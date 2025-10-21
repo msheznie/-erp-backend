@@ -3920,6 +3920,10 @@ return
     'po_advance_payment_retrieved_successfully' => 'Po Advance Payment retrieved successfully',
     'po_advance_payment_saved_successfully' => 'Po Advance Payment saved successfully',
     'po_advance_payments_retrieved_successfully' => 'Po Advance Payments retrieved successfully',
+    'po_advance_payment_logistic_charge_linked_to_grv' => 'Selected logistic charge is linked to GRV :grv_code',
+    'po_advance_payment_amount_should_be_greater_than_zero' => 'Amount should be greater than 0',
+    'po_advance_payment_already_requested' => 'Advance Payment already requested',
+    'po_advance_payment_unable_to_export_excel' => 'Unable to export excel',
     'po_attachments_pulled_successfully' => 'PO attachments pulled successfully',
     'po_bulk_upload_error_log_deleted_successfully' => 'Po Bulk Upload Error Log deleted successfully',
     'po_bulk_upload_error_log_not_found' => 'Po Bulk Upload Error Log not found',
@@ -7265,6 +7269,8 @@ return
 
     // PO to Payment Report Title
     'po_to_payment_report' => 'PO to Payment Report',
+    'pr_to_grv_report' => 'PR to GRV Report',
+    'pr_to_grv_path' => 'pr_to_grv',
 
     // Accounts Receivable Report Translations
     'customer_balance_statement' => 'Customer Balance Statement',
@@ -9581,4 +9587,35 @@ return
     // Status translations
     'deactivated' => 'Deactivated',
     'activated' => 'Activated',
+
+    'no_data_found_in_the_excel_file' => 'No data found in the excel file',
+
+    // Customer Ledger Email Body
+    'auto_generated_email_footer' => 'This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.',
+    'dear_customer_ledger_sent' => 'Dear :customerName,<p> Customer ledger report has been sent from :companyName',
+    'customer_ledger_report_from' => 'Customer ledger report from :companyName',
+    'dear_customer_statement_sent' => 'Dear :customerName,<p> Customer statement report has been sent from :companyName',
+    'customer_statement_report_from' => 'Customer statement report from :companyName',
+
+    // Match document master
+    'debit_note_amount_more_than_document' => 'Debit note amount is more than document value, please check again',
+   
+    'advance_payment_amount_more_than_document' => 'Advance payment amount is more than document value, please check again',
+    'no_active_finance_year_found' => 'No Active Finance Year Found',
+    'matching_type_found' => 'Matching Type Found',
+    'invoice_without_vat_matching_receipt_with_vat' => 'Invoice without VAT is being matched with reciept with VAT.This will nullify the VAT entries to zero.Are you sure you want to proceed ?',
+    'document_not_canceled_try_again' => 'Document not canceled, try again',
+
+     // Inventory batch messages
+     'batch_has_been_sold' => 'Batch has been sold.',
+     'batch_qty_greater_than_remaining' => 'Batch quantity cannot be greater than remaining quantity.',
+     'out_qty_greater_than_issue_qty' => 'Out quantity cannot be greater than issue quantity',
+     'out_qty_greater_than_remaining_qty' => 'Out quantity cannot be greater than remaining quantity',
+     'batch_code_allowed_chars' => 'Batch code can contain only / and - in special character',
+    'file_not_selected' => 'File not selected',
+    'supplier_po_invoice' => 'Supplier PO Invoice',
+    'supplier_direct_invoice' => 'Supplier Direct Invoice',
+    'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item',
+
+    'customer_statement' => 'Customer Statement'
   ];

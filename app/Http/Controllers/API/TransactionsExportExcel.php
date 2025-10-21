@@ -522,7 +522,8 @@ class TransactionsExportExcel extends AppBaseController
         if(isset($input['stat']) && $input['stat'] && $input['documentId'] == 1) {
             $db = $input['db'] ?? "";
             $userId = \Helper::getEmployeeSystemID();
-            ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode);
+            $lang = app()->getLocale() ? app()->getLocale() : 'en';
+            ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode,$lang);
 
             return $this->sendResponse('', trans('custom.pr_detailed_report_export_in_progress'));
         }

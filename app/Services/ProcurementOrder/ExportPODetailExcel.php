@@ -32,10 +32,13 @@ class ExportPODetailExcel {
     private $userId;
     private $companyCode;
     private $data = [];
+    private $userLang;
 
-    public function __construct($request) {
+    public function __construct($request, $userLang = 'en') {
         $this->input = $request;
         $this->setData($this->input);
+        $this->userLang = $userLang;
+        app()->setLocale($this->userLang);
     }
 
     private function setData($request) {

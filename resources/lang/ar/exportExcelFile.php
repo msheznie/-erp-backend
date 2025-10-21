@@ -58,5 +58,11 @@ return [
     'budget_master' => 'الميزانية_الرئيسية',
     'budget_transfer' => 'تحويل_الميزانية',
 
-    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل'
+    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل',
+    'saving_report' => 'تقرير_التوفير',
+    'tax_deductibility' => 'تقرير_الخصم_الضريبي',
+    'material_issue_register' => 'تقرير_صرف_المواد',
+    'items_by_company' => 'قائمة_العناصر_بالشركة',
+    'items_by_warehouse' => 'قائمة_العناصر_بالمخزن',
+    'stock-count' => 'عدد_الأسهم'
 ];

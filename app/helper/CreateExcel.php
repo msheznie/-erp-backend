@@ -586,7 +586,7 @@ class CreateExcel
 
 
        $disk = 's3';
-       $companyCode = isset($data['companyCode'])?$data['companyCode']:trans('custom.common');
+       $companyCode = isset($data['companyCode'])? $data['companyCode'] : trans('custom.common');
 
        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
        $path = $companyCode.'/'.$path_dir.$full_name;

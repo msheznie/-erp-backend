@@ -836,6 +836,11 @@ class CompanyAPIController extends AppBaseController
                     }
                 }
             }
+            if(!isset($digitalStampUpload))
+            {
+                return $this->sendError(trans('custom.file_not_selected'), 500);
+    
+            }
             return $this->sendResponse($digitalStampUpload, trans('custom.digital_stamp_uploaded_successfully'));
         } catch (\Exception $e) {
             return $this->sendError(trans('custom.digital_stamp_upload_error'), 500);

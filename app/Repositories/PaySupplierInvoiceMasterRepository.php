@@ -350,21 +350,21 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.posted_date')] = $val->postedDate;
                 $data[$x][trans('custom.payment_type')] = StatusService::getInvoiceType($val->invoiceType);
                 if($val->supplier){
-                    $data[$x][trans('custom.payee_type')] = "Supplier";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.supplier');
                     $data[$x][trans('custom.sup_emp_other')] = $val->supplier? $val->supplier->supplierName : '';
-                    $data[$x][trans('custom.payee_type')] = "Supplier";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.supplier');
                     $data[$x][trans('custom.sup_emp_other')] = $val->supplier? $val->supplier->supplierName : '';
                 }
                 else if($val->directPaymentPayeeEmpID > 0){
-                    $data[$x][trans('custom.payee_type')] = "Employee";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.employee');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
-                    $data[$x][trans('custom.payee_type')] = "Employee";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.employee');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                 }
                 else if($val->directPaymentPayeeEmpID == null && $val->supplier == null && $val->directPaymentPayee != null){
-                    $data[$x][trans('custom.payee_type')] = "Other";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.other');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
-                    $data[$x][trans('custom.payee_type')] = "Other";
+                    $data[$x][trans('custom.payee_type')] = trans('custom.other');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                 }
                 else{

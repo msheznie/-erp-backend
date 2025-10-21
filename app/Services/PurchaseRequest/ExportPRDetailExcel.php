@@ -10,10 +10,13 @@ class ExportPRDetailExcel
     private $userId;
     private $data;
     private $code;
-    public function __construct($request,$userId,$code) {
+    private $lang;
+    public function __construct($request,$userId,$code,$lang = 'en') {
         $this->data = $request;
         $this->userId = $userId;
         $this->code = $code;
+        $this->lang = $lang;
+        app()->setLocale($this->lang);
     }
 
     public function export() {

@@ -978,7 +978,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         // return $this->sendResponse(array(), trans('custom.success_export'));
 
-        $doc_name = 'pr_to_grv';
+        $doc_name = trans('custom.pr_to_grv_report');
         $doc_name_path = 'pr_to_grv/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
         $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);

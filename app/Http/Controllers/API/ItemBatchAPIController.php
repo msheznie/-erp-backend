@@ -237,7 +237,7 @@ class ItemBatchAPIController extends AppBaseController
         }
 
         if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['batchCode'])) {
-            return $this->sendError('Batch code can contain only / and - in special character');
+            return $this->sendError(trans('custom.batch_code_allowed_chars'));
         }
 
 
@@ -492,7 +492,7 @@ class ItemBatchAPIController extends AppBaseController
                                                              ->sum('quantity');
 
                 if (($checkCountOfOut + $input['quantityCopied']) > floatval($input['noQty'])) {
-                    return $this->sendError("Out quantity cannot be greater than issue quantity");
+                    return $this->sendError(trans('custom.out_qty_greater_than_issue_qty'));
                 }
 
                 $newCopiedQty = ($previousOutCount + $input['quantityCopied']);
@@ -511,11 +511,11 @@ class ItemBatchAPIController extends AppBaseController
                                                  ->first();     
                                                  
                 if (!$checkInData) {
-                    return $this->sendError("Batch has been sold.");
+                    return $this->sendError(trans('custom.batch_has_been_sold'));
                 }      
 
                 if (($checkInData->remaingQty - $previousLineOutCount) < $input['quantityCopied']) {
-                    return $this->sendError("Batch quantity cannot be greater than remaining quantity.");
+                    return $this->sendError(trans('custom.batch_qty_greater_than_remaining'));
                 }
 
 
@@ -695,7 +695,7 @@ class ItemBatchAPIController extends AppBaseController
                 }
 
                 if ($previousOutCount < $input['quantityCopied']) {
-                    return $this->sendError("Out quantity cannot be greater than remaining quantity");
+                    return $this->sendError(trans('custom.out_qty_greater_than_remaining_qty'));
                 }
 
                
@@ -714,11 +714,11 @@ class ItemBatchAPIController extends AppBaseController
                                                  ->first();     
                                                  
                 if (!$checkInData) {
-                    return $this->sendError("Batch has been sold.");
+                    return $this->sendError(trans('custom.batch_has_been_sold'));
                 }      
 
                 if (($checkInData->remaingQty - $previousLineOutCount) < $input['quantityCopied']) {
-                    return $this->sendError("Batch quantity cannot be greater than remaining quantity.");
+                    return $this->sendError(trans('custom.batch_qty_greater_than_remaining'));
                 }
 
 

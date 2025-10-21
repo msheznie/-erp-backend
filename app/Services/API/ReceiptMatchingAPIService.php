@@ -1143,7 +1143,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                                         {
                                             return [    
                                                 'status' => false,
-                                                'message' => 'Invoice without VAT is being matched with reciept with VAT.This will nullify the VAT entries to zero.Are you sure you want to proceed ?',
+                                                'message' => trans('custom.invoice_without_vat_matching_receipt_with_vat'),
                                                 'type' => ['UnconfirmAsset']
                                             ];
     

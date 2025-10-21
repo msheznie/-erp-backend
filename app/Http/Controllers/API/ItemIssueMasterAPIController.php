@@ -2588,7 +2588,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $toDate = (new Carbon($request->toDate))->format('Y-m-d');
         $groupBy = $request->groupByAsset;
        
-        $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+        $companyCode = isset($company->CompanyID)?$company->CompanyID: trans('custom.common');
 
 
         $selectedAssets  = $request->assets;
@@ -2630,7 +2630,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
         ];
 
-        $fileName = 'material_issue_register';
+        $fileName = trans('exportExcelFile.material_issue_register');
         $path = 'inventory/report/material_issue_register/excel/';
         $type = "xls";
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);

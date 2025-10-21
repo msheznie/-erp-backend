@@ -360,7 +360,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             $checkItems = $this->monthlyAdditionDetailRepository->findWhere(['monthlyAdditionsMasterID' => $id]);
 
             if (count($checkItems) == 0) {
-                return $this->sendError('Every monthly addition should have at least one item', 500);
+                return $this->sendError(trans('custom.every_monthly_addition_should_have_at_least_one_item'), 500);
             }
 
             $input['RollLevForApp_curr'] = 1;

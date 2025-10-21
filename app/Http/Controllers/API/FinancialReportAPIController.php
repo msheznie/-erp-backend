@@ -2250,7 +2250,7 @@ class FinancialReportAPIController extends AppBaseController
             $payInvoiceTotal = 0;
             if ($bookInvSuppMaster->paysuppdetail) {
                 foreach ($bookInvSuppMaster->paysuppdetail->sortByDesc('PayMasterAutoId') as $payDetail) {
-                    if($payDetail->payment_master->approved == -1) {
+                    if($payDetail->payment_master && $payDetail->payment_master->approved == -1) {
                         $payInvoiceTotal += $payDetail->payment_master->payAmountSuppTrans;
                         if ($payDetail->payment_master && $payDetail->payment_master->BPVdate) {
                             $paymentVoucherDate = $payDetail->payment_master->BPVdate ?? null;
@@ -4755,7 +4755,7 @@ class FinancialReportAPIController extends AppBaseController
                 );
 
                 $templateName = "export_report.generalLedger.rtd_details";
-                $fileName = 'Tax Deductibility';
+                $fileName = trans('exportExcelFile.tax_deductibility');
                 $path = 'general-ledger/report/rtd_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [

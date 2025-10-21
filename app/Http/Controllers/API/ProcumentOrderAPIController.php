@@ -5472,7 +5472,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         if(isset($input['stat']) && $input['stat']) {
             $db = $input['db'] ?? "";
-            ExportDetailedPoList::dispatch($db, $request->all());
+
+            $userLang = app()->getLocale() ? app()->getLocale() : 'en';
+            
+            ExportDetailedPoList::dispatch($db, $request->all(), $userLang);
 
             return $this->sendResponse('', trans('custom.po_detailed_report_export_progress'));
         }
@@ -6129,7 +6132,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
         $company_name = $companyMaster->CompanyName;
         $cur = null;
-        $fileName = 'po_to_payment';
+        $fileName = __('custom.po_to_payment_report');
         $doc_name_path = 'po_to_payment/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
         $report = new PoToPaymentReport();
@@ -9174,6 +9177,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            if(empty($uniqueData)) {
+                return $this->sendError(trans('custom.no_data_found_in_the_excel_file'), 500);
+            }
 
             $validateHeaderCode = false;
             $totalItemCount = 0;

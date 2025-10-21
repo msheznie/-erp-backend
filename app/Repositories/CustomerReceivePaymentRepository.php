@@ -138,6 +138,10 @@ class CustomerReceivePaymentRepository extends BaseRepository
             ->leftjoin('third_party_systems', 'document_system_mapping.thirdPartySystemId', '=', 'third_party_systems.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
             ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
+            ->leftjoin('paymentType_languages', function ($join) {
+                $join->on('paymentType_languages.paymentTypeId', '=', 'payment_type.id')
+                    ->where('paymentType_languages.languageCode', '=', 'ar');
+            })
             ->leftJoin('erp_bankledger', function ($join) {
                 $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
                 $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
@@ -275,6 +279,7 @@ class CustomerReceivePaymentRepository extends BaseRepository
             'bankAmount as bankAmount',
             'erp_bankledger.trsClearedYN as trsClearedYN',
             'payment_type.description as paymentType',
+            'paymentType_languages.description as paymentTypeAr',
             'projectID',
             'erp_projectmaster.description as project_description',
             'payee.empID',

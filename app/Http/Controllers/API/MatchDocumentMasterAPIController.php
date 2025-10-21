@@ -367,7 +367,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount);
 
                 if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans) {
-                    return $this->sendError('Debit note amount is more than document value, please check again', 500);
+                    return $this->sendError(trans('custom.debit_note_amount_more_than_document'), 500);
                 }
 
                 $input['matchingType'] = 'AP';
@@ -456,7 +456,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 }
 
                 if ($paySupplierInvoiceMaster->payAmountSuppTrans == $machAmount || $machAmount > $paySupplierInvoiceMaster->payAmountSuppTrans) {
-                    return $this->sendError('Advance payment amount is more than document value, please check again', 500);
+                    return $this->sendError(trans('custom.advance_payment_amount_more_than_document'), 500);
                 }
 
                 $input['matchingType'] = 'AP';
@@ -696,7 +696,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if(!isset($input['companyFinanceYearID']) )
             {
-                return $this->sendError('No Active Finance Year Found', 500);
+                return $this->sendError(trans('custom.no_active_finance_year_found'), 500);
             }
            
 
@@ -705,13 +705,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }elseif ($input['matchingType'] == 'AR'){
                 $department = 4;
             }else{
-                return $this->sendError('Matching Type Found', 500);
+                return $this->sendError(trans('custom.matching_type_found'), 500);
             }
 
 
             if(($input['companyFinancePeriodID']) == null)
             {
-                return $this->sendError('No Active Finance Year Found', 500);
+                return $this->sendError(trans('custom.no_active_finance_year_found'), 500);
             }
         
             $companyFinancePeriods = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->get();
@@ -1520,7 +1520,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $isEmpAdvConfigured = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], "employee-advance-account");
 
                     if (is_null($isEmpAdvConfigured)) {
-                        return $this->sendError('Please configure employee advance account for this company');
+                        return $this->sendError(trans('custom.please_configure_employee_advance_account'));
                     }
 
                     $totAdvancePayment = $advancePaymentEmployee->selectRaw("SUM(paymentLocalAmount) as localAmount,SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount")->first();
@@ -1870,6 +1870,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if ($input['documentSystemID'] == 21) {
 
                     $CustomerReceivePaymentDataUpdateCHK = CustomerReceivePayment::find($input['PayMasterAutoId']);
+
+                    if (empty($CustomerReceivePaymentDataUpdateCHK)) {
+                        return $this->sendError(trans('custom.customer_receive_payment_not_found'), 500);
+                    }
 
                     $postedDate = date("Y-m-d", strtotime($CustomerReceivePaymentDataUpdateCHK->postedDate));
 
@@ -2334,7 +2338,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             {
                                                 if($records->reciept_vocuher->VATAmount == 0)
                                                 {
-                                                    return $this->sendError('Invoice without VAT is being matched with reciept with VAT.This will nullify the VAT entries to zero.Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
+                                                    return $this->sendError(trans('custom.invoice_without_vat_matching_receipt_with_vat'), 300,['type' => 'UnconfirmAsset']);
             
                                                 }
             
@@ -3784,7 +3788,7 @@ ORDER BY
         if ($deleteDocument) {
             return $this->sendResponse($MatchDocumentMasterData, trans('custom.document_canceled_successfully_1'));
         } else {
-            return $this->sendResponse($MatchDocumentMasterData, 'Document not canceled, try again');
+            return $this->sendResponse($MatchDocumentMasterData, trans('custom.document_not_canceled_try_again'));
         }
 
     }
@@ -3867,7 +3871,7 @@ ORDER BY
             ->get();
 
         if (empty($detailExistAll)) {
-            return $this->sendError('There are no details to delete');
+            return $this->sendError(trans('custom.there_are_no_details_to_delete'));
         }
 
         if (!empty($detailExistAll)) {

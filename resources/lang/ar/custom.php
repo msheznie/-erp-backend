@@ -3871,6 +3871,10 @@ return
     'po_advance_payment_retrieved_successfully' => 'تم استرداد الدفعة المقدمة لأمر الشراء بنجاح',
     'po_advance_payment_saved_successfully' => 'تم حفظ الدفعة المقدمة لأمر الشراء بنجاح',
     'po_advance_payments_retrieved_successfully' => 'تم استرداد الدفعات المقدمة لأوامر الشراء بنجاح',
+    'po_advance_payment_logistic_charge_linked_to_grv' => 'رسوم الشحن المحددة مرتبطة بإشعار استلام البضائع :grv_code',
+    'po_advance_payment_amount_should_be_greater_than_zero' => 'يجب أن يكون المبلغ أكبر من 0',
+    'po_advance_payment_already_requested' => 'تم طلب الدفعة المقدمة بالفعل',
+    'po_advance_payment_unable_to_export_excel' => 'غير قادر على تصدير ملف Excel',
     'po_attachments_pulled_successfully' => 'تم سحب مرفقات أمر الشراء بنجاح',
     'po_bulk_upload_error_log_deleted_successfully' => 'تم حذف سجل أخطاء التحميل المجمع لأمر الشراء بنجاح',
     'po_bulk_upload_error_log_not_found' => 'سجل أخطاء التحميل المجمع لأمر الشراء غير موجود',
@@ -7173,6 +7177,8 @@ return
 
     // PO to Payment Report Title
     'po_to_payment_report' => 'تقرير من أمر الشراء إلى الدفع',
+    'pr_to_grv_report' => 'تقرير طلب الشراء إلى إيصال',
+    'pr_to_grv_path' => 'pr_to_grv',
 
     // Accounts Receivable Report Translations
     'customer_balance_statement' => 'كشف رصيد العميل',
@@ -9476,4 +9482,35 @@ return
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
+
+    'no_data_found_in_the_excel_file' => 'لم يتم العثور على بيانات في ملف الإكسل',
+
+    // Customer Ledger Email Body
+    'auto_generated_email_footer' => 'هذا بريد إلكتروني مُولد تلقائياً. يرجى عدم الرد على هذا البريد الإلكتروني لأننا لا نراقب هذا البريد الوارد.',
+    'dear_customer_ledger_sent' => 'عزيزي :customerName،<p> تم إرسال تقرير دفتر العملاء من :companyName',
+    'customer_ledger_report_from' => 'تقرير دفتر العملاء من :companyName',
+    'dear_customer_statement_sent' => 'عزيزي :customerName،<p> تم إرسال تقرير كشف حساب العميل من :companyName',
+    'customer_statement_report_from' => 'تقرير كشف حساب العميل من :companyName',
+
+    // Match document master
+    'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
+   
+    'advance_payment_amount_more_than_document' => 'مبلغ الدفعة المقدمة أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
+    'no_active_finance_year_found' => 'لم يتم العثور على سنة مالية نشطة',
+    'matching_type_found' => 'تم العثور على نوع مطابقة',
+    'invoice_without_vat_matching_receipt_with_vat' => 'يتم مطابقة فاتورة بدون ضريبة القيمة المضافة مع إيصال مع ضريبة القيمة المضافة. سيؤدي هذا إلى إلغاء إدخالات ضريبة القيمة المضافة إلى الصفر. هل أنت متأكد من أنك تريد المتابعة؟',
+    'document_not_canceled_try_again' => 'لم يتم إلغاء المستند، حاول مرة أخرى',
+
+     // Inventory batch messages
+     'batch_has_been_sold' => 'تم بيع الدفعة.',
+     'batch_qty_greater_than_remaining' => 'لا يمكن أن تكون كمية الدفعة أكبر من الكمية المتبقية.',
+     'out_qty_greater_than_issue_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من كمية الإصدار',
+     'out_qty_greater_than_remaining_qty' => 'لا يمكن أن تكون الكمية الخارجة أكبر من الكمية المتبقية',
+     'batch_code_allowed_chars' => 'يمكن أن يحتوي رمز الدفعة على / و - فقط كأحرف خاصة',
+    'file_not_selected' => 'لم يتم اختيار ملف',
+    'supplier_po_invoice' => 'فاتورة طلب شراء المورد',
+    'supplier_direct_invoice' => 'فاتورة المورد المباشرة',
+    'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل',
+
+    'customer_statement' => 'كشف حساب العميل'
   ];
