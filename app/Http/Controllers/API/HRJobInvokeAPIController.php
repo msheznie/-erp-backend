@@ -9,6 +9,7 @@ use App\Jobs\AttendanceDayEndPullingInitiate;
 use App\Jobs\BirthdayWishInitiate;
 use App\Jobs\EmpDesignationUpdateNotificationJob;
 use App\Jobs\LeaveAccrualInitiate;
+use App\Models\EmployeeLanguage;
 use App\Services\hrms\attendance\ShiftScheduleUnconfirmedAttendancePuller;
 use App\Services\hrms\attendance\SMAttendanceCrossDayPullingService;
 use App\Services\hrms\attendance\SMAttendancePullingService;
@@ -404,31 +405,44 @@ class HRJobInvokeAPIController extends AppBaseController
 
     function unConfirmedAttendancePull(Request $request){
 
-        DB::beginTransaction();
         try{
             $input = $request->all();
+            $dbName = CommonJobService::get_tenant_db($input['tenantId']);
+            CommonJobService::db_switch($dbName);
+
+            $empId = $input['shiftData'][0]['updated_by'];
+            $language = $this->switchLanguage($empId);
+            app()->setLocale($language);
+
             $this->validateUnConfirmAttendance($input);
             $data = [
                 'tenantId' => $input['tenantId'], 'companyId' => $input['companyId'],
                 'attendanceData' => $input['attendanceData'], 'shiftData' => $input['shiftData']
             ];
 
-            $dbName = CommonJobService::get_tenant_db($input['tenantId']);
-            CommonJobService::db_switch($dbName);
             $job = new ShiftScheduleUnconfirmedAttendancePuller($data);
             $resp = $job->pullData();
 
             if($resp['status']){
-                DB::commit();
                 return $this->sendResponse([], __('custom.data_pulled_successfully'));
             }
-            DB::rollBack();
             return $this->sendError(__('custom.error_in_shift_schedule_unconfirmed_attendance_pulling'),500);
 
         }catch (\Exception $e){
-            DB::rollBack();
             return $this->sendError($e->getMessage(),500);
         }
+    }
+
+    function switchLanguage($empId)
+    {
+        if (empty($empId)) {
+            return 'en';
+        }
+
+        $languageId = EmployeeLanguage::where('employeeID', $empId)
+            ->value('languageID') ?? 1;
+
+        return $languageId == 2 ? 'ar' : 'en';
     }
 
     function validateUnConfirmAttendance($input){

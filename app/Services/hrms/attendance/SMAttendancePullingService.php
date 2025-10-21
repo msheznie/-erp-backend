@@ -159,11 +159,9 @@ class SMAttendancePullingService{
             if (empty($this->tempData)) {
                 if(!$this->isFromShift){
                     Log::error('No records found for pulling step-1 and chunk-'.$i.' '.$this->log_suffix(__LINE__));
-                    continue;
-                }else{
-                    DB::rollBack();
-                    throw new Exception(__('custom.no_records_found_for_pulling_step', ['chunk' => $i]));
                 }
+
+                continue;
             }
 
             $this->insertToTempTb();
@@ -308,7 +306,13 @@ class SMAttendancePullingService{
             WHERE att.company_id = {$this->companyId} AND att.att_date = '{$this->pullingDate}' AND att.emp_id = e.EIdNo
         )";
 
-        $tempData = DB::table(DB::raw("($q) as tempTable"))->orderBy('EIdNo')->get()->toArray();
+        $query = DB::table(DB::raw("($q) as tempTable"));
+
+        if ($this->isFromShift && !empty($this->empIdList)) {
+            $query->whereIn('EIdNo', $this->empIdList);
+        }
+
+        $tempData = $query->orderBy('EIdNo')->get()->toArray();
 
         if(empty($tempData)){
             return true;
@@ -552,11 +556,18 @@ class SMAttendancePullingService{
 
     private function deleteEntries(){
 
-        $noOfRows = DB::table('srp_erp_pay_empattendancereview')
+        $query = DB::table('srp_erp_pay_empattendancereview')
             ->where('companyID', $this->companyId)
             ->where('attendanceDate', $this->pullingDate)
-            ->where('confirmedYN', 0)
-            ->delete();
+            ->where('confirmedYN', 0);
+
+        if($this->isFromShift && !empty($this->empIdList)){
+            $query->whereIn('empID', $this->empIdList);
+        }
+
+        $noOfRows = $query->delete();
+
+        $this->deleteWrDet();
 
         $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} 
                 (date : {$this->pullingDate})";
@@ -637,5 +648,28 @@ class SMAttendancePullingService{
         $this->weekendColumn = (SME::policy($this->companyId, 'LCW', 'LA'))
             ? "IFNULL(shd.isWeekend, 0)"
             : "IFNULL(calenders.weekend_flag, 0)";
+    }
+
+    function deleteWrDet()
+    {
+        $query = DB::table('srp_erp_pay_empattendancereview')
+            ->whereNotNull('work_out_detail_id')
+            ->where('attendanceDate', $this->pullingDate)
+            ->where('companyID', $this->companyId);;
+
+        if ($this->isFromShift && !empty($this->empIdList)) {
+            $query->whereIn('empID', $this->empIdList);
+        }
+
+        $detailIds = $query->pluck('work_out_detail_id');
+
+        if ($detailIds->isNotEmpty()) {
+            DB::table('hr_workout_request_details')
+                ->whereIn('id', $detailIds)
+                ->update([
+                    'review_id' => 0,
+                    'att_pulled_at' => null,
+                ]);
+        }
     }
 }

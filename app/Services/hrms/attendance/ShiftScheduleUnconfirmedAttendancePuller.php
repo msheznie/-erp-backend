@@ -31,6 +31,7 @@ class ShiftScheduleUnconfirmedAttendancePuller
     }
 
     public function pullData(){
+        DB::beginTransaction();
         $this->updateShiftSchedule();
         $dateEmpMap = [];
         foreach ($this->attendanceData as $row){
@@ -40,25 +41,18 @@ class ShiftScheduleUnconfirmedAttendancePuller
         foreach ($dateEmpMap as $date => $empIdList){
             try {
 
-                $result = $this->deleteMultipleAttendance(
-                    $date,
-                    $empIdList
-                );
-                if (!$result['status']) {
-                    throw new Exception($result['message']);
-                }
-
                 $serv = new SMAttendancePullingService(
                     $this->companyId,
                     $date,
-                    false,
+                    true,
                     true,
                     $empIdList
                 );
                 $serv->execute();
-
+                DB::commit();
 
             } catch (\Exception $e){
+                DB::rollBack();
                 throw new Exception(
                     __('custom.failed_to_process_attendance_for_date', ['date' => $date, 'employees' => implode(', ', $empIdList)]) . ': ' . $e->getMessage()
                 );
@@ -80,42 +74,5 @@ class ShiftScheduleUnconfirmedAttendancePuller
                     ->update($shiftRecord);
             }
         }
-    }
-
-    function deleteMultipleAttendance($date, $empIds){
-        $this->processTempData($date, $empIds);
-        $this->deleteAttendanceReviewData($date, $empIds);
-        return ['status' => true, 'message' => 'Record/s deleted successfully'];
-    }
-
-    function processTempData($fromDate, $empIds){
-        $tempIds =  DB::table('srp_erp_pay_empattendancetemptable as temp')
-            ->join('srp_erp_pay_empattendancereview as review', function($join) {
-                $join->on('review.attendanceDate', '=', 'temp.attDate')
-                    ->on('review.empID', '=', 'temp.emp_id');
-            })
-            ->where('review.companyID', $this->companyId)
-            ->where('review.attendanceDate', $fromDate)
-            ->whereIn('review.empID', $empIds)
-            ->where('review.confirmedYN', 0)
-            ->pluck('temp.autoID')
-            ->toArray();
-
-        if(empty($tempIds)){
-            throw new Exception(__('custom.no_temp_data_found'));
-        }
-
-        DB::table('srp_erp_pay_empattendancetemptable')
-            ->whereIn('autoID', $tempIds)
-            ->update(['isUpdated' => 0]);
-    }
-
-    function deleteAttendanceReviewData($date, $empIds){
-        DB::table('srp_erp_pay_empattendancereview')
-            ->where('companyID', $this->companyId)
-            ->where('attendanceDate', $date)
-            ->whereIn('empID', $empIds)
-            ->where('confirmedYN', 0)
-            ->delete();
     }
 }
