@@ -571,7 +571,10 @@ class SMAttendancePullingService{
 
         $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} 
                 (date : {$this->pullingDate})";
-        Log::info($msg.$this->log_suffix(__LINE__));
+        if(!$this->isFromShift){
+            Log::info($msg.$this->log_suffix(__LINE__));
+        }
+
     }
 
     function moreThan2RecordsExists($empId){
