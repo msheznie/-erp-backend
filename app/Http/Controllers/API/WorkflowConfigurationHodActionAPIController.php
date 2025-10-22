@@ -64,7 +64,7 @@ class WorkflowConfigurationHodActionAPIController extends AppBaseController
         $this->workflowConfigurationHodActionRepository->pushCriteria(new LimitOffsetCriteria($request));
         $workflowConfigurationHodActions = $this->workflowConfigurationHodActionRepository->all();
 
-        return $this->sendResponse($workflowConfigurationHodActions->toArray(), 'Workflow Configuration Hod Actions retrieved successfully');
+        return $this->sendResponse($workflowConfigurationHodActions->toArray(), trans('custom.workflow_configuration_hod_actions_retrieved_succe'));
     }
 
     /**
@@ -118,7 +118,7 @@ class WorkflowConfigurationHodActionAPIController extends AppBaseController
 
         $workflowConfigurationHodAction = $this->workflowConfigurationHodActionRepository->create($input);
 
-        return $this->sendResponse($workflowConfigurationHodAction->toArray(), 'Workflow Configuration Hod Action saved successfully');
+        return $this->sendResponse($workflowConfigurationHodAction->toArray(), trans('custom.workflow_configuration_hod_action_saved_successful'));
     }
 
     /**
@@ -166,10 +166,10 @@ class WorkflowConfigurationHodActionAPIController extends AppBaseController
         $workflowConfigurationHodAction = $this->workflowConfigurationHodActionRepository->findWithoutFail($id);
 
         if (empty($workflowConfigurationHodAction)) {
-            return $this->sendError('Workflow Configuration Hod Action not found');
+            return $this->sendError(trans('custom.workflow_configuration_hod_action_not_found'));
         }
 
-        return $this->sendResponse($workflowConfigurationHodAction->toArray(), 'Workflow Configuration Hod Action retrieved successfully');
+        return $this->sendResponse($workflowConfigurationHodAction->toArray(), trans('custom.workflow_configuration_hod_action_retrieved_succes'));
     }
 
     /**
@@ -235,12 +235,12 @@ class WorkflowConfigurationHodActionAPIController extends AppBaseController
         $workflowConfigurationHodAction = $this->workflowConfigurationHodActionRepository->findWithoutFail($id);
 
         if (empty($workflowConfigurationHodAction)) {
-            return $this->sendError('Workflow Configuration Hod Action not found');
+            return $this->sendError(trans('custom.workflow_configuration_hod_action_not_found'));
         }
 
         $workflowConfigurationHodAction = $this->workflowConfigurationHodActionRepository->update($input, $id);
 
-        return $this->sendResponse($workflowConfigurationHodAction->toArray(), 'WorkflowConfigurationHodAction updated successfully');
+        return $this->sendResponse($workflowConfigurationHodAction->toArray(), trans('custom.workflowconfigurationhodaction_updated_successfull'));
     }
 
     /**
@@ -288,7 +288,7 @@ class WorkflowConfigurationHodActionAPIController extends AppBaseController
         $workflowConfigurationHodAction = $this->workflowConfigurationHodActionRepository->findWithoutFail($id);
 
         if (empty($workflowConfigurationHodAction)) {
-            return $this->sendError('Workflow Configuration Hod Action not found');
+            return $this->sendError(trans('custom.workflow_configuration_hod_action_not_found'));
         }
 
         $workflowConfigurationHodAction->delete();

@@ -128,7 +128,7 @@ class SRMPublicLinkRepository extends BaseRepository
 
                     if ($existingLink)
                     {
-                        throw new \Exception('The link description already exists.');
+                        throw new \Exception(trans('srm_supplier_master.the_link_description_already_exists'));
                     }
                 }
 

@@ -44,8 +44,8 @@ namespace App\Services\OSOS_3_0;
 
      function execute(){
          try {
-
-             $valResp =$this->validateApiResponse();
+                        
+            $valResp =$this->validateApiResponse();
 
              if(!$valResp['status']){
                 $logData = ['message' => $valResp['message'], 'id' => $this->id];
@@ -62,7 +62,7 @@ namespace App\Services\OSOS_3_0;
              $headers = [
                  'content-type' => 'application/json',
                  'auth-key' =>  $this->apiExternalKey,
-                 'menu-id' =>  'defualt'
+                 'menu-id' =>  'default'
              ];
 
              $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
@@ -136,7 +136,7 @@ namespace App\Services\OSOS_3_0;
              return ['status' =>false, 'message'=> $error];
          }
 
-         if(empty($this->departmentData['id']) && $this->postType != 'POST'){
+         if(empty($this->departmentData['Id']) && $this->postType != 'POST'){
              $error = 'Reference id not found';
              return ['status' =>false, 'message'=> $error];
          }
@@ -164,7 +164,7 @@ namespace App\Services\OSOS_3_0;
 
          if($this->postType != "POST") {
              $this->getReferenceId();
-             $this->departmentData['id'] = $this->masterUuId;
+             $this->departmentData['Id'] = $this->masterUuId;
          }
 
          if(empty($data)){
@@ -172,7 +172,7 @@ namespace App\Services\OSOS_3_0;
          }
 
          $this->departmentData = array_merge([
-             "Code" => $data->Code,
+             "Code" => (string)$data->Code,
              "Name" => $data->Name,
              "Description" => $data->Description,
              "Status" => $data->Status,

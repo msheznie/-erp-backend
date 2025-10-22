@@ -65,7 +65,7 @@ class RegisteredSupplierCurrencyAPIController extends AppBaseController
         $this->registeredSupplierCurrencyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $registeredSupplierCurrencies = $this->registeredSupplierCurrencyRepository->all();
 
-        return $this->sendResponse($registeredSupplierCurrencies->toArray(), 'Registered Supplier Currencies retrieved successfully');
+        return $this->sendResponse($registeredSupplierCurrencies->toArray(), trans('custom.registered_supplier_currencies_retrieved_successfu'));
     }
 
     /**
@@ -112,7 +112,7 @@ class RegisteredSupplierCurrencyAPIController extends AppBaseController
 
         $registeredSupplierCurrency = $this->registeredSupplierCurrencyRepository->create($input);
 
-        return $this->sendResponse($registeredSupplierCurrency->toArray(), 'Registered Supplier Currency saved successfully');
+        return $this->sendResponse($registeredSupplierCurrency->toArray(), trans('custom.registered_supplier_currency_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class RegisteredSupplierCurrencyAPIController extends AppBaseController
         $registeredSupplierCurrency = $this->registeredSupplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierCurrency)) {
-            return $this->sendError('Registered Supplier Currency not found');
+            return $this->sendError(trans('custom.registered_supplier_currency_not_found'));
         }
 
-        return $this->sendResponse($registeredSupplierCurrency->toArray(), 'Registered Supplier Currency retrieved successfully');
+        return $this->sendResponse($registeredSupplierCurrency->toArray(), trans('custom.registered_supplier_currency_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class RegisteredSupplierCurrencyAPIController extends AppBaseController
         $registeredSupplierCurrency = $this->registeredSupplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierCurrency)) {
-            return $this->sendError('Registered Supplier Currency not found');
+            return $this->sendError(trans('custom.registered_supplier_currency_not_found'));
         }
 
         $registeredSupplierCurrency = $this->registeredSupplierCurrencyRepository->update($input, $id);
 
-        return $this->sendResponse($registeredSupplierCurrency->toArray(), 'RegisteredSupplierCurrency updated successfully');
+        return $this->sendResponse($registeredSupplierCurrency->toArray(), trans('custom.registeredsuppliercurrency_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class RegisteredSupplierCurrencyAPIController extends AppBaseController
         $registeredSupplierCurrency = $this->registeredSupplierCurrencyRepository->findWithoutFail($id);
 
         if (empty($registeredSupplierCurrency)) {
-            return $this->sendError('Registered Supplier Currency not found');
+            return $this->sendError(trans('custom.registered_supplier_currency_not_found'));
         }
 
         $registeredSupplierCurrency->delete();

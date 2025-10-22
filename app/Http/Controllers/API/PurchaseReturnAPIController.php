@@ -115,7 +115,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $this->purchaseReturnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseReturns = $this->purchaseReturnRepository->all();
 
-        return $this->sendResponse($purchaseReturns->toArray(), 'Purchase Returns retrieved successfully');
+        return $this->sendResponse($purchaseReturns->toArray(), trans('custom.purchase_returns_retrieved_successfully'));
     }
 
     /**
@@ -219,7 +219,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
         } else {
-            return $this->sendError('Purchase Return Date not between Financial period !', 500);
+            return $this->sendError(trans('custom.purchase_return_date_not_between_financial_period'), 500);
         }
 
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
@@ -300,7 +300,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $purchaseReturns = $this->purchaseReturnRepository->create($input);
         DB::commit();
-        return $this->sendResponse($purchaseReturns->toArray(), 'Purchase Return saved successfully');
+        return $this->sendResponse($purchaseReturns->toArray(), trans('custom.purchase_return_saved_successfully'));
     }
 
     /**
@@ -351,10 +351,10 @@ class PurchaseReturnAPIController extends AppBaseController
         },'supplier_by','currency_by'])->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
-        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return retrieved successfully');
+        return $this->sendResponse($purchaseReturn->toArray(), trans('custom.purchase_return_retrieved_successfully'));
     }
 
     /**
@@ -416,18 +416,18 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError('Segment not found');
+                return $this->sendError(trans('custom.segment_not_found'));
             }
 
             if ($checkDepartmentActive->isActive == 0) {
                 $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
-                return $this->sendError('Please select a active segment ', 500, $serviceLineError);
+                return $this->sendError(trans('custom.please_select_active_segment_return'), 500, $serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -436,12 +436,12 @@ class PurchaseReturnAPIController extends AppBaseController
         if (isset($input['purchaseReturnLocation'])) {
             $checkWareHouseActive = WarehouseMaster::find($input['purchaseReturnLocation']);
             if (empty($checkWareHouseActive)) {
-                return $this->sendError('Location not found', 500, $wareHouseError);
+                return $this->sendError(trans('custom.location_not_found'), 500, $wareHouseError);
             }
 
             if ($checkWareHouseActive->isActive == 0) {
                 $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $id);
-                return $this->sendError('Please select a active location', 500, $wareHouseError);
+                return $this->sendError(trans('custom.please_select_active_location_return'), 500, $wareHouseError);
             }
         }
 
@@ -510,13 +510,13 @@ class PurchaseReturnAPIController extends AppBaseController
             $monthEnd = $input['FYEnd'];
             if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
-                return $this->sendError('Return date is not within the selected financial period !', 500);
+                return $this->sendError(trans('custom.return_date_not_within_selected_financial_period'), 500);
             }
 
             $checkItems = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
                 ->count();
             if ($checkItems == 0) {
-                return $this->sendError('Every return should have at least one item', 500);
+                return $this->sendError(trans('custom.every_return_should_have_at_least_one_item'), 500);
             }
 
             $checkQuantity = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)
@@ -526,7 +526,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 })
                 ->count();
             if ($checkQuantity > 0) {
-                return $this->sendError('Every Item should have at least one minimum Qty Requested', 500);
+                return $this->sendError(trans('custom.every_item_should_have_at_least_one_minimum_qty_requested'), 500);
             }
 
             $itemIssueDetails = PurchaseReturnDetails::where('purhaseReturnAutoID', $id)->get();
@@ -575,7 +575,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
-                return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
+                return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
 
             //check Input Vat Transfer GL Account if vat exist
@@ -583,11 +583,11 @@ class PurchaseReturnAPIController extends AppBaseController
             if(TaxService::checkGRVVATEligible($purchaseReturn->companySystemID,$purchaseReturn->supplierID) && !empty($totalVAT) && $totalVAT->totalVAT > 0){
                 if ($purchaseReturn->isInvoiceCreatedForGrv == 1) {
                     if(empty(TaxService::getInputVATGLAccount($purchaseReturn->companySystemID))){
-                        return $this->sendError('Cannot confirm. Input VAT Control GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_control_gl_account_not_co'), 500);
                     }
                 } else {
                      if(empty(TaxService::getInputVATTransferGLAccount($purchaseReturn->companySystemID))){
-                        return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        return $this->sendError(trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'), 500);
                     }
                 }
 
@@ -609,7 +609,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
                 if ($checkGrvAddedToIncoice) {
                     $supInvCode = (isset($checkGrvAddedToIncoice->suppinvmaster->bookingInvCode)) ? $checkGrvAddedToIncoice->suppinvmaster->bookingInvCode : "";
-                    return $this->sendError('Selected GRV is been added to a draft supplier invoice '.$supInvCode.'. Delete the GRV from the invoice and try again.', 500);
+                    return $this->sendError(trans('custom.selected_grv_is_been_added_to_draft_supplier_invoice') . ' ' . $supInvCode . '. ' . trans('custom.delete_grv_from_invoice_and_try_again'), 500);
                 }
             }
 
@@ -643,7 +643,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $purchaseReturn = $this->purchaseReturnRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($purchaseReturn->toArray(), 'PurchaseReturn updated successfully',1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($purchaseReturn->toArray(), trans('custom.purchase_return_updated_successfully'),1,isset($confirm['data']) ? $confirm['data'] : null);
     }
 
 
@@ -737,12 +737,12 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($id);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         $purchaseReturn->delete();
 
-        return $this->sendResponse($id, 'Purchase Return deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_return_deleted_successfully'));
     }
 
     public function getPurchaseReturnByCompany(Request $request)
@@ -852,7 +852,7 @@ class PurchaseReturnAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function purchaseReturnSegmentChkActive(Request $request)
@@ -866,7 +866,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = PurchaseReturn::find($purchaseReturnAutoID);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         $validator = \Validator::make($purchaseReturn->toArray(), [
@@ -883,22 +883,22 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $checkDepartmentActive = SegmentMaster::find($purchaseReturn->serviceLineSystemID);
         if (empty($checkDepartmentActive)) {
-            return $this->sendError('Segment not found');
+            return $this->sendError(trans('custom.segment_not_found'));
         }
 
         if ($checkDepartmentActive->isActive == 0) {
           //  $this->purchaseReturnRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $purchaseReturnAutoID);
-            return $this->sendError('Please select a active segment ', 500, $serviceLineError);
+            return $this->sendError(trans('custom.please_select_active_segment'), 500, $serviceLineError);
         }
 
         $checkWareHouseActive = WarehouseMaster::find($purchaseReturn->purchaseReturnLocation);
         if (empty($checkWareHouseActive)) {
-            return $this->sendError('Location not found', 500, $wareHouseError);
+            return $this->sendError(trans('custom.location_not_found'), 500, $wareHouseError);
         }
 
         if ($checkWareHouseActive->isActive == 0) {
             $this->purchaseReturnRepository->update(['purchaseReturnLocation' => null], $purchaseReturnAutoID);
-            return $this->sendError('Please select a active location', 500, $wareHouseError);
+            return $this->sendError(trans('custom.please_select_active_location'), 500, $wareHouseError);
         }
 
 
@@ -914,7 +914,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = PurchaseReturn::find($purchaseReturnAutoID);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         $grv = GRVMaster::where('companySystemID', $purchaseReturn->companySystemID)
@@ -940,7 +940,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $grvMaster = GRVMaster::find($grvAutoID);
 
         if (empty($grvMaster)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
         $grvDetails = GRVDetails::where('grvAutoID', $grvMaster->grvAutoID)
@@ -965,12 +965,12 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->getAudit($id);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
 
-        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return retrieved successfully');
+        return $this->sendResponse($purchaseReturn->toArray(), trans('custom.purchase_return_retrieved_successfully'));
     }
 
     public function getPurchaseReturnApprovalByUser(Request $request)
@@ -1183,7 +1183,7 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturn = $this->purchaseReturnRepository->getAudit($id);
 
         if (empty($purchaseReturn)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
@@ -1209,19 +1209,19 @@ class PurchaseReturnAPIController extends AppBaseController
         $purchaseReturnMaster = $this->purchaseReturnRepository->findWithoutFail($id);
         $emails = array();
         if (empty($purchaseReturnMaster)) {
-            return $this->sendError('Purchase Return not found');
+            return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
         if ($purchaseReturnMaster->approved == -1) {
-            return $this->sendError('You cannot reopen this Purchase Return it is already fully approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_purchase_return_it_is_alrea_1'));
         }
 
         if ($purchaseReturnMaster->RollLevForApp_curr > 1) {
-            return $this->sendError('You cannot reopen this Purchase Return it is already partially approved');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_purchase_return_it_is_alrea'));
         }
 
         if ($purchaseReturnMaster->confirmedYN == 0) {
-            return $this->sendError('You cannot reopen this Purchase Return, it is not confirmed');
+            return $this->sendError(trans('custom.you_cannot_reopen_this_purchase_return_it_is_not_c'));
         }
 
         $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
@@ -1236,9 +1236,14 @@ class PurchaseReturnAPIController extends AppBaseController
         $cancelDocNameBody = $document->documentDescription . ' <b>' . $purchaseReturnMaster->itemReturnCode . '</b>';
         $cancelDocNameSubject = $document->documentDescription . ' ' . $purchaseReturnMaster->itemReturnCode;
 
-        $subject = $cancelDocNameSubject . ' is reopened';
+        $subject = trans('email.is_reopened_subject', ['attribute' => $cancelDocNameSubject]);
 
-        $body = '<p>' . $cancelDocNameBody . ' is reopened by ' . $employee->empID . ' - ' . $employee->empFullName . '</p><p>Comment : ' . $input['reopenComments'] . '</p>';
+        $body = trans('email.is_reopened_body', [
+            'attribute' => $cancelDocNameBody,
+            'empID' => $employee->empID,
+            'empName' => $employee->empFullName,
+            'reopenComments' => $input['reopenComments']
+        ]);
 
         $documentApproval = DocumentApproved::where('companySystemID', $purchaseReturnMaster->companySystemID)
             ->where('documentSystemCode', $purchaseReturnMaster->purhaseReturnAutoID)
@@ -1253,7 +1258,7 @@ class PurchaseReturnAPIController extends AppBaseController
                     ->first();
 
                 if (empty($companyDocument)) {
-                    return ['success' => false, 'message' => 'Policy not found for this document'];
+                    return ['success' => false, 'message' => trans('custom.policy_not_found_for_this_document')];
                 }
 
                 $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproval->approvalGroupID)
@@ -1295,7 +1300,7 @@ class PurchaseReturnAPIController extends AppBaseController
         /*Audit entry*/
         AuditTrial::createAuditTrial($purchaseReturnMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
 
-        return $this->sendResponse($purchaseReturnMaster->toArray(), 'Purchase Return reopened successfully');
+        return $this->sendResponse($purchaseReturnMaster->toArray(), trans('custom.purchase_return_reopened_successfully'));
     }
 
 
@@ -1309,7 +1314,7 @@ class PurchaseReturnAPIController extends AppBaseController
             ->first();
 
         if (empty($grvMaster)) {
-            return $this->sendError('Good Receipt Voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
         //checking segment is active
@@ -1319,7 +1324,7 @@ class PurchaseReturnAPIController extends AppBaseController
             ->first();
 
         if (empty($segments)) {
-            return $this->sendError('Selected segment is not active. Please select an active segment');
+            return $this->sendError(trans('custom.selected_segment_is_not_active'));
         }
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $companyID)
@@ -1333,7 +1338,7 @@ class PurchaseReturnAPIController extends AppBaseController
                                         ->orderBy('purhaseReturnAutoID', 'DESC')
                                         ->get();
 
-        return $this->sendResponse($purchaseReturn->toArray(), 'Purchase Return Details retrieved successfully');
+        return $this->sendResponse($purchaseReturn->toArray(), trans('custom.purchase_return_details_retrieved_successfully'));
     }
 
     public function getPurchaseReturnDetailForGRV(Request $request)
@@ -1349,7 +1354,7 @@ class PurchaseReturnAPIController extends AppBaseController
             ->where('goodsRecievedYN', '<>', 2)
             ->get();
 
-        return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
+        return $this->sendResponse($detail, trans('custom.purchase_order_details_retrieved_successfully'));
 
     }
 
@@ -1362,11 +1367,11 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $prMasterData = PurchaseReturn::find($purhaseReturnAutoID);
         if (empty($prMasterData)) {
-            return $this->sendError('Good receipt voucher not found');
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found'));
         }
 
         if ($prMasterData->refferedBackYN != -1) {
-            return $this->sendError('You cannot refer back this good receipt voucher');
+            return $this->sendError(trans('custom.you_cannot_refer_back_this_good_receipt_voucher'));
         }
 
         $prMasterDataArray = $prMasterData->toArray();
@@ -1417,6 +1422,6 @@ class PurchaseReturnAPIController extends AppBaseController
             $prMasterData->save();
         }
 
-        return $this->sendResponse($prMasterData->toArray(), 'Purchase return amend successfully');
+        return $this->sendResponse($prMasterData->toArray(), trans('custom.purchase_return_amend_successfully'));
     }
 }

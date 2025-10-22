@@ -255,4 +255,17 @@ return [
         'ExchangeSetupConfig' => App\Facades\ExchangeSetupConfigFacade::class
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | CSRF Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for CSRF token protection
+    |
+    */
+
+    'csrf_enabled' => env('CSRF_ENABLED', false),
+    'csrf_secret_key' => env('CSRF_SECRET_KEY', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'),
+    'csrf_token_expiry_time' => env('CSRF_TOKEN_EXPIRY_TIME', 5),
+
 ];

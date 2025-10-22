@@ -64,7 +64,7 @@ class TemplateSectionTableRowAPIController extends AppBaseController
         $this->templateSectionTableRowRepository->pushCriteria(new LimitOffsetCriteria($request));
         $templateSectionTableRows = $this->templateSectionTableRowRepository->all();
 
-        return $this->sendResponse($templateSectionTableRows->toArray(), 'Template Section Table Rows retrieved successfully');
+        return $this->sendResponse($templateSectionTableRows->toArray(), trans('custom.template_section_table_rows_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TemplateSectionTableRowAPIController extends AppBaseController
 
         $templateSectionTableRow = $this->templateSectionTableRowRepository->create($input);
 
-        return $this->sendResponse($templateSectionTableRow->toArray(), 'Template Section Table Row saved successfully');
+        return $this->sendResponse($templateSectionTableRow->toArray(), trans('custom.template_section_table_row_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TemplateSectionTableRowAPIController extends AppBaseController
         $templateSectionTableRow = $this->templateSectionTableRowRepository->findWithoutFail($id);
 
         if (empty($templateSectionTableRow)) {
-            return $this->sendError('Template Section Table Row not found');
+            return $this->sendError(trans('custom.template_section_table_row_not_found'));
         }
 
-        return $this->sendResponse($templateSectionTableRow->toArray(), 'Template Section Table Row retrieved successfully');
+        return $this->sendResponse($templateSectionTableRow->toArray(), trans('custom.template_section_table_row_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TemplateSectionTableRowAPIController extends AppBaseController
         $templateSectionTableRow = $this->templateSectionTableRowRepository->findWithoutFail($id);
 
         if (empty($templateSectionTableRow)) {
-            return $this->sendError('Template Section Table Row not found');
+            return $this->sendError(trans('custom.template_section_table_row_not_found'));
         }
 
         $templateSectionTableRow = $this->templateSectionTableRowRepository->update($input, $id);
 
-        return $this->sendResponse($templateSectionTableRow->toArray(), 'TemplateSectionTableRow updated successfully');
+        return $this->sendResponse($templateSectionTableRow->toArray(), trans('custom.templatesectiontablerow_updated_successfully'));
     }
 
     public function updateRow(Request $request)  {
@@ -260,7 +260,7 @@ class TemplateSectionTableRowAPIController extends AppBaseController
             $row->save();
         }
 
-        return $this->sendResponse($input, 'Row column updated successfully');
+        return $this->sendResponse($input, trans('custom.row_column_updated_successfully'));
 
     }
 
@@ -309,7 +309,7 @@ class TemplateSectionTableRowAPIController extends AppBaseController
         $templateSectionTableRow = $this->templateSectionTableRowRepository->findWithoutFail($id);
 
         if (empty($templateSectionTableRow)) {
-            return $this->sendError('Template Section Table Row not found');
+            return $this->sendError(trans('custom.template_section_table_row_not_found'));
         }
 
         $templateSectionTableRow->delete();

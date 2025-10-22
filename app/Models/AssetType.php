@@ -28,7 +28,7 @@ class AssetType extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $appends = ['typeDes'];
 
 
     public $fillable = [
@@ -54,6 +54,42 @@ class AssetType extends Model
     public static $rules = [
         
     ];
+
+    /**
+     * Get the translations for the accounts type.
+     */
+    public function translations()
+    {
+        return $this->hasMany(AssetTypeTranslation::class, 'typeID', 'typeID');
+    }
+
+    /**
+     * Get the translation for a specific language.
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get the translated description attribute.
+     */
+    public function getTypeDesAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation) {
+            return $translation->typeDes;
+        }
+
+        return $this->attributes['typeDes'] ?? '';
+    }
 
     
 }

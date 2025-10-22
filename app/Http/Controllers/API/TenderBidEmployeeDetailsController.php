@@ -51,26 +51,26 @@ class TenderBidEmployeeDetailsController extends AppBaseController
                 return $this->sendResponse([], $response['message']);
             }
         } catch(\Exception $exception){
-            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+            return $this->sendError(trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()]));
         }
     }
 
     public function getEmployeesApproval(Request $request) {
-        
+
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('status', true)->count();
         return $this->sendResponse($data, 'Employee reterived successfully');
 
     }
 
     public function getEmployeesCommercialApproval(Request $request) {
-        
+
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('commercial_eval_status', true)->count();
         return $this->sendResponse($data, 'Employee reterived successfully');
 
     }
 
     public function getEmployeesTenderAwardinglApproval(Request $request) {
-        
+
         $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('tender_award_commite_mem_status', true)->count();
         return $this->sendResponse($data, 'Employee reterived successfully');
 
@@ -83,7 +83,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
             if(!$response['success']){
                 return $this->sendError($response['message']);
             } else {
-                return $this->sendResponse([], 'User access details deleted successfully');
+                return $this->sendResponse([], trans('srm_tender_rfx.user_access_details_deleted_successfully'));
             }
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage());

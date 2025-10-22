@@ -65,7 +65,7 @@ class TenderFieldTypeAPIController extends AppBaseController
         $this->tenderFieldTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderFieldTypes = $this->tenderFieldTypeRepository->all();
 
-        return $this->sendResponse($tenderFieldTypes->toArray(), 'Tender Field Types retrieved successfully');
+        return $this->sendResponse($tenderFieldTypes->toArray(), trans('custom.tender_field_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class TenderFieldTypeAPIController extends AppBaseController
 
         $tenderFieldType = $this->tenderFieldTypeRepository->create($input);
 
-        return $this->sendResponse($tenderFieldType->toArray(), 'Tender Field Type saved successfully');
+        return $this->sendResponse($tenderFieldType->toArray(), trans('custom.tender_field_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class TenderFieldTypeAPIController extends AppBaseController
         $tenderFieldType = $this->tenderFieldTypeRepository->findWithoutFail($id);
 
         if (empty($tenderFieldType)) {
-            return $this->sendError('Tender Field Type not found');
+            return $this->sendError(trans('custom.tender_field_type_not_found'));
         }
 
-        return $this->sendResponse($tenderFieldType->toArray(), 'Tender Field Type retrieved successfully');
+        return $this->sendResponse($tenderFieldType->toArray(), trans('custom.tender_field_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class TenderFieldTypeAPIController extends AppBaseController
         $tenderFieldType = $this->tenderFieldTypeRepository->findWithoutFail($id);
 
         if (empty($tenderFieldType)) {
-            return $this->sendError('Tender Field Type not found');
+            return $this->sendError(trans('custom.tender_field_type_not_found'));
         }
 
         $tenderFieldType = $this->tenderFieldTypeRepository->update($input, $id);
 
-        return $this->sendResponse($tenderFieldType->toArray(), 'TenderFieldType updated successfully');
+        return $this->sendResponse($tenderFieldType->toArray(), trans('custom.tenderfieldtype_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class TenderFieldTypeAPIController extends AppBaseController
         $tenderFieldType = $this->tenderFieldTypeRepository->findWithoutFail($id);
 
         if (empty($tenderFieldType)) {
-            return $this->sendError('Tender Field Type not found');
+            return $this->sendError(trans('custom.tender_field_type_not_found'));
         }
 
         $tenderFieldType->delete();

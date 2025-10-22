@@ -15,12 +15,13 @@ class SentCustomerLedger implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $input;
     public $db;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($input, $db)
+    public function __construct($input, $db, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -30,6 +31,7 @@ class SentCustomerLedger implements ShouldQueue
 
         $this->input = $input;
         $this->db = $db;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -45,12 +47,13 @@ class SentCustomerLedger implements ShouldQueue
         $input = $this->input;
         $customers = $input['customers'];
         $errorMessage = [];
+        $languageCode = $this->languageCode;
 
         foreach ($customers as $key => $value) {
             $input['customers'] = [];
             $input['customers'][] = $value;
 
-            SentCustomerLedgerSubJob::dispatch($db, $input);
+            SentCustomerLedgerSubJob::dispatch($db, $input, $languageCode);
         }
         if (count($errorMessage) > 0) {
             Log::info($errorMessage);

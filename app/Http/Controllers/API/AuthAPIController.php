@@ -131,7 +131,8 @@ class AuthAPIController extends PassportAccessTokenController
         try {
             $user->login_token = null;
             $user->save();
-            return  $user->createToken('personal');
+
+            return $user->createToken('personal');
         } catch (OAuthServerException $exception) {
             return $this->withErrorHandling(function () use($exception) {
                 return response(["message" => trans('custom.error')], 401);

@@ -26,11 +26,11 @@ class TenderCustomEmailController extends AppBaseController
         try {
             $result = $this->repository->storeCustomEmailData($request);
             if (!$result['success']) {
-                return $this->sendError('Error occurred');
+                return $this->sendError($result['data']);
             }
-            return $this->sendResponse($result,'Saved successfully');
+            return $this->sendResponse($result,$result['data']);
         } catch (\Exception $e) {
-            return $this->sendError('Error occurred');
+            return $this->sendError(trans('srm_ranking.error_occurred'));
         }
     }
 
@@ -83,7 +83,7 @@ class TenderCustomEmailController extends AppBaseController
                 return $this->sendError('Error occurred', ['error' => $deleted['data']]);
             }
 
-            return $this->sendResponse(true, 'Records deleted successfully.');
+            return $this->sendResponse(true, trans('srm_ranking.records_deleted_success'));
 
         } catch (\Exception $e) {
             return $this->sendError('Error occurred', ['error' => $e->getMessage()]);

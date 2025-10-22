@@ -76,7 +76,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $this->gposPaymentGlConfigDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gposPaymentGlConfigDetails = $this->gposPaymentGlConfigDetailRepository->all();
 
-        return $this->sendResponse($gposPaymentGlConfigDetails->toArray(), 'Gpos Payment Gl Config Details retrieved successfully');
+        return $this->sendResponse($gposPaymentGlConfigDetails->toArray(), trans('custom.gpos_payment_gl_config_details_retrieved_successfu'));
     }
 
     /**
@@ -123,10 +123,10 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $messages = array(
-            'warehouseID.required' => 'The outlet field is required.',
-            'paymentConfigMasterID.required' => 'The Payment type field is required.',
-            'GLCode.required' => 'The Account name field is required.',
-            'GLCode.min' => 'The Account name field is required.'
+            'warehouseID.required' => trans('custom.validation_outlet_field_required'),
+            'paymentConfigMasterID.required' => trans('custom.validation_payment_type_field_required'),
+            'GLCode.required' => trans('custom.validation_account_name_field_required'),
+            'GLCode.min' => trans('custom.validation_account_name_field_required')
         );
 
         $validator = \Validator::make($input, [
@@ -146,7 +146,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
             ->count();
 
         if ($checkPaymentType > 0) {
-            return $this->sendError('Payment Type already exists in selected outlet', 500);
+            return $this->sendError(trans('custom.payment_type_already_exists_in_selected_outlet'), 500);
         }
 
         $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
@@ -158,7 +158,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
 
         $gposPaymentGlConfigDetails = $this->gposPaymentGlConfigDetailRepository->create($input);
 
-        return $this->sendResponse($gposPaymentGlConfigDetails->toArray(), 'Payment Gl Config saved successfully');
+        return $this->sendResponse($gposPaymentGlConfigDetails->toArray(), trans('custom.payment_gl_config_saved_successfully'));
     }
 
     /**
@@ -205,10 +205,10 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $gposPaymentGlConfigDetail = $this->gposPaymentGlConfigDetailRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigDetail)) {
-            return $this->sendError('Gpos Payment Gl Config Detail not found');
+            return $this->sendError(trans('custom.gpos_payment_gl_config_detail_not_found'));
         }
 
-        return $this->sendResponse($gposPaymentGlConfigDetail->toArray(), 'Gpos Payment Gl Config Detail retrieved successfully');
+        return $this->sendResponse($gposPaymentGlConfigDetail->toArray(), trans('custom.gpos_payment_gl_config_detail_retrieved_successful'));
     }
 
     /**
@@ -266,14 +266,14 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $gposPaymentGlConfigDetail = $this->gposPaymentGlConfigDetailRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigDetail)) {
-            return $this->sendError('Payment Gl Config not found');
+            return $this->sendError(trans('custom.payment_gl_config_not_found'));
         }
 
         $messages = array(
-            'warehouseID.required' => 'The outlet field is required.',
-            'paymentConfigMasterID.required' => 'The Payment type field is required.',
-            'GLCode.required' => 'The Account name field is required.',
-            'GLCode.min' => 'The Account name field is required.'
+            'warehouseID.required' => trans('custom.validation_outlet_field_required'),
+            'paymentConfigMasterID.required' => trans('custom.validation_payment_type_field_required'),
+            'GLCode.required' => trans('custom.validation_account_name_field_required'),
+            'GLCode.min' => trans('custom.validation_account_name_field_required')
         );
 
         $validator = \Validator::make($input, [
@@ -294,7 +294,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
             ->count();
 
         if ($checkPaymentType > 0) {
-            return $this->sendError('Payment Type already exists in selected outlet', 500);
+            return $this->sendError(trans('custom.payment_type_already_exists_in_selected_outlet'), 500);
         }
 
         $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
@@ -307,7 +307,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
 
         $gposPaymentGlConfigDetail = $this->gposPaymentGlConfigDetailRepository->update($input, $id);
 
-        return $this->sendResponse($gposPaymentGlConfigDetail->toArray(), 'GposPaymentGlConfigDetail updated successfully');
+        return $this->sendResponse($gposPaymentGlConfigDetail->toArray(), trans('custom.gpospaymentglconfigdetail_updated_successfully'));
     }
 
     /**
@@ -354,12 +354,12 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         $gposPaymentGlConfigDetail = $this->gposPaymentGlConfigDetailRepository->findWithoutFail($id);
 
         if (empty($gposPaymentGlConfigDetail)) {
-            return $this->sendError('Gpos Payment Gl Config Detail not found');
+            return $this->sendError(trans('custom.gpos_payment_gl_config_detail_not_found'));
         }
 
         $gposPaymentGlConfigDetail->delete();
 
-        return $this->sendResponse($id, 'Gpos Payment Gl Config Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.gpos_payment_gl_config_detail_deleted_successfully'));
     }
 
     public function getConfigByCompany(Request $request)
@@ -445,6 +445,6 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
             'paymentTypes' => $paymentTypes
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 }

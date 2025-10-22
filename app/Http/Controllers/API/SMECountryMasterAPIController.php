@@ -65,7 +65,7 @@ class SMECountryMasterAPIController extends AppBaseController
         $this->sMECountryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMECountryMasters = $this->sMECountryMasterRepository->all();
 
-        return $this->sendResponse($sMECountryMasters->toArray(), 'S M E Country Masters retrieved successfully');
+        return $this->sendResponse($sMECountryMasters->toArray(), trans('custom.s_m_e_country_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMECountryMasterAPIController extends AppBaseController
 
         $sMECountryMaster = $this->sMECountryMasterRepository->create($input);
 
-        return $this->sendResponse($sMECountryMaster->toArray(), 'S M E Country Master saved successfully');
+        return $this->sendResponse($sMECountryMaster->toArray(), trans('custom.s_m_e_country_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMECountryMasterAPIController extends AppBaseController
         $sMECountryMaster = $this->sMECountryMasterRepository->findWithoutFail($id);
 
         if (empty($sMECountryMaster)) {
-            return $this->sendError('S M E Country Master not found');
+            return $this->sendError(trans('custom.s_m_e_country_master_not_found'));
         }
 
-        return $this->sendResponse($sMECountryMaster->toArray(), 'S M E Country Master retrieved successfully');
+        return $this->sendResponse($sMECountryMaster->toArray(), trans('custom.s_m_e_country_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMECountryMasterAPIController extends AppBaseController
         $sMECountryMaster = $this->sMECountryMasterRepository->findWithoutFail($id);
 
         if (empty($sMECountryMaster)) {
-            return $this->sendError('S M E Country Master not found');
+            return $this->sendError(trans('custom.s_m_e_country_master_not_found'));
         }
 
         $sMECountryMaster = $this->sMECountryMasterRepository->update($input, $id);
 
-        return $this->sendResponse($sMECountryMaster->toArray(), 'SMECountryMaster updated successfully');
+        return $this->sendResponse($sMECountryMaster->toArray(), trans('custom.smecountrymaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMECountryMasterAPIController extends AppBaseController
         $sMECountryMaster = $this->sMECountryMasterRepository->findWithoutFail($id);
 
         if (empty($sMECountryMaster)) {
-            return $this->sendError('S M E Country Master not found');
+            return $this->sendError(trans('custom.s_m_e_country_master_not_found'));
         }
 
         $sMECountryMaster->delete();

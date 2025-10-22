@@ -60,7 +60,7 @@ class UnitAPIController extends AppBaseController
         $this->unitRepository->pushCriteria(new LimitOffsetCriteria($request));
         $units = $this->unitRepository->all();
 
-        return $this->sendResponse($units->toArray(), 'Units retrieved successfully');
+        return $this->sendResponse($units->toArray(), trans('custom.units_retrieved_successfully'));
     }
 
     /**
@@ -76,7 +76,7 @@ class UnitAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = array(
-            'UnitShortCode.unique'   => 'Unit code already exists'
+            'UnitShortCode.unique'   => trans('custom.unit_code_already_exists')
         );
 
         $validator = \Validator::make($input, [
@@ -111,7 +111,7 @@ class UnitAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse($units->toArray(), 'Unit saved successfully');
+        return $this->sendResponse($units->toArray(), trans('custom.unit_saved_successfully'));
     }
 
     /**
@@ -128,10 +128,10 @@ class UnitAPIController extends AppBaseController
         $unit = $this->unitRepository->findWithoutFail($id);
 
         if (empty($unit)) {
-            return $this->sendError('Unit not found');
+            return $this->sendError(trans('custom.unit_not_found'));
         }
 
-        return $this->sendResponse($unit->toArray(), 'Unit retrieved successfully');
+        return $this->sendResponse($unit->toArray(), trans('custom.unit_retrieved_successfully'));
     }
 
     /**
@@ -151,12 +151,12 @@ class UnitAPIController extends AppBaseController
         $unit = $this->unitRepository->findWithoutFail($id);
 
         if (empty($unit)) {
-            return $this->sendError('Unit not found');
+            return $this->sendError(trans('custom.unit_not_found'));
         }
 
         $unit = $this->unitRepository->update($input, $id);
 
-        return $this->sendResponse($unit->toArray(), 'Unit updated successfully');
+        return $this->sendResponse($unit->toArray(), trans('custom.unit_updated_successfully'));
     }
 
     /**
@@ -173,12 +173,12 @@ class UnitAPIController extends AppBaseController
         $unit = $this->unitRepository->findWithoutFail($id);
 
         if (empty($unit)) {
-            return $this->sendError('Unit not found');
+            return $this->sendError(trans('custom.unit_not_found'));
         }
         $unit->unitConversion()->delete();
         $unit->delete();
 
-        return $this->sendResponse($id, 'Unit deleted successfully');
+        return $this->sendResponse($id, trans('custom.unit_deleted_successfully'));
     }
 
     /**
@@ -235,7 +235,7 @@ class UnitAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = array(
-            'UnitShortCode.unique'   => 'The Unit Short Code has already been taken'
+            'UnitShortCode.unique'   => trans('custom.unit_short_code_taken')
         );
 
         $validator = \Validator::make($input, [
@@ -255,7 +255,7 @@ class UnitAPIController extends AppBaseController
 
         $unitMaster = $this->unitRepository->update($data, $input['UnitID']);
 
-        return $this->sendResponse($unitMaster->toArray(), 'Unit master updated successfully');
+        return $this->sendResponse($unitMaster->toArray(), trans('custom.unit_master_updated_successfully'));
     }
 
     /**
@@ -278,7 +278,7 @@ class UnitAPIController extends AppBaseController
             'unitConversion' => $unitData['dataArray'],
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
 
     }
 

@@ -64,7 +64,7 @@ class SegmentAssignedAPIController extends AppBaseController
         $this->segmentAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $segmentAssigneds = $this->segmentAssignedRepository->all();
 
-        return $this->sendResponse($segmentAssigneds->toArray(), 'Segment Assigneds retrieved successfully');
+        return $this->sendResponse($segmentAssigneds->toArray(), trans('custom.segment_assigneds_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SegmentAssignedAPIController extends AppBaseController
 
         $segmentAssigned = $this->segmentAssignedRepository->create($input);
 
-        return $this->sendResponse($segmentAssigned->toArray(), 'Segment Assigned saved successfully');
+        return $this->sendResponse($segmentAssigned->toArray(), trans('custom.segment_assigned_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SegmentAssignedAPIController extends AppBaseController
         $segmentAssigned = $this->segmentAssignedRepository->findWithoutFail($id);
 
         if (empty($segmentAssigned)) {
-            return $this->sendError('Segment Assigned not found');
+            return $this->sendError(trans('custom.segment_assigned_not_found'));
         }
 
-        return $this->sendResponse($segmentAssigned->toArray(), 'Segment Assigned retrieved successfully');
+        return $this->sendResponse($segmentAssigned->toArray(), trans('custom.segment_assigned_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SegmentAssignedAPIController extends AppBaseController
         $segmentAssigned = $this->segmentAssignedRepository->findWithoutFail($id);
 
         if (empty($segmentAssigned)) {
-            return $this->sendError('Segment Assigned not found');
+            return $this->sendError(trans('custom.segment_assigned_not_found'));
         }
 
         $segmentAssigned = $this->segmentAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($segmentAssigned->toArray(), 'SegmentAssigned updated successfully');
+        return $this->sendResponse($segmentAssigned->toArray(), trans('custom.segmentassigned_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SegmentAssignedAPIController extends AppBaseController
         $segmentAssigned = $this->segmentAssignedRepository->findWithoutFail($id);
 
         if (empty($segmentAssigned)) {
-            return $this->sendError('Segment Assigned not found');
+            return $this->sendError(trans('custom.segment_assigned_not_found'));
         }
 
         $segmentAssigned->delete();

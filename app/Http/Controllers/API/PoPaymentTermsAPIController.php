@@ -20,6 +20,7 @@ use App\Models\PoPaymentTerms;
 use App\Models\PaymentTermTemplateAssigned;
 use App\Models\PaymentTermConfig;
 use App\Models\PaymentTermTemplate;
+use App\Models\PoWisePaymentTermConfig;
 use App\Models\SupplierMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
@@ -61,7 +62,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $this->poPaymentTermsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poPaymentTerms = $this->poPaymentTermsRepository->all();
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms retrieved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -92,14 +93,14 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($prDetailExist)) {
-            return $this->sendError('At least one item should added to create payment term');
+            return $this->sendError(trans('custom.at_least_one_item_required'));
         }
 
         $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         /*        $supplier = SupplierMaster::where('supplierCodeSystem', $purchaseOrder['supplierID'])->first();
@@ -116,14 +117,14 @@ class PoPaymentTermsAPIController extends AppBaseController
         }
 
         if ($input['LCPaymentYN'] == 1) {
-            $input['paymentTemDes'] = 'Payment In';
+            $input['paymentTemDes'] = trans('custom.payment_in');
         } else if ($input['LCPaymentYN'] == 2) {
-            $input['paymentTemDes'] = 'Advance Payment';
+            $input['paymentTemDes'] = trans('custom.advance_payment');
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->create($input);
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms saved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_saved_successfully'));
     }
 
     /**
@@ -140,10 +141,10 @@ class PoPaymentTermsAPIController extends AppBaseController
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'Po Payment Terms retrieved successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.po_payment_terms_retrieved_successfully'));
     }
 
     /**
@@ -171,13 +172,13 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
@@ -198,7 +199,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             {
                 if(!empty($purchaseOrder->paymentTerms_by->sum('comPercentage')) && (round($purchaseOrder->paymentTerms_by->sum('comPercentage'),$supplierCurrencyDecimalPlace)) > 100)
                 {
-                    return $this->sendError('Po Payment Terms total percentage cannot be greater than 100',500,['type' => 2]);
+                    return $this->sendError(trans('custom.po_payment_terms_total_percentage_cannot_be_greate'),500,['type' => 2]);
                 }
             }
 
@@ -252,7 +253,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
 
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
 
@@ -269,7 +270,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $input['comAmount'] = ($input['poAmount'] / 100) * $input['comPercentage'];
         $poPaymentTerms = $this->poPaymentTermsRepository->update($input, $id);
 
-        return $this->sendResponse($poPaymentTerms->toArray(), 'PoPaymentTerms updated successfully');
+        return $this->sendResponse($poPaymentTerms->toArray(), trans('custom.popaymentterms_updated_successfully'));
     }
 
     /**
@@ -285,14 +286,14 @@ class PoPaymentTermsAPIController extends AppBaseController
         /** @var PoPaymentTerms $poPaymentTerms */
         $poPaymentTerms = $this->poPaymentTermsRepository->findWithoutFail($id);
         if (empty($poPaymentTerms)) {
-            return $this->sendError('Po Payment Terms not found');
+            return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
         $poPaymentTerms->delete();
 
         $deleteAdvancePayment = PoAdvancePayment::where('poTermID', $id)->delete();
 
-        return $this->sendResponse($id, 'Po Payment Terms deleted successfully');
+        return $this->sendResponse($id, trans('custom.po_payment_terms_deleted_successfully'));
     }
 
     public function getProcumentOrderPaymentTerms(Request $request)
@@ -304,7 +305,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->orderBy('paymentTermID', 'ASC')
             ->get();
 
-        return $this->sendResponse($poAdvancePaymentType->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($poAdvancePaymentType->toArray(), trans('custom.data_retrieved_successfully'));
     }
 
     public function getProcumentOrderPaymentTermConfigs(Request $request)
@@ -316,7 +317,7 @@ class PoPaymentTermsAPIController extends AppBaseController
         $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
         $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
 
-        $approvedPoConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)
+        $approvedPoConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)
             ->where(function ($query) {
                 $query->where('isApproved', true)
                     ->orWhere('isRejected', true);
@@ -329,32 +330,32 @@ class PoPaymentTermsAPIController extends AppBaseController
         }
         else if ($assignedTemplateId != null && $isActiveTemplate)
         {
-            $poAssignedTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
+            $poAssignedTemplateConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->first();
             if (!$poAssignedTemplateConfigs) {
                 $paymentTermConfigs = PaymentTermConfig::where('templateId', $assignedTemplateId)->get();
                 $isDefaultAssign = false;
                 $this->createProcumentOrderPaymentTermConfigs($assignedTemplateId, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
             }
-            $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
+            $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $assignedTemplateId)->orderBy('sortOrder')->get();
         } else
         {
-            $poDefaultConfigUpdate = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
+            $poDefaultConfigUpdate = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('isDefaultAssign', true)->where('isConfigUpdate', true)->first();
             if ($poDefaultConfigUpdate) {
-                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
+                $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
                     ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
             } else {
                 $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
-                $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
+                $poDefaultTemplateConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
                 if (!$poDefaultTemplateConfigs) {
                     $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
                     $isDefaultAssign = true;
                     $this->createProcumentOrderPaymentTermConfigs($defaultTemplateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign);
                 }
-                $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
+                $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->orderBy('sortOrder')->get();
             }
         }
 
-        return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), 'Payment terms and conditions retrieved successfully');
+        return $this->sendResponse($purchaseOrderPaymentTermConfigs->toArray(), trans('custom.payment_terms_and_conditions_retrieved_successfull'));
     }
 
     public function createProcumentOrderPaymentTermConfigs($templateID, $purchaseOrderID, $supplierID, $paymentTermConfigs, $isDefaultAssign) {
@@ -383,7 +384,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->first();
 
         if (empty($purchaseOrder)) {
-            return $this->sendError('Purchase Order not found');
+            return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
         $purchaseOrder->update(
@@ -462,7 +463,7 @@ class PoPaymentTermsAPIController extends AppBaseController
 
         }
 
-        return $this->sendResponse($purchaseOrder, 'Data retrieved successfully');
+        return $this->sendResponse($purchaseOrder, trans('custom.data_retrieved_successfully'));
 
     }
 

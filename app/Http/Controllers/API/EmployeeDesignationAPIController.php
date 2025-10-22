@@ -65,7 +65,7 @@ class EmployeeDesignationAPIController extends AppBaseController
         $this->employeeDesignationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeDesignations = $this->employeeDesignationRepository->all();
 
-        return $this->sendResponse($employeeDesignations->toArray(), 'Employee Designations retrieved successfully');
+        return $this->sendResponse($employeeDesignations->toArray(), trans('custom.employee_designations_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmployeeDesignationAPIController extends AppBaseController
 
         $employeeDesignation = $this->employeeDesignationRepository->create($input);
 
-        return $this->sendResponse($employeeDesignation->toArray(), 'Employee Designation saved successfully');
+        return $this->sendResponse($employeeDesignation->toArray(), trans('custom.employee_designation_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmployeeDesignationAPIController extends AppBaseController
         $employeeDesignation = $this->employeeDesignationRepository->findWithoutFail($id);
 
         if (empty($employeeDesignation)) {
-            return $this->sendError('Employee Designation not found');
+            return $this->sendError(trans('custom.employee_designation_not_found'));
         }
 
-        return $this->sendResponse($employeeDesignation->toArray(), 'Employee Designation retrieved successfully');
+        return $this->sendResponse($employeeDesignation->toArray(), trans('custom.employee_designation_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmployeeDesignationAPIController extends AppBaseController
         $employeeDesignation = $this->employeeDesignationRepository->findWithoutFail($id);
 
         if (empty($employeeDesignation)) {
-            return $this->sendError('Employee Designation not found');
+            return $this->sendError(trans('custom.employee_designation_not_found'));
         }
 
         $employeeDesignation = $this->employeeDesignationRepository->update($input, $id);
 
-        return $this->sendResponse($employeeDesignation->toArray(), 'EmployeeDesignation updated successfully');
+        return $this->sendResponse($employeeDesignation->toArray(), trans('custom.employeedesignation_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EmployeeDesignationAPIController extends AppBaseController
         $employeeDesignation = $this->employeeDesignationRepository->findWithoutFail($id);
 
         if (empty($employeeDesignation)) {
-            return $this->sendError('Employee Designation not found');
+            return $this->sendError(trans('custom.employee_designation_not_found'));
         }
 
         $employeeDesignation->delete();

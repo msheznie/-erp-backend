@@ -75,7 +75,7 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
         $this->directInvoiceDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directInvoiceDetailsRefferedBacks = $this->directInvoiceDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($directInvoiceDetailsRefferedBacks->toArray(), 'Direct Invoice Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($directInvoiceDetailsRefferedBacks->toArray(), trans('custom.direct_invoice_details_reffered_backs_retrieved_su'));
     }
 
     /**
@@ -122,7 +122,7 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
 
         $directInvoiceDetailsRefferedBacks = $this->directInvoiceDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($directInvoiceDetailsRefferedBacks->toArray(), 'Direct Invoice Details Reffered Back saved successfully');
+        return $this->sendResponse($directInvoiceDetailsRefferedBacks->toArray(), trans('custom.direct_invoice_details_reffered_back_saved_success'));
     }
 
     /**
@@ -169,10 +169,10 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
         $directInvoiceDetailsRefferedBack = $this->directInvoiceDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetailsRefferedBack)) {
-            return $this->sendError('Direct Invoice Details Reffered Back not found');
+            return $this->sendError(trans('custom.direct_invoice_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($directInvoiceDetailsRefferedBack->toArray(), 'Direct Invoice Details Reffered Back retrieved successfully');
+        return $this->sendResponse($directInvoiceDetailsRefferedBack->toArray(), trans('custom.direct_invoice_details_reffered_back_retrieved_suc'));
     }
 
     /**
@@ -229,12 +229,12 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
         $directInvoiceDetailsRefferedBack = $this->directInvoiceDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetailsRefferedBack)) {
-            return $this->sendError('Direct Invoice Details Reffered Back not found');
+            return $this->sendError(trans('custom.direct_invoice_details_reffered_back_not_found'));
         }
 
         $directInvoiceDetailsRefferedBack = $this->directInvoiceDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($directInvoiceDetailsRefferedBack->toArray(), 'DirectInvoiceDetailsRefferedBack updated successfully');
+        return $this->sendResponse($directInvoiceDetailsRefferedBack->toArray(), trans('custom.directinvoicedetailsrefferedback_updated_successfu'));
     }
 
     /**
@@ -281,12 +281,12 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
         $directInvoiceDetailsRefferedBack = $this->directInvoiceDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetailsRefferedBack)) {
-            return $this->sendError('Direct Invoice Details Reffered Back not found');
+            return $this->sendError(trans('custom.direct_invoice_details_reffered_back_not_found'));
         }
 
         $directInvoiceDetailsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Direct Invoice Details Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_invoice_details_reffered_back_deleted_succe'));
     }
 
     public function getSIDetailDirectAmendHistory(Request $request)
@@ -300,6 +300,6 @@ class DirectInvoiceDetailsRefferedBackAPIController extends AppBaseController
             ->with(['segment', 'chartofaccount'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Purchase Order Details Reffered History retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.purchase_order_details_reffered_history_retrieved_'));
     }
 }

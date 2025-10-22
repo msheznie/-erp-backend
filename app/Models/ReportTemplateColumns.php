@@ -82,6 +82,8 @@ class ReportTemplateColumns extends Model
 
     protected $primaryKey = 'columnID';
 
+    protected $appends = ['description'];
+
     public $fillable = [
         'description',
         'shortCode',
@@ -128,5 +130,26 @@ class ReportTemplateColumns extends Model
         
     ];
 
-    
+    public function translations()
+    {
+        return $this->hasMany(ReportTemplateColumnsTranslations::class,'columnID','id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['description'] ?? '';
+    }
 }

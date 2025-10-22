@@ -82,7 +82,7 @@ class PdcLogAPIController extends AppBaseController
         $this->pdcLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pdcLogs = $this->pdcLogRepository->with('currency')->all();
 
-        return $this->sendResponse($pdcLogs->toArray(), 'Pdc Logs retrieved successfully');
+        return $this->sendResponse($pdcLogs->toArray(), trans('custom.pdc_logs_retrieved_successfully'));
     }
 
     /**
@@ -129,7 +129,7 @@ class PdcLogAPIController extends AppBaseController
 
         $pdcLog = $this->pdcLogRepository->create($input);
 
-        return $this->sendResponse($pdcLog->toArray(), 'Pdc Log saved successfully');
+        return $this->sendResponse($pdcLog->toArray(), trans('custom.pdc_log_saved_successfully'));
     }
 
     /**
@@ -176,10 +176,10 @@ class PdcLogAPIController extends AppBaseController
         $pdcLog = $this->pdcLogRepository->findWithoutFail($id);
 
         if (empty($pdcLog)) {
-            return $this->sendError('Pdc Log not found');
+            return $this->sendError(trans('custom.pdc_log_not_found'));
         }
 
-        return $this->sendResponse($pdcLog->toArray(), 'Pdc Log retrieved successfully');
+        return $this->sendResponse($pdcLog->toArray(), trans('custom.pdc_log_retrieved_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PdcLogAPIController extends AppBaseController
         $pdcLog = $this->pdcLogRepository->findWithoutFail($id);
 
         if (empty($pdcLog)) {
-            return $this->sendError('Pdc Log not found');
+            return $this->sendError(trans('custom.pdc_log_not_found'));
         }
 
         if (!is_null($pdcLog->chequeRegisterAutoID)) {
@@ -303,7 +303,7 @@ class PdcLogAPIController extends AppBaseController
 
         $pdcLog->delete();
 
-        return $this->sendResponse([], 'Pdc Log deleted successfully');
+        return $this->sendResponse([], trans('custom.pdc_log_deleted_successfully'));
     }
 
     public function getPdcCheques(Request $request)
@@ -314,7 +314,7 @@ class PdcLogAPIController extends AppBaseController
                          ->where('documentmasterAutoID', $input['documentAutoID'])
                          ->get();
 
-        return $this->sendResponse($cheques, 'Pdc cheques retrieved successfully');
+        return $this->sendResponse($cheques, trans('custom.pdc_cheques_retrieved_successfully'));
     }
 
     public function deleteAllPDC(Request $request)
@@ -326,7 +326,7 @@ class PdcLogAPIController extends AppBaseController
                          ->get();
 
         if (count($cheques) == 0) {
-             return $this->sendError('Pdc cheques not found', 500);
+             return $this->sendError(trans('custom.pdc_cheques_not_found'), 500);
         }
 
         $chequeRegisterAutoIDs = collect($cheques)->pluck('chequeRegisterAutoID')->toArray();
@@ -346,7 +346,7 @@ class PdcLogAPIController extends AppBaseController
                          ->where('documentmasterAutoID', $input['documentAutoID'])
                          ->delete();
 
-        return $this->sendResponse([], 'Pdc cheques deleted successfully');
+        return $this->sendResponse([], trans('custom.pdc_cheques_deleted_successfully'));
     }
 
     public function getIssuedCheques(Request $request) {
@@ -447,7 +447,7 @@ class PdcLogAPIController extends AppBaseController
     public function getAllBanks(Request $request) {
         $banks =  PdcLog::all()->pluck('bank')->unique();
 
-        return $this->sendResponse($banks->toArray(), 'Banks received successfully');
+        return $this->sendResponse($banks->toArray(), trans('custom.banks_received_successfully'));
     }
 
     public function getFormData(Request $request) {
@@ -470,7 +470,7 @@ class PdcLogAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus
         ];
 
-        return $this->sendResponse($data, 'FromData received successfully');
+        return $this->sendResponse($data, trans('custom.fromdata_received_successfully'));
 
     }
 
@@ -517,7 +517,7 @@ class PdcLogAPIController extends AppBaseController
          $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['PayMasterAutoId']);
 
         if (empty($paySupplierInvoiceMaster)) {
-                return $this->sendError('Pay Supplier Invoice Master not found');
+                return $this->sendError(trans('custom.pay_supplier_invoice_master_not_found'));
         }
 
         $bankAccount = BankAccount::find($paySupplierInvoiceMaster->BPVAccount);

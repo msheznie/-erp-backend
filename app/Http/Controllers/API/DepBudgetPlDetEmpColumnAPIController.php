@@ -66,7 +66,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $this->depBudgetPlDetEmpColumnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $depBudgetPlDetEmpColumns = $this->depBudgetPlDetEmpColumnRepository->all();
 
-        return $this->sendResponse($depBudgetPlDetEmpColumns->toArray(), 'Dep Budget Pl Det Emp Columns retrieved successfully');
+        return $this->sendResponse($depBudgetPlDetEmpColumns->toArray(), trans('custom.dep_budget_pl_det_emp_columns_retrieved_successful'));
     }
 
     /**
@@ -120,7 +120,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
 
         $depBudgetPlDetEmpColumn = $this->depBudgetPlDetEmpColumnRepository->create($input);
 
-        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), 'Dep Budget Pl Det Emp Column saved successfully');
+        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), trans('custom.dep_budget_pl_det_emp_column_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $depBudgetPlDetEmpColumn = $this->depBudgetPlDetEmpColumnRepository->findWithoutFail($id);
 
         if (empty($depBudgetPlDetEmpColumn)) {
-            return $this->sendError('Dep Budget Pl Det Emp Column not found');
+            return $this->sendError(trans('custom.dep_budget_pl_det_emp_column_not_found'));
         }
 
-        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), 'Dep Budget Pl Det Emp Column retrieved successfully');
+        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), trans('custom.dep_budget_pl_det_emp_column_retrieved_successfull'));
     }
 
     /**
@@ -237,12 +237,12 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $depBudgetPlDetEmpColumn = $this->depBudgetPlDetEmpColumnRepository->findWithoutFail($id);
 
         if (empty($depBudgetPlDetEmpColumn)) {
-            return $this->sendError('Dep Budget Pl Det Emp Column not found');
+            return $this->sendError(trans('custom.dep_budget_pl_det_emp_column_not_found'));
         }
 
         $depBudgetPlDetEmpColumn = $this->depBudgetPlDetEmpColumnRepository->update($input, $id);
 
-        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), 'DepBudgetPlDetEmpColumn updated successfully');
+        return $this->sendResponse($depBudgetPlDetEmpColumn->toArray(), trans('custom.depbudgetpldetempcolumn_updated_successfully'));
     }
 
     /**
@@ -290,7 +290,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $depBudgetPlDetEmpColumn = $this->depBudgetPlDetEmpColumnRepository->findWithoutFail($id);
 
         if (empty($depBudgetPlDetEmpColumn)) {
-            return $this->sendError('Dep Budget Pl Det Emp Column not found');
+            return $this->sendError(trans('custom.dep_budget_pl_det_emp_column_not_found'));
         }
 
         $depBudgetPlDetEmpColumn->delete();
@@ -309,13 +309,13 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $data = $request->all();
 
         if (!isset($data['selectedColumns'])) {
-            return $this->sendError('Selected column list is required');
+            return $this->sendError(trans('custom.selected_column_list_is_required'));
         }
 
         $empID = Auth::user()->employee_id;
         
         if (!$empID) {
-            return $this->sendError('Employee ID not found');
+            return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
         DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $data['companySystemID'])->delete();
@@ -340,7 +340,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
 
         $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->get();
 
-        return $this->sendResponse($empColumns, 'Employee columns saved successfully');
+        return $this->sendResponse($empColumns, trans('custom.employee_columns_saved_successfully'));
     }
 
     public function getDepBudgetPlDetEmpColumns(Request $request)
@@ -350,11 +350,11 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
         $empID = Auth::user()->employee_id;
 
         if (!$empID) {
-            return $this->sendError('Employee ID not found');
+            return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
         $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->get();
 
-        return $this->sendResponse($empColumns, 'Available columns retrieved successfully');
+        return $this->sendResponse($empColumns, trans('custom.available_columns_retrieved_successfully'));
     }
 }

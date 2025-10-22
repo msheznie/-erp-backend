@@ -75,7 +75,7 @@ class LogisticModeOfImportAPIController extends AppBaseController
         $this->logisticModeOfImportRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logisticModeOfImports = $this->logisticModeOfImportRepository->all();
 
-        return $this->sendResponse($logisticModeOfImports->toArray(), 'Logistic Mode Of Imports retrieved successfully');
+        return $this->sendResponse($logisticModeOfImports->toArray(), trans('custom.logistic_mode_of_imports_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class LogisticModeOfImportAPIController extends AppBaseController
 
         $logisticModeOfImports = $this->logisticModeOfImportRepository->create($input);
 
-        return $this->sendResponse($logisticModeOfImports->toArray(), 'Logistic Mode Of Import saved successfully');
+        return $this->sendResponse($logisticModeOfImports->toArray(), trans('custom.logistic_mode_of_import_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class LogisticModeOfImportAPIController extends AppBaseController
         $logisticModeOfImport = $this->logisticModeOfImportRepository->findWithoutFail($id);
 
         if (empty($logisticModeOfImport)) {
-            return $this->sendError('Logistic Mode Of Import not found');
+            return $this->sendError(trans('custom.logistic_mode_of_import_not_found'));
         }
 
-        return $this->sendResponse($logisticModeOfImport->toArray(), 'Logistic Mode Of Import retrieved successfully');
+        return $this->sendResponse($logisticModeOfImport->toArray(), trans('custom.logistic_mode_of_import_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class LogisticModeOfImportAPIController extends AppBaseController
         $logisticModeOfImport = $this->logisticModeOfImportRepository->findWithoutFail($id);
 
         if (empty($logisticModeOfImport)) {
-            return $this->sendError('Logistic Mode Of Import not found');
+            return $this->sendError(trans('custom.logistic_mode_of_import_not_found'));
         }
 
         $logisticModeOfImport = $this->logisticModeOfImportRepository->update($input, $id);
 
-        return $this->sendResponse($logisticModeOfImport->toArray(), 'LogisticModeOfImport updated successfully');
+        return $this->sendResponse($logisticModeOfImport->toArray(), trans('custom.logisticmodeofimport_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class LogisticModeOfImportAPIController extends AppBaseController
         $logisticModeOfImport = $this->logisticModeOfImportRepository->findWithoutFail($id);
 
         if (empty($logisticModeOfImport)) {
-            return $this->sendError('Logistic Mode Of Import not found');
+            return $this->sendError(trans('custom.logistic_mode_of_import_not_found'));
         }
 
         $logisticModeOfImport->delete();
 
-        return $this->sendResponse($id, 'Logistic Mode Of Import deleted successfully');
+        return $this->sendResponse($id, trans('custom.logistic_mode_of_import_deleted_successfully'));
     }
 }

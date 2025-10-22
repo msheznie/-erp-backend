@@ -26,6 +26,8 @@ class YesNoSelection extends Model
     //use SoftDeletes;
 
     public $table = 'yesnoselection';
+
+    protected $appends = ['yes_no_label'];
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -57,5 +59,49 @@ class YesNoSelection extends Model
         
     ];
 
-    
+    /**
+     * Relationship to YesNoSelectionLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(YesNoSelectionLanguage::class, 'yesNoSelectionID', 'idyesNoselection');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get YesNo value in current language
+     */
+    public function getYesNoLabelAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        // Try to get translation for current language
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->YesNo;
+        }
+        
+        // Fallback to English if current language translation not found
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->YesNo;
+            }
+        }
+        
+        // Final fallback to original value
+        return $value;
+    }
 }

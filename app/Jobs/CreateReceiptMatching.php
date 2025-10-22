@@ -105,7 +105,7 @@ class CreateReceiptMatching implements ShouldQueue
                 $result = [
                     'index' => $index,
                     'status' => 'failed',
-                    'message' => 'Validation failed',
+                    'message' => trans('custom.validation_failed'),
                 ];
                 if (!empty($headerErrors)) {
                     $result['errors'] = $headerErrors;
@@ -124,7 +124,7 @@ class CreateReceiptMatching implements ShouldQueue
                 $results[] = [
                     'index' => $index,
                     'status' => 'success',
-                    'message' => 'Receipt Matching posted successfully',
+                    'message' => trans('custom.receipt_matching_posted_successfully'),
                     'reference' => $erpRef,
                 ];
             } catch (\Exception $e) {
@@ -182,9 +182,9 @@ class CreateReceiptMatching implements ShouldQueue
         $customer = null;
 
         // General validations
-        if (empty($customerCode)) $errors[] = 'Customer is required.';
-        if (!in_array($matchingType, [1, 2])) $errors[] = 'Invalid Type selected. Please choose the correct type.';
-        if (empty($brvOrCreditNoteCode)) $errors[] = 'brvOrCreditNoteCode is required.';
+        if (empty($customerCode)) $errors[] = trans('custom.customer_required');
+        if (!in_array($matchingType, [1, 2])) $errors[] = trans('custom.invalid_type_selected');
+        if (empty($brvOrCreditNoteCode)) $errors[] = trans('custom.brv_or_credit_note_code_required');
 
         if (!empty($errors)) return ['errors' => $errors, 'data' => $data];
 
@@ -198,7 +198,7 @@ class CreateReceiptMatching implements ShouldQueue
             if(!$approvedCustomer){
                 $errors[] = [
                     'field' => "customer",
-                    'message' => ["Selected Customer is not available in the system"]
+                    'message' => [trans('custom.selected_customer_not_available')]
                 ];
             }
 
@@ -206,14 +206,14 @@ class CreateReceiptMatching implements ShouldQueue
                 if($approvedCustomer->approvedYN == 0) {
                     $errors[] = [
                         'field' => "customer",
-                        'message' => ["Selected Customer is not approved"]
+                        'message' => [trans('custom.selected_customer_not_approved')]
                     ];
                 } else {
 
                     if($approvedCustomer->isCustomerActive == 0){
                         $errors[] = [
                             'field' => "customer",
-                            'message' => ["Selected Customer is not active"]
+                            'message' => [trans('custom.selected_customer_not_active')]
                         ];
                     } else {
                         $customer = CustomerAssigned::Where('CutomerCode',$approvedCustomer->CutomerCode)
@@ -224,13 +224,13 @@ class CreateReceiptMatching implements ShouldQueue
                         if(!$customer){
                             $errors[] = [
                                 'field' => "customer",
-                                'message' => ["Selected Customer is not assigned to the company"]
+                                'message' => [trans('custom.selected_customer_not_assigned')]
                             ];
                         } else {
                             if($customer->isActive == 0) {
                                 $errors[] = [
                                     'field' => "customer",
-                                    'message' => ["Company assigned Customer is not active"]
+                                    'message' => [trans('custom.company_assigned_customer_not_active')]
                                 ];
                             }
                         }
@@ -248,7 +248,7 @@ class CreateReceiptMatching implements ShouldQueue
                 ->first();
 
             if (!$brv) {
-                $errors[] = 'Advance receipt voucher document code not matching with system';
+                $errors[] = trans('custom.advance_receipt_voucher_not_matching');
             } else {
 
                 $isMultipleSegmentDetails = DirectReceiptDetail::where('directReceiptAutoID', $brv->custReceivePaymentAutoID)->get();
@@ -256,16 +256,16 @@ class CreateReceiptMatching implements ShouldQueue
                 if (!empty($isMultipleSegmentDetails) && $isMultipleSegmentDetails->count() > 1) {
                     $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
                     if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
-                        $errors[] = 'The advance receipt voucher contains multiple lines with different segments.';
+                        $errors[] = trans('custom.advance_receipt_multiple_segments');
                         return ['errors' => $errors, 'data' => $data];
                     }
                 }
 
                 if($brv->customerID != $customer->customerCodeSystem){
-                    $errors[] = "The selected document {$brvOrCreditNoteCode} does not belong to the selected customer.";
+                    $errors[] = trans('custom.document_not_belong_to_customer', ['code' => $brvOrCreditNoteCode]);
                 } else {
                     if ($brv->approved != -1) {
-                        $errors[] = 'Advance receipt voucher not approved';
+                        $errors[] = trans('custom.advance_receipt_voucher_not_approved');
                     } else {
                         $existingMatch = MatchDocumentMaster::where('PayMasterAutoId', $brv->custReceivePaymentAutoID)
                             ->where('documentSystemID', 21)
@@ -273,7 +273,7 @@ class CreateReceiptMatching implements ShouldQueue
                             ->where('matchingConfirmedYN', 0)
                             ->first();
                         if ($existingMatch) {
-                            $errors[] = 'A matching document for the selected advance receipt voucher is created and not confirmed. Please confirm the previously created document and try again.';
+                            $errors[] = trans('custom.matching_document_created_not_confirmed');
                         } else {
                              $doc = $this->getDocumentForMatching($matchingType, $brvOrCreditNoteCode, $companySystemId, $customer->customerCodeSystem);
                              if ($doc) {
@@ -287,7 +287,7 @@ class CreateReceiptMatching implements ShouldQueue
                                 ->where('matchingConfirmedYN', 1)
                                 ->first();
                                 if($existingMatch){
-                                    $errors[] = 'Selected Advance receipt voucher already fully matched';
+                                    $errors[] = trans('custom.selected_advance_receipt_already_matched');
                                 }
                              }
                         }
@@ -309,13 +309,13 @@ class CreateReceiptMatching implements ShouldQueue
         $matchingDate = $header['matchingDate'] ?? null;
         $narration = $header['narration'] ?? null;
         if (!$matchingDate) {
-            $errors[] = 'Matching date is required.';
+            $errors[] = trans('custom.matching_date_required');
         } else {
             $date = \DateTime::createFromFormat('d-m-Y', $matchingDate);
-            if (!$date) $errors[] = 'Matching date format should be DD-MM-YYYY.';
-            else if ($date > new \DateTime()) $errors[] = 'Matching date should be equal and less than current date.';
+            if (!$date) $errors[] = trans('custom.matching_date_format_error');
+            else if ($date > new \DateTime()) $errors[] = trans('custom.matching_date_greater_than_current');
         }
-        if (empty($narration)) $errors[] = 'The narration field is mandatory.';
+        if (empty($narration)) $errors[] = trans('custom.narration_field_mandatory');
 
         return ['errors' => $errors, 'data' => $data];
     }
@@ -328,7 +328,7 @@ class CreateReceiptMatching implements ShouldQueue
         $creditNote = CreditNote::where('creditNoteCode', $documentCode)
             ->where('companySystemID', $companySystemID)->first();
         if (!$creditNote) {
-            $errors[] = 'Credit note document code not matching with system';
+            $errors[] = trans('custom.credit_note_document_not_matching');
             return ['errors' => $errors, 'data' => $data];
         } else {
 
@@ -338,17 +338,17 @@ class CreateReceiptMatching implements ShouldQueue
             if (!empty($isMultipleSegmentDetails) && $isMultipleSegmentDetails->count() > 1) {
                 $uniqueSegments = $isMultipleSegmentDetails->pluck('serviceLineSystemID')->unique();
                 if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
-                    $errors[] = 'The credit note contains multiple lines with different segments.';
+                    $errors[] = trans('custom.credit_note_multiple_segments');
                     return ['errors' => $errors, 'data' => $data];
                 }
             }
 
             if($creditNote->customerID != $customerSystemID) {
-                $errors[] = "The selected document {$documentCode} does not belong to the selected customer.";
+                $errors[] = trans('custom.document_not_belong_to_customer', ['code' => $documentCode]);
                 return ['errors' => $errors, 'data' => $data];
             } else {
                 if ($creditNote->approved != -1) {
-                    $errors[] = 'A selected Credit note not approved';
+                    $errors[] = trans('custom.credit_note_not_approved');
                     return ['errors' => $errors, 'data' => $data];
                 } else {
                     
@@ -358,7 +358,7 @@ class CreateReceiptMatching implements ShouldQueue
                     ->where('matchingConfirmedYN', 0)
                     ->first();
                     if ($existingMatch) {
-                        $errors[] = 'A matching document for the selected credit note is created and not confirmed. Please confirm the previously created document and try again.';
+                        $errors[] = trans('custom.credit_note_matching_created_not_confirmed');
                         return ['errors' => $errors, 'data' => $data];
                     } else {
                         $unconfirmedReceipt = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $creditNote->creditNoteAutoID)
@@ -368,7 +368,7 @@ class CreateReceiptMatching implements ShouldQueue
                         })->exists();
                         
                         if ($unconfirmedReceipt) {
-                            $errors[] = 'A receipt voucher document for the selected credit note is created and not confirmed. Please confirm and try again.';
+                            $errors[] = trans('custom.receipt_voucher_created_not_confirmed');
                             return ['errors' => $errors, 'data' => $data];
                         } else {
                             $doc = $this->getDocumentForMatching(2, $documentCode, $companySystemID, $customerSystemID);
@@ -382,7 +382,7 @@ class CreateReceiptMatching implements ShouldQueue
                                     ->where('matchingConfirmedYN', 1)
                                     ->first();
                                 if($existingFullyMatched){
-                                    $errors[] = 'Selected Credit note already fully matched';
+                                    $errors[] = trans('custom.selected_credit_note_already_matched');
                                 }
                             }
                         }
@@ -698,7 +698,7 @@ class CreateReceiptMatching implements ShouldQueue
     {
         $detailsErrors = [];
         if($validationData['matchDocument']==null){
-            $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => ['Correct matching document not found.']];
+            $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => [trans('custom.correct_matching_document_not_found')]];
             return $detailsErrors;
         }
         $matchingDate = $header['matchingDate'] ?? null;
@@ -716,14 +716,14 @@ class CreateReceiptMatching implements ShouldQueue
 
             // Validate required fields
             if (empty($bookingInvCode)) {
-                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Booking Invoice Code is required.']];
+                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => [trans('custom.booking_invoice_code_required')]];
             }
             if(isset($detail['matchingAmount'])){
                 if($matchingAmount <= 0){
-                    $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['The matching amount should be positive value.']];
+                    $detailsErrors[] = ['detailsIndex' => $index, 'errors' => [trans('custom.matching_amount_positive')]];
                 }
             } else {
-                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => ['Matching Amount is required.']];
+                $detailsErrors[] = ['detailsIndex' => $index, 'errors' => [trans('custom.matching_amount_required')]];
             }
 
             if ($bookingInvCode) {
@@ -735,10 +735,10 @@ class CreateReceiptMatching implements ShouldQueue
 
                     // Check approval 
                     if ($invoice->approved != -1){
-                        $err[] = 'Customer invoice not approved.';
+                        $err[] = trans('custom.customer_invoice_not_approved');
                     } else {
                         if($invoice->customerID != $customerCodeSystem){
-                            $err[] = "The selected customer invoice document code {$bookingInvCode} does not belong to the selected customer.";
+                            $err[] = trans('custom.document_not_belong_to_customer', ['code' => $bookingInvCode]);
                         } else {
                             
                             $notApprovedReceiptVoucher = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
@@ -748,7 +748,7 @@ class CreateReceiptMatching implements ShouldQueue
                             ->exists();
 
                             if ($notApprovedReceiptVoucher) {
-                                $err[] = 'A receipt voucher document for the selected customer invoice is created and not approved. Please approve the previously created document and try again.';
+                                $err[] = trans('custom.receipt_voucher_created_not_confirmed');
                             }
 
                             $unconfirmedMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
@@ -758,7 +758,7 @@ class CreateReceiptMatching implements ShouldQueue
                             ->exists();
 
                             if ($unconfirmedMatch) {
-                                $err[] = 'A matching document for the selected customer invoice is created and not confirmed. Please confirm the previously created document and try again.';
+                                $err[] = trans('custom.matching_document_created_not_confirmed');
                             }
 
                             $notApprovedSalesReturn = SalesReturnDetail::where('custInvoiceDirectAutoID', $invoice->custInvoiceDirectAutoID)
@@ -768,7 +768,7 @@ class CreateReceiptMatching implements ShouldQueue
                             ->exists();
 
                             if ($notApprovedSalesReturn) {
-                                $err[] = 'A sales return document for the selected customer invoice is created and not approved. Please approve the previously created document and try again.';
+                                $err[] = trans('custom.receipt_voucher_created_not_confirmed');
                             }
 
                             if ($matchingDate) {
@@ -776,17 +776,17 @@ class CreateReceiptMatching implements ShouldQueue
                                 $matchingDateObject = \Carbon\Carbon::createFromFormat('d-m-Y', $matchingDate)->startOfDay();
                                 
                                 if ($invoiceBookingDate->gt($matchingDateObject)) {
-                                    $err[] = 'The customer invoice date is greater than matching date.';
-                                } else {    
+                                    $err[] = trans('custom.customer_invoice_date_greater_than_matching');
+                                } else {
                                     if($invoice->custTransactionCurrencyID != $currencyID){
-                                        $err[] = 'Can not match the two different currency documents.';
+                                        $err[] = trans('custom.cannot_match_different_currency');
                                     } else {
                                         
                                         $isMultipleSegmentnvoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $invoice->custInvoiceDirectAutoID)->get();
                                         if (!empty($isMultipleSegmentnvoiceDetails) && $isMultipleSegmentnvoiceDetails->count() > 1) {
                                             $uniqueSegments = $isMultipleSegmentnvoiceDetails->pluck('serviceLineSystemID')->unique();
                                             if (!empty($uniqueSegments) && $uniqueSegments->count() > 1) {
-                                                $err[] = 'The customer invoice contains multiple lines with different segments.';
+                                                $err[] = trans('custom.customer_invoice_multiple_segments');
                                             }
                                         }else{
                                             $isCheckSegmentonRVM = CompanyPolicyMaster::where('companyPolicyCategoryID', 95)
@@ -795,7 +795,7 @@ class CreateReceiptMatching implements ShouldQueue
 
                                             if($isCheckSegmentonRVM && $isCheckSegmentonRVM->isYesNO == 0){
                                                 if($invoiceDetails && $invoiceDetails->serviceLineSystemID != $segmentID){
-                                                    $err[] = 'Selected customer invoice segment not matching with advance or credit note segment.';
+                                                    $err[] = trans('custom.customer_invoice_segment_not_matching');
                                                 }
                                             }
                                         }
@@ -805,7 +805,7 @@ class CreateReceiptMatching implements ShouldQueue
                          }
                     }
                 } else {
-                        $err[] = "Customer invoice document code not matching with system.";
+                    $err[] = trans('custom.credit_note_document_not_matching');
                 }
             }
         }
@@ -818,7 +818,7 @@ class CreateReceiptMatching implements ShouldQueue
             $detailsErrors[] = ['detailsIndex' => $index, 'errors' => $err];
         } else {
             if ($totalMatchingAmount > $availableBalance) {
-                $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => ['Total matching amount exceeds the available balance of the document.']];
+                $detailsErrors[] = ['detailsIndex' => 'summary', 'errors' => [trans('custom.total_matching_amount_exceeds_balance')]];
             }
         }
 
@@ -849,7 +849,7 @@ class CreateReceiptMatching implements ShouldQueue
             
             // Check if master insert was successful before proceeding with details
                         if (!$masterInsert['status']) {
-                throw new \Exception($masterInsert['message'] ?? 'Failed to create receipt matching master record.');
+                throw new \Exception($masterInsert['message'] ?? trans('custom.failed_create_receipt_matching_master'));
             } else {
                     $customerCodeSystem = $validationData['matchDocument']->customerID ?? null;
                     foreach ($details as $index => $detail) {
@@ -877,7 +877,7 @@ class CreateReceiptMatching implements ShouldQueue
                         $detailInsert = ReceiptMatchingAPIService::createReceiptMatchingDetails($input);
             
                         if (!$detailInsert['status']) {
-                            throw new \Exception($detailInsert['message'] ?? 'Failed to create receipt matching detail.');
+                            throw new \Exception($detailInsert['message'] ?? trans('custom.failed_create_receipt_matching_detail'));
                         }
                     }
                     if($masterInsert['status']){
@@ -896,9 +896,9 @@ class CreateReceiptMatching implements ShouldQueue
                         $updateReceiptMatching = ReceiptMatchingAPIService::updateReceiptMatching($inputData,true);
                         if (!$updateReceiptMatching['status']) {
                             if (count($updateReceiptMatching['message']) > 0) {
-                                    throw new \Exception(Arr::flatten($updateReceiptMatching['message'])[0] ?? 'Failed to update receipt matching.');
+                                    throw new \Exception(Arr::flatten($updateReceiptMatching['message'])[0] ?? trans('custom.failed_update_receipt_matching'));
                                 } else {
-                                    throw new \Exception($updateReceiptMatching['message'] ?? 'Failed to update receipt matching.');
+                                    throw new \Exception($updateReceiptMatching['message'] ?? trans('custom.failed_update_receipt_matching'));
                                 }
                         } else {
                             $this->storeToDocumentSystemMapping(70,$masterInsert['data']['matchDocumentMasterAutoID'],$this->authorization);

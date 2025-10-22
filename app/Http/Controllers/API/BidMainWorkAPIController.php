@@ -65,7 +65,7 @@ class BidMainWorkAPIController extends AppBaseController
         $this->bidMainWorkRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidMainWorks = $this->bidMainWorkRepository->all();
 
-        return $this->sendResponse($bidMainWorks->toArray(), 'Bid Main Works retrieved successfully');
+        return $this->sendResponse($bidMainWorks->toArray(), trans('custom.bid_main_works_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BidMainWorkAPIController extends AppBaseController
 
         $bidMainWork = $this->bidMainWorkRepository->create($input);
 
-        return $this->sendResponse($bidMainWork->toArray(), 'Bid Main Work saved successfully');
+        return $this->sendResponse($bidMainWork->toArray(), trans('custom.bid_main_work_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BidMainWorkAPIController extends AppBaseController
         $bidMainWork = $this->bidMainWorkRepository->findWithoutFail($id);
 
         if (empty($bidMainWork)) {
-            return $this->sendError('Bid Main Work not found');
+            return $this->sendError(trans('custom.bid_main_work_not_found'));
         }
 
-        return $this->sendResponse($bidMainWork->toArray(), 'Bid Main Work retrieved successfully');
+        return $this->sendResponse($bidMainWork->toArray(), trans('custom.bid_main_work_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BidMainWorkAPIController extends AppBaseController
         $bidMainWork = $this->bidMainWorkRepository->findWithoutFail($id);
 
         if (empty($bidMainWork)) {
-            return $this->sendError('Bid Main Work not found');
+            return $this->sendError(trans('custom.bid_main_work_not_found'));
         }
 
         $bidMainWork = $this->bidMainWorkRepository->update($input, $id);
 
-        return $this->sendResponse($bidMainWork->toArray(), 'BidMainWork updated successfully');
+        return $this->sendResponse($bidMainWork->toArray(), trans('custom.bidmainwork_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BidMainWorkAPIController extends AppBaseController
         $bidMainWork = $this->bidMainWorkRepository->findWithoutFail($id);
 
         if (empty($bidMainWork)) {
-            return $this->sendError('Bid Main Work not found');
+            return $this->sendError(trans('custom.bid_main_work_not_found'));
         }
 
         $bidMainWork->delete();

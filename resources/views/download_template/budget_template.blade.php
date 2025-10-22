@@ -12,7 +12,7 @@
 </div>
 <div class="row">
     <div class="col-md-12">
-        <p><b>Note<span class="p-l-10"></span> Please enter Expense GL Amounts in negative value. Eg : -1200.00 <br/><b> Do not amend/modify the Template Description columns or rows. If amended the upload may not be successful.</b> <br/> Delete segment columns which are not applicable for the upload</b></p>
+        <p><b>Note<span class="p-l-10"></span> Please enter Expense GL amounts in negative value. Eg : -1200.00 <br/><b> Do not amend/modify the Template Description columns or rows. If amended the upload may not be successful.</b> <br/> Delete segment columns which are not applicable for the upload</b></p>
     </div>
 </div>
 <div class="row">

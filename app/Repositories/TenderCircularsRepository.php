@@ -168,7 +168,7 @@ class TenderCircularsRepository extends BaseRepository
                 if (!$amdCirculars['success']) {
                     return ['success' => false, 'message' => $amdCirculars['message']];
                 }
-                return ['success' => true, 'message' => 'Successfully deleted'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
             });
         } catch (\Exception $e) {
 
@@ -186,7 +186,7 @@ class TenderCircularsRepository extends BaseRepository
                     CircularSuppliersEditLog::where('circular_id', $amd_id)->where('version_id', $versionID)->where('is_deleted', 0)->update(['is_deleted' => 1]) :
                     CircularSuppliers::where('circular_id', $amd_id)->delete();
 
-                return ['success' => true, 'message' => 'Successfully Deleted'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
             });
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
@@ -203,14 +203,14 @@ class TenderCircularsRepository extends BaseRepository
 
             if($circularAmendments != 0) {
                 if($input['action'] == 'U'){
-                    return ['success' => false, 'message' => 'This amendment is assigned to a circular, you cannot update.'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.amendment_assigned_to_circular_cannot_update')];
                 } elseif ($input['action'] == 'D'){
-                    return ['success' => false, 'message' => 'This amendment is assigned to a circular, you cannot delete.'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.amendment_assigned_to_circular_cannot_delete')];
                 }
             }
-            return ['success' => true, 'message' => 'This amendment is not assigned to any circular/s, you can delete.'];
+            return ['success' => true, 'message' => trans('srm_tender_rfx.amendment_not_assigned_to_any_circular_can_delete')];
         } catch (\Exception $ex) {
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 }

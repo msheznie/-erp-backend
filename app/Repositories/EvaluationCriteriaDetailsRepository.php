@@ -88,12 +88,12 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 }
 
                 if($result){
-                    return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+                    return ['success' => true, 'message' => trans('srm_masters.successfully_created'), 'data' => $result];
                 }
-                return ['success' => false, 'message' => 'Failed to create'];
+                return ['success' => false, 'message' => trans('srm_masters.failed_to_create')];
             });
         } catch (\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error') . $exception->getMessage()];
         }
     }
     public function createCriteriaScoreConfig($data, $editOrAmend, $versionID){
@@ -110,7 +110,7 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
 
             });
         } catch (\Exception $exception){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $exception->getMessage()];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error') . $exception->getMessage()];
         }
     }
     public function getEvaluationDetailById($input) {
@@ -135,17 +135,17 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
         try{
             if ($input['level'] == 1 && $input['critera_type_id'] != 1) {
                 if (empty($input['weightage']) || $input['weightage'] <= 0) {
-                    return ['success' => false, 'message' => 'Weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.weightage_is_required')];
                 }
 
                 if (empty($input['passing_weightage']) || $input['passing_weightage'] <= 0) {
-                    return ['success' => false, 'message' => 'Passing weightage is required'];
+                    return ['success' => false, 'message' => trans('srm_masters.passing_weightage_is_required')];
                 }
             }
 
 
             if (!empty($input['is_final_level']) && empty($input['answer_type_id'])) {
-                return ['success' => false, 'message' => 'Answer Type is required'];
+                return ['success' => false, 'message' => trans('srm_masters.answer_type_is_required')];
             }
 
             $versionID = $input['versionID'] ?? 0;
@@ -156,7 +156,7 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 EvaluationCriteriaDetails::checkForDescriptionDuplication($input['tender_id'], $input['description'], $input['level'], $input['id']);
 
             if(!empty($chkDuplicate)){
-                return ['success' => false, 'message' => 'Description cannot be duplicated'];
+                return ['success' => false, 'message' => trans('srm_masters.description_cannot_be_duplicated')];
             }
 
             return DB::transaction(function () use ($input, $editOrAmend, $versionID) {
@@ -190,12 +190,12 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                             EvacuationCriteriaScoreConfigLog::getCriteriaBaseScore($input['amd_id']) :
                             EvaluationCriteriaScoreConfig::getCriteriaBaseScore($input['id']);
                         if(empty($config)){
-                            return ['success' => false, 'message' => 'At least one score configuration is required'];
+                            return ['success' => false, 'message' => trans('srm_masters.at_least_one_score_configuration_is_required')];
                         }
                     }
-                    return ['success' => true, 'message' => 'Successfully updated'];
+                    return ['success' => true, 'message' => trans('srm_masters.successfully_updated')];
                 }
-                return ['success' => false, 'message' => 'Failed to update'];
+                return ['success' => false, 'message' => trans('srm_masters.failed_to_update')];
             });
         } catch(\Exception $ex){
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -219,7 +219,7 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 $evaluationDetails = $model::find($criteriaID);
 
                 if (empty($evaluationDetails)) {
-                    return ['success' => false, 'message' => 'Record not found.'];
+                    return ['success' => false, 'message' => trans('srm_masters.record_not_found')];
                 }
 
                 $result = $editOrAmend ? tap($evaluationDetails)->update(['is_deleted' => 1]) : $evaluationDetails->delete();
@@ -247,7 +247,7 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
 
                 $deleteChildren($criteriaID);
 
-                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_masters.successfully_deleted'), 'data' => $result];
             });
 
         } catch(\Exception $ex){
@@ -268,9 +268,9 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                 EvaluationCriteriaDetails::calculateWeightage($tenderMasterId, 1);
             $total = $result + $weightage;
             if($total>100){
-                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+                return ['success' => false, 'message' => trans('srm_masters.total_weightage_cannot_exceed_100_percent')];
             } else {
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         } else {
             $result = $editOrAmend ?
@@ -284,9 +284,11 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
             $total = $result + $weightage;
 
             if($total > $parent->weightage){
-                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+                return ['success' => false, 'message' => trans('srm_masters.total_child_weightage_cannot_exceed', [
+                    'code' => $parent['weightage'],
+                ])];
             }else{
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         }
     }
@@ -309,28 +311,30 @@ class EvaluationCriteriaDetailsRepository extends BaseRepository
                     EvaluationCriteriaDetails::getParentEvaluationCriteria($input['parent_id']);
 
                 if(empty($parent)){
-                    return ['success' => false, 'message' => 'Parent evaluation record not found'];
+                    return ['success' => false, 'message' => trans('srm_masters.parent_evaluation_record_not_found')];
                 }
 
                 $total = $result + $input['weightage'];
 
                 if($total > $parent['weightage']){
-                    return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+                    return ['success' => false, 'message' => trans('srm_masters.total_child_weightage_cannot_exceed', [
+                        'code' => $parent['weightage'],
+                    ])];
                 } else{
-                    return ['success' => true, 'message' => 'Success'];
+                    return ['success' => true, 'message' => trans('srm_masters.success')];
                 }
             } else {
-                return ['success' => true, 'message' => 'Success'];
+                return ['success' => true, 'message' => trans('srm_masters.success')];
             }
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_masters.unexpected_error') . $ex->getMessage()];
         }
     }
     public function validateWeightageRequest($input): array{
         $validator = Validator::make($input, [
             'tender_id' => 'required'
         ], [
-            'tender_id.required' => 'Tender Master ID is required',
+            'tender_id.required' => trans('srm_tender_rfx.tender_master_id_required'),
         ]);
 
         if ($validator->fails()) {

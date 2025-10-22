@@ -53,7 +53,7 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $this->taxFormulaMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $taxFormulaMasters = $this->taxFormulaMasterRepository->all();
 
-        return $this->sendResponse($taxFormulaMasters->toArray(), 'Tax Formula Masters retrieved successfully');
+        return $this->sendResponse($taxFormulaMasters->toArray(), trans('custom.tax_formula_masters_retrieved_successfully'));
     }
 
     /**
@@ -73,7 +73,7 @@ class TaxFormulaMasterAPIController extends AppBaseController
 
         $taxFormulaMasters = $this->taxFormulaMasterRepository->create($input);
 
-        return $this->sendResponse($taxFormulaMasters->toArray(), 'Tax Formula Master saved successfully');
+        return $this->sendResponse($taxFormulaMasters->toArray(), trans('custom.tax_formula_master_saved_successfully'));
     }
 
     /**
@@ -90,10 +90,10 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $taxFormulaMaster = $this->taxFormulaMasterRepository->findWithoutFail($id);
 
         if (empty($taxFormulaMaster)) {
-            return $this->sendError('Tax Formula Master not found');
+            return $this->sendError(trans('custom.tax_formula_master_not_found'));
         }
 
-        return $this->sendResponse($taxFormulaMaster->toArray(), 'Tax Formula Master retrieved successfully');
+        return $this->sendResponse($taxFormulaMaster->toArray(), trans('custom.tax_formula_master_retrieved_successfully'));
     }
 
     /**
@@ -116,12 +116,12 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $taxFormulaMaster = $this->taxFormulaMasterRepository->findWithoutFail($id);
 
         if (empty($taxFormulaMaster)) {
-            return $this->sendError('Tax Formula Master not found');
+            return $this->sendError(trans('custom.tax_formula_master_not_found'));
         }
 
         $taxFormulaMaster = $this->taxFormulaMasterRepository->update($input, $id);
 
-        return $this->sendResponse($taxFormulaMaster->toArray(), 'TaxFormulaMaster updated successfully');
+        return $this->sendResponse($taxFormulaMaster->toArray(), trans('custom.taxformulamaster_updated_successfully'));
     }
 
     /**
@@ -138,17 +138,17 @@ class TaxFormulaMasterAPIController extends AppBaseController
         $taxFormulaMaster = $this->taxFormulaMasterRepository->findWithoutFail($id);
 
         if (empty($taxFormulaMaster)) {
-            return $this->sendError('Tax Formula Master not found');
+            return $this->sendError(trans('custom.tax_formula_master_not_found'));
         }
 
         $isExistDetail = TaxFormulaDetail::where('taxCalculationformulaID',$taxFormulaMaster->taxCalculationformulaID)->exists();
         if ($isExistDetail) {
-            return $this->sendError('You cannot delete. This tax formula master has assigned tax formula details');
+            return $this->sendError(trans('custom.you_cannot_delete_this_tax_formula_master_has_assi'));
         }
 
         $taxFormulaMaster->delete();
 
-        return $this->sendResponse($id, 'Tax Formula Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.tax_formula_master_deleted_successfully'));
     }
 
     public function getTaxFormulaMasterDatatable(Request $request)

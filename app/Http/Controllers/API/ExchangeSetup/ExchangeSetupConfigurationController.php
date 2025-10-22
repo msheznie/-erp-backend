@@ -49,7 +49,7 @@ class ExchangeSetupConfigurationController extends AppBaseController
         if(!$result)
             return $this->sendError(500,"Cannot create exchange setup configuration!");
 
-        return $this->sendResponse($result,'Exchange setup configuration created');
+        return $this->sendResponse($result,trans('custom.exchange_setup_configuration_created'));
 
 
     }
@@ -89,7 +89,7 @@ class ExchangeSetupConfigurationController extends AppBaseController
             ];
         }
 
-        return $this->sendResponse($configArray,'data reterived successfully');
+        return $this->sendResponse($configArray,trans('custom.data_reterived_successfully_3'));
 
 
     }

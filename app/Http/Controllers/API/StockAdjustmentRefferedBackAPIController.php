@@ -75,7 +75,7 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
         $this->stockAdjustmentRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $stockAdjustmentRefferedBacks = $this->stockAdjustmentRefferedBackRepository->all();
 
-        return $this->sendResponse($stockAdjustmentRefferedBacks->toArray(), 'Stock Adjustment Reffered Backs retrieved successfully');
+        return $this->sendResponse($stockAdjustmentRefferedBacks->toArray(), trans('custom.stock_adjustment_reffered_backs_retrieved_successf'));
     }
 
     /**
@@ -122,7 +122,7 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
 
         $stockAdjustmentRefferedBacks = $this->stockAdjustmentRefferedBackRepository->create($input);
 
-        return $this->sendResponse($stockAdjustmentRefferedBacks->toArray(), 'Stock Adjustment Reffered Back saved successfully');
+        return $this->sendResponse($stockAdjustmentRefferedBacks->toArray(), trans('custom.stock_adjustment_reffered_back_saved_successfully'));
     }
 
     /**
@@ -173,10 +173,10 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($stockAdjustmentRefferedBack)) {
-            return $this->sendError('Stock Adjustment not found');
+            return $this->sendError(trans('custom.stock_adjustment_not_found'));
         }
 
-        return $this->sendResponse($stockAdjustmentRefferedBack->toArray(), 'Stock Adjustment Referred Back retrieved successfully');
+        return $this->sendResponse($stockAdjustmentRefferedBack->toArray(), trans('custom.stock_adjustment_referred_back_retrieved_successfu'));
     }
 
     /**
@@ -233,12 +233,12 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
         $stockAdjustmentRefferedBack = $this->stockAdjustmentRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockAdjustmentRefferedBack)) {
-            return $this->sendError('Stock Adjustment Reffered Back not found');
+            return $this->sendError(trans('custom.stock_adjustment_reffered_back_not_found'));
         }
 
         $stockAdjustmentRefferedBack = $this->stockAdjustmentRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($stockAdjustmentRefferedBack->toArray(), 'StockAdjustmentRefferedBack updated successfully');
+        return $this->sendResponse($stockAdjustmentRefferedBack->toArray(), trans('custom.stockadjustmentrefferedback_updated_successfully'));
     }
 
     /**
@@ -285,12 +285,12 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
         $stockAdjustmentRefferedBack = $this->stockAdjustmentRefferedBackRepository->findWithoutFail($id);
 
         if (empty($stockAdjustmentRefferedBack)) {
-            return $this->sendError('Stock Adjustment Reffered Back not found');
+            return $this->sendError(trans('custom.stock_adjustment_reffered_back_not_found'));
         }
 
         $stockAdjustmentRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Stock Adjustment Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.stock_adjustment_reffered_back_deleted_successfull'));
     }
 
     public function getReferBackHistoryByStockAdjustments(Request $request)

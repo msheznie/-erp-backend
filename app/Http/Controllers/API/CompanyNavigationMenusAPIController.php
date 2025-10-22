@@ -181,12 +181,20 @@ class CompanyNavigationMenusAPIController extends AppBaseController
         $companyID = $request['companyID'];
         //$navigationMenu = NavigationMenus::all()->toArray();
         //DB::enableQueryLog();
+
+        $languageCode = $request->header('Accept-Language');
+
         $navigationMenu = DB::table('srp_erp_navigationmenus')
-            ->select(DB::raw('srp_erp_navigationmenus.*,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationmenus.navigationMenuID,1,0) as isChecked'))
+            ->select(DB::raw('srp_erp_navigationmenus.*,if(srp_erp_companynavigationmenus.navigationMenuID = srp_erp_navigationmenus.navigationMenuID,1,0) as isChecked, srp_erp_navigationmenus_languages.description as secondaryLanguageDescription'))
             ->leftJoin('srp_erp_companynavigationmenus', function ($join) use ($companyID) {
                 $join->on('srp_erp_navigationmenus.navigationMenuID', '=', 'srp_erp_companynavigationmenus.navigationMenuID')
                     ->where('srp_erp_companynavigationmenus.companyID', '=', $companyID)
                     ->orderBy('srp_erp_navigationmenus.sortOrder');
+            })
+            ->leftJoin('srp_erp_navigationmenus_languages', function ($join) use ($languageCode) {
+                $join->on('srp_erp_navigationmenus.navigationMenuID', '=', 'srp_erp_navigationmenus_languages.navigationMenuID')
+                    ->where('srp_erp_navigationmenus_languages.languageCode', '=', $languageCode)
+                    ->orderBy('srp_erp_navigationmenus_languages.sortOrder');
             })
             ->orderBy('srp_erp_navigationmenus.sortOrder')
             ->get();

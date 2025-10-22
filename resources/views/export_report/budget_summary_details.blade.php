@@ -2,7 +2,7 @@
 <center>
     <tr>
         <td colspan="3"> </td>
-        <td><h1>Details</h1>  </td>
+        <td><h1>{{ trans('custom.details') }}</h1>  </td>
         <td colspan="3"> </td>
 
     <tr>
@@ -11,12 +11,12 @@
 <table>
     <thead>
     <tr>
-    <td>Company ID</td>
-    <td>Department</td>
-    <td>GL Code</td>
-    <td>Document Code</td>
-    <td>Year</td>
-    <td>Pending Amount</td>
+    <td>{{ trans('custom.company_id') }}</td>
+    <td>{{ trans('custom.department') }}</td>
+    <td>{{ trans('custom.gl_code') }}</td>
+    <td>{{ trans('custom.document_code') }}</td>
+    <td>{{ trans('custom.year') }}</td>
+    <td>{{ trans('custom.pending_amount') }}</td>
     </tr>
     </thead>
     <tbody>
@@ -36,7 +36,7 @@
     <tfoot>
         <tr>
             <td colspan="4"></td>
-            <td>Total</td>
+            <td>{{ trans('custom.total') }}</td>
             <td>{{ number_format($total,2) }}</td>
         </tr>
     </tfoot>

@@ -177,19 +177,19 @@ class CreateExcel
                             }
                             
                            
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                         }
                         else if(($array['type']) == 2)
                         {
                             if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
                                 $i = $i - 0;
-                                self::branch($array, $sheet, 'Branch ');
-                                self::selectedCurrency($array, $sheet, 'Currency');
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::branch($array, $sheet, __('custom.branch').' ');
+                                self::selectedCurrency($array, $sheet, trans('custom.currency'));
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             } else {
                                 $i = $i - 2;
-                                self::fromDate($array,$sheet,'As of Date');
+                                self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             }
                         }
                         else if(($array['type']) == 3)
@@ -199,7 +199,7 @@ class CreateExcel
                         }
                         else if(($array['type']) == 4)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             self::currency($array,$sheet,'A5');
 
@@ -207,13 +207,13 @@ class CreateExcel
                         else if(($array['type']) == 5)
                         {
                             $i = $i - 1;
-                            self::fromDate($array,$sheet,'As of Date');
+                            self::fromDate($array,$sheet,trans('custom.as_of_date'));
                             self::currency($array,$sheet,'A4');
 
                         }
                         else if(($array['type']) == 6)
                         {
-                            self::fromDate($array,$sheet,'From Date ');
+                            self::fromDate($array,$sheet,trans('custom.from_date'));
                             self::toDate($array,$sheet);
                             $sheet->cell('A5', function($cell) use($array)
                             {
@@ -222,7 +222,7 @@ class CreateExcel
                     
                                 {
                     
-                                    $cell->setValue('Company VAT Registration No - '.$array['company_vat_registration_number']);  
+                                    $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);  
                     
                                     $cell->setFont(array(
                     
@@ -282,7 +282,11 @@ class CreateExcel
 
                     });
 
-
+                    if (app()->getLocale() == 'ar') {
+                        // Set right-to-left for the entire sheet
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
                 });
             }
 
@@ -290,7 +294,7 @@ class CreateExcel
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
         })->string($type);
         $disk = 's3';
-        $companyCode = isset($array['company_code'])?$array['company_code']:'common';
+        $companyCode = isset($array['company_code'])?$array['company_code']:trans('custom.common');
 
         $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
         $path = $companyCode.'/'.$path_dir.$full_name;
@@ -309,7 +313,7 @@ class CreateExcel
 
     public static function processDetailExport($data, $companyCode) {
         $excel_content = \Excel::create('po_details_export', function($excel) use ($data) {
-            $excel->sheet('Sheet1', function($sheet) use ($data) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
                 $sheet->setStyle([
                     'font' => [
                         'name' => 'Calibri',
@@ -319,13 +323,13 @@ class CreateExcel
 
                 $rowNum = 1;
                 $knownHeaders = [
-                    'company id',
-                    'order details',
-                    'item code',
-                    'pr number',
-                    'logistics details',
-                    'category',
-                    'addon details',
+                    trans('custom.excel_company_id'),
+                    trans('custom.excel_order_details'),
+                    trans('custom.excel_item_code'),
+                    trans('custom.excel_pr_number'),
+                    trans('custom.excel_logistics_details'),
+                    trans('custom.excel_category'),
+                    trans('custom.excel_addon_details'),
                 ];
 
                 $columnWidths = [
@@ -395,11 +399,17 @@ class CreateExcel
 
                     $rowNum++;
                 }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->string('xlsx');
 
         $disk = 's3';
-        $fileName = 'po_detail_export';
+        $fileName = trans('custom.excel_po_detail_export');
         $path_dir='procurement/purchase_order/excel/';
         $type='xlsx';
 
@@ -464,7 +474,7 @@ class CreateExcel
         {
             if(isset($array))
             {
-                $cell->setValue('To Date - '.$array['to_date']);
+                $cell->setValue(__('custom.to_date').' - '.$array['to_date']);
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -485,7 +495,7 @@ class CreateExcel
         {
             if(isset($array['cur']))
             {
-                $cell->setValue('Currency - '.$array['cur']);  
+                $cell->setValue(__('custom.currency').' - '.$array['cur']);  
                 $cell->setFont(array(
     
                     'family'     => 'Calibri',
@@ -546,17 +556,37 @@ class CreateExcel
 
     public static function loadView($data,$type,$fileName,$path_dir,$templateName, $excelColumnFormat = [])
     {
+        // Sanitize data to prevent Excel formula errors by removing '=' characters
+        if (isset($data['reportData']) && is_array($data['reportData'])) {
+            foreach ($data['reportData'] as &$record) {
+                if (is_object($record)) {
+                    foreach ($record as $key => &$value) {
+                        if (is_string($value)) {
+                            $value = str_replace(['='], '', $value);
+                        }
+                    }
+                }
+            }
+        }
 
         $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
-                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat) {
+                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName) {
                            $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
+                           
+                           // Set right-to-left for Arabic locale
+                            if($fileName != trans('custom.budget_template')) { 
+                                if (app()->getLocale() == 'ar') {
+                                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                    $sheet->setRightToLeft(true);
+                                }
+                            }
                        });
                    })->string($type);
 
 
        $disk = 's3';
-       $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
+       $companyCode = isset($data['companyCode'])? $data['companyCode'] : trans('custom.common');
 
        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
        $path = $companyCode.'/'.$path_dir.$full_name;
@@ -642,6 +672,11 @@ class CreateExcel
                         $sheet->appendRow([]);
                     }
 
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
 
                 });
             
@@ -671,7 +706,7 @@ class CreateExcel
     public static function processPRDetailExport($data,$companyCode) 
     {
         $excel_content = \Excel::create('pr_details_export', function($excel) use ($data) {
-            $excel->sheet('Sheet1', function($sheet) use ($data) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
                 $sheet->setStyle([
                     'font' => [
                         'name' => 'Calibri',
@@ -727,11 +762,17 @@ class CreateExcel
 
                     $rowNum++;
                 }
+                
+                // Set right-to-left for Arabic locale
+                if (app()->getLocale() == 'ar') {
+                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->setRightToLeft(true);
+                }
             });
         })->string('xlsx');
 
         $disk = 's3';
-        $fileName = 'PR_detail_export';
+        $fileName = trans('custom.pr_detail_export');
         $path_dir='procurement/purchase_order/excel/';
         $type='xlsx';
 

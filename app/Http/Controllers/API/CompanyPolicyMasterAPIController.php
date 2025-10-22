@@ -84,19 +84,19 @@ class CompanyPolicyMasterAPIController extends AppBaseController
             $childCompanies = [$companyId];
         }
         $search = $request->input('search.value'); 
-        $companyPolicyMasters = CompanyPolicyMaster::with(['company','policyCategory' => function($q) use($search){
-            $q->where('isActive',-1)
-              ->when($search, function ($q) use ($search) {
-                return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
-            });
-        }])
+        $companyPolicyMasters = CompanyPolicyMaster::with(['company','policyCategory','policyCategory.translations'])
         ->whereHas('policyCategory',function ($q){
             $q->where('isActive',-1);
         })
         ->when($search,function ($q) use($search){
-           return  $q->whereHas('policyCategory',function ($q) use($search){
-               return $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
-           });
+            $q->whereHas('policyCategory',function ($q) use($search){
+                $q->where('companyPolicyCategoryDescription', 'LIKE', "%{$search}%");
+
+                $q->orWhereHas('translations',function ($q) use($search){
+                    $q->where('description', 'LIKE', "%{$search}%")
+                        ->orWhere('comment', 'LIKE', "%{$search}%");
+                });
+            });
         })
         ->whereIn('companySystemID',$childCompanies);
 
@@ -105,7 +105,10 @@ class CompanyPolicyMasterAPIController extends AppBaseController
             $companyPolicyMasters = $companyPolicyMasters->where('companyPolicyCategoryID', $input['companyPolicyCategoryID']);
         }
 
+        $data['search']['value'] = '';
+        $request->merge($data);
 
+        $request->request->remove('search.value');
 
         return \DataTables::eloquent($companyPolicyMasters)
             ->order(function ($query) use ($input) {
@@ -172,7 +175,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $companyPolicyMasters = $this->companyPolicyMasterRepository->create($input);
 
-        return $this->sendResponse($companyPolicyMasters->toArray(), 'Company Policy Master saved successfully');
+        return $this->sendResponse($companyPolicyMasters->toArray(), trans('custom.company_policy_master_saved_successfully'));
     }
 
     /**
@@ -272,3 +275,4 @@ class CompanyPolicyMasterAPIController extends AppBaseController
         }
     }
 }
+

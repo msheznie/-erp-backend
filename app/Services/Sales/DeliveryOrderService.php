@@ -27,7 +27,7 @@ class DeliveryOrderService
             ->first();
 
         if(empty($deliveryOrderMaster)){
-            return ['status' =>  false, 'message' => 'Delivery order not found',500];
+            return ['status' =>  false, 'message' => trans('custom.delivery_order_not_found'),500];
         }
 
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $deliveryOrderID)
@@ -37,7 +37,7 @@ class DeliveryOrderService
             ->exists();
 
         if ($alreadyAdded) {
-            return ['status' =>  false, 'message' => "Selected item is already added. Please check again", 500];
+            return ['status' =>  false, 'message' => trans('custom.selected_item_already_added'), 500];
         }
 
         $data = array(
@@ -50,26 +50,26 @@ class DeliveryOrderService
 
         if($item->financeCategoryMaster==1){
             if (isset($itemCurrentCostAndQty['currentWareHouseStockQty']) && ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0)) {
-                return ['status'=> false ,  'message' => "Stock Qty is 0. You cannot issue."];
+                return ['status'=> false ,  'message' => trans('custom.stock_qty_zero_cannot_issue')];
             }
 
             if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
-                return ['status'=> false ,  'message' => "Warehouse stock Qty is 0. You cannot issue."];
+                return ['status'=> false ,  'message' => trans('custom.warehouse_stock_qty_zero_cannot_issue')];
             }
 
             if ((float)$itemCurrentCostAndQty['wacValueLocal'] == 0 || (float)$itemCurrentCostAndQty['wacValueReporting'] == 0) {
-                return ['status'=> false ,  'message' => "Cost is 0. You cannot issue."];
+                return ['status'=> false ,  'message' => trans('custom.cost_zero_cannot_issue')];
             }
 
             if ($itemCurrentCostAndQty['wacValueLocal'] < 0 || $itemCurrentCostAndQty['wacValueReporting'] < 0) {
-                return ['status'=> false ,  'message' => "Cost is negative. You cannot issue."];
+                return ['status'=> false ,  'message' => trans('custom.cost_negative_cannot_issue')];
             }
         }
 
 
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$deliveryOrderID)->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
-            return ['status' =>  false, 'message' => 'Different finance category found. You can not add different finance category items for same order',500];
+            return ['status' =>  false, 'message' => trans('custom.different_finance_category_found'),500];
         }
 
         if($item->financeCategoryMaster==1){
@@ -91,7 +91,7 @@ class DeliveryOrderService
                 ->where('approvedYN', 0)
                 ->first();
             if (!empty($checkWhether)) {
-                return ['status' =>  false, 'message' => "There is a Delivery Order (" . $checkWhether->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500];
+                return ['status' =>  false, 'message' => trans('custom.delivery_order_pending_approval', ['code' => $checkWhether->deliveryOrderCode]), 500];
             }
 
 
@@ -120,7 +120,7 @@ class DeliveryOrderService
             /* approved=0*/
 
             if (!empty($checkWhetherItemIssueMaster)) {
-                return ['status' =>  false, 'message' => "There is a Materiel Issue (" . $checkWhetherItemIssueMaster->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500];
+                return ['status' =>  false, 'message' => trans('custom.material_issue_pending_approval', ['code' => $checkWhetherItemIssueMaster->itemIssueCode]), 500];
             }
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -147,7 +147,7 @@ class DeliveryOrderService
             /* approved=0*/
 
             if (!empty($checkWhetherStockTransfer)) {
-                return ['status' =>  false, 'message' => "There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500];
+                return ['status' =>  false, 'message' => trans('custom.stock_transfer_pending_approval', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500];
             }
 
             $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
@@ -173,7 +173,7 @@ class DeliveryOrderService
             /* approved=0*/
 
             if (!empty($checkWhetherInvoice)) {
-                return ['status' =>  false, 'message' => "There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500];
+                return ['status' =>  false, 'message' => trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]), 500];
             }
 
             /*Check in purchase return*/
@@ -196,7 +196,7 @@ class DeliveryOrderService
                 ->first();
 
             if (!empty($checkWhetherPR)) {
-                return ['status' =>  false, 'message' => "There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500];
+                return ['status' =>  false, 'message' => trans('custom.purchase_return_pending_approval', ['code' => $checkWhetherPR->purchaseReturnCode]), 500];
             }
 
 
@@ -208,17 +208,17 @@ class DeliveryOrderService
 
             if(empty($financeItemCategorySubAssigned))
             {
-                return ['success'=> false , 'messsage' => "Finance Item category sub assigned not found"];
+                return ['success'=> false , 'messsage' => trans('custom.finance_item_category_sub_not_found')];
             }
 
             if((!$financeItemCategorySubAssigned['financeGLcodebBS'] || !$financeItemCategorySubAssigned['financeGLcodebBSSystemID']) && $item->financeCategoryMaster!=2){
-                return ['status' =>false , 'message' => 'BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription];
+                return ['status' =>false , 'message' => trans('custom.bs_account_cannot_be_null', ['item_code' => $item->itemPrimaryCode, 'item_description' => $item->itemDescription])];
             }elseif (!$financeItemCategorySubAssigned['financeGLcodePL'] || !$financeItemCategorySubAssigned['financeGLcodePLSystemID']){
-                return ['status' =>false , 'message' => 'Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription];
+                return ['status' =>false , 'message' => trans('custom.cost_account_cannot_be_null', ['item_code' => $item->itemPrimaryCode, 'item_description' => $item->itemDescription])];
             }elseif (!$financeItemCategorySubAssigned['financeCogsGLcodePL'] || !$financeItemCategorySubAssigned['financeCogsGLcodePLSystemID']){
-                return ['status' =>false , 'message' => 'COGS gl account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription];
+                return ['status' =>false , 'message' => trans('custom.cogs_account_cannot_be_null', ['item_code' => $item->itemPrimaryCode, 'item_description' => $item->itemDescription])];
             }elseif (!$financeItemCategorySubAssigned['financeGLcodeRevenueSystemID'] || !$financeItemCategorySubAssigned['financeGLcodeRevenue']){
-                return ['status' =>false , 'message' => 'Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription];
+                return ['status' =>false , 'message' => trans('custom.revenue_account_cannot_be_null', ['item_code' => $item->itemPrimaryCode, 'item_description' => $item->itemDescription])];
             }
 
         }

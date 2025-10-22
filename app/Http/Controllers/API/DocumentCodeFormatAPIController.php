@@ -64,7 +64,7 @@ class DocumentCodeFormatAPIController extends AppBaseController
         $this->documentCodeFormatRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentCodeFormats = $this->documentCodeFormatRepository->all();
 
-        return $this->sendResponse($documentCodeFormats->toArray(), 'Document Code Formats retrieved successfully');
+        return $this->sendResponse($documentCodeFormats->toArray(), trans('custom.document_code_formats_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class DocumentCodeFormatAPIController extends AppBaseController
 
         $documentCodeFormat = $this->documentCodeFormatRepository->create($input);
 
-        return $this->sendResponse($documentCodeFormat->toArray(), 'Document Code Format saved successfully');
+        return $this->sendResponse($documentCodeFormat->toArray(), trans('custom.document_code_format_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class DocumentCodeFormatAPIController extends AppBaseController
         $documentCodeFormat = $this->documentCodeFormatRepository->findWithoutFail($id);
 
         if (empty($documentCodeFormat)) {
-            return $this->sendError('Document Code Format not found');
+            return $this->sendError(trans('custom.document_code_format_not_found'));
         }
 
-        return $this->sendResponse($documentCodeFormat->toArray(), 'Document Code Format retrieved successfully');
+        return $this->sendResponse($documentCodeFormat->toArray(), trans('custom.document_code_format_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class DocumentCodeFormatAPIController extends AppBaseController
         $documentCodeFormat = $this->documentCodeFormatRepository->findWithoutFail($id);
 
         if (empty($documentCodeFormat)) {
-            return $this->sendError('Document Code Format not found');
+            return $this->sendError(trans('custom.document_code_format_not_found'));
         }
 
         $documentCodeFormat = $this->documentCodeFormatRepository->update($input, $id);
 
-        return $this->sendResponse($documentCodeFormat->toArray(), 'DocumentCodeFormat updated successfully');
+        return $this->sendResponse($documentCodeFormat->toArray(), trans('custom.documentcodeformat_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class DocumentCodeFormatAPIController extends AppBaseController
         $documentCodeFormat = $this->documentCodeFormatRepository->findWithoutFail($id);
 
         if (empty($documentCodeFormat)) {
-            return $this->sendError('Document Code Format not found');
+            return $this->sendError(trans('custom.document_code_format_not_found'));
         }
 
         $documentCodeFormat->delete();

@@ -83,7 +83,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $this->departmentBudgetPlanningRepository->pushCriteria(new LimitOffsetCriteria($request));
         $departmentBudgetPlannings = $this->departmentBudgetPlanningRepository->all();
 
-        return $this->sendResponse($departmentBudgetPlannings->toArray(), 'Department Budget Plannings retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlannings->toArray(), trans('custom.department_budget_plannings_retrieved_successfully'));
     }
 
     /**
@@ -137,7 +137,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->create($input);
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning saved successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_saved_successfully'));
     }
 
     /**
@@ -186,10 +186,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -255,12 +255,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($input, $id);
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), 'DepartmentBudgetPlanning updated successfully');
+        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.departmentbudgetplanning_updated_successfully'));
     }
 
     /**
@@ -308,7 +308,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         $departmentBudgetPlanning->delete();
@@ -381,7 +381,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions')->findWithoutFail($input['budgetPlanningId']);
 
         if (empty($departmentBudgetPlanning)) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         if($departmentBudgetPlanning->revisions->count() > 0){
@@ -409,6 +409,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
 
+        if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
+            return $this->sendError('Status cannot be changed from submitted');
+        }
+
         try {
             \DB::beginTransaction();
 
@@ -420,7 +424,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             ])->find($input['budgetPlanningId']);
 
             if (!$departmentBudgetPlanning) {
-                return $this->sendError('Department Budget Planning not found');
+                return $this->sendError(trans('custom.department_budget_planning_not_found'));
             }
 
             // Validate budget template assignment before processing
@@ -497,10 +501,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             \DB::commit();
 
-            return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning status updated successfully and details processing initiated');
+            return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_status_updated_successf'));
         } catch (\Exception $e) {
             \DB::rollback();
-            return $this->sendError('Error updating status - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_updating_status') . $e->getMessage(), 500);
         }
     }
 
@@ -622,7 +626,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $currentSubmissionDate = \Carbon\Carbon::parse($input['currentSubmissionDate'])->format('Y-m-d');
                     $dateOfRequest = \Carbon\Carbon::parse($input['dateOfRequest'])->format('Y-m-d');
                 } catch (\Exception $secondError) {
-                    return $this->sendError('Date parsing error', 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
+                    return $this->sendError(trans('custom.date_parsing_error'), 'Invalid date format - Expected dd/MM/yyyy: ' . $secondError->getMessage() . ' | Original: ' . $dateError->getMessage());
                 }
             }
 
@@ -755,11 +759,11 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             \DB::commit();
 
-            return $this->sendResponse(['id' => $timeRequest->id], 'Time extension request created successfully');
+            return $this->sendResponse(['id' => $timeRequest->id], trans('custom.time_extension_request_created_successfully'));
 
         } catch (\Exception $e) {
             \DB::rollback();
-            return $this->sendError('Error creating time extension request - '.$e->getMessage());
+            return $this->sendError(trans('custom.error_creating_time_extension_request').$e->getMessage());
         }
     }
 
@@ -884,12 +888,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         if (!$companySystemID) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
 
         if (!$budgetPlanning) {
-            return $this->sendError('Department Budget Planning not found');
+            return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
         // Get the last request code for this budget planning using Eloquent model
@@ -912,7 +916,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Generate the new request code
         $requestCode = 'RQ' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-        return $this->sendResponse(['requestCode' => $requestCode], 'Request code generated successfully');
+        return $this->sendResponse(['requestCode' => $requestCode], trans('custom.request_code_generated_successfully'));
     }
 
     /**
@@ -956,9 +960,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 $attachment->uploaded_by_name = $attachment->uploader ? $attachment->uploader->name : 'Unknown';
             }
 
-            return $this->sendResponse($attachments, 'Attachments retrieved successfully');
+            return $this->sendResponse($attachments, trans('custom.attachments_retrieved_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving attachments - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_attachments') . $e->getMessage(), 500);
         }
     }
 
@@ -972,7 +976,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $attachment = \App\Models\DeptBudgetPlanningTimeRequestAttachment::find($attachmentId);
 
             if (!$attachment) {
-                return $this->sendError('Attachment not found', 404);
+                return $this->sendError(trans('custom.attachment_not_found'), 404);
             }
 
             // Get company info for determining disk
@@ -980,7 +984,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 ->find($attachment->time_request_id);
 
             if (!$timeRequest) {
-                return $this->sendError('Time request not found');
+                return $this->sendError(trans('custom.time_request_not_found'));
             }
 
             $companySystemID = $timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
@@ -990,7 +994,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             // Check if file exists
             if (!\Storage::disk($disk)->exists($attachment->file_path)) {
-                return $this->sendError('File not found on storage');
+                return $this->sendError(trans('custom.file_not_found_on_storage'));
             }
 
             // Get file contents
@@ -1002,7 +1006,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 ->header('Content-Disposition', 'attachment; filename="' . $attachment->original_file_name . '"');
 
         } catch (\Exception $e) {
-            return $this->sendError('Error downloading attachment - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_downloading_attachment') . $e->getMessage(), 500);
         }
     }
 
@@ -1076,7 +1080,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         if (!$timeExtensionRequest) {
-            return $this->sendError('Time extension request not found');
+            return $this->sendError(trans('custom.time_extension_request_not_found'));
         }
 
         $oldValue = $timeExtensionRequest->toArray();

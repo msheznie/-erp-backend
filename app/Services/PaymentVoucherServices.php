@@ -691,9 +691,30 @@ class PaymentVoucherServices
             if ($checkErChange && $input['confirmedYN'] == 1) {
                 if(($input['BPVbankCurrencyEROld'] != $paySupplierInvoiceMaster->BPVbankCurrencyER) || ($input['localCurrencyEROld'] != $paySupplierInvoiceMaster->localCurrencyER) || ($input['companyRptCurrencyEROld'] != $paySupplierInvoiceMaster->companyRptCurrencyER))
                 {
-                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$input['BPVbankCurrencyEROld']." | Local ER ".$input['localCurrencyEROld']." | Reporting ER ".$input['companyRptCurrencyEROld']."</p><p style='font-size: medium;'>Current rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p>Are you sure you want to proceed ?</p>";
+                    $erMessage =  $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                                        "<p style='font-size: medium;'>" .
+                                            trans('custom.previous_rates') . " " . 
+                                            trans('custom.bank_er') . " " . $input['BPVbankCurrencyEROld'] . 
+                                            " | " . trans('custom.local_er') . " " . $input['localCurrencyEROld'] . 
+                                            " | " . trans('custom.reporting_er') . " " . $input['companyRptCurrencyEROld'] .
+                                        "</p>" .
+                                        "<p style='font-size: medium;'>" .
+                                            trans('custom.current_rates') . " " . 
+                                            trans('custom.bank_er') . " " . $paySupplierInvoiceMaster->BPVbankCurrencyER .
+                                            " | " . trans('custom.local_er') . " " . $paySupplierInvoiceMaster->localCurrencyER .
+                                            " | " . trans('custom.reporting_er') . " " . $paySupplierInvoiceMaster->companyRptCurrencyER .
+                                        "</p>" .
+                                        "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
                 }else {
-                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+                    $erMessage = trans('custom.exchange_rates_updated_message', [
+                        'bank_er' => $paySupplierInvoiceMaster->BPVbankCurrencyER,
+                        'local_er' => $paySupplierInvoiceMaster->localCurrencyER,
+                        'reporting_er' => $paySupplierInvoiceMaster->companyRptCurrencyER,
+                        'current_bank_er' => $input['BPVbankCurrencyER'],
+                        'current_local_er' => $input['localCurrencyER'],
+                        'current_reporting_er' => $input['companyRptCurrencyER']
+                    ]);
                 }
 
                 return [
@@ -936,7 +957,7 @@ class PaymentVoucherServices
                 if ($error_count > 0) {
                     return [
                         'status' => false,
-                        'message' => 'You cannot confirm this document.',
+                        'message' => trans('custom.you_cannot_confirm_this_document'),
                         'code' => 500,
                         'type' => $confirm_error
                     ];
@@ -950,7 +971,7 @@ class PaymentVoucherServices
                 if (!$validatorResult['success']) {
                     return [
                         'status' => false,
-                        'message' => 'The selected supplier has been blocked. Are you sure you want to proceed ?',
+                        'message' => trans('custom.supplier_blocked_confirm_proceed'),
                         'code' => 500,
                         'type' => ['type' => 'blockSupplier']
                     ];
@@ -968,7 +989,7 @@ class PaymentVoucherServices
                 if ($pdcLogValidation) {
                     return [
                         'status' => false,
-                        'message' => 'PDC Cheque date cannot be empty',
+                        'message' => trans('custom.pdc_cheque_date_cannot_be_empty'),
                         'code' => 500,
                     ];
                 }
@@ -1001,7 +1022,7 @@ class PaymentVoucherServices
                 if (count($pdcLog) == 0) {
                     return [
                         'status' => false,
-                        'message' => 'PDC Cheques not created, Please create atleast one cheque',
+                        'message' => trans('custom.pdc_cheques_not_created_please_create_atleast_one_'),
                         'code' => 500,
                     ];
                 }
@@ -1015,7 +1036,7 @@ class PaymentVoucherServices
                 if ($checkingAmount > 0.001 || $checkingAmount < 0) {
                     return [
                         'status' => false,
-                        'message' => 'PDC Cheque amount should equal to PV total amount',
+                        'message' => trans('custom.PDC_cheque_amount_should_equal_to_PV_total_amount'),
                         'code' => 500,
                     ];
                 }
@@ -1025,7 +1046,7 @@ class PaymentVoucherServices
                 if (is_null($checkPlAccount)) {
                     return [
                         'status' => false,
-                        'message' => 'Please configure PDC Payable account for payment voucher',
+                        'message' => trans('custom.please_configure'),
                         'code' => 500,
                     ];
                 }
@@ -1061,13 +1082,13 @@ class PaymentVoucherServices
                         if ($checkExchangeGainLossAccountCode) {
                             return [
                                 'status' => false,
-                                'message' => 'Please assign Exchange Gain/Loss account for this company',
+                                'message' => trans('custom.please_assign_exchange'),
                                 'code' => 500,
                             ];
                         }
                         return [
                             'status' => false,
-                            'message' => 'Please configure Exchange Gain/Loss account for this company',
+                            'message' => trans('custom.please_configure_exchange_gain_loss_account_for_this_company'),
                             'code' => 500,
                         ];
                     }
@@ -1164,7 +1185,7 @@ class PaymentVoucherServices
             } else {
                 return [
                     'status' => false,
-                    'message' => 'Payment voucher date is not within financial period!',
+                    'message' => trans('custom.payment_voucher_date_not_within_financial_period'),
                     'code' => 500,
                     'type' => ['type' => 'confirm']
                 ];
@@ -1174,7 +1195,7 @@ class PaymentVoucherServices
             if (empty($bank)) {
                 return [
                     'status' => false,
-                    'message' => 'Bank account not found',
+                    'message' => trans('custom.bank_account_not_found'),
                     'code' => 500,
                     'type' => ['type' => 'confirm']
                 ];
@@ -1183,7 +1204,7 @@ class PaymentVoucherServices
             if (!$bank->chartOfAccountSystemID) {
                 return [
                     'status' => false,
-                    'message' => 'Bank account is not linked to gl account',
+                    'message' => trans('custom.bank_account_not_linked_to_gl_account'),
                     'code' => 500,
                     'type' => ['type' => 'confirm']
                 ];
@@ -1200,7 +1221,7 @@ class PaymentVoucherServices
                 if (empty($pvDetailExist)) {
                     return [
                         'status' => false,
-                        'message' => 'PV document cannot confirm without details',
+                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1213,7 +1234,7 @@ class PaymentVoucherServices
                 if (round($checkAmountGreater['supplierPaymentAmount'], 3) < 0) {
                     return [
                         'status' => false,
-                        'message' => 'Total Amount should be equal or greater than zero',
+                        'message' => trans('custom.total_amount_should_be_equal_or_greater_than_zero'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1226,7 +1247,7 @@ class PaymentVoucherServices
                 if ($checkAmount > 0) {
                     return [
                         'status' => false,
-                        'message' => 'Every item should have a payment amount',
+                        'message' => trans('custom.every_item_should_have_a_payment_amount'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1380,7 +1401,7 @@ class PaymentVoucherServices
                 if (empty($pvDetailExist)) {
                     return [
                         'status' => false,
-                        'message' => 'PV document cannot confirm without details',
+                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1393,7 +1414,7 @@ class PaymentVoucherServices
                 if (round($checkAmountGreater['paymentAmount'], 3) < 0) {
                     return [
                         'status' => false,
-                        'message' => 'Total Amount should be equal or greater than zero',
+                        'message' => trans('custom.total_amount_should_be_equal_or_greater_than_zero'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1406,7 +1427,7 @@ class PaymentVoucherServices
                 if ($checkAmount > 0) {
                     return [
                         'status' => false,
-                        'message' => 'Every item should have a payment amount',
+                        'message' => trans('custom.every_item_should_have_a_payment_amount'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1420,7 +1441,7 @@ class PaymentVoucherServices
                     if(empty(TaxService::getInputVATTransferGLAccount($paySupplierInvoiceMaster->companySystemID))){
                         return [
                             'status' => false,
-                            'message' => 'Cannot confirm. Input VAT Transfer GL Account not configured.',
+                            'message' => trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_c'),
                             'code' => 500,
                         ];
                     }
@@ -1432,7 +1453,7 @@ class PaymentVoucherServices
                     if (!$checkAssignedStatusInputTrans) {
                         return [
                             'status' => false,
-                            'message' => 'Cannot confirm. Input VAT Transfer GL Account not assigned to company.',
+                            'message' => trans('custom.cannot_confirm_input_vat_transfer_gl_account_not_a'),
                             'code' => 500,
                         ];
                     }
@@ -1440,7 +1461,7 @@ class PaymentVoucherServices
                     if(empty(TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID))){
                         return [
                             'status' => false,
-                            'message' => 'Cannot confirm. Input VAT GL Account not configured.',
+                            'message' => trans('custom.cannot_confirm_input_vat_gl_account_not_configured'),
                             'code' => 500,
                         ];
                     }
@@ -1452,7 +1473,7 @@ class PaymentVoucherServices
                     if (!$checkAssignedStatus) {
                         return [
                             'status' => false,
-                            'message' => 'Cannot confirm. Input VAT GL Account not assigned to company.',
+                            'message' => trans('custom.cannot_confirm_input_vat_gl_account_not_assigned_t'),
                             'code' => 500,
                         ];
                     }
@@ -1497,7 +1518,7 @@ class PaymentVoucherServices
                 $confirmErrorOverPay = array('type' => 'confirm_error_over_payment', 'data' => $overPaymentErrorMessage);
                 return [
                     'status' => false,
-                    'message' => 'You cannot confirm this document.',
+                    'message' => trans('custom.cannot_confirm_document'),
                     'code' => 500,
                     'type' => $confirmErrorOverPay
                 ];
@@ -1510,7 +1531,7 @@ class PaymentVoucherServices
                 if (count($pvDetailExist) == 0) {
                     return [
                         'status' => false,
-                        'message' => 'PV document cannot confirm without details',
+                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -1693,7 +1714,7 @@ class PaymentVoucherServices
                 if ($checkAmount > 0) {
                     return [
                         'status' => false,
-                        'message' => 'Every item should have a payment amount',
+                        'message' => trans('custom.every_item_should_have_a_payment_amount'),
                         'code' => 500,
                         'type' => ['type' => 'confirm']
                     ];
@@ -2690,7 +2711,7 @@ class PaymentVoucherServices
         if (empty($paySupplierInvoiceMaster)) {
             return [
                 'status' => false,
-                'message' => 'Pay Supplier Invoice Master not found'
+                'message' => trans('custom.pay_supplier_invoice_master_not_found')
             ];
         }
 
@@ -2704,7 +2725,7 @@ class PaymentVoucherServices
             if (!$bankAccount) {
                 return [
                     'status' => false,
-                    'message' => 'Bank Account not selected'
+                    'message' => trans('custom.bank_account_not_selected')
                 ];
             }
 
@@ -2755,14 +2776,14 @@ class PaymentVoucherServices
                 return [
                     'status' => true,
                     'data' => $cheques,
-                    'message' => "PDC cheques generated successfully"
+                    'message' => trans('custom.pdc_cheques_generated_successfully')
                 ];
             }
             else {
                 return [
                     'status' => true,
                     'data' => ['chequeGenrated' => $chequeGenrated],
-                    'message' => "PDC cheques generated successfully"
+                    'message' => trans('custom.pdc_cheques_generated_successfully')
                 ];
             }
         } catch

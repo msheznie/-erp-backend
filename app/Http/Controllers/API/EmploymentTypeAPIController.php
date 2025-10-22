@@ -65,7 +65,7 @@ class EmploymentTypeAPIController extends AppBaseController
         $this->employmentTypeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employmentTypes = $this->employmentTypeRepository->all();
 
-        return $this->sendResponse($employmentTypes->toArray(), 'Employment Types retrieved successfully');
+        return $this->sendResponse($employmentTypes->toArray(), trans('custom.employment_types_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmploymentTypeAPIController extends AppBaseController
 
         $employmentTypes = $this->employmentTypeRepository->create($input);
 
-        return $this->sendResponse($employmentTypes->toArray(), 'Employment Type saved successfully');
+        return $this->sendResponse($employmentTypes->toArray(), trans('custom.employment_type_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmploymentTypeAPIController extends AppBaseController
         $employmentType = $this->employmentTypeRepository->findWithoutFail($id);
 
         if (empty($employmentType)) {
-            return $this->sendError('Employment Type not found');
+            return $this->sendError(trans('custom.employment_type_not_found'));
         }
 
-        return $this->sendResponse($employmentType->toArray(), 'Employment Type retrieved successfully');
+        return $this->sendResponse($employmentType->toArray(), trans('custom.employment_type_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmploymentTypeAPIController extends AppBaseController
         $employmentType = $this->employmentTypeRepository->findWithoutFail($id);
 
         if (empty($employmentType)) {
-            return $this->sendError('Employment Type not found');
+            return $this->sendError(trans('custom.employment_type_not_found'));
         }
 
         $employmentType = $this->employmentTypeRepository->update($input, $id);
 
-        return $this->sendResponse($employmentType->toArray(), 'EmploymentType updated successfully');
+        return $this->sendResponse($employmentType->toArray(), trans('custom.employmenttype_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class EmploymentTypeAPIController extends AppBaseController
         $employmentType = $this->employmentTypeRepository->findWithoutFail($id);
 
         if (empty($employmentType)) {
-            return $this->sendError('Employment Type not found');
+            return $this->sendError(trans('custom.employment_type_not_found'));
         }
 
         $employmentType->delete();
 
-        return $this->sendResponse($id, 'Employment Type deleted successfully');
+        return $this->sendResponse($id, trans('custom.employment_type_deleted_successfully'));
     }
 }

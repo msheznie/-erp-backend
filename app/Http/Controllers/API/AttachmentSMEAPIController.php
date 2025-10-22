@@ -66,7 +66,7 @@ class AttachmentSMEAPIController extends AppBaseController
         $this->attachmentSMERepository->pushCriteria(new LimitOffsetCriteria($request));
         $attachmentSMEs = $this->attachmentSMERepository->all();
 
-        return $this->sendResponse($attachmentSMEs->toArray(), 'Attachment S M Es retrieved successfully');
+        return $this->sendResponse($attachmentSMEs->toArray(), trans('custom.attachment_s_m_es_retrieved_successfully'));
     }
 
     /**
@@ -113,7 +113,7 @@ class AttachmentSMEAPIController extends AppBaseController
 
         $attachmentSME = $this->attachmentSMERepository->create($input);
 
-        return $this->sendResponse($attachmentSME->toArray(), 'Attachment S M E saved successfully');
+        return $this->sendResponse($attachmentSME->toArray(), trans('custom.attachment_s_m_e_saved_successfully'));
     }
 
     /**
@@ -161,7 +161,7 @@ class AttachmentSMEAPIController extends AppBaseController
         $column = ['attachmentID', 'attachmentDescription','myFileName', 'fileType'];
         $attachmentSME = $this->attachmentSMERepository->findWhere($where, $column);
 
-        return $this->sendResponse($attachmentSME->toArray(), 'Attachment retrieved successfully');
+        return $this->sendResponse($attachmentSME->toArray(), trans('custom.attachment_retrieved_successfully'));
     }
 
     /**
@@ -218,12 +218,12 @@ class AttachmentSMEAPIController extends AppBaseController
         $attachmentSME = $this->attachmentSMERepository->findWithoutFail($id);
 
         if (empty($attachmentSME)) {
-            return $this->sendError('Attachment S M E not found');
+            return $this->sendError(trans('custom.attachment_s_m_e_not_found'));
         }
 
         $attachmentSME = $this->attachmentSMERepository->update($input, $id);
 
-        return $this->sendResponse($attachmentSME->toArray(), 'AttachmentSME updated successfully');
+        return $this->sendResponse($attachmentSME->toArray(), trans('custom.attachmentsme_updated_successfully'));
     }
 
     /**
@@ -270,7 +270,7 @@ class AttachmentSMEAPIController extends AppBaseController
         $attachmentSME = $this->attachmentSMERepository->findWithoutFail($id);
 
         if (empty($attachmentSME)) {
-            return $this->sendError('Attachment S M E not found');
+            return $this->sendError(trans('custom.attachment_s_m_e_not_found'));
         }
 
         $attachmentSME->delete();

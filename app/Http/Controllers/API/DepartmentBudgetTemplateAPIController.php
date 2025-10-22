@@ -38,7 +38,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($departmentBudgetTemplates->toArray(), 'Department Budget Templates retrieved successfully');
+        return $this->sendResponse($departmentBudgetTemplates->toArray(), trans('custom.department_budget_templates_retrieved_successfully'));
     }
 
     /**
@@ -51,13 +51,13 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
 
         // Check if template is already assigned to department
         if ($this->departmentBudgetTemplateRepository->isTemplateAssigned($input['departmentSystemID'], $input['budgetTemplateID'])) {
-            return $this->sendError('This budget template is already assigned to the department');
+            return $this->sendError(trans('custom.this_budget_template_is_already_assigned_to_the_de'));
         }
 
         // Get the budget template to check its type
         $budgetTemplate = \App\Models\BudgetTemplate::find($input['budgetTemplateID']);
         if (!$budgetTemplate) {
-            return $this->sendError('Budget template not found');
+            return $this->sendError(trans('custom.budget_template_not_found'));
         }
 
         // Check if department already has an active template of the same type
@@ -95,10 +95,10 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
 
         if (empty($departmentBudgetTemplate)) {
-            return $this->sendError('Department Budget Template not found');
+            return $this->sendError(trans('custom.department_budget_template_not_found'));
         }
 
-        return $this->sendResponse($departmentBudgetTemplate->toArray(), 'Department Budget Template retrieved successfully');
+        return $this->sendResponse($departmentBudgetTemplate->toArray(), trans('custom.department_budget_template_retrieved_successfully'));
     }
 
     /**
@@ -110,7 +110,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
 
         if (empty($departmentBudgetTemplate)) {
-            return $this->sendError('Department Budget Template not found');
+            return $this->sendError(trans('custom.department_budget_template_not_found'));
         }
 
         $oldValues = $departmentBudgetTemplate->toArray();
@@ -156,7 +156,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $departmentBudgetTemplate = $this->departmentBudgetTemplateRepository->find($id);
 
         if (empty($departmentBudgetTemplate)) {
-            return $this->sendError('Department Budget Template not found');
+            return $this->sendError(trans('custom.department_budget_template_not_found'));
         }
 
         $previousValue = $departmentBudgetTemplate->toArray();
@@ -171,7 +171,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "department_budget_templates", "Department budget template deleted", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
 
-        return $this->sendResponse($id, 'Department Budget Template deleted successfully');
+        return $this->sendResponse($id, trans('custom.department_budget_template_deleted_successfully'));
     }
 
     /**
@@ -222,7 +222,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
     {
         $templates = $this->departmentBudgetTemplateRepository->getBudgetTemplatesByType($type);
 
-        return $this->sendResponse($templates->toArray(), 'Budget templates retrieved successfully');
+        return $this->sendResponse($templates->toArray(), trans('custom.budget_templates_retrieved_successfully'));
     }
 
     /**
@@ -237,9 +237,9 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 ['value' => 3, 'label' => 'Both']
             ];
 
-            return $this->sendResponse(['budgetTypes' => $budgetTypes], 'Form data retrieved successfully');
+            return $this->sendResponse(['budgetTypes' => $budgetTypes], trans('custom.form_data_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while fetching form data', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_fetching_form_data'), $e->getMessage());
         }
     }
 
@@ -257,9 +257,9 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 ->orderBy('glCode')
                 ->get();
 
-            return $this->sendResponse($chartOfAccounts, 'Chart of accounts retrieved successfully');
+            return $this->sendResponse($chartOfAccounts, trans('custom.chart_of_accounts_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while fetching chart of accounts', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_fetching_chart_of_accounts'), $e->getMessage());
         }
     }
 
@@ -284,7 +284,6 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         if (isset($input['departmentBudgetTemplateID']))
         {
             $tempDetail = \App\Models\DepBudgetTemplateGl::where('departmentBudgetTemplateID', $input['departmentBudgetTemplateID'])->pluck('chartOfAccountSystemID')->toArray();
-            dd($tempDetail);
         }else {
             $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails')->find($input['budgetPlanningID']);
             $departmentBudgeTemplateID = DepartmentBudgetTemplate::where('departmentSystemID',$budgetPlanning->departmentID)->where('budgetTemplateID',$budgetPlanning->budgetPlanningDetails->first()['budget_template_id'])->first();
@@ -293,7 +292,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         }
         $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail))->get();
 
-        return $this->sendResponse($items, 'Chart of accounts retrieved successfully');
+        return $this->sendResponse($items, trans('custom.chart_of_accounts_retrieved_successfully'));
     }
 
     /**
@@ -335,9 +334,9 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 ->orderBy('glCode')
                 ->get();
 
-            return $this->sendResponse($chartOfAccounts, 'Chart of accounts retrieved successfully');
+            return $this->sendResponse($chartOfAccounts, trans('custom.chart_of_accounts_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while fetching chart of accounts', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_fetching_chart_of_accounts'), $e->getMessage());
         }
     }
 
@@ -377,7 +376,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
 
 
             if (!$departmentBudgetTemplate) {
-                return $this->sendError('Department Budget Template not found');
+                return $this->sendError(trans('custom.department_budget_template_not_found'));
             }
 
             // // Delete existing GL assignments for this template
@@ -413,7 +412,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 "Successfully assigned {$assignedCount} GL codes to the budget template"
             );
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while assigning GL codes', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_assigning_gl_codes'), $e->getMessage());
         }
     }
 
@@ -426,7 +425,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             $departmentBudgetTemplateID = $request->get('departmentBudgetTemplateID');
 
             if (!$departmentBudgetTemplateID) {
-                return $this->sendError('Department Budget Template ID is required');
+                return $this->sendError(trans('custom.department_budget_template_id_is_required'));
             }
 
             // Get assigned GL codes with chart of account details
@@ -446,9 +445,9 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
                 ->orderBy('chartofaccounts.AccountCode')
                 ->get();
 
-            return $this->sendResponse($assignedGLCodes, 'Assigned GL codes retrieved successfully');
+            return $this->sendResponse($assignedGLCodes, trans('custom.assigned_gl_codes_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while fetching assigned GL codes', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_fetching_assigned_gl_codes'), $e->getMessage());
         }
     }
 } 

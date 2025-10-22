@@ -235,18 +235,18 @@ class PurchaseRequestRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['PR Code'] = $val->purchaseRequestCode;
-                $data[$x]['Category'] = $val->finance_category? $val->finance_category : '';
-                $data[$x]['Segment'] = $val->segment? $val->segment->ServiceLineDes : '';
-                $data[$x]['Location'] = $val->location_pdf ? $val->location_pdf->locationName : '';
-                $data[$x]['Priority'] = $val->priority_pdf? $val->priority_pdf->priorityDescription : '';
-                $data[$x]['Buyer'] = ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '';
-                $data[$x]['Budget Year'] = $val->budgetYear;
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Internal Note'] = $val->internalNotes;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Status'] = StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.excel_pr_code')] = $val->purchaseRequestCode;
+                $data[$x][trans('custom.excel_category')] = $val->finance_category? $val->finance_category : '';
+                $data[$x][trans('custom.excel_segment')] = $val->segment? $val->segment->ServiceLineDes : '';
+                $data[$x][trans('custom.excel_location')] = $val->location_pdf ? $val->location_pdf->locationName : '';
+                $data[$x][trans('custom.excel_priority')] = $val->priority_pdf? $val->priority_pdf->priorityDescription : '';
+                $data[$x][trans('custom.excel_buyer')] = ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '';
+                $data[$x][trans('custom.excel_budget_year')] = $val->budgetYear;
+                $data[$x][trans('custom.excel_comments')] = $val->comments;
+                $data[$x][trans('custom.excel_internal_note')] = $val->internalNotes;
+                $data[$x][trans('custom.excel_created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.excel_created_at')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.excel_status')] = StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }
@@ -277,55 +277,55 @@ class PurchaseRequestRepository extends BaseRepository
     private function mainHeader() {
         $this->data[] = [
             'IsHeader' => true,
-            'PR Code' => 'PR Code',
-            'Category' => 'Category',
-            'Segment' => 'Segment',
-            'Location' => 'Location',
-            'Priority' => 'Priority',
-            'Buyer' => 'Buyer',
-            'Budget Year' => 'Budget Year',
-            'Comments' => 'Comments',
-            'Internal Note' => 'Internal Note',
-            'Created By' => 'Created By',
-            'Created At' => 'Created At',
-            'Status' => 'Status'
+            trans('custom.excel_pr_code') => trans('custom.excel_pr_code'),
+            trans('custom.excel_category') => trans('custom.excel_category'),
+            trans('custom.excel_segment') => trans('custom.excel_segment'),
+            trans('custom.excel_location') => trans('custom.excel_location'),
+            trans('custom.excel_priority') => trans('custom.excel_priority'),
+            trans('custom.excel_buyer') => trans('custom.excel_buyer'),
+            trans('custom.excel_budget_year') => trans('custom.excel_budget_year'),
+            trans('custom.excel_comments') => trans('custom.excel_comments'),
+            trans('custom.excel_internal_note') => trans('custom.excel_internal_note'),
+            trans('custom.excel_created_by') => trans('custom.excel_created_by'),
+            trans('custom.excel_created_at') => trans('custom.excel_created_at'),
+            trans('custom.excel_status') => trans('custom.excel_status')
         ];
     }
 
     private function headerDetails($val) {
         $this->data[] = [
             'IsHeader' => false,
-            'PR Code' => $val->purchaseRequestCode,
-            'Category' => $val->finance_category ? $val->finance_category : '',
-            'Segment' => $val->segment ? $val->segment->ServiceLineDes : '',
-            'Location' => $val->location_pdf ? $val->location_pdf->locationName : '',
-            'Priority' => $val->priority_pdf ? $val->priority_pdf->priorityDescription : '',
-            'Buyer' => ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '',
-            'Budget Year' => $val->budgetYear,
-            'Comments' => $val->comments,
-            'Internal Note' => $val->internalNotes,
-            'Created By' => $val->created_by? $val->created_by->empName : '',
-            'Created At' =>\Helper::dateFormat($val->createdDateTime),
-            'Status' => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
+            trans('custom.excel_pr_code') => $val->purchaseRequestCode,
+            trans('custom.excel_category') => $val->finance_category ? $val->finance_category : '',
+            trans('custom.excel_segment') => $val->segment ? $val->segment->ServiceLineDes : '',
+            trans('custom.excel_location') => $val->location_pdf ? $val->location_pdf->locationName : '',
+            trans('custom.excel_priority') => $val->priority_pdf ? $val->priority_pdf->priorityDescription : '',
+            trans('custom.excel_buyer') => ($val->buyerEmpSystemID !== null && $val->buyerEmpSystemID != 0) ? $val->buyerEmpName : '',
+            trans('custom.excel_budget_year') => $val->budgetYear,
+            trans('custom.excel_comments') => $val->comments,
+            trans('custom.excel_internal_note') => $val->internalNotes,
+            trans('custom.excel_created_by') => $val->created_by? $val->created_by->empName : '',
+            trans('custom.excel_created_at') =>\Helper::dateFormat($val->createdDateTime),
+            trans('custom.excel_status') => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
         ];
     }
 
     private function detailDetails($val,$currency) {
          if (!empty($val) && count($val) > 0) {
-            $headerOne ['Details'] = 'Details';
+            $headerOne [trans('custom.excel_details')] = trans('custom.excel_details');
             $headerOne ['IsHeader'] = true;
 
             $this->data[] = $headerOne;
             $header = [];
             $header ['IsHeader'] = true;
-            $header['item Code'] = 'Item Code';
-            $header['Description'] = 'Item Description';
-            $header['UOM'] = 'UOM';
-            $header['Qty Requested'] = 'Qty Requested';
-            $header['Estimated Unit Cost'] = 'Estimated Unit Cost (' . $currency . ')';
-            $header['Total'] = 'Total';
-            $header['Qty On Order'] = 'Qty On Order';
-            $header['Qty in Hand'] = 'Qty in Hand';
+            $header[trans('custom.excel_item_code')] = trans('custom.excel_item_code');
+            $header[trans('custom.excel_item_description')] = trans('custom.excel_item_description');
+            $header[trans('custom.excel_uom')] = trans('custom.excel_uom');
+            $header[trans('custom.excel_qty_requested')] = trans('custom.excel_qty_requested');
+            $header[trans('custom.excel_estimated_unit_cost')] = trans('custom.excel_estimated_unit_cost') . ' (' . $currency . ')';
+            $header[trans('custom.excel_total')] = trans('custom.excel_total');
+            $header[trans('custom.excel_qty_on_order')] = trans('custom.excel_qty_on_order');
+            $header[trans('custom.excel_qty_in_hand')] = trans('custom.excel_qty_in_hand');
             $this->data[] = $header;
 
             $totalQtyRequested = 0;
@@ -334,28 +334,28 @@ class PurchaseRequestRepository extends BaseRepository
             foreach ($val as $detail) {
                 $row = [];
                 $row['IsHeader'] =false;
-                $row['item Code'] = $detail->itemPrimaryCode ?? '';
-                $row['Description'] = $detail->itemDescription ?? '';
-                $row['UOM'] = $detail->uom->UnitDes ?? '';
-                $row['Qty Requested'] = $detail->quantityRequested ?? '';
-                $row['Estimated Unit Cost'] = $detail->estimatedCost ?? '';
-                $row['Total'] = $detail->totalCost ?? '';
-                $row['Qty On Order'] = $detail->quantityOnOrder ?? '';
-                $row['Qty in Hand'] = $detail->quantityInHand ?? '';
+                $row[trans('custom.excel_item_code')] = $detail->itemPrimaryCode ?? '';
+                $row[trans('custom.excel_item_description')] = $detail->itemDescription ?? '';
+                $row[trans('custom.excel_uom')] = $detail->uom->UnitDes ?? '';
+                $row[trans('custom.excel_qty_requested')] = $detail->quantityRequested ?? '';
+                $row[trans('custom.excel_estimated_unit_cost')] = $detail->estimatedCost ?? '';
+                $row[trans('custom.excel_total')] = $detail->totalCost ?? '';
+                $row[trans('custom.excel_qty_on_order')] = $detail->quantityOnOrder ?? '';
+                $row[trans('custom.excel_qty_in_hand')] = $detail->quantityInHand ?? '';
                 $this->data[] = $row;
                 $totalQtyRequested += $detail->quantityRequested;
                 $totalCost += $detail->estimatedCost;
             }
             $totalRow = [
                 'IsHeader' => true,
-                'item Code' => '', 
-                'Description' => '',
-                'UOM' => 'Total',
-                'Qty Requested' => $totalQtyRequested,
-                'Estimated Unit Cost' => $totalCost,
-                'Total' => '',
-                'Qty On Order' => '',
-                'Qty in Hand' => ''
+                trans('custom.excel_item_code') => '', 
+                trans('custom.excel_item_description') => '',
+                trans('custom.excel_uom') => trans('custom.excel_total'),
+                trans('custom.excel_qty_requested') => $totalQtyRequested,
+                trans('custom.excel_estimated_unit_cost') => $totalCost,
+                trans('custom.excel_total') => '',
+                trans('custom.excel_qty_on_order') => '',
+                trans('custom.excel_qty_in_hand') => ''
             ];
         $this->data[] = $totalRow;
             $this->data[] = [];

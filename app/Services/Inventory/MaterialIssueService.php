@@ -28,7 +28,7 @@ use function foo\func;
 class MaterialIssueService
 {
 
-    public static  function validateRequestWithQty($input):Array {
+    public static  function validateRequestWithQty($input): array {
         $materielRequest = MaterielRequest::where('RequestID',$input['reqDocID'])->first();
         $totalQuantityRequested = $materielRequest->details->sum('quantityRequested');
         $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$input['reqDocID'])->get();
@@ -38,7 +38,7 @@ class MaterialIssueService
         }
 
         if($totalQuantityRequested != 0 && ($totalQuantityRequested == $totalIssuedQty)) {
-            return ['message' => 'Item/s fully issued for this request'];
+            return ['message' => trans('custom.items_fully_issued_for_request')];
         }
         return [];
     }
@@ -155,7 +155,7 @@ class MaterialIssueService
             self::errorLogUpdate($validatedItems['errorLog'], $materialIssue['itemIssueAutoID']);
         }
 
-        Log::info('Add Material Issue Multiple Items End');
+        Log::info(trans('custom.add_material_issue_multiple_items_end'));
         $materialIssue = ItemIssueMaster::find($materialIssue['itemIssueAutoID']);
         $materialIssue->upload_job_status = 1;
         $materialIssue->isBulkItemJobRun = 0;
@@ -200,20 +200,20 @@ class MaterialIssueService
                             ->first();
 
                         if (!$checkTheCategoryType) {
-                            $validationErrorMsg[] = 'The inventory items added should only be of Item Type: Purchase or Purchase & Sales for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.inventory_items_should_be_purchase_type', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
 
                         $checkItemExist = ItemIssueDetails::where('itemIssueAutoID', $materialIssue['itemIssueAutoID'])->where('itemCodeSystem', $categoryType->itemCodeSystem)->first();
                         if(!empty($checkItemExist)) {
-                            $validationErrorMsg[] = 'The items already added to material issue for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.items_already_added_material_issue', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         } else {
                             $validatedArraylist = collect($excelRows)->take(($rowNumber) - 7);
                             if(!$validatedArraylist->isEmpty()) {
                                 $itemCodeSystemArray = collect($validatedArraylist)->pluck('item_code');
                                 if ($itemCodeSystemArray->contains($rowData['item_code'])) {
-                                    $validationErrorMsg[] = 'The items already added in excel sheet for Excel row: ' . $rowNumber;
+                                    $validationErrorMsg[] = trans('custom.items_already_added_excel_sheet', ['row' => $rowNumber]);
                                     $isValidationError = 1;
                                 }
                             }
@@ -228,7 +228,7 @@ class MaterialIssueService
                             $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                             if (($rowData['qty'] > $itemCurrentCostAndQty['currentStockQty']) || ($rowData['qty'] > $itemCurrentCostAndQty['currentWareHouseStockQty'])) {
-                                $validationErrorMsg[] = 'Stock Qty is 0. You cannot issue. for Excel row: ' . $rowNumber;
+                                $validationErrorMsg[] = trans('custom.stock_qty_zero_cannot_issue_excel', ['row' => $rowNumber]);
                                 $isValidationError = 1;
                             }
                         }
@@ -257,7 +257,7 @@ class MaterialIssueService
                             ->first();
 
                         if (!empty($checkMaterialIssue)) {
-                            $validationErrorMsg[] = 'There is a Material Issue pending for approval for the item you are trying to add. Please check again. for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.material_issue_pending_approval', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
 
@@ -284,7 +284,7 @@ class MaterialIssueService
                             ->first();
 
                         if (!empty($checkStockTransfer)) {
-                            $validationErrorMsg[] = 'There is a Stock Transfer pending for approval for the item you are trying to add. Please check again. for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.stock_transfer_pending_approval', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
 
@@ -310,7 +310,7 @@ class MaterialIssueService
                             ->first();
 
                         if (!empty($checkInvoice)) {
-                            $validationErrorMsg[] = 'There is a Customer Invoice pending for approval for the item you are trying to add. Please check again. for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.customer_invoice_pending_approval', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
 
@@ -330,7 +330,7 @@ class MaterialIssueService
                             ->first();
 
                         if (!empty($checkDeliveryOrder)) {
-                            $validationErrorMsg[] = 'There is a Delivery Order pending for approval for the item you are trying to add. Please check again. for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.delivery_order_pending_approval', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
 
@@ -353,43 +353,43 @@ class MaterialIssueService
                             ->first();
 
                         if (!empty($checkPurchaseReturn)) {
-                            $validationErrorMsg[] = 'There is a Purchase Return pending for approval for the item you are trying to add. Please check again. for Excel row: ' . $rowNumber;
+                            $validationErrorMsg[] = trans('custom.purchase_return_pending_approval', ['row' => $rowNumber]);
                             $isValidationError = 1;
                         }
                     }
                     else {
-                        $validationErrorMsg[] = 'The item code does not match with a system for Excel row: ' . $rowNumber;
+                        $validationErrorMsg[] = trans('custom.item_code_not_match_system', ['row' => $rowNumber]);
                         $isValidationError = 1;
                     }
                 }
                 else {
-                    $validationErrorMsg[] = 'The item code has not been updated for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.item_code_not_updated', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
 
                 if (!isset($rowData['item_description'])) {
-                    $validationErrorMsg[] = 'The item description has not been updated for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.item_description_not_updated', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
 
                 if (isset($rowData['project']) && $rowData['project'] != null) {
                     $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
                     if (!$projectId) {
-                        $validationErrorMsg[] = 'The Project Code not match with system for Excel row: ' . $rowNumber;
+                        $validationErrorMsg[] = trans('custom.project_code_not_match_system', ['row' => $rowNumber]);
                         $isValidationError = 1;
                     }
                 }
 
                 if (!isset($rowData['qty'])) {
-                    $validationErrorMsg[] = 'The item Qty has not been updated for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.item_qty_not_updated', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
                 else if (!is_numeric($rowData['qty'])) {
-                    $validationErrorMsg[] = 'The quantity should be a numeric value for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.quantity_should_be_numeric', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
                 else if ($rowData['qty'] < 0) {
-                    $validationErrorMsg[] = 'The quantity should be a positive value for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.quantity_should_be_positive', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
 

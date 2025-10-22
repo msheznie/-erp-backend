@@ -65,7 +65,7 @@ class POSSourcePaymentGlConfigAPIController extends AppBaseController
         $this->pOSSourcePaymentGlConfigRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourcePaymentGlConfigs = $this->pOSSourcePaymentGlConfigRepository->all();
 
-        return $this->sendResponse($pOSSourcePaymentGlConfigs->toArray(), 'P O S Source Payment Gl Configs retrieved successfully');
+        return $this->sendResponse($pOSSourcePaymentGlConfigs->toArray(), trans('custom.p_o_s_source_payment_gl_configs_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourcePaymentGlConfigAPIController extends AppBaseController
 
         $pOSSourcePaymentGlConfig = $this->pOSSourcePaymentGlConfigRepository->create($input);
 
-        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), 'P O S Source Payment Gl Config saved successfully');
+        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), trans('custom.p_o_s_source_payment_gl_config_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourcePaymentGlConfigAPIController extends AppBaseController
         $pOSSourcePaymentGlConfig = $this->pOSSourcePaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSSourcePaymentGlConfig)) {
-            return $this->sendError('P O S Source Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_source_payment_gl_config_not_found'));
         }
 
-        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), 'P O S Source Payment Gl Config retrieved successfully');
+        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), trans('custom.p_o_s_source_payment_gl_config_retrieved_successfu'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourcePaymentGlConfigAPIController extends AppBaseController
         $pOSSourcePaymentGlConfig = $this->pOSSourcePaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSSourcePaymentGlConfig)) {
-            return $this->sendError('P O S Source Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_source_payment_gl_config_not_found'));
         }
 
         $pOSSourcePaymentGlConfig = $this->pOSSourcePaymentGlConfigRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), 'POSSourcePaymentGlConfig updated successfully');
+        return $this->sendResponse($pOSSourcePaymentGlConfig->toArray(), trans('custom.possourcepaymentglconfig_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourcePaymentGlConfigAPIController extends AppBaseController
         $pOSSourcePaymentGlConfig = $this->pOSSourcePaymentGlConfigRepository->findWithoutFail($id);
 
         if (empty($pOSSourcePaymentGlConfig)) {
-            return $this->sendError('P O S Source Payment Gl Config not found');
+            return $this->sendError(trans('custom.p_o_s_source_payment_gl_config_not_found'));
         }
 
         $pOSSourcePaymentGlConfig->delete();

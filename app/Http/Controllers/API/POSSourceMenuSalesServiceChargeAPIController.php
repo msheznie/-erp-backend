@@ -65,7 +65,7 @@ class POSSourceMenuSalesServiceChargeAPIController extends AppBaseController
         $this->pOSSourceMenuSalesServiceChargeRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceMenuSalesServiceCharges = $this->pOSSourceMenuSalesServiceChargeRepository->all();
 
-        return $this->sendResponse($pOSSourceMenuSalesServiceCharges->toArray(), 'P O S Source Menu Sales Service Charges retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesServiceCharges->toArray(), trans('custom.p_o_s_source_menu_sales_service_charges_retrieved_'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceMenuSalesServiceChargeAPIController extends AppBaseController
 
         $pOSSourceMenuSalesServiceCharge = $this->pOSSourceMenuSalesServiceChargeRepository->create($input);
 
-        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), 'P O S Source Menu Sales Service Charge saved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), trans('custom.p_o_s_source_menu_sales_service_charge_saved_succe'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSSourceMenuSalesServiceCharge = $this->pOSSourceMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Source Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_service_charge_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), 'P O S Source Menu Sales Service Charge retrieved successfully');
+        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), trans('custom.p_o_s_source_menu_sales_service_charge_retrieved_s'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSSourceMenuSalesServiceCharge = $this->pOSSourceMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Source Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_service_charge_not_found'));
         }
 
         $pOSSourceMenuSalesServiceCharge = $this->pOSSourceMenuSalesServiceChargeRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), 'POSSourceMenuSalesServiceCharge updated successfully');
+        return $this->sendResponse($pOSSourceMenuSalesServiceCharge->toArray(), trans('custom.possourcemenusalesservicecharge_updated_successful'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceMenuSalesServiceChargeAPIController extends AppBaseController
         $pOSSourceMenuSalesServiceCharge = $this->pOSSourceMenuSalesServiceChargeRepository->findWithoutFail($id);
 
         if (empty($pOSSourceMenuSalesServiceCharge)) {
-            return $this->sendError('P O S Source Menu Sales Service Charge not found');
+            return $this->sendError(trans('custom.p_o_s_source_menu_sales_service_charge_not_found'));
         }
 
         $pOSSourceMenuSalesServiceCharge->delete();

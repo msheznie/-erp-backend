@@ -44,15 +44,15 @@ class SegmentAllocatedItemRepository extends BaseRepository
     public function allocateSegmentWiseItem($input)
     {
         if (!isset($input['documentSystemID'])) {
-            return ['status' => false, 'message' => 'Document not found'];
+            return ['status' => false, 'message' => trans('custom.document_not_found')];
         }
 
         if (!isset($input['serviceLineSystemID'])) {
-            return ['status' => false, 'message' => 'Please select a segment'];
+            return ['status' => false, 'message' => trans('custom.please_select_segment')];
         }
 
         if (!isset($input['docDetailID'])) {
-            return ['status' => false, 'message' => 'Item line not found'];
+            return ['status' => false, 'message' => trans('custom.item_line_not_found')];
         }
 
         $checkAlreadyAllocated = SegmentAllocatedItem::where('serviceLineSystemID', $input['serviceLineSystemID'])
@@ -62,7 +62,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                                      ->first();
 
         if ($checkAlreadyAllocated) {
-            return ['status' => false, 'message' => 'Item already allocated for selected segment'];
+            return ['status' => false, 'message' => trans('custom.item_already_allocated_for_segment')];
         }
 
         if (in_array($input['documentSystemID'], [1,50,51])) {
@@ -78,7 +78,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $itemData = PurchaseRequestDetails::find($input['docDetailID']);
 
         if (!$itemData) {
-            return ['status' => false, 'message' => 'Item detail not found'];
+            return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
         }
 
         $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
@@ -87,7 +87,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                              ->sum('allocatedQty');
 
         if ($allocatedQty == $itemData->quantityRequested) {
-            return ['status' => false, 'message' => 'No remaining quantity to allocate'];
+            return ['status' => false, 'message' => trans('custom.no_remaining_quantity_to_allocate')];
         }
 
         $allocationData = [
@@ -102,7 +102,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $createRes = SegmentAllocatedItem::create($allocationData);
 
         if (!$createRes) {
-            return ['status' => false, 'message' => 'Error occured while allocating'];
+            return ['status' => false, 'message' => trans('custom.error_occurred_while_allocating')];
         }
 
         return ['status' => true];
@@ -115,7 +115,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $itemData = PurchaseOrderDetails::find($input['docDetailID']);
 
         if (!$itemData) {
-            return ['status' => false, 'message' => 'Item detail not found'];
+            return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
         }
 
         $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
@@ -123,7 +123,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                              ->where('documentDetailAutoID', $input['docDetailID'])
                                              ->sum('allocatedQty');
         if ($allocatedQty == $itemData->noQty) {
-            return ['status' => false, 'message' => 'No remaining quantity to allocate'];
+            return ['status' => false, 'message' => trans('custom.no_remaining_quantity_to_allocate')];
         }
 
         if ($procumentOrder && in_array($procumentOrder->poTypeID, [2, 3])) {
@@ -140,7 +140,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
             $createRes = SegmentAllocatedItem::create($allocationData);
 
             if (!$createRes) {
-                return ['status' => false, 'message' => 'Error occured while allocating'];
+                return ['status' => false, 'message' => trans('custom.error_occurred_while_allocating')];
             }
         } else {
             $purchaseOrderDetail = PurchaseOrderDetails::with(['requestDetail' => function($query) {
@@ -167,7 +167,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $itemData = PurchaseOrderDetails::find($input['docDetailID']);
 
         if (!$itemData) {
-            return ['status' => false, 'message' => 'Item detail not found'];
+            return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
         }
 
         $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['pulledDocumentSystemID'])
@@ -178,7 +178,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $remaining = $allocatedQty->allocatedQty - $allocatedQty->copiedQty;
         
         if ($remaining < floatval($input['allocatedQty'])) {
-            return ['status' => false, 'message' => 'No remaining quantity to allocate'];
+            return ['status' => false, 'message' => trans('custom.no_remaining_quantity_to_allocate')];
         }
 
         $allocationData = [
@@ -195,7 +195,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $createRes = SegmentAllocatedItem::create($allocationData);
 
         if (!$createRes) {
-            return ['status' => false, 'message' => 'Error occured while allocating'];
+            return ['status' => false, 'message' => trans('custom.error_occurred_while_allocating')];
         }
 
         $allocatedQty->copiedQty = $allocatedQty->copiedQty + $input['allocatedQty'];
@@ -210,13 +210,13 @@ class SegmentAllocatedItemRepository extends BaseRepository
         $itemData = PurchaseOrderDetails::find($input['docDetailID']);
 
         if (!$itemData) {
-            return ['status' => false, 'message' => 'Item detail not found'];
+            return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
         }
 
         $requestDetailData = PurchaseRequestDetails::with(['purchase_request'])->find($input['pulledDocumentDetailID']);
 
         if (!$requestDetailData) {
-            return ['status' => false, 'message' => 'request detail detail not found'];
+            return ['status' => false, 'message' => trans('custom.request_detail_not_found')];
         }
 
         $allocatedData = SegmentAllocatedItem::where('documentSystemID', $requestDetailData->purchase_request->documentSystemID)
@@ -238,7 +238,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
             $createRes = SegmentAllocatedItem::create($allocationData);
 
             if (!$createRes) {
-                return ['status' => false, 'message' => 'Error occured while allocating'];
+                return ['status' => false, 'message' => trans('custom.error_occurred_while_allocating')];
             }
 
             $newCopiedQty = ($allocatedQtyFromPR > 0) ? $allocatedQtyFromPR : $value->allocatedQty;
@@ -256,7 +256,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
             $itemData = PurchaseRequestDetails::find($input['documentDetailAutoID']);
 
             if (!$itemData) {
-                return ['status' => false, 'message' => 'Item detail not found'];
+                return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
             }
 
             $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
@@ -268,13 +268,13 @@ class SegmentAllocatedItemRepository extends BaseRepository
             $remainingQty = $itemData->quantityRequested - $allocatedQty;
 
             if ($input['allocatedQty'] > $remainingQty) {
-                return ['status' => false, 'message' => 'quantity cannot be greater than total requested quantity'];
+                return ['status' => false, 'message' => trans('custom.quantity_cannot_be_greater_than_requested')];
             }
         } else {
             $itemData = PurchaseOrderDetails::find($input['documentDetailAutoID']);
 
             if (!$itemData) {
-                return ['status' => false, 'message' => 'Item detail not found'];
+                return ['status' => false, 'message' => trans('custom.item_detail_not_found')];
             }
 
             $allocatedQty = SegmentAllocatedItem::where('documentSystemID', $input['documentSystemID'])
@@ -286,7 +286,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
             $remainingQty = $itemData->noQty - $allocatedQty;
 
             if ($input['allocatedQty'] > $remainingQty) {
-                return ['status' => false, 'message' => 'quantity cannot be greater than total ordered quantity'];
+                return ['status' => false, 'message' => trans('custom.quantity_cannot_be_greater_than_ordered')];
             }
         }
 
@@ -306,7 +306,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                                  ->sum('allocatedQty');
 
             if ($allocatedQty != $value->quantityRequested) {
-                return ['status' => false, 'message' => $value->itemPrimaryCode." is not fully allocated. please allocate the item quantity to segments"];
+                return ['status' => false, 'message' => $value->itemPrimaryCode." " . trans('custom.is_not_fully_allocated_please_allocate')];
             }
         }
 
@@ -326,7 +326,7 @@ class SegmentAllocatedItemRepository extends BaseRepository
                                                  ->sum('allocatedQty');
 
             if ($allocatedQty != $value->noQty) {
-                return ['status' => false, 'message' => $value->itemPrimaryCode." is not fully allocated. please allocate the item quantity to segments"];
+                return ['status' => false, 'message' => $value->itemPrimaryCode." " . trans('custom.is_not_fully_allocated_please_allocate')];
             }
         }
 

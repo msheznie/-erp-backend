@@ -172,17 +172,17 @@ class ItemReturnMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Item Return Code'] = $val->itemReturnCode;
-                $data[$x]['Department'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
-                $data[$x]['Reference No'] = $val->ReturnRefNo;
-                $data[$x]['Return Date'] = \Helper::dateFormat($val->ReturnDate);
-                $data[$x]['Warehouse'] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
-                $data[$x]['Comment'] = $val->comment;
-                $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
-                $data[$x]['Status'] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.item_return_code')] = $val->itemReturnCode;
+                $data[$x][trans('custom.department')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x][trans('custom.reference_no')] = $val->ReturnRefNo;
+                $data[$x][trans('custom.return_date')] = \Helper::dateFormat($val->ReturnDate);
+                $data[$x][trans('custom.warehouse')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
+                $data[$x][trans('custom.comment')] = $val->comment;
+                $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

@@ -51,7 +51,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $this->budgetTemplateRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetTemplates = $this->budgetTemplateRepository->all();
 
-        return $this->sendResponse($budgetTemplates->toArray(), 'Budget Templates retrieved successfully');
+        return $this->sendResponse($budgetTemplates->toArray(), trans('custom.budget_templates_retrieved_successfully_1'));
     }
 
     /**
@@ -76,7 +76,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $budgetTemplate->budgetTemplateID, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been created", "C", $budgetTemplate->toArray(), []);
 
-        return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template saved successfully');
+        return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_saved_successfully'));
     }
 
     /**
@@ -93,10 +93,10 @@ class BudgetTemplateAPIController extends AppBaseController
         $budgetTemplate = $this->budgetTemplateRepository->find($id);
 
         if (empty($budgetTemplate)) {
-            return $this->sendError('Budget Template not found');
+            return $this->sendError(trans('custom.budget_template_not_found_1'));
         }
 
-        return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template retrieved successfully');
+        return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $budgetTemplate = $this->budgetTemplateRepository->find($id);
 
         if (empty($budgetTemplate)) {
-            return $this->sendError('Budget Template not found');
+            return $this->sendError(trans('custom.budget_template_not_found_1'));
         }
 
         $oldValues = $budgetTemplate->toArray();
@@ -125,7 +125,7 @@ class BudgetTemplateAPIController extends AppBaseController
             //check if the template is already default for the same type
             $isDefault = BudgetTemplate::where('type', $budgetTemplate->type)->where('budgetTemplateID','!=',$input['budgetTemplateID'])->where('isDefault', 1)->first();
             if($isDefault) {
-                return $this->sendError('The default template has already been set for the selected type');
+                return $this->sendError(trans('custom.the_default_template_has_already_been_set_for_the_'));
             }
 
             $budgetTemplate->isDefault = $input['isDefault'];
@@ -143,7 +143,7 @@ class BudgetTemplateAPIController extends AppBaseController
             $db = $request->get('db', '');
             $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template default status updated", "U", $budgetTemplate->toArray(), $oldValues);
             
-            return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+            return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
         }
 
         if (isset($input['update']) && $input['update'] == 'linkRequestAmount') {
@@ -156,12 +156,12 @@ class BudgetTemplateAPIController extends AppBaseController
             $db = $request->get('db', '');
             $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template link request amount updated", "U", $budgetTemplate->toArray(), $oldValues);
 
-            return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+            return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
         }
 
         $companyDepartmentTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
         if ($companyDepartmentTemplate) {
-            return $this->sendError('The template already assigned to the department cannot be amended');
+            return $this->sendError(trans('custom.the_template_already_assigned_to_the_department_ca'));
         }
 
         // Set user ID for audit trail
@@ -174,7 +174,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been updated", "U", $budgetTemplate->toArray(), $oldValues);
 
-        return $this->sendResponse($budgetTemplate->toArray(), 'Budget Template updated successfully');
+        return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
     }
 
 
@@ -193,7 +193,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $budgetTemplate = $this->budgetTemplateRepository->find($id);
 
         if (empty($budgetTemplate)) {
-            return $this->sendError('Budget Template not found');
+            return $this->sendError(trans('custom.budget_template_not_found_1'));
         }
 
         $previousValue = $budgetTemplate->toArray();
@@ -201,7 +201,7 @@ class BudgetTemplateAPIController extends AppBaseController
         //check if template is assigned to any department
         $departmentBudgetTemplate = DepartmentBudgetTemplate::where('budgetTemplateID', $id)->first();
         if($departmentBudgetTemplate) {
-            return $this->sendError('The template is assigned to the department cannot be deleted');
+            return $this->sendError(trans('custom.the_template_is_assigned_to_the_department_cannot_'));
         }
 
         //delete all columns assigned to the template
@@ -214,7 +214,7 @@ class BudgetTemplateAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been deleted", "D", [], $previousValue);
 
-        return $this->sendResponse($id, 'Budget Template deleted successfully');
+        return $this->sendResponse($id, trans('custom.budget_template_deleted_successfully'));
     }
 
     /**
@@ -268,7 +268,7 @@ class BudgetTemplateAPIController extends AppBaseController
             ]
         ];
 
-        return $this->sendResponse($data, 'Budget Template form data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.budget_template_form_data_retrieved_successfully'));
     }
 
     /**
@@ -285,9 +285,9 @@ class BudgetTemplateAPIController extends AppBaseController
                 'isActive' => 1
             ]);
 
-            return $this->sendResponse($templates, 'Budget templates retrieved successfully');
+            return $this->sendResponse($templates, trans('custom.budget_templates_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error occurred while fetching budget templates', $e->getMessage());
+            return $this->sendError(trans('custom.error_occurred_while_fetching_budget_templates'), $e->getMessage());
         }
     }
 
@@ -323,7 +323,7 @@ class BudgetTemplateAPIController extends AppBaseController
             ];
         });
 
-        return $this->sendResponse($exportData->toArray(), 'Budget Templates exported successfully');
+        return $this->sendResponse($exportData->toArray(), trans('custom.budget_templates_exported_successfully'));
     }
 
 

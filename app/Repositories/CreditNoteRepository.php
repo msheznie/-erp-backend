@@ -107,7 +107,10 @@ class CreditNoteRepository extends BaseRepository
             ->leftjoin('employees', 'erp_creditnote.createdUserSystemID', '=', 'employees.employeeSystemID')
             ->leftjoin('erp_projectmaster', 'erp_creditnote.projectID', '=', 'erp_projectmaster.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_creditnote.customerID')
-            ->leftjoin('document_system_mapping', 'document_system_mapping.documentId', '=', 'erp_creditnote.creditNoteAutoID')
+            ->leftJoin('document_system_mapping', function ($join) {
+                $join->on('document_system_mapping.documentId', '=', 'erp_creditnote.creditNoteAutoID')
+                    ->where('document_system_mapping.documentSystemId', '=', 19);
+            })
             ->where('erp_creditnote.companySystemID', $input['companyId'])
             ->where('erp_creditnote.documentSystemID', $input['documentId']);
 
@@ -190,14 +193,14 @@ class CreditNoteRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['CN Date'] = \Helper::dateFormat($val->creditNoteDate);
-                $data[$x]['Credit Note Code'] = $val->creditNoteCode;
-                $data[$x]['Customer'] = $val->CutomerCode;
-                $data[$x]['Comments'] = $val->comments;
-                $data[$x]['Created By'] = $val->empName;
-                $data[$x]['Currency'] =$val->CurrencyCode? $val->CurrencyCode : '';
-                $data[$x]['Amount'] = number_format($val->creditAmountTrans, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
-                $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.cn_date')] = \Helper::dateFormat($val->creditNoteDate);
+                $data[$x][trans('custom.credit_note_code')] = $val->creditNoteCode;
+                $data[$x][trans('custom.customer')] = $val->CutomerCode;
+                $data[$x][trans('custom.comments')] = $val->comments;
+                $data[$x][trans('custom.created_by')] = $val->empName;
+                $data[$x][trans('custom.currency')] =$val->CurrencyCode? $val->CurrencyCode : '';
+                $data[$x][trans('custom.amount')] = number_format($val->creditAmountTrans, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
+                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }

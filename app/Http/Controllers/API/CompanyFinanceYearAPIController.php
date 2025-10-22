@@ -457,7 +457,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $assetCapitalization = AssetCapitalization::where('companyFinanceYearID', $id)->first();
 
         if (!empty($grv) || !empty($itemIssue) || !empty($itemReturn) || !empty($stockTransfer) || !empty($stockReceive) || !empty($stockAdjustment) || !empty($purchaseReturn) || !empty($stockCount) || !empty($inventoryClassification) || !empty($supplierInvoice) || !empty($debitNote) || !empty($paymentVoucher) || !empty($customerInvoice) || !empty($creditNote) || !empty($receiptVoucher) || !empty($deliveryOrder) || !empty($salesReturn) || !empty($journal) || !empty($assetDisposal) || !empty($assetCapitalization)) {
-            return $this->sendError('Finance Year cannot be deleted as transactions are available');
+            return $this->sendError(trans('custom.finance_year_cannot_be_deleted_as_transactions_are'));
         }
 
         $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0, 'deleted_at'=>date("Y-m-d H:i:s"), 'isDeleted'=>1,'deletedBy'=>$employee->empName]);

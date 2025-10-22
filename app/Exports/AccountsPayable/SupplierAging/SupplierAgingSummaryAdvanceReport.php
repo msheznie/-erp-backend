@@ -34,34 +34,34 @@ class SupplierAgingSummaryAdvanceReport
     public function getHeader($typeAging, $header) :Array {
         if($typeAging == 1) {
             return array_merge([
-                'Company ID',
-                'Company Name',
-                'Account',
-                'Supplier Code',
-                'Supplier Name',
-                'Supplier Group',
-                'Credit Period',
-                'Currency',
-                'Aging Days',
+                trans('custom.company_id'),
+                trans('custom.company_name'),
+                trans('custom.account'),
+                trans('custom.supplier_code'),
+                trans('custom.supplier_name'),
+                trans('custom.supplier_group'),
+                trans('custom.credit_period'),
+                trans('custom.currency'),
+                trans('custom.aging_days'),
                 ],
                 $header,
                 [
-                'Total'
+                trans('custom.total')
             ]);
         } else {
             return array_merge([
-                'Company ID',
-                'Company Name',
-                'Account',
-                'Employee Code',
-                'Employee Name',
-                'Credit Period',
-                'Currency',
-                'Aging Days',
+                trans('custom.company_id'),
+                trans('custom.company_name'),
+                trans('custom.account'),
+                trans('custom.employee_code'),
+                trans('custom.employee_name'),
+                trans('custom.credit_period'),
+                trans('custom.currency'),
+                trans('custom.aging_days'),
                 ],
                 $header,
                 [
-                'Total'
+                trans('custom.total')
             ]);
         }
     }

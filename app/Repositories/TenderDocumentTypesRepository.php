@@ -73,9 +73,9 @@ class TenderDocumentTypesRepository extends BaseRepository
                         TenderDocumentTypeAssignLog::insert($docTypeAssign) :
                         TenderDocumentTypeAssign::insert($docTypeAssign);
 
-                    return ['success' => true, 'message' => 'Created successfully'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.created_successfully')];
                 } else {
-                    return ['success' => false, 'message' => 'Please select document type'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.please_select_document_type')];
                 }
             });
         } catch(\Exception $ex){
@@ -115,10 +115,10 @@ class TenderDocumentTypesRepository extends BaseRepository
                         $result = TenderDocumentTypeAssign::find($docTypeData->id);
                         $result->delete();
                     }
-                    return ['success' => true, 'message' => 'Successfully deleted'];
+                    return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
 
                 } else {
-                    return ['success' => false, 'message' => 'Tender document type not found'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.tender_document_type_not_found')];
                 }
             });
         } catch(\Exception $ex){

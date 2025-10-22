@@ -65,7 +65,7 @@ class SecondaryCompanyAPIController extends AppBaseController
         $this->secondaryCompanyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $secondaryCompanies = $this->secondaryCompanyRepository->all();
 
-        return $this->sendResponse($secondaryCompanies->toArray(), 'Secondary Companies retrieved successfully');
+        return $this->sendResponse($secondaryCompanies->toArray(), trans('custom.secondary_companies_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SecondaryCompanyAPIController extends AppBaseController
 
         $secondaryCompany = $this->secondaryCompanyRepository->create($input);
 
-        return $this->sendResponse($secondaryCompany->toArray(), 'Secondary Company saved successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), trans('custom.secondary_company_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SecondaryCompanyAPIController extends AppBaseController
         $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
         if (empty($secondaryCompany)) {
-            return $this->sendError('Secondary Company not found');
+            return $this->sendError(trans('custom.secondary_company_not_found'));
         }
 
-        return $this->sendResponse($secondaryCompany->toArray(), 'Secondary Company retrieved successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), trans('custom.secondary_company_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SecondaryCompanyAPIController extends AppBaseController
         $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
         if (empty($secondaryCompany)) {
-            return $this->sendError('Secondary Company not found');
+            return $this->sendError(trans('custom.secondary_company_not_found'));
         }
 
         $secondaryCompany = $this->secondaryCompanyRepository->update($input, $id);
 
-        return $this->sendResponse($secondaryCompany->toArray(), 'SecondaryCompany updated successfully');
+        return $this->sendResponse($secondaryCompany->toArray(), trans('custom.secondarycompany_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class SecondaryCompanyAPIController extends AppBaseController
         $secondaryCompany = $this->secondaryCompanyRepository->findWithoutFail($id);
 
         if (empty($secondaryCompany)) {
-            return $this->sendError('Secondary Company not found');
+            return $this->sendError(trans('custom.secondary_company_not_found'));
         }
 
         $secondaryCompany->delete();
 
-        return $this->sendResponse($id, 'Secondary Company deleted successfully');
+        return $this->sendResponse($id, trans('custom.secondary_company_deleted_successfully'));
     }
 }

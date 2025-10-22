@@ -21,7 +21,7 @@ class ReceiptMatchingAPIController extends AppBaseController
 
         CreateReceiptMatching::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
 
-        return $this->sendResponse(['external_reference' => $externalReference], "Receipt matching request has been successfully queued for processing!");
+        return $this->sendResponse(['external_reference' => $externalReference], trans('custom.receipt_matching_request_has_been_successfully_que'));
         
     }
 } 

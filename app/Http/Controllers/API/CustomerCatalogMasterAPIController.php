@@ -121,7 +121,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $messages = [
-            'catalogID.required' => 'catalog Code field is required'
+            'catalogID.required' => trans('custom.catalog_code_required')
         ];
 
         $validator = \Validator::make($request->all(), [
@@ -267,7 +267,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input,'created_by');
         $messages = [
-            'catalogID.required' => 'Catalog Code field is required'
+            'catalogID.required' => trans('custom.catalog_code_required')
         ];
 
         $validator = \Validator::make($request->all(), [

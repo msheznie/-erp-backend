@@ -10,23 +10,23 @@
         <tr></tr>
         @if ($month != null)
             <tr>
-                <th>As of - {{$month}}</th>
+                <th>{{trans('custom.as_of')}} - {{$month}}</th>
             </tr>
         @endif
 
         @if ($from_date != null && $to_date != null)
             <tr>
-                <th>Period From - {{$from_date}}</th>
+                <th>{{trans('custom.period_from')}} - {{$from_date}}</th>
             </tr>
             <tr>
-                <th>Period To - {{$to_date}} </th>
+                <th>{{trans('custom.period_to')}} - {{$to_date}} </th>
             </tr>
         @endif
-        <tr>Currency: {{$currencyCode}}</tr>
+        <tr>{{trans('custom.currency_label')}}: {{$currencyCode}}</tr>
         <tr></tr>
         <tr></tr>
         <tr>
-            	<th>Description</th>
+            	<th>{{trans('custom.description')}}</th>
             @foreach ($columnHeader as $column)
             <th>{{$column['description']}}</th>
             @endforeach
@@ -52,7 +52,7 @@
         @endforeach
         @if(sizeof($reportData) == 0)
         <tr>
-            <td colspan="{{sizeof($columnHeader)}}">No Records Found</td>
+            <td colspan="{{sizeof($columnHeader)}}">{{trans('custom.no_records_found')}}</td>
         </tr>
         @endif
     </tbody>

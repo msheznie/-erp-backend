@@ -69,7 +69,7 @@ class TenantAPIController extends AppBaseController
         $this->tenantRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenants = $this->tenantRepository->all();
 
-        return $this->sendResponse($tenants->toArray(), 'Tenants retrieved successfully');
+        return $this->sendResponse($tenants->toArray(), trans('custom.tenants_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class TenantAPIController extends AppBaseController
 
         $tenant = $this->tenantRepository->create($input);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant saved successfully');
+        return $this->sendResponse($tenant->toArray(), trans('custom.tenant_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class TenantAPIController extends AppBaseController
         $tenant = $this->tenantRepository->findWithoutFail($id);
 
         if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+            return $this->sendError(trans('custom.tenant_not_found'));
         }
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant retrieved successfully');
+        return $this->sendResponse($tenant->toArray(), trans('custom.tenant_retrieved_successfully'));
     }
 
     /**
@@ -223,12 +223,12 @@ class TenantAPIController extends AppBaseController
         $tenant = $this->tenantRepository->findWithoutFail($id);
 
         if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+            return $this->sendError(trans('custom.tenant_not_found'));
         }
 
         $tenant = $this->tenantRepository->update($input, $id);
 
-        return $this->sendResponse($tenant->toArray(), 'Tenant updated successfully');
+        return $this->sendResponse($tenant->toArray(), trans('custom.tenant_updated_successfully'));
     }
 
     /**
@@ -275,7 +275,7 @@ class TenantAPIController extends AppBaseController
         $tenant = $this->tenantRepository->findWithoutFail($id);
 
         if (empty($tenant)) {
-            return $this->sendError('Tenant not found');
+            return $this->sendError(trans('custom.tenant_not_found'));
         }
 
         $tenant->delete();
@@ -291,6 +291,6 @@ class TenantAPIController extends AppBaseController
 
         $output = TaxService::poLogisticVATDistributionForGRV(58732);
 
-        return $this->sendResponse($output, 'retrieved successfully' . $request->input('api_key'));
+        return $this->sendResponse($output, trans('custom.retrieved_successfully_1') . $request->input('api_key'));
     }
 }

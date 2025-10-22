@@ -90,7 +90,6 @@ class BudgetPermissionService
                     $allParentIDs = CompanyDepartment::getAllParentIDs($budgetPlanning->departmentID);
                     
                     if(in_array($assignedDepartmentByBudget->department->departmentSystemID, $allParentIDs))
-
                     {
                         $actions = $actions->where('parent',1);
                     }else {
@@ -98,7 +97,6 @@ class BudgetPermissionService
                     }
 
                     $actions = $actions->pluck('hodActionID')->toArray();
-
 
                     $userPermissions['hodUser']['access'] = $actions;
 

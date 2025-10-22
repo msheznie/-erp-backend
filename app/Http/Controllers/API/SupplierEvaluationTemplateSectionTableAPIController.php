@@ -87,7 +87,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $this->supplierEvaluationTemplateSectionTableRepository->pushCriteria(new LimitOffsetCriteria($request));
         $supplierEvaluationTemplateSectionTables = $this->supplierEvaluationTemplateSectionTableRepository->all();
 
-        return $this->sendResponse($supplierEvaluationTemplateSectionTables->toArray(), 'Supplier Evaluation Template Section Tables retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTables->toArray(), trans('custom.supplier_evaluation_template_section_tables_retrie'));
     }
 
     /**
@@ -254,7 +254,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                                                                         ->where('formulaType' ,$sectionformulaInput['formulaType'])
                                                                         ->count();
                     if($duplicateCheckCount > 0){
-                        return $this->sendError('Same formula type can not be multiple times for a single table' , 500);
+                        return $this->sendError(trans('custom.same_formula_type_cannot_be_multiple_times'), 500);
                     }
                     // Create the supplier evaluation template section formula
                     $evaluationTemplateSectionFormula = $this->evaluationTemplateSectionFormulaRepository->create($sectionformulaInput);
@@ -270,7 +270,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
             }
 
             DB::commit();
-            return $this->sendResponse($data, 'Supplier Evaluation Template Section saved successfully');
+            return $this->sendResponse($data, trans('custom.supplier_evaluation_template_section_saved_success'));
     
         } catch (\Exception $exception) {
             DB::rollBack();
@@ -290,13 +290,13 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
                                                                                     ->count();
     
         if($validateTableColumn > 0){
-            return $this->sendError('Column type or column header can not be empty', 500);                                                
+            return $this->sendError(trans('custom.column_type_or_header_cannot_be_empty'), 500);                                                
         } else {
             $updateData = [
                 'isConfirmed' => 1
             ];
             $confirmTable = SupplierEvaluationTemplateSectionTable::where('id', $input['id'])->update($updateData);
-             return $this->sendResponse($confirmTable, 'Confirmed table successfully');
+             return $this->sendResponse($confirmTable, trans('custom.confirmed_table_successfully'));
         }
 
     }
@@ -309,7 +309,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
 
             $evaluationMaster = SupplierEvaluationMasters::where('id',$input['evaluationMasterId'] )->first();
             if(!$evaluationMaster){
-                return $this->sendError('Evaluation master not found', 500);                                                
+                return $this->sendError(trans('custom.evaluation_master_not_found'), 500);                                                
             }
             $input['is_disabled'] = 1;
             $input['evaluationMasterType'] = $evaluationMaster->type;
@@ -328,15 +328,15 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
 
 
                     if($scoreColumnCount > 0){
-                        return $this->sendError('Only General Master evaluation type can be multiple columns', 500);                                                
+                        return $this->sendError(trans('custom.only_general_master_evaluation_type_multiple_columns'), 500);                                                
                     }
 
                     if ($evaluationMaster->type == 1 ){
-                        $columnHeader = 'Score(Number)';
+                        $columnHeader = trans('custom.score_number');
                         $columnType = 4;
                     }
                     if ($evaluationMaster->type == 2 ){
-                        $columnHeader = 'Score(Rating)';
+                        $columnHeader = trans('custom.score_rating');
                         $columnType = 5;
                     }
 
@@ -391,7 +391,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
             ];
 
             DB::commit();
-            return $this->sendResponse($data, 'Master columns created successfully');
+            return $this->sendResponse($data, trans('custom.master_columns_created_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage() . $exception->getLine());
@@ -423,7 +423,7 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
             });
         }
 
-        return $this->sendResponse($evaluationTemplateSection, 'Evaluation template section retrieved successfully');
+        return $this->sendResponse($evaluationTemplateSection, trans('custom.evaluation_template_section_retrieved_successfully_1'));
 
     }
     
@@ -472,10 +472,10 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $supplierEvaluationTemplateSectionTable = $this->supplierEvaluationTemplateSectionTableRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateSectionTable)) {
-            return $this->sendError('Supplier Evaluation Template Section Table not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_not_fou'));
         }
 
-        return $this->sendResponse($supplierEvaluationTemplateSectionTable->toArray(), 'Supplier Evaluation Template Section Table retrieved successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTable->toArray(), trans('custom.supplier_evaluation_template_section_table_retriev'));
     }
 
     /**
@@ -542,13 +542,13 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $supplierEvaluationTemplateSectionTable = $this->supplierEvaluationTemplateSectionTableRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateSectionTable)) {
-            return $this->sendError('Supplier Evaluation Template Section Table not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_not_fou'));
         }
 
         $supplierEvaluationTemplateSectionTable = $this->supplierEvaluationTemplateSectionTableRepository->update($input, $id);
 
         
-        return $this->sendResponse($supplierEvaluationTemplateSectionTable->toArray(), 'SupplierEvaluationTemplateSectionTable updated successfully');
+        return $this->sendResponse($supplierEvaluationTemplateSectionTable->toArray(), trans('custom.supplierevaluationtemplatesectiontable_updated_suc'));
     }
 
     /**
@@ -596,14 +596,14 @@ class SupplierEvaluationTemplateSectionTableAPIController extends AppBaseControl
         $supplierEvaluationTemplateSectionTable = $this->supplierEvaluationTemplateSectionTableRepository->findWithoutFail($id);
 
         if (empty($supplierEvaluationTemplateSectionTable)) {
-            return $this->sendError('Supplier Evaluation Template Section Table not found');
+            return $this->sendError(trans('custom.supplier_evaluation_template_section_table_not_fou'));
         }
 
         $supplierEvaluationTemplateSectionTable->delete();
 
         $tableFormula = EvaluationTemplateSectionFormula::where('table_id', $id)->delete();
 
-        return $this->sendResponse($id,'Supplier Evaluation Template Section Table deleted successfully');
+        return $this->sendResponse($id,trans('custom.supplier_evaluation_template_section_table_deleted'));
 
     }
 }

@@ -77,7 +77,7 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         $this->purchaseRequestReferredRepository->pushCriteria(new LimitOffsetCriteria($request));
         $purchaseRequestReferreds = $this->purchaseRequestReferredRepository->all();
 
-        return $this->sendResponse($purchaseRequestReferreds->toArray(), 'Purchase Request Referreds retrieved successfully');
+        return $this->sendResponse($purchaseRequestReferreds->toArray(), trans('custom.purchase_request_referreds_retrieved_successfully'));
     }
 
     /**
@@ -124,7 +124,7 @@ class PurchaseRequestReferredAPIController extends AppBaseController
 
         $purchaseRequestReferreds = $this->purchaseRequestReferredRepository->create($input);
 
-        return $this->sendResponse($purchaseRequestReferreds->toArray(), 'Purchase Request Referred saved successfully');
+        return $this->sendResponse($purchaseRequestReferreds->toArray(), trans('custom.purchase_request_referred_saved_successfully'));
     }
 
     /**
@@ -171,10 +171,10 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         $purchaseRequestReferred = $this->purchaseRequestReferredRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($purchaseRequestReferred)) {
-            return $this->sendError('Purchase Request Referred not found');
+            return $this->sendError(trans('custom.purchase_request_referred_not_found'));
         }
 
-        return $this->sendResponse($purchaseRequestReferred->toArray(), 'Purchase Request Referred retrieved successfully');
+        return $this->sendResponse($purchaseRequestReferred->toArray(), trans('custom.purchase_request_referred_retrieved_successfully'));
     }
 
 
@@ -186,10 +186,10 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         $purchaseRequestReferred = $this->purchaseRequestReferredRepository->with(['created_by', 'confirmed_by', 'segment'])->findWithoutFail($id);
 
         if (empty($purchaseRequestReferred)) {
-            return $this->sendError('Purchase Request Referred not found');
+            return $this->sendError(trans('custom.purchase_request_referred_not_found'));
         }
 
-        return $this->sendResponse($purchaseRequestReferred, 'Purchase Request Referred retrieved successfully');
+        return $this->sendResponse($purchaseRequestReferred, trans('custom.purchase_request_referred_retrieved_successfully'));
 
     }
 
@@ -247,12 +247,12 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         $purchaseRequestReferred = $this->purchaseRequestReferredRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestReferred)) {
-            return $this->sendError('Purchase Request Referred not found');
+            return $this->sendError(trans('custom.purchase_request_referred_not_found'));
         }
 
         $purchaseRequestReferred = $this->purchaseRequestReferredRepository->update($input, $id);
 
-        return $this->sendResponse($purchaseRequestReferred->toArray(), 'PurchaseRequestReferred updated successfully');
+        return $this->sendResponse($purchaseRequestReferred->toArray(), trans('custom.purchaserequestreferred_updated_successfully'));
     }
 
     /**
@@ -299,12 +299,12 @@ class PurchaseRequestReferredAPIController extends AppBaseController
         $purchaseRequestReferred = $this->purchaseRequestReferredRepository->findWithoutFail($id);
 
         if (empty($purchaseRequestReferred)) {
-            return $this->sendError('Purchase Request Referred not found');
+            return $this->sendError(trans('custom.purchase_request_referred_not_found'));
         }
 
         $purchaseRequestReferred->delete();
 
-        return $this->sendResponse($id, 'Purchase Request Referred deleted successfully');
+        return $this->sendResponse($id, trans('custom.purchase_request_referred_deleted_successfully'));
     }
 
     public function getPrMasterAmendHistory(Request $request)
@@ -315,6 +315,6 @@ class PurchaseRequestReferredAPIController extends AppBaseController
             ->with(['created_by','location','financeCategory','segment','approved_by', 'priority'])
             ->get();
 
-        return $this->sendResponse($procumentOrderHistory, 'Purchase Request Master retrieved successfully');
+        return $this->sendResponse($procumentOrderHistory, trans('custom.purchase_request_master_retrieved_successfully'));
     }
 }

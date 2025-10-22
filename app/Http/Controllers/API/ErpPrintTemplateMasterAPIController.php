@@ -65,7 +65,7 @@ class ErpPrintTemplateMasterAPIController extends AppBaseController
         $this->erpPrintTemplateMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpPrintTemplateMasters = $this->erpPrintTemplateMasterRepository->all();
 
-        return $this->sendResponse($erpPrintTemplateMasters->toArray(), 'Erp Print Template Masters retrieved successfully');
+        return $this->sendResponse($erpPrintTemplateMasters->toArray(), trans('custom.erp_print_template_masters_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class ErpPrintTemplateMasterAPIController extends AppBaseController
 
         $erpPrintTemplateMaster = $this->erpPrintTemplateMasterRepository->create($input);
 
-        return $this->sendResponse($erpPrintTemplateMaster->toArray(), 'Erp Print Template Master saved successfully');
+        return $this->sendResponse($erpPrintTemplateMaster->toArray(), trans('custom.erp_print_template_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class ErpPrintTemplateMasterAPIController extends AppBaseController
         $erpPrintTemplateMaster = $this->erpPrintTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($erpPrintTemplateMaster)) {
-            return $this->sendError('Erp Print Template Master not found');
+            return $this->sendError(trans('custom.erp_print_template_master_not_found'));
         }
 
-        return $this->sendResponse($erpPrintTemplateMaster->toArray(), 'Erp Print Template Master retrieved successfully');
+        return $this->sendResponse($erpPrintTemplateMaster->toArray(), trans('custom.erp_print_template_master_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class ErpPrintTemplateMasterAPIController extends AppBaseController
         $erpPrintTemplateMaster = $this->erpPrintTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($erpPrintTemplateMaster)) {
-            return $this->sendError('Erp Print Template Master not found');
+            return $this->sendError(trans('custom.erp_print_template_master_not_found'));
         }
 
         $erpPrintTemplateMaster = $this->erpPrintTemplateMasterRepository->update($input, $id);
 
-        return $this->sendResponse($erpPrintTemplateMaster->toArray(), 'ErpPrintTemplateMaster updated successfully');
+        return $this->sendResponse($erpPrintTemplateMaster->toArray(), trans('custom.erpprinttemplatemaster_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class ErpPrintTemplateMasterAPIController extends AppBaseController
         $erpPrintTemplateMaster = $this->erpPrintTemplateMasterRepository->findWithoutFail($id);
 
         if (empty($erpPrintTemplateMaster)) {
-            return $this->sendError('Erp Print Template Master not found');
+            return $this->sendError(trans('custom.erp_print_template_master_not_found'));
         }
 
         $erpPrintTemplateMaster->delete();
 
-        return $this->sendResponse($id, 'Erp Print Template Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.erp_print_template_master_deleted_successfully'));
     }
 }

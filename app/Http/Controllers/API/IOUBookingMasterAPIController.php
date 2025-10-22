@@ -64,7 +64,7 @@ class IOUBookingMasterAPIController extends AppBaseController
         $this->iOUBookingMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $iOUBookingMasters = $this->iOUBookingMasterRepository->all();
 
-        return $this->sendResponse($iOUBookingMasters->toArray(), 'I O U Booking Masters retrieved successfully');
+        return $this->sendResponse($iOUBookingMasters->toArray(), trans('custom.i_o_u_booking_masters_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class IOUBookingMasterAPIController extends AppBaseController
 
         $iOUBookingMaster = $this->iOUBookingMasterRepository->create($input);
 
-        return $this->sendResponse($iOUBookingMaster->toArray(), 'I O U Booking Master saved successfully');
+        return $this->sendResponse($iOUBookingMaster->toArray(), trans('custom.i_o_u_booking_master_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class IOUBookingMasterAPIController extends AppBaseController
         $iOUBookingMaster = $this->iOUBookingMasterRepository->findWithoutFail($id);
 
         if (empty($iOUBookingMaster)) {
-            return $this->sendError('I O U Booking Master not found');
+            return $this->sendError(trans('custom.i_o_u_booking_master_not_found'));
         }
 
-        return $this->sendResponse($iOUBookingMaster->toArray(), 'I O U Booking Master retrieved successfully');
+        return $this->sendResponse($iOUBookingMaster->toArray(), trans('custom.i_o_u_booking_master_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class IOUBookingMasterAPIController extends AppBaseController
         $iOUBookingMaster = $this->iOUBookingMasterRepository->findWithoutFail($id);
 
         if (empty($iOUBookingMaster)) {
-            return $this->sendError('I O U Booking Master not found');
+            return $this->sendError(trans('custom.i_o_u_booking_master_not_found'));
         }
 
         $iOUBookingMaster = $this->iOUBookingMasterRepository->update($input, $id);
 
-        return $this->sendResponse($iOUBookingMaster->toArray(), 'IOUBookingMaster updated successfully');
+        return $this->sendResponse($iOUBookingMaster->toArray(), trans('custom.ioubookingmaster_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class IOUBookingMasterAPIController extends AppBaseController
         $iOUBookingMaster = $this->iOUBookingMasterRepository->findWithoutFail($id);
 
         if (empty($iOUBookingMaster)) {
-            return $this->sendError('I O U Booking Master not found');
+            return $this->sendError(trans('custom.i_o_u_booking_master_not_found'));
         }
 
         $iOUBookingMaster->delete();

@@ -82,7 +82,7 @@ class ErpProjectMasterAPIController extends AppBaseController
         $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')
                                             ->whereIN('companySystemID', $companyID)
                                             ->get();
-        return $this->sendResponse($projectMaster, 'Projects retrieved successfully');
+        return $this->sendResponse($projectMaster, trans('custom.projects_retrieved_successfully'));
     }
 
     public function index(Request $request)
@@ -195,7 +195,7 @@ class ErpProjectMasterAPIController extends AppBaseController
         $checkProjectCode = ErpProjectMaster::where('projectCode',$projectCode)->first();
 
         if($checkProjectCode){
-            return $this->sendError('Project Code Already Exist', 500);
+            return $this->sendError(trans('custom.project_code_already_exist'), 500);
         }
 
         if (isset($input['companySystemID'])) {
@@ -226,7 +226,7 @@ class ErpProjectMasterAPIController extends AppBaseController
 
         $erpProjectMaster = $this->erpProjectMasterRepository->create($input);
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master saved successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), trans('custom.project_master_saved_successfully'));
     }
 
     /**
@@ -274,10 +274,10 @@ class ErpProjectMasterAPIController extends AppBaseController
        $erpProjectMaster = $this->erpProjectMasterRepository->with('gl_details')->findWithoutFail($id);
 
         if (empty($erpProjectMaster)) {
-            return $this->sendError('Erp Project Master not found');
+            return $this->sendError(trans('custom.erp_project_master_not_found'));
         }
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master retrieved successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), trans('custom.project_master_retrieved_successfully'));
     }
 
     /**
@@ -335,7 +335,7 @@ class ErpProjectMasterAPIController extends AppBaseController
         $erpProjectMaster = $this->erpProjectMasterRepository->findWithoutFail($id);
 
         if (empty($erpProjectMaster)) {
-            return $this->sendError('Erp Project Master not found');
+            return $this->sendError(trans('custom.erp_project_master_not_found'));
         }
 
         if (isset($input['companySystemID'])) {
@@ -364,7 +364,7 @@ class ErpProjectMasterAPIController extends AppBaseController
 
         $erpProjectMaster = $this->erpProjectMasterRepository->update($input, $id);
 
-        return $this->sendResponse($erpProjectMaster->toArray(), 'Project Master updated successfully');
+        return $this->sendResponse($erpProjectMaster->toArray(), trans('custom.project_master_updated_successfully'));
     }
 
     /**
@@ -412,7 +412,7 @@ class ErpProjectMasterAPIController extends AppBaseController
         $erpProjectMaster = $this->erpProjectMasterRepository->findWithoutFail($id);
 
         if (empty($erpProjectMaster)) {
-            return $this->sendError('Project Master not found');
+            return $this->sendError(trans('custom.project_master_not_found'));
         }
 
         $erpProjectMaster->delete();
@@ -439,6 +439,6 @@ class ErpProjectMasterAPIController extends AppBaseController
 
         $companySystemID = $request['companySystemID'];
         $serviceLines = SegmentMaster::where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
-        return $this->sendResponse($serviceLines, 'Segments Projects retrieved successfully');
+        return $this->sendResponse($serviceLines, trans('custom.segments_projects_retrieved_successfully'));
     }
 }

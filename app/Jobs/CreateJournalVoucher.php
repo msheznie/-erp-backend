@@ -232,7 +232,7 @@ class CreateJournalVoucher implements ShouldQueue
         if(!empty($errorDocuments)) {
             $returnData[] = [
                 'success' => false,
-                'message' => "Validation Failed",
+                'message' => trans('custom.validation_failed'),
                 'code' => 422,
                 'errors' => $errorDocuments
             ];
@@ -241,7 +241,7 @@ class CreateJournalVoucher implements ShouldQueue
         if(!empty($successDocuments)) {
             $returnData[] = [
                 'success' => true,
-                'message' => "Journal voucher created Successfully!",
+                'message' => trans('custom.journal_voucher_created_successfully'),
                 'code' => 200,
                 'data' => $successDocuments
             ];
@@ -299,7 +299,7 @@ class CreateJournalVoucher implements ShouldQueue
                 if ($request['journalVoucherType'] != 1) {
                     $errorData[] = [
                         'field' => "journalVoucherType",
-                        'message' => ["journalVoucherType format is invalid"]
+                        'message' => [trans('custom.journal_voucher_type_format_invalid')]
                     ];
                 }
                 else {
@@ -309,14 +309,14 @@ class CreateJournalVoucher implements ShouldQueue
             else {
                 $errorData[] = [
                     'field' => "journalVoucherType",
-                    'message' => ["journalVoucherType must be an integer"]
+                        'message' => [trans('custom.journal_voucher_type_must_be_integer')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "journalVoucherType",
-                'message' => ["journalVoucherType field is required"]
+                        'message' => [trans('custom.journal_voucher_type_field_required')]
             ];
         }
 
@@ -331,21 +331,21 @@ class CreateJournalVoucher implements ShouldQueue
             else {
                 $errorData[] = [
                     'field' => "currency",
-                    'message' => ["Invalid Currency"]
+                        'message' => [trans('custom.invalid_currency')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "currency",
-                'message' => ["currency field is required"]
+                        'message' => [trans('custom.currency_field_required')]
             ];
         }
 
         if (!isset($request['narration'])) {
             $errorData[] = [
                 'field' => "narration",
-                'message' => ["narration field is required"]
+                        'message' => [trans('custom.narration_field_required')]
             ];
             $errorData[] = $fieldErrors;
         }
@@ -393,7 +393,7 @@ class CreateJournalVoucher implements ShouldQueue
                                                     if(!$reversalJVDate->greaterThan($documentDate)) {
                                                         $errorData[] = [
                                                             'field' => "reversalDate",
-                                                            'message' => ["Reversal JV date cannot be less than or equal to the document date"]
+                                                            'message' => [trans('custom.reversal_jv_date_cannot_be_less_than_document_date')]
                                                         ];
                                                     }
 
@@ -402,21 +402,21 @@ class CreateJournalVoucher implements ShouldQueue
                                                     if (!$reversalJVDate->greaterThan($today)) {
                                                         $errorData[] = [
                                                             'field' => "reversalDate",
-                                                            'message' => ["Reversal JV date cannot be less than or equal to the current date"]
+                                                            'message' => [trans('custom.reversal_jv_date_cannot_be_less_than_current_date')]
                                                         ];
                                                     }
                                                 }
                                                 else {
                                                     $errorData[] = [
                                                         'field' => "reversalDate",
-                                                        'message' => ["reversalDate format is invalid"]
+                                                        'message' => [trans('custom.reversal_date_format_invalid')]
                                                     ];
                                                 }
                                             }
                                             else {
                                                 $errorData[] = [
                                                     'field' => "reversalDate",
-                                                    'message' => ["reversalDate field is required"]
+                                                    'message' => [trans('custom.reversal_date_field_required')]
                                                 ];
                                             }
                                         }
@@ -428,14 +428,14 @@ class CreateJournalVoucher implements ShouldQueue
                                     else {
                                         $errorData[] = [
                                             'field' => "reversalJV",
-                                            'message' => ["reversalJV format is invalid"]
+                                            'message' => [trans('custom.reversal_jv_format_invalid')]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "reversalJV",
-                                        'message' => ["reversalJV mus be an integer"]
+                                        'message' => [trans('custom.reversal_jv_must_be_integer')]
                                     ];
                                 }
                             }
@@ -447,35 +447,35 @@ class CreateJournalVoucher implements ShouldQueue
                         else {
                             $errorData[] = [
                                 'field' => "jvDate",
-                                'message' => ["Finance Period Not Active"]
+                                'message' => [trans('custom.finance_period_not_active')]
                             ];
                         }
                     }
                     else{
                         $errorData[] = [
                             'field' => "jvDate",
-                            'message' => ["Finance Year Not Found"]
+                            'message' => [trans('custom.finance_year_not_found')]
                         ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "jvDate",
-                        'message' => ["The Journal voucher date must be today or before"]
+                        'message' => [trans('custom.journal_voucher_date_must_be_today_or_before')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "jvDate",
-                    'message' => ["jvDate format is invalid"]
+                        'message' => [trans('custom.jv_date_format_invalid')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "jvDate",
-                'message' => ["jvDate field is required"]
+                        'message' => [trans('custom.jv_date_field_required')]
             ];
         }
 
@@ -487,14 +487,14 @@ class CreateJournalVoucher implements ShouldQueue
                 else {
                     $errorData[] = [
                         'field' => "relatedParty",
-                        'message' => ["relatedParty format is invalid"]
+                        'message' => [trans('custom.related_party_format_invalid')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "relatedParty",
-                    'message' => ["relatedParty mus be an integer"]
+                        'message' => [trans('custom.related_party_must_be_integer')]
                 ];
             }
         }
@@ -514,21 +514,21 @@ class CreateJournalVoucher implements ShouldQueue
                 if($totalCredit != $totalDebit) {
                     $errorData[] = [
                         'field' => "details",
-                        'message' => ["Debit amount total and credit amount total is not matching"]
+                        'message' => [trans('custom.debit_amount_total_and_credit_amount_total_is_not_matching')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "details",
-                    'message' => ["details cannot be less than two"]
+                        'message' => [trans('custom.details_cannot_be_less_than_two')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "details",
-                'message' => ["details field is required"]
+                        'message' => [trans('custom.details_field_required')]
             ];
         }
 
@@ -584,7 +584,7 @@ class CreateJournalVoucher implements ShouldQueue
                 if($chartOfAccountAssign->controllAccountYN == 1) {
                     $errorData[] = [
                         'field' => 'glCode',
-                        'message' => ['Journal voucher creation is not allowed with a control account.']
+                        'message' => [trans('custom.journal_voucher_creation_not_allowed_with_control_account')]
                     ];
                 }
                 else {
@@ -594,14 +594,14 @@ class CreateJournalVoucher implements ShouldQueue
             else {
                 $errorData[] = [
                     'field' => 'glCode',
-                    'message' => ['GlCode not found']
+                        'message' => [trans('custom.gl_code_not_found')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "glCode",
-                'message' => ["glCode field is required"]
+                        'message' => [trans('custom.gl_code_field_required')]
             ];
         }
 
@@ -619,14 +619,14 @@ class CreateJournalVoucher implements ShouldQueue
                 else {
                     $errorData[] = [
                         'field' => 'project',
-                        'message' => ['Project code not found in the system']
+                        'message' => [trans('custom.project_code_not_found_in_system')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => 'project',
-                    'message' => ['Project not enabled']
+                        'message' => [trans('custom.project_not_enabled')]
                 ];
             }
         }
@@ -645,7 +645,7 @@ class CreateJournalVoucher implements ShouldQueue
                 if($segment->approved_yn == 0) {
                     $errorData[] = [
                             'field' => "segment",
-                            'message' => ["The segment is not approved"]
+                            'message' => [trans('custom.segment_not_approved')]
                         ];
                 } else {
                     $segmentAssigned = SegmentAssigned::where('serviceLineSystemID',$segment->serviceLineSystemID)
@@ -656,7 +656,7 @@ class CreateJournalVoucher implements ShouldQueue
                     if(!$segmentAssigned){
                         $errorData[] = [
                             'field' => "segment",
-                            'message' => ["The segment not assigned to selected company"]
+                            'message' => [trans('custom.segment_not_assigned_to_company')]
                         ];
                     } else {
                         $request['segmentID'] = $segment->serviceLineSystemID;
@@ -665,13 +665,13 @@ class CreateJournalVoucher implements ShouldQueue
             } else {
                 $errorData[] = [
                     'field' => 'segment',
-                    'message' => ['Segment not found']
+                    'message' => [trans('custom.segment_not_found')]
                 ];
             }
         } else {
             $errorData[] = [
                 'field' => "segment",
-                'message' => ["segment field is required"]
+                        'message' => [trans('custom.segment_field_required')]
             ];
         }
 
@@ -691,14 +691,14 @@ class CreateJournalVoucher implements ShouldQueue
                 else {
                     $errorData[] = [
                         'field' => 'clientContract',
-                        'message' => ['Client Contract not found in the system']
+                        'message' => [trans('custom.client_contract_not_found_in_system')]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => 'clientContract',
-                    'message' => ['clientContract not enabled']
+                        'message' => [trans('custom.client_contract_not_enabled')]
                 ];
             }
         }
@@ -714,14 +714,14 @@ class CreateJournalVoucher implements ShouldQueue
             else {
                 $errorData[] = [
                     'field' => "debitAmount",
-                    'message' => ["debitAmount must be a numeric"]
+                        'message' => [trans('custom.debit_amount_must_be_numeric')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "debitAmount",
-                'message' => ["debitAmount field is required"]
+                        'message' => [trans('custom.debit_amount_field_required')]
             ];
         }
 
@@ -733,14 +733,14 @@ class CreateJournalVoucher implements ShouldQueue
             else {
                 $errorData[] = [
                     'field' => "creditAmount",
-                    'message' => ["creditAmount must be a numeric"]
+                        'message' => [trans('custom.credit_amount_must_be_numeric')]
                 ];
             }
         }
         else {
             $errorData[] = [
                 'field' => "creditAmount",
-                'message' => ["creditAmount field is required"]
+                        'message' => [trans('custom.credit_amount_field_required')]
             ];
         }
 
@@ -748,25 +748,25 @@ class CreateJournalVoucher implements ShouldQueue
             if($request['creditAmount'] < 0) {
                 $errorData[] = [
                     'field' => "creditAmount",
-                    'message' => ["Credit amount cannot less than 0"]
+                        'message' => [trans('custom.credit_amount_cannot_less_than_zero')]
                 ];
             }
 
             if($request['debitAmount'] < 0) {
                 $errorData[] = [
                     'field' => "debitAmount",
-                    'message' => ["Debit amount cannot less than 0"]
+                        'message' => [trans('custom.debit_amount_cannot_less_than_zero')]
                 ];
             }
 
             if(($request['creditAmount'] > 0) && ($request['debitAmount'] > 0)) {
                 $errorData[] = [
                     'field' => "debitAmount",
-                    'message' => ["Cannot enter both credit and debit amount same time"]
+                        'message' => [trans('custom.cannot_enter_both_credit_and_debit_amount_same_time')]
                 ];
                 $errorData[] = [
                     'field' => "creditAmount",
-                    'message' => ["Cannot enter both credit and debit amount same time"]
+                        'message' => [trans('custom.cannot_enter_both_credit_and_debit_amount_same_time')]
                 ];
             }
         }

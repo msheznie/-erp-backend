@@ -64,7 +64,7 @@ class CommercialBidRankingItemsAPIController extends AppBaseController
         $this->commercialBidRankingItemsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->all();
 
-        return $this->sendResponse($commercialBidRankingItems->toArray(), 'Commercial Bid Ranking Items retrieved successfully');
+        return $this->sendResponse($commercialBidRankingItems->toArray(), trans('custom.commercial_bid_ranking_items_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class CommercialBidRankingItemsAPIController extends AppBaseController
 
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->create($input);
 
-        return $this->sendResponse($commercialBidRankingItems->toArray(), 'Commercial Bid Ranking Items saved successfully');
+        return $this->sendResponse($commercialBidRankingItems->toArray(), trans('custom.commercial_bid_ranking_items_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class CommercialBidRankingItemsAPIController extends AppBaseController
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->findWithoutFail($id);
 
         if (empty($commercialBidRankingItems)) {
-            return $this->sendError('Commercial Bid Ranking Items not found');
+            return $this->sendError(trans('custom.commercial_bid_ranking_items_not_found'));
         }
 
-        return $this->sendResponse($commercialBidRankingItems->toArray(), 'Commercial Bid Ranking Items retrieved successfully');
+        return $this->sendResponse($commercialBidRankingItems->toArray(), trans('custom.commercial_bid_ranking_items_retrieved_successfull'));
     }
 
     /**
@@ -235,12 +235,12 @@ class CommercialBidRankingItemsAPIController extends AppBaseController
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->findWithoutFail($id);
 
         if (empty($commercialBidRankingItems)) {
-            return $this->sendError('Commercial Bid Ranking Items not found');
+            return $this->sendError(trans('custom.commercial_bid_ranking_items_not_found'));
         }
 
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->update($input, $id);
 
-        return $this->sendResponse($commercialBidRankingItems->toArray(), 'CommercialBidRankingItems updated successfully');
+        return $this->sendResponse($commercialBidRankingItems->toArray(), trans('custom.commercialbidrankingitems_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class CommercialBidRankingItemsAPIController extends AppBaseController
         $commercialBidRankingItems = $this->commercialBidRankingItemsRepository->findWithoutFail($id);
 
         if (empty($commercialBidRankingItems)) {
-            return $this->sendError('Commercial Bid Ranking Items not found');
+            return $this->sendError(trans('custom.commercial_bid_ranking_items_not_found'));
         }
 
         $commercialBidRankingItems->delete();

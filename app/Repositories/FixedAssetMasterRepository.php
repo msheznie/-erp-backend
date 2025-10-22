@@ -190,12 +190,12 @@ class FixedAssetMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Doc No'] = $val->grv_master? $val->grv_master->grvPrimaryCode : '';
-                $data[$x]['Doc Description'] = $val->itemDescription;
-                $data[$x]['Doc Date'] = $val->grv_master? (\Helper::dateFormat($val->grv_master->approvedDate)) : '';
-                $data[$x]['Qty'] = $val->noQty;
-                $data[$x]['Amount / Unit(Local)'] = number_format($val->landingCost_LocalCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
-                $data[$x]['Amount / Unit(Reporting)'] = number_format($val->landingCost_RptCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
+                $data[$x][trans('custom.doc_no')] = $val->grv_master? $val->grv_master->grvPrimaryCode : '';
+                $data[$x][trans('custom.doc_description')] = $val->itemDescription;
+                $data[$x][trans('custom.doc_date')] = $val->grv_master? (\Helper::dateFormat($val->grv_master->approvedDate)) : '';
+                $data[$x][trans('custom.qty')] = $val->noQty;
+                $data[$x][trans('custom.amount_unit_local')] = number_format($val->landingCost_LocalCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
+                $data[$x][trans('custom.amount_unit_reporting')] = number_format($val->landingCost_RptCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
 
                 $x++;
             }

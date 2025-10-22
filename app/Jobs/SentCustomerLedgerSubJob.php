@@ -23,13 +23,14 @@ class SentCustomerLedgerSubJob implements ShouldQueue
     public $input;
     public $db;
     public $receivableController;
+    public $languageCode;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $input)
+    public function __construct($db, $input, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -40,6 +41,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
         $this->input = $input;
         $this->db = $db;
         $this->receivableController = app(AccountsReceivableReportAPIController::class);
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -58,6 +60,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
 
         $customerMaster = CustomerMaster::find($customerCodeSystem);
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)->get();
+        $languageCode = $this->languageCode;
         if (!$fetchCusEmail->isEmpty()) {
             $reportTypeID = $input['reportTypeID'];
             $baseController = app()->make(AppBaseController::class);
@@ -83,7 +86,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                             'fetchCusEmail' => $fetchCusEmail->toArray(),
                             'customerName' => $customerMaster->CustomerName
                         );
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray, $languageCode);
                         $reportCount++;
                     }
                 } else {
@@ -107,7 +110,7 @@ class SentCustomerLedgerSubJob implements ShouldQueue
                             'fetchCusEmail' => $fetchCusEmail->toArray(),
                             'customerName' => $customerMaster->CustomerName
                         );
-                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray);
+                        SentCustomerLedgerPdfGeneration::dispatch($db, $dataArray, $languageCode);
                         $reportCount++;
                     }
                 } else {

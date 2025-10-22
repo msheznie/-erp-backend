@@ -91,7 +91,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $this->companyBudgetPlanningRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyBudgetPlannings = $this->companyBudgetPlanningRepository->all();
 
-        return $this->sendResponse($companyBudgetPlannings->toArray(), 'Company Budget Plannings retrieved successfully');
+        return $this->sendResponse($companyBudgetPlannings->toArray(), trans('custom.company_budget_plannings_retrieved_successfully'));
     }
 
     /**
@@ -202,7 +202,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'Budget Planning initiated successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
 
     /**
@@ -252,10 +252,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'Company Budget Planning retrieved successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.company_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -321,12 +321,12 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'CompanyBudgetPlanning updated successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
     }
 
     /**
@@ -374,7 +374,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
         $companyBudgetPlanning->delete();
@@ -540,7 +540,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             );
         }
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getBudgetPlanningMasterData(Request $request) {
@@ -994,7 +994,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $companyID = $data['primaryCompany'];
         }
         else {
-            return $this->sendError('Primary Company is required');
+            return $this->sendError(trans('custom.primary_company_is_required'));
         }
 
         $activeDepartments = CompanyDepartment::where('companySystemID', $companyID)
@@ -1061,7 +1061,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (isset($data['departmentID'])) {
                         $departmentBudgetPlanningState = DepartmentBudgetPlanning::where('departmentID', $data['departmentID'])->where('status', 1)->exists();
                         if ($departmentBudgetPlanningState) {
-                            return $this->sendError('Budget Planning is already in progress for this department');
+                            return $this->sendError(trans('custom.budget_planning_is_already_in_progress_for_this_de'));
                         }
                     }
                     break;
@@ -1069,7 +1069,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (isset($data['workflowID'])) {
                         $budgetPlanningStatus = CompanyBudgetPlanning::where('workflowID', $data['workflowID'])->where('status', 1)->exists();
                         if ($budgetPlanningStatus) {
-                            return $this->sendError('Budget Planning is already in progress');
+                            return $this->sendError(trans('custom.budget_planning_is_already_in_progress'));
                         }
                     }
                     break;
