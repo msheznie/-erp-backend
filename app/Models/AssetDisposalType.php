@@ -30,7 +30,7 @@ class AssetDisposalType extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'disposalTypesID';
-    protected $appends = ['typeDescription'];
+    protected $appends = ['typeDescription', 'purpose', 'transaction'];
 
     public $fillable = [
         'typeDescription',
@@ -51,7 +51,9 @@ class AssetDisposalType extends Model
         'activeYN' => 'integer',
         'chartOfAccountID' => 'integer',
         'glCode' => 'string',
-        'typeDescription' => 'string'
+        'typeDescription' => 'string',
+        'purpose' => 'string',
+        'transaction' => 'string'
     ];
 
     /**
@@ -97,6 +99,38 @@ class AssetDisposalType extends Model
         }
         
         return $this->attributes['typeDescription'] ?? '';
+    }
+
+    /**
+     * Get translated purpose
+     */
+    public function getPurposeAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->purpose) {
+            return $translation->purpose;
+        }
+
+        return $this->attributes['purpose'] ?? '';
+    }
+
+    /**
+     * Get translated transaction
+     */
+    public function getTransactionAttribute()
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->transaction) {
+            return $translation->transaction;
+        }
+
+        return $this->attributes['transaction'] ?? '';
     }
 
     public function chartofaccount()
