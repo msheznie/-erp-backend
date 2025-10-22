@@ -421,13 +421,13 @@ class UserGroupAssignAPIController extends AppBaseController
             $templateName = "export_report.navigation_report.erp_nav";
 
             $type = $input['type'];
-            $doc_name = 'erp_navigation';
+            $doc_name = trans('custom.erp_navigation');
             $path = 'Navigation/report/erp_navigation/excel/';
             $basePath = CreateExcel::loadView($array,$type,$doc_name,$path,$templateName);
     
             if($basePath == '')
             {
-                 return $this->sendError('Unable to export excel');
+                 return $this->sendError(trans('custom.unable_to_export_excel'));
             }
             else
             {

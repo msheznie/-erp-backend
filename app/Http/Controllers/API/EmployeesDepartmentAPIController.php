@@ -1035,7 +1035,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
         );
 
 
-        $fileName = 'approval_matrix';
+        $fileName = trans('custom.approval_matrix');
         $path = 'approval-setup/approval_matrix/excel/';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 

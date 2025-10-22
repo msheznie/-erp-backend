@@ -6339,7 +6339,7 @@ return
     'user_already_assigned' => 'هناك :attribute مستخدمين معينين بالفعل لهذه المجموعة. قم بإزالة المستخدمين وحاول مرة أخرى',
 
     // Navigation Report
-    'erp_navigation' => 'التنقل في نظام تخطيط موارد المؤسسة',
+    'erp_navigation' => 'قوائم تخطيط موارد المؤسسات',
     'portal_navigation' => 'تنقل البوابة',
     'operation_navigation' => 'تنقل العمليات',
     'hrms_navigation' => 'تنقل نظام إدارة الموارد البشرية',
@@ -9512,5 +9512,6 @@ return
     'supplier_direct_invoice' => 'فاتورة المورد المباشرة',
     'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل',
 
-    'customer_statement' => 'كشف حساب العميل'
+    'customer_statement' => 'كشف حساب العميل',
+    'approval_matrix' => 'مصفوفة الموافقة'
   ];
