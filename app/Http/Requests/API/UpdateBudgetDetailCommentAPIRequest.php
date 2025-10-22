@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\BudgetDetailComment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBudgetDetailCommentAPIRequest extends APIRequest
+class UpdateBudgetDetailCommentAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +23,23 @@ class UpdateBudgetDetailCommentAPIRequest extends APIRequest
      */
     public function rules()
     {
-        $rules = BudgetDetailComment::$rules;
-        
-        return $rules;
+        return [
+            'comment' => 'required|string|max:5000',
+            'companySystemID' => 'required|integer'
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'comment.required' => 'Comment text is required.',
+            'comment.max' => 'Comment text cannot exceed 5000 characters.',
+            'companySystemID.required' => 'Company system ID is required.'
+        ];
     }
 }

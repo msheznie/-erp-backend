@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\BudgetDetailComment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBudgetDetailCommentAPIRequest extends APIRequest
+class CreateBudgetDetailCommentAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,6 +23,24 @@ class CreateBudgetDetailCommentAPIRequest extends APIRequest
      */
     public function rules()
     {
-        return BudgetDetailComment::$rules;
+        return [
+            'budgetDetailId' => 'required|integer|exists:department_budget_planning_details,id',
+            'comment' => 'required|string|max:5000'
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'budgetDetailId.required' => 'Budget detail ID is required.',
+            'budgetDetailId.exists' => 'The specified budget detail does not exist.',
+            'comment.required' => 'Comment text is required.',
+            'comment.max' => 'Comment text cannot exceed 5000 characters.'
+        ];
     }
 }
