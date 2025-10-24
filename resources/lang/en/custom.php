@@ -9620,5 +9620,6 @@ return
     'customer_statement' => 'Customer Statement',
     'approval_matrix' => 'Approval Matrix',
     'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'PDC cheque already cleared for treasury, cannot be returned',
-    'auto_bank_reconciliation' => 'Auto bank reconciliation'
+    'auto_bank_reconciliation' => 'Auto bank reconciliation',
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'Cash Flow Amount is greater than applicable amount'
   ];

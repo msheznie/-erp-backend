@@ -1037,7 +1037,7 @@ class CashFlowReportAPIController extends AppBaseController
                 $applicableAmount = min($minArray);
                 $applicableAmount = round($applicableAmount,$companyCurrencyDecimal);
                 if ($detail['cashFlowAmount'] > $applicableAmount) {
-                    return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                    return $this->sendError(trans('custom.cash_flow_amount_is_greater_than_applicable_amount'), 500);
                 }
                 $data['localAmount'] = $detail['cashFlowAmount'];
                 $data['subCategoryID'] = $subCategoryID;
@@ -1122,7 +1122,7 @@ class CashFlowReportAPIController extends AppBaseController
                     $applicableAmount = min($minArray);
                     $applicableAmount = round($applicableAmount,$companyCurrencyDecimal);
                     if ($detail['cashFlowAmount'] > $applicableAmount) {
-                        return $this->sendError('Cash Flow Amount is greater than applicable amount', 500);
+                        return $this->sendError(trans('custom.cash_flow_amount_is_greater_than_applicable_amount'), 500);
                     }
                     $data['localAmount'] = $detail['cashFlowAmount'];
                     $data['subCategoryID'] = $subCategoryID;
