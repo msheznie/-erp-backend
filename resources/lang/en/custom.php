@@ -9618,5 +9618,7 @@ return
     'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item',
 
     'customer_statement' => 'Customer Statement',
-    'approval_matrix' => 'Approval Matrix'
+    'approval_matrix' => 'Approval Matrix',
+    'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'PDC cheque already cleared for treasury, cannot be returned',
+    'auto_bank_reconciliation' => 'Auto bank reconciliation'
   ];

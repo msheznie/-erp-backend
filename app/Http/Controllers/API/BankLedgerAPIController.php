@@ -1019,6 +1019,8 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         return \DataTables::eloquent($bankLedger)
+            ->filter(function ($instance){  
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input,$orderBy) {
                 if (request()->has('order')) {
