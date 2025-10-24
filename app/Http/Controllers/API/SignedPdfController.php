@@ -285,6 +285,7 @@ class SignedPdfController extends AppBaseController
             'supplier-item-wise-report',
             'schedule-wise-report',
             'SupplierScheduleWiseExportReport',
+            'printERPAssetTransfer',
             'genearetBarcode'
         ];
     }
@@ -481,6 +482,10 @@ class SignedPdfController extends AppBaseController
             'genearetBarcode' => [
                 'controller' => 'App\Http\Controllers\API\BarcodeConfigurationAPIController',
                 'method' => 'genearetBarcode'
+            ],
+            'printERPAssetTransfer' => [
+                'controller' => 'App\Http\Controllers\API\ERPAssetTransferDetailAPIController',
+                'method' => 'printERPAssetTransfer'
             ]
         ];
     }
