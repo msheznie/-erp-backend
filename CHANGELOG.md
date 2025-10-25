@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.89.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.2...v10.89.0) (2025-10-25)
+
+
+### Features
+
+* **Shift:** Portal | EA | Past date shift changes for pulled attendance [GHR-6372] ([#9122](https://github.com/pbsgears/Gears_BackEnd/issues/9122)) ([e8654d7](https://github.com/pbsgears/Gears_BackEnd/commit/e8654d719513467b6977097ae45ace9a33346c57))
+
 ## [10.88.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.1...v10.88.2) (2025-10-22)
 
 
