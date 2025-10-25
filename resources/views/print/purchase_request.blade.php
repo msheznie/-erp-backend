@@ -315,6 +315,38 @@
                             {{ $request->location_pdf?$request->location_pdf->locationName:'-' }}
                         </td>
                     </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.pr_type') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            @php
+                                $prTypeLabels = [
+                                    1 => __('custom.single_source'),
+                                    2 => __('custom.closed_source'),
+                                    3 => __('custom.open_source'),
+                                    4 => __('custom.negotiated')
+                                ];
+                            @endphp
+                            {{ $request->prType ? ($prTypeLabels[$request->prType] ?? '-') : '-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.justification') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->justification ? $request->justification : '-' }}
+                        </td>
+                    </tr>
                 </table>
             </td>
             <td style="width: 50%">

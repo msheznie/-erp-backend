@@ -3414,6 +3414,12 @@ return
 
     'order_code'=> 'رقم الطلب',
     "priority" => "الاولوية",
+    "pr_type" => "نوع طلب الشراء",
+    "justification" => "المبرر",
+    "single_source" => "مصدر واحد",
+    "closed_source" => "مصدر مغلق",
+    "open_source" => "مصدر مفتوح",
+    "negotiated" => "متفاوض",
     "requisitioner" => "مقدم الطلب",
     "part_number" => "رقم الجزء / الرقم المرجعي",
     "alt_qnty" => "الكمية البديلة",

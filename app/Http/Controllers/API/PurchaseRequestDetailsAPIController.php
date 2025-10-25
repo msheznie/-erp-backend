@@ -1519,7 +1519,9 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
                     $request_data['documentID'] = $purchaseRequest->documentID;  
                     $request_data['docRefNo'] = $purchaseRequest->docRefNo;  
                     $request_data['companyID'] = $purchaseRequest->companyID;  
-                    $request_data['financeCategory'] = $purchaseRequest->financeCategory;   
+                    $request_data['financeCategory'] = $purchaseRequest->financeCategory;
+                    $request_data['prType'] = $purchaseRequest->prType;
+                    $request_data['justification'] = $purchaseRequest->justification;   
 
 
                     $serivice_line_code = '';
