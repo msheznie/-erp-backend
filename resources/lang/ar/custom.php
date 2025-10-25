@@ -9513,5 +9513,8 @@ return
     'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل',
 
     'customer_statement' => 'كشف حساب العميل',
-    'approval_matrix' => 'مصفوفة الموافقة'
+    'approval_matrix' => 'مصفوفة الموافقة',
+    'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'لا يمكن إعادة إصدار الشيك المدخل للخزينة منذ تاريخ الإيداع',
+    'auto_bank_reconciliation' => 'التسوية البنكية التلقائية',
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'مبلغ التدفق النقدي أكبر من المبلغ المطبق'
   ];

@@ -504,6 +504,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $html = view('print.asset_transfer', $transferDetails);
         
         $mpdf = new \Mpdf\Mpdf([
+            'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4',
             'orientation' => 'P',
