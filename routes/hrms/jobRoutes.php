@@ -14,3 +14,4 @@ Route::get('crossDayClockOutJobCall', 'HRJobInvokeAPIController@crossDayClockOut
 Route::get('leaveAccrualJobCallDebug', 'HRJobInvokeAPIController@leaveAccrualJobCallDebug');
 Route::get('delegationJobCallDebug', 'HRJobInvokeAPIController@delegationJobCallDebug');
 Route::get('empDesignationUpdateNotification', 'HRJobInvokeAPIController@sendEmpDesignationUpdateNotification');
+Route::post('unconfirmed-attendance-pull', 'HRJobInvokeAPIController@unConfirmedAttendancePull');

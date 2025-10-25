@@ -634,5 +634,17 @@ return [
     'attachment_not_found' => 'Attachment not found',
     'file_not_found_on_storage' => 'File not found on storage',
     'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
+    'no_records_found_for_pulling_step' => 'No records found for pulling step-1 and chunk-:chunk',
+    'no_records_found_for_pulling_step_3' => 'No records found for pulling step-3',
+    'no_records_found_for_pulling_step_5' => 'No records found for pulling step-5',
+    'tenant_id_required' => 'tenantId is required',
+    'company_id_required' => 'companyId is required',
+    'attendance_data_required' => 'attendanceData is required',
+    'shift_data_required' => 'shiftData is required',
+    'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'Error in the Shift Schedule Unconfirmed Attendance pulling',
+    'no_dates_found_for_shift_schedule_pulling' => 'No dates found to proceed the Shift Schedule Unconfirmed Attendance pulling',
+    'failed_to_process_attendance_for_date' => 'Failed to process attendance for date :date with employees [:employees]',
+    'no_temp_data_found' => 'No temp data found',
+    'data_pulled_successfully' => 'Data pulled successfully'
 ];
