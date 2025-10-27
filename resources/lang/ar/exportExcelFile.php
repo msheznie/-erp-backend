@@ -64,5 +64,6 @@ return [
     'material_issue_register' => 'تقرير_صرف_المواد',
     'items_by_company' => 'قائمة_العناصر_بالشركة',
     'items_by_warehouse' => 'قائمة_العناصر_بالمخزن',
-    'stock-count' => 'عدد_الأسهم'
+    'stock-count' => 'عدد_الأسهم',
+    'spent_analysis_by_supplier_report' => 'تقرير_تحليل_المصروفات_بالمورد'
 ];
