@@ -12,6 +12,16 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Http\Controllers\API\DocumentAttachmentsAPIController;
+use App\Http\Controllers\API\JvDetailAPIController;
+use App\Http\Controllers\API\JvMasterAPIController;
+use App\Models\DocumentAttachments;
+use App\Models\JvMaster;
+use App\Models\RecurringVoucherSetupScheDet;
+use App\Models\RecurringVoucherScheduleError;
+use App\Services\JournalVoucherService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class RecurringVoucherSetupScheduleController
@@ -431,6 +441,126 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
             return $this->sendResponse($output, trans('custom.all_schedules_stopped_successfully'));
         }catch (\Exception $e){
             return $this->sendError(trans('custom.try_again'));
+        }
+    }
+
+    public function getJVScheduleData(Request $request)
+    {
+        try {
+            $companySystemID = $request['companyId'];
+            
+            $tomorrowDate = Carbon::tomorrow()->format('d-m-y');
+            
+            $output = RecurringVoucherSetupSchedule::whereHas('master', function($query) use ($companySystemID) {
+                    $query->where('approved', -1)
+                          ->where('companySystemID', $companySystemID);
+                })
+                ->whereDate('processDate', $tomorrowDate)
+                ->where('stopYN', 0)
+                ->where('rrvGeneratedYN', 0)
+                ->with(['master'])
+                ->get();
+
+            $data['scheduleDate'] = Carbon::tomorrow()->format('d-m-Y');
+            $data['jvScheduleData'] = $output;
+            return $this->sendResponse($data, trans('custom.record_retrieved_successfully'));
+            
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function getNotPostedScheduleData(Request $request)
+    {
+        try {
+            $companySystemID = $request['companyId'];
+            $today = Carbon::today();
+            
+            $schedules = RecurringVoucherSetupSchedule::whereHas('master', function($query) use ($companySystemID) {
+                    $query->where('approved', -1)
+                          ->where('companySystemID', $companySystemID);
+                })
+                ->where('processDate', '<=', $today)
+                ->where('rrvGeneratedYN', 0)
+                ->where('stopYN', 0)
+                ->with(['master']);
+            
+            return \DataTables::of($schedules)
+                ->filter(function ($query) use ($request) {
+                    if ($request->has('search') && !empty($request->input('search')['value'])) {
+                        $searchValue = $request->input('search')['value'];
+                        $searchValue = addcslashes($searchValue, '%_\\');
+                        $query->where(function($q) use ($searchValue) {
+                            $q->whereHas('master', function($masterQuery) use ($searchValue) {
+                                $masterQuery->where('RRVcode', 'like', '%' . $searchValue . '%')
+                                          ->orWhere('narration', 'like', '%' . $searchValue . '%');
+                            })
+                            ->orWhere('amount', 'like', '%' . $searchValue . '%')
+                            ->orWhere('processDate', 'like', '%' . $searchValue . '%');
+                        });
+                    }
+                })
+                ->addIndexColumn()
+                ->addColumn('hasError', function($schedule) {
+                    $error = RecurringVoucherScheduleError::where('rrvSetupScheduleAutoID', $schedule->rrvSetupScheduleAutoID)
+                                                          ->first();
+                    return !empty($error);
+                })
+                ->addColumn('failReason', function($schedule) {
+                    $error = RecurringVoucherScheduleError::where('rrvSetupScheduleAutoID', $schedule->rrvSetupScheduleAutoID)
+                                                          ->first();
+                    
+                    if (!empty($error)) {
+                        return trans('custom.technical_system_errors');
+                    } else {
+                        return trans('custom.schedule_created_for_past_period');
+                    }
+                })
+                ->addColumn('errorMessages', function($schedule) {
+                    $errors = RecurringVoucherScheduleError::where('rrvSetupScheduleAutoID', $schedule->rrvSetupScheduleAutoID)
+                                                         ->pluck('errorMessage')
+                                                         ->toArray();
+                    return $errors;
+                })
+                ->make(true);
+            
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function postNotPostedSchedule(Request $request)
+    {
+        try {
+            $rrvSetupScheduleAutoID = $request['rrvSetupScheduleAutoID'];
+            
+       
+            if (empty($rrvSetupScheduleAutoID)) {
+                return $this->sendError(trans('custom.rrv_setup_schedule_id_required'));
+            }
+            
+            if (!is_numeric($rrvSetupScheduleAutoID)) {
+                return $this->sendError(trans('custom.invalid_rrv_setup_schedule_id'));
+            }
+            
+            $schedule = RecurringVoucherSetupSchedule::find($rrvSetupScheduleAutoID);
+            
+            if (empty($schedule)) {
+                return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
+            }
+            
+            
+            $result = JournalVoucherService::postRecurringVoucherSchedule($rrvSetupScheduleAutoID);
+            
+            if ($result['success']) {
+                return $this->sendResponse($result, $result['message']);
+            } else {
+                return $this->sendError($result['message']);
+            }
+            
+        } catch (\Exception $e) {
+            Log::error("Post recurring voucher schedule error: {$e->getMessage()}");
+            return $this->sendError($e->getMessage());
         }
     }
 

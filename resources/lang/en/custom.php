@@ -4395,6 +4395,7 @@ return
     'recurring_voucher_setup_schedule_saved_successfull' => 'Recurring Voucher Setup Schedule saved successfully',
     'recurring_voucher_setup_schedules_retrieved_succes' => 'Recurring Voucher Setup Schedules retrieved successfully',
     'recurring_voucher_setup_updated_successfully' => 'Recurring Voucher Setup  updated successfully',
+    'recurring_voucher_master_not_found' => 'Recurring Voucher Master not found',
     'recurring_voucher_setups_retrieved_successfully' => 'Recurring Voucher Setups retrieved successfully',
     'recurring_voucher_updated_successfully' => 'Recurring Voucher updated successfully',
     'recurringvouchersetupschedet_updated_successfully' => 'RecurringVoucherSetupScheDet updated successfully',
@@ -9628,5 +9629,11 @@ return
     'approval_matrix' => 'Approval Matrix',
     'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'PDC cheque already cleared for treasury, cannot be returned',
     'auto_bank_reconciliation' => 'Auto bank reconciliation',
-    'cash_flow_amount_is_greater_than_applicable_amount' => 'Cash Flow Amount is greater than applicable amount'
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'Cash Flow Amount is greater than applicable amount',
+
+    'technical_system_errors' => 'Technical System Errors',
+    'schedule_created_for_past_period' => 'Schedule created for past period',
+    'rrv_setup_schedule_id_required' => 'RRV Setup Schedule ID is required',
+    'invalid_rrv_setup_schedule_id' => 'Invalid RRV Setup Schedule ID',
+    'recurring_voucher_setup_schedule_not_found' => 'Recurring Voucher Setup Schedule not found',
   ];

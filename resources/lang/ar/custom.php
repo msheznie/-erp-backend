@@ -4343,6 +4343,7 @@ return
     'recurring_voucher_setup_schedule_saved_successfull' => 'تم حفظ جدول إعداد الإيصال المتكرر بنجاح',
     'recurring_voucher_setup_schedules_retrieved_succes' => 'تم استرداد جداول إعداد الإيصالات المتكررة بنجاح',
     'recurring_voucher_setup_updated_successfully' => 'تم تحديث إعداد الإيصال المتكرر بنجاح',
+    'recurring_voucher_master_not_found' => 'الماستر الإيصال المتكرر غير موجود',
     'recurring_voucher_setups_retrieved_successfully' => 'تم استرداد إعدادات الإيصالات المتكررة بنجاح',
     'recurring_voucher_updated_successfully' => 'تم تحديث الإيصال المتكرر بنجاح',
     'recurringvouchersetupschedet_updated_successfully' => 'تم تحديث تفاصيل جدول إعداد الإيصال المتكرر بنجاح',
@@ -9523,5 +9524,12 @@ return
     'approval_matrix' => 'مصفوفة الموافقة',
     'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'لا يمكن إعادة إصدار الشيك المدخل للخزينة منذ تاريخ الإيداع',
     'auto_bank_reconciliation' => 'التسوية البنكية التلقائية',
-    'cash_flow_amount_is_greater_than_applicable_amount' => 'مبلغ التدفق النقدي أكبر من المبلغ المطبق'
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'مبلغ التدفق النقدي أكبر من المبلغ المطبق',
+
+
+    'technical_system_errors' => 'خطأ فني في النظام',
+    'schedule_created_for_past_period' => 'تم إنشاء الجدول لفترة مضت',
+    'rrv_setup_schedule_id_required' => 'معرف الجدول المتكرر مطلوب',
+    'invalid_rrv_setup_schedule_id' => 'معرف الجدول المتكرر غير صالح',
+    'recurring_voucher_setup_schedule_not_found' => 'الجدول المتكرر غير موجود',
   ];

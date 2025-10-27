@@ -88,6 +88,9 @@ Route::group([], function(){
     Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget')->name('Sync gl budget');
     Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment')->name('Get budget detail comment');
     Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory')->name('Get budget detail history');
+    Route::get('getJVScheduleData', 'RecurringVoucherSetupScheduleAPIController@getJVScheduleData')->name('Get JV schedule data');
+    Route::post('getNotPostedScheduleData', 'RecurringVoucherSetupScheduleAPIController@getNotPostedScheduleData')->name('Get not posted schedule data');
+    Route::post('postNotPostedSchedule', 'RecurringVoucherSetupScheduleAPIController@postNotPostedSchedule')->name('Post not posted schedule');
 
     //budgets
     Route::resource('budget_masters', 'BudgetMasterAPIController');
