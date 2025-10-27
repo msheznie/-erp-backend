@@ -838,7 +838,7 @@ class AssetManagementReportAPIController extends AppBaseController
     public function exportReport(Request $request, AssetManagementService $assetManagementService, ExportVatDetailReportService $service)
     {
         $reportID = $request->reportID;
-        $type = $request->type;
+        $type = 'xls';
         switch ($reportID) {
             case 'AMAR': //Asset Register
                 if ($request->reportTypeID == 'ARD') { // Asset Register Detail
@@ -2079,6 +2079,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
                         $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                             $sheet->loadView($templateName, $reportData);
+                             if (app()->getLocale() == 'ar') {
+                                $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                                $sheet->setRightToLeft(true);
+                            }
                         });
                     })->download('xlsx');
                 }

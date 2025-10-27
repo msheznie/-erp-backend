@@ -383,6 +383,7 @@ return [
         'chartOfAccountSerialLength' => 'طول تسلسل دليل الحسابات',
         'reportID' => 'معرّف التقرير',
         'employeeSystemID' => 'معرّف نظام الموظف',
-        'columnID' => 'معرف العمود'
+        'columnID' => 'معرف العمود',
+        'documents' => 'المستندات'
     ],
 ];
