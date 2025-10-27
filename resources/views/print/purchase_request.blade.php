@@ -251,6 +251,18 @@
             <td style="width: 50%">
                 <table>
 
+    <tr>
+        <td width="150px">
+            <span style="font-weight:bold; font-size: 16px;">{{ __('custom.pr_title') }}</span>
+        </td>
+        <td width="10px">
+            <span>:</span>
+        </td>
+        <td>
+            <span>{{ $request->prTitle ? $request->prTitle : '-' }}</span>
+        </td>
+    </tr>
+
                     <tr>
                         <td width="150px">
                             <span style="font-weight:bold;">{{ __('custom.request_code') }}</span>

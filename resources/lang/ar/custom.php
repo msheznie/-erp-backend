@@ -3415,6 +3415,7 @@ return
     'order_code'=> 'رقم الطلب',
     "priority" => "الاولوية",
     "pr_type" => "نوع طلب الشراء",
+    "pr_title" => "عنوان طلب الشراء",
     "justification" => "المبرر",
     "single_source" => "مصدر واحد",
     "closed_source" => "مصدر مغلق",

@@ -3285,6 +3285,7 @@ return
     'order_code'=> 'Order Code',
     "priority" => "Priority",
     "pr_type" => "PR Type",
+    "pr_title" => "PR Title",
     "justification" => "Justification",
     "single_source" => "Single Source",
     "closed_source" => "Closed Source",
