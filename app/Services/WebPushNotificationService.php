@@ -117,6 +117,7 @@ class WebPushNotificationService
                 return ['notifications' => [], 'newNotificationCount' => 0];
             }
         } catch (\Exception $exception) {
+            Log::error('Error getting user notifications: ' . $exception->getMessage());
             return ['notifications' => [], 'newNotificationCount' => 0];
         }
     }
