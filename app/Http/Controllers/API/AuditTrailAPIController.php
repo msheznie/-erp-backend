@@ -562,48 +562,27 @@ class AuditTrailAPIController extends AppBaseController
                 })->values()->all();
             }
 
-            // Prepare Excel data
-            $excelData = [];
-            foreach ($formatedData as $index => $log) {
-                $excelData[$index] = [
-                    trans('custom.session_id') => $log['session_id'] ?? '',
-                    trans('custom.emp_id') => $log['employeeId'] ?? '',
-                    trans('custom.employee_name') => $log['employeeName'] ?? '',
-                    trans('custom.role') => $log['role'] ?? '',
-                    trans('custom.event') => $log['event'] ?? '',
-                    trans('custom.time_stamp') => $log['date_time'] ?? '',
-                    trans('custom.ip_address') => $log['ipAddress'] ?? '',
-                    trans('custom.device') => $log['deviceInfo'] ?? '',
-                ];
-            }
-
-            // Prepare export options
-            $exportOptions = [
-                'setColumnAutoSize' => true,
-                'excelFormat' => [
-                    'A' => 'normal',
-                    'B' => 'normal',
-                    'C' => 'normal',
-                    'D' => 'normal',
-                    'E' => 'normal',
-                    'F' => 'normal',
-                    'G' => 'normal',
-                    'H' => 'normal',
-                    'I' => 'normal',
-                ],
-                'from_date' => $fromDate->format('Y-m-d'),
-                'to_date' => $toDate->format('Y-m-d'),
+            // Prepare report data for Blade template
+            $reportData = [
+                'data' => $formatedData,
+                'fromDate' => $requestFromDate,
+                'toDate' => $requestToDate,
             ];
 
-            // Generate Excel file
+            // Generate Excel file using Blade template
             $fileName = trans('custom.user_audit_logs');
-            $path = \App\helper\CreateExcel::process($excelData, 'xlsx', $fileName, 'reports/', $exportOptions);
-
-            if ($path) {
-                return $this->sendResponse($path, trans('custom.success_export'));
-            } else {
-                return $this->sendError(trans('custom.unable_to_export_excel'));
-            }
+            
+            return \Excel::create($fileName, function ($excel) use ($reportData) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+                    $sheet->loadView('export_report.user_audit_logs', $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+                });
+            })->download('xlsx');
 
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
