@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.89.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.0...v10.89.1) (2025-10-28)
+
+
+### Bug Fixes
+
+* **procurement:** issue on PO print fixes [GCP-16199] ([#9161](https://github.com/pbsgears/Gears_BackEnd/issues/9161)) ([e44ef26](https://github.com/pbsgears/Gears_BackEnd/commit/e44ef2667f932b90e11155e3b1921134f81a14a7))
+
 ## [10.89.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.2...v10.89.0) (2025-10-25)
 
 
