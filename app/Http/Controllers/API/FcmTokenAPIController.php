@@ -367,7 +367,7 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
             if ($tenantDomain != 'localhost:8000') {
                  $logoutUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
@@ -400,7 +400,7 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
             if ($tenantDomain != 'localhost:8000') {
                 $portalUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
