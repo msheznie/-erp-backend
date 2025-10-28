@@ -648,12 +648,12 @@ class AuditTrailAPIController extends AppBaseController
             // Dispatch a separate job for each table
             foreach ($tables as $table) {
                 $tenantUuid = '1234567890';
-                $jobId = $batchId . '_' . $table . '_' . $tenant->uuid;
-                MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenant->uuid);
+                $jobId = $batchId . '_' . $table . '_' . $tenantUuid;
+                MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid);
                 $dispatchedJobs[] = [
                     'job_id' => $jobId,
                     'table' => $table,
-                    'tenant_uuid' => $tenant->uuid
+                    'tenant_uuid' => $tenantUuid
                 ];
             }
 
