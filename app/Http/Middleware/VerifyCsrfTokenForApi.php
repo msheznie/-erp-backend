@@ -262,7 +262,8 @@ class VerifyCsrfTokenForApi
             'api/v1/department-budget-detail-comments/paginated',
             'api/v1/department-budget-detail-comments/recent',
             'api/v1/department-budget-detail-comments/resolve',
-            'api/v1/department-budget-detail-comments'
+            'api/v1/department-budget-detail-comments',
+            'api/v1/company_budget_plannings/{company_budget_planning}',
         ];
     }
 }
