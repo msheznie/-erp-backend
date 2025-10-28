@@ -3569,14 +3569,14 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  )";
+            $whereQry = "(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  ) <> 0 AND round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  ) <> 0)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal>0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)";
+            $whereQry = "(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces) <> 0 AND round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  ) <> 0)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
         if($type == 1) {
@@ -3859,7 +3859,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             '.$typeQry.'
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . ($currency == 1 ? $whereQry . ' <> 0' : $whereQry) . ' ORDER BY documentDate ASC) as grandFinal;');
 
 
 

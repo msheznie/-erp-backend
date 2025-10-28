@@ -22,7 +22,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Services\LokiService;
+use App\Jobs\AuditLog\MigrateAuditLogsJob;
 use DataTables;
+use App\helper\CommonJobService;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -295,7 +297,6 @@ class AuditTrailAPIController extends AppBaseController
     public function auditLogs(Request $request){
 
         $input = $request->all();
-
         try {
             $env = env("LOKI_ENV");
 
@@ -308,32 +309,43 @@ class AuditTrailAPIController extends AppBaseController
             $table = $this->lokiService->getAuditTables($module);
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
 
-            $params = 'query?query=rate({env="'.$env.'"}|= `\"transaction_id\":\"'.$id.'\"` |= `\"table\":\"'.$table.'\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` | json ['.$diff.'d])';
+            // Optimize query using labels: env, channel, tenant (no table label to avoid high cardinality)
+            $params = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | transaction_id="'.$id.'" | table="'.$table.'" ['.$diff.'d])';
 
             $data = $this->lokiService->getAuditLogs($params);
 
+            // Check if $data is an error response
+            if (is_object($data) && method_exists($data, 'getStatusCode')) {
+                return $data;
+            }
 
-            $params2 = 'query?query=rate({env="'.$env.'"}|= `\"parent_id\":\"'.$id.'\"` |= `\"parent_table\":\"'.$table.'\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` | json ['.$diff.'d])';
+
+            $params2 = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | parent_id="'.$id.'" | parent_table="'.$table.'" ['.$diff.'d])';
 
             $data2 = $this->lokiService->getAuditLogs($params2);
+
+            // Check if $data2 is an error response
+            if (is_object($data2) && method_exists($data2, 'getStatusCode')) {
+                return $data2;
+            }
 
             $formatedData = [];
 
             foreach ($data as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
+                if (isset($value['metric'])) {
+                    $lineData = $value['metric'];
 
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+                    $lineData['data'] = isset($value['metric']['data']) ? json_decode($value['metric']['data']) : [];
 
                     $formatedData[] = $lineData;
                 }
             }
 
             foreach ($data2 as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
+                if (isset($value['metric']['data'])) {
+                    $lineData = $value['metric'];
 
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+                    $lineData['data'] = isset($value['metric']['data']) ? json_decode($value['metric']['data']) : [];
 
                     $formatedData[] = $lineData;
                 }
@@ -344,6 +356,318 @@ class AuditTrailAPIController extends AppBaseController
             return DataTables::of($formatedData)
                 ->addIndexColumn()
                 ->make(true);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Get user audit logs (login, logout, session events)
+     * Fetches logs where logType = 'user_audit' from Loki
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function userAuditLogs(Request $request){
+        $input = $request->all();
+        try {
+            $env = env("LOKI_ENV");
+            
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+            
+            // Get current locale and determine filter language
+            $locale = app()->getLocale() ?: 'en';
+            $langFilter = $locale === 'ar' ? 'ar' : 'en';
+
+            // Build the Loki query
+            $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json | locale="'.$langFilter.'"';
+            
+            // Add event filter if event is specified
+            if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
+                // Map event value to TRANSLATED event name based on locale
+                // These are the translated values that are actually stored in the logs
+                $eventMap = [
+                    '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
+                    '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
+                    '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
+                    '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
+                ];
+                
+                $eventValue = $eventMap[$input['event']] ?? $input['event'];
+                $query .= ' | event="'.$eventValue.'"';
+            }
+
+            if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
+                $empIdValue = $input['employeeId'];
+                $query .= ' | employeeId="'.$empIdValue.'"';
+            }
+            
+            $query .= ' ['.(int)$diff.'d])';
+            $params = 'query?query='.$query;
+
+            $data = $this->lokiService->getAuditLogs($params);
+
+            // Check if $data is an error response
+            if (is_object($data) && method_exists($data, 'getStatusCode')) {
+                return $data; // Return the error response
+            }
+
+            $formatedData = [];
+
+            foreach ($data as $key => $value) {
+                if (isset($value['metric'])) {
+                    $lineData = $value['metric'];
+                    $formatedData[] = $lineData;
+                }
+            }
+
+            $formatedData = collect($formatedData)->sortByDesc('timestamp');
+
+            // Get search value for client-side filtering
+            $searchValue = $request->input('search.value');
+            
+ 
+
+            return DataTables::of($formatedData)
+                ->addIndexColumn()
+                ->filter(function ($instance) use ($searchValue, $fromDate, $toDate) {
+                    // Filter by date range if provided
+                    if (!empty($fromDate) && !empty($toDate)) {
+                        $instance->collection = $instance->collection->filter(function ($item) use ($fromDate, $toDate) {
+                            $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
+                            if (!$itemDateTime) {
+                                return false;
+                            }
+                            $from = Carbon::parse($fromDate);
+                            $to = Carbon::parse($toDate);
+                            return $itemDateTime->gte($from) && $itemDateTime->lte($to);
+                        });
+                    }
+                    
+                    // Filter by search value
+                    if (!empty($searchValue)) {
+                        $instance->collection = $instance->collection->filter(function ($item) use ($searchValue) {
+                            return stripos($item['session_id'] ?? '', $searchValue) !== false ||
+                                   stripos($item['event'] ?? '', $searchValue) !== false ||
+                                   stripos($item['employeeId'] ?? '', $searchValue) !== false ||
+                                   stripos($item['employeeName'] ?? '', $searchValue) !== false ||
+                                   stripos($item['role'] ?? '', $searchValue) !== false ||
+                                   stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
+                                   stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
+                        });
+                    }
+                })
+                ->make(true);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Export user audit logs to Excel
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function exportUserAuditLogs(Request $request)
+    {
+        $input = $request->all();
+        try {
+            $env = env("LOKI_ENV");
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+            
+            // Get current locale and determine filter language
+            $locale = app()->getLocale() ?: 'en';
+            $langFilter = $locale === 'ar' ? 'ar' : 'en';
+
+            // Build the Loki query
+            $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json | locale="'.$langFilter.'"';
+            
+            // Add event filter if event is specified
+            if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
+                // Map event value to TRANSLATED event name based on locale
+                // These are the translated values that are actually stored in the logs
+                $eventMap = [
+                    '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
+                    '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
+                    '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
+                    '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
+                ];
+                
+                $eventValue = $eventMap[$input['event']] ?? $input['event'];
+                $query .= ' | event="'.$eventValue.'"';
+            }
+
+            if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
+                $empIdValue = $input['employeeId'];
+                $query .= ' | employeeId="'.$empIdValue.'"';
+            }
+            
+            $query .= ' ['.(int)$diff.'d])';
+            $params = 'query?query='.$query;
+
+            $data = $this->lokiService->getAuditLogs($params);
+
+            // Check if $data is an error response
+            if (is_object($data) && method_exists($data, 'getStatusCode')) {
+                return $data; // Return the error response
+            }
+
+            $formatedData = [];
+
+            foreach ($data as $key => $value) {
+                if (isset($value['metric'])) {
+                    $lineData = $value['metric'];
+                    $formatedData[] = $lineData;
+                }
+            }
+
+            // Sort by timestamp
+            $formatedData = collect($formatedData)->sortByDesc('timestamp')->values()->all();
+            
+            // Get date range filters from request
+            $requestFromDate = $request->input('fromDate');
+            $requestToDate = $request->input('toDate');
+            
+            // Apply date range filter if specified
+            if (!empty($requestFromDate) && !empty($requestToDate)) {
+                $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
+                    $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
+                    if (!$itemDateTime) {
+                        return false;
+                    }
+                    $from = Carbon::parse($requestFromDate);
+                    $to = Carbon::parse($requestToDate);
+                    return $itemDateTime->gte($from) && $itemDateTime->lte($to);
+                })->values()->all();
+            }
+            
+            // Apply search filter if specified (client-side filtering for export)
+            $searchValue = $request->input('search.value');
+            if (!empty($searchValue)) {
+                $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
+                    return stripos($item['session_id'] ?? '', $searchValue) !== false ||
+                           stripos($item['event'] ?? '', $searchValue) !== false ||
+                           stripos($item['employeeId'] ?? '', $searchValue) !== false ||
+                           stripos($item['employeeName'] ?? '', $searchValue) !== false ||
+                           stripos($item['role'] ?? '', $searchValue) !== false ||
+                           stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
+                           stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
+                })->values()->all();
+            }
+
+            // Prepare Excel data
+            $excelData = [];
+            foreach ($formatedData as $index => $log) {
+                $excelData[$index] = [
+                    trans('custom.session_id') => $log['session_id'] ?? '',
+                    trans('custom.emp_id') => $log['employeeId'] ?? '',
+                    trans('custom.employee_name') => $log['employeeName'] ?? '',
+                    trans('custom.role') => $log['role'] ?? '',
+                    trans('custom.event') => $log['event'] ?? '',
+                    trans('custom.time_stamp') => $log['date_time'] ?? '',
+                    trans('custom.ip_address') => $log['ipAddress'] ?? '',
+                    trans('custom.device') => $log['deviceInfo'] ?? '',
+                ];
+            }
+
+            // Prepare export options
+            $exportOptions = [
+                'setColumnAutoSize' => true,
+                'excelFormat' => [
+                    'A' => 'normal',
+                    'B' => 'normal',
+                    'C' => 'normal',
+                    'D' => 'normal',
+                    'E' => 'normal',
+                    'F' => 'normal',
+                    'G' => 'normal',
+                    'H' => 'normal',
+                    'I' => 'normal',
+                ],
+                'from_date' => $fromDate->format('Y-m-d'),
+                'to_date' => $toDate->format('Y-m-d'),
+            ];
+
+            // Generate Excel file
+            $fileName = trans('custom.user_audit_logs');
+            $path = \App\helper\CreateExcel::process($excelData, 'xlsx', $fileName, 'reports/', $exportOptions);
+
+            if ($path) {
+                return $this->sendResponse($path, trans('custom.success_export'));
+            } else {
+                return $this->sendError(trans('custom.unable_to_export_excel'));
+            }
+
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Migrate old audit logs to new format with proper labels
+     * Dispatches separate jobs for each table to fetch logs from Loki and re-log them
+     *
+     * @param Request $request
+     * @return Response
+     * 
+     * Request parameters:
+     * - table (optional): specific table name to migrate, or "all" to migrate all tables
+     *   If not provided, defaults to migrating all tables
+     */
+    public function migrateAuditLogs(Request $request)
+    {
+        $input = $request->all();
+
+        try {
+            $env = env("LOKI_ENV");
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+            
+            // Determine which tables to migrate
+            $requestedTable = $input['table'] ?? 'all';
+            
+            if ($requestedTable === 'all' || empty($requestedTable)) {
+                $tables = $this->lokiService->getAllAuditTables();
+            } else {
+                $tables = [$requestedTable];
+            }
+
+            // Generate unique batch ID for tracking all related jobs
+            $batchId = 'batch_' . uniqid() . '_' . time();
+            
+            $dispatchedJobs = [];
+
+            // Dispatch a separate job for each table
+            foreach ($tables as $table) {
+                
+                $tenants = CommonJobService::tenant_list();
+                foreach ($tenants as $tenant) {
+                    $jobId = $batchId . '_' . $table . '_' . $tenant->uuid;
+                    MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenant->uuid);
+                    $dispatchedJobs[] = [
+                        'job_id' => $jobId,
+                        'table' => $table,
+                        'tenant_uuid' => $tenant->uuid
+                    ];
+                }
+            }
+
+            return $this->sendResponse([
+                'batch_id' => $batchId,
+                'jobs_dispatched' => count($dispatchedJobs),
+                'jobs' => $dispatchedJobs,
+                'status' => 'queued',
+                'message' => "Dispatched " . count($dispatchedJobs) . " migration job(s), one for each table. Check the logs at storage/logs/audit_migration.log for progress and results."
+            ], 'Migration jobs dispatched successfully');
+
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
         }

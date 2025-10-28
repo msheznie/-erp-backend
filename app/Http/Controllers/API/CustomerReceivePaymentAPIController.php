@@ -726,6 +726,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'narration' => 'required',
             ]);
 
+            if ($input['documentType'] == 13 || $input['documentType'] == 15 || (isset($input['payeeTypeID']) && $input['payeeTypeID'] == 1)) {
+                $validator->addRules([
+                    'customerID' => 'required|numeric|min:1'
+                ]);
+            }
+
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
@@ -1685,6 +1691,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'custTransactionCurrencyID' => 'required|numeric|min:1',
                 'narration' => 'required',
             ]);
+
+            if ($input['documentType'] == 13 || $input['documentType'] == 15 || (isset($input['payeeTypeID']) && $input['payeeTypeID'] == 1)) {
+                $validator->addRules([
+                    'customerID' => 'required|numeric|min:1'
+                ]);
+            }
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);

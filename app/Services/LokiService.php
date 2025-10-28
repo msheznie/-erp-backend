@@ -19,14 +19,14 @@ class LokiService
             $data = json_decode($response->getBody()->getContents(), true);
 
             $logEntriesAsArrays = array_map(function ($entry) {
-                $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
+                // $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
                 return $entry;
             }, $data['data']['result']);
 
 
             usort($logEntriesAsArrays, function ($a, $b) {
-                $timestampA = strtotime(isset($a['metric']['log']['date_time']) ? $a['metric']['log']['date_time']: null);
-                $timestampB = strtotime(isset($b['metric']['log']['date_time']) ? $b['metric']['log']['date_time']: null);
+                $timestampA = strtotime(isset($a['metric']['date_time']) ? $a['metric']['date_time']: null);
+                $timestampB = strtotime(isset($b['metric']['date_time']) ? $b['metric']['date_time']: null);
 
                 return $timestampB - $timestampA;
             });
@@ -35,6 +35,8 @@ class LokiService
             return $logEntriesAsArrays;
 
         } catch (RequestException $e) {
+            \Log::error('Loki connection error: ' . $e->getMessage());
+            
             if ($e->hasResponse()) {
                 $statusCode = $e->getResponse()->getStatusCode();
                 $errorBody = $e->getResponse()->getBody()->getContents();
@@ -42,6 +44,9 @@ class LokiService
             } else {
                 return response()->json(['error' => 'Request failed: ' . $e->getMessage()], 500);
             }
+        } catch (\Exception $e) {
+            \Log::error('Loki service error: ' . $e->getMessage());
+            return [];
         }
 
     }
@@ -118,5 +123,64 @@ class LokiService
         return $table;
     }
 
+    /**
+     * Get all table names for audit log migration
+     * 
+     * @return array
+     */
+    public function getAllAuditTables(){
+        return [
+            'financeitemcategorysub',
+            'customermaster',
+            'suppliermaster',
+            'chartofaccounts',
+            'itemmaster',
+            'erp_fa_financecategory',
+            'chart_of_account_config',
+            'erp_fa_asset_master',
+            'serviceline',
+            'erp_attributes',
+            'company_departments',
+            'department_budget_templates',
+            'budget_templates',
+            'budget_template_columns',
+            'erp_workflow_configurations',
+            'department_budget_plannings',
+            'department_budget_planning_details_template_data',
+        ];
+    }
 
+    public function getAuditLogsForMigration($params){
+        try {
+
+            $client = new Client();
+            $url = env("LOKI_URL");
+
+            $response = $client->get($url . $params);
+
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            $logEntriesAsArrays = array_map(function ($entry) {
+                $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
+                return $entry['metric']['log'];
+            }, $data['data']['result']);
+
+            return $logEntriesAsArrays;
+
+        } catch (RequestException $e) {
+            \Log::error('Loki connection error (migration): ' . $e->getMessage());
+            
+            if ($e->hasResponse()) {
+                $statusCode = $e->getResponse()->getStatusCode();
+                $errorBody = $e->getResponse()->getBody()->getContents();
+                return response()->json(['error' => "HTTP $statusCode: $errorBody"], $statusCode);
+            } else {
+                return response()->json(['error' => 'Request failed: ' . $e->getMessage()], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Loki service error (migration): ' . $e->getMessage());
+            return [];
+        }
+
+    }
 }
