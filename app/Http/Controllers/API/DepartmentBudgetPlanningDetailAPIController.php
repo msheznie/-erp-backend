@@ -1104,14 +1104,16 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         return \DataTables::of($query)
             ->addColumn('newDate', function ($row) {
                 if ($row->timeExtensionRequests->count() > 0) {
-                    return $row->timeExtensionRequests->where('status', 2)->last()->new_time;
+                    $lastTimeExtension = $row->timeExtensionRequests->where('status', 2)->last();
+                    return $lastTimeExtension ? $lastTimeExtension->new_time : null;
                 } else {
                     return null;
                 }
             })
             ->addColumn('submissionDate', function ($row) {
                 if ($row->timeExtensionRequests->count() > 0) {
-                    return $row->timeExtensionRequests->first()->current_submission_date;
+                    $firstTimeExtension = $row->timeExtensionRequests->first();
+                    return $firstTimeExtension ? $firstTimeExtension->current_submission_date : $row->submissionDate;
                 } else {
                     return $row->submissionDate;
                 }
