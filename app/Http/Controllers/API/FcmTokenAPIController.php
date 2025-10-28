@@ -369,7 +369,7 @@ class FcmTokenAPIController extends AppBaseController
 
             $tenantDomain = str_replace('-erp', '', $subDomain);
 
-            if ($tenantDomain != 'localhost:8000') {
+            if ($tenantDomain != 'localhost:8000' && env('APP_ENV') != 'local') {
                  $logoutUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
             } else {
                  $logoutUrl = null;
@@ -378,6 +378,19 @@ class FcmTokenAPIController extends AppBaseController
             $resp = [];
             $logged = Auth::check();
             if ($logged) {
+                $user = Auth::user();
+                $employee = $user->employee;
+                
+                // Get session_id from the oauth_access_tokens table
+                $tokenId = $request->user()->token()->id;
+                $accessToken = \App\Models\AccessTokens::find($tokenId);
+                $sessionId = $accessToken && $accessToken->session_id ? $accessToken->session_id : null;
+                
+                // Log logout before revoking token
+                if ($sessionId && $employee) {
+                    \App\Services\AuditLog\AuthAuditService::logLogout($sessionId, $user, $employee, $request);
+                }
+                
                 $resp = $request->user()->token()->revoke();
             }
 

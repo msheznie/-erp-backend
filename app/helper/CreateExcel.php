@@ -266,7 +266,7 @@ class CreateExcel
                         // call cell manipulation methods
 
                         $row->setAlignment('left');
-                        $row->setFontColor('#00000');
+                        $row->setFontColor('#000000');
 
                         $row->setFont(array(
 

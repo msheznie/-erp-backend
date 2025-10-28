@@ -1049,6 +1049,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
     });
 
     if (env("LOG_ENABLE", false)) {
+        Route::get('migrateAuditLogs', 'AuditTrailAPIController@migrateAuditLogs');
         Route::get('runCronJob/{cron}', function ($cron) {
             Artisan::call($cron);
             return 'CRON Job run successfully';
