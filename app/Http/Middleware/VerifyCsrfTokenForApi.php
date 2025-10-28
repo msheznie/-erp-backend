@@ -252,7 +252,17 @@ class VerifyCsrfTokenForApi
             'api/v1/saveDepBudgetPlEmpColumns',
             'api/v1/updateBudgetPlanningDelegateWorkStatus',
             'api/v1/deleteTimeExtensionRequest',
-            'api/v1/acceptTimeExtensionRequest'
+            'api/v1/acceptTimeExtensionRequest',
+            'api/v1/department-budget-detail-comments/budget-detail/{budgetDetailId}',
+            'api/v1/department-budget-detail-comments/save',
+            'api/v1/department-budget-detail-comments/update/{id}',
+            'api/v1/department-budget-detail-comments/delete/{id}',
+            'api/v1/department-budget-detail-comments/count/{budgetDetailId}',
+            'api/v1/department-budget-detail-comments/bulk',
+            'api/v1/department-budget-detail-comments/paginated',
+            'api/v1/department-budget-detail-comments/recent',
+            'api/v1/department-budget-detail-comments/resolve',
+            'api/v1/department-budget-detail-comments'
         ];
     }
 }
