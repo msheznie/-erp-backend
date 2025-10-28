@@ -65,7 +65,7 @@ class EmployeeDetailsAPIController extends AppBaseController
         $this->employeeDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeDetails = $this->employeeDetailsRepository->all();
 
-        return $this->sendResponse($employeeDetails->toArray(), 'Employee Details retrieved successfully');
+        return $this->sendResponse($employeeDetails->toArray(), trans('custom.employee_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmployeeDetailsAPIController extends AppBaseController
 
         $employeeDetails = $this->employeeDetailsRepository->create($input);
 
-        return $this->sendResponse($employeeDetails->toArray(), 'Employee Details saved successfully');
+        return $this->sendResponse($employeeDetails->toArray(), trans('custom.employee_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmployeeDetailsAPIController extends AppBaseController
         $employeeDetails = $this->employeeDetailsRepository->findWithoutFail($id);
 
         if (empty($employeeDetails)) {
-            return $this->sendError('Employee Details not found');
+            return $this->sendError(trans('custom.employee_details_not_found'));
         }
 
-        return $this->sendResponse($employeeDetails->toArray(), 'Employee Details retrieved successfully');
+        return $this->sendResponse($employeeDetails->toArray(), trans('custom.employee_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmployeeDetailsAPIController extends AppBaseController
         $employeeDetails = $this->employeeDetailsRepository->findWithoutFail($id);
 
         if (empty($employeeDetails)) {
-            return $this->sendError('Employee Details not found');
+            return $this->sendError(trans('custom.employee_details_not_found'));
         }
 
         $employeeDetails = $this->employeeDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($employeeDetails->toArray(), 'EmployeeDetails updated successfully');
+        return $this->sendResponse($employeeDetails->toArray(), trans('custom.employeedetails_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class EmployeeDetailsAPIController extends AppBaseController
         $employeeDetails = $this->employeeDetailsRepository->findWithoutFail($id);
 
         if (empty($employeeDetails)) {
-            return $this->sendError('Employee Details not found');
+            return $this->sendError(trans('custom.employee_details_not_found'));
         }
 
         $employeeDetails->delete();
 
-        return $this->sendResponse($id, 'Employee Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.employee_details_deleted_successfully'));
     }
 }

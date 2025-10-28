@@ -16,12 +16,13 @@ class ExportDetailedPoList implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $data;
     public $dispatch_db;
+    public $userLang;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $input)
+    public function __construct($dispatch_db, $input, $userLang = 'en')
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -36,6 +37,7 @@ class ExportDetailedPoList implements ShouldQueue
 
         $this->data = $input;
         $this->dispatch_db = $dispatch_db;
+        $this->userLang = $userLang;
     }
 
     /**
@@ -50,7 +52,7 @@ class ExportDetailedPoList implements ShouldQueue
         CommonJobService::db_switch($db);
 
         try {
-            (new ExportPODetailExcel($this->data))->export();
+            (new ExportPODetailExcel($this->data, $this->userLang))->export();
         } catch (\Exception $e) {
             Log::error('Export failed.', [
                 'message' => $e->getMessage(),

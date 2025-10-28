@@ -104,15 +104,20 @@ class WebPushNotificationService
                 foreach ($notificationData as $key => $value) {
                     $value['data']['time'] = Carbon::parse($value['data']['time'])->diffForHumans();
 
+                    $translatedTitle = trans('custom.'.$value['data']['title']);
+                    if($translatedTitle !== 'custom.'.$value['data']['title']){
+                        $value['data']['title'] = $translatedTitle;
+                    }
+
                     $notificationDataRes[] = $value;
                 }
-
 
                 return ['notifications' => $notificationDataRes, 'newNotificationCount' => collect(json_decode($response->getBody(), true))->where('read', 0)->count()];
             } else {
                 return ['notifications' => [], 'newNotificationCount' => 0];
             }
         } catch (\Exception $exception) {
+            Log::error('Error getting user notifications: ' . $exception->getMessage());
             return ['notifications' => [], 'newNotificationCount' => 0];
         }
     }
@@ -128,9 +133,17 @@ class WebPushNotificationService
             $params['uuid'] = $currentUserID;
             $response = $client->request('POST', $url, ['json' => $params]);
 
-
             if ($response) {
-                return $notificationData = json_decode($response->getBody(), true);
+                $notificationData = json_decode($response->getBody(), true);
+
+                foreach ($notificationData as $key => $value) {
+                    $translatedTitle = trans('custom.'.$value['data']['title']);
+                    if($translatedTitle !== 'custom.'.$value['data']['title']){
+                        $notificationData[$key]['data']['title'] = $translatedTitle;
+                    }
+                }
+
+                return $notificationData;
             } else {
                 return [];
             }

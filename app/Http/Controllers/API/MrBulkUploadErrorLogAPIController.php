@@ -64,7 +64,7 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
         $this->mrBulkUploadErrorLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $mrBulkUploadErrorLogs = $this->mrBulkUploadErrorLogRepository->all();
 
-        return $this->sendResponse($mrBulkUploadErrorLogs->toArray(), 'Mr Bulk Upload Error Logs retrieved successfully');
+        return $this->sendResponse($mrBulkUploadErrorLogs->toArray(), trans('custom.mr_bulk_upload_error_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
 
         $mrBulkUploadErrorLog = $this->mrBulkUploadErrorLogRepository->create($input);
 
-        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), 'Mr Bulk Upload Error Log saved successfully');
+        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), trans('custom.mr_bulk_upload_error_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
         $mrBulkUploadErrorLog = $this->mrBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($mrBulkUploadErrorLog)) {
-            return $this->sendError('Mr Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mr_bulk_upload_error_log_not_found'));
         }
 
-        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), 'Mr Bulk Upload Error Log retrieved successfully');
+        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), trans('custom.mr_bulk_upload_error_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
         $mrBulkUploadErrorLog = $this->mrBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($mrBulkUploadErrorLog)) {
-            return $this->sendError('Mr Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mr_bulk_upload_error_log_not_found'));
         }
 
         $mrBulkUploadErrorLog = $this->mrBulkUploadErrorLogRepository->update($input, $id);
 
-        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), 'MrBulkUploadErrorLog updated successfully');
+        return $this->sendResponse($mrBulkUploadErrorLog->toArray(), trans('custom.mrbulkuploaderrorlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
         $mrBulkUploadErrorLog = $this->mrBulkUploadErrorLogRepository->findWithoutFail($id);
 
         if (empty($mrBulkUploadErrorLog)) {
-            return $this->sendError('Mr Bulk Upload Error Log not found');
+            return $this->sendError(trans('custom.mr_bulk_upload_error_log_not_found'));
         }
 
         $mrBulkUploadErrorLog->delete();
@@ -301,12 +301,12 @@ class MrBulkUploadErrorLogAPIController extends AppBaseController
         $requestId = $request['requestId'];
         $errorMsg = $this->mrBulkUploadErrorLogRepository->getBulkUploadErrors($requestId);
 
-        return $this->sendResponse($errorMsg, 'Purchase order item upload error log status fetched successfully');
+        return $this->sendResponse($errorMsg, trans('custom.purchase_order_item_upload_error_log_status_fetche'));
     }
 
     function deleteMrErrorLog($id)
     {
         MrBulkUploadErrorLog::where('documentSystemID', trim($id))->delete();
-        return $this->sendResponse([], 'Po Bulk Upload Error Log deleted successfully');
+        return $this->sendResponse([], trans('custom.po_bulk_upload_error_log_deleted_successfully'));
     }
 }

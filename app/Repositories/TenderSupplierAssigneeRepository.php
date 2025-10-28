@@ -72,7 +72,7 @@ class TenderSupplierAssigneeRepository extends BaseRepository
                         ->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])
                         ->delete();
                 }
-                return ['success' => true, 'message' => 'Deleted successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -94,7 +94,7 @@ class TenderSupplierAssigneeRepository extends BaseRepository
                 } else {
                     TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->whereIn('id',$input['deleteList'])->delete();
                 }
-                return ['success' => true, 'message' => 'Deleted successfully'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.deleted_successfully')];
             });
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -135,10 +135,10 @@ class TenderSupplierAssigneeRepository extends BaseRepository
                 } else {
                     $result = TenderSupplierAssignee::create($data);
                 }
-                return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             });
         } catch(\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
     public function validateFileds($input){
@@ -146,6 +146,15 @@ class TenderSupplierAssigneeRepository extends BaseRepository
             'email' => 'required|email|max:255',
             'name' => 'required|max:255',
             'regNo' => 'required|max:255',
+        ],[
+            'email.required' => trans('srm_tender_rfx.email_required'),
+            'email.email'    => trans('srm_tender_rfx.email_invalid'),
+            'email.max'      => trans('srm_tender_rfx.email_max'),
+            'email.unique'   => trans('srm_tender_rfx.email_exists'),
+            'name.required'  => trans('srm_tender_rfx.name_required'),
+            'name.max'       => trans('srm_tender_rfx.name_max'),
+            'regNo.required' => trans('srm_tender_rfx.regNo_required'),
+            'regNo.max'      => trans('srm_tender_rfx.regNo_max'),
         ]);
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages(), 'code' => 422];
@@ -165,15 +174,15 @@ class TenderSupplierAssigneeRepository extends BaseRepository
         $registrationNumbers = $supplierRegLink->pluck('registration_number')->toArray();
 
         if (in_array($email, $emails)) {
-            return ['status' => false, 'message' => 'Email already exists','code' => 402];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.email_exists'),'code' => 402];
         }
 
         if (in_array($regNo, $registrationNumbers)) {
-            return ['status' => false, 'message' => 'Registration number already exists','code' => 402];
+            return ['status' => false, 'message' => trans('srm_tender_rfx.regNo_exists'),'code' => 402];
         }
 
 
-        return ['status' => true, 'message' => 'success'];
+        return ['status' => true, 'message' => trans('srm_tender_rfx.success')];
 
     }
     public static function deleteAssignedUsers($id, $versionID, $editOrAmend){
@@ -184,7 +193,7 @@ class TenderSupplierAssigneeRepository extends BaseRepository
                     TenderSupplierAssignee::find($id);
 
                 if(empty($supplier)){
-                    return ['success' => false, 'message' => 'Assigned supplier not found'];
+                    return ['success' => false, 'message' => trans('srm_tender_rfx.assigned_supplier_not_found')];
                 }
 
                 if($editOrAmend){
@@ -192,10 +201,10 @@ class TenderSupplierAssigneeRepository extends BaseRepository
                 } else {
                     TenderSupplierAssignee::where('id', $id)->delete();
                 }
-                return ['success' => true, 'message' => 'Successfully deleted.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
             });
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: '. $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 }

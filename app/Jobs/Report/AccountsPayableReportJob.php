@@ -28,12 +28,13 @@ class AccountsPayableReportJob implements ShouldQueue
     public $dispatch_db;
     public $requestData;
     public $userIds;
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $userId)
+    public function __construct($dispatch_db, $request, $userId, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -43,6 +44,7 @@ class AccountsPayableReportJob implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
         $this->userIds = $userId;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -58,6 +60,8 @@ class AccountsPayableReportJob implements ShouldQueue
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
         $reportTypeId = ($this->requestData->reportTypeID)  ? :null;
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
         switch ($reportTypeId) {
             case "SS":
                 $request = $this->requestData;
@@ -70,7 +74,7 @@ class AccountsPayableReportJob implements ShouldQueue
 
                 foreach ($outputChunkData as $output1)
                 {
-                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root)->onQueue('single');
+                    GeneratePdfJob::dispatch($db,$request,$reportCount,$this->userIds,$output1,count($outputChunkData), $root, $languageCode)->onQueue('single');
 
                     $reportCount++;
                 }

@@ -1,12 +1,44 @@
 # Changelog
 
 
+## [10.87.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.1...v10.87.0) (2025-10-11)
+
+
+### Features
+
+* **Data Synchronization:** HRMS | OSOS 3.0 | Support OBP Endpoint Version Upgrade – New Tenant Integration & API Payload Updates [GHR-6075] ([#9011](https://github.com/pbsgears/Gears_BackEnd/issues/9011)) ([28152aa](https://github.com/pbsgears/Gears_BackEnd/commit/28152aa41d114a7b003013892cc5aaa24a41ba1c))
+* **OSOS 3.0:** Improvements in Data Synchronization (Status field and menu-id value) [GHR-7833] ([2a0a05d](https://github.com/pbsgears/Gears_BackEnd/commit/2a0a05d6757a35be71e8bcc60a8fd6714e730130))
+* **OSOS 3.0:** Improvements in Data Synchronization (Status field and menu-id value) [GHR-7833] ([ce736f5](https://github.com/pbsgears/Gears_BackEnd/commit/ce736f5467152375a81bc963056c2674e03e7eed))
+
+## [10.86.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.0...v10.86.1) (2025-10-11)
+
+
+### Bug Fixes
+
+* decrease token expire to 12h [GCP-15714] ([#9059](https://github.com/pbsgears/Gears_BackEnd/issues/9059)) ([ef23819](https://github.com/pbsgears/Gears_BackEnd/commit/ef238197415a35c1fbacd147ed2056974d760d19))
+
+## [10.86.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.85.0...v10.86.0) (2025-09-26)
+
+
+### Features
+
+* **sourcing management:** tender create translation [GSUP-4092] ([#8706](https://github.com/pbsgears/Gears_BackEnd/issues/8706)) ([512f8b8](https://github.com/pbsgears/Gears_BackEnd/commit/512f8b85415c403263c182565a9012d0badcd5cb))
+* **sourcing management:** Tender/Rfx list and creation arabization [GSUP-4114] ([#8711](https://github.com/pbsgears/Gears_BackEnd/issues/8711)) ([62a21ba](https://github.com/pbsgears/Gears_BackEnd/commit/62a21ba647d808a8c03e37c16e684f51d062e435))
+* **srm:** SRM | Sourcing Management Arabic Translation [GSUP-4115] ([#8718](https://github.com/pbsgears/Gears_BackEnd/issues/8718)) ([95b732e](https://github.com/pbsgears/Gears_BackEnd/commit/95b732e5b2fdad501910ff5a639c08ed9a3e63d0))
+
+
+### Bug Fixes
+
+* **srm:** Error message incorrectly displayed when only one supplier is selected in Single Sourcing Tender / RFX [GSUP-4198] ([#8879](https://github.com/pbsgears/Gears_BackEnd/issues/8879)) ([128ec89](https://github.com/pbsgears/Gears_BackEnd/commit/128ec89a4199ac275d9eb9905f52c6e2912f1247))
+* **srm:** SQL Error When Updating Document Type [GSUP-4088] ([#8862](https://github.com/pbsgears/Gears_BackEnd/issues/8862)) ([3101c9c](https://github.com/pbsgears/Gears_BackEnd/commit/3101c9cc9e383bb22214a32e4e4ca3b7a1e73587))
+
 ## [10.84.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.83.0...v10.84.0) (2025-09-16)
 
 
 ### Features
 
 * **Employee Designation:** EA | Setup for Designation Update Notification in Employee Master [GHR-6977] ([#8719](https://github.com/pbsgears/Gears_BackEnd/issues/8719)) ([5968897](https://github.com/pbsgears/Gears_BackEnd/commit/596889712e413822c1d3cc7b57ca682fcfbf6c7e))
+
 
 ## [10.83.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.82.0...v10.83.0) (2025-09-11)
 
@@ -23,12 +55,14 @@
 
 * **Commercial Bid Opening:** Commercial bid records are visible before approval of bid opening [GSUP-4064] ([#8651](https://github.com/pbsgears/Gears_BackEnd/issues/8651)) ([5b26359](https://github.com/pbsgears/Gears_BackEnd/commit/5b263593ecfced44f76e120d170af022509e88b6))
 
+
 ## [10.82.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.1...v10.82.0) (2025-09-07)
 
 
 ### Features
 
 * **treasury management:** b2B file format double quotation mark replaced with empty [GCP-11669] ([#8685](https://github.com/pbsgears/Gears_BackEnd/issues/8685)) ([b3ae859](https://github.com/pbsgears/Gears_BackEnd/commit/b3ae8597d274273bf73bc19e74af35a023db43e1))
+
 
 ## [10.81.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.81.0...v10.81.1) (2025-09-01)
 

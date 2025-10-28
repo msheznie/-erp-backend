@@ -40,9 +40,9 @@ class BudgetDelegateAPIController extends AppBaseController
 
             $records = $this->budgetDelegateService->getDelegateAccessRecords($request->budget_planning_detail_id);
             
-            return $this->sendResponse($records, 'Delegate access records retrieved successfully');
+            return $this->sendResponse($records, trans('custom.delegate_access_records_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error retrieving delegate access records: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_retrieving_delegate_access_records') . $e->getMessage());
         }
     }
 
@@ -83,7 +83,7 @@ class BudgetDelegateAPIController extends AppBaseController
                     return $this->sendError($result['message']);
                 }
             } catch (Exception $e) {
-                return $this->sendError('Error updating delegate access: ' . $e->getMessage());
+                return $this->sendError(trans('custom.error_updating_delegate_access') . $e->getMessage());
             }
         }
         else {
@@ -117,7 +117,7 @@ class BudgetDelegateAPIController extends AppBaseController
                     ->find($input['budget_planning_id']);
 
                 if (!$departmentBudgetPlanning) {
-                    return $this->sendError('Department budget planning not found');
+                    return $this->sendError(trans('custom.department_budget_planning_not_found_1'));
                 }
 
                 // validate submission time is not graeter than budget planning detail submission time
@@ -140,13 +140,13 @@ class BudgetDelegateAPIController extends AppBaseController
                 );
 
                 if ($data['success']) {
-                    return $this->sendResponse(null, 'All delegations processed successfully.');
+                    return $this->sendResponse(null, trans('custom.all_delegations_processed_successfully'));
                 }
                 else {
                     throw new Exception($data['message']);
                 }
             } catch (Exception $e) {
-                return $this->sendError('Error processing multiple delegations: ' . $e->getMessage());
+                return $this->sendError(trans('custom.error_processing_multiple_delegations') . $e->getMessage());
             }
         }
     }
@@ -207,7 +207,7 @@ class BudgetDelegateAPIController extends AppBaseController
 
                 return [
                     'success' => true,
-                    'message' => 'All delegations processed successfully.'
+                    'message' => trans('custom.all_delegations_processed_successfully')
                 ];
             }
 
@@ -246,7 +246,7 @@ class BudgetDelegateAPIController extends AppBaseController
                 return $this->sendError($result['message']);
             }
         } catch (Exception $e) {
-            return $this->sendError('Error removing delegate access: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_removing_delegate_access') . $e->getMessage());
         }
     }
 
@@ -265,9 +265,9 @@ class BudgetDelegateAPIController extends AppBaseController
 
             $summary = $this->budgetDelegateService->getDelegateAccessSummary($request->budget_planning_detail_id);
             
-            return $this->sendResponse($summary, 'Delegate access summary retrieved successfully');
+            return $this->sendResponse($summary, trans('custom.delegate_access_summary_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error retrieving delegate access summary: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_retrieving_delegate_access_summary') . $e->getMessage());
         }
     }
 
@@ -280,11 +280,11 @@ class BudgetDelegateAPIController extends AppBaseController
         $budgetPlanningDetailId = $data['budget_planning_detail_id'] ?? 0;
 
         if (!isset($data['department_id'])) {
-            return $this->sendError('Department ID is required');
+            return $this->sendError(trans('custom.department_id_is_required'));
         }
 
         if (!isset($data['budget_planning_id'])) {
-            return $this->sendError('Budget Planning ID is required');
+            return $this->sendError(trans('custom.budget_planning_id_is_required'));
         }
 
         try {
@@ -338,9 +338,9 @@ class BudgetDelegateAPIController extends AppBaseController
                 ];
             }
 
-            return $this->sendResponse($data, 'Data retrieved successfully');
+            return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
         } catch (Exception $e) {
-            return $this->sendError('Error retrieving data: ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_retrieving_data') . $e->getMessage());
         }
     }
 
@@ -349,18 +349,18 @@ class BudgetDelegateAPIController extends AppBaseController
         $input = $request->all();
 
         if (!isset($input['delegate_id'])) {
-            return $this->sendError('Delegate ID is required');
+            return $this->sendError(trans('custom.delegate_id_is_required'));
         }
 
         $data = BudgetDelegateAccessRecord::find($input['delegate_id']);
         if (!$data) {
-            return $this->sendError('Delegate not found');
+            return $this->sendError(trans('custom.delegate_not_found'));
         }
 
         $data->status = $input['new_status'];
         $data->save();
 
-        return $this->sendResponse($data->refresh()->toArray(), 'Delegate status updated successfully');
+        return $this->sendResponse($data->refresh()->toArray(), trans('custom.delegate_status_updated_successfully'));
     }
 
     public function updateDelegateAcccessStatus(Request $request)

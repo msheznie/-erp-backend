@@ -81,7 +81,7 @@ class SalesReturnDetailAPIController extends AppBaseController
         $this->salesReturnDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salesReturnDetails = $this->salesReturnDetailRepository->all();
 
-        return $this->sendResponse($salesReturnDetails->toArray(), 'Sales Return Details retrieved successfully');
+        return $this->sendResponse($salesReturnDetails->toArray(), trans('custom.sales_return_details_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class SalesReturnDetailAPIController extends AppBaseController
 
         $salesReturnDetail = $this->salesReturnDetailRepository->create($input);
 
-        return $this->sendResponse($salesReturnDetail->toArray(), 'Sales Return Detail saved successfully');
+        return $this->sendResponse($salesReturnDetail->toArray(), trans('custom.sales_return_detail_saved_successfully'));
     }
 
     /**
@@ -175,10 +175,10 @@ class SalesReturnDetailAPIController extends AppBaseController
         $salesReturnDetail = $this->salesReturnDetailRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetail)) {
-            return $this->sendError('Sales Return Detail not found');
+            return $this->sendError(trans('custom.sales_return_detail_not_found'));
         }
 
-        return $this->sendResponse($salesReturnDetail->toArray(), 'Sales Return Detail retrieved successfully');
+        return $this->sendResponse($salesReturnDetail->toArray(), trans('custom.sales_return_detail_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SalesReturnDetailAPIController extends AppBaseController
         $salesReturnDetail = $this->salesReturnDetailRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetail)) {
-            return $this->sendError('Sales Return Detail not found');
+            return $this->sendError(trans('custom.sales_return_detail_not_found'));
         }
 
         $salesReturnData = SalesReturn::find($input['salesReturnID']);
         if (!$salesReturnData) {
-            return $this->sendError('Sales Return Data not found');
+            return $this->sendError(trans('custom.sales_return_data_not_found'));
         }
 
         $remaingQty = 0;
@@ -422,10 +422,10 @@ class SalesReturnDetailAPIController extends AppBaseController
                return $this->sendError($resVat['message']); 
             } 
             DB::commit();
-            return $this->sendResponse([], 'Sales Return Item Details updated successfully');
+            return $this->sendResponse([], trans('custom.sales_return_item_details_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
         
     }
@@ -543,10 +543,10 @@ class SalesReturnDetailAPIController extends AppBaseController
             } 
 
             DB::commit();
-            return $this->sendResponse([], 'Sales Return Item Details updated successfully');
+            return $this->sendResponse([], trans('custom.sales_return_item_details_updated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
+            return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
         }
     }
 
@@ -594,13 +594,13 @@ class SalesReturnDetailAPIController extends AppBaseController
         $salesReturnDetail = $this->salesReturnDetailRepository->findWithoutFail($id);
 
         if (empty($salesReturnDetail)) {
-            return $this->sendError('Sales Return Detail not found');
+            return $this->sendError(trans('custom.sales_return_detail_not_found'));
         }
 
         $salesReturn = SalesReturn::find($salesReturnDetail->salesReturnID);
 
         if (!$salesReturn) {
-            return $this->sendError('Sales Return not found');
+            return $this->sendError(trans('custom.sales_return_not_found'));
         }
 
         if ($salesReturnDetail->trackingType == 2) {
@@ -610,7 +610,7 @@ class SalesReturnDetailAPIController extends AppBaseController
                                                          ->first();
 
             if ($validateSubProductSold) {
-                return $this->sendError('You cannot delete this line item. Serial details are sold already.', 422);
+                return $this->sendError(trans('custom.you_cannot_delete_this_line_item_serial_details_ar'), 422);
             }
 
             $subProduct = DocumentSubProduct::where('documentSystemID', $salesReturn->documentSystemID)
@@ -698,7 +698,7 @@ class SalesReturnDetailAPIController extends AppBaseController
            return $this->sendError($resVat['message']); 
         } 
 
-        return $this->sendResponse([], 'Sales Return Detail deleted successfully');
+        return $this->sendResponse([], trans('custom.sales_return_detail_deleted_successfully'));
     }
 
 

@@ -64,7 +64,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $this->financeItemCategoryMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $financeItemCategoryMasters = $this->financeItemCategoryMasterRepository->all();
 
-        return $this->sendResponse($financeItemCategoryMasters->toArray(), 'Finance Item Category Masters retrieved successfully');
+        return $this->sendResponse($financeItemCategoryMasters->toArray(), trans('custom.finance_item_category_masters_retrieved_successful'));
     }
 
     /**
@@ -201,7 +201,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
             'itemCategoryTypes' => $itemCategoryTypes
         );
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAttributesData(Request $request){
@@ -209,7 +209,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $itemCategorySubID = $request[0];
         $attributes = ErpAttributes::with('field_type')->where('document_master_id',$itemCategorySubID)->get();
 
-        return $this->sendResponse($attributes, 'Record retrieved successfully');
+        return $this->sendResponse($attributes, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAssetCostAttributesData(Request $request){
@@ -254,7 +254,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $output = array(
             'fieldTypes' => $fieldTypes,
         );
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getDropdownValues(Request $request){
@@ -264,7 +264,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $dropDownvalues = ErpAttributesDropdown::where('attributes_id',$itemCategorySubID)->get();
 
 
-         return $this->sendResponse($dropDownvalues, 'Record retrieved successfully');
+         return $this->sendResponse($dropDownvalues, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function addItemAttributes(Request $request){
@@ -276,7 +276,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                 $descriptionValidate = ErpAttributes::where('description', $input['description'])
                                                     ->where('document_master_id', $input['document_master_id'])->get();
                 if (count($descriptionValidate) > 0){
-                    return $this->sendError('Description Already Exists');
+                    return $this->sendError(trans('custom.description_already_exists_1'));
                 }
 
                 $masterData = [
@@ -297,7 +297,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                 }
 
             DB::commit();
-            return $this->sendResponse([], 'Attributes Created successfully');
+            return $this->sendResponse([], trans('custom.attributes_created_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -318,7 +318,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $financeItemCategoryMasters = $this->financeItemCategoryMasterRepository->create($input);
 
-        return $this->sendResponse($financeItemCategoryMasters->toArray(), 'Finance Item Category Master saved successfully');
+        return $this->sendResponse($financeItemCategoryMasters->toArray(), trans('custom.finance_item_category_master_saved_successfully'));
     }
 
     /**
@@ -335,10 +335,10 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryMaster)) {
-            return $this->sendError('Finance Item Category Master not found');
+            return $this->sendError(trans('custom.finance_item_category_master_not_found'));
         }
 
-        return $this->sendResponse($financeItemCategoryMaster->toArray(), 'Finance Item Category Master retrieved successfully');
+        return $this->sendResponse($financeItemCategoryMaster->toArray(), trans('custom.finance_item_category_master_retrieved_successfull'));
     }
 
     /**
@@ -358,12 +358,12 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryMaster)) {
-            return $this->sendError('Finance Item Category Master not found');
+            return $this->sendError(trans('custom.finance_item_category_master_not_found'));
         }
 
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->update($input, $id);
 
-        return $this->sendResponse($financeItemCategoryMaster->toArray(), 'FinanceItemCategoryMaster updated successfully');
+        return $this->sendResponse($financeItemCategoryMaster->toArray(), trans('custom.financeitemcategorymaster_updated_successfully'));
     }
 
     /**
@@ -380,12 +380,12 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->findWithoutFail($id);
 
         if (empty($financeItemCategoryMaster)) {
-            return $this->sendError('Finance Item Category Master not found');
+            return $this->sendError(trans('custom.finance_item_category_master_not_found'));
         }
 
         $financeItemCategoryMaster->delete();
 
-        return $this->sendResponse($id, 'Finance Item Category Master deleted successfully');
+        return $this->sendResponse($id, trans('custom.finance_item_category_master_deleted_successfully'));
     }
 
     public function getFinanceItemCategoryMasterExpiryStatus(Request $request){
@@ -393,7 +393,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         $expiryStatus = FinanceItemCategoryMaster::select('exipryYN')->where('itemCategoryID',$itemCategoryID)->first();
 
-        return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
+        return $this->sendResponse($expiryStatus, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getFinanceItemCategoryMasterAttributesStatus(Request $request){
@@ -401,7 +401,7 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         return$expiryStatus = FinanceItemCategoryMaster::select('attributesYN')->where('itemCategoryID',$itemCategoryID)->first();
 
-        return $this->sendResponse($expiryStatus, 'Record retrieved successfully');
+        return $this->sendResponse($expiryStatus, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function usedFinanceSubCatByMainCat(Request $request): JsonResponse {

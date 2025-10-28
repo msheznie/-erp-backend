@@ -65,7 +65,7 @@ class POSSourceInvoicePaymentAPIController extends AppBaseController
         $this->pOSSourceInvoicePaymentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSourceInvoicePayments = $this->pOSSourceInvoicePaymentRepository->all();
 
-        return $this->sendResponse($pOSSourceInvoicePayments->toArray(), 'P O S Source Invoice Payments retrieved successfully');
+        return $this->sendResponse($pOSSourceInvoicePayments->toArray(), trans('custom.p_o_s_source_invoice_payments_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSourceInvoicePaymentAPIController extends AppBaseController
 
         $pOSSourceInvoicePayment = $this->pOSSourceInvoicePaymentRepository->create($input);
 
-        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), 'P O S Source Invoice Payment saved successfully');
+        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), trans('custom.p_o_s_source_invoice_payment_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSourceInvoicePaymentAPIController extends AppBaseController
         $pOSSourceInvoicePayment = $this->pOSSourceInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceInvoicePayment)) {
-            return $this->sendError('P O S Source Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_invoice_payment_not_found'));
         }
 
-        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), 'P O S Source Invoice Payment retrieved successfully');
+        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), trans('custom.p_o_s_source_invoice_payment_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSourceInvoicePaymentAPIController extends AppBaseController
         $pOSSourceInvoicePayment = $this->pOSSourceInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceInvoicePayment)) {
-            return $this->sendError('P O S Source Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_invoice_payment_not_found'));
         }
 
         $pOSSourceInvoicePayment = $this->pOSSourceInvoicePaymentRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), 'POSSourceInvoicePayment updated successfully');
+        return $this->sendResponse($pOSSourceInvoicePayment->toArray(), trans('custom.possourceinvoicepayment_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSourceInvoicePaymentAPIController extends AppBaseController
         $pOSSourceInvoicePayment = $this->pOSSourceInvoicePaymentRepository->findWithoutFail($id);
 
         if (empty($pOSSourceInvoicePayment)) {
-            return $this->sendError('P O S Source Invoice Payment not found');
+            return $this->sendError(trans('custom.p_o_s_source_invoice_payment_not_found'));
         }
 
         $pOSSourceInvoicePayment->delete();

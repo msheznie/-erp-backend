@@ -10,10 +10,13 @@ class ExportPRDetailExcel
     private $userId;
     private $data;
     private $code;
-    public function __construct($request,$userId,$code) {
+    private $lang;
+    public function __construct($request,$userId,$code,$lang = 'en') {
         $this->data = $request;
         $this->userId = $userId;
         $this->code = $code;
+        $this->lang = $lang;
+        app()->setLocale($this->lang);
     }
 
     public function export() {
@@ -33,7 +36,7 @@ class ExportPRDetailExcel
 
     private function sendNotification($basePath) {
         $webPushData = [
-            'title' => "Purchase Request Detailed Excel has been generated",
+            'title' => "purchase_request_detailed_excel_generated",
             'body' => '',
             'url' => "",
             'path' => $basePath,

@@ -34,13 +34,13 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         $company = Company::where('companySystemID', $companySystemID)->first();
 
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
 
         $item = MaterielRequestDetails::where('RequestDetailsID', $detail['itemCode'])->with(['item_by'])->first();
 
         if (empty($item)) {
-            return $this->sendError('Item not found');
+            return $this->sendError(trans('custom.item_not_found'));
         }
 
 
@@ -49,29 +49,29 @@ class StoreDetailsToMaterielRequest extends AppBaseController
                 $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $detail['itemIssueAutoID'])->first();
 
                 if (empty($itemIssueMaster)) {
-                    return $this->sendError('Materiel Issue not found');
+                    return $this->sendError(trans('custom.materiel_issue_not_found'));
                 }
             } else {
-                return $this->sendError('Materiel Issue not found');
+                return $this->sendError(trans('custom.materiel_issue_not_found'));
             }
         } else {
-            return $this->sendError('Materiel Issue not found');
+            return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
         if((isset($itemIssueMaster->reqDocID) && $itemIssueMaster->reqDocID > 0) && ($itemIssueMaster->reqDocID != $detail['RequestID']))
-            return $this->sendError('Cannot select items from multiple material requests');
+            return $this->sendError(trans('custom.cannot_select_items_from_multiple_material_requests'));
 
         if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
-            return $this->sendError('Please map the original item.');
+            return $this->sendError(trans('custom.please_map_the_original_item'));
 
         if(isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0)
-            return $this->sendError('Issuing quantity cannot be zero');
+            return $this->sendError(trans('custom.issuing_quantity_cannot_be_zero'));
 
         if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
-            return $this->sendError('Issuing quantity cannot be empty');
+            return $this->sendError(trans('custom.issuing_quantity_cannot_be_empty'));
 
         if (!is_numeric($detail['qtyIssued']) || fmod($detail['qtyIssued'], 1) !== 0.0 || $detail['qtyIssued'] > 999999999) {
-            return $this->sendError('Invalid qtyIssued');
+            return $this->sendError(trans('custom.invalid_qtyissued'));
         }
 
         if((isset($detail['mappingItemCode']) && $detail['mappingItemCode'] != 0) || (isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0))
@@ -113,11 +113,11 @@ class StoreDetailsToMaterielRequest extends AppBaseController
 
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         }else {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
-            return $this->sendError("Account code not updated.", 500);
+            return $this->sendError(trans('custom.account_code_not_updated'), 500);
         }
 
         // check policy 18
@@ -151,7 +151,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhether)) {
-            return $this->sendError("There is a Materiel Issue (" . $checkWhether->itemIssueCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.materiel_issue_pending_approval_for_item', ['code' => $checkWhether->itemIssueCode]), 500);
         }
 
         $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
@@ -178,7 +178,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherStockTransfer)) {
-            return $this->sendError("There is a Stock Transfer (" . $checkWhetherStockTransfer->stockTransferCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.stock_transfer_pending_approval_for_item', ['code' => $checkWhetherStockTransfer->stockTransferCode]), 500);
         }
 
         /*check item sales invoice*/
@@ -205,7 +205,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherInvoice)) {
-            return $this->sendError("There is a Customer Invoice (" . $checkWhetherInvoice->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.customer_invoice_pending_approval_for_item', ['code' => $checkWhetherInvoice->bookingInvCode]), 500);
         }
 
         // check in delivery order
@@ -225,7 +225,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             ->first();
 
         if (!empty($checkWhetherDeliveryOrder)) {
-            return $this->sendError("There is a Delivery Order (" . $checkWhetherDeliveryOrder->deliveryOrderCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.delivery_order_pending_approval_for_item', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]), 500);
         }
 
         /*Check in purchase return*/
@@ -249,7 +249,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         /* approved=0*/
 
         if (!empty($checkWhetherPR)) {
-            return $this->sendError("There is a Purchase Return (" . $checkWhetherPR->purchaseReturnCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
+            return $this->sendError(trans('custom.purchase_return_pending_approval_for_item', ['code' => $checkWhetherPR->purchaseReturnCode]), 500);
         }
 
 
@@ -272,13 +272,13 @@ class StoreDetailsToMaterielRequest extends AppBaseController
 
 
         if((int)$detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
-            return $this->sendError("Quantity Issuing is greater than the available quantity", 500);
+            return $this->sendError(trans('custom.quantity_issuing_greater_than_available'), 500);
         }
 
 
         if((int)$detail['qtyIssued'] >  $detail['currentWareHouseStockQty']) {
             $qtyError = array('type' => 'qty','status' => 'warehouse');
-            return $this->sendError("Current warehouse stock Qty is: " .  $detail['currentWareHouseStockQty'] . " .You cannot issue more than the current warehouse stock qty.", 500, $qtyError);
+            return $this->sendError(trans('custom.current_warehouse_stock_qty_message', ['qty' => $detail['currentWareHouseStockQty']]), 500, $qtyError);
         }
 
 
@@ -291,7 +291,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
                     $item = $itemMap['data'];
                 }
             } else {
-                return $this->sendError('Item not found, Please map this item with a original item', 500, ["type" => 'itemMap']);
+                return $this->sendError(trans('custom.item_not_found_please_map_this_item_with_a_origina'), 500, ["type" => 'itemMap']);
             }
         }
         return $this->sendResponse($detail,'success');
@@ -303,14 +303,14 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             ->where('companySystemID', $companySystemID)
             ->first();
         if (empty($item)) {
-            return ['status' => false, 'message' => 'Item not found'];
+            return ['status' => false, 'message' => trans('custom.item_not_found')];
         }
 
         $materielRequest = MaterielRequest::where('RequestID', $requestID)->first();
 
 
         if (empty($materielRequest)) {
-            return ['status' => false, 'message' => 'Materiel Request Details not found'];
+            return ['status' => false, 'message' => trans('custom.materiel_request_details_not_found')];
         }
 
 
@@ -340,7 +340,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
             ->first();
 
         if (empty($financeItemCategorySubAssigned)) {
-            return ['status' => false, 'message' => 'Finance Category not found'];
+            return ['status' => false, 'message' => trans('custom.finance_category_not_found')];
         }
 
         if ($item->financeCategoryMaster == 1) {
@@ -352,7 +352,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
                 ->first();
 
             if ($alreadyAdded) {
-                return ['status' => false, 'message' => 'Selected item is already added to above material request. Please check again'];
+                return ['status' => false, 'message' => trans('custom.selected_item_already_added_to_material_request')];
             }
         }
 
@@ -402,7 +402,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         $input['quantityInHand']  = $quantityInHand;
 
         if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
-            return ['status' => false, 'message' => 'No stock Qty. Please check again'];
+            return ['status' => false, 'message' => trans('custom.no_stock_qty_please_check_again')];
         }
 
         return ['status' => true, 'data' => (object)$input];

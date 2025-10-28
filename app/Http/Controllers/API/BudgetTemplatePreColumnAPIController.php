@@ -31,7 +31,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($budgetTemplatePreColumns->toArray(), 'Budget Template Pre Columns retrieved successfully');
+        return $this->sendResponse($budgetTemplatePreColumns->toArray(), trans('custom.budget_template_pre_columns_retrieved_successfully'));
     }
 
     /**
@@ -51,7 +51,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
 
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->create($input);
 
-        return $this->sendResponse($budgetTemplatePreColumn->toArray(), 'Budget Template Pre Column saved successfully');
+        return $this->sendResponse($budgetTemplatePreColumn->toArray(), trans('custom.budget_template_pre_column_saved_successfully'));
     }
 
     /**
@@ -63,10 +63,10 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->find($id);
 
         if (empty($budgetTemplatePreColumn)) {
-            return $this->sendError('Budget Template Pre Column not found');
+            return $this->sendError(trans('custom.budget_template_pre_column_not_found'));
         }
 
-        return $this->sendResponse($budgetTemplatePreColumn->toArray(), 'Budget Template Pre Column retrieved successfully');
+        return $this->sendResponse($budgetTemplatePreColumn->toArray(), trans('custom.budget_template_pre_column_retrieved_successfully'));
     }
 
     /**
@@ -78,12 +78,12 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->find($id);
 
         if (empty($budgetTemplatePreColumn)) {
-            return $this->sendError('Budget Template Pre Column not found');
+            return $this->sendError(trans('custom.budget_template_pre_column_not_found'));
         }
 
         // Prevent editing system predefined columns
         if ($budgetTemplatePreColumn->isSystemPredefined) {
-            return $this->sendError('System predefined columns cannot be edited');
+            return $this->sendError(trans('custom.system_predefined_columns_cannot_be_edited'));
         }
 
         $input = $request->all();
@@ -95,7 +95,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
 
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->update($input, $id);
 
-        return $this->sendResponse($budgetTemplatePreColumn->toArray(), 'BudgetTemplatePreColumn updated successfully');
+        return $this->sendResponse($budgetTemplatePreColumn->toArray(), trans('custom.budgettemplateprecolumn_updated_successfully'));
     }
 
     /**
@@ -107,17 +107,17 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->find($id);
 
         if (empty($budgetTemplatePreColumn)) {
-            return $this->sendError('Budget Template Pre Column not found');
+            return $this->sendError(trans('custom.budget_template_pre_column_not_found'));
         }
 
         // Prevent deleting system predefined columns
         if ($budgetTemplatePreColumn->isSystemPredefined) {
-            return $this->sendError('System predefined columns cannot be deleted');
+            return $this->sendError(trans('custom.system_predefined_columns_cannot_be_deleted'));
         }
 
         $budgetTemplatePreColumn->delete();
 
-        return $this->sendResponse($id, 'Budget Template Pre Column deleted successfully');
+        return $this->sendResponse($id, trans('custom.budget_template_pre_column_deleted_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
     {
         $grouped = $this->budgetTemplatePreColumnRepository->getAvailableColumnsGrouped();
 
-        return $this->sendResponse($grouped, 'Available columns retrieved successfully');
+        return $this->sendResponse($grouped, trans('custom.available_columns_retrieved_successfully'));
     }
 
     /**
@@ -139,7 +139,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
     {
         $columns = $this->budgetTemplatePreColumnRepository->getUnassignedColumns($templateId);
 
-        return $this->sendResponse($columns->toArray(), 'Unassigned columns retrieved successfully');
+        return $this->sendResponse($columns->toArray(), trans('custom.unassigned_columns_retrieved_successfully'));
     }
 
     /**
@@ -150,6 +150,6 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
     {
         $options = $this->budgetTemplatePreColumnRepository->getColumnTypeOptions();
 
-        return $this->sendResponse($options, 'Column type options retrieved successfully');
+        return $this->sendResponse($options, trans('custom.column_type_options_retrieved_successfully'));
     }
 } 

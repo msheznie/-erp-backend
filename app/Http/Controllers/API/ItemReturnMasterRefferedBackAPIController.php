@@ -76,7 +76,7 @@ class ItemReturnMasterRefferedBackAPIController extends AppBaseController
         $this->itemReturnMasterRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemReturnMasterRefferedBacks = $this->itemReturnMasterRefferedBackRepository->all();
 
-        return $this->sendResponse($itemReturnMasterRefferedBacks->toArray(), 'Item Return Master Reffered Backs retrieved successfully');
+        return $this->sendResponse($itemReturnMasterRefferedBacks->toArray(), trans('custom.item_return_master_reffered_backs_retrieved_succes'));
     }
 
     /**
@@ -123,7 +123,7 @@ class ItemReturnMasterRefferedBackAPIController extends AppBaseController
 
         $itemReturnMasterRefferedBacks = $this->itemReturnMasterRefferedBackRepository->create($input);
 
-        return $this->sendResponse($itemReturnMasterRefferedBacks->toArray(), 'Item Return Master Reffered Back saved successfully');
+        return $this->sendResponse($itemReturnMasterRefferedBacks->toArray(), trans('custom.item_return_master_reffered_back_saved_successfull'));
     }
 
     /**
@@ -174,10 +174,10 @@ class ItemReturnMasterRefferedBackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($itemReturnMasterRefferedBack)) {
-            return $this->sendError('Item Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_master_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($itemReturnMasterRefferedBack->toArray(), 'Item Return Master Reffered Back retrieved successfully');
+        return $this->sendResponse($itemReturnMasterRefferedBack->toArray(), trans('custom.item_return_master_reffered_back_retrieved_success'));
     }
 
     /**
@@ -234,12 +234,12 @@ class ItemReturnMasterRefferedBackAPIController extends AppBaseController
         $itemReturnMasterRefferedBack = $this->itemReturnMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemReturnMasterRefferedBack)) {
-            return $this->sendError('Item Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_master_reffered_back_not_found'));
         }
 
         $itemReturnMasterRefferedBack = $this->itemReturnMasterRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($itemReturnMasterRefferedBack->toArray(), 'ItemReturnMasterRefferedBack updated successfully');
+        return $this->sendResponse($itemReturnMasterRefferedBack->toArray(), trans('custom.itemreturnmasterrefferedback_updated_successfully'));
     }
 
     /**
@@ -286,12 +286,12 @@ class ItemReturnMasterRefferedBackAPIController extends AppBaseController
         $itemReturnMasterRefferedBack = $this->itemReturnMasterRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemReturnMasterRefferedBack)) {
-            return $this->sendError('Item Return Master Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_master_reffered_back_not_found'));
         }
 
         $itemReturnMasterRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Item Return Master Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_return_master_reffered_back_deleted_successfu'));
     }
 
     public function getReferBackHistoryByMaterielReturn(Request $request)

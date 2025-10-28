@@ -76,7 +76,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $this->logisticShippingStatusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $logisticShippingStatuses = $this->logisticShippingStatusRepository->all();
 
-        return $this->sendResponse($logisticShippingStatuses->toArray(), 'Logistic Shipping Statuses retrieved successfully');
+        return $this->sendResponse($logisticShippingStatuses->toArray(), trans('custom.logistic_shipping_statuses_retrieved_successfully'));
     }
 
     /**
@@ -128,7 +128,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
 
         $logisticShippingStatuses = $this->logisticShippingStatusRepository->create($input);
 
-        return $this->sendResponse($logisticShippingStatuses->toArray(), 'Logistic Shipping Status saved successfully');
+        return $this->sendResponse($logisticShippingStatuses->toArray(), trans('custom.logistic_shipping_status_saved_successfully'));
     }
 
     /**
@@ -175,10 +175,10 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $logisticShippingStatus = $this->logisticShippingStatusRepository->findWithoutFail($id);
 
         if (empty($logisticShippingStatus)) {
-            return $this->sendError('Logistic Shipping Status not found');
+            return $this->sendError(trans('custom.logistic_shipping_status_not_found'));
         }
 
-        return $this->sendResponse($logisticShippingStatus->toArray(), 'Logistic Shipping Status retrieved successfully');
+        return $this->sendResponse($logisticShippingStatus->toArray(), trans('custom.logistic_shipping_status_retrieved_successfully'));
     }
 
     /**
@@ -235,7 +235,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $logisticShippingStatus = $this->logisticShippingStatusRepository->findWithoutFail($id);
 
         if (empty($logisticShippingStatus)) {
-            return $this->sendError('Logistic Shipping Status not found');
+            return $this->sendError(trans('custom.logistic_shipping_status_not_found'));
         }
 
         if (isset($input['statusDate']) && $input['statusDate']) {
@@ -244,7 +244,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
 
         $logisticShippingStatus = $this->logisticShippingStatusRepository->update(array_only($input, ['statusDate','statusComment']), $id);
 
-        return $this->sendResponse($logisticShippingStatus->toArray(), 'LogisticShippingStatus updated successfully');
+        return $this->sendResponse($logisticShippingStatus->toArray(), trans('custom.logisticshippingstatus_updated_successfully'));
     }
 
     /**
@@ -291,11 +291,11 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $logisticShippingStatus = $this->logisticShippingStatusRepository->findWithoutFail($id);
 
         if (empty($logisticShippingStatus)) {
-            return $this->sendError('Logistic Shipping Status not found');
+            return $this->sendError(trans('custom.logistic_shipping_status_not_found'));
         }
 
         $logisticShippingStatus->delete();
 
-        return $this->sendResponse($id, 'Logistic Shipping Status deleted successfully');
+        return $this->sendResponse($id, trans('custom.logistic_shipping_status_deleted_successfully'));
     }
 }

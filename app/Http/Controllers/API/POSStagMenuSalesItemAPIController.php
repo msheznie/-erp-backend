@@ -65,7 +65,7 @@ class POSStagMenuSalesItemAPIController extends AppBaseController
         $this->pOSStagMenuSalesItemRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagMenuSalesItems = $this->pOSStagMenuSalesItemRepository->all();
 
-        return $this->sendResponse($pOSStagMenuSalesItems->toArray(), 'P O S Stag Menu Sales Items retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesItems->toArray(), trans('custom.p_o_s_stag_menu_sales_items_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagMenuSalesItemAPIController extends AppBaseController
 
         $pOSStagMenuSalesItem = $this->pOSStagMenuSalesItemRepository->create($input);
 
-        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), 'P O S Stag Menu Sales Item saved successfully');
+        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), trans('custom.p_o_s_stag_menu_sales_item_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagMenuSalesItemAPIController extends AppBaseController
         $pOSStagMenuSalesItem = $this->pOSStagMenuSalesItemRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesItem)) {
-            return $this->sendError('P O S Stag Menu Sales Item not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_item_not_found'));
         }
 
-        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), 'P O S Stag Menu Sales Item retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), trans('custom.p_o_s_stag_menu_sales_item_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagMenuSalesItemAPIController extends AppBaseController
         $pOSStagMenuSalesItem = $this->pOSStagMenuSalesItemRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesItem)) {
-            return $this->sendError('P O S Stag Menu Sales Item not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_item_not_found'));
         }
 
         $pOSStagMenuSalesItem = $this->pOSStagMenuSalesItemRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), 'POSStagMenuSalesItem updated successfully');
+        return $this->sendResponse($pOSStagMenuSalesItem->toArray(), trans('custom.posstagmenusalesitem_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagMenuSalesItemAPIController extends AppBaseController
         $pOSStagMenuSalesItem = $this->pOSStagMenuSalesItemRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesItem)) {
-            return $this->sendError('P O S Stag Menu Sales Item not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_item_not_found'));
         }
 
         $pOSStagMenuSalesItem->delete();

@@ -69,7 +69,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
         $this->cashFlowTemplateDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $cashFlowTemplateDetails = $this->cashFlowTemplateDetailRepository->all();
 
-        return $this->sendResponse($cashFlowTemplateDetails->toArray(), 'Cash Flow Template Details retrieved successfully');
+        return $this->sendResponse($cashFlowTemplateDetails->toArray(), trans('custom.cash_flow_template_details_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
 
         $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->create($input);
 
-        return $this->sendResponse($cashFlowTemplateDetail->toArray(), 'Cash Flow Template Detail saved successfully');
+        return $this->sendResponse($cashFlowTemplateDetail->toArray(), trans('custom.cash_flow_template_detail_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
         $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
 
         if (empty($cashFlowTemplateDetail)) {
-            return $this->sendError('Cash Flow Template Detail not found');
+            return $this->sendError(trans('custom.cash_flow_template_detail_not_found'));
         }
 
-        return $this->sendResponse($cashFlowTemplateDetail->toArray(), 'Cash Flow Template Detail retrieved successfully');
+        return $this->sendResponse($cashFlowTemplateDetail->toArray(), trans('custom.cash_flow_template_detail_retrieved_successfully'));
     }
 
     /**
@@ -232,12 +232,12 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
         $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
 
         if (empty($reportTemplateDetails)) {
-            return $this->sendError('Template Details not found');
+            return $this->sendError(trans('custom.template_details_not_found'));
         }
 
         $cashFlowTemplateDetail = $this->cashFlowTemplateDetailRepository->update($input, $id);
 
-        return $this->sendResponse($cashFlowTemplateDetail->toArray(), 'CashFlowTemplateDetail updated successfully');
+        return $this->sendResponse($cashFlowTemplateDetail->toArray(), trans('custom.cashflowtemplatedetail_updated_successfully'));
     }
 
     /**
@@ -285,7 +285,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
             /** @var ReportTemplateDetails $reportTemplateDetails */
             $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($id);
             if (empty($reportTemplateDetails)) {
-                return $this->sendError('Template Details not found');
+                return $this->sendError(trans('custom.template_details_not_found'));
             }
 
             $checkIsAddedToGroupTotal = CashFlowTemplateLink::where('subCategory', $id)
@@ -296,7 +296,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
                                                            ->count();
 
             if ($checkIsAddedToGroupTotal > 0) {
-                return $this->sendError('Category cannot be deleted as it is added for total calculation');
+                return $this->sendError(trans('custom.category_cannot_be_deleted_as_it_is_added_for_tota'));
             }
 
 
@@ -317,7 +317,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
             }
             $reportTemplateDetails->delete();
             DB::commit();
-            return $this->sendResponse($id, 'Template Details deleted successfully');
+            return $this->sendResponse($id, trans('custom.template_details_deleted_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -328,7 +328,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
     {
         $reportTemplateDetails = $this->cashFlowTemplateDetailRepository->findWithoutFail($categoryID);
         if (empty($reportTemplateDetails)) {
-            return ['status'=> false, 'message' => 'Template Details not found'];
+            return ['status'=> false, 'message' => trans('custom.template_details_not_found')];
         }
 
         $detID = $reportTemplateDetails->subcategory()->pluck('id')->toArray();
@@ -383,7 +383,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
 
         $output = ['template' => $reportTemplateDetails->toArray()];
 
-        return $this->sendResponse($output, 'Report Template Details retrieved successfully');
+        return $this->sendResponse($output, trans('custom.report_template_details_retrieved_successfully'));
     }
 
      public function addCashFlowTemplateSubCategory(Request $request)
@@ -436,7 +436,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
                 }
             }
             DB::commit();
-            return $this->sendResponse([], 'Report Template Details saved successfully');
+            return $this->sendResponse([], trans('custom.report_template_details_saved_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -448,14 +448,14 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
         $reportTemplateDetails = '';
         if ($request->isHeader == 1) {
             $reportTemplateDetails = CashFlowTemplateDetail::where('cashFlowTemplateID', $request->templateID)->whereIN('type', [2,4])->orderBy('sortOrder')->get();
-            return $this->sendResponse($reportTemplateDetails->toArray(), 'Report Template Details retrieved successfully');
+            return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_retrieved_successfully'));
         } else {
             $reportTemplateDetails = CashFlowTemplateDetail::where('masterID', $request->masterID)->where('sortOrder', '<', $request->sortOrder)->whereIN('type', [2,4])->orderBy('sortOrder')->get();
 
             $this->finalLevelSubCategories = [];
             $reportTemplateDetailsFinalLevels = $this->getFinalCategoriesOfSubLevel($reportTemplateDetails, [2,4]);
 
-            return $this->sendResponse($reportTemplateDetailsFinalLevels, 'Report Template Details retrieved successfully');
+            return $this->sendResponse($reportTemplateDetailsFinalLevels, trans('custom.report_template_details_retrieved_successfully'));
         }
     }
 

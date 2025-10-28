@@ -65,7 +65,7 @@ class SMECompanyPolicyAPIController extends AppBaseController
         $this->sMECompanyPolicyRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMECompanyPolicies = $this->sMECompanyPolicyRepository->all();
 
-        return $this->sendResponse($sMECompanyPolicies->toArray(), 'S M E Company Policies retrieved successfully');
+        return $this->sendResponse($sMECompanyPolicies->toArray(), trans('custom.s_m_e_company_policies_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMECompanyPolicyAPIController extends AppBaseController
 
         $sMECompanyPolicy = $this->sMECompanyPolicyRepository->create($input);
 
-        return $this->sendResponse($sMECompanyPolicy->toArray(), 'S M E Company Policy saved successfully');
+        return $this->sendResponse($sMECompanyPolicy->toArray(), trans('custom.s_m_e_company_policy_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMECompanyPolicyAPIController extends AppBaseController
         $sMECompanyPolicy = $this->sMECompanyPolicyRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicy)) {
-            return $this->sendError('S M E Company Policy not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_not_found'));
         }
 
-        return $this->sendResponse($sMECompanyPolicy->toArray(), 'S M E Company Policy retrieved successfully');
+        return $this->sendResponse($sMECompanyPolicy->toArray(), trans('custom.s_m_e_company_policy_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMECompanyPolicyAPIController extends AppBaseController
         $sMECompanyPolicy = $this->sMECompanyPolicyRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicy)) {
-            return $this->sendError('S M E Company Policy not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_not_found'));
         }
 
         $sMECompanyPolicy = $this->sMECompanyPolicyRepository->update($input, $id);
 
-        return $this->sendResponse($sMECompanyPolicy->toArray(), 'SMECompanyPolicy updated successfully');
+        return $this->sendResponse($sMECompanyPolicy->toArray(), trans('custom.smecompanypolicy_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMECompanyPolicyAPIController extends AppBaseController
         $sMECompanyPolicy = $this->sMECompanyPolicyRepository->findWithoutFail($id);
 
         if (empty($sMECompanyPolicy)) {
-            return $this->sendError('S M E Company Policy not found');
+            return $this->sendError(trans('custom.s_m_e_company_policy_not_found'));
         }
 
         $sMECompanyPolicy->delete();

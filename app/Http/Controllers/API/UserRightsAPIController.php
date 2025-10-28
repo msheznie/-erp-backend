@@ -65,7 +65,7 @@ class UserRightsAPIController extends AppBaseController
         $this->userRightsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userRights = $this->userRightsRepository->all();
 
-        return $this->sendResponse($userRights->toArray(), 'User Rights retrieved successfully');
+        return $this->sendResponse($userRights->toArray(), trans('custom.user_rights_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class UserRightsAPIController extends AppBaseController
 
         $userRights = $this->userRightsRepository->create($input);
 
-        return $this->sendResponse($userRights->toArray(), 'User Rights saved successfully');
+        return $this->sendResponse($userRights->toArray(), trans('custom.user_rights_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class UserRightsAPIController extends AppBaseController
         $userRights = $this->userRightsRepository->findWithoutFail($id);
 
         if (empty($userRights)) {
-            return $this->sendError('User Rights not found');
+            return $this->sendError(trans('custom.user_rights_not_found'));
         }
 
-        return $this->sendResponse($userRights->toArray(), 'User Rights retrieved successfully');
+        return $this->sendResponse($userRights->toArray(), trans('custom.user_rights_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class UserRightsAPIController extends AppBaseController
         $userRights = $this->userRightsRepository->findWithoutFail($id);
 
         if (empty($userRights)) {
-            return $this->sendError('User Rights not found');
+            return $this->sendError(trans('custom.user_rights_not_found'));
         }
 
         $userRights = $this->userRightsRepository->update($input, $id);
 
-        return $this->sendResponse($userRights->toArray(), 'UserRights updated successfully');
+        return $this->sendResponse($userRights->toArray(), trans('custom.userrights_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class UserRightsAPIController extends AppBaseController
         $userRights = $this->userRightsRepository->findWithoutFail($id);
 
         if (empty($userRights)) {
-            return $this->sendError('User Rights not found');
+            return $this->sendError(trans('custom.user_rights_not_found'));
         }
 
         $userRights->delete();
 
-        return $this->sendResponse($id, 'User Rights deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_rights_deleted_successfully'));
     }
 }

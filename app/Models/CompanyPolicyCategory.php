@@ -65,8 +65,7 @@ class CompanyPolicyCategory extends Model
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'companyPolicyCategoryID';
-
-
+    protected $appends = ['companyPolicyCategoryDescription', 'policyCategoryComment'];
 
     public $fillable = [
         'companyPolicyCategoryDescription',
@@ -105,6 +104,39 @@ class CompanyPolicyCategory extends Model
 
     function company_policy_master(){
         return $this->hasOne(CompanyPolicyMaster::class, 'companyPolicyCategoryID');
+    }
+
+    function translations(){
+        return $this->hasMany(CompanyPolicyCategoryTranslations::class, 'companyPolicyCategoryID','companyPolicyCategoryID');
+    }
+
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getCompanyPolicyCategoryDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+        return $this->attributes['companyPolicyCategoryDescription'] ?? '';
+    }
+
+    public function getPolicyCategoryCommentAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        $translation = $this->translation($currentLanguage);
+        if ($translation && $translation->comment) {
+            return $translation->comment;
+        }
+        return $this->attributes['policyCategoryComment'] ?? '';
     }
     
 }

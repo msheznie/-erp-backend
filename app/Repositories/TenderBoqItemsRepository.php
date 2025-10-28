@@ -92,7 +92,7 @@ class TenderBoqItemsRepository extends BaseRepository
                     $exist->delete();
                 }
             } else {
-                return ['success' => false, 'message' => 'Item already exists'];
+                return ['success' => false, 'message' => trans('srm_tender_rfx.item_already_exists')];
             }
         }
         return ['success' => true, 'message' => 'Valid item name', 'data' => $d['purchase_request_id']];
@@ -154,10 +154,10 @@ class TenderBoqItemsRepository extends BaseRepository
                     }
                 }
 
-                return ['success' => true, 'message' => 'Uploaded successfully.'];
+                return ['success' => true, 'message' => trans('srm_tender_rfx.uploaded_successfully')];
             });
         } catch (\Exception $ex){
-            return ['success' => false, 'message' => 'Unexpected Error: ' . $ex->getMessage()];
+            return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
     }
 
@@ -167,14 +167,14 @@ class TenderBoqItemsRepository extends BaseRepository
             'main_work_id' => 'required',
         ], [
 
-            'tenderID.required' => 'Tender Master ID is required',
-            'main_work_id.required' => 'Main Work ID is required',
+            'tenderID.required'     => trans('srm_tender_rfx.tender_master_id_required'),
+            'main_work_id.required' => trans('srm_tender_rfx.main_work_id_required'),
         ]);
 
         if ($validator->fails()) {
             return ['success' => false, 'message' => implode(', ', $validator->errors()->all())];
         }
-        return ['success' => true, 'message' => 'Validation check success'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
     public function checkValidBoqItemRequestParams($input){
         $validator = Validator::make($input, [
@@ -185,16 +185,16 @@ class TenderBoqItemsRepository extends BaseRepository
             'qty' => 'required',
         ], [
 
-            'tender_id.required' => 'Tender Master ID is required',
-            'main_work_id.required' => 'Main Work ID is required',
-            'item_name.required' => 'Item is required',
-            'uom.required' => 'UOM is required',
-            'qty.required' => 'QTY is required',
+            'tender_id.required'    => trans('srm_tender_rfx.tender_master_id_required'),
+            'main_work_id.required' => trans('srm_tender_rfx.main_work_id_required'),
+            'item_name.required'    => trans('srm_tender_rfx.item_required'),
+            'uom.required'          => trans('srm_tender_rfx.uom_required'),
+            'qty.required'          => trans('srm_tender_rfx.qty_required'),
         ]);
 
         if ($validator->fails()) {
             return ['success' => false, 'message' => implode(', ', $validator->errors()->all())];
         }
-        return ['success' => true, 'message' => 'Validation check success'];
+        return ['success' => true, 'message' => trans('srm_tender_rfx.validation_check_success')];
     }
 }

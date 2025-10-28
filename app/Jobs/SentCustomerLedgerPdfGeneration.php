@@ -18,13 +18,13 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $db;
     public $dataArray;
-
+    public $languageCode;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $dataArray)
+    public function __construct($db, $dataArray, $languageCode)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -34,6 +34,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
         $this->dataArray = $dataArray;
         $this->db = $db;
+        $this->languageCode = $languageCode;
     }
 
     /**
@@ -59,6 +60,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
         $customerName = $dataArray['customerName'];
 
         $checkIsGroup = Company::find($input['companySystemID']);
+        $languageCode = $this->languageCode;
+        app()->setLocale($languageCode);
 
         if ($input['reportTypeID'] == 'CLT1') {
             $outputArr = array();
@@ -84,13 +87,53 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_one', $dataArr)->render();
-            $pdf = \App::make('dompdf.wrapper');
 
             if (!file_exists($path)) {
                 File::makeDirectory($path, 0777, true, true);
             }
 
-            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/customer_ledger_' . $customerCodeSystem . '_' . $reportCount . '.pdf');
+            $fileName = trans('custom.customer_ledger') . $customerCodeSystem . '_' . $reportCount . '.pdf';
+            $filePath = $path . '/' . $fileName;
+
+            $lang = app()->getLocale();
+            $isRTL = ($lang === 'ar');
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_top' => 16,
+                'margin_bottom' => 16,
+                'margin_header' => 9,
+                'margin_footer' => 9
+            ];
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+
+            try {
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->AddPage('L');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($this->cleanHtmlForMpdf($html));
+                $mpdf->Output($filePath, 'F');
+            } catch (\Exception $e) {
+                $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                if ($isRTL) {
+                    $fallbackConfig['direction'] = 'rtl';
+                }
+                try {
+                    $mpdf = new \Mpdf\Mpdf($fallbackConfig);
+                    $mpdf->AddPage('L');
+                    $mpdf->WriteHTML($this->cleanHtmlForMpdf($html));
+                    $mpdf->Output($filePath, 'F');
+                } catch (\Exception $e2) {
+                    Log::error('mPDF Error in SentCustomerLedgerPdfGeneration (CLT1): ' . $e2->getMessage());
+                }
+            }
 
         } else {
 
@@ -111,13 +154,53 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_two', $dataArr)->render();
-            $pdf = \App::make('dompdf.wrapper');
 
             if (!file_exists($path)) {
                 File::makeDirectory($path, 0777, true, true);
             }
 
-            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path . '/customer_ledger_' . $customerCodeSystem . '_' . $reportCount . '.pdf');
+            $fileName = trans('custom.customer_ledger') . $customerCodeSystem . '_' . $reportCount . '.pdf';
+            $filePath = $path . '/' . $fileName;
+
+            $lang = app()->getLocale();
+            $isRTL = ($lang === 'ar');
+            $mpdfConfig = [
+                'tempDir' => public_path('tmp'),
+                'mode' => 'utf-8',
+                'format' => 'A4-L',
+                'setAutoTopMargin' => 'stretch',
+                'autoMarginPadding' => -10,
+                'margin_left' => 15,
+                'margin_right' => 15,
+                'margin_top' => 16,
+                'margin_bottom' => 16,
+                'margin_header' => 9,
+                'margin_footer' => 9
+            ];
+            if ($isRTL) {
+                $mpdfConfig['direction'] = 'rtl';
+            }
+
+            try {
+                $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+                $mpdf->AddPage('L');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($this->cleanHtmlForMpdf($html));
+                $mpdf->Output($filePath, 'F');
+            } catch (\Exception $e) {
+                $fallbackConfig = ['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L'];
+                if ($isRTL) {
+                    $fallbackConfig['direction'] = 'rtl';
+                }
+                try {
+                    $mpdf = new \Mpdf\Mpdf($fallbackConfig);
+                    $mpdf->AddPage('L');
+                    $mpdf->WriteHTML($this->cleanHtmlForMpdf($html));
+                    $mpdf->Output($filePath, 'F');
+                } catch (\Exception $e2) {
+                    Log::error('mPDF Error in SentCustomerLedgerPdfGeneration (CLT2): ' . $e2->getMessage());
+                }
+            }
 
         }
 
@@ -137,9 +220,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
-            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                "monitoring this inbox.</font>";
+            $footer = "<font size='1.5'><i><p><br><br><br>" . trans('custom.save_paper_think_before_print') .
+                "<br>" . trans('custom.auto_generated_email_footer') . "</font>";
 
             $emailSentTo = 0;
             foreach ($fetchCusEmail as $row) {
@@ -148,11 +230,11 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $dataEmail['empEmail'] = $row['contactPersonEmail'];
                     $dataEmail['companySystemID'] = $input['companySystemID'];
 
-                    $temp = "Dear " . $customerName . ',<p> Customer ledger report has been sent from ' . $company->CompanyName . $footer;
+                    $temp = trans('custom.dear_customer_ledger_sent', ['customerName' => $customerName, 'companyName' => $company->CompanyName]) . $footer;
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $zipFilePath;
-                    $dataEmail['alertMessage'] = "Customer ledger report from " . $company->CompanyName;
+                    $dataEmail['alertMessage'] = trans('custom.customer_ledger_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
@@ -166,5 +248,19 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 Log::error('Email not sent.');
             }
         }
+    }
+
+    private function cleanHtmlForMpdf($html)
+    {
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*0\.1\)/', '#000000', $html);
+        $html = preg_replace('/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/', '#$1$2$3', $html);
+        $html = preg_replace('/rgb\((\d+),\s*(\d+),\s*(\d+)\)/', '#$1$2$3', $html);
+        $html = preg_replace('/\s*!important\s*/', '', $html);
+        $html = str_replace('border-top: 1px solid #0000001', 'border-top: 1px solid #000000', $html);
+        $html = preg_replace('/opacity\s*:\s*[\d.]+\s*;?/', '', $html);
+        $html = preg_replace('/transform[^;]*;?/', '', $html);
+        $html = preg_replace('/transform-origin[^;]*;?/', '', $html);
+        $html = preg_replace('/font-family:\s*[^;]*apple-system[^;]*;?/', 'font-family: Arial, sans-serif;', $html);
+        return $html;
     }
 }

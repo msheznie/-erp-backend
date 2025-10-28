@@ -49,7 +49,7 @@ class UserGroupAPIController extends AppBaseController
         $this->userGroupRepository->pushCriteria(new LimitOffsetCriteria($request));
         $userGroups = $this->userGroupRepository->all();
 
-        return $this->sendResponse($userGroups->toArray(), 'User Groups retrieved successfully');
+        return $this->sendResponse($userGroups->toArray(), trans('custom.user_groups_retrieved_successfully'));
     }
 
     /**
@@ -74,13 +74,13 @@ class UserGroupAPIController extends AppBaseController
              $userGroups = UserGroup::where("userGroupID", $id)->first();
 
             if (empty($userGroups)) {
-                return $this->sendError('User Group not found');
+                return $this->sendError(trans('custom.user_group_not_found'));
             }
 
             $employeeExists = EmployeeNavigation::where('userGroupID',$id)->count();
             
             if ($employeeExists > 0) {
-                return $this->sendError('User Group already assigned to employees, cannot change the company');
+                return $this->sendError(trans('custom.user_group_already_assigned_to_employees_cannot_ch'));
             }
             
             if($input["defaultYN"])
@@ -92,7 +92,7 @@ class UserGroupAPIController extends AppBaseController
 
                 
                     if (isset($userGroupsDefault)) {
-                        //return $this->sendError('The company have already a default user group');
+                        //return $this->sendError(trans('custom.the_company_have_already_a_default_user_group'));
                         return $this->sendError(trans('custom.company_has_default_user_group'), 500);
 
                     }
@@ -134,7 +134,7 @@ class UserGroupAPIController extends AppBaseController
             $userGroups = $this->userGroupRepository->create($input);
         
         }
-        return $this->sendResponse($userGroups, 'User Group saved successfully');
+        return $this->sendResponse($userGroups, trans('custom.user_group_saved_successfully'));
     }
 
     /**
@@ -151,10 +151,10 @@ class UserGroupAPIController extends AppBaseController
         $userGroup = $this->userGroupRepository->findWithoutFail($id);
 
         if (empty($userGroup)) {
-            return $this->sendError('User Group not found');
+            return $this->sendError(trans('custom.user_group_not_found'));
         }
 
-        return $this->sendResponse($userGroup->toArray(), 'User Group retrieved successfully');
+        return $this->sendResponse($userGroup->toArray(), trans('custom.user_group_retrieved_successfully'));
     }
 
     /**
@@ -174,12 +174,12 @@ class UserGroupAPIController extends AppBaseController
         $userGroup = $this->userGroupRepository->findWithoutFail($id);
 
         if (empty($userGroup)) {
-            return $this->sendError('User Group not found');
+            return $this->sendError(trans('custom.user_group_not_found'));
         }
 
         $userGroup = $this->userGroupRepository->update($input, $id);
 
-        return $this->sendResponse($userGroup->toArray(), 'UserGroup updated successfully');
+        return $this->sendResponse($userGroup->toArray(), trans('custom.usergroup_updated_successfully'));
     }
 
     /**
@@ -196,19 +196,19 @@ class UserGroupAPIController extends AppBaseController
         $userGroup = $this->userGroupRepository->findWithoutFail($id);
 
         if (empty($userGroup)) {
-            return $this->sendError('User Group not found');
+            return $this->sendError(trans('custom.user_group_not_found'));
         }
 
         $countUsers = EmployeeNavigation::where('userGroupID', $id)->get();
         if ($countUsers && count($countUsers) > 0){
-            return $this->sendError('There are ' .count($countUsers). ' users already assigned to this group. Remove users and try again');
+            return $this->sendError(trans('custom.user_already_assigned', ['attribute' => count($countUsers)]));
         }
 
         $userGroup->navigationusergroup()->delete();
         $userGroup->usergroupemployee()->delete();
         $userGroup->update(['isActive' => 0, 'isDeleted' => 1, 'defaultYN' => 0]);
 
-        return $this->sendResponse($id, 'User Group deleted successfully');
+        return $this->sendResponse($id, trans('custom.user_group_deleted_successfully'));
     }
 
     public function getUserGroupByCompanyDatatable(Request $request)
@@ -222,7 +222,7 @@ class UserGroupAPIController extends AppBaseController
     {
         $input = $request->all();
         $userGroup = $this->userGroupRepository->getUserGroup($input);
-        return $this->sendResponse($userGroup, 'User Group retrieved successfully');
+        return $this->sendResponse($userGroup, trans('custom.user_group_retrieved_successfully'));
     }
 
 }

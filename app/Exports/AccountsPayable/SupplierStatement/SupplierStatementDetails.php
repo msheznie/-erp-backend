@@ -117,17 +117,17 @@ class SupplierStatementDetails
     public function getHeader():Array
     {
         return  [
-            'Payable Account',
-            'Prepayment Account',
-            'Currency',
-            'Supplier Name',
-            'Supplier Group',
-            'Open Supplier Invoices',
-            'Open Advance to Suppliers',
-            'Open Debit Notes',
-            'Total Payable',
-            'Total Prepayment',
-            'Net Outstanding'
+            trans('custom.payable_account'),
+            trans('custom.prepayment_account'),
+            trans('custom.currency'),
+            trans('custom.supplier_name'),
+            trans('custom.supplier_group'),
+            trans('custom.open_supplier_invoices'),
+            trans('custom.open_advance_to_suppliers'),
+            trans('custom.open_debit_notes'),
+            trans('custom.total_payable'),
+            trans('custom.total_prepayment'),
+            trans('custom.net_outstanding')
         ];
     }
 }

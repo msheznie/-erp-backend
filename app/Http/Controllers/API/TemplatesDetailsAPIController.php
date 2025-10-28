@@ -84,7 +84,7 @@ class TemplatesDetailsAPIController extends AppBaseController
         $this->templatesDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $templatesDetails = $this->templatesDetailsRepository->all();
 
-        return $this->sendResponse($templatesDetails->toArray(), 'Templates Details retrieved successfully');
+        return $this->sendResponse($templatesDetails->toArray(), trans('custom.templates_details_retrieved_successfully'));
     }
 
     /**
@@ -131,7 +131,7 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         $templatesDetails = $this->templatesDetailsRepository->create($input);
 
-        return $this->sendResponse($templatesDetails->toArray(), 'Templates Details saved successfully');
+        return $this->sendResponse($templatesDetails->toArray(), trans('custom.templates_details_saved_successfully'));
     }
 
     /**
@@ -178,10 +178,10 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templatesDetails = $this->templatesDetailsRepository->findWithoutFail($id);
 
         if (empty($templatesDetails)) {
-            return $this->sendError('Templates Details not found');
+            return $this->sendError(trans('custom.templates_details_not_found'));
         }
 
-        return $this->sendResponse($templatesDetails->toArray(), 'Templates Details retrieved successfully');
+        return $this->sendResponse($templatesDetails->toArray(), trans('custom.templates_details_retrieved_successfully'));
     }
 
     /**
@@ -238,12 +238,12 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templatesDetails = $this->templatesDetailsRepository->findWithoutFail($id);
 
         if (empty($templatesDetails)) {
-            return $this->sendError('Templates Details not found');
+            return $this->sendError(trans('custom.templates_details_not_found'));
         }
 
         $templatesDetails = $this->templatesDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($templatesDetails->toArray(), 'TemplatesDetails updated successfully');
+        return $this->sendResponse($templatesDetails->toArray(), trans('custom.templatesdetails_updated_successfully'));
     }
 
     /**
@@ -290,12 +290,12 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templatesDetails = $this->templatesDetailsRepository->findWithoutFail($id);
 
         if (empty($templatesDetails)) {
-            return $this->sendError('Templates Details not found');
+            return $this->sendError(trans('custom.templates_details_not_found'));
         }
 
         $templatesDetails->delete();
 
-        return $this->sendResponse($id, 'Templates Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.templates_details_deleted_successfully'));
     }
 
     public function getTemplatesDetailsByMaster(Request $request)
@@ -306,20 +306,20 @@ class TemplatesDetailsAPIController extends AppBaseController
         $budgetTransferMaster = BudgetTransferForm::find($id);
 
         if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.budget_transfer_not_found'));
         }
 
         $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
                                         ->where('isFinalLevel', 1)
                                         ->get();
 
-        return $this->sendResponse($details, 'Templates Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.templates_details_retrieved_successfully'));
     }
 
     public function getTemplateByGLCode(Request $request){
@@ -331,13 +331,13 @@ class TemplatesDetailsAPIController extends AppBaseController
         $budgetTransferMaster = BudgetTransferForm::find($id);
 
         if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.budget_transfer_not_found'));
         }
 
         $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
@@ -351,7 +351,7 @@ class TemplatesDetailsAPIController extends AppBaseController
 
         $templateDetail = ReportTemplateDetails::where('detID', $glData[0]->templateDetailID)->where('companyReportTemplateID',$glData[0]->templateMasterID)->get();
 
-        return $this->sendResponse($templateDetail, 'Template Description retrieved successfully');
+        return $this->sendResponse($templateDetail, trans('custom.template_description_retrieved_successfully'));
     }
 
     public function getAllGLCodes(Request $request){
@@ -361,13 +361,13 @@ class TemplatesDetailsAPIController extends AppBaseController
         $budgetTransferMaster = BudgetTransferForm::find($id);
 
         if (empty($budgetTransferMaster)) {
-            return $this->sendError('Budget Transfer not found');
+            return $this->sendError(trans('custom.budget_transfer_not_found'));
         }
 
         $templateMaster = ReportTemplate::find($budgetTransferMaster->templatesMasterAutoID);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $budgetTransferMaster->templatesMasterAutoID)
@@ -383,7 +383,7 @@ class TemplatesDetailsAPIController extends AppBaseController
         $glCodes = ChartOfAccountsAssigned::where('companySystemID', $request->get('companySystemID'))->whereIn('chartOfAccountSystemID', $glIds)
             ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
-       return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+       return $this->sendResponse($glCodes, trans('custom.gl_codes_retrieved_successfully'));
     }
 
     public function getAllGLCodesByTemplate(Request $request)
@@ -393,7 +393,7 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templateDetail = ReportTemplateDetails::find($id);
 
         if (empty($templateDetail)) {
-            return $this->sendError('Templates Detail not found');
+            return $this->sendError(trans('custom.templates_detail_not_found'));
         }
 
         $glData = ReportTemplateLinks::where('templateMasterID', $templateDetail->companyReportTemplateID)
@@ -407,7 +407,7 @@ class TemplatesDetailsAPIController extends AppBaseController
             ->whereIn('chartOfAccountSystemID', $glIds)
             ->get(['chartOfAccountSystemID', 'AccountCode', 'AccountDescription', 'controlAccounts']);
 
-        return $this->sendResponse($glCodes, 'GL Codes retrieved successfully');
+        return $this->sendResponse($glCodes, trans('custom.gl_codes_retrieved_successfully'));
     }
 
     public function getTemplatesDetailsById(Request $request)
@@ -418,12 +418,12 @@ class TemplatesDetailsAPIController extends AppBaseController
         $templateMaster = ReportTemplate::find($id);
 
         if (empty($templateMaster)) {
-            return $this->sendError('Templates Master not found');
+            return $this->sendError(trans('custom.templates_master_not_found'));
         }
 
         $details = ReportTemplateDetails::where('companyReportTemplateID', $id)
                                         ->get();
 
-        return $this->sendResponse($details, 'Templates Details retrieved successfully');
+        return $this->sendResponse($details, trans('custom.templates_details_retrieved_successfully'));
     }
 }

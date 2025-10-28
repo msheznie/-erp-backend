@@ -64,7 +64,7 @@ class NavigationRouteAPIController extends AppBaseController
         $this->navigationRouteRepository->pushCriteria(new LimitOffsetCriteria($request));
         $navigationRoutes = $this->navigationRouteRepository->all();
 
-        return $this->sendResponse($navigationRoutes->toArray(), 'Navigation Routes retrieved successfully');
+        return $this->sendResponse($navigationRoutes->toArray(), trans('custom.navigation_routes_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class NavigationRouteAPIController extends AppBaseController
 
         $navigationRoute = $this->navigationRouteRepository->create($input);
 
-        return $this->sendResponse($navigationRoute->toArray(), 'Navigation Route saved successfully');
+        return $this->sendResponse($navigationRoute->toArray(), trans('custom.navigation_route_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class NavigationRouteAPIController extends AppBaseController
         $navigationRoute = $this->navigationRouteRepository->findWithoutFail($id);
 
         if (empty($navigationRoute)) {
-            return $this->sendError('Navigation Route not found');
+            return $this->sendError(trans('custom.navigation_route_not_found'));
         }
 
-        return $this->sendResponse($navigationRoute->toArray(), 'Navigation Route retrieved successfully');
+        return $this->sendResponse($navigationRoute->toArray(), trans('custom.navigation_route_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class NavigationRouteAPIController extends AppBaseController
         $navigationRoute = $this->navigationRouteRepository->findWithoutFail($id);
 
         if (empty($navigationRoute)) {
-            return $this->sendError('Navigation Route not found');
+            return $this->sendError(trans('custom.navigation_route_not_found'));
         }
 
         $navigationRoute = $this->navigationRouteRepository->update($input, $id);
 
-        return $this->sendResponse($navigationRoute->toArray(), 'NavigationRoute updated successfully');
+        return $this->sendResponse($navigationRoute->toArray(), trans('custom.navigationroute_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class NavigationRouteAPIController extends AppBaseController
         $navigationRoute = $this->navigationRouteRepository->findWithoutFail($id);
 
         if (empty($navigationRoute)) {
-            return $this->sendError('Navigation Route not found');
+            return $this->sendError(trans('custom.navigation_route_not_found'));
         }
 
         $navigationRoute->delete();

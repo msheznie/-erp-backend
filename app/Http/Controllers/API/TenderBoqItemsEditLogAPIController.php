@@ -64,7 +64,7 @@ class TenderBoqItemsEditLogAPIController extends AppBaseController
         $this->tenderBoqItemsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderBoqItemsEditLogs = $this->tenderBoqItemsEditLogRepository->all();
 
-        return $this->sendResponse($tenderBoqItemsEditLogs->toArray(), 'Tender Boq Items Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderBoqItemsEditLogs->toArray(), trans('custom.tender_boq_items_edit_logs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderBoqItemsEditLogAPIController extends AppBaseController
 
         $tenderBoqItemsEditLog = $this->tenderBoqItemsEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), 'Tender Boq Items Edit Log saved successfully');
+        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), trans('custom.tender_boq_items_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderBoqItemsEditLogAPIController extends AppBaseController
         $tenderBoqItemsEditLog = $this->tenderBoqItemsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItemsEditLog)) {
-            return $this->sendError('Tender Boq Items Edit Log not found');
+            return $this->sendError(trans('custom.tender_boq_items_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), 'Tender Boq Items Edit Log retrieved successfully');
+        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), trans('custom.tender_boq_items_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderBoqItemsEditLogAPIController extends AppBaseController
         $tenderBoqItemsEditLog = $this->tenderBoqItemsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItemsEditLog)) {
-            return $this->sendError('Tender Boq Items Edit Log not found');
+            return $this->sendError(trans('custom.tender_boq_items_edit_log_not_found'));
         }
 
         $tenderBoqItemsEditLog = $this->tenderBoqItemsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), 'TenderBoqItemsEditLog updated successfully');
+        return $this->sendResponse($tenderBoqItemsEditLog->toArray(), trans('custom.tenderboqitemseditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderBoqItemsEditLogAPIController extends AppBaseController
         $tenderBoqItemsEditLog = $this->tenderBoqItemsEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderBoqItemsEditLog)) {
-            return $this->sendError('Tender Boq Items Edit Log not found');
+            return $this->sendError(trans('custom.tender_boq_items_edit_log_not_found'));
         }
 
         $tenderBoqItemsEditLog->delete();

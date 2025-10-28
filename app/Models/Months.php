@@ -10,7 +10,6 @@
  * -- REVISION HISTORY
  */
 namespace App\Models;
-
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -29,7 +28,7 @@ class Months extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-
+    protected $appends = ['monthDes'];
 
     protected $dates = ['deleted_at'];
 
@@ -59,5 +58,46 @@ class Months extends Model
         
     ];
 
+    /**
+     * Relationship to MonthsLanguage
+     */
+    public function translations()
+    {
+        return $this->hasMany(MonthsLanguage::class, 'monthID', 'monthID');
+    }
+
+    /**
+     * Get translation for specific language
+     */
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    /**
+     * Get translated month description
+     */
+    public function getMonthDesAttribute()
+    {
+        // Check if the current path contains 'downloadBudgetUploadTemplate'
+        // If so, return original month description without translation
+        if (strpos(request()->path(), 'downloadBudgetUploadTemplate') !== false || strpos(request()->path(), 'budgetDetailsUpload') !== false) {
+            return $this->attributes['monthDes'] ?? '';
+        }
+
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation && $translation->monthDes) {
+            return $translation->monthDes;
+        }
+        
+        return $this->attributes['monthDes'] ?? '';
+    }
     
 }

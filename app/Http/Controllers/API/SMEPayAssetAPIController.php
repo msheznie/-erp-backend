@@ -65,7 +65,7 @@ class SMEPayAssetAPIController extends AppBaseController
         $this->sMEPayAssetRepository->pushCriteria(new LimitOffsetCriteria($request));
         $sMEPayAssets = $this->sMEPayAssetRepository->all();
 
-        return $this->sendResponse($sMEPayAssets->toArray(), 'S M E Pay Assets retrieved successfully');
+        return $this->sendResponse($sMEPayAssets->toArray(), trans('custom.s_m_e_pay_assets_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SMEPayAssetAPIController extends AppBaseController
 
         $sMEPayAsset = $this->sMEPayAssetRepository->create($input);
 
-        return $this->sendResponse($sMEPayAsset->toArray(), 'S M E Pay Asset saved successfully');
+        return $this->sendResponse($sMEPayAsset->toArray(), trans('custom.s_m_e_pay_asset_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SMEPayAssetAPIController extends AppBaseController
         $sMEPayAsset = $this->sMEPayAssetRepository->findWithoutFail($id);
 
         if (empty($sMEPayAsset)) {
-            return $this->sendError('S M E Pay Asset not found');
+            return $this->sendError(trans('custom.s_m_e_pay_asset_not_found'));
         }
 
-        return $this->sendResponse($sMEPayAsset->toArray(), 'S M E Pay Asset retrieved successfully');
+        return $this->sendResponse($sMEPayAsset->toArray(), trans('custom.s_m_e_pay_asset_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SMEPayAssetAPIController extends AppBaseController
         $sMEPayAsset = $this->sMEPayAssetRepository->findWithoutFail($id);
 
         if (empty($sMEPayAsset)) {
-            return $this->sendError('S M E Pay Asset not found');
+            return $this->sendError(trans('custom.s_m_e_pay_asset_not_found'));
         }
 
         $sMEPayAsset = $this->sMEPayAssetRepository->update($input, $id);
 
-        return $this->sendResponse($sMEPayAsset->toArray(), 'SMEPayAsset updated successfully');
+        return $this->sendResponse($sMEPayAsset->toArray(), trans('custom.smepayasset_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class SMEPayAssetAPIController extends AppBaseController
         $sMEPayAsset = $this->sMEPayAssetRepository->findWithoutFail($id);
 
         if (empty($sMEPayAsset)) {
-            return $this->sendError('S M E Pay Asset not found');
+            return $this->sendError(trans('custom.s_m_e_pay_asset_not_found'));
         }
 
         $sMEPayAsset->delete();

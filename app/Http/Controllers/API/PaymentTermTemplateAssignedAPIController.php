@@ -69,7 +69,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $this->paymentTermTemplateAssignedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentTermTemplateAssigneds = $this->paymentTermTemplateAssignedRepository->all();
 
-        return $this->sendResponse($paymentTermTemplateAssigneds->toArray(), 'Payment Term Template Assigneds retrieved successfully');
+        return $this->sendResponse($paymentTermTemplateAssigneds->toArray(), trans('custom.payment_term_template_assigneds_retrieved_successf'));
     }
 
     /**
@@ -129,7 +129,10 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             $existingAssignment = PaymentTermTemplateAssigned::where('supplierID', $supplier['id'])->first();
 
             if ($existingAssignment) {
-                $errorMsg[] = $existingAssignment->supplier->supplierName . ' has already been assigned to ' . $existingAssignment->template->templateName;
+                $errorMsg[] = trans('custom.supplier_already_assigned_to_template', [
+                    'supplier' => $existingAssignment->supplier->supplierName,
+                    'template' => $existingAssignment->template->templateName
+                ]);;
             } else {
                 $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->create([
                     'templateID' => $input['templateID'],
@@ -142,10 +145,10 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         }
 
         if (!empty($errorMsg)) {
-            return $this->sendError("The following suppliers have already been assigned to a template.", 500, $errorMsg);
+            return $this->sendError(trans('custom.suppliers_already_assigned'), 500, $errorMsg);
         }
 
-        return $this->sendResponse($assignSuppliers, 'Payment Term Template Assigned successfully');
+        return $this->sendResponse($assignSuppliers, trans('custom.payment_term_template_assigned_successfully'));
     }
 
     /**
@@ -193,10 +196,10 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplateAssigned)) {
-            return $this->sendError('Payment Term Template Assigned not found');
+            return $this->sendError(trans('custom.payment_term_template_assigned_not_found'));
         }
 
-        return $this->sendResponse($paymentTermTemplateAssigned->toArray(), 'Payment Term Template Assigned retrieved successfully');
+        return $this->sendResponse($paymentTermTemplateAssigned->toArray(), trans('custom.payment_term_template_assigned_retrieved_successfu'));
     }
 
     /**
@@ -262,12 +265,12 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplateAssigned)) {
-            return $this->sendError('Payment Term Template Assigned not found');
+            return $this->sendError(trans('custom.payment_term_template_assigned_not_found'));
         }
 
         $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->update($input, $id);
 
-        return $this->sendResponse($paymentTermTemplateAssigned->toArray(), 'PaymentTermTemplateAssigned updated successfully');
+        return $this->sendResponse($paymentTermTemplateAssigned->toArray(), trans('custom.paymenttermtemplateassigned_updated_successfully'));
     }
 
     /**
@@ -315,7 +318,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $paymentTermTemplateAssigned = $this->paymentTermTemplateAssignedRepository->findWithoutFail($id);
 
         if (empty($paymentTermTemplateAssigned)) {
-            return $this->sendError('Payment Term Template Assigned not found');
+            return $this->sendError(trans('custom.payment_term_template_assigned_not_found'));
         }
 
         $templateID = $paymentTermTemplateAssigned->templateID;
@@ -330,11 +333,11 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             ->count();
 
         if ($pendingApprovalCount > 0) {
-            return $this->sendError('The assigned supplier has already been pulled to pending purchase orders.', 500);
+            return $this->sendError(trans('custom.the_assigned_supplier_has_already_been_pulled_to_p'), 500);
         }
         $paymentTermTemplateAssigned->delete();
 
-        return $this->sendResponse($id, 'Payment Term Template Assigned deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_term_template_assigned_deleted_successfull'));
     }
 
     public function getSupplierAssignFormData(Request $request)
@@ -362,7 +365,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             'companies' => $companies,
         );
 
-        return $this->sendResponse($output, 'Records retrieved successfully');
+        return $this->sendResponse($output, trans('custom.records_retrieved_successfully'));
     }
 
     public function getSupplierList(Request $request)
@@ -376,7 +379,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             ->where('isBlocked', false)
             ->get();
 
-        return $this->sendResponse($suppliers, 'Record retrieved successfully');
+        return $this->sendResponse($suppliers, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAllAssignedSuppliers(Request $request)

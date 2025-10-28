@@ -66,7 +66,7 @@ class FcmTokenAPIController extends AppBaseController
         $this->fcmTokenRepository->pushCriteria(new LimitOffsetCriteria($request));
         $fcmTokens = $this->fcmTokenRepository->all();
 
-        return $this->sendResponse($fcmTokens->toArray(), 'Fcm Tokens retrieved successfully');
+        return $this->sendResponse($fcmTokens->toArray(), trans('custom.fcm_tokens_retrieved_successfully'));
     }
 
     /**
@@ -145,12 +145,12 @@ class FcmTokenAPIController extends AppBaseController
             $input['userID'] = $user_id;
             $fcmTokens = FcmToken::insert($input);
 
-            return $this->sendResponse($fcmTokens, 'Fcm Token saved successfully');
+            return $this->sendResponse($fcmTokens, trans('custom.fcm_token_saved_successfully'));
         } else {
             $fcmTokens = $this->fcmTokenRepository->update([
                 'fcm_token' => $input['fcm_token']
             ], $token->id);
-            return $this->sendResponse([], 'Fcm Token saved successfully');
+            return $this->sendResponse([], trans('custom.fcm_token_saved_successfully'));
         }
     }
 
@@ -198,10 +198,10 @@ class FcmTokenAPIController extends AppBaseController
         $fcmToken = $this->fcmTokenRepository->findWithoutFail($id);
 
         if (empty($fcmToken)) {
-            return $this->sendError('Fcm Token not found');
+            return $this->sendError(trans('custom.fcm_token_not_found'));
         }
 
-        return $this->sendResponse($fcmToken->toArray(), 'Fcm Token retrieved successfully');
+        return $this->sendResponse($fcmToken->toArray(), trans('custom.fcm_token_retrieved_successfully'));
     }
 
     /**
@@ -258,12 +258,12 @@ class FcmTokenAPIController extends AppBaseController
         $fcmToken = $this->fcmTokenRepository->findWithoutFail($id);
 
         if (empty($fcmToken)) {
-            return $this->sendError('Fcm Token not found');
+            return $this->sendError(trans('custom.fcm_token_not_found'));
         }
 
         $fcmToken = $this->fcmTokenRepository->update($input, $id);
 
-        return $this->sendResponse($fcmToken->toArray(), 'FcmToken updated successfully');
+        return $this->sendResponse($fcmToken->toArray(), trans('custom.fcmtoken_updated_successfully'));
     }
 
     /**
@@ -310,7 +310,7 @@ class FcmTokenAPIController extends AppBaseController
         $fcmToken = $this->fcmTokenRepository->findWithoutFail($id);
 
         if (empty($fcmToken)) {
-            return $this->sendError('Fcm Token not found');
+            return $this->sendError(trans('custom.fcm_token_not_found'));
         }
 
         $fcmToken->delete();
@@ -339,7 +339,7 @@ class FcmTokenAPIController extends AppBaseController
                 $homeUrl = null;
             }
 
-            return $this->sendResponse(['homeUrl' => $homeUrl], 'Successfully Redirected to Home');
+            return $this->sendResponse(['homeUrl' => $homeUrl], trans('custom.successfully_redirected_to_home'));
         } catch (\Exception $exception) {
             return $this->sendError('Something went wrong');
         }
@@ -408,7 +408,7 @@ class FcmTokenAPIController extends AppBaseController
                 $portalUrl = null;
             }
 
-            return $this->sendResponse(['portalUrl' => $portalUrl], 'Successfully Redirected to Portal');
+            return $this->sendResponse(['portalUrl' => $portalUrl], trans('custom.successfully_redirected_to_portal'));
         } catch (\Exception $exception) {
             return $this->sendError('Something went wrong');
         }

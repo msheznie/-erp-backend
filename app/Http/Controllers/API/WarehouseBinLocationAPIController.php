@@ -77,7 +77,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $this->warehouseBinLocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $warehouseBinLocations = $this->warehouseBinLocationRepository->all();
 
-        return $this->sendResponse($warehouseBinLocations->toArray(), 'Warehouse Bin Locations retrieved successfully');
+        return $this->sendResponse($warehouseBinLocations->toArray(), trans('custom.warehouse_bin_locations_retrieved_successfully'));
     }
 
     /**
@@ -137,17 +137,17 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $warehouse   =  WarehouseMaster::find($input['wareHouseSystemCode']);
 
         if(empty($warehouse)){
-            return $this->sendError('Warehouse not found');
+            return $this->sendError(trans('custom.warehouse_not_found'));
         }
         $input['companySystemID'] = $warehouse->companySystemID;
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if (empty($company)) {
-            return $this->sendError('Company not found');
+            return $this->sendError(trans('custom.company_not_found'));
         }
         $input['companyID'] = $company->CompanyID;
         $warehouseBinLocations = $this->warehouseBinLocationRepository->create($input);
 
-        return $this->sendResponse($warehouseBinLocations->toArray(), 'Warehouse Bin Location saved successfully');
+        return $this->sendResponse($warehouseBinLocations->toArray(), trans('custom.warehouse_bin_location_saved_successfully'));
     }
 
     /**
@@ -194,10 +194,10 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 
         if (empty($warehouseBinLocation)) {
-            return $this->sendError('Warehouse Bin Location not found');
+            return $this->sendError(trans('custom.warehouse_bin_location_not_found'));
         }
 
-        return $this->sendResponse($warehouseBinLocation->toArray(), 'Warehouse Bin Location retrieved successfully');
+        return $this->sendResponse($warehouseBinLocation->toArray(), trans('custom.warehouse_bin_location_retrieved_successfully'));
     }
 
     /**
@@ -264,18 +264,18 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 
         if (empty($warehouseBinLocation)) {
-            return $this->sendError('Warehouse Bin Location not found');
+            return $this->sendError(trans('custom.warehouse_bin_location_not_found'));
         }
 
         $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
 
         if($checkIsAssigned > 0){
-            return $this->sendError('Bin location you are trying to change is already assigned to an inventory.',500);
+            return $this->sendError(trans('custom.bin_location_you_are_trying_to_change_is_already_a'),500);
         }
 
         $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
 
-        return $this->sendResponse($warehouseBinLocation->toArray(), 'WarehouseBinLocation updated successfully');
+        return $this->sendResponse($warehouseBinLocation->toArray(), trans('custom.warehousebinlocation_updated_successfully'));
     }
 
     /**
@@ -322,13 +322,13 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $warehouseBinLocation = $this->warehouseBinLocationRepository->findWithoutFail($id);
 
         if (empty($warehouseBinLocation)) {
-            return $this->sendError('Warehouse Bin Location not found');
+            return $this->sendError(trans('custom.warehouse_bin_location_not_found'));
         }
 
         $checkIsAssigned = WarehouseItems::where('binNumber',$id)->count();
 
         if($checkIsAssigned > 0){
-            return $this->sendError('Bin location you are trying to delete is already assigned to an inventory.',500);
+            return $this->sendError(trans('custom.bin_location_you_are_trying_to_delete_is_already_a'),500);
         }
 
         $data['isDeleted'] = 1;
@@ -336,7 +336,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
         $this->warehouseBinLocationRepository->update($data,$id);
         //$warehouseBinLocation->delete();
 
-        return $this->sendResponse($id, 'Warehouse Bin Location deleted successfully');
+        return $this->sendResponse($id, trans('custom.warehouse_bin_location_deleted_successfully'));
     }
 
     public function getAllBinLocationsByWarehouse(Request $request)

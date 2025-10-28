@@ -64,7 +64,7 @@ class TenderPurchaseRequestEditLogAPIController extends AppBaseController
         $this->tenderPurchaseRequestEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $tenderPurchaseRequestEditLogs = $this->tenderPurchaseRequestEditLogRepository->all();
 
-        return $this->sendResponse($tenderPurchaseRequestEditLogs->toArray(), 'Tender Purchase Request Edit Logs retrieved successfully');
+        return $this->sendResponse($tenderPurchaseRequestEditLogs->toArray(), trans('custom.tender_purchase_request_edit_logs_retrieved_succes'));
     }
 
     /**
@@ -118,7 +118,7 @@ class TenderPurchaseRequestEditLogAPIController extends AppBaseController
 
         $tenderPurchaseRequestEditLog = $this->tenderPurchaseRequestEditLogRepository->create($input);
 
-        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), 'Tender Purchase Request Edit Log saved successfully');
+        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), trans('custom.tender_purchase_request_edit_log_saved_successfull'));
     }
 
     /**
@@ -166,10 +166,10 @@ class TenderPurchaseRequestEditLogAPIController extends AppBaseController
         $tenderPurchaseRequestEditLog = $this->tenderPurchaseRequestEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderPurchaseRequestEditLog)) {
-            return $this->sendError('Tender Purchase Request Edit Log not found');
+            return $this->sendError(trans('custom.tender_purchase_request_edit_log_not_found'));
         }
 
-        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), 'Tender Purchase Request Edit Log retrieved successfully');
+        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), trans('custom.tender_purchase_request_edit_log_retrieved_success'));
     }
 
     /**
@@ -235,12 +235,12 @@ class TenderPurchaseRequestEditLogAPIController extends AppBaseController
         $tenderPurchaseRequestEditLog = $this->tenderPurchaseRequestEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderPurchaseRequestEditLog)) {
-            return $this->sendError('Tender Purchase Request Edit Log not found');
+            return $this->sendError(trans('custom.tender_purchase_request_edit_log_not_found'));
         }
 
         $tenderPurchaseRequestEditLog = $this->tenderPurchaseRequestEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), 'TenderPurchaseRequestEditLog updated successfully');
+        return $this->sendResponse($tenderPurchaseRequestEditLog->toArray(), trans('custom.tenderpurchaserequesteditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class TenderPurchaseRequestEditLogAPIController extends AppBaseController
         $tenderPurchaseRequestEditLog = $this->tenderPurchaseRequestEditLogRepository->findWithoutFail($id);
 
         if (empty($tenderPurchaseRequestEditLog)) {
-            return $this->sendError('Tender Purchase Request Edit Log not found');
+            return $this->sendError(trans('custom.tender_purchase_request_edit_log_not_found'));
         }
 
         $tenderPurchaseRequestEditLog->delete();

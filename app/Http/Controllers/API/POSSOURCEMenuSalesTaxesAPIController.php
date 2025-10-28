@@ -65,7 +65,7 @@ class POSSOURCEMenuSalesTaxesAPIController extends AppBaseController
         $this->pOSSOURCEMenuSalesTaxesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->all();
 
-        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), 'P O S S O U R C E Menu Sales Taxes retrieved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_retrieved_succe'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCEMenuSalesTaxesAPIController extends AppBaseController
 
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), 'P O S S O U R C E Menu Sales Taxes saved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_saved_successfu'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCEMenuSalesTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_not_found'));
         }
 
-        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), 'P O S S O U R C E Menu Sales Taxes retrieved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_retrieved_succe'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCEMenuSalesTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_not_found'));
         }
 
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), 'POSSOURCEMenuSalesTaxes updated successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesTaxes->toArray(), trans('custom.possourcemenusalestaxes_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCEMenuSalesTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesTaxes = $this->pOSSOURCEMenuSalesTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_taxes_not_found'));
         }
 
         $pOSSOURCEMenuSalesTaxes->delete();

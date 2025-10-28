@@ -71,7 +71,7 @@ class ProcumentOrderService
             self::errorLogUpdate($valiatedItems['errorLog'], $procumentOrder['purchaseOrderID']);
         }
 
-        Log::info('Add Multiple Items End');
+        Log::info(trans('custom.add_multiple_items_end'));
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 1;
         $procumentOrder->isBulkItemJobRun = 0;
@@ -98,7 +98,7 @@ class ProcumentOrderService
             ->first();
 
             if ($checkAlreadyAllocated) {
-                return ['status' => false, 'message' => 'Item already allocated for selected segment'];
+                return ['status' => false, 'message' => trans('custom.item_already_allocated')];
             }
 
             $procumentOrder = ProcumentOrder::find($allocationData['docAutoID']);
@@ -218,43 +218,43 @@ class ProcumentOrderService
         foreach ($excelRows as $rowData) {
             $isValidationError = 0;
             if (!array_key_exists('no_qty',$rowData) || is_null($rowData['no_qty'])) {
-                $validationErrorMsg[] = 'The item Qty has not been updated for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.item_qty_not_updated', ['row' => $rowNumber]);
                 $isValidationError = 1;
             } else if (!is_numeric($rowData['no_qty'])) {
-                $validationErrorMsg[] = 'The quantity should be a numeric value for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.quantity_numeric_required', ['row' => $rowNumber]);
                 $isValidationError = 1;
             } else if ($rowData['no_qty'] < 0) {
-                $validationErrorMsg[] = 'The quantity should be a positive value for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.quantity_positive_required', ['row' => $rowNumber]);
                 $isValidationError = 1;
             }
 
             if (!array_key_exists('unit_cost',$rowData) || is_null($rowData['unit_cost'])) {
-                $validationErrorMsg[] = 'The Unit Cost has not been updated for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.unit_cost_not_updated', ['row' => $rowNumber]);
                 $isValidationError = 1;
             } else if (!is_numeric($rowData['unit_cost'])) {
-                $validationErrorMsg[] = 'The Unit cost should be a numeric value for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.unit_cost_numeric_required', ['row' => $rowNumber]);
                 $isValidationError = 1;
             }else if ($rowData['unit_cost'] < 0) {
-                $validationErrorMsg[] = 'The Unit cost should be a positive value for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.unit_cost_positive_required', ['row' => $rowNumber]);
                 $isValidationError = 1;
             }
 
             if (array_key_exists('dis_percentage',$rowData) && $rowData['dis_percentage'] !== null) {
                 if($rowData['dis_percentage'] < 0 || $rowData['dis_percentage'] > 100) {
-                    $validationErrorMsg[] = 'The Dis Percentage value should be between 0 - 100 for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.discount_percentage_range', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 } else if (!is_numeric($rowData['dis_percentage'])) {
-                    $validationErrorMsg[] = 'The Dis Percentage should be a numeric value for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.discount_percentage_numeric', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
             }
 
             if (array_key_exists('vat_percentage',$rowData) && $rowData['vat_percentage'] !== null) {
                 if($rowData['vat_percentage'] < 0 || $rowData['vat_percentage'] > 100) {
-                    $validationErrorMsg[] = 'The VAT Percentage value should be between 0 - 100 for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.vat_percentage_range', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 } else if (!is_numeric($rowData['vat_percentage'])) {
-                    $validationErrorMsg[] = 'The VAT Percentage should be a numeric value for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.vat_percentage_numeric', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
             }
@@ -264,13 +264,13 @@ class ProcumentOrderService
                     ->pluck('id')
                     ->first();
                 if (!$projectId) {
-                    $validationErrorMsg[] = 'The Project Code not match with system for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.project_code_not_match', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
             }
 
             if (!array_key_exists('item_code',$rowData) || is_null($rowData['item_code'])) {
-                $validationErrorMsg[] = 'The item code has not been updated for Excel row: ' . $rowNumber;
+                $validationErrorMsg[] = trans('custom.item_code_not_updated', ['row' => $rowNumber]);
                 $isValidationError = 1;
             } else {
                 $companyId = $purchaseOrder['companySystemID'];
@@ -287,11 +287,11 @@ class ProcumentOrderService
                                                                   ->first();
 
                     if (!$checkTheCategoryType) {
-                        $validationErrorMsg[] = 'The inventory items added should only be of Item Type: Purchase or Purchase & Sales for Excel row: ' . $rowNumber;
+                        $validationErrorMsg[] = trans('custom.item_type_purchase_required', ['row' => $rowNumber]);
                         $isValidationError = 1;
                     }
                 } else {
-                    $validationErrorMsg[] = 'The item code does not match with a system for Excel row: ' . $rowNumber;
+                    $validationErrorMsg[] = trans('custom.item_code_not_match', ['row' => $rowNumber]);
                     $isValidationError = 1;
                 }
             }

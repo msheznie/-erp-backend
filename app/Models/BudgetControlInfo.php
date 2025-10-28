@@ -121,6 +121,7 @@ class BudgetControlInfo extends Model
 
     public $table = 'budget_control_info';
     
+    protected $appends = ['controlName'];
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -176,5 +177,29 @@ class BudgetControlInfo extends Model
     	
 	public function gl_links(){
         return $this->hasMany('App\Models\BudgetControlLink','controlId','id');
+    }
+
+    /**
+     * Get the translated control name
+     *
+     * @return string
+     */
+    public function getControlNameAttribute()
+    {
+        $controlName = $this->attributes['controlName'];
+        
+        // Map the control name values to translation keys
+        $translationMap = [
+            'Profit and Loss GL' => 'profit_and_loss_gl',
+            'Balance Sheet' => 'balance_sheet',
+            'Income Statement' => 'income_statement',
+        ];
+        
+        // Return translated value if mapping exists, otherwise return original value
+        if (isset($translationMap[$controlName])) {
+            return trans('custom.' . $translationMap[$controlName]);
+        }
+        
+        return $controlName;
     }
 }

@@ -286,7 +286,7 @@ class SlotDetailsAPIController extends AppBaseController
         $deleteSlotDetail = $this->slotDetailsRepository->deleteSlotDetail($slotDetailID);
         if($deleteSlotDetail['success'])
         {
-            return $this->sendResponse([], 'Slot detail successfully deleted');
+            return $this->sendResponse([], trans('srm_supplier_management.slot_detail_successfully_deleted'));
         } else{
             $statusCode = $deleteSlotDetail['code'] ?? 404;
             return $this->sendError($deleteSlotDetail['message'], $statusCode);
@@ -297,7 +297,7 @@ class SlotDetailsAPIController extends AppBaseController
     {
         $removeMultipleSlots = $this->slotDetailsRepository->removeMultipleSlots($request);
         if($removeMultipleSlots['status']){
-            return $this->sendResponse([], $removeMultipleSlots['message'] ?? 'Slots deleted successfully');
+            return $this->sendResponse([], $removeMultipleSlots['message'] ?? trans('srm_supplier_management.slots_deleted_successfully'));
         } else {
             $statusCode = $removeMultipleSlots['code'] ?? 404;
             return $this->sendError($removeMultipleSlots['message'], $statusCode);

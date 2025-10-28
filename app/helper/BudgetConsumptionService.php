@@ -54,9 +54,13 @@ class BudgetConsumptionService
 	    	$checkBudgetBasedOnGLPolicy = true;
 	    }
 
-		if ($budgetData['status']) {
-			if (sizeof($budgetData['data']) > 0) {
-				$userMessageE = "";
+				if ($budgetData['status']) {
+					if (sizeof($budgetData['data']) > 0) {
+						$userMessageE = "";
+						// Apply RTL wrapper for Arabic language
+						if (app()->getLocale() == 'ar') {
+							$userMessageE = '<div dir="rtl" style="direction: rtl; text-align: center;">';
+						}
 				$isDefinedBehaviour = false;
 				foreach ($budgetData['data'] as $key => $value) {
 
@@ -89,11 +93,11 @@ class BudgetConsumptionService
 
 						$budgetExceMsg = "";
 						if (isset($budgetData['projectBased']) && $budgetData['projectBased']) {
-							$budgetExceMsg = "Budget Exceeded Project : ";
+							$budgetExceMsg = __('custom.budget_exceeded_project');
 						} else if (isset($budgetData['checkBudgetBasedOnGLPolicy']) && $budgetData['checkBudgetBasedOnGLPolicy']) {
-							$budgetExceMsg = "Budget Exceeded GL Account : ";
+							$budgetExceMsg = __('custom.budget_exceeded_gl_account');
 						} else {
-							$budgetExceMsg = "Budget Exceeded Category : ";
+							$budgetExceMsg = __('custom.budget_exceeded_category');
 						}
 
 
@@ -101,34 +105,38 @@ class BudgetConsumptionService
                         $userMessageE .= "<br>";
 
                         if (isset($budgetData['departmentWiseCheckBudgetPolicy']) && $budgetData['departmentWiseCheckBudgetPolicy'] && (!isset($budgetData['projectBased']) || (isset($budgetData['projectBased']) && !$budgetData['projectBased']))) {
-                        	$userMessageE .= "Segment : ". $value['serviceLine'] ;
+                        	$userMessageE .= __('custom.segment'). $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
 
                         if (isset($budgetData['checkBudgetBasedOnGLPolicyProject']) && $budgetData['checkBudgetBasedOnGLPolicyProject'] &&  (isset($budgetData['projectBased']) && $budgetData['projectBased'])) {
-                        	$userMessageE .= "GL Account : ". $value['serviceLine'] ;
+                        	$userMessageE .= __('custom.gl_account'). $value['serviceLine'] ;
                         	$userMessageE .= "<br>";
                         }
 
                         $currencyDecimal = isset($budgetData['rptCurrency']) ? $budgetData['rptCurrency']['DecimalPlaces'] : 2;
 
-                        $userMessageE .= "Budget Amount : " . round($totalBudgetRptAmount, $currencyDecimal) ;
+                        $userMessageE .= __('custom.budget_amount') . round($totalBudgetRptAmount, $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Document Amount : " . round($value['currenctDocumentConsumption'], $currencyDecimal) ;
+                        $userMessageE .= __('custom.document_amount') . round($value['currenctDocumentConsumption'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Consumed Amount : " . round($value['consumedAmount'], $currencyDecimal) ;
+                        $userMessageE .= __('custom.consumed_amount') . round($value['consumedAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Pending Document Amount : " . round($value['pendingDocumentAmount'], $currencyDecimal) ;
+                        $userMessageE .= __('custom.pending_document_amount') . round($value['pendingDocumentAmount'], $currencyDecimal) ;
                         $userMessageE .= "<br>";
-                        $userMessageE .= "Total Consumed Amount : " . round($totalConsumedAmount, $currencyDecimal);
+                        $userMessageE .= __('custom.total_consumed_amount') . round($totalConsumedAmount, $currencyDecimal);
 					}
+				}
+				// Close RTL wrapper for Arabic language
+				if (app()->getLocale() == 'ar') {
+					$userMessageE .= '</div>';
 				}
 				$isValidateMsg = false;
 				$validateMessageE = "";
 				if (isset($budgetData['validateArray']) && count($budgetData['validateArray']) > 0) {
 					$validateMessageE .= "<br>";
 					$validateMessageE .= "<br>";
-					$validateMessageE .= "Budget not configured for below GL codes";
+					$validateMessageE .= __('custom.budget_not_configured_for_gl_codes');
 					$validateMessageE .= "<br>";
 						
 					foreach ($budgetData['validateArray'] as $key => $value) {
@@ -164,7 +172,7 @@ class BudgetConsumptionService
 				if ($documentSystemID == 22) {
 					$fixedAsset = FixedAssetMaster::find($documentSystemCode);
 
-					return ['status' => true, 'message' => "The budget allocated to account code ".($fixedAsset ? $fixedAsset->COSTGLCODE : '') ." is exceeding. Are you sure you want to proceed ?", 'type' => 'question'];
+					return ['status' => true, 'message' => __('custom.budget_allocated_account_code_exceeding', ['account_code' => $fixedAsset ? $fixedAsset->COSTGLCODE : '']), 'type' => 'question'];
 				}
 				if ($isValidateMsg) {
 					$userMessageE .= $validateMessageE;
@@ -199,7 +207,7 @@ class BudgetConsumptionService
 					}
 					if($isNotDefinedBehaviour)
 					{
-						return ['status' => true, 'message' => "Some GL codes are not assigned for budget with relevant segment and finance period"];
+						return ['status' => true, 'message' => __('custom.gl_codes_not_assigned_budget')];
 					}
 					else if($isDefinedBehaviour){
 						return ['status' => true, 'message' =>'','warning' => $isDefinedBehaviour];
@@ -416,7 +424,7 @@ class BudgetConsumptionService
                 $budgetFormData['financeGLcodebBSSystemIDs'] = $detailData->pluck('financeGLcodebBSSystemID')->toArray();
 				break;
 			default:
-				return ['status' => false, 'message' => "Budget check is not set for this documnt"];
+				return ['status' => false, 'message' => __('custom.budget_check_not_set_document')];
 				break;
 		}
 
@@ -3685,7 +3693,7 @@ class BudgetConsumptionService
 				$result = self::prnBudgetConsumption($documentSystemCode);
 				break;
 			default:
-				return ['status' => false, 'message' => "Budget consumption is not set for this documnt"];
+				return ['status' => false, 'message' => __('custom.budget_consumption_not_set_document')];
 				break;
 		}
 

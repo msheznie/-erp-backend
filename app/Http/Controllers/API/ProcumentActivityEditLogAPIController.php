@@ -64,7 +64,7 @@ class ProcumentActivityEditLogAPIController extends AppBaseController
         $this->procumentActivityEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $procumentActivityEditLogs = $this->procumentActivityEditLogRepository->all();
 
-        return $this->sendResponse($procumentActivityEditLogs->toArray(), 'Procument Activity Edit Logs retrieved successfully');
+        return $this->sendResponse($procumentActivityEditLogs->toArray(), trans('custom.procument_activity_edit_logs_retrieved_successfull'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ProcumentActivityEditLogAPIController extends AppBaseController
 
         $procumentActivityEditLog = $this->procumentActivityEditLogRepository->create($input);
 
-        return $this->sendResponse($procumentActivityEditLog->toArray(), 'Procument Activity Edit Log saved successfully');
+        return $this->sendResponse($procumentActivityEditLog->toArray(), trans('custom.procument_activity_edit_log_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ProcumentActivityEditLogAPIController extends AppBaseController
         $procumentActivityEditLog = $this->procumentActivityEditLogRepository->findWithoutFail($id);
 
         if (empty($procumentActivityEditLog)) {
-            return $this->sendError('Procument Activity Edit Log not found');
+            return $this->sendError(trans('custom.procument_activity_edit_log_not_found'));
         }
 
-        return $this->sendResponse($procumentActivityEditLog->toArray(), 'Procument Activity Edit Log retrieved successfully');
+        return $this->sendResponse($procumentActivityEditLog->toArray(), trans('custom.procument_activity_edit_log_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ProcumentActivityEditLogAPIController extends AppBaseController
         $procumentActivityEditLog = $this->procumentActivityEditLogRepository->findWithoutFail($id);
 
         if (empty($procumentActivityEditLog)) {
-            return $this->sendError('Procument Activity Edit Log not found');
+            return $this->sendError(trans('custom.procument_activity_edit_log_not_found'));
         }
 
         $procumentActivityEditLog = $this->procumentActivityEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($procumentActivityEditLog->toArray(), 'ProcumentActivityEditLog updated successfully');
+        return $this->sendResponse($procumentActivityEditLog->toArray(), trans('custom.procumentactivityeditlog_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ProcumentActivityEditLogAPIController extends AppBaseController
         $procumentActivityEditLog = $this->procumentActivityEditLogRepository->findWithoutFail($id);
 
         if (empty($procumentActivityEditLog)) {
-            return $this->sendError('Procument Activity Edit Log not found');
+            return $this->sendError(trans('custom.procument_activity_edit_log_not_found'));
         }
 
         $procumentActivityEditLog->delete();

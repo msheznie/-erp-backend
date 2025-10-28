@@ -40,24 +40,24 @@ class TenderCommitteeController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $srm_employees = $srm_employees->whereHas('employee', function ($query) use ($search){
                 $query->where('empFullName', 'like', '%'.$search.'%')
-                ->orWhere('empID', 'like', '%'.$search.'%');
+                    ->orWhere('empID', 'like', '%'.$search.'%');
             });
         }
 
         return \DataTables::of($srm_employees)
-        ->order(function ($query) use ($input) {
-            if (request()->has('order')) {
-                if ($input['order'][0]['column'] == 0) {
-                    $query->orderBy('id', $input['order'][0]['dir']);
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
                 }
-            }
-        })
-        ->addIndexColumn()
-        ->with('orderCondition', $sort)
-        ->make(true);
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
 
     }
-    
+
 
     public function assignEmployeesToTenderCommitee(Request $request) {
         $company_id = $request['companyID'];
@@ -81,22 +81,22 @@ class TenderCommitteeController extends AppBaseController
             $srm_employees = SrmEmployees::insert($data);
 
             if($srm_employees) {
-                return $this->sendResponse($data,'Employee saved successfully');
+                return $this->sendResponse($data,trans('srm_masters.employee_saved_successfully'));
             }
 
         }else {
-            return $this->sendError('Employee not selected');
+            return $this->sendError(trans('srm_masters.employee_not_selected'));
         }
     }
 
     public function delete(Request $request) {
 
         $delteRecord = SrmEmployees::where('company_id',$request['companyID'])->where('id',$request['id'])->delete();
-        
+
         if($delteRecord) {
-            return $this->sendResponse($delteRecord,'Data deleted successfully');
+            return $this->sendResponse($delteRecord,trans('srm_masters.data_deleted_successfully'));
         }else {
-            return $this->sendError('Record not found');
+            return $this->sendError(trans('srm_masters.record_not_found'));
         }
     }
 
@@ -107,7 +107,7 @@ class TenderCommitteeController extends AppBaseController
         unset($input['employee']);
         $srm->update($input);
 
-        return $this->sendResponse($srm,'Data updated successfully');
+        return $this->sendResponse($srm,trans('srm_masters.data_updated_successfully'));
 
     }
 

@@ -91,7 +91,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $this->directInvoiceDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->all();
 
-        return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details retrieved successfully');
+        return $this->sendResponse($directInvoiceDetails->toArray(), trans('custom.direct_invoice_details_retrieved_successfully'));
     }
 
     /**
@@ -140,7 +140,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
 
         if (empty($BookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
 
@@ -149,12 +149,12 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         }
 
         if($BookInvSuppMaster->confirmedYN){
-            return $this->sendError('You cannot add detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_add_detail_this_document_already_confir'),500);
         }
 
         if(isset($input['type']) &&  $input['type'] != $BookInvSuppMaster->documentType)
         {
-            return $this->sendError('The Supplier Invoice type has changed, unable to proceed');
+            return $this->sendError(trans('custom.the_supplier_invoice_type_has_changed'));
         }
 
         if ($BookInvSuppMaster->documentType == 4 && empty($BookInvSuppMaster->employeeID)) {
@@ -188,7 +188,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::find($input['chartOfAccountSystemID']);
         if (empty($chartOfAccount)) {
-            return $this->sendError('Chart of Account not found');
+            return $this->sendError(trans('custom.chart_of_account_not_found_1'));
         }
 
         $input['glCode'] = $chartOfAccount->AccountCode;
@@ -234,7 +234,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->create($input);
 
-        return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details saved successfully');
+        return $this->sendResponse($directInvoiceDetails->toArray(), trans('custom.direct_invoice_details_saved_successfully'));
     }
 
     /**
@@ -281,10 +281,10 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetails)) {
-            return $this->sendError('Direct Invoice Details not found');
+            return $this->sendError(trans('custom.direct_invoice_details_not_found'));
         }
 
-        return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details retrieved successfully');
+        return $this->sendResponse($directInvoiceDetails->toArray(), trans('custom.direct_invoice_details_retrieved_successfully'));
     }
 
     /**
@@ -344,13 +344,13 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetails)) {
-            return $this->sendError('Direct Invoice Details not found');
+            return $this->sendError(trans('custom.direct_invoice_details_not_found'));
         }
 
         $BookInvSuppMaster = BookInvSuppMaster::find($input['directInvoiceAutoID']);
 
         if (empty($BookInvSuppMaster)) {
-            return $this->sendError('Supplier Invoice Master not found');
+            return $this->sendError(trans('custom.supplier_invoice_master_not_found'));
         }
 
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($BookInvSuppMaster->documentSystemID, $BookInvSuppMaster->companySystemID, $id, $input, $BookInvSuppMaster->supplierID, $BookInvSuppMaster->documentType);
@@ -363,7 +363,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         }
 
         if($BookInvSuppMaster->confirmedYN){
-            return $this->sendError('You cannot update detail, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_update_detail_this_document_already_con'),500);
         }
 
         if (isset($input['serviceLineSystemID'])) {
@@ -371,7 +371,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             if($input['serviceLineSystemID'] > 0) {
                 $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
                 if (empty($checkDepartmentActive)) {
-                    return $this->sendError('Department not found');
+                    return $this->sendError(trans('custom.department_not_found'));
                 }
 
                 if ($checkDepartmentActive->isActive == 0) {
@@ -449,7 +449,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         \Helper::updateSupplierDirectWhtAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
 
 
-        return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
+        return $this->sendResponse($directInvoiceDetails->toArray(), trans('custom.direct_invoice_details_updated_successfully'));
     }
 
     /**
@@ -496,11 +496,11 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->findWithoutFail($id);
 
         if (empty($directInvoiceDetails)) {
-            return $this->sendError('Direct Invoice Details not found');
+            return $this->sendError(trans('custom.direct_invoice_details_not_found'));
         }
 
         if($directInvoiceDetails->supplier_invoice_master && $directInvoiceDetails->supplier_invoice_master->confirmedYN){
-            return $this->sendError('You cannot delete Supplier Invoice Details, this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_supplier_invoice_details_this_do_1'),500);
         }
 
 
@@ -522,7 +522,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         \Helper::updateSupplierDirectWhtAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
         SupplierInvoice::updateMaster($directInvoiceDetails->directInvoiceAutoID);
 
-        return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.direct_invoice_details_deleted_successfully'));
     }
 
     public function getDirectItems(Request $request)
@@ -534,7 +534,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
             ->with(['segment', 'purchase_order','chartofaccount','vat_sub_category'])
             ->get();
 
-        return $this->sendResponse($items->toArray(), 'Direct Invoice Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.direct_invoice_details_retrieved_successfully'));
     }
 
     public function deleteAllSIDirectDetail(Request $request)
@@ -546,11 +546,11 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $supInvoice = BookInvSuppMaster::find($directInvoiceAutoID);
 
         if (empty($supInvoice)) {
-            return $this->sendError('Supplier Invoice not found');
+            return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
         if($supInvoice->confirmedYN){
-            return $this->sendError('You cannot delete Supplier Invoice Details , this document already confirmed',500);
+            return $this->sendError(trans('custom.you_cannot_delete_supplier_invoice_details_this_do'),500);
         }
 
 
@@ -575,6 +575,6 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         \Helper::updateSupplierDirectWhtAmount($directInvoiceAutoID,$supInvoice);
         SupplierInvoice::updateMaster($directInvoiceAutoID);
 
-        return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');
+        return $this->sendResponse($directInvoiceAutoID, trans('custom.details_deleted_successfully'));
     }
 }

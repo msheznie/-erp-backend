@@ -76,7 +76,7 @@ class JvMasterReferredbackAPIController extends AppBaseController
         $this->jvMasterReferredbackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $jvMasterReferredbacks = $this->jvMasterReferredbackRepository->all();
 
-        return $this->sendResponse($jvMasterReferredbacks->toArray(), 'Jv Master Referredbacks retrieved successfully');
+        return $this->sendResponse($jvMasterReferredbacks->toArray(), trans('custom.jv_master_referredbacks_retrieved_successfully'));
     }
 
     /**
@@ -123,7 +123,7 @@ class JvMasterReferredbackAPIController extends AppBaseController
 
         $jvMasterReferredbacks = $this->jvMasterReferredbackRepository->create($input);
 
-        return $this->sendResponse($jvMasterReferredbacks->toArray(), 'Jv Master Referredback saved successfully');
+        return $this->sendResponse($jvMasterReferredbacks->toArray(), trans('custom.jv_master_referredback_saved_successfully'));
     }
 
     /**
@@ -174,10 +174,10 @@ class JvMasterReferredbackAPIController extends AppBaseController
         }])->findWithoutFail($id);
 
         if (empty($jvMasterReferredback)) {
-            return $this->sendError('Jv Master Referredback not found');
+            return $this->sendError(trans('custom.jv_master_referredback_not_found'));
         }
 
-        return $this->sendResponse($jvMasterReferredback->toArray(), 'Jv Master Referredback retrieved successfully');
+        return $this->sendResponse($jvMasterReferredback->toArray(), trans('custom.jv_master_referredback_retrieved_successfully'));
     }
 
     /**
@@ -234,12 +234,12 @@ class JvMasterReferredbackAPIController extends AppBaseController
         $jvMasterReferredback = $this->jvMasterReferredbackRepository->findWithoutFail($id);
 
         if (empty($jvMasterReferredback)) {
-            return $this->sendError('Jv Master Referredback not found');
+            return $this->sendError(trans('custom.jv_master_referredback_not_found'));
         }
 
         $jvMasterReferredback = $this->jvMasterReferredbackRepository->update($input, $id);
 
-        return $this->sendResponse($jvMasterReferredback->toArray(), 'JvMasterReferredback updated successfully');
+        return $this->sendResponse($jvMasterReferredback->toArray(), trans('custom.jvmasterreferredback_updated_successfully'));
     }
 
     /**
@@ -286,12 +286,12 @@ class JvMasterReferredbackAPIController extends AppBaseController
         $jvMasterReferredback = $this->jvMasterReferredbackRepository->findWithoutFail($id);
 
         if (empty($jvMasterReferredback)) {
-            return $this->sendError('Jv Master Referredback not found');
+            return $this->sendError(trans('custom.jv_master_referredback_not_found'));
         }
 
         $jvMasterReferredback->delete();
 
-        return $this->sendResponse($id, 'Jv Master Referredback deleted successfully');
+        return $this->sendResponse($id, trans('custom.jv_master_referredback_deleted_successfully'));
     }
 
     public function getJournalVoucherAmendHistory(Request $request)
@@ -305,6 +305,6 @@ class JvMasterReferredbackAPIController extends AppBaseController
             }])
             ->get();
 
-        return $this->sendResponse($jvAmendHistory, 'Journal Voucher detail retrieved successfully');
+        return $this->sendResponse($jvAmendHistory, trans('custom.journal_voucher_detail_retrieved_successfully'));
     }
 }

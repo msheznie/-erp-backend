@@ -10,15 +10,24 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\JvDetail;
 use App\Models\JvMaster;
+use App\Models\RecurringVoucherSetupSchedule;
+use App\Models\RecurringVoucherSetupScheDet;
 use App\Models\SegmentMaster;
 use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\User;
+use App\Http\Controllers\API\DocumentAttachmentsAPIController;
+use App\Http\Controllers\API\JvDetailAPIController;
+use App\Http\Controllers\API\JvMasterAPIController;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class JournalVoucherService
 {
@@ -59,14 +68,14 @@ class JournalVoucherService
                 {
                     return [
                         "status" => false,
-                        "message" => "Please configure PO accrual account for this company.",
+                        "message" => trans('custom.configure_po_accrual_account'),
                         "httpCode" => 500
                     ];
                 }
             }else {
                 return [
                     "status" => false,
-                    "message" => "Gl Code scenario not found for PO Accrual.",
+                    "message" => trans('custom.gl_code_scenario_not_found_for_po_accrual'),
                     "httpCode" => 500
                 ];
             }
@@ -75,7 +84,7 @@ class JournalVoucherService
             {
                 return [
                     "status" => false,
-                    "message" => "Reversal date should greater the JV date.",
+                    "message" => trans('custom.reversal_date_should_greater_the_jv_date'),
                     "httpCode" => 500
                 ];
             }else {
@@ -92,7 +101,7 @@ class JournalVoucherService
             if ($checkPendingJv) {
                 return [
                     "status" => false,
-                    "message" => "There is a pending allocation JV, please approve those allocation JVs.",
+                    "message" => trans('custom.pending_allocation_jv_exists'),
                     "httpCode" => 500
                 ];
             }
@@ -116,7 +125,7 @@ class JournalVoucherService
         if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
             return [
                 "status" => false,
-                "message" => "JV date is not within the financial period.",
+                "message" => trans('custom.jv_financial_period_validation'),
                 "httpCode" => 500
             ];
         }
@@ -194,7 +203,7 @@ class JournalVoucherService
         return [
             'status' => true,
             'data' => $jvMaster->refresh()->toArray(),
-            'message' => 'Pay Supplier Invoice Master saved successfully',
+            'message' =>  trans('custom.jv_created_successfully'),
             "httpCode" => 200
         ];
     }
@@ -206,7 +215,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Jv Master not found",
+                'message' =>  trans('custom.jv_master_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -248,14 +257,14 @@ class JournalVoucherService
                     {
                         return [
                             "status" => false,
-                            "message" => "Please configure PO accrual account for this company",
+                            'message' =>  trans('custom.configure_po_accrual_account'),
                             "httpCode" => 500
                         ];
                     }
                 }else {
                     return [
                         "status" => false,
-                        "message" => "Gl Code scenario not found for PO Accrual",
+                        'message' =>  trans('custom.gl_code_scenario_not_found_for_po_accrual'),
                         "httpCode" => 500
                     ];
                 }
@@ -264,7 +273,7 @@ class JournalVoucherService
                 {
                     return [
                         "status" => false,
-                        "message" => "Reversal date should greater the JV date",
+                        'message' =>  trans('custom.reversal_date_should_greater_the_jv_date'),
                         "httpCode" => 500
                     ];
                 }else {
@@ -282,7 +291,7 @@ class JournalVoucherService
                 if ($checkPendingJv) {
                     return [
                         "status" => false,
-                        "message" => "There is a pending allocation JV, please approve those allocation JVs",
+                        'message' =>  trans('custom.pending_allocation_jv_exists'),
                         "httpCode" => 500
                     ];
                 }
@@ -292,7 +301,7 @@ class JournalVoucherService
                 if($input['reversalDate'] == null) {
                     return [
                         "status" => false,
-                        "message" => "Reversal Date is mandatory",
+                        'message' =>  trans('custom.reversal_date_mandatory'),
                         "httpCode" => 500
                     ];
                 }
@@ -332,7 +341,7 @@ class JournalVoucherService
             if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
                 return [
                     "status" => false,
-                    "message" => "Document date is not within the selected financial period !",
+                    'message' =>  trans('custom.document_date_financial_period_validation'),
                     "httpCode" => 500
                 ];
             }
@@ -364,14 +373,14 @@ class JournalVoucherService
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) {
                     return [
                         "status" => false,
-                        "message" => "The Chart of Account/s are Inactive",
+                        'message' =>  trans('custom.chart_of_account_inactive'),
                         "httpCode" => 500
                     ];
                 }
                 else{
                     return [
                         "status" => false,
-                        "message" => "The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",
+                        "message" => trans('custom.chart_of_account_inactive_with_accounts', ['accounts' => $msg]),
                         "type" => 'ca_inactive',
                         "httpCode" => 500
                     ];
@@ -384,7 +393,7 @@ class JournalVoucherService
             if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
                 return [
                     "status" => false,
-                    "message" => "Document date is not within the selected financial period !",
+                    'message' =>  trans('custom.document_date_financial_period_validation'),
                     "httpCode" => 500
                 ];
             }
@@ -394,7 +403,7 @@ class JournalVoucherService
             if ($checkItems == 0) {
                 return [
                     "status" => false,
-                    "message" => "Journal Voucher should have at least one item",
+                    'message' =>  trans('custom.jv_should_have_at_least_one_item'),
                     "httpCode" => 500
                 ];
             }
@@ -407,7 +416,7 @@ class JournalVoucherService
                 if ($checkQuantity > 0) {
                     return [
                         "status" => false,
-                        "message" => "Amount should be greater than 0 for debit amount or credit amount",
+                        'message' =>  trans('custom.amount_should_be_greater_than_0_for_debit_amount_or_credit_amount'),
                         "httpCode" => 500
                     ];
                 }
@@ -466,14 +475,14 @@ class JournalVoucherService
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
                         "status" => false,
-                        "message" => "You cannot confirm this document.",
+                        'message' =>  trans('custom.you_cannot_confirm_this_document'),
                         "httpCode" => 500
                     ];
                 }
                 else{
                     return [
                         "status" => false,
-                        "message" => "Amount should be greater than 0 for debit amount or credit amount",
+                        'message' =>  trans('custom.amount_should_be_greater_than_0_for_debit_amount_or_credit_amount'),
                         "error_details" => $confirm_error,
                         "httpCode" => 500
                     ];
@@ -489,7 +498,7 @@ class JournalVoucherService
             if (round($JvDetailDebitSum, $currencyDecimalPlace) != round($JvDetailCreditSum, $currencyDecimalPlace)) {
                 return [
                     "status" => false,
-                    "message" => "Debit amount total and credit amount total is not matching.",
+                    'message' =>  trans('custom.debit_amount_total_and_credit_amount_total_is_not_matching'),
                     "httpCode" => 500
                 ];
             }
@@ -547,7 +556,7 @@ class JournalVoucherService
         if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
             return [
                 "status" => true,
-                "message" => "Journal Voucher confirmed successfully",
+                'message' =>  trans('custom.jv_confirmed_successfully'),
                 "data" => $input,
                 "confirm_data" => $confirm['data'] ?? null,
                 "httpCode" => 200
@@ -555,7 +564,7 @@ class JournalVoucherService
         }
         return [
             "status" => true,
-            "message" => "Journal Voucher updated successfully",
+            'message' =>  trans('custom.jv_updated_successfully'),
             "data" => $input,
             "httpCode" => 200
         ];
@@ -567,7 +576,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Journal Voucher not found",
+                'message' =>  trans('custom.journal_voucher_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -581,7 +590,7 @@ class JournalVoucherService
         if (empty($chartOfAccount)) {
             return [
                 "status" => false,
-                "message" => "Chart of Account not found",
+                'message' =>  trans('custom.chart_of_account_not_found_1'),
                 "httpCode" => 500
             ];
         }
@@ -632,7 +641,7 @@ class JournalVoucherService
             return [
                 'status' => true,
                 'data' => $jvDetails->refresh()->toArray(),
-                'message' => 'Jv Detail saved successfully',
+                'message' =>  trans('custom.jv_detail_saved_successfully'),
                 "httpCode" => 200
             ];
         }
@@ -645,7 +654,7 @@ class JournalVoucherService
         if (empty($jvDetail)) {
             return [
                 "status" => false,
-                "message" => "Jv Detail not found",
+                'message' =>  trans('custom.jv_detail_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -654,7 +663,7 @@ class JournalVoucherService
         if (empty($jvMaster)) {
             return [
                 "status" => false,
-                "message" => "Journal Voucher not found",
+                'message' =>  trans('custom.journal_voucher_not_found'),
                 "httpCode" => 500
             ];
         }
@@ -672,7 +681,7 @@ class JournalVoucherService
                 if (empty($checkDepartmentActive)) {
                     return [
                         "status" => false,
-                        "message" => "Department not found",
+                        'message' =>  trans('custom.department_not_found'),
                         "httpCode" => 500
                     ];
                 }
@@ -680,7 +689,7 @@ class JournalVoucherService
                     JvDetail::where('jvDetailAutoID', $id)->update(['serviceLineSystemID' => null, 'serviceLineCode' => null]);
                     return [
                         "status" => false,
-                        "message" => "Please select an active department",
+                        'message' =>  trans('custom.select_active_department'),
                         "error_details" => $serviceLineError,
                         "httpCode" => 500
                     ];
@@ -708,9 +717,251 @@ class JournalVoucherService
         JvDetail::where('jvDetailAutoID', $id)->update(array_except($input, ['isAutoCreateDocument']));
         return [
             "status" => true,
-            "message" => "JvDetail updated successfully",
+            'message' =>  trans('custom.jv_detail_updated_successfully'),
             "data" => $input,
             "httpCode" => 200
         ];
+    }
+
+
+    public static function postRecurringVoucherSchedule($rrvSetupScheduleAutoID)
+    {
+        try {
+            $rrvSchedule = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID', $rrvSetupScheduleAutoID)
+                                                 ->with('master')->first();
+
+            if (empty($rrvSchedule)) {
+                return [
+                    'success' => false,
+                    'message' => trans('custom.recurring_voucher_setup_schedule_not_found'),
+                ];
+            }
+
+            if (!isset($rrvSchedule->master) || empty($rrvSchedule->master)) {
+                return [
+                    'success' => false,
+                    'message' => trans('custom.recurring_voucher_master_not_found'),
+                ];
+            }
+
+            if($rrvSchedule->master->documentStatus != 2){
+                return [
+                    'success' => false,
+                    'message' => trans('custom.document_not_approved'),
+                ];
+            }
+
+            DB::beginTransaction();
+            
+            $rrvSchedule->update(['isInProccess' => 1]);
+
+            $request = new Request();
+            $request->replace([
+                'companySystemID' => $rrvSchedule->master->companySystemID,
+                'companyFinanceYearID' => $rrvSchedule->companyFinanceYearID,
+                'companyFinancePeriodID' => $rrvSchedule->companyFinancePeriodID,
+                'JVNarration' => $rrvSchedule->master->narration.' '.$rrvSchedule->master->RRVcode,
+                'currencyID' => $rrvSchedule->master->currencyID,
+                'jvType' => 2,
+                'isRelatedPartyYN' => $rrvSchedule->master->isRelatedPartyYN,
+                'JVdate' => $rrvSchedule->processDate,
+                'isAutoCreateDocument' => true
+            ]);
+            
+            $controller = app(JvMasterAPIController::class);
+            $jvMasterReturnData = $controller->store($request);
+
+            if(!$jvMasterReturnData['success']){
+                DB::rollBack();
+                Log::error("Recurring Voucher Schedule ID (JV create error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterReturnData['message']}");
+                return [
+                    'success' => false,
+                    'message' => $jvMasterReturnData['message'],
+                ];
+            }
+
+            $rrvDetails = RecurringVoucherSetupScheDet::where('recurringVoucherSheduleAutoId', $rrvSchedule->rrvSetupScheduleAutoID)
+                                                      ->where('recurringVoucherAutoId', $rrvSchedule->master->recurringVoucherAutoId)
+                                                      ->where('companySystemID', $rrvSchedule->master->companySystemID)
+                                                      ->get();
+
+            $jvDetailsCreateState = true;
+            foreach ($rrvDetails as $rrvDetail){
+                $dataset = [
+                    'jvMasterAutoId' => $jvMasterReturnData['data']['jvMasterAutoId'],
+                    'chartOfAccountSystemID' => $rrvDetail->chartOfAccountSystemID,
+                    'isAutoCreateDocument' => true
+                ];
+
+                $request = new Request();
+                $request->replace($dataset);
+                $controller = app(JvDetailAPIController::class);
+                $jvMasterDetailStoreReturnData = $controller->store($request);
+
+                if($jvMasterDetailStoreReturnData['success']) {
+                    $dataset = [
+                        'jvMasterAutoId' => $jvMasterReturnData['data']['jvMasterAutoId'],
+                        'debitAmount' => $rrvDetail->debitAmount,
+                        'creditAmount' => $rrvDetail->creditAmount,
+                        'serviceLineSystemID' => $rrvDetail->serviceLineSystemID,
+                        'contractUID' => $rrvDetail->contractUID,
+                        'detail_project_id' => $rrvDetail->detailProjectID,
+                        'isAutoCreateDocument' => true
+                    ];
+
+                    $request = new Request();
+                    $request->replace($dataset);
+                    $jvMasterDetailUpdateReturnData = $controller->update($jvMasterDetailStoreReturnData['data']['jvDetailAutoID'], $request);
+
+                    if(!$jvMasterDetailUpdateReturnData['success']){
+                        $jvDetailsCreateState = false;
+                        Log::error("Recurring Voucher Schedule ID (JV details update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailUpdateReturnData['message']}");
+                        DB::rollBack();
+                        return [
+                            'success' => false,
+                            'message' => $jvMasterDetailUpdateReturnData['message'],
+                        ];
+                    }
+                } else {
+                    $jvDetailsCreateState = false;
+                    Log::error("Recurring Voucher Schedule ID (JV details store error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailStoreReturnData['message']}");
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => $jvMasterDetailStoreReturnData['message'],
+                    ];
+                }
+            }
+
+            $documentAttachments = DocumentAttachments::where('companySystemID', $rrvSchedule->master->companySystemID)
+                ->where('documentSystemID', $rrvSchedule->master->documentSystemID)
+                ->where('documentSystemCode', $rrvSchedule->master->recurringVoucherAutoId)
+                ->get();
+
+            $jvAttachmentsUpdateState = !(count($documentAttachments) > 0);
+
+            foreach ($documentAttachments as $documentAttachment){
+                $dataset = $documentAttachment->toArray();
+                $tempType = explode('.', $dataset['myFileName']);
+                $dataset['fileType'] = end($tempType);
+                $dataset['documentSystemID'] = 17;
+                $dataset['documentSystemCode'] = $jvMasterReturnData['data']['jvMasterAutoId'];
+                $dataset['isAutoCreateDocument'] = true;
+                unset($dataset['attachmentID'], $dataset['timeStamp']);
+
+                $request = new Request();
+                $request->replace($dataset);
+                $controller = app(DocumentAttachmentsAPIController::class);
+                $jvAttachmentReturnData = $controller->store($request);
+                
+                if($jvAttachmentReturnData['success']){
+                    $jvAttachmentsUpdateState = true;
+                } else {
+                    $jvAttachmentsUpdateState = false;
+                    Log::error("Recurring Voucher Schedule ID (attachment update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvAttachmentReturnData['message']}");
+                    DB::rollBack();
+                    return [
+                        'success' => false,
+                        'message' => $jvAttachmentReturnData['message'],
+                    ];
+                }
+            }
+
+            if ($jvAttachmentsUpdateState){
+                $dataset = $jvMasterReturnData['data'];
+                $dataset['confirmedYN'] = 1;
+                $dataset['isAutoCreateDocument'] = true;
+
+                $request = new Request();
+                $request->replace($dataset);
+                $controller = app(JvMasterAPIController::class);
+                $jvConfirmReturnData = $controller->update($jvMasterReturnData['data']['jvMasterAutoId'], $request);
+
+                if($jvConfirmReturnData['success']){
+                    $request = new Request();
+                    $request->replace([
+                        'companyId' => $jvConfirmReturnData['data']['companySystemID'],
+                        'jvMasterAutoId' => $jvConfirmReturnData['data']['jvMasterAutoId'],
+                        'isAutoCreateDocument' => true
+                    ]);
+                    $controller = app(JvMasterAPIController::class);
+                    $jvApproveDocumentReturnData = $controller->getJournalVoucherMasterApproval($request);
+                    $jvApproveDocumentReturnData = json_decode(json_encode($jvApproveDocumentReturnData), true);
+
+                    if($jvApproveDocumentReturnData['success']){
+                        $dataset = $jvApproveDocumentReturnData['data'];
+                        $dataset['isAutoCreateDocument'] = true;
+                        $request = new Request();
+                        $request->replace($dataset);
+                        $controller = app(JvMasterAPIController::class);
+                        $jvApprovePreCheckReturnData = $controller->approvalPreCheckJV($request);
+
+                        if($jvApprovePreCheckReturnData['success']){
+                            $request = new Request();
+                            $request->replace($dataset);
+                            $request->merge(['approvedComments' => '']);
+                            $controller = app(JvMasterAPIController::class);
+                            $jvApproveReturnData = $controller->approveJournalVoucher($request);
+
+                            if($jvApproveReturnData['success']){
+                                $rrvSchedule->update([
+                                    'generateDocumentID' => $jvConfirmReturnData['data']['jvMasterAutoId'],
+                                    'rrvGeneratedYN' => 1,
+                                    'isInProccess' => 0
+                                ]);
+                                JvMaster::find($jvConfirmReturnData['data']['jvMasterAutoId'])->update(['isAutoApprove' => 1]);
+                                DB::commit();
+                                
+                                return [
+                                    'success' => true,
+                                    'message' => trans('custom.schedule_posted_successfully'),
+                                ];
+                            } else {
+                                DB::rollBack();
+                                Log::error("Recurring Voucher Schedule ID (Approval error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveReturnData['message']}");
+                                return [
+                                    'success' => false,
+                                    'message' => $jvApproveReturnData['message'],
+                                ];
+                            }
+                        } else {
+                            Log::error("Recurring Voucher Schedule ID (Approval JV pre check error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApprovePreCheckReturnData['message']}");
+                            return [
+                                'success' => false,
+                                'message' => $jvApprovePreCheckReturnData['message'],
+                            ];
+                        }
+                    } else {
+                        Log::error("Recurring Voucher Schedule ID (Approval JV get error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveDocumentReturnData['message']}");
+                        return [
+                            'success' => false,
+                            'message' => $jvApproveDocumentReturnData['message'],
+                        ];
+                    }
+                } else {
+                    DB::rollBack();
+                    Log::error("Recurring Voucher Schedule ID (JV confirm error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvConfirmReturnData['message']}");
+                    return [
+                        'success' => false,
+                        'message' => $jvConfirmReturnData['message'],
+                    ];
+                }
+            } else {
+                Log::error("Recurring Voucher Schedule ID (attachment update error)");
+                DB::rollBack();
+                return [
+                    'success' => false,
+                    'message' => 'attachment update error',
+                ];
+            }
+
+        } catch (\Exception $e){
+            DB::rollBack();
+            Log::error("Recurring Voucher Schedule ID (catch error) :- {$rrvSetupScheduleAutoID} {$e->getMessage()}");
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }

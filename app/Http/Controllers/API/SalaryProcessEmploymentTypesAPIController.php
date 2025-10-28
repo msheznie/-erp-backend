@@ -65,7 +65,7 @@ class SalaryProcessEmploymentTypesAPIController extends AppBaseController
         $this->salaryProcessEmploymentTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->all();
 
-        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), 'Salary Process Employment Types retrieved successfully');
+        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), trans('custom.salary_process_employment_types_retrieved_successf'));
     }
 
     /**
@@ -112,7 +112,7 @@ class SalaryProcessEmploymentTypesAPIController extends AppBaseController
 
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->create($input);
 
-        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), 'Salary Process Employment Types saved successfully');
+        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), trans('custom.salary_process_employment_types_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class SalaryProcessEmploymentTypesAPIController extends AppBaseController
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->findWithoutFail($id);
 
         if (empty($salaryProcessEmploymentTypes)) {
-            return $this->sendError('Salary Process Employment Types not found');
+            return $this->sendError(trans('custom.salary_process_employment_types_not_found'));
         }
 
-        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), 'Salary Process Employment Types retrieved successfully');
+        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), trans('custom.salary_process_employment_types_retrieved_successf'));
     }
 
     /**
@@ -219,12 +219,12 @@ class SalaryProcessEmploymentTypesAPIController extends AppBaseController
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->findWithoutFail($id);
 
         if (empty($salaryProcessEmploymentTypes)) {
-            return $this->sendError('Salary Process Employment Types not found');
+            return $this->sendError(trans('custom.salary_process_employment_types_not_found'));
         }
 
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->update($input, $id);
 
-        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), 'SalaryProcessEmploymentTypes updated successfully');
+        return $this->sendResponse($salaryProcessEmploymentTypes->toArray(), trans('custom.salaryprocessemploymenttypes_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class SalaryProcessEmploymentTypesAPIController extends AppBaseController
         $salaryProcessEmploymentTypes = $this->salaryProcessEmploymentTypesRepository->findWithoutFail($id);
 
         if (empty($salaryProcessEmploymentTypes)) {
-            return $this->sendError('Salary Process Employment Types not found');
+            return $this->sendError(trans('custom.salary_process_employment_types_not_found'));
         }
 
         $salaryProcessEmploymentTypes->delete();
 
-        return $this->sendResponse($id, 'Salary Process Employment Types deleted successfully');
+        return $this->sendResponse($id, trans('custom.salary_process_employment_types_deleted_successful'));
     }
 }

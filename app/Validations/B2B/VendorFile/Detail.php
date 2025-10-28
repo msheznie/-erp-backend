@@ -63,7 +63,7 @@ class Detail
                 'max:99999999',
                 function ($attribute, $value, $fail) {
                     if ($value !== null && strlen((string) $value) > 8) {
-                        $fail("Exchange rate should have at most 8 characters in total, including the decimal point.");
+                        $fail(trans('custom.exchange_rate_max_characters'));
                     }
                 },
             ],
@@ -72,7 +72,7 @@ class Detail
                 'alpha_num',
                 function ($attribute, $value, $fail) {
                     if (!in_array(strlen($value), [8, 11])) {
-                        $fail('The SWIFT code must be exactly 8 or 11 characters long.');
+                        $fail(trans('custom.swift_code_length'));
                     }
                 }
             ],
@@ -84,7 +84,7 @@ class Detail
                     $emails = explode(';', $value);
                     foreach ($emails as $email) {
                         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                            $fail("The email '$email' is not a valid email.");
+                            $fail(str_replace(':email', $email, trans('custom.email_invalid_format')));
                         }
                     }
                 }
@@ -92,60 +92,60 @@ class Detail
         ];
 
         $messages = [
-            'section_index.required' => 'Section Index is required.',
-            'section_index.in' => 'Section Index must be "S2".',
-            'transfer_method.required' => 'Transfer Method is required.',
-            'transfer_method.in' => 'Invalid Transfer Method. Allowed values: TRF, SWF, LCL.',
-            'credit_amount.required' => 'Credit Amount is required.',
-            'credit_amount.numeric' => 'Credit Amount must be a valid number.',
-            'credit_amount.min' => 'Credit Amount must be greater than 0.',
-            'credit_amount.max' => 'The Credit Amount must not exceed 15 digits in total, including decimals.',
-            'credit_currency.required' => 'Credit Currency is required.',
-            'credit_currency.size' => 'Credit Currency must be exactly 3 characters long.',
-            'value_date.required' => 'Value Date is required.',
-            'value_date.date_format' => 'Value Date format must be DD/MM/YYYY.',
-            'debit_account_no.required' => 'Debit Account Number is required.',
-            'debit_account_no.numeric' => 'The debit account number must be a numeric value.',
-            'debit_account_no.regex' => 'The debit account number cannot contain special characters,letters or spaces.',
-            'debit_account_no.max' => 'Debit Account Number cannot be more than 13 characters.',
-            'credit_account_no.required' => 'Credit Account Number is required.',
-            'credit_account_no.alpha_num' => 'Credit Account Number must be alphanumeric.',
-            'credit_account_no.max' => 'Credit Account Number cannot be more than 30 characters.',
-            'transaction_reference.required' => 'Transaction Reference is required when Payment Details 1 is provided.',
-            'payment_details_1.required' => 'Payment Details 1 is required.',
-            'payment_details_2.required' => 'Payment Details 2 is required.',
-            'beneficiary_name.required' => 'Beneficiary Name is required.',
-            'beneficiary_name.max' => 'Beneficiary Name cannot exceed 35 characters.',
-            'institution_name_address_1.required' => 'Institution Name Address 1 is required.',
-            'swift.required' => 'SWIFT Code is required.',
-            'swift.alpha_num' => 'SWIFT Code must be alphanumeric.',
-            'charges_type.required' => 'Charges Type is required.',
-            'charges_type.in' => 'Charges Type must be either OUR, BEN, or SHA.',
-            'transactor_code.required' => 'Transactor Code is required.',
-            'exchange_rate.numeric' => 'Exchange rate must be a number.',
-            'exchange_rate.max' => 'Exchange rate should have at most 8 characters in total, including the decimal point.',
-            'deal_ref_no.string' => 'Deal Reference must be a string.',
-            'deal_ref_no.max' => 'Deal Reference cannot exceed 10 characters.',
-            'transaction_reference.string' => 'Transaction Reference must be a string.',
-            'transaction_reference.max' => 'Transaction Reference cannot exceed 20 characters.',
-            'email.email' => 'Email must be a valid email address.',
-            'dispatch_mode.in' => 'Dispatch Mode must be "E" if provided.',
-            'beneficiary_address1.regex' => 'The beneficiary address1 should only contain letters, numbers, and spaces.',
-            'beneficiary_address1.max' => 'The beneficiary address1 must not exceed 35 characters.',
-            'institution_name_address_2.regex' => 'The beneficiary address2 should only contain letters, numbers, and spaces.',
-            'institution_name_address_2.max' => 'The beneficiary address2 must not exceed 35 characters.',
-            'institution_name_address_3.regex' => 'The beneficiary address2 should only contain letters, numbers, and spaces.',
-            'institution_name_address_3.max' => 'The beneficiary address2 must not exceed 35 characters.',
-            'institution_name_address_4.regex' => 'The beneficiary address2 should only contain letters, numbers, and spaces.',
-            'institution_name_address_4.max' => 'The beneficiary address2 must not exceed 35 characters.',
-            'institution_name_address_1.regex' => 'Institution Name Address 1 should only contain letters, numbers, and spaces.',
-            'institution_name_address_1.max' => 'Institution Name Address 1 must not exceed 35 characters.',
-            'intermediary_account.max' => 'Intermediary Account must not exceed 35 characters',
-            'sort_code_beneficiary_bank.max' => 'The sort code of beneficiary bank must not exceed 15 characters',
-            'IFSC.max' => 'IFSC code must not exceed 15 characters',
-            'fedwire.max' => 'Fedwire code must not exceed 15 characters',
-            'IFSC.regex' => 'The IFSC code cannot contain special characters or spaces.',
-            'fedwire.regex' => 'The Fedwire code cannot contain special characters or spaces.'
+            'section_index.required' => trans('custom.section_index_required'),
+            'section_index.in' => trans('custom.section_index_in'),
+            'transfer_method.required' => trans('custom.transfer_method_required'),
+            'transfer_method.in' => trans('custom.transfer_method_in'),
+            'credit_amount.required' => trans('custom.credit_amount_required'),
+            'credit_amount.numeric' => trans('custom.credit_amount_numeric'),
+            'credit_amount.min' => trans('custom.credit_amount_min'),
+            'credit_amount.max' => trans('custom.credit_amount_max'),
+            'credit_currency.required' => trans('custom.credit_currency_required'),
+            'credit_currency.size' => trans('custom.credit_currency_size'),
+            'value_date.required' => trans('custom.value_date_required'),
+            'value_date.date_format' => trans('custom.value_date_date_format'),
+            'debit_account_no.required' => trans('custom.debit_account_no_required'),
+            'debit_account_no.numeric' => trans('custom.debit_account_no_numeric'),
+            'debit_account_no.regex' => trans('custom.debit_account_no_regex'),
+            'debit_account_no.max' => trans('custom.debit_account_no_max'),
+            'credit_account_no.required' => trans('custom.credit_account_no_required'),
+            'credit_account_no.alpha_num' => trans('custom.credit_account_no_alpha_num'),
+            'credit_account_no.max' => trans('custom.credit_account_no_max'),
+            'transaction_reference.required' => trans('custom.transaction_reference_required'),
+            'payment_details_1.required' => trans('custom.payment_details_1_required'),
+            'payment_details_2.required' => trans('custom.payment_details_2_required'),
+            'beneficiary_name.required' => trans('custom.beneficiary_name_required'),
+            'beneficiary_name.max' => trans('custom.beneficiary_name_max'),
+            'institution_name_address_1.required' => trans('custom.institution_name_address_1_required'),
+            'swift.required' => trans('custom.swift_required'),
+            'swift.alpha_num' => trans('custom.swift_alpha_num'),
+            'charges_type.required' => trans('custom.charges_type_required'),
+            'charges_type.in' => trans('custom.charges_type_in'),
+            'transactor_code.required' => trans('custom.transactor_code_required'),
+            'exchange_rate.numeric' => trans('custom.exchange_rate_numeric'),
+            'exchange_rate.max' => trans('custom.exchange_rate_max'),
+            'deal_ref_no.string' => trans('custom.deal_ref_no_string'),
+            'deal_ref_no.max' => trans('custom.deal_ref_no_max'),
+            'transaction_reference.string' => trans('custom.transaction_reference_string'),
+            'transaction_reference.max' => trans('custom.transaction_reference_max'),
+            'email.email' => trans('custom.email_email'),
+            'dispatch_mode.in' => trans('custom.dispatch_mode_in'),
+            'beneficiary_address1.regex' => trans('custom.beneficiary_address1_regex'),
+            'beneficiary_address1.max' => trans('custom.beneficiary_address1_max'),
+            'institution_name_address_2.regex' => trans('custom.institution_name_address_2_regex'),
+            'institution_name_address_2.max' => trans('custom.institution_name_address_2_max'),
+            'institution_name_address_3.regex' => trans('custom.institution_name_address_3_regex'),
+            'institution_name_address_3.max' => trans('custom.institution_name_address_3_max'),
+            'institution_name_address_4.regex' => trans('custom.institution_name_address_4_regex'),
+            'institution_name_address_4.max' => trans('custom.institution_name_address_4_max'),
+            'institution_name_address_1.regex' => trans('custom.institution_name_address_1_regex'),
+            'institution_name_address_1.max' => trans('custom.institution_name_address_1_max'),
+            'intermediary_account.max' => trans('custom.intermediary_account_max'),
+            'sort_code_beneficiary_bank.max' => trans('custom.sort_code_beneficiary_bank_max'),
+            'IFSC.max' => trans('custom.IFSC_max'),
+            'fedwire.max' => trans('custom.fedwire_max'),
+            'IFSC.regex' => trans('custom.IFSC_regex'),
+            'fedwire.regex' => trans('custom.fedwire_regex')
         ];
 
 

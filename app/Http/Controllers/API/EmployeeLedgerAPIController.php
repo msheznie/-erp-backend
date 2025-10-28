@@ -65,7 +65,7 @@ class EmployeeLedgerAPIController extends AppBaseController
         $this->employeeLedgerRepository->pushCriteria(new LimitOffsetCriteria($request));
         $employeeLedgers = $this->employeeLedgerRepository->all();
 
-        return $this->sendResponse($employeeLedgers->toArray(), 'Employee Ledgers retrieved successfully');
+        return $this->sendResponse($employeeLedgers->toArray(), trans('custom.employee_ledgers_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class EmployeeLedgerAPIController extends AppBaseController
 
         $employeeLedger = $this->employeeLedgerRepository->create($input);
 
-        return $this->sendResponse($employeeLedger->toArray(), 'Employee Ledger saved successfully');
+        return $this->sendResponse($employeeLedger->toArray(), trans('custom.employee_ledger_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class EmployeeLedgerAPIController extends AppBaseController
         $employeeLedger = $this->employeeLedgerRepository->findWithoutFail($id);
 
         if (empty($employeeLedger)) {
-            return $this->sendError('Employee Ledger not found');
+            return $this->sendError(trans('custom.employee_ledger_not_found'));
         }
 
-        return $this->sendResponse($employeeLedger->toArray(), 'Employee Ledger retrieved successfully');
+        return $this->sendResponse($employeeLedger->toArray(), trans('custom.employee_ledger_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class EmployeeLedgerAPIController extends AppBaseController
         $employeeLedger = $this->employeeLedgerRepository->findWithoutFail($id);
 
         if (empty($employeeLedger)) {
-            return $this->sendError('Employee Ledger not found');
+            return $this->sendError(trans('custom.employee_ledger_not_found'));
         }
 
         $employeeLedger = $this->employeeLedgerRepository->update($input, $id);
 
-        return $this->sendResponse($employeeLedger->toArray(), 'EmployeeLedger updated successfully');
+        return $this->sendResponse($employeeLedger->toArray(), trans('custom.employeeledger_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class EmployeeLedgerAPIController extends AppBaseController
         $employeeLedger = $this->employeeLedgerRepository->findWithoutFail($id);
 
         if (empty($employeeLedger)) {
-            return $this->sendError('Employee Ledger not found');
+            return $this->sendError(trans('custom.employee_ledger_not_found'));
         }
 
         $employeeLedger->delete();

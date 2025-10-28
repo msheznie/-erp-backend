@@ -76,7 +76,7 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
 
         $budgetPlanningDetailTempAttachments = $this->budgetPlanningDetailTempAttachmentRepository->all();
 
-        return $this->sendResponse($budgetPlanningDetailTempAttachments->toArray(), 'Budget Planning Detail Temp Attachments retrieved successfully');
+        return $this->sendResponse($budgetPlanningDetailTempAttachments->toArray(), trans('custom.budget_planning_detail_temp_attachments_retrieved_'));
     }
 
     /**
@@ -155,12 +155,12 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
         }
         $entryData = BudgetPlanningDetailTempAttachment::getBudgetTempEntryData($input['entry_id']);
         if(empty($entryData)){
-            return $this->sendError('Budget planning detail template entry not found', 404);
+            return $this->sendError(trans('custom.budget_planning_detail_template_entry_not_found'), 404);
         }
 
         $departmentBudget = DepartmentBudgetPlanningDetail::getBudgetPlaningCompany($entryData->budget_detail_id);
         if(!$departmentBudget){
-            return $this->sendError('Budget department not found');
+            return $this->sendError(trans('custom.budget_department_not_found'));
         }
 
         $companySystemID = $departmentBudget->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
@@ -221,11 +221,11 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
                     'file_path' => $filePath,
                 ]);
 
-                return $this->sendResponse($attachmentRecord, 'Attachment uploaded successfully');
+                return $this->sendResponse($attachmentRecord, trans('custom.attachment_uploaded_successfully'));
 
             });
         } catch (\Exception $exception){
-            return $this->sendError('Unexpected Error: ' . $exception->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $exception->getMessage());
         }
     }
 
@@ -274,10 +274,10 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
         $budgetPlanningDetailTempAttachment = $this->budgetPlanningDetailTempAttachmentRepository->findWithoutFail($id);
 
         if (empty($budgetPlanningDetailTempAttachment)) {
-            return $this->sendError('Budget Planning Detail Temp Attachment not found');
+            return $this->sendError(trans('custom.budget_planning_detail_temp_attachment_not_found'));
         }
 
-        return $this->sendResponse($budgetPlanningDetailTempAttachment->toArray(), 'Budget Planning Detail Temp Attachment retrieved successfully');
+        return $this->sendResponse($budgetPlanningDetailTempAttachment->toArray(), trans('custom.budget_planning_detail_temp_attachment_retrieved_s'));
     }
 
     /**
@@ -343,12 +343,12 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
         $budgetPlanningDetailTempAttachment = $this->budgetPlanningDetailTempAttachmentRepository->findWithoutFail($id);
 
         if (empty($budgetPlanningDetailTempAttachment)) {
-            return $this->sendError('Budget Planning Detail Temp Attachment not found');
+            return $this->sendError(trans('custom.budget_planning_detail_temp_attachment_not_found'));
         }
 
         $budgetPlanningDetailTempAttachment = $this->budgetPlanningDetailTempAttachmentRepository->update($input, $id);
 
-        return $this->sendResponse($budgetPlanningDetailTempAttachment->toArray(), 'BudgetPlanningDetailTempAttachment updated successfully');
+        return $this->sendResponse($budgetPlanningDetailTempAttachment->toArray(), trans('custom.budgetplanningdetailtempattachment_updated_success'));
     }
 
     /**
@@ -406,7 +406,7 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
             }
             return $this->sendResponse([], trans('custom.Budget_planning_detail_template_deleted_successfully'));
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage());
         }*/
     }
     public function downloadBudgetTempAttachment(Request $request){
@@ -420,12 +420,12 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
 
             $entryData = BudgetPlanningDetailTempAttachment::getBudgetTempEntryData($attachment->entry_id);
             if(empty($entryData)){
-                return $this->sendError('Budget planning detail template entry not found', 404);
+                return $this->sendError(trans('custom.budget_planning_detail_template_entry_not_found'), 404);
             }
 
             $departmentBudget = DepartmentBudgetPlanningDetail::getBudgetPlaningCompany($entryData->budget_detail_id);
             if(!$departmentBudget){
-                return $this->sendError('Budget department not found');
+                return $this->sendError(trans('custom.budget_department_not_found'));
             }
 
             $companySystemID = $departmentBudget->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
@@ -445,7 +445,7 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
                 ->header('Content-Disposition', 'attachment; filename="' . $attachment->original_file_name . '"');
 
         } catch (\Exception $exception){
-            return $this->sendError('Error downloading attachment - ' . $exception->getMessage(), 500);
+            return $this->sendError(trans('custom.error_downloading_attachment') . $exception->getMessage(), 500);
         }
     }
 
@@ -466,7 +466,7 @@ class BudgetPlanningDetailTempAttachmentAPIController extends AppBaseController
             }
             return $this->sendResponse([], trans('custom.Budget_planning_detail_template_deleted_successfully'));
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage());
         }
     }
 }

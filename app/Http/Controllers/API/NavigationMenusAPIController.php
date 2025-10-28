@@ -50,7 +50,7 @@ class NavigationMenusAPIController extends AppBaseController
         $this->navigationMenusRepository->pushCriteria(new LimitOffsetCriteria($request));
         $navigationMenuses = $this->navigationMenusRepository->all();
 
-        return $this->sendResponse($navigationMenuses->toArray(), 'Navigation Menuses retrieved successfully');
+        return $this->sendResponse($navigationMenuses->toArray(), trans('custom.navigation_menuses_retrieved_successfully'));
     }
 
     /**
@@ -67,7 +67,7 @@ class NavigationMenusAPIController extends AppBaseController
 
         $navigationMenuses = $this->navigationMenusRepository->create($input);
 
-        return $this->sendResponse($navigationMenuses->toArray(), 'Navigation Menus saved successfully');
+        return $this->sendResponse($navigationMenuses->toArray(), trans('custom.navigation_menus_saved_successfully'));
     }
 
     /**
@@ -84,10 +84,10 @@ class NavigationMenusAPIController extends AppBaseController
         $navigationMenus = $this->navigationMenusRepository->findWithoutFail($id);
 
         if (empty($navigationMenus)) {
-            return $this->sendError('Navigation Menus not found');
+            return $this->sendError(trans('custom.navigation_menus_not_found'));
         }
 
-        return $this->sendResponse($navigationMenus->toArray(), 'Navigation Menus retrieved successfully');
+        return $this->sendResponse($navigationMenus->toArray(), trans('custom.navigation_menus_retrieved_successfully'));
     }
 
     /**
@@ -107,12 +107,12 @@ class NavigationMenusAPIController extends AppBaseController
         $navigationMenus = $this->navigationMenusRepository->findWithoutFail($id);
 
         if (empty($navigationMenus)) {
-            return $this->sendError('Navigation Menus not found');
+            return $this->sendError(trans('custom.navigation_menus_not_found'));
         }
 
         $navigationMenus = $this->navigationMenusRepository->update($input, $id);
 
-        return $this->sendResponse($navigationMenus->toArray(), 'NavigationMenus updated successfully');
+        return $this->sendResponse($navigationMenus->toArray(), trans('custom.navigationmenus_updated_successfully'));
     }
 
     /**
@@ -129,12 +129,12 @@ class NavigationMenusAPIController extends AppBaseController
         $navigationMenus = $this->navigationMenusRepository->findWithoutFail($id);
 
         if (empty($navigationMenus)) {
-            return $this->sendError('Navigation Menus not found');
+            return $this->sendError(trans('custom.navigation_menus_not_found'));
         }
 
         $navigationMenus->delete();
 
-        return $this->sendResponse($id, 'Navigation Menus deleted successfully');
+        return $this->sendResponse($id, trans('custom.navigation_menus_deleted_successfully'));
     }
 
 }

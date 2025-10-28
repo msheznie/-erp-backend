@@ -64,7 +64,7 @@ class PoCutoffJobAPIController extends AppBaseController
         $this->poCutoffJobRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poCutoffJobs = $this->poCutoffJobRepository->all();
 
-        return $this->sendResponse($poCutoffJobs->toArray(), 'Po Cutoff Jobs retrieved successfully');
+        return $this->sendResponse($poCutoffJobs->toArray(), trans('custom.po_cutoff_jobs_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PoCutoffJobAPIController extends AppBaseController
 
         $poCutoffJob = $this->poCutoffJobRepository->create($input);
 
-        return $this->sendResponse($poCutoffJob->toArray(), 'Po Cutoff Job saved successfully');
+        return $this->sendResponse($poCutoffJob->toArray(), trans('custom.po_cutoff_job_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PoCutoffJobAPIController extends AppBaseController
         $poCutoffJob = $this->poCutoffJobRepository->findWithoutFail($id);
 
         if (empty($poCutoffJob)) {
-            return $this->sendError('Po Cutoff Job not found');
+            return $this->sendError(trans('custom.po_cutoff_job_not_found'));
         }
 
-        return $this->sendResponse($poCutoffJob->toArray(), 'Po Cutoff Job retrieved successfully');
+        return $this->sendResponse($poCutoffJob->toArray(), trans('custom.po_cutoff_job_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PoCutoffJobAPIController extends AppBaseController
         $poCutoffJob = $this->poCutoffJobRepository->findWithoutFail($id);
 
         if (empty($poCutoffJob)) {
-            return $this->sendError('Po Cutoff Job not found');
+            return $this->sendError(trans('custom.po_cutoff_job_not_found'));
         }
 
         $poCutoffJob = $this->poCutoffJobRepository->update($input, $id);
 
-        return $this->sendResponse($poCutoffJob->toArray(), 'PoCutoffJob updated successfully');
+        return $this->sendResponse($poCutoffJob->toArray(), trans('custom.pocutoffjob_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PoCutoffJobAPIController extends AppBaseController
         $poCutoffJob = $this->poCutoffJobRepository->findWithoutFail($id);
 
         if (empty($poCutoffJob)) {
-            return $this->sendError('Po Cutoff Job not found');
+            return $this->sendError(trans('custom.po_cutoff_job_not_found'));
         }
 
         $poCutoffJob->delete();

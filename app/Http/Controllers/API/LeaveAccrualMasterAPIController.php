@@ -70,7 +70,7 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         $this->leaveAccrualMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveAccrualMasters = $this->leaveAccrualMasterRepository->all();
 
-        return $this->sendResponse($leaveAccrualMasters->toArray(), 'Leave Accrual Masters retrieved successfully');
+        return $this->sendResponse($leaveAccrualMasters->toArray(), trans('custom.leave_accrual_masters_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class LeaveAccrualMasterAPIController extends AppBaseController
 
         $leaveAccrualMaster = $this->leaveAccrualMasterRepository->create($input);
 
-        return $this->sendResponse($leaveAccrualMaster->toArray(), 'Leave Accrual Master saved successfully');
+        return $this->sendResponse($leaveAccrualMaster->toArray(), trans('custom.leave_accrual_master_saved_successfully'));
     }
 
     /**
@@ -164,10 +164,10 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         $leaveAccrualMaster = $this->leaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualMaster)) {
-            return $this->sendError('Leave Accrual Master not found');
+            return $this->sendError(trans('custom.leave_accrual_master_not_found'));
         }
 
-        return $this->sendResponse($leaveAccrualMaster->toArray(), 'Leave Accrual Master retrieved successfully');
+        return $this->sendResponse($leaveAccrualMaster->toArray(), trans('custom.leave_accrual_master_retrieved_successfully'));
     }
 
     /**
@@ -224,12 +224,12 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         $leaveAccrualMaster = $this->leaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualMaster)) {
-            return $this->sendError('Leave Accrual Master not found');
+            return $this->sendError(trans('custom.leave_accrual_master_not_found'));
         }
 
         $leaveAccrualMaster = $this->leaveAccrualMasterRepository->update($input, $id);
 
-        return $this->sendResponse($leaveAccrualMaster->toArray(), 'LeaveAccrualMaster updated successfully');
+        return $this->sendResponse($leaveAccrualMaster->toArray(), trans('custom.leaveaccrualmaster_updated_successfully'));
     }
 
     /**
@@ -276,7 +276,7 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         $leaveAccrualMaster = $this->leaveAccrualMasterRepository->findWithoutFail($id);
 
         if (empty($leaveAccrualMaster)) {
-            return $this->sendError('Leave Accrual Master not found');
+            return $this->sendError(trans('custom.leave_accrual_master_not_found'));
         }
 
         $leaveAccrualMaster->delete();

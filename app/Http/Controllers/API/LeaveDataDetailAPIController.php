@@ -75,7 +75,7 @@ class LeaveDataDetailAPIController extends AppBaseController
         $this->leaveDataDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $leaveDataDetails = $this->leaveDataDetailRepository->all();
 
-        return $this->sendResponse($leaveDataDetails->toArray(), 'Leave Data Details retrieved successfully');
+        return $this->sendResponse($leaveDataDetails->toArray(), trans('custom.leave_data_details_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class LeaveDataDetailAPIController extends AppBaseController
 
         $leaveDataDetail = $this->leaveDataDetailRepository->create($input);
 
-        return $this->sendResponse($leaveDataDetail->toArray(), 'Leave Data Detail saved successfully');
+        return $this->sendResponse($leaveDataDetail->toArray(), trans('custom.leave_data_detail_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class LeaveDataDetailAPIController extends AppBaseController
         $leaveDataDetail = $this->leaveDataDetailRepository->findWithoutFail($id);
 
         if (empty($leaveDataDetail)) {
-            return $this->sendError('Leave Data Detail not found');
+            return $this->sendError(trans('custom.leave_data_detail_not_found'));
         }
 
-        return $this->sendResponse($leaveDataDetail->toArray(), 'Leave Data Detail retrieved successfully');
+        return $this->sendResponse($leaveDataDetail->toArray(), trans('custom.leave_data_detail_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class LeaveDataDetailAPIController extends AppBaseController
         $leaveDataDetail = $this->leaveDataDetailRepository->findWithoutFail($id);
 
         if (empty($leaveDataDetail)) {
-            return $this->sendError('Leave Data Detail not found');
+            return $this->sendError(trans('custom.leave_data_detail_not_found'));
         }
 
         $leaveDataDetail = $this->leaveDataDetailRepository->update($input, $id);
 
-        return $this->sendResponse($leaveDataDetail->toArray(), 'LeaveDataDetail updated successfully');
+        return $this->sendResponse($leaveDataDetail->toArray(), trans('custom.leavedatadetail_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class LeaveDataDetailAPIController extends AppBaseController
         $leaveDataDetail = $this->leaveDataDetailRepository->findWithoutFail($id);
 
         if (empty($leaveDataDetail)) {
-            return $this->sendError('Leave Data Detail not found');
+            return $this->sendError(trans('custom.leave_data_detail_not_found'));
         }
 
         $leaveDataDetail->delete();
 
-        return $this->sendResponse($id, 'Leave Data Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.leave_data_detail_deleted_successfully'));
     }
 }

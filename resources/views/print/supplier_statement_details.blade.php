@@ -1,3 +1,5 @@
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <style type="text/css">
     @page {
         margin: 110px 30px 40px;
@@ -146,8 +148,8 @@
                     <td valign="top" style="width: 55%">
                         <br><br>
                         <span class="font-weight-bold">{{$companyName}}</span><br>
-                        <span class="font-weight-bold">Supplier Statement Details</span><br>
-                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;As of {{ $fromDate }}</span>
+                        <span class="font-weight-bold">{{ __('custom.supplier_statment_details') }}</span><br>
+                        <span class="font-weight-bold">&nbsp;&nbsp;&nbsp;{{ __('custom.as_of') }} {{ $fromDate }}</span>
                     </td>
                 </tr>
             </table>
@@ -159,17 +161,17 @@
     <table style="width:100%;border:1px solid #9fcdff" class="table">
 
         <tr style="width:100%">
-            <th>Payable Account</th>
-            <th>Prepayment Account</th>
-            <th>Currency</th>
-            <th>Supplier Name</th>
-            <th>Supplier Group</th>
-            <th>Open Supplier Invoices</th>
-            <th>Open Advance to Suppliers</th>
-            <th>Open Debit Notes</th>
-            <th>Total Payable</th>
-            <th>Total Prepayment</th>
-            <th>Net Outstanding</th>
+            <th>{{ __('custom.payable_account') }}</th>
+            <th>{{ __('custom.prepayment_account') }}</th>
+            <th>{{ __('custom.currency') }}</th>
+            <th>{{ __('custom.supplier_name') }}</th>
+            <th>{{ __('custom.supplier_group') }}</th>
+            <th>{{ __('custom.open_supplier_invoices') }}</th>
+            <th>{{ __('custom.open_advance_to_suppliers') }}</th>
+            <th>{{ __('custom.open_debit_notes') }}</th>
+            <th>{{ __('custom.total_payable') }}</th>
+            <th>{{ __('custom.total_prepayment') }}</th>
+            <th>{{ __('custom.net_outstanding') }}</th>
         </tr>
         <tbody>
         @foreach ($reportData as $key => $supplier)
@@ -189,7 +191,7 @@
         @endforeach
         <tr width="100%">
                 <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
-                    class="text-right"><b>Total:</b></td>
+                    class="text-right"><b>{{ __('custom.total') }}:</b></td>
 
                 <td style="text-align: right"><b>{{ number_format($totalArray['totalInvoices'], $currencyDecimalPlace) }}</b></td>
                 <td style="text-align: right"><b>{{ number_format($totalArray['totalAdvances'], $currencyDecimalPlace) }}</b></td>

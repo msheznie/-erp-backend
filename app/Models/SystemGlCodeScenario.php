@@ -36,7 +36,7 @@ class SystemGlCodeScenario extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $appends = ['description', 'purpose', 'transaction'];
 
     public $fillable = [
         'documentSystemID',
@@ -78,5 +78,58 @@ class SystemGlCodeScenario extends Model
     public function detail()
     {
         return $this->belongsTo('App\Models\SystemGlCodeScenarioDetail', 'id', 'systemGlScenarioID');
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(SystemGlCodeScenarioTranslation::class, 'system_gl_code_scenario_id', 'id');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getDescriptionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->description) {
+            return $translation->description;
+        }
+
+        return $this->attributes['description'] ?? '';
+    }
+
+    public function getPurposeAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->purpose) {
+            return $translation->purpose;
+        }
+
+        return $this->attributes['purpose'] ?? '';
+    }
+
+    public function getTransactionAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+
+        $translation = $this->translation($currentLanguage);
+
+        if ($translation && $translation->transaction) {
+            return $translation->transaction;
+        }
+
+        return $this->attributes['transaction'] ?? '';
     }
 }

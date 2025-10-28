@@ -40,6 +40,8 @@ class GRVTypes extends Model
 {
 
     public $table = 'erp_grvtpes';
+
+    protected $appends = ['grv_type_label'];
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -71,5 +73,38 @@ class GRVTypes extends Model
         
     ];
 
-    
+    public function translations()
+    {
+        return $this->hasMany(GrvTypeLanguage::class, 'grvTypeID', 'grvTypeID');
+    }
+
+    public function translation($languageCode = null)
+    {
+        if (!$languageCode) {
+            $languageCode = app()->getLocale() ?: 'en';
+        }
+        
+        return $this->translations()->where('languageCode', $languageCode)->first();
+    }
+
+    public function getGrvTypeLabelAttribute($value)
+    {
+        $currentLanguage = app()->getLocale() ?: 'en';
+        
+        $translation = $this->translation($currentLanguage);
+        
+        if ($translation) {
+            return $translation->des;
+        }
+        
+        if ($currentLanguage !== 'en') {
+            $englishTranslation = $this->translation('en');
+            if ($englishTranslation) {
+                return $englishTranslation->des;
+            }
+        }
+        
+        return $value;
+    }
+
 }

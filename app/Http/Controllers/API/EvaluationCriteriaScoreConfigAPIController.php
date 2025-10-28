@@ -291,9 +291,9 @@ class EvaluationCriteriaScoreConfigAPIController extends AppBaseController
             if(!$deleteCriteriaScore['success']){
                 return $this->sendError($deleteCriteriaScore['message']);
             }
-            return $this->sendResponse([], 'Score configuration deleted successfully');
+            return $this->sendResponse([], trans('srm_masters.score_configuration_deleted_successfully'));
         } catch (\Exception $ex){
-            return $this->sendError('Unexpected Error: ' . $ex->getMessage());
+            return $this->sendError(trans('srm_masters.unexpected_error') . $ex->getMessage());
         }
     }
 

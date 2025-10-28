@@ -78,7 +78,7 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
         $this->documentRestrictionAssignRepository->pushCriteria(new LimitOffsetCriteria($request));
         $documentRestrictionAssigns = $this->documentRestrictionAssignRepository->all();
 
-        return $this->sendResponse($documentRestrictionAssigns->toArray(), 'Document Restriction Assigns retrieved successfully');
+        return $this->sendResponse($documentRestrictionAssigns->toArray(), trans('custom.document_restriction_assigns_retrieved_successfull'));
     }
 
     /**
@@ -125,7 +125,7 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
 
         $documentRestrictionAssigns = $this->documentRestrictionAssignRepository->create($input);
 
-        return $this->sendResponse($documentRestrictionAssigns->toArray(), 'Document Restriction Assign saved successfully');
+        return $this->sendResponse($documentRestrictionAssigns->toArray(), trans('custom.document_restriction_assign_saved_successfully'));
     }
 
     /**
@@ -172,10 +172,10 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
         $documentRestrictionAssign = $this->documentRestrictionAssignRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionAssign)) {
-            return $this->sendError('Document Restriction Assign not found');
+            return $this->sendError(trans('custom.document_restriction_assign_not_found'));
         }
 
-        return $this->sendResponse($documentRestrictionAssign->toArray(), 'Document Restriction Assign retrieved successfully');
+        return $this->sendResponse($documentRestrictionAssign->toArray(), trans('custom.document_restriction_assign_retrieved_successfully'));
     }
 
     /**
@@ -232,12 +232,12 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
         $documentRestrictionAssign = $this->documentRestrictionAssignRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionAssign)) {
-            return $this->sendError('Document Restriction Assign not found');
+            return $this->sendError(trans('custom.document_restriction_assign_not_found'));
         }
 
         $documentRestrictionAssign = $this->documentRestrictionAssignRepository->update($input, $id);
 
-        return $this->sendResponse($documentRestrictionAssign->toArray(), 'DocumentRestrictionAssign updated successfully');
+        return $this->sendResponse($documentRestrictionAssign->toArray(), trans('custom.documentrestrictionassign_updated_successfully'));
     }
 
     /**
@@ -284,12 +284,12 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
         $documentRestrictionAssign = $this->documentRestrictionAssignRepository->findWithoutFail($id);
 
         if (empty($documentRestrictionAssign)) {
-            return $this->sendError('Document Restriction Assign not found');
+            return $this->sendError(trans('custom.document_restriction_assign_not_found'));
         }
 
         $documentRestrictionAssign->delete();
 
-        return $this->sendResponse($id, 'Document Restriction Assign deleted successfully');
+        return $this->sendResponse($id, trans('custom.document_restriction_assign_deleted_successfully'));
     }
 
     public function checkRestrictionByPolicy(Request $request)
@@ -313,7 +313,7 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
                                         ->first();
 
         if(empty($userGroup)){
-            return $this->sendResponse($permission, 'Restriction assign permission retrieve successfully');
+            return $this->sendResponse($permission, trans('custom.restriction_assign_permission_retrieve_successfull'));
         }
 
         $userGroupID = $userGroup->userGroupID;
@@ -328,6 +328,6 @@ class DocumentRestrictionAssignAPIController extends AppBaseController
             $permission = true;
         }
 
-        return $this->sendResponse($permission, 'Restriction assign permission retrieve successfully');
+        return $this->sendResponse($permission, trans('custom.restriction_assign_permission_retrieve_successfull'));
     }
 }
