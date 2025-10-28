@@ -695,7 +695,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMaster = $this->quotationMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($quotationMaster->toArray(), ' ' . trans('custom.sales') . ' ' . trans('custom.'.$tempName) . ' ' . trans('custom.updated_successfully'),1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails($quotationMaster->toArray(), ' ' . trans('custom.sales') . ' ' . $tempName . ' ' . trans('custom.updated_successfully'),1,$confirm['data'] ?? null);
     }
 
     /**

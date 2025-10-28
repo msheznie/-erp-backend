@@ -91,6 +91,11 @@ class VerifyCsrfTokenForApi
             $timeExpiry = $hasFiles ? env('CSRF_TOKEN_EXPIRY_TIME_FOR_FILE_UPLOAD', 10) : $baseExpiry;
             
             if (!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) {
+                \Log::error('Invalid CSRF token');
+                \Log::error('timestamp: ' . $timestamp);
+                \Log::error('timeExpiry: ' . $timeExpiry);
+                \Log::error('time: ' . time());
+                \Log::error('abs(time() - (int)($timestamp)): ' . abs(time() - (int)($timestamp)));
                 return $this->sendError();
             }
             
@@ -133,7 +138,7 @@ class VerifyCsrfTokenForApi
 
     private function sendError(): \Illuminate\Http\JsonResponse
     {
-        return response()->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+        return response()->json(['success' => false, 'message' => 'Your connection appears unstable. Please check your internet connection or refresh the page to continue.'], 403);
     }
 
     private function ignoreRoutes(): array

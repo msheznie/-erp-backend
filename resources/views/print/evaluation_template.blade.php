@@ -225,12 +225,12 @@
             <tr style="width: 100%">
                 <td valign="top" style="width: 40%">
                     <br>
-                    <span> <b>Supplier Code:</b> </span>
+                    <span> <b>{{ __('custom.supplier_code') }}:</b> </span>
                     <br>
                 </td>
                 <td valign="top" style="width: 50%">
                     <br>
-                    <span> <b>Supplier Name:</b> </span>
+                    <span> <b>{{ __('custom.supplier_name') }}:</b> </span>
                     <br>
                 </td>
             </tr>

@@ -2738,6 +2738,7 @@ return
     'invoice_already_voided' => 'Invoice already voided.',
     'invoice_amount' => 'Invoice Amount',
     'invoice_code' => 'Invoice Code',
+    'invoice_doc_code' => 'Invoice Document Code',
     'invoice_date' => 'Invoice Date',
     'invoice_detail' => 'Invoice detail',
     'invoice_details' => 'Invoice detail',
@@ -9618,6 +9619,10 @@ return
     'every_monthly_addition_should_have_at_least_one_item' => 'Every monthly addition should have at least one item',
 
     'customer_statement' => 'Customer Statement',
+    'approval_matrix' => 'Approval Matrix',
+    'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'PDC cheque already cleared for treasury, cannot be returned',
+    'auto_bank_reconciliation' => 'Auto bank reconciliation',
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'Cash Flow Amount is greater than applicable amount',
     'no_records_found_for_pulling_step' => 'No records found for pulling step-1 and chunk-:chunk',
     'no_records_found_for_pulling_step_3' => 'No records found for pulling step-3',
     'no_records_found_for_pulling_step_5' => 'No records found for pulling step-5',

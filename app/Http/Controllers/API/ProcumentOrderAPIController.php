@@ -3202,7 +3202,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
 
         foreach ($supplierReportGRVBase as $val) {
-            $test = array('CompanyID' => $val->companyID, 'Supplier Code' => $val->supplierPrimaryCode, 'Supplier Name' => $val->supplierName, 'Supplier Country' => $val->countryName);
+            $test = array(trans('custom.company_id') => $val->companyID, trans('custom.supplier_code') => $val->supplierPrimaryCode, trans('custom.supplier_name') => $val->supplierName, trans('custom.supplier_country') => $val->countryName);
 
             if (!empty($months)) {
                 foreach ($months as $key => $row) {
@@ -3220,7 +3220,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
@@ -3979,7 +3979,7 @@ WHERE
 
         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);

@@ -485,7 +485,7 @@ class PdcLogAPIController extends AppBaseController
         $checkBankLedger = BankLedger::where('pdcID', $input['id'])->where('trsClearedYN', -1)->first();
 
         if ($checkBankLedger && $input['newStatus'] == 2) {
-            return $this->sendError("PDC cheque already cleared for treasury, cannot be returned", 500);
+            return $this->sendError(trans('custom.pdc_cheque_already_cleared_for_treasury_cannot_be_returned'), 500);
         }
 
 

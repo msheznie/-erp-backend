@@ -67,7 +67,9 @@ class AssetDisposalTypeLanguage extends Model
     public $fillable = [
         'disposalTypesID',
         'languageCode',
-        'typeDescription'
+        'typeDescription',
+        'purpose',
+        'transaction'
     ];
 
     /**
@@ -79,7 +81,9 @@ class AssetDisposalTypeLanguage extends Model
         'id' => 'integer',
         'disposalTypesID' => 'integer',
         'languageCode' => 'string',
-        'typeDescription' => 'string'
+        'typeDescription' => 'string',
+        'purpose' => 'string',
+        'transaction' => 'string'
     ];
 
     /**

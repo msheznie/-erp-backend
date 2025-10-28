@@ -2709,6 +2709,7 @@ return
     'invoice_already_voided' => 'الفاتورة مبطلة بالفعل.',
     'invoice_amount' => 'مبلغ الفاتورة',
     'invoice_code' => 'رمز الفاتورة',
+    'invoice_doc_code' => 'رمز مستند الفاتورة',
     'invoice_date' => 'تاريخ الفاتورة',
     'invoice_detail' => 'تفاصيل الفاتورة',
     'invoice_details' => 'تفاصيل الفاتورة',
@@ -6339,7 +6340,7 @@ return
     'user_already_assigned' => 'هناك :attribute مستخدمين معينين بالفعل لهذه المجموعة. قم بإزالة المستخدمين وحاول مرة أخرى',
 
     // Navigation Report
-    'erp_navigation' => 'التنقل في نظام تخطيط موارد المؤسسة',
+    'erp_navigation' => 'قوائم تخطيط موارد المؤسسات',
     'portal_navigation' => 'تنقل البوابة',
     'operation_navigation' => 'تنقل العمليات',
     'hrms_navigation' => 'تنقل نظام إدارة الموارد البشرية',
@@ -9513,6 +9514,11 @@ return
     'every_monthly_addition_should_have_at_least_one_item' => 'يجب أن يحتوي كل إضافة شهرية على عنصر واحد على الأقل',
 
     'customer_statement' => 'كشف حساب العميل',
+    'approval_matrix' => 'مصفوفة الموافقة',
+    'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'لا يمكن إعادة إصدار الشيك المدخل للخزينة منذ تاريخ الإيداع',
+    'auto_bank_reconciliation' => 'التسوية البنكية التلقائية',
+    'cash_flow_amount_is_greater_than_applicable_amount' => 'مبلغ التدفق النقدي أكبر من المبلغ المطبق',
+
     'no_records_found_for_pulling_step' => 'لم يتم العثور على سجلات لخطوة السحب الأولى والجزء-:chunk',
     'no_records_found_for_pulling_step_3' => 'لم يتم العثور على سجلات لخطوة السحب الثالثة',
     'no_records_found_for_pulling_step_5' => 'لم يتم العثور على سجلات لخطوة السحب الخامسة',

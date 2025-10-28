@@ -78,7 +78,7 @@ class GenerateBankReconciliation implements ShouldQueue
             /** creation of bank reconciliation master */
             $recMaster['bankAccountAutoID'] = $bankStatement->bankAccountAutoID;
             $recMaster['bankRecAsOf'] = $bankStatement->statementEndDate;
-            $recMaster['description'] = 'Auto bank reconciliation';
+            $recMaster['description'] = trans('custom.auto_bank_reconciliation');
             $recMaster['isAutoCreateDocument'] = 1;
 
             

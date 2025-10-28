@@ -29,6 +29,7 @@
         body {
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
 
         h3 {
@@ -58,11 +59,11 @@
         }
 
         .text-left {
-            text-align: left;
+            text-align: {{ app()->getLocale() == 'ar' ? 'right' : 'left' }};
         }
 
         .text-right {
-            text-align: right;
+            text-align: {{ app()->getLocale() == 'ar' ? 'left' : 'right' }};
         }
 
         .text-center {
@@ -159,12 +160,14 @@
             border-left: 1px solid #ffffff00 !important;
             background-color: #ffffff !important;
             border-right: 0;
+            direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
 
         .border-bottom-remov {
             border-bottom: 1px solid #ffffffff !important;
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
+            direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
     </style>
 </head>
@@ -224,7 +227,7 @@
                     @endif
                 </td>
                 <td style="width:33%;font-size: 10px;vertical-align: top;">
-                    <span style="margin-left: 50%;">{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
+                    <span style="margin-left: {{ app()->getLocale() == 'ar' ? '0' : '50%' }}; margin-right: {{ app()->getLocale() == 'ar' ? '50%' : '0' }};">{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
                 </td>
             </tr>
         </table>

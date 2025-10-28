@@ -12,6 +12,7 @@ use App\Rules\NoEmoji;
 use App\Services\TimeRequestExtensionService;
 use App\Traits\AuditLogsTrait;
 use Carbon\Carbon;
+use Cassandra\Time;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -181,7 +182,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department','delegateAccess'])->findWithoutFail($id);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess'])->findWithoutFail($id);
 
         $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
         if (empty($departmentBudgetPlanning)) {
@@ -377,20 +378,36 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->findWithoutFail($input['budgetPlanningId']);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions')->findWithoutFail($input['budgetPlanningId']);
 
         if (empty($departmentBudgetPlanning)) {
             return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
 
-        //prevent status change if new status is 0
-        if ($input['workStatus'] == 1) {
-            return $this->sendError('Status cannot be changed to Not Started');
+        if($departmentBudgetPlanning->revisions->count() > 0){
+            if ($input['workStatus'] == 1) {
+                return $this->sendError('Status cannot be changed to Not Started, already has a revision');
+            }else {
+                $departmentBudgetPlanning->financeTeamStatus = 1;
+                $departmentBudgetPlanning->save();
+            }
+
+        }else {
+            //prevent status change if new status is 0
+            if ($input['workStatus'] == 1) {
+                return $this->sendError('Status cannot be changed to Not Started');
+            }
+
+            if (($input['workStatus'] == 3) && ($departmentBudgetPlanning->workStatus == 1)) {
+                return $this->sendError('Status cannot be changed to Submitted');
+            }
+
+            if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
+                return $this->sendError('Status cannot be changed from submitted');
+            }
+
         }
 
-        if (($input['workStatus'] == 3) && ($departmentBudgetPlanning->workStatus == 1)) {
-            return $this->sendError('Status cannot be changed to Submitted');
-        }
 
         if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
             return $this->sendError('Status cannot be changed from submitted');
@@ -454,7 +471,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $updateData = ['workStatus' => $input['workStatus']];
             $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
 
-            if ($input['workStatus'] == 2) {
+            if ($input['workStatus'] == 2 && !empty($departmentBudgetPlanning->budgetPlanningDetails)) {
 
                 // Get database from request (added by TenantEnforce middleware)
                 $db = $request->input('db', '');
@@ -1057,6 +1074,11 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $input = $request->all();
 
         $timeExtensionRequest = DeptBudgetPlanningTimeRequest::find($input['id']);
+
+        if(!empty($input['comment'])) {
+            $timeExtensionRequest->review_comments = $input['comment'];
+        }
+
         if (!$timeExtensionRequest) {
             return $this->sendError(trans('custom.time_extension_request_not_found'));
         }
@@ -1119,6 +1141,27 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $input = $request->all();
 
         $timeExtensionRequest = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning')->find($input['id']);
+
+        $newDate = null;
+
+        if(!empty($input['timeExtensionRequests'])) {
+            if(!is_null(collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'])) {
+                $newDate = collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'];
+                $newDate = Carbon::parse($newDate)->addDays(1)->format('Y-m-d');
+            }
+        }
+
+
+        if(!is_null($newDate)) {
+           if(Carbon::parse($newDate)->lessThan(Carbon::parse($timeExtensionRequest->current_submission_date)))
+           {
+                return $this->sendError('New date cannot be less than the original submission date');
+           }
+        }
+
+        if(!empty($input['comment'])) {
+            $timeExtensionRequest->review_comments = $input['comment'];
+        }
         if (!$timeExtensionRequest) {
             return $this->sendError('Time request not found');
         }
@@ -1127,7 +1170,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         // Update status to 2 (accepted)
         $timeExtensionRequest->status = 2;
-        $timeExtensionRequest->new_time = $timeExtensionRequest->date_of_request;
+        $timeExtensionRequest->new_time = $newDate ?? $timeExtensionRequest->date_of_request;
         $timeExtensionRequest->save();
 
         // Update submission dates for budget planning and its details
@@ -1161,8 +1204,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     {
         $departmentBudgetPlanning = $timeExtensionRequest->departmentBudgetPlanning;
         
-        if ($departmentBudgetPlanning && isset($timeExtensionRequest->date_of_request)) {
-            $newSubmissionDate = $timeExtensionRequest->date_of_request;
+        if ($departmentBudgetPlanning) {
+            if(isset($timeExtensionRequest->date_of_request)) {
+                $newSubmissionDate = $timeExtensionRequest->date_of_request;
+            }
+            
+            if(isset($timeExtensionRequest->new_time)) {
+                $newSubmissionDate = $timeExtensionRequest->new_time;
+            }
+
             
             // Update DepartmentBudgetPlanning's submissionDate
             $departmentBudgetPlanning->submissionDate = $newSubmissionDate;
