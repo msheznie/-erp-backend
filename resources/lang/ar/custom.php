@@ -2709,6 +2709,7 @@ return
     'invoice_already_voided' => 'الفاتورة مبطلة بالفعل.',
     'invoice_amount' => 'مبلغ الفاتورة',
     'invoice_code' => 'رمز الفاتورة',
+    'invoice_doc_code' => 'رمز مستند الفاتورة',
     'invoice_date' => 'تاريخ الفاتورة',
     'invoice_detail' => 'تفاصيل الفاتورة',
     'invoice_details' => 'تفاصيل الفاتورة',

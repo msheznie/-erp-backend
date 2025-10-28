@@ -3979,7 +3979,7 @@ WHERE
 
         \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
 
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
+            $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);

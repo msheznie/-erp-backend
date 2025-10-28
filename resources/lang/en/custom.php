@@ -2738,6 +2738,7 @@ return
     'invoice_already_voided' => 'Invoice already voided.',
     'invoice_amount' => 'Invoice Amount',
     'invoice_code' => 'Invoice Code',
+    'invoice_doc_code' => 'Invoice Document Code',
     'invoice_date' => 'Invoice Date',
     'invoice_detail' => 'Invoice detail',
     'invoice_details' => 'Invoice detail',
