@@ -65,5 +65,6 @@ return [
     'items_by_company' => 'items_by_company',
     'items_by_warehouse' => 'items_by_warehouse',
     'stock-count' => 'stock-count',
-    'spent_analysis_by_supplier_report' => 'spent_analysis_by_supplier_report'
+    'spent_analysis_by_supplier_report' => 'spent_analysis_by_supplier_report',
+    'spent_analysis_drilldown_report' => 'spent_analysis_drilldown_report'
 ];
