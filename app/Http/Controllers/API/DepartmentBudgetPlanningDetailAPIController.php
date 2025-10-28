@@ -1011,9 +1011,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $currentStatus = $budgetPlanning->financeTeamStatus;
             $newStatus = $input['financeTeamStatus'];
 
-            // if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
-            //     return $this->sendError("Status can only be changed forward.", 422);
-            // }
+            if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
+                return $this->sendError("Status can only be changed forward.", 422);
+            }
 
             $budgetPlanning->financeTeamStatus = $newStatus;
             $budgetPlanning->save();
@@ -1044,8 +1044,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         
         // Define valid progressions
         $validProgressions = [
-            1 => [2, 3, 4], // From Open: can go to Under Review, Sent Back for Revision, or Completed
-            2 => [3, 4],    // From Under Review: can go to Sent Back for Revision or Completed
+            1 => [2], // From Open: can go to Under Review, Sent Back for Revision, or Completed
+            2 => [3],    // From Under Review: can go to Sent Back for Revision or Completed
             3 => [4],       // From Sent Back for Revision: can go back to Completed
             4 => []         // From Completed: no further changes allowed
         ];
@@ -1100,8 +1100,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
 
-        $query = DepartmentBudgetPlanning::with('department.hod.employee')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        $query = DepartmentBudgetPlanning::with('department.hod.employee','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
         return \DataTables::of($query)
+            ->addColumn('newDate', function ($row) {
+                if ($row->timeExtensionRequests->count() > 0) {
+                    return $row->timeExtensionRequests->where('status', 2)->last()->new_time;
+                } else {
+                    return null;
+                }
+            })
+            ->addColumn('submissionDate', function ($row) {
+                if ($row->timeExtensionRequests->count() > 0) {
+                    return $row->timeExtensionRequests->first()->current_submission_date;
+                } else {
+                    return $row->submissionDate;
+                }
+            })
             ->addIndexColumn()
             ->make(true);
 

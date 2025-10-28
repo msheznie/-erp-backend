@@ -89,7 +89,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     {
         $this->companyBudgetPlanningRepository->pushCriteria(new RequestCriteria($request));
         $this->companyBudgetPlanningRepository->pushCriteria(new LimitOffsetCriteria($request));
-        $companyBudgetPlannings = $this->companyBudgetPlanningRepository->all();
+        $companyBudgetPlannings = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->all();
 
         return $this->sendResponse($companyBudgetPlannings->toArray(), trans('custom.company_budget_plannings_retrieved_successfully'));
     }
@@ -247,7 +247,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
 
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
@@ -318,10 +318,25 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $input = $request->all();
 
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
+        }
+
+
+        if($input['confirmed_yn'] == 1) {
+            // Validate department budget planning statuses before allowing confirmation
+            $validationResult = $this->validateDepartmentBudgetPlanningStatuses($companyBudgetPlanning);
+            
+            if (!$validationResult['valid']) {
+                return $this->sendError($validationResult['message']);
+            }
+
+            $companyBudgetPlanning->departmentBudgetPlannings;
+            $input['confirmed_yn'] = 1;
+            $input['confirmed_by'] = Auth::user()->employee_id;
+            $input['confirmed_at'] = Carbon::now();
         }
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
@@ -566,7 +581,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
             }
 
-            $data = CompanyBudgetPlanning::with(['financeYear'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
+            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
             /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
@@ -1217,7 +1232,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     return $revision->reopenEditableSection;
                 })
                 ->addColumn('revisionCount', function ($revision) {
-                    return $revision->count();
+                    return 0;
                 })
                 ->addColumn('revisionTypeText', function ($revision) {
                     return $revision->revision_type_text;
@@ -1296,5 +1311,51 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving time extension requests: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Validate department budget planning statuses before allowing confirmation
+     *
+     * @param CompanyBudgetPlanning $companyBudgetPlanning
+     * @return array
+     */
+    private function validateDepartmentBudgetPlanningStatuses($companyBudgetPlanning)
+    {
+        // Check if budget plan has department budget planning records
+        if (!$companyBudgetPlanning->departmentBudgetPlannings || $companyBudgetPlanning->departmentBudgetPlannings->count() === 0) {
+            return [
+                'valid' => false,
+                'message' => trans('custom.no_department_budget_planning_found')
+            ];
+        }
+
+        // Check if all department budget planning records have workStatus = 3 (submitted to finance)
+        $notSubmittedToFinance = $companyBudgetPlanning->departmentBudgetPlannings->filter(function ($dept) {
+            return $dept->workStatus !== 3;
+        });
+
+        if ($notSubmittedToFinance->count() > 0) {
+            return [
+                'valid' => false,
+                'message' => trans('custom.not_all_departments_submitted_to_finance')
+            ];
+        }
+
+        // Check if all department budget planning records have financeTeamStatus = 4 (completed)
+        $notCompletedByFinance = $companyBudgetPlanning->departmentBudgetPlannings->filter(function ($dept) {
+            return $dept->financeTeamStatus !== 4;
+        });
+
+        if ($notCompletedByFinance->count() > 0) {
+            return [
+                'valid' => false,
+                'message' => trans('custom.not_all_finance_status_completed')
+            ];
+        }
+
+        return [
+            'valid' => true,
+            'message' => 'Validation passed'
+        ];
     }
 }

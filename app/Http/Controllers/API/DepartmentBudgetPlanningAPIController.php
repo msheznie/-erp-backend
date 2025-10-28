@@ -824,6 +824,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             ->addColumn('created_by_name', function ($row) {
                 return $row->creator ? $row->creator->name : 'Unknown';
             })
+            ->addColumn('new_time', function ($row) {
+                return isset($row->new_time) ? $row->new_time : $row->current_submission_date;
+            })
             ->addColumn('attachment_count', function ($row) {
                 return $row->attachments_count;
             })

@@ -60,7 +60,10 @@ class BudgetDetailComment extends Model
         'parentId',
         'budgetDetailID',
         'comment',
-        'created_by'
+        'created_by',
+        'is_resolved',
+        'resolved_by',
+        'resolved_at'
     ];
 
     /**
@@ -73,7 +76,10 @@ class BudgetDetailComment extends Model
         'parentId' => 'integer',
         'budgetDetailID' => 'integer',
         'comment' => 'string',
-        'created_by' => 'integer'
+        'created_by' => 'integer',
+        'is_resolved' => 'boolean',
+        'resolved_by' => 'integer',
+        'resolved_at' => 'datetime'
     ];
 
     /**
@@ -88,6 +94,11 @@ class BudgetDetailComment extends Model
     public function created_by_emp()
     {
         return $this->belongsTo('App\Models\Employee', 'created_by', 'employeeSystemID');
+    }
+
+    public function resolved_by_emp()
+    {
+        return $this->belongsTo('App\Models\Employee', 'resolved_by', 'employeeSystemID');
     }
 
     public function parent()

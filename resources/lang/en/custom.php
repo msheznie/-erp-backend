@@ -3515,6 +3515,19 @@ return
     // budget planning details template attachment
     'original_file_name_required' => 'The original file name is required.',
     'original_file_name_string'   => 'The original file name must be a string.',
+    'file_type_required' => 'The file type is required.',
+    'file_type_string'   => 'The file type must be a string.',
+    'file_size_required' => 'The file size is required.',
+    'file_size_integer'  => 'The file size must be an integer.',
+    'file_size_max'      => 'The file size must not exceed :max bytes.',
+    'attachment_type_id_string' => 'The attachment type must be an string.',
+    'file_data_required' => 'The file data is required.',
+    'file_data_string'   => 'The file data must be a valid string.',
+    'description_string' => 'The description must be a string',
+    'attachment_not_found' => 'Attachment not found',
+    'file_not_found_on_storage' => 'File not found on storage',
+    'budget_planning_detail_template_attachment_not_found' => 'Budget planning detail template attachment not found',
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully',
     'no_bank' => 'There is no bank selected',
     'no_grv_selected_to_add' => 'No GRV selected to add',
     'no_items_found_for_print' => 'No items found for print',
@@ -9598,6 +9611,11 @@ return
     'activated' => 'Activated',
 
     'no_data_found_in_the_excel_file' => 'No data found in the excel file',
+    
+    // Budget Planning Validation Messages
+    'no_department_budget_planning_found' => 'No department budget planning found',
+    'not_all_departments_submitted_to_finance' => 'Not all departments have submitted their budget planning to finance',
+    'not_all_finance_status_completed' => 'Not all finance team statuses are completed',
 
     // Customer Ledger Email Body
     'auto_generated_email_footer' => 'This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.',

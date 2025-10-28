@@ -142,4 +142,5 @@ Route::get('department-budget-detail-comments/count/{budgetDetailId}', 'Departme
 Route::post('department-budget-detail-comments/bulk', 'DepartmentBudgetDetailCommentAPIController@getCommentsByBudgetDetailIds')->name('Get department budget detail comments bulk');
 Route::get('department-budget-detail-comments/paginated', 'DepartmentBudgetDetailCommentAPIController@getCommentsPaginated')->name('Get department budget detail comments paginated');
 Route::get('department-budget-detail-comments/recent', 'DepartmentBudgetDetailCommentAPIController@getRecentComments')->name('Get recent department budget detail comments');
+Route::post('department-budget-detail-comments/resolve', 'DepartmentBudgetDetailCommentAPIController@resolve')->name('Resolve department budget detail comment');
 Route::resource('department-budget-detail-comments', 'DepartmentBudgetDetailCommentAPIController');
