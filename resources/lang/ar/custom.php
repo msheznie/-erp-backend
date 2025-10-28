@@ -602,5 +602,12 @@ return [
     'description_string' => 'The description must be a string AR',
     'attachment_not_found' => 'Attachment not found AR',
     'file_not_found_on_storage' => 'File not found on storage AR',
-    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR'
+    'Budget_planning_detail_template_deleted_successfully' => 'Budget Planning Detail Temp Attachment deleted successfully AR',
+    'upload_budget_template' => 'قالب رفع الميزانية',
+    'new_sheet' => 'ورقة جديدة',
+    
+    // Budget Planning Validation Messages
+    'no_department_budget_planning_found' => 'لم يتم العثور على تخطيط ميزانية القسم',
+    'not_all_departments_submitted_to_finance' => 'لم تقم جميع الأقسام بتقديم تخطيط ميزانيتها إلى المالية',
+    'not_all_finance_status_completed' => 'لم تكتمل جميع حالات فريق المالية'
 ];

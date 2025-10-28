@@ -467,7 +467,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $updateData = ['workStatus' => $input['workStatus']];
             $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
 
-            if ($input['workStatus'] == 2 && empty($departmentBudgetPlanning->budgetPlanningDetails)) {
+            if ($input['workStatus'] == 2 && !empty($departmentBudgetPlanning->budgetPlanningDetails)) {
 
                 // Get database from request (added by TenantEnforce middleware)
                 $db = $request->input('db', '');
@@ -819,6 +819,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             })
             ->addColumn('created_by_name', function ($row) {
                 return $row->creator ? $row->creator->name : 'Unknown';
+            })
+            ->addColumn('new_time', function ($row) {
+                return isset($row->new_time) ? $row->new_time : $row->current_submission_date;
             })
             ->addColumn('attachment_count', function ($row) {
                 return $row->attachments_count;

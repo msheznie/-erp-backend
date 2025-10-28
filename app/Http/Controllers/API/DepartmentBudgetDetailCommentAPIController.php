@@ -112,6 +112,51 @@ class DepartmentBudgetDetailCommentAPIController extends AppBaseController
     }
 
     /**
+     * Resolve a comment conversation.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function resolve(Request $request)
+    {
+        try {
+            $comment = BudgetDetailComment::find($request->commentId);
+
+            if (!$comment) {
+                return $this->sendError('Department budget detail comment not found');
+            }
+
+            // Check if user has permission to resolve comments
+            // You can add specific permission checks here based on your business logic
+            // For example, only finance users or managers can resolve comments
+            
+            $comment->update([
+                'is_resolved' => true,
+                'resolved_by' => Auth::user()->employee_id,
+                'resolved_at' => now()
+            ]);
+
+            // If this is a parent comment, also resolve all child comments (replies)
+            if (!$comment->parentId) {
+                BudgetDetailComment::where('parentId', $comment->id)
+                    ->update([
+                        'is_resolved' => true,
+                        'resolved_by' => Auth::user()->employee_id,
+                        'resolved_at' => now()
+                    ]);
+            }
+
+            $comment->load(['created_by_emp', 'resolved_by_emp']);
+
+            return $this->sendResponse($comment->toArray(), 'Comment conversation resolved successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error resolving comment conversation: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id

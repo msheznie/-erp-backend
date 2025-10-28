@@ -252,6 +252,23 @@ class UserAPIController extends AppBaseController
 
     public function getCurrentUserInfo(Request $request){
         $output = Helper::getEmployeeInfo();
+
+        //filter the output to only include the fields that are needed
+        $output = $output->only([
+            'empID',
+            'empCompanySystemID',
+            'empCompanyID',
+            'empFullName',
+            'empName',
+            'empEmail',
+            'empUserName',
+            'language',
+            'profilepic',
+            'user_data',
+            'isAdmin',
+            'employeeSystemID'
+        ]);
+
         /*if($output->profilepic){
             $output->profilepic->profileImage = public_path().$output->profilepic->profileImage;
         }
