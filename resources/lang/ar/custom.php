@@ -9558,7 +9558,7 @@ return
     'time_stamp' => 'تاريخ السجل',
     'ip_address' => 'عنوان الإيبي',
     'user_audit_logs' => 'سجلات مراجعة المستخدم',
-
+    'no_user_audit_logs_found' => 'لم يتم العثور على سجلات مراجعة المستخدم للمعايير المحددة',
     'customer_statement' => 'كشف حساب العميل',
     'approval_matrix' => 'مصفوفة الموافقة',
     'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'لا يمكن إعادة إصدار الشيك المدخل للخزينة منذ تاريخ الإيداع',

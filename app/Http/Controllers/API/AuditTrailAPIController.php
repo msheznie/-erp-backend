@@ -26,6 +26,7 @@ use App\Services\LokiService;
 use App\Jobs\AuditLog\MigrateAuditLogsJob;
 use DataTables;
 use App\helper\CommonJobService;
+use Illuminate\Support\Facades\Log;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -363,6 +364,164 @@ class AuditTrailAPIController extends AppBaseController
     }
 
     /**
+     * Fetch and format user audit logs from Loki
+     * 
+     * @param Request $request
+     * @return array
+     */
+    private function fetchUserAuditLogs(Request $request)
+    {
+        $input = $request->all();
+        $env = env("LOKI_ENV");
+        
+        // Get date range from request input
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Calculate diff for Loki query range
+        if (!empty($requestFromDate) && !empty($requestToDate)) {
+            $fromDate = Carbon::parse($requestFromDate);
+            $toDate = Carbon::parse($requestToDate);
+            $diff = $toDate->diffInDays($fromDate);
+            
+            // Ensure minimum 1 day range for Loki query (diffInDays can be 0 for same day)
+            if ($diff == 0) {
+                $diff = 1; // Use at least 1 day range
+            }
+            
+            \Log::info('Using request dates for Loki query', [
+                'fromDate' => $requestFromDate,
+                'toDate' => $requestToDate,
+                'diff' => $diff
+            ]);
+        } else {
+            // Fallback to environment-based dates if not provided in request
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+            \Log::info('Using environment dates for Loki query', [
+                'fromDate' => env("LOKI_START_DATE"),
+                'toDate' => 'now',
+                'diff' => $diff
+            ]);
+        }
+        
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+        
+        // Get current locale and determine filter language
+        $locale = app()->getLocale() ?: 'en';
+        $langFilter = $locale === 'ar' ? 'ar' : 'en';
+
+        // Build the Loki query - just filter by channel
+        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json';
+        
+        // Add event filter if event is specified
+        if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
+            // Map event value to TRANSLATED event name based on locale
+            // These are the translated values that are actually stored in the logs
+            $eventMap = [
+                '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
+                '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
+                '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
+                '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
+            ];
+            
+            $eventValue = $eventMap[$input['event']] ?? $input['event'];
+            $query .= ' | event="'.$eventValue.'"';
+        }
+
+        if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
+            $empIdValue = $input['employeeId'];
+            $query .= ' | employeeId="'.$empIdValue.'"';
+        }
+        
+        $query .= ' ['.(int)$diff.'d])';
+        $params = 'query?query='.$query;
+        
+        \Log::info('Loki query for user audit logs', [
+            'query' => $query,
+            'params' => $params,
+            'locale' => $locale,
+            'langFilter' => $langFilter
+        ]);
+
+        $data = $this->lokiService->getAuditLogs($params);
+
+        // Check if $data is an error response
+        if (is_object($data) && method_exists($data, 'getStatusCode')) {
+            throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
+        }
+
+        // Handle empty data or non-array response
+        if (empty($data) || !is_array($data)) {
+            \Log::warning('fetchUserAuditLogs: Empty or invalid data from Loki', [
+                'params' => $params,
+                'data_type' => gettype($data),
+                'data_count' => is_array($data) ? count($data) : 'N/A'
+            ]);
+            $data = [];
+        }
+
+        $formatedData = [];
+
+        foreach ($data as $key => $value) {
+            if (isset($value['metric'])) {
+                $lineData = $value['metric'];
+                
+                // Filter by locale if present
+                if (isset($lineData['locale']) && $lineData['locale'] === $langFilter) {
+                    $formatedData[] = $lineData;
+                } elseif (!isset($lineData['locale'])) {
+                    // If locale is not set, include it (for backward compatibility)
+                    $formatedData[] = $lineData;
+                }
+            }
+        }
+        
+        \Log::info('fetchUserAuditLogs: Formatted data count after locale filter', [
+            'count' => count($formatedData),
+            'locale' => $locale,
+            'langFilter' => $langFilter
+        ]);
+
+        // Sort by date_time
+        $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
+        
+        // Get date range filters from request
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Apply date range filter if specified
+        if (!empty($requestFromDate) && !empty($requestToDate)) {
+            $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
+                $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
+                if (!$itemDateTime) {
+                    return false;
+                }
+                $from = Carbon::parse($requestFromDate);
+                $to = Carbon::parse($requestToDate);
+                return $itemDateTime->gte($from) && $itemDateTime->lte($to);
+            })->values()->all();
+        }
+        
+        // Apply search filter if specified
+        $searchValue = $request->input('search.value');
+        if (!empty($searchValue)) {
+            $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
+                return stripos($item['session_id'] ?? '', $searchValue) !== false ||
+                       stripos($item['event'] ?? '', $searchValue) !== false ||
+                       stripos($item['employeeId'] ?? '', $searchValue) !== false ||
+                       stripos($item['employeeName'] ?? '', $searchValue) !== false ||
+                       stripos($item['role'] ?? '', $searchValue) !== false ||
+                       stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
+                       stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
+            })->values()->all();
+        }
+        
+        return $formatedData;
+    }
+
+    /**
      * Get user audit logs (login, logout, session events)
      * Fetches logs where logType = 'user_audit' from Loki
      *
@@ -370,101 +529,12 @@ class AuditTrailAPIController extends AppBaseController
      * @return Response
      */
     public function userAuditLogs(Request $request){
-        $input = $request->all();
         try {
-            $env = env("LOKI_ENV");
+            // Use shared method to fetch data with all filters applied
+            $formatedData = $this->fetchUserAuditLogs($request);
             
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
-            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
-            
-            // Get current locale and determine filter language
-            $locale = app()->getLocale() ?: 'en';
-            $langFilter = $locale === 'ar' ? 'ar' : 'en';
-
-            // Build the Loki query
-            $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json | locale="'.$langFilter.'"';
-            
-            // Add event filter if event is specified
-            if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
-                // Map event value to TRANSLATED event name based on locale
-                // These are the translated values that are actually stored in the logs
-                $eventMap = [
-                    '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
-                    '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
-                    '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
-                    '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
-                ];
-                
-                $eventValue = $eventMap[$input['event']] ?? $input['event'];
-                $query .= ' | event="'.$eventValue.'"';
-            }
-
-            if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
-                $empIdValue = $input['employeeId'];
-                $query .= ' | employeeId="'.$empIdValue.'"';
-            }
-            
-            $query .= ' ['.(int)$diff.'d])';
-            $params = 'query?query='.$query;
-
-            $data = $this->lokiService->getAuditLogs($params);
-
-            // Check if $data is an error response
-            if (is_object($data) && method_exists($data, 'getStatusCode')) {
-                return $data; // Return the error response
-            }
-
-            $formatedData = [];
-
-            foreach ($data as $key => $value) {
-                if (isset($value['metric'])) {
-                    $lineData = $value['metric'];
-                    $formatedData[] = $lineData;
-                }
-            }
-
-            $formatedData = collect($formatedData)->sortByDesc('date_time');
-
-            // Get date range filters from request
-            $requestFromDate = $request->input('fromDate');
-            $requestToDate = $request->input('toDate');
-
-            // Get search value for client-side filtering
-            $searchValue = $request->input('search.value');
-            
- 
-
             return DataTables::of($formatedData)
                 ->addIndexColumn()
-                ->filter(function ($instance) use ($searchValue, $requestFromDate, $requestToDate) {
-                    // Filter by date range if provided
-                    if (!empty($requestFromDate) && !empty($requestToDate)) {
-                        $instance->collection = $instance->collection->filter(function ($item) use ($requestFromDate, $requestToDate) {
-                            $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
-                            if (!$itemDateTime) {
-                                return false;
-                            }
-                            $from = Carbon::parse($requestFromDate);
-                            $to = Carbon::parse($requestToDate);
-                            return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-                        });
-                    }
-                    
-                    // Filter by search value
-                    if (!empty($searchValue)) {
-                        $instance->collection = $instance->collection->filter(function ($item) use ($searchValue) {
-                            return stripos($item['session_id'] ?? '', $searchValue) !== false ||
-                                   stripos($item['event'] ?? '', $searchValue) !== false ||
-                                   stripos($item['employeeId'] ?? '', $searchValue) !== false ||
-                                   stripos($item['employeeName'] ?? '', $searchValue) !== false ||
-                                   stripos($item['role'] ?? '', $searchValue) !== false ||
-                                   stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
-                                   stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
-                        });
-                    }
-                })
                 ->make(true);
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
@@ -479,93 +549,20 @@ class AuditTrailAPIController extends AppBaseController
      */
     public function exportUserAuditLogs(Request $request)
     {
-        $input = $request->all();
         try {
-            $env = env("LOKI_ENV");
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
-            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+            // Use shared method to fetch data with all filters applied
+            $formatedData = $this->fetchUserAuditLogs($request);
             
-            // Get current locale and determine filter language
-            $locale = app()->getLocale() ?: 'en';
-            $langFilter = $locale === 'ar' ? 'ar' : 'en';
-
-            // Build the Loki query
-            $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json | locale="'.$langFilter.'"';
-            
-            // Add event filter if event is specified
-            if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
-                // Map event value to TRANSLATED event name based on locale
-                // These are the translated values that are actually stored in the logs
-                $eventMap = [
-                    '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
-                    '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
-                    '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
-                    '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
-                ];
-                
-                $eventValue = $eventMap[$input['event']] ?? $input['event'];
-                $query .= ' | event="'.$eventValue.'"';
-            }
-
-            if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
-                $empIdValue = $input['employeeId'];
-                $query .= ' | employeeId="'.$empIdValue.'"';
+            // Check if there's no data to export
+            if (empty($formatedData)) {
+                return $this->sendError(trans('custom.no_user_audit_logs_found'), 404);
             }
             
-            $query .= ' ['.(int)$diff.'d])';
-            $params = 'query?query='.$query;
-
-            $data = $this->lokiService->getAuditLogs($params);
-
-            // Check if $data is an error response
-            if (is_object($data) && method_exists($data, 'getStatusCode')) {
-                return $data; // Return the error response
-            }
-
-            $formatedData = [];
-
-            foreach ($data as $key => $value) {
-                if (isset($value['metric'])) {
-                    $lineData = $value['metric'];
-                    $formatedData[] = $lineData;
-                }
-            }
-
-            // Sort by timestamp
-            $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
-            
-            // Get date range filters from request
+            // Get date range filters for displaying in Excel
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
-            // Apply date range filter if specified
-            if (!empty($requestFromDate) && !empty($requestToDate)) {
-                $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
-                    $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
-                    if (!$itemDateTime) {
-                        return false;
-                    }
-                    $from = Carbon::parse($requestFromDate);
-                    $to = Carbon::parse($requestToDate);
-                    return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-                })->values()->all();
-            }
-            
-            // Apply search filter if specified (client-side filtering for export)
-            $searchValue = $request->input('search.value');
-            if (!empty($searchValue)) {
-                $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
-                    return stripos($item['session_id'] ?? '', $searchValue) !== false ||
-                           stripos($item['event'] ?? '', $searchValue) !== false ||
-                           stripos($item['employeeId'] ?? '', $searchValue) !== false ||
-                           stripos($item['employeeName'] ?? '', $searchValue) !== false ||
-                           stripos($item['role'] ?? '', $searchValue) !== false ||
-                           stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
-                           stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
-                })->values()->all();
-            }
+            \Log::info('exportUserAuditLogs: Final data count for export', ['count' => count($formatedData)]);
 
             // Prepare report data for Blade template
             $reportData = [
