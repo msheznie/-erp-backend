@@ -424,7 +424,11 @@ class AuditTrailAPIController extends AppBaseController
                 }
             }
 
-            $formatedData = collect($formatedData)->sortByDesc('timestamp');
+            $formatedData = collect($formatedData)->sortByDesc('date_time');
+
+            // Get date range filters from request
+            $requestFromDate = $request->input('fromDate');
+            $requestToDate = $request->input('toDate');
 
             // Get search value for client-side filtering
             $searchValue = $request->input('search.value');
@@ -433,16 +437,16 @@ class AuditTrailAPIController extends AppBaseController
 
             return DataTables::of($formatedData)
                 ->addIndexColumn()
-                ->filter(function ($instance) use ($searchValue, $fromDate, $toDate) {
+                ->filter(function ($instance) use ($searchValue, $requestFromDate, $requestToDate) {
                     // Filter by date range if provided
-                    if (!empty($fromDate) && !empty($toDate)) {
-                        $instance->collection = $instance->collection->filter(function ($item) use ($fromDate, $toDate) {
+                    if (!empty($requestFromDate) && !empty($requestToDate)) {
+                        $instance->collection = $instance->collection->filter(function ($item) use ($requestFromDate, $requestToDate) {
                             $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
                             if (!$itemDateTime) {
                                 return false;
                             }
-                            $from = Carbon::parse($fromDate);
-                            $to = Carbon::parse($toDate);
+                            $from = Carbon::parse($requestFromDate);
+                            $to = Carbon::parse($requestToDate);
                             return $itemDateTime->gte($from) && $itemDateTime->lte($to);
                         });
                     }
@@ -529,7 +533,7 @@ class AuditTrailAPIController extends AppBaseController
             }
 
             // Sort by timestamp
-            $formatedData = collect($formatedData)->sortByDesc('timestamp')->values()->all();
+            $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
             
             // Get date range filters from request
             $requestFromDate = $request->input('fromDate');
