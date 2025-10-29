@@ -63,49 +63,74 @@ class MigrateAuditLogsJob implements ShouldQueue
         $migratedCount = 0;
         $errorCount = 0;
         $errors = [];
+        
+        // Batch configuration
+        $batchSize = env('AUDIT_LOG_MIGRATION_BATCH_SIZE', 50); // Process 50 logs per batch
+        $batchDelayMs = env('AUDIT_LOG_MIGRATION_BATCH_DELAY_MS', 500); // 500ms delay between batches
 
         try {
             $params = 'query?query=rate({env="'.$this->env.'"} |= `\"table\":\"'.$this->table.'\"` |= `\"tenant_uuid\":\"'.$this->tenantUuid.'\"` | json ['.$this->diff.'d])';
             $data = $lokiService->getAuditLogsForMigration($params);
+            
+            $totalLogs = count($data);
 
-            foreach ($data as $key => $value) {
-                try {
-                    if (isset($value)) {
-                        $log = $value;
-                        
-                        if (isset($log['table'])) {
-                            // Old audit log format - re-log using Log facade
-                            \Log::useFiles(storage_path() . '/logs/audit.log');
-                            \Log::info('data:', [
-                                'channel' => 'audit',
-                                'transaction_id' => $log['transaction_id'] ?? '',
-                                'table' => $log['table'] ?? '',
-                                'user_name' => $log['user_name'] ?? 'Unknown',
-                                'tenant_uuid' => $log['tenant_uuid'] ?? 'local',
-                                'crudType' => $log['crudType'] ?? '',
-                                'narration' => $log['narration'] ?? '',
-                                'date_time' => $log['date_time'] ?? date('Y-m-d H:i:s'),
-                                'parent_id' => $log['parent_id'] ?? '',
-                                'parent_table' => $log['parent_table'] ?? null,
-                                'module' => 'Finance',
-                                'session_id' => $log['session_id'] ?? '',
-                                'data' => $log['data'] ?? '[]',
-                            ]);
+            // Split data into batches
+            $batches = array_chunk($data, $batchSize);
+            $totalBatches = count($batches);
+            
+
+            foreach ($batches as $batchIndex => $batch) {
+                $batchNumber = $batchIndex + 1;
+                
+                foreach ($batch as $key => $value) {
+                    try {
+                        if (isset($value)) {
+                            $log = $value;
                             
-                            $migratedCount++;
+                            if (isset($log['table'])) {
+                                // Old audit log format - re-log using Log facade
+                                \Log::useFiles(storage_path() . '/logs/audit.log');
+                                \Log::info('data:', [
+                                    'channel' => 'audit',
+                                    'transaction_id' => $log['transaction_id'] ?? '',
+                                    'table' => $log['table'] ?? '',
+                                    'user_name' => $log['user_name'] ?? 'Unknown',
+                                    'tenant_uuid' => $log['tenant_uuid'] ?? 'local',
+                                    'crudType' => $log['crudType'] ?? '',
+                                    'narration' => $log['narration'] ?? '',
+                                    'date_time' => $log['date_time'] ?? date('Y-m-d H:i:s'),
+                                    'parent_id' => $log['parent_id'] ?? '',
+                                    'parent_table' => $log['parent_table'] ?? null,
+                                    'module' => 'Finance',
+                                    'session_id' => $log['session_id'] ?? '',
+                                    'data' => $log['data'] ?? '[]',
+                                ]);
+                                
+                                $migratedCount++;
+                            }
                         }
+                    } catch (\Exception $e) {
+                        $errorCount++;
+                        $errors[] = [
+                            'key' => $key,
+                            'error' => $e->getMessage()
+                        ];
                     }
-                } catch (\Exception $e) {
-                    $errorCount++;
-                    $errors[] = [
-                        'key' => $key,
-                        'error' => $e->getMessage()
-                    ];
+                }
+                
+                // Sleep between batches to give Fluent Bit time to process
+                if ($batchNumber < $totalBatches) {
+                    usleep($batchDelayMs * 1000); // Convert milliseconds to microseconds
                 }
             }
-
-
         } catch (\Exception $e) {
+            Log::error("MigrateAuditLogsJob: Failed for table: {$this->table}, tenant: {$this->tenantUuid}", [
+                'job_id' => $this->jobId,
+                'batch_id' => $this->batchId,
+                'error' => $e->getMessage(),
+                'migrated_count' => $migratedCount,
+                'error_count' => $errorCount
+            ]);
             throw $e;
         }
     }
