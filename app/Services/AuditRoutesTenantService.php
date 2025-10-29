@@ -8,6 +8,7 @@ class AuditRoutesTenantService
         $lokiTenantRoutes = [
             'api/v1/auditLogs',
             'api/v1/userAuditLogs',
+            'api/v1/exportUserAuditLogs',
             'api/v1/addItemAttributes',
             'api/v1/erp_attributes/{erp_attribute}',
             'api/v1/financeItemCategorySubsExpiryUpdate',
