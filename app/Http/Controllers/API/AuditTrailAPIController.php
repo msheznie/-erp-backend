@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAuditTrailAPIRequest;
 use App\Http\Requests\API\UpdateAuditTrailAPIRequest;
 use App\Models\AuditTrail;
+use App\Models\Tenant;
 use App\Repositories\AuditTrailRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -631,12 +632,12 @@ class AuditTrailAPIController extends AppBaseController
             // Dispatch a separate job for each table
             foreach ($tables as $table) {
                 
-                $tenants = CommonJobService::tenant_list();
+                $tenants = Tenant::where('is_active', 1)->get();
                 
                 foreach ($tenants as $tenant) {
                     $tenantUuid = $tenant->uuid;
                     $jobId = $batchId . '_' . $table . '_' . $tenantUuid;
-                    MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid);
+                    MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid)->onQueue('single');
                     $dispatchedJobs[] = [
                         'job_id' => $jobId,
                         'table' => $table,
