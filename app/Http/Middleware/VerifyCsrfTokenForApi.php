@@ -267,6 +267,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getRevisionsByCompanyBudget',
             'api/v1/getTimeExtensionRequestsByCompanyBudget',
             'api/v1/getDepartmentBudgetPlanningStatusesByCompany',
+            'api/v1/updateFinanceTeamStatus'
             
         ];
     }
