@@ -9663,7 +9663,7 @@ return
     'time_stamp' => 'Time Stamp',
     'ip_address' => 'IP Address',
     'user_audit_logs' => 'User Audit Logs',
-
+    'no_user_audit_logs_found' => 'No user audit logs found for the selected criteria',
     'customer_statement' => 'Customer Statement',
     'approval_matrix' => 'Approval Matrix',
     'pdc_cheque_already_cleared_for_treasury_cannot_be_returned' => 'PDC cheque already cleared for treasury, cannot be returned',
