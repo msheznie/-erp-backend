@@ -137,7 +137,7 @@ Route::post('getChartOfAccountsByRevisionGlSections', 'DepartmentBudgetPlanningD
 Route::get('department-budget-detail-comments/budget-detail/{budgetDetailId}', 'DepartmentBudgetDetailCommentAPIController@getByBudgetDetail')->name('Get department budget detail comments');
 Route::post('department-budget-detail-comments/save', 'DepartmentBudgetDetailCommentAPIController@save')->name('Save department budget detail comment');
 Route::put('department-budget-detail-comments/update/{id}', 'DepartmentBudgetDetailCommentAPIController@update')->name('Update department budget detail comment');
-Route::delete('department-budget-detail-comments/delete/{id}', 'DepartmentBudgetDetailCommentAPIController@destroy')->name('Delete department budget detail comment');
+Route::get('department-budget-detail-comments/delete/{id}', 'DepartmentBudgetDetailCommentAPIController@destroy')->name('Delete department budget detail comment');
 Route::get('department-budget-detail-comments/count/{budgetDetailId}', 'DepartmentBudgetDetailCommentAPIController@getCommentsCount')->name('Get department budget detail comments count');
 Route::post('department-budget-detail-comments/bulk', 'DepartmentBudgetDetailCommentAPIController@getCommentsByBudgetDetailIds')->name('Get department budget detail comments bulk');
 Route::get('department-budget-detail-comments/paginated', 'DepartmentBudgetDetailCommentAPIController@getCommentsPaginated')->name('Get department budget detail comments paginated');

@@ -8,6 +8,8 @@ use App\Http\Requests\API\UpdateCompanyDepartmentEmployeeAPIRequest;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepBudgetPlDetColumn;
 use App\Models\DepBudgetPlDetEmpColumn;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
+use App\Models\DepartmentBudgetPlanning;
 use App\Models\Employee;
 use App\Models\CompanyDepartment;
 use App\Models\BudgetControl;
@@ -50,6 +52,7 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
     public function getAllDepartmentEmployees(Request $request)
     {
         $departmentSystemID = $request->get('departmentSystemID');
+        $draw = $request->get('draw'); // Check if DataTables request
         
         if (!$departmentSystemID) {
             return $this->sendError('Department ID is required');
@@ -60,21 +63,75 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
                  ->orderBy('departmentEmployeeSystemID', 'asc')
                  ->get();
 
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('employeeCode', function ($departmentEmployee) {
-                return $departmentEmployee->employee ? $departmentEmployee->employee->empID : '';
-            })
-            ->addColumn('employeeName', function ($departmentEmployee) {
-                return $departmentEmployee->employee ? $departmentEmployee->employee->empName : '';
-            })
-            ->addColumn('hodStatus', function ($departmentEmployee) {
-                return $departmentEmployee->isHOD == 1 ? 'Yes' : 'No';
-            })
-            ->addColumn('activeStatus', function ($departmentEmployee) {
-                return $departmentEmployee->isActive == 1 ? 'Active' : 'Inactive';
-            })
-            ->make(true);
+        // If draw parameter exists, return DataTables format
+        if ($draw !== null) {
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('employeeCode', function ($departmentEmployee) {
+                    return $departmentEmployee->employee ? $departmentEmployee->employee->empID : '';
+                })
+                ->addColumn('employeeName', function ($departmentEmployee) {
+                    return $departmentEmployee->employee ? $departmentEmployee->employee->empName : '';
+                })
+                ->addColumn('hodStatus', function ($departmentEmployee) {
+                    return $departmentEmployee->isHOD == 1 ? 'Yes' : 'No';
+                })
+                ->addColumn('activeStatus', function ($departmentEmployee) {
+                    return $departmentEmployee->isActive == 1 ? 'Active' : 'Inactive';
+                })
+                ->make(true);
+        }
+
+
+        $employeeId = Auth::user()->employee_id;
+        // Get all employees from finance department
+        $financeDepartmentEmployees = CompanyDepartment::with('employees.employee')->where('isFinance', 1)->where('companySystemID', 1)->first();
+        
+        // Format finance department employees
+        $financeEmployees = collect();
+        if ($financeDepartmentEmployees && $financeDepartmentEmployees->employees) {
+            $financeEmployees = $financeDepartmentEmployees->employees->map(function ($departmentEmployee) {
+                return [
+                    'id' => $departmentEmployee->employee ? $departmentEmployee->employee->employeeSystemID : null,
+                    'name' => $departmentEmployee->employee ? $departmentEmployee->employee->empFullName : '',
+                    'employee_code' => $departmentEmployee->employee ? $departmentEmployee->employee->empID : '',
+                    'email' => $departmentEmployee->employee ? $departmentEmployee->employee->empEmail : '',
+                    'department_name' => $departmentEmployee->department ? $departmentEmployee->department->departmentName : '',
+                    'department_id' => $departmentEmployee->departmentSystemID,
+                    'is_hod' => $departmentEmployee->isHOD == 1,
+                    'is_active' => $departmentEmployee->isActive == 1
+                ];
+            })->filter(function ($employee) {
+                // Only return active employees
+                return $employee['is_active'] && $employee['id'] !== null;
+            });
+        }
+       
+        // Return simple array format for @mention functionality
+        $formattedEmployees = $query->map(function ($departmentEmployee) {
+            return [
+                'id' => $departmentEmployee->employee ? $departmentEmployee->employee->employeeSystemID : null,
+                'name' => $departmentEmployee->employee ? $departmentEmployee->employee->empFullName : '',
+                'employee_code' => $departmentEmployee->employee ? $departmentEmployee->employee->empID : '',
+                'email' => $departmentEmployee->employee ? $departmentEmployee->employee->empEmail : '',
+                'department_name' => $departmentEmployee->department ? $departmentEmployee->department->departmentName : '',
+                'department_id' => $departmentEmployee->departmentSystemID,
+                'is_hod' => $departmentEmployee->isHOD == 1,
+                'is_active' => $departmentEmployee->isActive == 1
+            ];
+        })->filter(function ($employee) {
+            // Only return active employees
+            return $employee['is_active'] && $employee['id'] !== null;
+        });
+
+        // Merge department employees with finance employees
+        $allEmployees = $formattedEmployees->merge($financeEmployees)->unique('id');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Department employees retrieved successfully',
+            'data' => $allEmployees
+        ]);
     }
 
     /**
