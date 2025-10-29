@@ -743,6 +743,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if ($customerReceivePaymentDetailCount == 0) {
                     return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
                 }
+
+                $sumDiscountGiven = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->sum('discount_given');
+                     
+                if($sumDiscountGiven < 0){
+                    $checkDiscountConfigured = SystemGlCodeScenarioDetail::where('companySystemID', $input['companySystemID'])
+                        ->where('systemGlScenarioID', 23)
+                        ->whereNotNull('chartOfAccountSystemID')
+                        ->where('chartOfAccountSystemID', '>', 0)
+                        ->first();
+        
+                    if(empty($checkDiscountConfigured)){
+                        return $this->sendError(trans('custom.discount_given_gl_not_assigned'), 500);
+                    }
+                }
             }
             else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
                 $checkDirectItemsCount = DirectReceiptDetail::where('directReceiptAutoID', $id)
@@ -797,7 +812,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 })
                                 ->count();
 
-                            if ($checkAmount > 0) {
+                            if ($sumDiscountGiven == 0 && $checkAmount > 0) {
                                 return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         } elseif ($row['addedDocumentSystemID'] == 19) {
@@ -813,7 +828,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 })
                                 ->count();
 
-                            if ($checkAmount > 0) {
+                            if ($sumDiscountGiven == 0 && $checkAmount > 0) {
                                 return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         }
@@ -2801,6 +2816,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $ciDetailTotTra = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                                                       ->where('matchingDocID', 0)
                                                       ->sum('receiveAmountTrans');
+        $discountTot = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            ->where('matchingDocID', 0)
+            ->sum('discount_given');
+            
+        $netTot = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            ->where('matchingDocID', 0)
+            ->sum('net_amount');
 
         $advanceDetailsTotalNet =  AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->sum('paymentAmount');
 
@@ -2816,6 +2838,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'localDecimal' => $localDecimal,
             'rptDecimal' => $rptDecimal,
             'directTotTra' => $directTotTra,
+            'discountTot' => $discountTot,
+            'netTot' => $netTot,
             'directTotalVAT' => $directTotalVAT,
             'directTotalNet' => $directTotalNet,
             'ciDetailTotTra' => $ciDetailTotTra,

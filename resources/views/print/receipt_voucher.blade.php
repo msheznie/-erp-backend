@@ -872,10 +872,23 @@
                     </tr>
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_total') }}</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
-                        <td class="text-right border-bottom-remov border-top-remov"></td>
-                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.payment_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($ciDetailTotTra), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.total_discount_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($discountTot), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.bank_charges_others') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($netTot+$directTotTra), $transDecimal)}}</td>
                     </tr>
                 @endif
                 

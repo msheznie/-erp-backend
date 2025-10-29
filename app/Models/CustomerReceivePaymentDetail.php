@@ -214,6 +214,8 @@ class CustomerReceivePaymentDetail extends Model
         'custReceiveCurrencyID',
         'custReceiveCurrencyER',
         'custbalanceAmount',
+        'net_amount',
+        'discount_given',
         'receiveAmountTrans',
         'receiveAmountLocal',
         'receiveAmountRpt',

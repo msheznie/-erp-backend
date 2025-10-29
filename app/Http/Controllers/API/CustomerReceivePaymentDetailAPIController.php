@@ -21,6 +21,7 @@ use App\Models\AdvanceReceiptDetails;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DirectReceiptDetail;
 use App\Models\SegmentMaster;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\UserRepository;
 use App\Models\CustomerReceivePayment;
 use App\Models\MatchDocumentMaster;
@@ -475,6 +476,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     public function updateCustomerReciept(Request $request)
     {
         $input = $request->all();
+        $discountGiven = isset($input['discount_given']) && $input['discount_given'] > 0;
         $serviceLineSystemID = null;
         if (isset($input['ar_data'])) {
             $serviceLineSystemID = $input['ar_data']['serviceLineSystemID'];
@@ -577,7 +579,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $allocationDifferent = $input["receiveAmountTrans"] - $input["custbalanceAmount"];
 
         
-        if ($input['addedDocumentSystemID'] == 20) {
+        if ($input['addedDocumentSystemID'] == 20 && $discountGiven) {
             if ($input["receiveAmountTrans"] - round($totReceiveAmountDetail,$decimalPlaces) > $epsilon || $allocationDifferent > $epsilon) {
                 return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_balance_amou'), 500);
             }

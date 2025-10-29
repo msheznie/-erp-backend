@@ -90,9 +90,17 @@ class CustomerReceivePaymentGlService
         $masterData = CustomerReceivePayment::with(['bank', 'finance_period_by'])->find($masterModel["autoID"]);
 
         //get balancesheet account
-        $cpd = CustomerReceivePaymentDetail::selectRaw("SUM(receiveAmountLocal) as localAmount, SUM(receiveAmountRpt) as rptAmount,SUM(receiveAmountTrans) as transAmount,localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,custTransactionCurrencyID as transCurrencyID,companyReportingER as reportingCurrencyER,localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER")
+        $cpd = CustomerReceivePaymentDetail::selectRaw("SUM(receiveAmountLocal) as localAmount, 
+            SUM(receiveAmountRpt) as rptAmount, SUM(receiveAmountTrans) as transAmount,
+            localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,
+            custTransactionCurrencyID as transCurrencyID,
+            companyReportingER as reportingCurrencyER,
+            localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER")
             ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
             ->first();
+
+        $dgd = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $masterModel['autoID'])
+            ->sum('discount_given');
 
         $totaldd = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
             ->WHERE('directReceiptAutoID', $masterModel["autoID"])
@@ -198,7 +206,10 @@ class CustomerReceivePaymentGlService
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                     $data['timestamp'] = \Helper::currentDateTime();
 
-                    $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans, SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, erp_accountsreceivableledger.serviceLineSystemID as serviceLineSystemID, erp_accountsreceivableledger.serviceLineCode as serviceLineCode')
+                    $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans,
+                            SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, 
+                            SUM(net_amount) as net_amount,localCurrencyER,companyReportingER,
+                            erp_accountsreceivableledger.serviceLineSystemID as serviceLineSystemID, erp_accountsreceivableledger.serviceLineCode as serviceLineCode')
                             ->join('erp_accountsreceivableledger', 'erp_accountsreceivableledger.arAutoID', '=', 'erp_custreceivepaymentdet.arAutoID')
                             ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
                             ->groupBy('erp_accountsreceivableledger.serviceLineSystemID')
@@ -238,13 +249,14 @@ class CustomerReceivePaymentGlService
                     foreach ($receiptDetails as $keyRe => $valueRe) {
                         $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
 
-
-                        $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                        $data['documentLocalAmount'] = (\Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                        $data['documentRptAmount'] = (\Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
-                        $data['serviceLineCode'] =  $valueRe->serviceLineCode;
-                        array_push($finalData, $data);
+                        if($valueRe->net_amount > 0){
+                            $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentLocalAmount'] = (\Helper::roundValue((1 / $valueRe->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentRptAmount'] = (\Helper::roundValue((1 / $valueRe->companyReportingER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                            $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                            array_push($finalData, $data); 
+                        }
                     }
 
                     $directReceiptsBySegmentsData = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
@@ -261,6 +273,34 @@ class CustomerReceivePaymentGlService
                         $data['serviceLineCode'] =  $val->serviceLineCode;
                         array_push($finalData, $data);
                     }
+
+                    if($dgd < 0){
+                        $discountGLId = SystemGlCodeScenarioDetail::selectRaw("chartOfAccountSystemID")
+                            ->where('systemGlScenarioID', 23)
+                            ->where('companySystemID', $masterData->companySystemID)
+                            ->first();
+
+                        $data['chartOfAccountSystemID'] = $discountGLId->chartOfAccountSystemID;
+                        $data['glCode'] = chartOfAccount::getGlAccountCode($discountGLId->chartOfAccountSystemID);
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($discountGLId->chartOfAccountSystemID);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($discountGLId->chartOfAccountSystemID);
+
+                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+
+                        $data['documentTransAmount'] = \Helper::roundValue(ABS($dgd));
+                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($dgd))/$masterData->localCurrencyER;
+                        $data['documentRptAmount'] = \Helper::roundValue(ABS($dgd))/$masterData->companyRptCurrencyER;
+                      
+
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+                    }
+
                     // Bank Charges
                     if ($dd) {
                         foreach ($dd as $val) {
