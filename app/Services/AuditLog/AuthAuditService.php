@@ -297,6 +297,9 @@ class AuthAuditService
 
         try {
             $empNav = EmployeeNavigation::with('usergroup')
+                ->whereHas('usergroup', function ($query) {
+                    $query->where('isActive', 1);
+                })
                 ->where('employeeSystemID', $employeeId)
                 ->get();
 
