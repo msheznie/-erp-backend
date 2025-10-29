@@ -65,7 +65,7 @@ class MigrateAuditLogsJob implements ShouldQueue
         $errors = [];
 
         try {
-            $params = 'query?query=rate({env="'.$this->env.'"} |= `\"table\":\"'.$this->table.'\"` | json ['.$this->diff.'d])';
+            $params = 'query?query=rate({env="'.$this->env.'"} |= `\"table\":\"'.$this->table.'\"` |= `\"tenant_uuid\":\"'.$this->tenantUuid.'\"` | json ['.$this->diff.'d])';
             $data = $lokiService->getAuditLogsForMigration($params);
 
             foreach ($data as $key => $value) {

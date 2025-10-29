@@ -626,14 +626,19 @@ class AuditTrailAPIController extends AppBaseController
 
             // Dispatch a separate job for each table
             foreach ($tables as $table) {
-                $tenantUuid = '1234567890';
-                $jobId = $batchId . '_' . $table . '_' . $tenantUuid;
-                MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid);
-                $dispatchedJobs[] = [
-                    'job_id' => $jobId,
-                    'table' => $table,
-                    'tenant_uuid' => $tenantUuid
-                ];
+                
+                $tenants = CommonJobService::tenant_list();
+                
+                foreach ($tenants as $tenant) {
+                    $tenantUuid = $tenant->uuid;
+                    $jobId = $batchId . '_' . $table . '_' . $tenantUuid;
+                    MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid);
+                    $dispatchedJobs[] = [
+                        'job_id' => $jobId,
+                        'table' => $table,
+                        'tenant_uuid' => $tenantUuid
+                    ];
+                }
             }
 
             return $this->sendResponse([
