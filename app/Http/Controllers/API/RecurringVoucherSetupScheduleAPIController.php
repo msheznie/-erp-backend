@@ -449,7 +449,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         try {
             $companySystemID = $request['companyId'];
             
-            $tomorrowDate = Carbon::tomorrow()->format('d-m-y');
+            $tomorrowDate = Carbon::tomorrow()->format('y-m-d');
             
             $output = RecurringVoucherSetupSchedule::whereHas('master', function($query) use ($companySystemID) {
                     $query->where('approved', -1)
