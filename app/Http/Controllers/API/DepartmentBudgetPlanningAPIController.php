@@ -1078,6 +1078,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $timeExtensionRequest = DeptBudgetPlanningTimeRequest::find($input['id']);
 
+        if(empty($input['comment'])) {
+            return $this->sendError('Comment is required for cancellation');
+        }
+
         if(!empty($input['comment'])) {
             $timeExtensionRequest->review_comments = $input['comment'];
         }
