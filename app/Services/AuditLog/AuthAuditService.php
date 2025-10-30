@@ -303,7 +303,6 @@ class AuthAuditService
             $empMaster = Employee::with(['emp_company', 'manager', 'desi_master' => function ($query) {
                                     $query->with('designation');
                                 }])->where('employeeSystemID', $employeeId)->first();
-
         
             return $empMaster->desi_master->designation->designation ?? '';
         } catch (\Exception $e) {
@@ -365,6 +364,71 @@ class AuthAuditService
             Log::error('Failed to get tenant UUID: ' . $e->getMessage());
             return 'local';
         }
+    }
+
+    /**
+     * Log navigation access events (screen/module access)
+     *
+     * @param string $sessionId
+     * @param User $user
+     * @param $employee
+     * @param string $screenAccessed
+     * @param string $navigationPath
+     * @param string $accessType (read, create, edit, delete)
+     * @param $request
+     * @param string $tenantUuid
+     * @return void
+     */
+    public static function logNavigationAccess($sessionId, $user, $employee, $screenAccessed, $navigationPath, $accessType, $request, $tenantUuid = 'local')
+    {
+        // Handle both array format (new) and string format (backward compatibility)
+        if (is_array($screenAccessed)) {
+            $screenAccessedEn = $screenAccessed['en'] ?? 'Unknown Screen';
+            $screenAccessedAr = $screenAccessed['ar'] ?? $screenAccessedEn;
+        } else {
+            // Backward compatibility: if string provided, use for both languages
+            $screenAccessedEn = $screenAccessed ?? 'Unknown Screen';
+            $screenAccessedAr = $screenAccessed ?? 'Unknown Screen';
+        }
+        
+        if (is_array($navigationPath)) {
+            $navigationPathEn = $navigationPath['en'] ?? '';
+            $navigationPathAr = $navigationPath['ar'] ?? $navigationPathEn;
+        } else {
+            // Backward compatibility: if string provided, use for both languages
+            $navigationPathEn = $navigationPath ?? '';
+            $navigationPathAr = $navigationPath ?? '';
+        }
+        
+        // Base data common to both language entries
+        $baseData = [
+            'channel' => 'navigation',
+            'session_id' => (string) $sessionId,
+            'employeeId' => $employee->empID ?? '-',
+            'employeeName' => $employee->empName ?? '-',
+            'role' => self::getRoleFromEmployee($employee->employeeSystemID ?? null),
+            'accessType' => $accessType,
+            'date_time' => date('Y-m-d H:i:s'),
+            'ipAddress' => self::getIpAddress($request),
+            'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
+            'tenant_uuid' => $tenantUuid,
+        ];
+
+        // Create two separate log entries: one for English, one for Arabic
+        $eventDataEn = array_merge($baseData, [
+            'locale' => 'en',
+            'screenAccessed' => $screenAccessedEn,
+            'navigationPath' => $navigationPathEn,
+        ]);
+        
+        $eventDataAr = array_merge($baseData, [
+            'locale' => 'ar',
+            'screenAccessed' => $screenAccessedAr,
+            'navigationPath' => $navigationPathAr,
+        ]);
+
+        // Write both log entries
+        self::writeToAuditLog($eventDataEn, $eventDataAr);
     }
 
     /**

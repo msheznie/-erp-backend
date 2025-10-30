@@ -463,13 +463,13 @@ class AuditTrailAPIController extends AppBaseController
         $searchValue = $request->input('search.value');
         if (!empty($searchValue)) {
             $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
-                return stripos($item['session_id'] ?? '', $searchValue) !== false ||
-                       stripos($item['event'] ?? '', $searchValue) !== false ||
-                       stripos($item['employeeId'] ?? '', $searchValue) !== false ||
-                       stripos($item['employeeName'] ?? '', $searchValue) !== false ||
-                       stripos($item['role'] ?? '', $searchValue) !== false ||
-                       stripos($item['ipAddress'] ?? '', $searchValue) !== false ||
-                       stripos($item['deviceInfo'] ?? '', $searchValue) !== false;
+                return str_contains($item['employeeName'] ?? '', $searchValue) ||
+                       str_contains($item['employeeId'] ?? '', $searchValue) ||
+                       str_contains($item['role'] ?? '', $searchValue) ||
+                       str_contains($item['event'] ?? '', $searchValue) ||
+                       str_contains($item['session_id'] ?? '', $searchValue) ||
+                       str_contains($item['ipAddress'] ?? '', $searchValue) ||
+                       str_contains($item['deviceInfo'] ?? '', $searchValue);
             })->values()->all();
         }
         
@@ -489,6 +489,8 @@ class AuditTrailAPIController extends AppBaseController
             $formatedData = $this->fetchUserAuditLogs($request);
             
             return DataTables::of($formatedData)
+            ->filter(function ($query) use ($request) {
+            })
                 ->addIndexColumn()
                 ->make(true);
         } catch (\Exception $exception) {
@@ -530,6 +532,229 @@ class AuditTrailAPIController extends AppBaseController
             return \Excel::create($fileName, function ($excel) use ($reportData) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
                     $sheet->loadView('export_report.user_audit_logs', $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+                });
+            })->download('xlsx');
+
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Fetch navigation access logs from Loki
+     * Filters by channel="navigation" and applies date range, search, and locale filters
+     *
+     * @param Request $request
+     * @return array
+     */
+    private function fetchNavigationAccessLogs(Request $request)
+    {
+        $input = $request->all();
+        $env = env("LOKI_ENV");
+        
+        // Get date range from request input
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Calculate diff for Loki query range
+        if (!empty($requestFromDate) && !empty($requestToDate)) {
+            $fromDate = Carbon::parse($requestFromDate);
+            $toDate = Carbon::parse($requestToDate);
+            $diff = $toDate->diffInDays($fromDate);
+            
+            // Ensure minimum 1 day range for Loki query (diffInDays can be 0 for same day)
+            if ($diff == 0) {
+                $diff = 1; // Use at least 1 day range
+            }
+        
+        } else {
+            // Fallback to environment-based dates if not provided in request
+            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+            $toDate = Carbon::now();
+            $diff = $toDate->diffInDays($fromDate);
+        }
+        
+        // Get tenant_uuid - try multiple sources (same as fetchUserAuditLogs)
+        // Check request input first, then request attribute, then headers
+        $uuid = $request->input('tenant_uuid');
+        if (empty($uuid)) {
+            $uuid = $request->get('tenant_uuid');
+        }
+        if (empty($uuid)) {
+            $uuid = $request->header('tenant-uuid');
+        }
+        if (empty($uuid)) {
+            // Try accessing as attribute (set by middleware)
+            $uuid = $request->attributes->get('tenant_uuid');
+        }
+        if (empty($uuid)) {
+            $uuid = 'local';
+        }
+        
+        // Get current locale and determine filter language
+        $locale = app()->getLocale() ?: 'en';
+        $langFilter = $locale === 'ar' ? 'ar' : 'en';
+
+        // Build the Loki query - filter by channel="navigation"
+        // Use same pattern as fetchUserAuditLogs with rate()
+        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
+        
+        // Add employeeId filter if specified
+        if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
+            $empIdValue = $input['employeeId'];
+            $query .= ' | employeeId="'.$empIdValue.'"';
+        }
+        
+        // Add accessType filter if specified (supports numeric 1,2,3 -> read,create,edit)
+        if (isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != '') {
+            $accessTypeValue = $input['accessType'];
+            if (is_numeric($accessTypeValue)) {
+                switch ((int)$accessTypeValue) {
+                    case 1: $accessTypeValue = 'Read'; break;
+                    case 2: $accessTypeValue = 'Create'; break;
+                    case 3: $accessTypeValue = 'Edit'; break;
+                    case 4: $accessTypeValue = 'Delete'; break;
+                    default: $accessTypeValue = 'Read';
+                }
+            }
+            $query .= ' | accessType="'.$accessTypeValue.'"';
+        }
+        
+        $query .= ' ['.(int)$diff.'d])';
+        $params = 'query?query='.$query;
+        
+        $data = $this->lokiService->getAuditLogs($params);
+        
+        // Check if $data is an error response
+        if (is_object($data) && method_exists($data, 'getStatusCode')) {
+            throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
+        }
+
+        // Handle empty data or non-array response
+        if (empty($data) || !is_array($data)) {
+            $data = [];
+        }
+
+        $formatedData = [];
+
+        foreach ($data as $key => $value) {
+            if (isset($value['metric'])) {
+                $lineData = $value['metric'];
+                
+                // Filter by locale if present
+                if (isset($lineData['locale']) && $lineData['locale'] === $langFilter) {
+                    $formatedData[] = $lineData;
+                } elseif (!isset($lineData['locale'])) {
+                    // If locale is not set, include it (for backward compatibility)
+                    $formatedData[] = $lineData;
+                }
+            }
+        }
+        
+
+        // Sort by date_time
+        $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
+        
+        // Get date range filters from request
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Apply date range filter if specified
+        if (!empty($requestFromDate) && !empty($requestToDate)) {
+            $countBeforeDateFilter = count($formatedData);
+            $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
+                $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
+                if (!$itemDateTime) {
+                    return false;
+                }
+                $from = Carbon::parse($requestFromDate);
+                $to = Carbon::parse($requestToDate);
+                return $itemDateTime->gte($from) && $itemDateTime->lte($to);
+            })->values()->all();
+        }
+        
+        // Apply search filter if specified
+        $searchValue = $request->input('search.value');
+        if (!empty($searchValue)) {
+            $countBeforeSearch = count($formatedData);
+            $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
+                return str_contains($item['session_id'] ?? '', $searchValue) ||
+                       str_contains($item['employeeId'] ?? '', $searchValue) ||
+                       str_contains($item['employeeName'] ?? '', $searchValue) ||
+                       str_contains($item['role'] ?? '', $searchValue) ||
+                       str_contains($item['accessType'] ?? '', $searchValue) ||
+                       str_contains($item['screenAccessed'] ?? '', $searchValue) ||
+                       str_contains($item['navigationPath'] ?? '', $searchValue);
+            })->values()->all();
+        }
+        
+        
+        return $formatedData;
+    }
+
+    /**
+     * Get navigation access logs
+     * Fetches logs where channel = 'navigation' from Loki
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function navigationAccessLogs(Request $request){
+        try {
+            // Use shared method to fetch data with all filters applied
+            $formatedData = $this->fetchNavigationAccessLogs($request);
+            
+            return DataTables::of($formatedData)
+                ->filter(function ($query) use ($request) {
+                })
+                ->addIndexColumn()
+                ->make(true);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Export navigation access logs to Excel
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function exportNavigationAccessLogs(Request $request)
+    {
+        try {
+            // Use shared method to fetch data with all filters applied
+            $formatedData = $this->fetchNavigationAccessLogs($request);
+            
+            // Check if there's no data to export
+            if (empty($formatedData)) {
+                return $this->sendError(trans('custom.no_navigation_access_logs_found'), 404);
+            }
+            
+            // Get date range filters for displaying in Excel
+            $requestFromDate = $request->input('fromDate');
+            $requestToDate = $request->input('toDate');
+            
+
+            // Prepare report data for Blade template
+            $reportData = [
+                'data' => $formatedData,
+                'fromDate' => $requestFromDate,
+                'toDate' => $requestToDate,
+            ];
+
+            // Generate Excel file using Blade template
+            $fileName = trans('custom.navigation_access_logs');
+            
+            return \Excel::create($fileName, function ($excel) use ($reportData) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+                    $sheet->loadView('export_report.navigation_access_logs', $reportData);
                     
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
