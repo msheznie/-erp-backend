@@ -2,7 +2,7 @@
 
 namespace App\Services\AuditLog;
 
-use App\Models\EmployeeNavigation;
+use App\Models\Employee;
 use App\Models\ERPLanguageMaster;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -53,6 +53,7 @@ class AuthAuditService
             'ipAddress' => self::getIpAddress($request),
             'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
             'tenant_uuid' => $tenantUuid,
+            'module' => 'finance',
             'auth_type' => $authType,
         ];
 
@@ -98,6 +99,7 @@ class AuthAuditService
             'employeeName' => $emp_name,
             'role' => $role,
             'reason' => $reason,
+            'module' => 'finance',
             'date_time' => date('Y-m-d H:i:s'),
             'ipAddress' => self::getIpAddress($request),
             'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
@@ -141,7 +143,8 @@ class AuthAuditService
             'ipAddress' => self::getIpAddress($request),
             'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
             'tenant_uuid' => self::getTenantUuid($request),
-            'auth_type' => 'passport',
+            'auth_type' => 'passport', 
+            'module' => 'finance'
         ];
 
         // Create log entries for all active languages
@@ -188,6 +191,7 @@ class AuthAuditService
             'date_time' => date('Y-m-d H:i:s'),
             'ipAddress' => 'system',
             'deviceInfo' => 'system',
+            'module' => 'finance',
             'tenant_uuid' => $tenantUuid,
             'auth_type' => $authType,
         ];
@@ -296,21 +300,12 @@ class AuthAuditService
         }
 
         try {
-            $empNav = EmployeeNavigation::with('usergroup')
-                ->whereHas('usergroup', function ($query) {
-                    $query->where('isActive', 1);
-                })
-                ->where('employeeSystemID', $employeeId)
-                ->get();
+            $empMaster = Employee::with(['emp_company', 'manager', 'desi_master' => function ($query) {
+                                    $query->with('designation');
+                                }])->where('employeeSystemID', $employeeId)->first();
 
-            $roles = [];
-            foreach ($empNav as $nav) {
-                if ($nav->usergroup) {
-                    $roles[] = $nav->usergroup->description;
-                }
-            }
         
-            return empty($roles) ? '-' : implode(', ', $roles);
+            return $empMaster->desi_master->designation->designation ?? '';
         } catch (\Exception $e) {
             Log::error('Failed to get role from employee: ' . $e->getMessage());
             return 'Unknown';

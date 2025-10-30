@@ -374,37 +374,10 @@ class AuditTrailAPIController extends AppBaseController
         $input = $request->all();
         $env = env("LOKI_ENV");
         
-        // Get date range from request input
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
-        
-        // Calculate diff for Loki query range
-        if (!empty($requestFromDate) && !empty($requestToDate)) {
-            $fromDate = Carbon::parse($requestFromDate);
-            $toDate = Carbon::parse($requestToDate);
-            $diff = $toDate->diffInDays($fromDate);
-            
-            // Ensure minimum 1 day range for Loki query (diffInDays can be 0 for same day)
-            if ($diff == 0) {
-                $diff = 1; // Use at least 1 day range
-            }
-            
-            \Log::info('Using request dates for Loki query', [
-                'fromDate' => $requestFromDate,
-                'toDate' => $requestToDate,
-                'diff' => $diff
-            ]);
-        } else {
-            // Fallback to environment-based dates if not provided in request
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
-            \Log::info('Using environment dates for Loki query', [
-                'fromDate' => env("LOKI_START_DATE"),
-                'toDate' => 'now',
-                'diff' => $diff
-            ]);
-        }
+
+        $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+        $toDate = Carbon::now();
+        $diff = $toDate->diffInDays($fromDate);
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
@@ -438,13 +411,6 @@ class AuditTrailAPIController extends AppBaseController
         $query .= ' ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
         
-        \Log::info('Loki query for user audit logs', [
-            'query' => $query,
-            'params' => $params,
-            'locale' => $locale,
-            'langFilter' => $langFilter
-        ]);
-
         $data = $this->lokiService->getAuditLogs($params);
 
         // Check if $data is an error response
@@ -454,11 +420,6 @@ class AuditTrailAPIController extends AppBaseController
 
         // Handle empty data or non-array response
         if (empty($data) || !is_array($data)) {
-            \Log::warning('fetchUserAuditLogs: Empty or invalid data from Loki', [
-                'params' => $params,
-                'data_type' => gettype($data),
-                'data_count' => is_array($data) ? count($data) : 'N/A'
-            ]);
             $data = [];
         }
 
@@ -478,12 +439,6 @@ class AuditTrailAPIController extends AppBaseController
             }
         }
         
-        \Log::info('fetchUserAuditLogs: Formatted data count after locale filter', [
-            'count' => count($formatedData),
-            'locale' => $locale,
-            'langFilter' => $langFilter
-        ]);
-
         // Sort by date_time
         $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
         
@@ -562,8 +517,6 @@ class AuditTrailAPIController extends AppBaseController
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
-            \Log::info('exportUserAuditLogs: Final data count for export', ['count' => count($formatedData)]);
-
             // Prepare report data for Blade template
             $reportData = [
                 'data' => $formatedData,
