@@ -1012,6 +1012,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Primary Company is required');
         }
 
+        
+        $duplicateBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyID)
+            ->where('status', 1)
+            ->where('periodID', $data['budgetPeriod'])
+            ->where('yearID', $data['budgetYear'])
+            ->where('typeID', $data['budgetType'])
+            ->exists();
+
+        if ($duplicateBudgetPlanning) {
+            $budgetType = $this->getbudgetType($data['budgetType']);
+            $errorMessage = 'For the selected budget type ('.$budgetType.') and period, budget planning has already been initiated.';
+            return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
+        }
+
         $activeDepartments = CompanyDepartment::where('companySystemID', $companyID)
             ->where('isActive', 1)
             ->get();
@@ -1062,6 +1076,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutBudgetTemplate);
             return $this->sendError($errorMessage, 404, ['template_error']);
         }
+
 
         return $this->sendResponse(null, 'Budget Planning validation successful');
     }
