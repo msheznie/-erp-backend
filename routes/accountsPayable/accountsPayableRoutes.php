@@ -17,6 +17,7 @@ Route::group([], function() {
     Route::get('getInvoiceMasterRecord', 'BookInvSuppMasterAPIController@getInvoiceMasterRecord')->name("Get invoice master record");
     Route::put('book_inv_supp_local_update/{id}', 'BookInvSuppMasterAPIController@updateLocalER')->name("Update local er");
     Route::put('book_inv_supp_reporting_update/{id}', 'BookInvSuppMasterAPIController@updateReportingER')->name("Update reporting er");
+    Route::put('setDefaultSupplierInvoiceER/{id}', 'BookInvSuppMasterAPIController@setDefaultSupplierInvoiceExchangeRate')->name("Set default supplier invoice exchange rate");
     Route::put('supplierInvoiceUpdateCurrency/{id}', 'BookInvSuppMasterAPIController@updateCurrency')->name("Update currency");
     Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData')->name("Get invoice master form data");
     Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView')->name("Get invoice master view");

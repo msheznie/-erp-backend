@@ -3,9 +3,12 @@
 namespace App\Repositories;
 
 use App\Models\BookInvSuppMaster;
+use App\Models\DirectInvoiceDetails;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
+use App\helper\Helper;
 use Illuminate\Http\Request;
 /**
  * Class BookInvSuppMasterRepository
@@ -250,5 +253,54 @@ class BookInvSuppMasterRepository extends BaseRepository
     public function getInvoiceDetails($id)
     {
         return BookInvSuppMaster::getInvoiceDetails($id);
+    }
+
+    /**
+     * Apply master document exchange rates to detail items for document types 1 and 4
+     * 
+     * @param int $id Master document ID (bookingSuppMasInvAutoID)
+     * @return bool Success status
+     */
+    public function applyMasterExchangeRatesToDetails($id)
+    {
+        try {
+            $masterDocument = $this->find($id);
+            
+            if (!$masterDocument) {
+                return false;
+            }
+
+            $localCurrencyER = $masterDocument->localCurrencyER ?? 1;
+            $companyReportingER = $masterDocument->companyReportingER ?? 1;
+
+            $details = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
+
+            // Update each detail item with master exchange rates and recalculate amounts
+            foreach ($details as $item) {
+                $localAmount = Helper::roundValue($item->DIAmount / $localCurrencyER);
+                $VATAmountLocal = Helper::roundValue($item->VATAmount / $localCurrencyER);
+                $netAmountLocal = Helper::roundValue($item->netAmount / $localCurrencyER);
+
+                $comRptAmount = Helper::roundValue($item->DIAmount / $companyReportingER);
+                $VATAmountRpt = Helper::roundValue($item->VATAmount / $companyReportingER);
+                $netAmountRpt = Helper::roundValue($item->netAmount / $companyReportingER);
+
+                $item->update([
+                    'localCurrencyER' => $localCurrencyER,
+                    'comRptCurrencyER' => $companyReportingER,
+                    'localAmount' => $localAmount,
+                    'comRptAmount' => $comRptAmount,
+                    'VATAmountLocal' => $VATAmountLocal,
+                    'VATAmountRpt' => $VATAmountRpt,
+                    'netAmountLocal' => $netAmountLocal,
+                    'netAmountRpt' => $netAmountRpt
+                ]);
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error applying master exchange rates to details: ' . $e->getMessage());
+            return false;
+        }
     }
 }

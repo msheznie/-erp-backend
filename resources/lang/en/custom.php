@@ -2084,6 +2084,7 @@ return
     'error_updating_department_employee' => 'Error updating department employee',
     'error_updating_department_segment' => 'Error updating department segment',
     'error_updating_status' => 'Error updating status - ',
+    'error_updating_exchange_rate' => 'Error updating exchange rate',
     'error_verifying_budget_template_configuration' => 'Error verifying budget template configuration - ',
     'errormessage' => 'errorMessage',
     'evacuation_criteria_score_config_log_not_found' => 'Evacuation Criteria Score Config Log not found',

@@ -2055,6 +2055,7 @@ return
     'error_updating_department_employee' => 'خطأ في تحديث موظف القسم',
     'error_updating_department_segment' => 'خطأ في تحديث شريحة القسم',
     'error_updating_status' => 'خطأ في تحديث الحالة - ',
+    'error_updating_exchange_rate' => 'خطأ في تحديث سعر الصرف',
     'error_verifying_budget_template_configuration' => 'خطأ في التحقق من تكوين قالب الميزانية - ',
     'errormessage' => 'رسالة خطأ',
     'evacuation_criteria_score_config_log_not_found' => 'سجل تكوين نقاط معايير الإخلاء غير موجود',
