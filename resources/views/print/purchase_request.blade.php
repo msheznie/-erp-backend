@@ -355,7 +355,7 @@
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
-                        <td style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 300px;">
+                        <td>
                             {{ $request->justification ? $request->justification : '-' }}
                         </td>
                     </tr>
@@ -394,7 +394,7 @@
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
                         </td>
-                        <td style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 300px;">
+                        <td>
                             {{ $request->comments?$request->comments:'-' }}
                         </td>
                     </tr>
