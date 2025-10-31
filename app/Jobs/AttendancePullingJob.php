@@ -56,8 +56,6 @@ class AttendancePullingJob implements ShouldQueue
         CommonJobService::db_switch( $db_name );
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
-        $isShiftModule = 0;//after finalize this will be removed
-
         if($isShiftModule){
             $obj = new SMAttendancePullingService($this->companyId, $this->pullingDate, $this->isClockOutPulling);
             $obj->execute();
