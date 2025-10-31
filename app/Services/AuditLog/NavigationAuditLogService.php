@@ -43,6 +43,7 @@ class NavigationAuditLogService
             'companyID' => $companyID,
             'companyName' => $companyName,
             'date_time' => date('Y-m-d H:i:s'),
+            'module' => 'finance',
             'tenant_uuid' => $tenantUuid,
             'screenAccessed' => $screenAccessed,
             'navigationPath' => $navigationPath,

@@ -19,14 +19,13 @@ class LokiService
             $data = json_decode($response->getBody()->getContents(), true);
 
             $logEntriesAsArrays = array_map(function ($entry) {
-                // $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
-                return $entry;
+                return $entry['metric'];
             }, $data['data']['result']);
 
 
             usort($logEntriesAsArrays, function ($a, $b) {
-                $timestampA = strtotime(isset($a['metric']['date_time']) ? $a['metric']['date_time']: null);
-                $timestampB = strtotime(isset($b['metric']['date_time']) ? $b['metric']['date_time']: null);
+                $timestampA = strtotime(isset($a['date_time']) ? $a['date_time']: null);
+                $timestampB = strtotime(isset($b['date_time']) ? $b['date_time']: null);
 
                 return $timestampB - $timestampA;
             });

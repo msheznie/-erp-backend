@@ -334,23 +334,15 @@ class AuditTrailAPIController extends AppBaseController
             $formatedData = [];
 
             foreach ($data as $key => $value) {
-                if (isset($value['metric'])) {
-                    $lineData = $value['metric'];
-
-                    $lineData['data'] = isset($value['metric']['data']) ? json_decode($value['metric']['data']) : [];
-
-                    $formatedData[] = $lineData;
-                }
+                $lineData = $value;
+                $lineData['data'] = isset($value['data']) ? json_decode($value['data']) : [];
+                $formatedData[] = $lineData;
             }
 
             foreach ($data2 as $key => $value) {
-                if (isset($value['metric']['data'])) {
-                    $lineData = $value['metric'];
-
-                    $lineData['data'] = isset($value['metric']['data']) ? json_decode($value['metric']['data']) : [];
-
-                    $formatedData[] = $lineData;
-                }
+                $lineData = $value;
+                $lineData['data'] = isset($value['data']) ? json_decode($value['data']) : [];
+                $formatedData[] = $lineData;
             }
 
             $formatedData = collect($formatedData)->sortByDesc('date_time');
@@ -407,6 +399,9 @@ class AuditTrailAPIController extends AppBaseController
             $empIdValue = $input['employeeId'];
             $query .= ' | employeeId="'.$empIdValue.'"';
         }
+
+        $localeValue = app()->getLocale() ?: 'en';
+        $query .= ' | locale="'.$localeValue.'"';
         
         $query .= ' ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
@@ -423,24 +418,8 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        $formatedData = [];
-
-        foreach ($data as $key => $value) {
-            if (isset($value['metric'])) {
-                $lineData = $value['metric'];
-                
-                // Filter by locale if present
-                if (isset($lineData['locale']) && $lineData['locale'] === $langFilter) {
-                    $formatedData[] = $lineData;
-                } elseif (!isset($lineData['locale'])) {
-                    // If locale is not set, include it (for backward compatibility)
-                    $formatedData[] = $lineData;
-                }
-            }
-        }
-        
         // Sort by date_time
-        $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
+        $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
         
         // Get date range filters from request
         $requestFromDate = $request->input('fromDate');
@@ -557,58 +536,25 @@ class AuditTrailAPIController extends AppBaseController
     {
         $input = $request->all();
         $env = env("LOKI_ENV");
+        $fromDate = Carbon::parse(env("LOKI_START_DATE"));
+        $toDate = Carbon::now();
+        $diff = $toDate->diffInDays($fromDate);
         
-        // Get date range from request input
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        // Calculate diff for Loki query range
-        if (!empty($requestFromDate) && !empty($requestToDate)) {
-            $fromDate = Carbon::parse($requestFromDate);
-            $toDate = Carbon::parse($requestToDate);
-            $diff = $toDate->diffInDays($fromDate);
-            
-            // Ensure minimum 1 day range for Loki query (diffInDays can be 0 for same day)
-            if ($diff == 0) {
-                $diff = 1; // Use at least 1 day range
-            }
-        
-        } else {
-            // Fallback to environment-based dates if not provided in request
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
-        }
-        
-        // Get tenant_uuid - try multiple sources (same as fetchUserAuditLogs)
-        // Check request input first, then request attribute, then headers
-        $uuid = $request->input('tenant_uuid');
-        if (empty($uuid)) {
-            $uuid = $request->get('tenant_uuid');
-        }
-        if (empty($uuid)) {
-            $uuid = $request->header('tenant-uuid');
-        }
-        if (empty($uuid)) {
-            // Try accessing as attribute (set by middleware)
-            $uuid = $request->attributes->get('tenant_uuid');
-        }
-        if (empty($uuid)) {
-            $uuid = 'local';
-        }
-        
-        // Get current locale and determine filter language
         $locale = app()->getLocale() ?: 'en';
         $langFilter = $locale === 'ar' ? 'ar' : 'en';
-
-        // Build the Loki query - filter by channel="navigation"
-        // Use same pattern as fetchUserAuditLogs with rate()
+        
         $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
         
-        // Add employeeId filter if specified
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
             $query .= ' | employeeId="'.$empIdValue.'"';
+        }
+
+        if (isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != '') {
+            $companyIdValue = $input['companyId'];
+            $query .= ' | companyID="'.$companyIdValue.'"';
         }
         
         // Add accessType filter if specified (supports numeric 1,2,3 -> read,create,edit)
@@ -616,22 +562,24 @@ class AuditTrailAPIController extends AppBaseController
             $accessTypeValue = $input['accessType'];
             if (is_numeric($accessTypeValue)) {
                 switch ((int)$accessTypeValue) {
-                    case 1: $accessTypeValue = 'Read'; break;
-                    case 2: $accessTypeValue = 'Create'; break;
-                    case 3: $accessTypeValue = 'Edit'; break;
-                    case 4: $accessTypeValue = 'Delete'; break;
-                    default: $accessTypeValue = 'Read';
+                    case 1: $accessTypeValue = trans('audit.read', [], $langFilter); break;
+                    case 2: $accessTypeValue = trans('audit.create', [], $langFilter); break;
+                    case 3: $accessTypeValue = trans('audit.edit', [], $langFilter); break;
+                    case 4: $accessTypeValue = trans('audit.delete', [], $langFilter); break;
+                    default: $accessTypeValue = trans('audit.read', [], $langFilter);
                 }
             }
             $query .= ' | accessType="'.$accessTypeValue.'"';
         }
+
+        $localeValue = app()->getLocale() ?: 'en';
+        $query .= ' | locale="'.$localeValue.'"';
         
         $query .= ' ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
         
         $data = $this->lokiService->getAuditLogs($params);
         
-        // Check if $data is an error response
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
         }
@@ -641,25 +589,8 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        $formatedData = [];
-
-        foreach ($data as $key => $value) {
-            if (isset($value['metric'])) {
-                $lineData = $value['metric'];
-                
-                // Filter by locale if present
-                if (isset($lineData['locale']) && $lineData['locale'] === $langFilter) {
-                    $formatedData[] = $lineData;
-                } elseif (!isset($lineData['locale'])) {
-                    // If locale is not set, include it (for backward compatibility)
-                    $formatedData[] = $lineData;
-                }
-            }
-        }
-        
-
         // Sort by date_time
-        $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
+        $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
         
         // Get date range filters from request
         $requestFromDate = $request->input('fromDate');
