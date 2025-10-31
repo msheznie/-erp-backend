@@ -30,6 +30,8 @@ use App\Services\AuditLog\AssetCostAuditService;
 use App\Services\AuditLog\SegmentMasterAuditService;
 use App\Services\AuditLog\SupplierMasterAuditService;
 use Illuminate\Support\Facades\Log;
+use App\Models\AccessTokens;
+use App\Models\Employee;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -46,13 +48,13 @@ class AuditLogJob implements ShouldQueue
     protected $parentID;
     protected $parentTable;
     protected $user;
-
+    protected $tokenId;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user)
+    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user, $tokenId)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -74,6 +76,7 @@ class AuditLogJob implements ShouldQueue
         $this->parentID = $parentID;
         $this->parentTable = $parentTable;
         $this->user = $user;
+        $this->tokenId = $tokenId;
     }
 
     /**
@@ -167,17 +170,25 @@ class AuditLogJob implements ShouldQueue
         }
 
         if (!empty($data)) {
+            $employee = Employee::find($this->user);
+
+            $accessToken = AccessTokens::find($this->tokenId);
+
             Log::useFiles(storage_path() . '/logs/audit.log');
 
-            Log::info('data:',[
+            Log::info('data:', [
                         'channel' => 'audit',
                         'transaction_id' => (string) $this->transactionID,
                         'table' => $this->table,
-                        'user_name' => $this->user,
+                        'user_name' => $employee ? $employee->empName : '-',
+                        'role' => $employee ? Employee::getDesignation($employee->employeeSystemID ?? null) : '-',
+                        'employeeId' => $employee ? $employee->empID : '-',
                         'tenant_uuid' => $this->tenant_uuid,
                         'crudType' => $this->crudType,
                         'narration' => $this->narration,
+                        'session_id' => $accessToken ? $accessToken->session_id : '-',
                         'date_time' => date('Y-m-d H:i:s'),
+                        'module' => 'finance',
                         'parent_id' => (string) $this->parentID,
                         'parent_table' => $this->parentTable,
                         'data' => json_encode($data),

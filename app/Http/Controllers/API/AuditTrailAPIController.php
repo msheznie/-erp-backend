@@ -373,22 +373,14 @@ class AuditTrailAPIController extends AppBaseController
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        // Get current locale and determine filter language
-        $locale = app()->getLocale() ?: 'en';
-        $langFilter = $locale === 'ar' ? 'ar' : 'en';
-
-        // Build the Loki query - just filter by channel
         $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json';
         
-        // Add event filter if event is specified
         if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
-            // Map event value to TRANSLATED event name based on locale
-            // These are the translated values that are actually stored in the logs
             $eventMap = [
-                '1' => $locale === 'ar' ? 'تسجيل الدخول' : 'Login',
-                '2' => $locale === 'ar' ? 'تسجيل الخروج' : 'Logout',
-                '3' => $locale === 'ar' ? 'فشل تسجيل الدخول' : 'Login Failed',
-                '4' => $locale === 'ar' ? 'انتهت صلاحية الجلسة' : 'Session Expired',
+                '1' => trans('audit.login'),
+                '2' => trans('audit.logout'),
+                '3' => trans('audit.login_failed'),
+                '4' => trans('audit.session_expired'),
             ];
             
             $eventValue = $eventMap[$input['event']] ?? $input['event'];
@@ -402,6 +394,12 @@ class AuditTrailAPIController extends AppBaseController
 
         $localeValue = app()->getLocale() ?: 'en';
         $query .= ' | locale="'.$localeValue.'"';
+        
+        $searchValue = $request->input('search.value');
+        if (!empty($searchValue)) {
+            $escapedSearch = preg_quote($searchValue, '/');
+            $query .= ' |~ `(?i)'.$escapedSearch.'`';
+        }
         
         $query .= ' ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
@@ -435,20 +433,6 @@ class AuditTrailAPIController extends AppBaseController
                 $from = Carbon::parse($requestFromDate);
                 $to = Carbon::parse($requestToDate);
                 return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-            })->values()->all();
-        }
-        
-        // Apply search filter if specified
-        $searchValue = $request->input('search.value');
-        if (!empty($searchValue)) {
-            $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
-                return str_contains($item['employeeName'] ?? '', $searchValue) ||
-                       str_contains($item['employeeId'] ?? '', $searchValue) ||
-                       str_contains($item['role'] ?? '', $searchValue) ||
-                       str_contains($item['event'] ?? '', $searchValue) ||
-                       str_contains($item['session_id'] ?? '', $searchValue) ||
-                       str_contains($item['ipAddress'] ?? '', $searchValue) ||
-                       str_contains($item['deviceInfo'] ?? '', $searchValue);
             })->values()->all();
         }
         
@@ -575,6 +559,14 @@ class AuditTrailAPIController extends AppBaseController
         $localeValue = app()->getLocale() ?: 'en';
         $query .= ' | locale="'.$localeValue.'"';
         
+        // Add search filter if specified (searches across all fields in Loki)
+        $searchValue = $request->input('search.value');
+        if (!empty($searchValue)) {
+            // Escape special regex characters for Loki
+            $escapedSearch = preg_quote($searchValue, '/');
+            $query .= ' |~ `(?i)'.$escapedSearch.'`';
+        }
+        
         $query .= ' ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
         
@@ -607,21 +599,6 @@ class AuditTrailAPIController extends AppBaseController
                 $from = Carbon::parse($requestFromDate);
                 $to = Carbon::parse($requestToDate);
                 return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-            })->values()->all();
-        }
-        
-        // Apply search filter if specified
-        $searchValue = $request->input('search.value');
-        if (!empty($searchValue)) {
-            $countBeforeSearch = count($formatedData);
-            $formatedData = collect($formatedData)->filter(function ($item) use ($searchValue) {
-                return str_contains($item['session_id'] ?? '', $searchValue) ||
-                       str_contains($item['employeeId'] ?? '', $searchValue) ||
-                       str_contains($item['employeeName'] ?? '', $searchValue) ||
-                       str_contains($item['role'] ?? '', $searchValue) ||
-                       str_contains($item['accessType'] ?? '', $searchValue) ||
-                       str_contains($item['screenAccessed'] ?? '', $searchValue) ||
-                       str_contains($item['navigationPath'] ?? '', $searchValue);
             })->values()->all();
         }
         
