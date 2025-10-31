@@ -270,7 +270,8 @@ class VerifyCsrfTokenForApi
             'api/v1/updateFinanceTeamStatus',
             'api/v1/getChartofAccountsByBudget',
             'api/v1/sendBackForRevision',
-            'api/v1/getRevisionGL'
+            'api/v1/getRevisionGL',
+            'api/v1/workflow_configurations/{workflow_configuration}',
             
         ];
     }
