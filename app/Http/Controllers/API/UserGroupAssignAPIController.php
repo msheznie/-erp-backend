@@ -33,7 +33,8 @@ use App\Repositories\UserRepository;
 use Response;
 use App\helper\CreateExcel;
 use App\Models\UserGroup;
-use App\Services\AuditLog\AuthAuditService;
+use App\Traits\AuditLogsTrait;
+use App\Services\AuditLog\NavigationAuditLogService;
 use App\Models\AccessTokens;
 
 /**
@@ -42,6 +43,8 @@ use App\Models\AccessTokens;
  */
 class UserGroupAssignAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  UserGroupAssignRepository */
     private $userGroupAssignRepository;
     private $userRepository;
@@ -345,167 +348,23 @@ class UserGroupAssignAPIController extends AppBaseController
             $accessRights = array('isDelegation' => $isDelegation,'R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
         }
 
-        // Get session ID from token
-        $tokenId = Auth::user()->token()->id;
-        $accessToken = AccessTokens::find($tokenId);
-        $sessionId = $accessToken && $accessToken->session_id ? $accessToken->session_id : null;
-
-        // Determine access type from request
-        $accessType = 'read'; // Default
-        if (isset($request['accessType'])) {
-            $accessType = $request['accessType'];
-        } elseif (isset($request['action'])) {
-            // Map common actions to access types
-            $actionMap = [
-                'create' => 'create',
-                'add' => 'create',
-                'update' => 'edit',
-                'edit' => 'edit',
-                'delete' => 'delete',
-                'remove' => 'delete',
-                'read' => 'read',
-                'view' => 'read',
-                'print' => 'read',
-                'export' => 'read',
-            ];
-            $accessType = $actionMap[strtolower($request['action'])] ?? 'read';
-        }
-
-        // Get screen name and navigation path
-        $screenName = '';
-        $navigationPath = '';
-        
-        // Try to get navigation menu details
-        $navigationMenu = DB::table('srp_erp_companynavigationmenus')
-            ->where('navigationMenuID', $navigationMenuID)
-            ->where('companyID', $companyID)
-            ->first();
-        
-        if ($navigationMenu) {
-            // Function to get both English and Arabic descriptions
-            $getMenuDescription = function($menuID) use ($companyID) {
-                $menu = DB::table('srp_erp_companynavigationmenus')
-                    ->where('navigationMenuID', $menuID)
-                    ->where('companyID', $companyID)
-                    ->first();
-                
-                $enDescription = $menu->description ?? $menu->navigationMenuName ?? 'Unknown Screen';
-                
-                // Get Arabic description from srp_erp_navigationmenus_languages
-                $arDescription = DB::table('srp_erp_navigationmenus_languages')
-                    ->where('navigationMenuID', $menuID)
-                    ->where('languageCode', 'ar')
-                    ->value('description');
-                
-                return [
-                    'en' => $enDescription,
-                    'ar' => $arDescription ?? $enDescription // Fallback to English if Arabic not found
-                ];
-            };
+        try {
+            $user = \Auth::user();
+            $tokenId = $user && $user->token() ? $user->token()->id : null;
             
-            // Get screen name in both languages
-            $screenNameTranslations = $getMenuDescription($navigationMenuID);
-            
-            // Build breadcrumb navigation path by traversing master hierarchy
-            $breadcrumbsEn = [];
-            $breadcrumbsAr = [];
-            $currentMenu = $navigationMenu;
-            $maxDepth = 10; // Safety limit to prevent infinite loops
-            $depth = 0;
-            
-            // Add current screen first
-            $currentDescriptions = $getMenuDescription($navigationMenuID);
-            $breadcrumbsEn[] = $currentDescriptions['en'];
-            $breadcrumbsAr[] = $currentDescriptions['ar'];
-            
-            // Loop upward through master hierarchy until masterID is null or 0
-            while ($currentMenu && !empty($currentMenu->masterID) && $depth < $maxDepth) {
-                $masterMenu = DB::table('srp_erp_companynavigationmenus')
-                    ->where('navigationMenuID', $currentMenu->masterID)
-                    ->where('companyID', $companyID)
-                    ->first();
-                
-                if ($masterMenu) {
-                    $masterDescriptions = $getMenuDescription($currentMenu->masterID);
-                    $breadcrumbsEn[] = $masterDescriptions['en'];
-                    $breadcrumbsAr[] = $masterDescriptions['ar'];
-                    $currentMenu = $masterMenu;
-                    $depth++;
-                } else {
-                    // If master not found, stop the loop
-                    break;
-                }
-            }
-            
-            // Reverse to get path from master to child (top-level → current screen)
-            // Example: Inventory → Transaction → Good receipt voucher
-            $breadcrumbsEn = array_reverse($breadcrumbsEn);
-            $breadcrumbsAr = array_reverse($breadcrumbsAr);
-            
-            // Join with arrow separator for each language
-            $navigationPathEn = implode(' → ', $breadcrumbsEn);
-            $navigationPathAr = implode(' → ', $breadcrumbsAr);
-            
-            // Store as arrays with English and Arabic translations
-            $screenName = [
-                'en' => $screenNameTranslations['en'],
-                'ar' => $screenNameTranslations['ar']
-            ];
-            $navigationPath = [
-                'en' => $navigationPathEn,
-                'ar' => $navigationPathAr
-            ];
-        } else {
-            // If navigation menu not found, create default translations
-            $screenName = [
-                'en' => 'Unknown Screen',
-                'ar' => 'شاشة غير معروفة'
-            ];
-            $navigationPath = [
-                'en' => 'Unknown',
-                'ar' => 'غير معروف'
-            ];
-        }
-
-        // Log navigation access if we have a session ID
-        if ($sessionId && !empty($user->employee)) {
-            try {
-                AuthAuditService::logNavigationAccess(
-                    $sessionId,
-                    $user,
-                    $user->employee,
-                    $screenName, // Array: ['en' => '...', 'ar' => '...']
-                    $navigationPath, // Array: ['en' => '...', 'ar' => '...']
-                    $accessType,
-                    $request,
-                    self::getTenantUuid($request)
-                );
-            } catch (\Exception $e) {
-                // Log error but don't fail the main request
-                \Log::error('Failed to log navigation access: ' . $e->getMessage());
-            }
+            $this->log('navigationAccess', [
+                'navigationMenuID' => $navigationMenuID,
+                'companyID' => $companyID,
+                'accessType' => NavigationAuditLogService::determineAccessType($request),
+                'userId' => $user ? $user->id : null,
+                'tokenId' => $tokenId,
+                'request' => NavigationAuditLogService::extractRequestData($request)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log navigation access: ' . $e->getMessage());
         }
 
         return $this->sendResponse($accessRights, trans('custom.record_retrieved_successfully_1'));
-    }
-
-    /**
-     * Get tenant UUID from request
-     */
-    private static function getTenantUuid($request)
-    {
-        try {
-            // Try to get from request
-            $tenantUuid = $request->header('tenant-uuid') ?? $request->input('tenant_uuid');
-            
-            if ($tenantUuid) {
-                return $tenantUuid;
-            }
-            
-            return 'local';
-        } catch (\Exception $e) {
-            return 'local';
-        }
     }
 
     public function exportNavigationeport(Request $request)

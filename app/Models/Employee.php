@@ -392,5 +392,14 @@ class Employee extends Model
         $data = self::where('employeeSystemID', $employeeSystemID)->first();
         return $data ? $data->empID : '';
     }
+
+    public static function getDesignation($employeeSystemID)
+    {
+        $empMaster = Employee::with(['desi_master' => function ($query) {
+            $query->with('designation');
+        }])->where('employeeSystemID', $employeeSystemID)->first();
+    
+        return $empMaster->desi_master->designation->designation ?? '';
+    }
     
 }

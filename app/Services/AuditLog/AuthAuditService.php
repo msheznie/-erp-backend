@@ -3,12 +3,302 @@
 namespace App\Services\AuditLog;
 
 use App\Models\Employee;
+use App\Models\AccessTokens;
 use App\Models\ERPLanguageMaster;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class AuthAuditService
 {
+    /**
+     * Prepare audit data based on event type
+     *
+     * @param string $event
+     * @param array $parameters
+     * @return array
+     */
+    public static function prepareAuditData($event, $parameters)
+    {
+        switch ($event) {
+            case 'login_success':
+                return self::prepareLoginSuccessData($parameters);
+            case 'login_failure':
+                return self::prepareLoginFailureData($parameters);
+            case 'logout':
+                return self::prepareLogoutData($parameters);
+            case 'token_expired':
+                return self::prepareTokenExpiredData($parameters);
+            default:
+                Log::warning('Unknown auth event: ' . $event);
+                return [];
+        }
+    }
+
+    /**
+     * Extract login data from OAuth response (for OAuth token)
+     * This must be called BEFORE dispatching the job to avoid serialization issues
+     *
+     * @param \Zend\Diactoros\Response $response
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function extractLoginDataFromResponse($response, $request)
+    {
+        $responseBody = json_decode($response->getBody()->__toString(), true);
+        
+        if (isset($responseBody['access_token'])) {
+            $tokenParts = explode('.', $responseBody['access_token']);
+            if (count($tokenParts) === 3) {
+                $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $tokenParts[1])), true);
+                
+                if (isset($payload['jti'])) {
+                    $accessToken = AccessTokens::find($payload['jti']);
+                    
+                    if ($accessToken) {
+                        $sessionId = $accessToken->session_id;
+                        $user = User::with(['employee'])->find($accessToken->user_id);
+                        
+                        if ($user && $user->employee) {
+                            return [
+                                'event' => 'login_success',
+                                'sessionId' => $sessionId,
+                                'user' => $user,
+                                'employee' => $user->employee,
+                                'authType' => 'passport',
+                                'request' => self::extractRequestData($request),
+                                'tenantUuid' => 'local'
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Extract login data from personal access token
+     * This must be called BEFORE dispatching the job to avoid serialization issues
+     *
+     * @param \Laravel\Passport\PersonalAccessTokenResult $tokenResult
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function extractLoginDataFromToken($tokenResult, $request)
+    {
+        $accessToken = AccessTokens::find($tokenResult->token->id);
+        $tenantUuid = isset($request->tenant_uuid) ? $request->tenant_uuid : 'local';
+        
+        if ($accessToken) {
+            $sessionId = $accessToken->session_id;
+            $user = User::with(['employee'])->find($accessToken->user_id);
+            
+            if ($user && $user->employee) {
+                return [
+                    'event' => 'login_success',
+                    'sessionId' => $sessionId,
+                    'user' => $user,
+                    'employee' => $user->employee,
+                    'authType' => 'passport',
+                    'request' => self::extractRequestData($request),
+                    'tenantUuid' => $tenantUuid
+                ];
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Extract serializable data from request object
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return array
+     */
+    public static function extractRequestData($request)
+    {
+        return [
+            'ip' => $request->ip(),
+            'user_agent' => $request->header('User-Agent'),
+            'x_forwarded_for' => $request->header('X-Forwarded-For'),
+            'x_real_ip' => $request->header('X-Real-IP'),
+            'tenant_uuid' => $request->tenant_uuid ?? null,
+            'db' => $request->db ?? null,
+        ];
+    }
+
+    /**
+     * Prepare login success audit data
+     *
+     * @param array $parameters
+     * @return array
+     */
+    private static function prepareLoginSuccessData($parameters)
+    {
+        $sessionId = $parameters['sessionId'];
+        $user = $parameters['user'];
+        $employee = $parameters['employee'];
+        $authType = $parameters['authType'];
+        $requestData = $parameters['request'];
+        $tenantUuid = $parameters['tenantUuid'] ?? 'local';
+
+        $baseData = [
+            'channel' => 'auth',
+            'event' => 'login',
+            'status' => 'success',
+            'session_id' => (string) $sessionId,
+            'employeeId' => $employee->empID ?? '-',
+            'employeeName' => $employee->empName ?? '-',
+            'role' => Employee::getDesignation($employee->employeeSystemID ?? null),
+            'date_time' => date('Y-m-d H:i:s'),
+            'ipAddress' => self::getIpAddressFromData($requestData),
+            'deviceInfo' => self::extractDeviceInfo($requestData['user_agent'] ?? null),
+            'tenant_uuid' => $tenantUuid,
+            'module' => 'finance',
+            'auth_type' => $authType,
+        ];
+
+        return self::createMultiLanguageData($baseData);
+    }
+
+    /**
+     * Prepare login failure audit data
+     *
+     * @param array $parameters
+     * @return array
+     */
+    private static function prepareLoginFailureData($parameters)
+    {
+        $username = $parameters['username'];
+        $reason = $parameters['reason'];
+        $requestData = $parameters['request'];
+
+        $employee = Employee::where('empEmail', $username)->first();
+        if ($employee) {
+            $emp_id = $employee->empID;
+            $emp_name = $employee->empName;
+            $role = Employee::getDesignation($employee->employeeSystemID ?? null);
+        } else {
+            $emp_id = '-';
+            $emp_name = '-';
+            $role = '-';
+        }
+
+        $baseData = [
+            'channel' => 'auth',
+            'event' => 'login_failed',
+            'status' => 'failed',
+            'session_id' => null,
+            'employeeId' => $emp_id,
+            'employeeName' => $emp_name,
+            'role' => $role,
+            'reason' => $reason,
+            'module' => 'finance',
+            'date_time' => date('Y-m-d H:i:s'),
+            'ipAddress' => self::getIpAddressFromData($requestData),
+            'deviceInfo' => self::extractDeviceInfo($requestData['user_agent'] ?? null),
+            'tenant_uuid' => $requestData['tenant_uuid'] ?? 'local',
+            'auth_type' => 'passport',
+        ];
+
+        return self::createMultiLanguageData($baseData);
+    }
+
+    /**
+     * Prepare logout audit data
+     *
+     * @param array $parameters
+     * @return array
+     */
+    private static function prepareLogoutData($parameters)
+    {
+        $sessionId = $parameters['sessionId'];
+        $user = $parameters['user'];
+        $employee = $parameters['employee'];
+        $requestData = $parameters['request'];
+
+        $baseData = [
+            'channel' => 'auth',
+            'event' => 'logout',
+            'status' => 'success',
+            'session_id' => (string) $sessionId,
+            'employeeId' => $employee->empID ?? 'unknown',
+            'employeeName' => $employee->empName ?? 'unknown',
+            'role' => Employee::getDesignation($employee->employeeSystemID ?? null),
+            'date_time' => date('Y-m-d H:i:s'),
+            'ipAddress' => self::getIpAddressFromData($requestData),
+            'deviceInfo' => self::extractDeviceInfo($requestData['user_agent'] ?? null),
+            'tenant_uuid' => $requestData['tenant_uuid'] ?? 'local',
+            'auth_type' => 'passport',
+            'module' => 'finance'
+        ];
+
+        return self::createMultiLanguageData($baseData);
+    }
+
+    /**
+     * Prepare token expired audit data
+     *
+     * @param array $parameters
+     * @return array
+     */
+    private static function prepareTokenExpiredData($parameters)
+    {
+        $sessionId = $parameters['sessionId'];
+        $userId = $parameters['userId'];
+        $employeeId = $parameters['employeeId'] ?? null;
+        $authType = $parameters['authType'] ?? 'passport';
+        $tenantUuid = $parameters['tenantUuid'] ?? 'local';
+
+        $user = User::find($userId);
+        $employee = null;
+
+        if ($employeeId) {
+            $employee = Employee::find($employeeId);
+        } elseif ($user && $user->employee_id) {
+            $employee = Employee::find($user->employee_id);
+        }
+
+        $baseData = [
+            'channel' => 'auth',
+            'event' => 'session_expired',
+            'status' => 'expired',
+            'session_id' => (string) $sessionId,
+            'employeeId' => $employee->empID ?? 'unknown',
+            'employeeName' => $employee->empName ?? 'unknown',
+            'role' => Employee::getDesignation($employee->employeeSystemID ?? null),
+            'date_time' => date('Y-m-d H:i:s'),
+            'ipAddress' => 'system',
+            'deviceInfo' => 'system',
+            'module' => 'finance',
+            'tenant_uuid' => $tenantUuid,
+            'auth_type' => $authType,
+        ];
+
+        return self::createMultiLanguageData($baseData);
+    }
+
+    /**
+     * Create multi-language data entries
+     *
+     * @param array $baseData
+     * @return array
+     */
+    private static function createMultiLanguageData($baseData)
+    {
+        $activeLanguages = self::getActiveLanguages();
+        $eventDataByLanguage = [];
+        
+        foreach ($activeLanguages as $language) {
+            $eventData = $baseData;
+            $eventData['locale'] = $language;
+            $eventDataByLanguage[] = $eventData;
+        }
+
+        return $eventDataByLanguage;
+    }
+
     /**
      * Get active languages from ERPLanguageMaster
      *
@@ -30,216 +320,56 @@ class AuthAuditService
     }
 
     /**
-     * Log successful login
+     * Translate event data based on language
      *
-     * @param string $sessionId
-     * @param User $user
-     * @param $employee
-     * @param string $authType
-     * @param $request
-     * @return void
+     * @param array $eventData
+     * @param string $lang
+     * @return array
      */
-    public static function logLoginSuccess($sessionId, $user, $employee, $authType, $request, $tenantUuid = 'local')
+    public static function translateEventData($eventData, $lang)
     {
-        $baseData = [
-            'channel' => 'auth',
-            'event' => 'login',
-            'status' => 'success',
-            'session_id' => (string) $sessionId,
-            'employeeId' => $employee->empID ?? '-',
-            'employeeName' => $employee->empName ?? '-',
-            'role' => self::getRoleFromEmployee($employee->employeeSystemID ?? null),
-            'date_time' => date('Y-m-d H:i:s'),
-            'ipAddress' => self::getIpAddress($request),
-            'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
-            'tenant_uuid' => $tenantUuid,
-            'module' => 'finance',
-            'auth_type' => $authType,
-        ];
-
-        // Create log entries for all active languages
-        $activeLanguages = self::getActiveLanguages();
-        $eventDataByLanguage = [];
+        $translated = $eventData;
         
-        foreach ($activeLanguages as $language) {
-            $eventData = $baseData;
-            $eventData['locale'] = $language;
-            $eventDataByLanguage[] = $eventData;
-        }
-
-        self::writeToAuditLog(...$eventDataByLanguage);
-    }
-
-    /**
-     * Log failed login attempt
-     *
-     * @param string $username
-     * @param string $reason
-     * @param $request
-     * @return void
-     */
-    public static function logLoginFailure($username, $reason, $request)
-    {
-        $employee = \App\Models\Employee::where('empEmail', $username)->first();
-        if ($employee) {
-            $emp_id = $employee->empID;
-            $emp_name = $employee->empName;
-            $role = self::getRoleFromEmployee($employee->employeeSystemID ?? null);
-        } else {
-            $emp_id = '-';
-            $emp_name = '-';
-            $role = '-';
-        }
-        $baseData = [
-            'channel' => 'auth',
-            'event' => 'login_failed',
-            'status' => 'failed',
-            'session_id' => null,
-            'employeeId' => $emp_id,
-            'employeeName' => $emp_name,
-            'role' => $role,
-            'reason' => $reason,
-            'module' => 'finance',
-            'date_time' => date('Y-m-d H:i:s'),
-            'ipAddress' => self::getIpAddress($request),
-            'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
-            'tenant_uuid' => self::getTenantUuid($request),
-            'auth_type' => 'passport',
+        // Map common phrases to translation keys
+        $keyMap = [
+            'Invalid credentials' => 'invalid_credentials',
+            'Account locked' => 'account_locked',
+            'Login disabled' => 'login_disabled',
+            'Employee not found' => 'employee_not_found',
+            'Employee discharged' => 'employee_discharged',
+            'Account not activated' => 'account_not_activated',
+            'Employee inactive' => 'employee_inactive',
+            'Token validation failed' => 'token_validation_failed',
+            'Invalid or expired login token' => 'invalid_or_expired_login_token',
+            'Token creation failed' => 'token_creation_failed',
+            'Unknown OS' => 'unknown_os',
+            'unknown browser' => 'unknown_browser',
+            'unknown IP' => 'unknown_ip',
         ];
-
-        // Create log entries for all active languages
-        $activeLanguages = self::getActiveLanguages();
-        $eventDataByLanguage = [];
         
-        foreach ($activeLanguages as $language) {
-            $eventData = $baseData;
-            $eventData['locale'] = $language;
-            $eventDataByLanguage[] = $eventData;
+        // Translate event type
+        if (isset($translated['event'])) {
+            $eventKey = str_replace(' ', '_', strtolower($translated['event']));
+            $translated['event'] = trans("audit.{$eventKey}", [], $lang);
         }
 
-        self::writeToAuditLog(...$eventDataByLanguage);
-    }
-
-    /**
-     * Log user logout
-     *
-     * @param string $sessionId
-     * @param User $user
-     * @param $employee
-     * @param $request
-     * @return void
-     */
-    public static function logLogout($sessionId, $user, $employee, $request)
-    {
-        $baseData = [
-            'channel' => 'auth',
-            'event' => 'logout',
-            'status' => 'success',
-            'session_id' => (string) $sessionId,
-            'employeeId' => $employee->empID ?? 'unknown',
-            'employeeName' => $employee->empName ?? 'unknown',
-            'role' => self::getRoleFromEmployee($employee->employeeSystemID ?? null),
-            'date_time' => date('Y-m-d H:i:s'),
-            'ipAddress' => self::getIpAddress($request),
-            'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
-            'tenant_uuid' => self::getTenantUuid($request),
-            'auth_type' => 'passport', 
-            'module' => 'finance'
-        ];
-
-        // Create log entries for all active languages
-        $activeLanguages = self::getActiveLanguages();
-        $eventDataByLanguage = [];
-        
-        foreach ($activeLanguages as $language) {
-            $eventData = $baseData;
-            $eventData['locale'] = $language;
-            $eventDataByLanguage[] = $eventData;
-        }
-
-        self::writeToAuditLog(...$eventDataByLanguage);
-    }
-
-    /**
-     * Log token expiration
-     *
-     * @param string $tokenId
-     * @param int $userId
-     * @param int|null $employeeId
-     * @param string $authType
-     * @return void
-     */
-    public static function logTokenExpired($sessionId, $userId, $employeeId = null, $authType = 'passport', $tenantUuid = 'local')
-    {
-        $user = User::find($userId);
-        $employee = null;
-
-        if ($employeeId) {
-            $employee = \App\Models\Employee::find($employeeId);
-        } elseif ($user && $user->employee_id) {
-            $employee = \App\Models\Employee::find($user->employee_id);
-        }
-
-        $baseData = [
-            'channel' => 'auth',
-            'event' => 'session_expired',
-            'status' => 'expired',
-            'session_id' => (string) $sessionId,
-            'employeeId' => $employee->empID ?? 'unknown',
-            'employeeName' => $employee->empName ?? 'unknown',
-            'role' => self::getRoleFromEmployee($employee->employeeSystemID ?? null),
-            'date_time' => date('Y-m-d H:i:s'),
-            'ipAddress' => 'system',
-            'deviceInfo' => 'system',
-            'module' => 'finance',
-            'tenant_uuid' => $tenantUuid,
-            'auth_type' => $authType,
-        ];
-
-        // Create log entries for all active languages
-        $activeLanguages = self::getActiveLanguages();
-        $eventDataByLanguage = [];
-        
-        foreach ($activeLanguages as $language) {
-            $eventData = $baseData;
-            $eventData['locale'] = $language;
-            $eventDataByLanguage[] = $eventData;
-        }
-
-        self::writeToAuditLog(...$eventDataByLanguage);
-    }
-
-    /**
-     * Extract session ID from JWT token
-     *
-     * @param string|null $token
-     * @param string $authType
-     * @return string|null
-     */
-    public static function extractSessionIdFromToken($token, $authType)
-    {
-        if (!$token) {
-            return null;
-        }
-
-        try {
-            $tokenParts = explode('.', $token);
-            if (count($tokenParts) !== 3) {
-                return null;
+        // Translate reason if exists
+        if (isset($translated['reason'])) {
+            // Check if there's a direct mapping
+            if (isset($keyMap[$translated['reason']])) {
+                $translated['reason'] = trans("audit.{$keyMap[$translated['reason']]}", [], $lang);
+            } else {
+                // Try to convert to snake_case key
+                $reasonKey = str_replace(' ', '_', strtolower($translated['reason']));
+                $translation = trans("audit.{$reasonKey}", [], $lang);
+                // Only use translation if it's not the key itself
+                if ($translation !== "audit.{$reasonKey}") {
+                    $translated['reason'] = $translation;
+                }
             }
-
-            $payload = json_decode(base64_decode($tokenParts[1]), true);
-
-            if ($authType === 'passport' || $authType === 'api') {
-                return $payload['jti'] ?? null;
-            } elseif ($authType === 'keycloak') {
-                return $payload['sid'] ?? null;
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to extract session ID from token: ' . $e->getMessage());
         }
 
-        return null;
+        return $translated;
     }
 
     /**
@@ -248,7 +378,7 @@ class AuthAuditService
      * @param string|null $userAgent
      * @return string
      */
-    public static function extractDeviceInfo($userAgent)
+    private static function extractDeviceInfo($userAgent)
     {
         if (!$userAgent) {
             return 'Unknown';
@@ -287,265 +417,37 @@ class AuthAuditService
         return "$os $browser";
     }
 
-    /**
-     * Get role from employee navigation
-     *
-     * @param int|null $employeeId
-     * @return string
-     */
-    public static function getRoleFromEmployee($employeeId)
-    {
-        if (!$employeeId) {
-            return 'Unknown';
-        }
-
-        try {
-            $empMaster = Employee::with(['emp_company', 'manager', 'desi_master' => function ($query) {
-                                    $query->with('designation');
-                                }])->where('employeeSystemID', $employeeId)->first();
-        
-            return $empMaster->desi_master->designation->designation ?? '';
-        } catch (\Exception $e) {
-            Log::error('Failed to get role from employee: ' . $e->getMessage());
-            return 'Unknown';
-        }
-    }
 
     /**
-     * Get IP address from request
+     * Get IP address from request data array
      *
-     * @param $request
+     * @param array $requestData
      * @return string
      */
-    public static function getIpAddress($request)
+    private static function getIpAddressFromData($requestData)
     {
-        if (!$request) {
+        if (empty($requestData)) {
             return 'unknown';
         }
 
         try {
             // Check for proxy headers
-            if ($request->header('X-Forwarded-For')) {
-                $ips = explode(',', $request->header('X-Forwarded-For'));
+            if (!empty($requestData['x_forwarded_for'])) {
+                $ips = explode(',', $requestData['x_forwarded_for']);
                 return trim($ips[0]);
             }
 
-            if ($request->header('X-Real-IP')) {
-                return $request->header('X-Real-IP');
+            if (!empty($requestData['x_real_ip'])) {
+                return $requestData['x_real_ip'];
             }
 
-            return $request->ip();
+            return $requestData['ip'] ?? 'unknown';
         } catch (\Exception $e) {
             Log::error('Failed to get IP address: ' . $e->getMessage());
             return 'unknown';
         }
     }
 
-    /**
-     * Get tenant UUID from request
-     *
-     * @param $request
-     * @return string
-     */
-    public static function getTenantUuid($request)
-    {
-        if (!$request) {
-            return 'local';
-        }
 
-        try {
-            // Try to get from request parameter
-            if (isset($request->tenant_uuid)) {
-                return $request->tenant_uuid;
-            }
-
-            return 'local';
-        } catch (\Exception $e) {
-            Log::error('Failed to get tenant UUID: ' . $e->getMessage());
-            return 'local';
-        }
-    }
-
-    /**
-     * Log navigation access events (screen/module access)
-     *
-     * @param string $sessionId
-     * @param User $user
-     * @param $employee
-     * @param string $screenAccessed
-     * @param string $navigationPath
-     * @param string $accessType (read, create, edit, delete)
-     * @param $request
-     * @param string $tenantUuid
-     * @return void
-     */
-    public static function logNavigationAccess($sessionId, $user, $employee, $screenAccessed, $navigationPath, $accessType, $request, $tenantUuid = 'local')
-    {
-        // Handle both array format (new) and string format (backward compatibility)
-        if (is_array($screenAccessed)) {
-            $screenAccessedEn = $screenAccessed['en'] ?? 'Unknown Screen';
-            $screenAccessedAr = $screenAccessed['ar'] ?? $screenAccessedEn;
-        } else {
-            // Backward compatibility: if string provided, use for both languages
-            $screenAccessedEn = $screenAccessed ?? 'Unknown Screen';
-            $screenAccessedAr = $screenAccessed ?? 'Unknown Screen';
-        }
-        
-        if (is_array($navigationPath)) {
-            $navigationPathEn = $navigationPath['en'] ?? '';
-            $navigationPathAr = $navigationPath['ar'] ?? $navigationPathEn;
-        } else {
-            // Backward compatibility: if string provided, use for both languages
-            $navigationPathEn = $navigationPath ?? '';
-            $navigationPathAr = $navigationPath ?? '';
-        }
-        
-        // Base data common to both language entries
-        $baseData = [
-            'channel' => 'navigation',
-            'session_id' => (string) $sessionId,
-            'employeeId' => $employee->empID ?? '-',
-            'employeeName' => $employee->empName ?? '-',
-            'role' => self::getRoleFromEmployee($employee->employeeSystemID ?? null),
-            'accessType' => $accessType,
-            'date_time' => date('Y-m-d H:i:s'),
-            'ipAddress' => self::getIpAddress($request),
-            'deviceInfo' => self::extractDeviceInfo($request->header('User-Agent')),
-            'tenant_uuid' => $tenantUuid,
-        ];
-
-        // Create two separate log entries: one for English, one for Arabic
-        $eventDataEn = array_merge($baseData, [
-            'locale' => 'en',
-            'screenAccessed' => $screenAccessedEn,
-            'navigationPath' => $navigationPathEn,
-        ]);
-        
-        $eventDataAr = array_merge($baseData, [
-            'locale' => 'ar',
-            'screenAccessed' => $screenAccessedAr,
-            'navigationPath' => $navigationPathAr,
-        ]);
-
-        // Write both log entries
-        self::writeToAuditLog($eventDataEn, $eventDataAr);
-    }
-
-    /**
-     * Write event data to audit log
-     *
-     * @param array ...$eventDataArray
-     * @return void
-     */
-    public static function writeToAuditLog(...$eventDataArray)
-    {
-        try {
-            Log::useFiles(storage_path() . '/logs/audit.log');
-            
-            // Write logs for each language
-            foreach ($eventDataArray as $eventData) {
-                $locale = $eventData['locale'] ?? 'en';
-                $translatedData = self::translateEventData($eventData, $locale);
-                Log::info('data:', $translatedData);
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to write to audit log: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Translate event data based on language
-     *
-     * @param array $eventData
-     * @param string $lang
-     * @return array
-     */
-    private static function translateEventData($eventData, $lang)
-    {
-        $translationMap = [
-            'en' => [
-                'login' => 'Login',
-                'logout' => 'Logout',
-                'login_failed' => 'Login Failed',
-                'token_expired' => 'Token Expired',
-                'success' => 'Success',
-                'failed' => 'Failed',
-                'expired' => 'Expired',
-                'Token expired' => 'Token expired',
-                'Invalid credentials' => 'Invalid Credentials',
-                'Account locked' => 'Account Locked',
-                'Login disabled' => 'Login Disabled',
-                'Employee not found' => 'Employee Not Found',
-                'Employee discharged' => 'Employee Discharged',
-                'Account not activated' => 'Account Not Activated',
-                'Employee inactive' => 'Employee Inactive',
-                'Token validation failed' => 'Token Validation Failed',
-                'Invalid or expired login token' => 'Invalid or Expired Login Token',
-                'Token creation failed' => 'Token Creation Failed',
-                'unknown' => 'Unknown',
-                'Unknown OS' => 'Unknown OS',
-                'unknown browser' => 'Unknown Browser',
-                'unknown IP' => 'Unknown IP',
-                'Windows' => 'Windows',
-                'macOS' => 'macOS',
-                'Linux' => 'Linux',
-                'Android' => 'Android',
-                'iOS' => 'iOS',
-                'Chrome' => 'Chrome',
-                'Firefox' => 'Firefox',
-                'Safari' => 'Safari',
-                'Edge' => 'Edge',
-                'session_expired' => 'Session Expired',
-            ],
-            'ar' => [
-                'login' => 'تسجيل الدخول',
-                'logout' => 'تسجيل الخروج',
-                'login_failed' => 'فشل تسجيل الدخول',
-                'token_expired' => 'انتهت صلاحية الجلسة',
-                'success' => 'نجح',
-                'failed' => 'فشل',
-                'expired' => 'منتهي الصلاحية',
-                'Token expired' => 'انتهت صلاحية الجلسة',
-                'Invalid credentials' => 'بيانات اعتماد غير صحيحة',
-                'Account locked' => 'تم قفل الحساب',
-                'Login disabled' => 'تم تعطيل تسجيل الدخول',
-                'Employee not found' => 'الموظف غير موجود',
-                'Employee discharged' => 'تم تسريح الموظف',
-                'Account not activated' => 'الحساب غير مفعل',
-                'Employee inactive' => 'الموظف غير نشط',
-                'Token validation failed' => 'فشل التحقق من الرمز',
-                'Invalid or expired login token' => 'رمز تسجيل الدخول غير صالح أو منتهي الصلاحية',
-                'Token creation failed' => 'فشل إنشاء الرمز',
-                'unknown' => 'مجهول',
-                'Unknown OS' => 'مجهول أوس',
-                'unknown browser' => 'مجهول المتصفح',
-                'unknown IP' => 'مجهول العنوان الإيبي',
-                'Windows' => 'نظام ويندوز',
-                'macOS' => 'ماك أو إس',
-                'Linux' => 'لينكس',
-                'Android' => 'أندرويد',
-                'iOS' => 'آي أو إس',
-                'Chrome' => 'شريط العتاد',
-                'Firefox' => 'فايرفوكس',
-                'Safari' => 'سفاري',
-                'Edge' => 'أيجد',
-                'session_expired' => 'انتهت صلاحية الجلسة',
-            ]
-        ];
-
-        $translated = $eventData;
-        
-        // Translate event type
-        if (isset($translated['event']) && isset($translationMap[$lang][$translated['event']])) {
-            $translated['event'] = $translationMap[$lang][$translated['event']];
-        }
-
-        // Translate reason if exists
-        if (isset($translated['reason']) && isset($translationMap[$lang][$translated['reason']])) {
-            $translated['reason'] = $translationMap[$lang][$translated['reason']];
-        }
-
-        return $translated;
-    }
 }
 

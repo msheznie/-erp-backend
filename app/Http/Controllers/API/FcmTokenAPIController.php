@@ -12,6 +12,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FcmTokenController
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
 
 class FcmTokenAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  FcmTokenRepository */
     private $fcmTokenRepository;
 
@@ -388,7 +391,13 @@ class FcmTokenAPIController extends AppBaseController
                 
                 // Log logout before revoking token
                 if ($sessionId && $employee) {
-                    \App\Services\AuditLog\AuthAuditService::logLogout($sessionId, $user, $employee, $request);
+                    $this->log('auth', [
+                        'event' => 'logout',
+                        'sessionId' => $sessionId,
+                        'user' => $user,
+                        'employee' => $employee,
+                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request)
+                    ]);
                 }
                 
                 $resp = $request->user()->token()->revoke();

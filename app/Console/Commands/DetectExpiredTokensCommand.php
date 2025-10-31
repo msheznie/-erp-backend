@@ -4,12 +4,14 @@ namespace App\Console\Commands;
 
 use App\Models\User;
 use App\helper\CommonJobService;
-use App\Services\AuditLog\AuthAuditService;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class DetectExpiredTokensCommand extends Command
 {
+    use AuditLogsTrait;
+    
     /**
      * The name and signature of the console command.
      *
@@ -55,14 +57,27 @@ class DetectExpiredTokensCommand extends Command
                     ->where('expires_at', '<=', now())
                     ->where('revoked', false)
                     ->get();
-    
+                
                 $count = 0;
                 foreach ($expiredTokens as $token) {
-                    $user = User::find($token->user_id);
-                    $employeeId = $user ? $user->employee_id : null;
-                    
-                    AuthAuditService::logTokenExpired($token->session_id, $token->user_id, $employeeId, 'passport', $tenant_uuid);
-                    $count++;
+                    try {
+                        $user = User::find($token->user_id);
+                        $employeeId = $user ? $user->employee_id : null;
+                        
+                        $this->log('auth', [
+                            'event' => 'token_expired',
+                            'sessionId' => $token->session_id,
+                            'userId' => $token->user_id,
+                            'employeeId' => $employeeId,
+                            'authType' => 'passport',
+                            'request' => ['db' => $db],
+                            'tenantUuid' => $tenant_uuid
+                        ]);
+                        $count++;
+                    } catch (\Exception $tokenException) {
+                        \Log::error('Error logging expired token: ' . $tokenException->getMessage());
+                        $this->error('Error logging token ' . $token->id . ': ' . $tokenException->getMessage());
+                    }
                 }
             }
             return 0;
