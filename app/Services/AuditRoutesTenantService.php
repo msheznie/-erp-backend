@@ -105,7 +105,8 @@ class AuditRoutesTenantService
             'api/v1/deleteBudgetPlanningTemplateDetailRow',
             'api/v1/saveBudgetDetailTemplateEntries',
             'api/v1/oauth/login_with_token',
-            'api/v1/logoutApiUser'
+            'api/v1/logoutApiUser',
+            'api/v1/checkUserGroupAccessRights'
         ];
 
         return $lokiTenantRoutes;
