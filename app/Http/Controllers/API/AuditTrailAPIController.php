@@ -373,7 +373,7 @@ class AuditTrailAPIController extends AppBaseController
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json';
+        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
         
         if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
             $eventMap = [
@@ -401,7 +401,7 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ' ['.(int)$diff.'d])';
+        $query .= ')';
         $params = 'query?query='.$query;
         
         $data = $this->lokiService->getAuditLogs($params);
@@ -529,7 +529,7 @@ class AuditTrailAPIController extends AppBaseController
         $locale = app()->getLocale() ?: 'en';
         $langFilter = $locale === 'ar' ? 'ar' : 'en';
         
-        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
+        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
         
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
@@ -567,7 +567,7 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ' ['.(int)$diff.'d])';
+        $query .= ')';
         $params = 'query?query='.$query;
         
         $data = $this->lokiService->getAuditLogs($params);
