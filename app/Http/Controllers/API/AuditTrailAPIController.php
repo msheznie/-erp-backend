@@ -366,14 +366,20 @@ class AuditTrailAPIController extends AppBaseController
         $input = $request->all();
         $env = env("LOKI_ENV");
         
-
-        $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = Carbon::now();
-        $diff = $toDate->diffInDays($fromDate);
+        // Get date range from request
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Use request dates if provided, otherwise fallback to defaults
+        $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
+        $toDate = !empty($requestToDate) ? Carbon::parse($requestToDate) : Carbon::now();
+        // Loki expects timestamps in nanoseconds
+        $startTime = $fromDate->timestamp * 1000000000;
+        $endTime = $toDate->timestamp * 1000000000;
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+        $query = '{env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json';
         
         if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
             $eventMap = [
@@ -401,10 +407,9 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ')';
-        $params = 'query?query='.$query;
+        $params = 'query_range?query='.urlencode($query).'&start='.$startTime.'&end='.$endTime;
         
-        $data = $this->lokiService->getAuditLogs($params);
+        $data = $this->lokiService->getAuditLogsRange($params);
 
         // Check if $data is an error response
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
@@ -416,25 +421,8 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        // Sort by date_time
+        // Sort by date_time (date range already filtered by Loki query_range)
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
-        
-        // Get date range filters from request
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
-        
-        // Apply date range filter if specified
-        if (!empty($requestFromDate) && !empty($requestToDate)) {
-            $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
-                $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
-                if (!$itemDateTime) {
-                    return false;
-                }
-                $from = Carbon::parse($requestFromDate);
-                $to = Carbon::parse($requestToDate);
-                return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-            })->values()->all();
-        }
         
         return $formatedData;
     }
@@ -520,16 +508,24 @@ class AuditTrailAPIController extends AppBaseController
     {
         $input = $request->all();
         $env = env("LOKI_ENV");
-        $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = Carbon::now();
-        $diff = $toDate->diffInDays($fromDate);
+        
+        // Get date range from request
+        $requestFromDate = $request->input('fromDate');
+        $requestToDate = $request->input('toDate');
+        
+        // Use request dates if provided, otherwise fallback to defaults
+        $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
+        $toDate = !empty($requestToDate) ? Carbon::parse($requestToDate) : Carbon::now();
+        // Loki expects timestamps in nanoseconds
+        $startTime = $fromDate->timestamp * 1000000000;
+        $endTime = $toDate->timestamp * 1000000000;
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
         $locale = app()->getLocale() ?: 'en';
         $langFilter = $locale === 'ar' ? 'ar' : 'en';
         
-        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+        $query = '{env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
         
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
@@ -567,10 +563,9 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ')';
-        $params = 'query?query='.$query;
+        $params = 'query_range?query='.urlencode($query).'&start='.$startTime.'&end='.$endTime;
         
-        $data = $this->lokiService->getAuditLogs($params);
+        $data = $this->lokiService->getAuditLogsRange($params);
         
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
@@ -581,27 +576,8 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        // Sort by date_time
+        // Sort by date_time (date range already filtered by Loki query_range)
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
-        
-        // Get date range filters from request
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
-        
-        // Apply date range filter if specified
-        if (!empty($requestFromDate) && !empty($requestToDate)) {
-            $countBeforeDateFilter = count($formatedData);
-            $formatedData = collect($formatedData)->filter(function ($item) use ($requestFromDate, $requestToDate) {
-                $itemDateTime = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
-                if (!$itemDateTime) {
-                    return false;
-                }
-                $from = Carbon::parse($requestFromDate);
-                $to = Carbon::parse($requestToDate);
-                return $itemDateTime->gte($from) && $itemDateTime->lte($to);
-            })->values()->all();
-        }
-        
         
         return $formatedData;
     }

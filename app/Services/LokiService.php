@@ -149,6 +149,64 @@ class LokiService
         ];
     }
 
+    /**
+     * Get audit logs using query_range endpoint (for time-series data)
+     * 
+     * @param string $params Query parameters including query, start, end
+     * @return array
+     */
+    public function getAuditLogsRange($params){
+        try {
+            $client = new Client();
+            $url = env("LOKI_URL");
+
+            $response = $client->get($url . $params);
+            $data = json_decode($response->getBody()->getContents(), true);
+
+            // query_range returns data.result[].values which is array of [timestamp, value] pairs
+            // For logs with | json, the parsed fields are added to the stream labels
+            // We need to extract these from each result entry
+            $logEntriesAsArrays = [];
+            
+            if (isset($data['data']['result']) && is_array($data['data']['result'])) {
+                foreach ($data['data']['result'] as $entry) {
+                    // Each entry has 'stream' (labels with parsed JSON fields) and 'values' (time-series data)
+                    // Since each unique combination of labels creates a separate stream,
+                    // we can just use the stream data as our log entry
+                    if (isset($entry['stream']) && !empty($entry['values'])) {
+                        // Add each log entry (one per stream since each log line has unique fields)
+                        $logEntriesAsArrays[] = $entry['stream'];
+                    }
+                }
+            }
+
+            // Sort by date_time if available
+            usort($logEntriesAsArrays, function ($a, $b) {
+                $timestampA = strtotime(isset($a['date_time']) ? $a['date_time']: null);
+                $timestampB = strtotime(isset($b['date_time']) ? $b['date_time']: null);
+                return $timestampB - $timestampA;
+            });
+
+            return $logEntriesAsArrays;
+
+        } catch (RequestException $e) {
+            \Log::error('Loki query_range connection error: ' . $e->getMessage());
+            
+            if ($e->hasResponse()) {
+                $statusCode = $e->getResponse()->getStatusCode();
+                $errorBody = $e->getResponse()->getBody()->getContents();
+                \Log::error('Loki error response: ' . $errorBody);
+                return response()->json(['error' => "HTTP $statusCode: $errorBody"], $statusCode);
+            } else {
+                return response()->json(['error' => 'Request failed: ' . $e->getMessage()], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Loki query_range service error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return [];
+        }
+    }
+
     public function getAuditLogsForMigration($params){
         try {
 
