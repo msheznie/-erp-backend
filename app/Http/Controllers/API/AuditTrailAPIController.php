@@ -372,14 +372,12 @@ class AuditTrailAPIController extends AppBaseController
         
         // Use request dates if provided, otherwise fallback to defaults
         $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = !empty($requestToDate) ? Carbon::parse($requestToDate) : Carbon::now();
-        // Loki expects timestamps in nanoseconds
-        $startTime = $fromDate->timestamp * 1000000000;
-        $endTime = $toDate->timestamp * 1000000000;
+        $toDate = Carbon::now();
+        $diff = $toDate->diffInDays($fromDate) + 1;
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        $query = '{env="'.$env.'",channel="auth",tenant="'.$uuid.'"} | json';
+        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
         
         if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
             $eventMap = [
@@ -407,9 +405,10 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $params = 'query_range?query='.urlencode($query).'&start='.$startTime.'&end='.$endTime;
+        $query .= ')';
+        $params = 'query?query='.$query;
         
-        $data = $this->lokiService->getAuditLogsRange($params);
+        $data = $this->lokiService->getAuditLogs($params);
 
         // Check if $data is an error response
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
@@ -421,7 +420,7 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        // Sort by date_time (date range already filtered by Loki query_range)
+        // Sort by date_time
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
         
         return $formatedData;
@@ -515,17 +514,15 @@ class AuditTrailAPIController extends AppBaseController
         
         // Use request dates if provided, otherwise fallback to defaults
         $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = !empty($requestToDate) ? Carbon::parse($requestToDate) : Carbon::now();
-        // Loki expects timestamps in nanoseconds
-        $startTime = $fromDate->timestamp * 1000000000;
-        $endTime = $toDate->timestamp * 1000000000;
+        $toDate = Carbon::now();
+        $diff = $toDate->diffInDays($fromDate) + 1;
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
         $locale = app()->getLocale() ?: 'en';
         $langFilter = $locale === 'ar' ? 'ar' : 'en';
         
-        $query = '{env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
+        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
         
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
@@ -563,9 +560,10 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $params = 'query_range?query='.urlencode($query).'&start='.$startTime.'&end='.$endTime;
+        $query .= ')';
+        $params = 'query?query='.$query;
         
-        $data = $this->lokiService->getAuditLogsRange($params);
+        $data = $this->lokiService->getAuditLogs($params);
         
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
@@ -576,7 +574,7 @@ class AuditTrailAPIController extends AppBaseController
             $data = [];
         }
 
-        // Sort by date_time (date range already filtered by Loki query_range)
+        // Sort by date_time
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
         
         return $formatedData;
