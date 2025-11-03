@@ -526,7 +526,7 @@ class AuditTrailAPIController extends AppBaseController
         $locale = app()->getLocale() ?: 'en';
         $langFilter = $locale === 'ar' ? 'ar' : 'en';
         
-        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+        $query = '{env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} | json';
         
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
@@ -564,10 +564,17 @@ class AuditTrailAPIController extends AppBaseController
             $query .= ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ')';
-        $params = 'query?query='.$query;
+        // $query .= ')';
         
-        $data = $this->lokiService->getAuditLogs($params);
+        $limit = 500;
+        
+        // Convert dates to Unix nanosecond timestamps for Loki query_range
+        $start = $fromDate->timestamp * 1000000000; // Convert to nanoseconds
+        $end = $toDate->timestamp * 1000000000; // Convert to nanoseconds
+        
+        $params = 'query_range?query='.urlencode($query).'&limit='.(int)$limit.'&start='.$start.'&end='.$end;
+        
+        $data = $this->lokiService->getAuditLogsRange($params);
         
         if (is_object($data) && method_exists($data, 'getStatusCode')) {
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
