@@ -1040,12 +1040,19 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $departmentsWithoutBudgetTemplate = [];
 
         foreach ($activeDepartments as $department) {
-            $hod = CompanyDepartmentEmployee::where('departmentSystemID', $department->departmentSystemID)
-                ->where('isHOD', 1)
-                ->first();
+            // Check if this is a child department (has parentDepartmentID)
+            $isChildDepartment = !empty($department->parentDepartmentID);
+            
+            // Only check for HOD if it's a child department
+            if ($isChildDepartment) {
+                $hod = CompanyDepartmentEmployee::where('departmentSystemID', $department->departmentSystemID)
+                    ->where('isHOD', 1)
+                    ->where('isActive', 1)
+                    ->first();
 
-            if (empty($hod)) {
-                $departmentsWithoutHOD[] = $department->departmentCode;
+                if (empty($hod)) {
+                    $departmentsWithoutHOD[] = $department->departmentCode;
+                }
             }
         }
 
@@ -1315,7 +1322,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError('Company Budget ID is required', 400);
             }
 
-            $timeExtensionRequests = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning.department.hod.employee')
+            $timeExtensionRequests = DeptBudgetPlanningTimeRequest::with(['departmentBudgetPlanning.department.hod.employee','reviewer'])
             ->whereHas('departmentBudgetPlanning', function ($query) use ($companyBudgetId) {
                 $query->where('companyBudgetPlanningID', $companyBudgetId);
             });

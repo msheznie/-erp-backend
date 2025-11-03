@@ -1089,6 +1089,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $oldValue = $timeExtensionRequest->toArray();
 
         $timeExtensionRequest->status = 4;
+        $timeExtensionRequest->reviewed_by = Auth::user()->employee_id;
+        $timeExtensionRequest->reviewed_at = now();
         $timeExtensionRequest->save();
 
         // Add audit log
@@ -1174,6 +1176,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Update status to 2 (accepted)
         $timeExtensionRequest->status = 2;
         $timeExtensionRequest->new_time = $newDate ?? $timeExtensionRequest->date_of_request;
+        $timeExtensionRequest->reviewed_by = Auth::user()->employee_id;
+        $timeExtensionRequest->reviewed_at = now();
         $timeExtensionRequest->save();
 
         // Update submission dates for budget planning and its details
