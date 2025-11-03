@@ -69,7 +69,7 @@ class DeptBudgetPlanningTimeRequest extends Model
      */
     public function reviewer()
     {
-        return $this->belongsTo(User::class, 'reviewed_by');
+        return $this->belongsTo(Employee::class, 'reviewed_by');
     }
 
     /**
