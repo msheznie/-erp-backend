@@ -422,6 +422,10 @@ class AuditTrailAPIController extends AppBaseController
 
         // Sort by date_time
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
+
+        $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
+            return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
+        })->values()->all();
         
         return $formatedData;
     }
@@ -576,6 +580,10 @@ class AuditTrailAPIController extends AppBaseController
 
         // Sort by date_time
         $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
+
+        $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
+            return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
+        })->values()->all();
         
         return $formatedData;
     }
