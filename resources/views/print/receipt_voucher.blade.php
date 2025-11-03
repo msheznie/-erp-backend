@@ -878,7 +878,7 @@
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
                         <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.total_discount_amount') }}</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($discountTot), $transDecimal)}}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(abs($discountTot), $transDecimal)}}</td>
                     </tr>
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
