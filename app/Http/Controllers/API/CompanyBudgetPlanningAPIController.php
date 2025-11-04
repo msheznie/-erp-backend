@@ -1239,7 +1239,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     return $revision->revision_status_text;
                 })
                 ->addColumn('reviewBy', function ($revision) {
-                    return $revision->createdBy ? $revision->createdBy->empFullName : 'N/A';
+                    return $revision->createdBy ? $revision->createdBy->empFullName.' - '.$revision->createdBy->empID : 'N/A';
                 })
                 ->addColumn('reviewComment', function ($revision) {
                     return $revision->reviewComments;
