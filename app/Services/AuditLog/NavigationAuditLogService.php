@@ -30,7 +30,6 @@ class NavigationAuditLogService
         $companyID = $parameters['companyID'] ?? null;
         $requestData = $parameters['request'];
         $tenantUuid = $parameters['tenantUuid'] ?? 'local';
-        $companyName = $parameters['companyName'] ?? '-';
 
         $baseData = [
             'channel' => 'navigation',
@@ -41,7 +40,6 @@ class NavigationAuditLogService
             'accessType' => $accessType,
             'company' => $company,
             'companyID' => $companyID,
-            'companyName' => $companyName,
             'date_time' => date('Y-m-d H:i:s'),
             'module' => 'finance',
             'tenant_uuid' => $tenantUuid,

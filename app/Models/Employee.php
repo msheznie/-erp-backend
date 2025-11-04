@@ -401,7 +401,7 @@ class Employee extends Model
             $query->with('designation');
         }])->where('employeeSystemID', $employeeSystemID)->first();
     
-        if($empMaster->emp_company && $empMaster->emp_company->isHrmsIntergrated){
+        if($empMaster && $empMaster->emp_company && $empMaster->emp_company->isHrmsIntergrated){
             return $empMaster->hr_emp->designation->designation ?? '';
         } else {    
             return $empMaster->desi_master->designation->designation ?? '';
