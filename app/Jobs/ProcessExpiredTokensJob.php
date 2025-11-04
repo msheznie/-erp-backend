@@ -61,8 +61,6 @@ class ProcessExpiredTokensJob implements ShouldQueue
                 ->where('revoked', 0)
                 ->get();
 
-            Log::info('Expired tokens found for tenant: ' . $this->tenantUuid . ' - Count: ' . count($expiredTokens));
-            
             $count = 0;
             foreach ($expiredTokens as $token) {
                 try {
@@ -84,9 +82,6 @@ class ProcessExpiredTokensJob implements ShouldQueue
                     Log::error('Token ID: ' . $token->id);
                 }
             }
-            
-            Log::info("Processed {$count} expired tokens for tenant: {$this->tenantUuid}");
-            
         } catch (\Exception $e) {
             Log::error('Error processing expired tokens for tenant ' . $this->tenantUuid . ': ' . $e->getMessage());
             Log::error('Stack trace: ' . $e->getTraceAsString());

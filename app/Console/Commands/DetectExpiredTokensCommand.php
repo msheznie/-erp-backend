@@ -6,6 +6,7 @@ use App\helper\CommonJobService;
 use App\Jobs\ProcessExpiredTokensJob;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class DetectExpiredTokensCommand extends Command
 {
@@ -42,7 +43,11 @@ class DetectExpiredTokensCommand extends Command
     public function handle()
     {
         try {
-            $tenants = CommonJobService::tenant_list();
+            $tenants = DB::table('tenants')
+                         ->where('is_active', 1)
+                         ->whereNotNull('uuid')
+                         ->whereNotNull('database')
+                         ->get();
 
             foreach ($tenants as $tenant) {
                 $tenant_uuid = $tenant->uuid;
@@ -52,7 +57,6 @@ class DetectExpiredTokensCommand extends Command
                     ProcessExpiredTokensJob::dispatch($tenant_uuid, $db);
                 }
             }
-            Log::info('Expired token jobs dispatched for all tenants');
             return 0;
         } catch (\Exception $e) {
             Log::error('Error dispatching expired token jobs: ' . $e->getMessage());
