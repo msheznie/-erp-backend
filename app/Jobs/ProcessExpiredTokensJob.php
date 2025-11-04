@@ -60,6 +60,8 @@ class ProcessExpiredTokensJob implements ShouldQueue
                 ->where('expires_at', '<=', now())
                 ->where('revoked', 0)
                 ->get();
+
+            Log::info('Expired tokens found for tenant: ' . $this->tenantUuid . ' - Count: ' . count($expiredTokens));
             
             $count = 0;
             foreach ($expiredTokens as $token) {

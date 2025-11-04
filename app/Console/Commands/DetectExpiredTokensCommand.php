@@ -47,9 +47,12 @@ class DetectExpiredTokensCommand extends Command
             foreach ($tenants as $tenant) {
                 $tenant_uuid = $tenant->uuid;
                 $db = $tenant->database;
-                
-                ProcessExpiredTokensJob::dispatch($tenant_uuid, $db);
+
+                if (!is_null($tenant_uuid) && !is_null($db)) {
+                    ProcessExpiredTokensJob::dispatch($tenant_uuid, $db);
+                }
             }
+            Log::info('Expired token jobs dispatched for all tenants');
             return 0;
         } catch (\Exception $e) {
             Log::error('Error dispatching expired token jobs: ' . $e->getMessage());
