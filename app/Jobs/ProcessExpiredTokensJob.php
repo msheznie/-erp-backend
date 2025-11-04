@@ -73,7 +73,7 @@ class ProcessExpiredTokensJob implements ShouldQueue
                         'userId' => $token->user_id,
                         'employeeId' => $employeeId,
                         'authType' => 'passport',
-                        'request' => (object)['db' => $this->tenantDb],
+                        'request' => ['db' => $this->tenantDb],
                         'tenantUuid' => $this->tenantUuid
                     ]);
 

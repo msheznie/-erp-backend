@@ -47,7 +47,7 @@ class AuthAuditLogJob implements ShouldQueue
     public function handle()
     {
         $request = $this->parameters['request'];
-        $db = $request->db ?? null;
+        $db = $request['db'] ?? null;
         CommonJobService::db_switch($db);
 
         // Get prepared audit data from service
