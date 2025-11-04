@@ -76,6 +76,10 @@ class ProcessExpiredTokensJob implements ShouldQueue
                         'request' => (object)['db' => $this->tenantDb],
                         'tenantUuid' => $this->tenantUuid
                     ]);
+
+                    // Revoke the token
+                    DB::table('oauth_access_tokens')->where('id', $token->id)->update(['revoked' => 1]);
+
                     $count++;
                 } catch (\Exception $tokenException) {
                     Log::error('Error logging expired token: ' . $tokenException->getMessage());
