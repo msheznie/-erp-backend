@@ -43,7 +43,7 @@ class DetectExpiredTokensCommand extends Command
     public function handle()
     {
         try {
-            $tenants = DB::table('tenants')
+            $tenants = DB::table('tenant')
                          ->where('is_active', 1)
                          ->whereNotNull('uuid')
                          ->whereNotNull('database')
