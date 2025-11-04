@@ -45,6 +45,7 @@ class DetectExpiredTokensCommand extends Command
         try {
             $tenants = DB::table('tenant')
                          ->where('is_active', 1)
+                         ->where('sub_domain', 'like', '%erp%')
                          ->whereNotNull('uuid')
                          ->whereNotNull('database')
                          ->get();
