@@ -53,7 +53,7 @@ class DetectExpiredTokensCommand extends Command
                 CommonJobService::db_switch($db);
                 
                 $expiredTokens = DB::table('oauth_access_tokens')
-                    ->where('expires_at', '>', now()->subHour())
+                    // ->where('expires_at', '>', now()->subHour())
                     ->where('expires_at', '<=', now())
                     ->where('revoked', false)
                     ->get();
