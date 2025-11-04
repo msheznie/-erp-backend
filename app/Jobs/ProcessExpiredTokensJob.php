@@ -56,7 +56,7 @@ class ProcessExpiredTokensJob implements ShouldQueue
             
             // Get expired tokens
             $expiredTokens = DB::table('oauth_access_tokens')
-                // ->where('expires_at', '>', now()->subHour())
+                ->where('expires_at', '>', now()->subHour())
                 ->where('expires_at', '<=', now())
                 ->where('revoked', 0)
                 ->get();
