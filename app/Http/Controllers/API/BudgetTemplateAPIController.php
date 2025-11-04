@@ -74,7 +74,8 @@ class BudgetTemplateAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $budgetTemplate->budgetTemplateID, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been created", "C", $budgetTemplate->toArray(), []);
+        $narrationVariables = $budgetTemplate->description;
+        $this->auditLog($db, $budgetTemplate->budgetTemplateID, $uuid, "budget_templates", $narrationVariables, "C", $budgetTemplate->toArray(), []);
 
         return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_saved_successfully'));
     }
@@ -141,7 +142,7 @@ class BudgetTemplateAPIController extends AppBaseController
             // Audit log for default update
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template default status updated", "U", $budgetTemplate->toArray(), $oldValues);
+            $this->auditLog($db, $id, $uuid, "budget_templates", "", "U", $budgetTemplate->toArray(), $oldValues);
             
             return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
         }
@@ -154,7 +155,7 @@ class BudgetTemplateAPIController extends AppBaseController
             // Audit log for link request amount update
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template link request amount updated", "U", $budgetTemplate->toArray(), $oldValues);
+            $this->auditLog($db, $id, $uuid, "budget_templates", "", "U", $budgetTemplate->toArray(), $oldValues);
 
             return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
         }
@@ -172,7 +173,8 @@ class BudgetTemplateAPIController extends AppBaseController
         // Audit log for regular update
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been updated", "U", $budgetTemplate->toArray(), $oldValues);
+        $narrationVariables = $budgetTemplate->description;
+        $this->auditLog($db, $id, $uuid, "budget_templates", $narrationVariables, "U", $budgetTemplate->toArray(), $oldValues);
 
         return $this->sendResponse($budgetTemplate->toArray(), trans('custom.budget_template_updated_successfully'));
     }
@@ -212,7 +214,8 @@ class BudgetTemplateAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "budget_templates", "Budget template ".$budgetTemplate->description." has been deleted", "D", [], $previousValue);
+        $narrationVariables = $budgetTemplate->description;
+        $this->auditLog($db, $id, $uuid, "budget_templates", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.budget_template_deleted_successfully'));
     }

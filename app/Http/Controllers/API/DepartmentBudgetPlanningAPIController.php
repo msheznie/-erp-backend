@@ -487,12 +487,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
+            $narrationVariables = $departmentBudgetPlanning->planningCode;
             $this->auditLog(
                 $db,
                 $input['budgetPlanningId'],
                 $uuid,
                 "department_budget_plannings",
-                "Department Budget Planning ".$departmentBudgetPlanning->planningCode." has been updated",
+                $narrationVariables,
                 "U",
                 $departmentBudgetPlanning->toArray(),
                 $oldValue,
@@ -745,12 +746,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
+            $narrationVariables = $timeRequest->request_code;
             $this->auditLog(
                 $db,
                 $input['budgetPlanningId'],
                 $uuid,
                 "department_budget_plannings",
-                "Time extension request ".$timeRequest->request_code." has been created",
+                $narrationVariables,
                 "C",
                 $timeRequest->toArray(),
                 [],
@@ -1100,12 +1102,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
+        $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
             $timeExtensionRequest->department_budget_planning_id,
             $uuid,
             "department_budget_plannings",
-            "Time extension request ".$timeExtensionRequest->request_code." has been updated",
+            $narrationVariables,
             "U",
             $timeExtensionRequest->refresh()->toArray(),
             $oldValue,
@@ -1131,12 +1134,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
+        $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
             $timeExtensionRequest->department_budget_planning_id,
             $uuid,
             "department_budget_plannings",
-            "Time extension request ".$timeExtensionRequest->request_code." has been deleted",
+            $narrationVariables,
             "D",
             null,
             $oldValue,
@@ -1190,12 +1194,13 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
+        $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
             $timeExtensionRequest->department_budget_planning_id,
             $uuid,
             "department_budget_plannings",
-            "Time extension request ".$timeExtensionRequest->request_code." has been accepted",
+            $narrationVariables,
             "U",
             $timeExtensionRequest->refresh()->toArray(),
             $oldValue,

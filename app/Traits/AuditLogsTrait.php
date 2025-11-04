@@ -20,6 +20,8 @@ trait AuditLogsTrait
         //get token id
         $tokenId = Auth::user() && Auth::user()->token() ? Auth::user()->token()->id : null;
 
+        // Pass narration as docCode (original narration for translation key lookup)
+        // Variables will be extracted in the job from the narration itself
         AuditLogJob::dispatch($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue, $previosValue, $parentID, $parentTable, $user, $tokenId);
     }
 

@@ -301,7 +301,8 @@ class CustomerMasterAPIService
                         }
                     }
 
-                    self::auditLog($db, $input['customerCodeSystem'],$uuid, "customermaster", $input['CutomerCode']." has updated", "U", $newValue, $previousValue);
+                    $narrationVariables = $input['CutomerCode'];
+                    self::auditLog($db, $input['customerCodeSystem'],$uuid, "customermaster", $narrationVariables, "U", $newValue, $previousValue);
 
                     return [
                         'status' => true,

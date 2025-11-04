@@ -1156,7 +1156,8 @@ class ItemMasterAPIController extends AppBaseController
                     $itemMasterCategoryType->save();
                 }
 
-                $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $newValue['primaryCode']." has updated", "U", $newValue, $previosValue);
+                $narrationVariables = $newValue['primaryCode'];
+                $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $narrationVariables, "U", $newValue, $previosValue);
            
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],

@@ -305,26 +305,101 @@ class AuditTrailAPIController extends AppBaseController
             $fromDate = Carbon::parse(env("LOKI_START_DATE"));
             $toDate = Carbon::now();
             $diff = $toDate->diffInDays($fromDate);
-            $id = $input['id'];
-            $module = $input['module'];
-
-            $table = $this->lokiService->getAuditTables($module);
+            $locale = app()->getLocale() ?: 'en';
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
 
-            // Optimize query using labels: env, channel, tenant (no table label to avoid high cardinality)
-            $params = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | transaction_id="'.$id.'" | table="'.$table.'" ['.$diff.'d])';
+            if(isset($input['isFromTracking']) && $input['isFromTracking']){
+                
+                $requestFromDate = $request->input('fromDate');
+                $requestToDate = $request->input('toDate');
+                
+                $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
+                $toDate = Carbon::now();
+                $diff = $toDate->diffInDays($fromDate) + 1;
 
-            $data = $this->lokiService->getAuditLogs($params);
+
+                $params = 'rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+
+                if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
+                    $eventMap = [
+                        '1' => 'C',
+                        '2' => 'U',
+                        '3' => 'D',
+                    ];
+                    
+                    $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
+                    $params .= ' | crudType="'.$crudType.'"';
+                }
+
+                if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
+                    $params .= ' | employeeId="'.$input['employeeId'].'"';
+                }
+
+                $params .= ' | locale="'.$locale.'"';
+                
+                $searchValue = $request->input('search.value');
+                if (!empty($searchValue)) {
+                    $escapedSearch = preg_quote($searchValue, '/');
+                    $params .= ' |~ `(?i)'.$escapedSearch.'`';
+                }
+                
+                $params .= ')';
+                $params = 'query?query='.$params;
+                $data = $this->lokiService->getAuditLogs($params);
+
+                
+                $params2 = 'rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+                if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
+                    $eventMap = [
+                        '1' => 'C',
+                        '2' => 'U',
+                        '3' => 'D',
+                    ];
+                    
+                    $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
+                    $params2 .= ' | crudType="'.$crudType.'"';
+                }
+
+                if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
+                    $params2 .= ' | employeeId="'.$input['employeeId'].'"';
+                }
+                
+                $params2 .= ' | locale="'.$locale.'"';
+                
+                $searchValue2 = $request->input('search.value');
+                if (!empty($searchValue2)) {
+                    $escapedSearch2 = preg_quote($searchValue2, '/');
+                    $params2 .= ' |~ `(?i)'.$escapedSearch2.'`';
+                }
+                
+                $params2 .= ')';
+                $params2 = 'query?query='.$params2;
+                $data2 = $this->lokiService->getAuditLogs($params2);
+            } else {
+                $id = $input['id'];
+                $module = $input['module'];
+                $table = $this->lokiService->getAuditTables($module);
+                
+                // Optimize query using labels: env, channel, tenant (no table label to avoid high cardinality)
+                $params = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | transaction_id="'.$id.'" | table="'.$table.'" | locale="'.$locale.'" ['.$diff.'d])';
+
+                $data = $this->lokiService->getAuditLogs($params);
+
+                
+                $params2 = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | parent_id="'.$id.'" | parent_table="'.$table.'" | locale="'.$locale.'" ['.$diff.'d])';
+
+                $data2 = $this->lokiService->getAuditLogs($params2);
+
+            }
+
+
+
+
 
             // Check if $data is an error response
             if (is_object($data) && method_exists($data, 'getStatusCode')) {
                 return $data;
             }
-
-
-            $params2 = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | parent_id="'.$id.'" | parent_table="'.$table.'" ['.$diff.'d])';
-
-            $data2 = $this->lokiService->getAuditLogs($params2);
 
             // Check if $data2 is an error response
             if (is_object($data2) && method_exists($data2, 'getStatusCode')) {
@@ -346,10 +421,24 @@ class AuditTrailAPIController extends AppBaseController
             }
 
             $formatedData = collect($formatedData)->sortByDesc('date_time');
+            
+            if(isset($input['isExport']) && $input['isExport']){
+                return $formatedData;
+            }
 
-            return DataTables::of($formatedData)
-                ->addIndexColumn()
-                ->make(true);
+            if(isset($input['isFromTracking']) && $input['isFromTracking']){
+                return DataTables::of($formatedData)
+                    ->filter(function ($query) use ($request) {
+                    })
+                    ->addIndexColumn()
+                    ->make(true);
+            } else {
+
+                return DataTables::of($formatedData)
+                    ->addIndexColumn()
+                    ->make(true);
+            }
+            
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
         }
@@ -486,6 +575,62 @@ class AuditTrailAPIController extends AppBaseController
             return \Excel::create($fileName, function ($excel) use ($reportData) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
                     $sheet->loadView('export_report.user_audit_logs', $reportData);
+                    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+                });
+            })->download('xlsx');
+
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Export event tracking logs to Excel
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function exportEventTrackingLogs(Request $request)
+    {
+        try {
+            // Add isExport flag to request and call auditLogs function
+            $request->merge(['isExport' => true, 'isFromTracking' => true]);
+            
+            // Call auditLogs function which will return formatted data when isExport is true
+            $formatedData = $this->auditLogs($request);
+            
+            // Check if response is an error
+            if (is_object($formatedData) && method_exists($formatedData, 'getStatusCode')) {
+                return $formatedData;
+            }
+            
+            // Check if there's no data to export
+            if (empty($formatedData)) {
+                return $this->sendError(trans('custom.no_event_tracking_logs_found'), 404);
+            }
+            
+            // Get date range filters for displaying in Excel
+            $requestFromDate = $request->input('fromDate');
+            $requestToDate = $request->input('toDate');
+            
+            // Prepare report data for Blade template
+            $reportData = [
+                'data' => $formatedData,
+                'fromDate' => $requestFromDate,
+                'toDate' => $requestToDate,
+            ];
+
+            // Generate Excel file using Blade template
+            $fileName = trans('custom.event_tracking_logs');
+            
+            return \Excel::create($fileName, function ($excel) use ($reportData) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+                    $sheet->loadView('export_report.event_tracking_logs', $reportData);
                     
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {

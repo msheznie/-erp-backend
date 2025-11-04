@@ -11,6 +11,7 @@ class AuditRoutesTenantService
             'api/v1/exportUserAuditLogs',
             'api/v1/navigationAccessLogs',
             'api/v1/exportNavigationAccessLogs',
+            'api/v1/exportEventTrackingLogs',
             'api/v1/addItemAttributes',
             'api/v1/erp_attributes/{erp_attribute}',
             'api/v1/financeItemCategorySubsExpiryUpdate',

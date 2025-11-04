@@ -285,7 +285,8 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
 
             DB::commit();
 
-            $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", "{$input['departmentName']} - {$systemGlCodeScenarioDetail->master->description} has updated", "U", $newValue, $previousValue);
+            $narrationVariables = $input['departmentName'] . ' - ' . $systemGlCodeScenarioDetail->master->description;
+            $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", $narrationVariables, "U", $newValue, $previousValue);
 
             return $this->sendResponse($systemGlCodeScenarioDetail->toArray(), trans('custom.gl_code_updated_successfully'));
         }catch(\Exception $e){

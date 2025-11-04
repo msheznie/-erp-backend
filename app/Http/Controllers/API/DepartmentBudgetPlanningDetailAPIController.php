@@ -546,7 +546,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
-                    "Budget planning detail record has been created",
+                    "",
                     "C",
                     $newValue->toArray(),
                     $oldValue
@@ -560,7 +560,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
-                    "Budget planning detail record has been updated",
+                    "",
                     "U",
                     $newValue->toArray(),
                     $oldValue
@@ -882,7 +882,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $budgetDetailId,
                 $uuid,
                 "department_budget_planning_details_template_data",
-                "Budget planning detail record has been deleted",
+                "",
                 "D",
                 [],
                 $oldValue->toArray()

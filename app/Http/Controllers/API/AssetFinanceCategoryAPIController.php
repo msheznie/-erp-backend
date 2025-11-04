@@ -485,7 +485,7 @@ class AssetFinanceCategoryAPIController extends AppBaseController
         $transactionID = $input['faFinanceCatID'];
         $assetFinanceCategory = AssetFinanceCategory::withoutGlobalScope(ActiveScope::class)->where('faFinanceCatID', $input['faFinanceCatID'])->update($input);
         
-        $this->auditLog($db, $transactionID, $uuid, "erp_fa_financecategory", "Asset Finance Category has updated", "U", $newValue, $previosValue);
+        $this->auditLog($db, $transactionID, $uuid, "erp_fa_financecategory", "", "U", $newValue, $previosValue);
         
         return $this->sendResponse($assetFinanceCategory, trans('custom.update', ['attribute' => trans('custom.asset_finance_categories')]));
     }

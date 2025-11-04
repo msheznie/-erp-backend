@@ -334,7 +334,8 @@ class SegmentMasterAPIController extends AppBaseController
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
             $db = isset($input['db']) ? $input['db'] : '';
 
-            $this->auditLog($db, $id,$uuid, "serviceline", "Segment master ".$segmentMaster->ServiceLineDes." has been deleted", "D", [], $previousValue);
+            $narrationVariables = $segmentMaster->ServiceLineDes;
+            $this->auditLog($db, $id,$uuid, "serviceline", $narrationVariables, "D", [], $previousValue);
 
             DB::commit();
             return $this->sendResponse($id, trans('custom.segment_master_deleted_successfully'));
@@ -1004,7 +1005,8 @@ class SegmentMasterAPIController extends AppBaseController
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                       ->update($data);
 
-        $this->auditLog($db, $input['serviceLineSystemID'],$uuid, "serviceline", "Segment master ".$input['ServiceLineDes']." has been updated", "U", $data, $previousValue);
+        $narrationVariables = $input['ServiceLineDes'];
+        $this->auditLog($db, $input['serviceLineSystemID'],$uuid, "serviceline", $narrationVariables, "U", $data, $previousValue);
 
         if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
             return ['status' => true];

@@ -367,7 +367,8 @@ class ChartOfAccountAPIController extends AppBaseController
                         $data = ChartOfAccountAuditService::validateFieldsByPolicy($newDataValue, $previosDataValue, $policy ,$policyCAc);
                         $previosValue = $data['allowedpreviousValues'];
                         $newValue = $data['allowednewValues'];
-                        $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $previosDataValue['AccountCode']." has updated", "U", $newValue, $previosValue);
+                        $narrationVariables = $previosDataValue['AccountCode'];
+                        $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $narrationVariables, "U", $newValue, $previosValue);
                         return $this->sendResponse([], trans('custom.chart_of_account_updated_successfully_done'));
                     }
 

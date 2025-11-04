@@ -226,7 +226,9 @@ class CompanyDepartmentAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $companyDepartment->departmentSystemID, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been created", "C", $companyDepartment->toArray(), []);
+        // Extract only dynamic variables for narration (static narration = empty string)
+        $narrationVariables = $companyDepartment->departmentDescription;
+        $this->auditLog($db, $companyDepartment->departmentSystemID, $uuid, "company_departments", $narrationVariables, "C", $companyDepartment->toArray(), []);
 
         return $this->sendResponse($companyDepartment->toArray(), trans('custom.company_department_saved_successfully'));
     }
@@ -311,7 +313,9 @@ class CompanyDepartmentAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been updated", "U", $companyDepartment->toArray(), $oldValues);
+        // Extract only dynamic variables for narration
+        $narrationVariables = $companyDepartment->departmentDescription;
+        $this->auditLog($db, $id, $uuid, "company_departments", $narrationVariables, "U", $companyDepartment->toArray(), $oldValues);
 
         return $this->sendResponse($companyDepartment->toArray(), trans('custom.company_department_updated_successfully'));
     }
@@ -390,7 +394,9 @@ class CompanyDepartmentAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "company_departments", "Department master ".$companyDepartment->departmentDescription." has been deleted", "D", [], $previousValue);
+        // Extract only dynamic variables for narration
+        $narrationVariables = $companyDepartment->departmentDescription;
+        $this->auditLog($db, $id, $uuid, "company_departments", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.company_department_deleted_successfully'));
     }

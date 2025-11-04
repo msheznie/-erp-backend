@@ -81,7 +81,7 @@ class DepartmentUserBudgetControlAPIController extends AppBaseController
             // Audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $departmentEmployeeSystemID, $uuid, "department_user_budget_control", "Budget controls updated for user", "U", $selectedControlIds, []);
+            $this->auditLog($db, $departmentEmployeeSystemID, $uuid, "department_user_budget_control", "", "U", $selectedControlIds, []);
 
             DB::commit();
 

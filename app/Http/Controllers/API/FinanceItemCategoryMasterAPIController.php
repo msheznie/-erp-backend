@@ -293,7 +293,8 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
                 $db = isset($input['db']) ? $input['db'] : '';
 
                 if ($input['document_id'] == "SUBCAT") {
-                    $this->auditLog($db, $attributes['id'],$uuid, "erp_attributes", "Attribute ".$input['description']." has created", "C", $masterData, [], $input['document_master_id'], 'financeitemcategorysub');
+                    $narrationVariables = $input['description'];
+                    $this->auditLog($db, $attributes['id'],$uuid, "erp_attributes", $narrationVariables, "C", $masterData, [], $input['document_master_id'], 'financeitemcategorysub');
                 }
 
             DB::commit();

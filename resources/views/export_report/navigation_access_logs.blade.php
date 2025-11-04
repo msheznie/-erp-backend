@@ -2,12 +2,12 @@
     <table>
         <thead>
             <tr>
-                <td colspan="2"><h1 style="text-align: center;">{{ trans('custom.navigation_access_logs') }}</h1></td>
+                <td colspan="9"><h1 style="text-align: center;">{{ trans('custom.navigation_access_logs') }}</h1></td>
                 
             </tr>
             @if(isset($fromDate) && isset($toDate))
             <tr>
-                <td colspan="2"><h4 style="text-align: center;">{{trans('custom.from')}} {{ \App\helper\Helper::dateFormat($fromDate) }} {{trans('custom.to')}} {{ \App\helper\Helper::dateFormat($toDate) }}</h4></td>
+                <td colspan="9"><h4 style="text-align: center;">{{trans('custom.from')}} {{ \App\helper\Helper::dateFormat($fromDate) }} {{trans('custom.to')}} {{ \App\helper\Helper::dateFormat($toDate) }}</h4></td>
             </tr>
             @endif
         </thead>

@@ -29,9 +29,11 @@ use App\Services\AuditLog\ItemMasterAuditService;
 use App\Services\AuditLog\AssetCostAuditService;
 use App\Services\AuditLog\SegmentMasterAuditService;
 use App\Services\AuditLog\SupplierMasterAuditService;
+use App\Services\AuditLog\AuditLogCommonService;
 use Illuminate\Support\Facades\Log;
 use App\Models\AccessTokens;
 use App\Models\Employee;
+use App\Models\ERPLanguageMaster;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -171,28 +173,70 @@ class AuditLogJob implements ShouldQueue
 
         if (!empty($data)) {
             $employee = Employee::find($this->user);
-
             $accessToken = AccessTokens::find($this->tokenId);
 
-            Log::useFiles(storage_path() . '/logs/audit.log');
+            $narrationVariables = $this->narration;
+            
+            $languages = self::getActiveLanguages();
 
-            Log::info('data:', [
-                        'channel' => 'audit',
-                        'transaction_id' => (string) $this->transactionID,
-                        'table' => $this->table,
-                        'user_name' => $employee ? $employee->empName : '-',
-                        'role' => $employee ? Employee::getDesignation($employee->employeeSystemID ?? null) : '-',
-                        'employeeId' => $employee ? $employee->empID : '-',
-                        'tenant_uuid' => $this->tenant_uuid,
-                        'crudType' => $this->crudType,
-                        'narration' => $this->narration,
-                        'session_id' => $accessToken ? $accessToken->session_id : '-',
-                        'date_time' => date('Y-m-d H:i:s'),
-                        'module' => 'finance',
-                        'parent_id' => (string) $this->parentID,
-                        'parent_table' => $this->parentTable,
-                        'data' => json_encode($data),
-                    ]);
+            $docCode = AuditLogCommonService::getDocCode(
+                $this->transactionID,
+                $this->table
+            );
+
+            Log::useFiles(storage_path() . '/logs/audit.log');
+            
+            foreach ($languages as $locale) {
+                $translatedNarration = AuditLogCommonService::translateNarration(
+                    $narrationVariables,  
+                    $this->table,
+                    $this->crudType,
+                    $locale,
+                    $this->parentTable  
+                );
+                
+                
+                $logData = [
+                    'channel' => 'audit',
+                    'transaction_id' => (string) $this->transactionID,
+                    'table' => $this->table,
+                    'user_name' => $employee ? $employee->empName : '-',
+                    'role' => $employee ? Employee::getDesignation($employee->employeeSystemID ?? null) : '-',
+                    'employeeId' => $employee ? $employee->empID : '-',
+                    'tenant_uuid' => $this->tenant_uuid,
+                    'crudType' => $this->crudType,
+                    'narration' => $translatedNarration,
+                    'session_id' => $accessToken ? $accessToken->session_id : '-',
+                    'date_time' => date('Y-m-d H:i:s'),
+                    'module' => 'finance',
+                    'parent_id' => (string) $this->parentID,
+                    'parent_table' => $this->parentTable,
+                    'data' => json_encode($data),
+                    'locale' => $locale,  
+                    'doc_code' => $docCode,
+                ];
+                
+                Log::info('data:', $logData);
+            }
+        }
+    }
+    
+    /**
+     * Get active languages from system
+     * 
+     * @return array
+     */
+    private static function getActiveLanguages()
+    {
+        try {
+            $languages = ERPLanguageMaster::where('isActive', 1)
+                ->pluck('languageShortCode')
+                ->toArray();
+            
+            return !empty($languages) ? $languages : ['en'];
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch active languages: ' . $e->getMessage());
+            return ['en']; 
         }
     }
 }
