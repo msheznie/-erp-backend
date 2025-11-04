@@ -268,26 +268,34 @@ class AuditLogCommonService
      * @param string $locale Language code (not used for doc code, but kept for consistency)
      * @return string Document code or empty string if not found
      */
-    public static function getDocCode($transactionID, $table, $crudType = 'C', $locale = 'en')
+    public static function getDocCompanyCode($transactionID, $table, $parentID, $parentTable, $type = 'docCodeColumn')
     {
         try {
+            $autoId = $transactionID;
             $docCodeInfo = self::getDocCodeMapping($table);
             
             if (empty($docCodeInfo)) {
                 return '';
             }
             
-            if (empty($docCodeInfo['docCodeColumn'])) {
-                return '';
+            if (empty($docCodeInfo[$type])) {
+                $autoId = $parentID;
+                $docCodeInfo = self::getDocCodeMapping($parentTable);
+                if (empty($docCodeInfo)) {
+                    return '';
+                }
+                if (empty($docCodeInfo[$type])) {
+                    return '';
+                }
             }
             
             $record = DB::table($docCodeInfo['tableName'])
-                ->where($docCodeInfo['primaryKey'], $transactionID)
-                ->select($docCodeInfo['docCodeColumn'])
+                ->where($docCodeInfo['primaryKey'], $autoId)
+                ->select($docCodeInfo[$type])
                 ->first();
             
-            if ($record && isset($record->{$docCodeInfo['docCodeColumn']})) {
-                return $record->{$docCodeInfo['docCodeColumn']};
+            if ($record && isset($record->{$docCodeInfo[$type]})) {
+                return $record->{$docCodeInfo[$type]};
             }
             
             return '';
@@ -310,161 +318,184 @@ class AuditLogCommonService
                 return [
                     'tableName' => 'company_departments',
                     'primaryKey' => 'departmentSystemID',
-                    'docCodeColumn' => 'departmentCode'
+                    'docCodeColumn' => 'departmentCode',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'serviceline':
                 return [
                     'tableName' => 'serviceline',
                     'primaryKey' => 'serviceLineSystemID',
-                    'docCodeColumn' => 'ServiceLineCode'
+                    'docCodeColumn' => 'ServiceLineCode',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'chartofaccounts':
                 return [
                     'tableName' => 'chartofaccounts',
                     'primaryKey' => 'chartOfAccountSystemID',
-                    'docCodeColumn' => 'AccountCode'
+                    'docCodeColumn' => 'AccountCode',
+                    'companySystemIdColumn' => 'primaryCompanySystemID'
                 ];
                 
             case 'suppliermaster':
                 return [
                     'tableName' => 'suppliermaster',
                     'primaryKey' => 'supplierCodeSystem',
-                    'docCodeColumn' => 'primarySupplierCode'
+                    'docCodeColumn' => 'primarySupplierCode',
+                    'companySystemIdColumn' => 'primaryCompanySystemID'
                 ];
                 
             case 'itemmaster':
                 return [
                     'tableName' => 'itemmaster',
                     'primaryKey' => 'itemCodeSystem',
-                    'docCodeColumn' => 'primaryCode'
+                    'docCodeColumn' => 'primaryCode',
+                    'companySystemIdColumn' => 'primaryCompanySystemID'
                 ];
                 
             case 'customermaster':
                 return [
                     'tableName' => 'customermaster',
                     'primaryKey' => 'customerCodeSystem',
-                    'docCodeColumn' => 'CutomerCode'
+                    'docCodeColumn' => 'CutomerCode',
+                    'companySystemIdColumn' => 'primaryCompanySystemID'
                 ];
                 
             case 'erp_fa_asset_master':
                 return [
                     'tableName' => 'erp_fa_asset_master',
                     'primaryKey' => 'faID',
-                    'docCodeColumn' => 'faCode'
+                    'docCodeColumn' => 'faCode',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'department_budget_plannings':
                 return [
                     'tableName' => 'department_budget_plannings',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => 'planningCode'
+                    'docCodeColumn' => 'planningCode',
+                    'companySystemIdColumn' => null // No direct column, gets via companyBudgetPlanning relationship
                 ];
                 
             case 'erp_workflow_configurations':
                 return [
                     'tableName' => 'erp_workflow_configurations',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => 'workflowName'
+                    'docCodeColumn' => 'workflowName',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'budget_templates':
                 return [
                     'tableName' => 'budget_templates',
                     'primaryKey' => 'budgetTemplateID',
-                    'docCodeColumn' => 'description'
+                    'docCodeColumn' => 'description',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'financeitemcategorysub':
                 return [
                     'tableName' => 'financeitemcategorysub',
                     'primaryKey' => 'itemCategorySubID',
-                    'docCodeColumn' => 'categoryDescription'
+                    'docCodeColumn' => 'categoryDescription',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'erp_attributes':
                 return [
                     'tableName' => 'erp_attributes',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => 'description'
+                    'docCodeColumn' => 'description',
+                    'companySystemIdColumn' => null // No direct company column
                 ];
                 
             case 'financeitemcategorysubassigned':
                 return [
                     'tableName' => 'financeitemcategorysubassigned',
                     'primaryKey' => 'itemCategoryAssignedID',
-                    'docCodeColumn' => 'categoryDescription'
+                    'docCodeColumn' => 'categoryDescription',
+                    'companySystemIdColumn' => null // No direct company column
                 ];
                 
             case 'erp_fa_financecategory':
                 return [
                     'tableName' => 'erp_fa_financecategory',
                     'primaryKey' => 'faFinanceCatID',
-                    'docCodeColumn' => 'financeCatDescription'
+                    'docCodeColumn' => 'financeCatDescription',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'company_departments_segments':
                 return [
                     'tableName' => 'company_departments_segments',
                     'primaryKey' => 'departmentSegmentSystemID',
-                    'docCodeColumn' => null // Junction table, no document code
+                    'docCodeColumn' => null, // Junction table, no document code
+                    'companySystemIdColumn' => null // Junction table, no direct company column
                 ];
                 
             case 'company_departments_employees':
                 return [
                     'tableName' => 'company_departments_employees',
                     'primaryKey' => 'departmentEmployeeSystemID',
-                    'docCodeColumn' => null // Junction table, no document code
+                    'docCodeColumn' => null, // Junction table, no document code
+                    'companySystemIdColumn' => null // Junction table, no direct company column
                 ];
                 
             case 'department_budget_templates':
                 return [
                     'tableName' => 'department_budget_templates',
                     'primaryKey' => 'departmentBudgetTemplateID',
-                    'docCodeColumn' => null // Junction table, no document code
+                    'docCodeColumn' => null, // Junction table, no document code
+                    'companySystemIdColumn' => null // Junction table, no direct company column
                 ];
                 
             case 'budget_template_columns':
                 return [
                     'tableName' => 'budget_template_columns',
                     'primaryKey' => 'templateColumnID',
-                    'docCodeColumn' => 'fieldCode'
+                    'docCodeColumn' => 'fieldCode',
+                    'companySystemIdColumn' => null // No direct company column
                 ];
                 
             case 'erp_workflow_configuration_hod_actions':
                 return [
                     'tableName' => 'erp_workflow_configuration_hod_actions',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => null // Junction table, no document code
+                    'docCodeColumn' => null, // Junction table, no document code
+                    'companySystemIdColumn' => null // Junction table, no direct company column
                 ];
                 
             case 'department_budget_planning_details_template_data':
                 return [
                     'tableName' => 'department_budget_planning_details_template_data',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => null // No document code available
+                    'docCodeColumn' => null, // No document code available
+                    'companySystemIdColumn' => null // No direct company column
                 ];
                 
             case 'chart_of_account_config':
                 return [
                     'tableName' => 'chart_of_account_config',
                     'primaryKey' => 'transactionID',
-                    'docCodeColumn' => null // No document code available
+                    'docCodeColumn' => null, // No document code available
+                    'companySystemIdColumn' => null // No direct company column
                 ];
                 
             case 'department_user_budget_control':
                 return [
                     'tableName' => 'department_user_budget_control',
                     'primaryKey' => 'id',
-                    'docCodeColumn' => null // Junction/configuration table, no document code
+                    'docCodeColumn' => null, // Junction/configuration table, no document code
+                    'companySystemIdColumn' => null // Junction/configuration table, no direct company column
                 ];
                 
             default:
                 return [
                     'tableName' => $table,
                     'primaryKey' => 'id',
-                    'docCodeColumn' => null
+                    'docCodeColumn' => null,
+                    'companySystemIdColumn' => null
                 ];
         }
     }

@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use App\helper\CommonJobService;
+use Illuminate\Support\Str;
 
 class AuthAuditLogJob implements ShouldQueue
 {
@@ -75,6 +76,7 @@ class AuthAuditLogJob implements ShouldQueue
             foreach ($eventDataArray as $eventData) {
                 $locale = $eventData['locale'] ?? 'en';
                 $translatedData = AuthAuditService::translateEventData($eventData, $locale);
+                $translatedData['log_uuid'] = (string) bin2hex(random_bytes(16));
                 Log::info('data:', $translatedData);
             }
         } catch (\Exception $e) {

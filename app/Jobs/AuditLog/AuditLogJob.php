@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\AccessTokens;
 use App\Models\Employee;
 use App\Models\ERPLanguageMaster;
+use Illuminate\Support\Str;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -179,9 +180,20 @@ class AuditLogJob implements ShouldQueue
             
             $languages = self::getActiveLanguages();
 
-            $docCode = AuditLogCommonService::getDocCode(
+            $docCode = AuditLogCommonService::getDocCompanyCode(
                 $this->transactionID,
-                $this->table
+                $this->table,
+                $this->parentID,
+                $this->parentTable,
+                'docCodeColumn'
+            );
+
+            $companySystemId = AuditLogCommonService::getDocCompanyCode(
+                $this->transactionID,
+                $this->table,
+                $this->parentID,
+                $this->parentTable,
+                'companySystemIdColumn'
             );
 
             Log::useFiles(storage_path() . '/logs/audit.log');
@@ -194,7 +206,6 @@ class AuditLogJob implements ShouldQueue
                     $locale,
                     $this->parentTable  
                 );
-                
                 
                 $logData = [
                     'channel' => 'audit',
@@ -213,7 +224,9 @@ class AuditLogJob implements ShouldQueue
                     'parent_table' => $this->parentTable,
                     'data' => json_encode($data),
                     'locale' => $locale,  
+                    'company_system_id' => $companySystemId,
                     'doc_code' => $docCode,
+                    'log_uuid' => bin2hex(random_bytes(16)),
                 ];
                 
                 Log::info('data:', $logData);

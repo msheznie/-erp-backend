@@ -335,6 +335,10 @@ class AuditTrailAPIController extends AppBaseController
                     $params .= ' | employeeId="'.$input['employeeId'].'"';
                 }
 
+                if(isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != ''){
+                    $params .= ' | company_system_id="'.$input['companyId'].'"';
+                }
+
                 $params .= ' | locale="'.$locale.'"';
                 
                 $searchValue = $request->input('search.value');
@@ -392,10 +396,6 @@ class AuditTrailAPIController extends AppBaseController
 
             }
 
-
-
-
-
             // Check if $data is an error response
             if (is_object($data) && method_exists($data, 'getStatusCode')) {
                 return $data;
@@ -421,6 +421,9 @@ class AuditTrailAPIController extends AppBaseController
             }
 
             $formatedData = collect($formatedData)->sortByDesc('date_time');
+
+            //make the formatedData unique by log_uuid
+            $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
             
             if(isset($input['isExport']) && $input['isExport']){
                 return $formatedData;
@@ -515,6 +518,9 @@ class AuditTrailAPIController extends AppBaseController
         $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
             return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
         })->values()->all();
+
+        //make the formatedData unique by log_uuid
+        $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
         
         return $formatedData;
     }
@@ -729,6 +735,9 @@ class AuditTrailAPIController extends AppBaseController
         $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
             return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
         })->values()->all();
+
+        //make the formatedData unique by log_uuid
+        $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
         
         return $formatedData;
     }

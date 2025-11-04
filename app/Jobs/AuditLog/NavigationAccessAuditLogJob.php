@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class NavigationAccessAuditLogJob implements ShouldQueue
 {
@@ -91,6 +92,7 @@ class NavigationAccessAuditLogJob implements ShouldQueue
             
             // Write logs for each language
             foreach ($eventDataArray as $eventData) {
+                $eventData['log_uuid'] = (string) bin2hex(random_bytes(16));
                 Log::info('data:', $eventData);
             }
         } catch (\Exception $e) {

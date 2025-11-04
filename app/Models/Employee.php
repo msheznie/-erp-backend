@@ -395,11 +395,17 @@ class Employee extends Model
 
     public static function getDesignation($employeeSystemID)
     {
-        $empMaster = Employee::with(['hr_emp' => function ($query) {
+        $empMaster = Employee::with(['emp_company', 'desi_master' => function ($query) {
+            $query->with('designation');
+        }, 'hr_emp' => function ($query) {
             $query->with('designation');
         }])->where('employeeSystemID', $employeeSystemID)->first();
     
-        return $empMaster->hr_emp->designation->designation ?? '';
+        if($empMaster->emp_company && $empMaster->emp_company->isHrmsIntergrated){
+            return $empMaster->hr_emp->designation->designation ?? '';
+        } else {    
+            return $empMaster->desi_master->designation->designation ?? '';
+        }
     }
     
 }
