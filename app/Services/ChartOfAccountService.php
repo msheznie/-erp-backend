@@ -21,51 +21,84 @@ class ChartOfAccountService
     {
         $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails.budgetTemplateGl', 'workflow')->find($budgetPlanningId);
         
-        if (!$budgetPlanning) {
+        if (!$budgetPlanning || !$budgetPlanning->budgetPlanningDetails) {
             return [];
         }
 
         $chartOfAccountSystemIDs = [];
+        $isMethod1 = $budgetPlanning->workflow && $budgetPlanning->workflow->method == 1;
         
-        if ($budgetPlanning->workflow && $budgetPlanning->workflow->method == 1) {
-            if ($budgetPlanning && $budgetPlanning->budgetPlanningDetails) {
-                foreach ($budgetPlanning->budgetPlanningDetails as $budgetPlanningDetail) {
-                    if (!empty($budgetPlanningDetail->budgetTemplateGl)) {
-                        if ($budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID']) {
-                            $chartOfAccounts = ChartOfAccount::where('chartOfAccountSystemID', $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID'])
-                                ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription')
-                                ->first();
-                            
-                            $companySegment = CompanyDepartmentSegment::find($budgetPlanningDetail->department_segment_id);
-                            
-                            if ($chartOfAccounts) {
-                                array_push($chartOfAccountSystemIDs, [
-                                    'chartOfAccountSystemID' => $budgetPlanningDetail->id,
-                                    'AccountDescription' => $chartOfAccounts->AccountCode . ' - ' . $chartOfAccounts->AccountDescription,
-                                    'AccountCode' => SegmentMaster::find($companySegment->serviceLineSystemID)->ServiceLineDes
-                                ]);
-                            }
-                        }
+        // Collect all chartOfAccountSystemIDs and department_segment_ids first
+        $chartOfAccountIds = [];
+        $departmentSegmentIds = [];
+        
+        foreach ($budgetPlanning->budgetPlanningDetails as $budgetPlanningDetail) {
+            if (!empty($budgetPlanningDetail->budgetTemplateGl) && 
+                $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID']) {
+                $chartOfAccountIds[] = $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID'];
+                
+                if ($isMethod1 && $budgetPlanningDetail->department_segment_id) {
+                    $departmentSegmentIds[] = $budgetPlanningDetail->department_segment_id;
+                }
+            }
+        }
+        
+        if (empty($chartOfAccountIds)) {
+            return [];
+        }
+        
+        // Bulk query for all ChartOfAccounts
+        $chartOfAccountsMap = ChartOfAccount::whereIn('chartOfAccountSystemID', array_unique($chartOfAccountIds))
+            ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription')
+            ->get()
+            ->keyBy('chartOfAccountSystemID');
+        
+        // For method 1, bulk query for segments
+        $segmentsMap = [];
+        if ($isMethod1 && !empty($departmentSegmentIds)) {
+            $companySegments = CompanyDepartmentSegment::whereIn('departmentSegmentSystemID', array_unique($departmentSegmentIds))
+                ->get()
+                ->keyBy('departmentSegmentSystemID');
+            
+            $serviceLineIds = $companySegments->pluck('serviceLineSystemID')->filter()->unique()->toArray();
+            
+            if (!empty($serviceLineIds)) {
+                $segmentMasters = SegmentMaster::whereIn('serviceLineSystemID', $serviceLineIds)
+                    ->get()
+                    ->keyBy('serviceLineSystemID');
+                
+                // Build segments map
+                foreach ($companySegments as $segment) {
+                    if ($segment->serviceLineSystemID && isset($segmentMasters[$segment->serviceLineSystemID])) {
+                        $segmentsMap[$segment->departmentSegmentSystemID] = $segmentMasters[$segment->serviceLineSystemID]->ServiceLineDes;
                     }
                 }
             }
-        } else {
-            if ($budgetPlanning && $budgetPlanning->budgetPlanningDetails) {
-                foreach ($budgetPlanning->budgetPlanningDetails as $budgetPlanningDetail) {
-                    if (!empty($budgetPlanningDetail->budgetTemplateGl)) {
-                        if ($budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID']) {
-                            $chartOfAccounts = ChartOfAccount::where('chartOfAccountSystemID', $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID'])
-                                ->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription')
-                                ->first();
-                            
-                            if ($chartOfAccounts) {
-                                array_push($chartOfAccountSystemIDs, [
-                                    'chartOfAccountSystemID' => $budgetPlanningDetail->budgetTemplateGl['depBudgetTemplateGlID'],
-                                    'AccountDescription' => $chartOfAccounts->AccountDescription,
-                                    'AccountCode' => $chartOfAccounts->AccountCode
-                                ]);
-                            }
-                        }
+        }
+        
+        // Build result array using the maps
+        foreach ($budgetPlanning->budgetPlanningDetails as $budgetPlanningDetail) {
+            if (!empty($budgetPlanningDetail->budgetTemplateGl) && 
+                $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID']) {
+                
+                $chartOfAccountId = $budgetPlanningDetail->budgetTemplateGl['chartOfAccountSystemID'];
+                $chartOfAccount = $chartOfAccountsMap[$chartOfAccountId] ?? null;
+                
+                if ($chartOfAccount) {
+                    if ($isMethod1) {
+                        $segmentDescription = $segmentsMap[$budgetPlanningDetail->department_segment_id] ?? 'N/A';
+                        
+                        $chartOfAccountSystemIDs[] = [
+                            'chartOfAccountSystemID' => $budgetPlanningDetail->id,
+                            'AccountDescription' => $chartOfAccount->AccountCode . ' - ' . $chartOfAccount->AccountDescription,
+                            'AccountCode' => $segmentDescription
+                        ];
+                    } else {
+                        $chartOfAccountSystemIDs[] = [
+                            'chartOfAccountSystemID' => $budgetPlanningDetail->budgetTemplateGl['depBudgetTemplateGlID'],
+                            'AccountDescription' => $chartOfAccount->AccountDescription,
+                            'AccountCode' => $chartOfAccount->AccountCode
+                        ];
                     }
                 }
             }
@@ -113,7 +146,7 @@ class ChartOfAccountService
                             array_push($chartOfAccountSystemIDs, [
                                 'chartOfAccountSystemID' => $budgetPlanningDetail->id,
                                 'AccountDescription' => $chartOfAccounts->AccountCode . ' - ' . $chartOfAccounts->AccountDescription,
-                                'AccountCode' => SegmentMaster::find($companySegment->serviceLineSystemID)->ServiceLineDes
+                                'AccountCode' => (!empty($companySegment) && !empty($companySegment->serviceLineSystemID)) ? SegmentMaster::find($companySegment->serviceLineSystemID)->ServiceLineDes : 'N/A'
                             ]);
                         }
                     }

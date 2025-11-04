@@ -395,11 +395,11 @@ class Employee extends Model
 
     public static function getDesignation($employeeSystemID)
     {
-        $empMaster = Employee::with(['desi_master' => function ($query) {
+        $empMaster = Employee::with(['hr_emp' => function ($query) {
             $query->with('designation');
         }])->where('employeeSystemID', $employeeSystemID)->first();
     
-        return $empMaster->desi_master->designation->designation ?? '';
+        return $empMaster->hr_emp->designation->designation ?? '';
     }
     
 }
