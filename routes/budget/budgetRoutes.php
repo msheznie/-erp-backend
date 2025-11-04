@@ -130,7 +130,6 @@ Route::post('deleteTemplateDetailAttachment', 'BudgetPlanningDetailTempAttachmen
 Route::post('updateBudgetTemplateComment', 'BudgetTemplateCommentAPIController@updateBudgetTemplateComment')->name('Update budget template comment');
 
 Route::post('updateFinanceTeamStatus', 'DepartmentBudgetPlanningDetailAPIController@updateFinanceTeamStatus')->name('Update finance team status');
-Route::post('getChartofAccountsByBudget', 'DepartmentBudgetPlanningDetailAPIController@getChartofAccountsByBudget');
 Route::post('getChartOfAccountsByRevisionGlSections', 'DepartmentBudgetPlanningDetailAPIController@getChartOfAccountsByRevisionGlSections')->name('Get chart of accounts by revision GL sections');
 
 // Department Budget Detail Comments Routes
@@ -144,3 +143,9 @@ Route::get('department-budget-detail-comments/paginated', 'DepartmentBudgetDetai
 Route::get('department-budget-detail-comments/recent', 'DepartmentBudgetDetailCommentAPIController@getRecentComments')->name('Get recent department budget detail comments');
 Route::post('department-budget-detail-comments/resolve', 'DepartmentBudgetDetailCommentAPIController@resolve')->name('Resolve department budget detail comment');
 Route::resource('department-budget-detail-comments', 'DepartmentBudgetDetailCommentAPIController');
+
+Route::group(['middleware' => 'max_memory_limit'], function () {
+    Route::group(['middleware' => 'max_execution_limit'], function () {
+        Route::post('getChartofAccountsByBudget', 'DepartmentBudgetPlanningDetailAPIController@getChartofAccountsByBudget')->name('Get chart of accounts by budget');   
+    });
+});
