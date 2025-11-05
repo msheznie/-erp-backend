@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CommonJobService;
 use App\helper\CompanyService;
+use App\Jobs\UpdateUsersLoginTypeJob;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateEmployeeAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeAPIRequest;
@@ -1103,17 +1104,15 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
             try {
                 $loginType = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();
 
-                CommonJobService::db_switch($tenantDb);
-
-                User::chunk(50, function($users) use ($loginType) {
-                    foreach ($users as $user) {
-                        $user->loginType = $loginType->loginType;
-                        $user->save();
-                    }
-                });
+                if ($loginType && isset($loginType->loginType)) {
+                    // Dispatch job to update users login type
+                    UpdateUsersLoginTypeJob::dispatch($tenantDb, $loginType->loginType, $tenant->id);
+                } else {
+                    Log::warning("No login type found for tenant: " . $tenantDb);
+                }
 
             } catch (\Exception $e) {
-                Log::error("Error updating login type for tenant: " . $tenantDb . " - " . $e->getMessage());
+                Log::error("Error dispatching update login type job for tenant: " . $tenantDb . " - " . $e->getMessage());
             }
         }
     }
