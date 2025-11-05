@@ -189,7 +189,7 @@
         }
 
         .footer {
-            bottom: 40px;
+            bottom: 2px;
         }
 
         .pagenum:before {
