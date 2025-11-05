@@ -72,14 +72,27 @@ class BudgetPermissionService
 
                 // only get permission if budgetPlanningID is set
                 if (isset($input['budgetPlanningID'])) {
-                    $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+                    $budgetPlanning = DepartmentBudgetPlanning::with('timeExtensionRequests')->find($input['budgetPlanningID']);
+
+                    // Get the latest new_time from approved time extension requests (status = 2)
+                    $latestExtensionTime = null;
+                    if ($budgetPlanning->timeExtensionRequests->count() > 0) {
+                        $approvedExtensions = $budgetPlanning->timeExtensionRequests->where('status', 2);
+                        if ($approvedExtensions->count() > 0) {
+                            // Sort by new_time descending and get the first (latest) one
+                            $latestExtension = $approvedExtensions->sortByDesc('new_time')->first();
+                            $latestExtensionTime = $latestExtension ? $latestExtension->new_time : null;
+                        }
+                    }
 
                     $assignedDepartmentByBudget = CompanyDepartmentEmployee::with(['department'])->where('employeeSystemID',Auth::user()->employee_id)
                                                     ->where('isHOD',true)
                                                     ->where('isActive', 1)
                                                     ->first();
 
-                    if($budgetPlanning->submissionDate <= Carbon::today()->format('Y-m-d'))
+                    // Use the latest extension time if available, otherwise use original submission date
+                    $effectiveSubmissionDate = $latestExtensionTime ? Carbon::parse($latestExtensionTime)->format('Y-m-d') : $budgetPlanning->submissionDate;
+                    if($effectiveSubmissionDate <= Carbon::today()->format('Y-m-d'))
                     {
                         $userPermissions['hodUser']['isActive'] = false;
                     }

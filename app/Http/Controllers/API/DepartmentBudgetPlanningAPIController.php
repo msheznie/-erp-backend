@@ -1222,7 +1222,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             
             // Update DepartmentBudgetPlanning's submissionDate
-            $departmentBudgetPlanning->submissionDate = $newSubmissionDate;
+            // $departmentBudgetPlanning->submissionDate = $newSubmissionDate;
             
             // Check if submission date is less than current date, set isActive to false
             $currentDate = now();
@@ -1230,12 +1230,12 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 $departmentBudgetPlanning->isActive = false;
             }
             
-            $departmentBudgetPlanning->save();
+            // $departmentBudgetPlanning->save();
             
             // Update all related DepartmentBudgetPlanningDetails' time_for_submission
-            $departmentBudgetPlanning->budgetPlanningDetails()->update([
-                'time_for_submission' => $newSubmissionDate
-            ]);
+            // $departmentBudgetPlanning->budgetPlanningDetails()->update([
+            //     'time_for_submission' => $newSubmissionDate
+            // ]);
         }
     }
 }
