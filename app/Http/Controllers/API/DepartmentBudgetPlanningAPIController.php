@@ -182,7 +182,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess'])->findWithoutFail($id);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy'])->findWithoutFail($id);
 
         $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
         if (empty($departmentBudgetPlanning)) {
@@ -372,9 +372,37 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
 
-        // Validate required fields
-        if (!isset($input['budgetPlanningId']) || !isset($input['workStatus'])) {
-            return $this->sendError('Budget Planning ID and Status are required');
+        if(isset($input['confirmed_yn'])) {
+            if(!isset($input['budgetPlanningId'])) {
+                return $this->sendError('Budget Planning ID is required');
+            }
+
+            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions')->findWithoutFail($input['budgetPlanningId']);
+
+            if($departmentBudgetPlanning->financeTeamStatus != 4 && $input['confirmed_yn'] == 1) {
+                return $this->sendError('Finance Team Status must be completed before confirming');
+            }
+
+            if($input['confirmed_yn'] == 0) {
+                $departmentBudgetPlanning->confirmed_yn = 0;
+                $departmentBudgetPlanning->confirmed_by = null;
+                $departmentBudgetPlanning->confirmed_at = null;
+                $departmentBudgetPlanning->save();
+                return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning reopened successfully');
+            }
+
+            $departmentBudgetPlanning->confirmed_yn = 1;
+            $departmentBudgetPlanning->confirmed_by = Auth::user()->employee_id;
+            $departmentBudgetPlanning->confirmed_at = now();
+            $departmentBudgetPlanning->save();
+
+            return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning confirmed successfully');
+
+        }else {
+            // Validate required fields
+            if (!isset($input['budgetPlanningId']) || !isset($input['workStatus'])) {
+                return $this->sendError('Budget Planning ID and Status are required');
+            }
         }
 
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
