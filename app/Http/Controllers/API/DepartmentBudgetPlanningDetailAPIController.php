@@ -1045,7 +1045,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         // Define valid progressions
         $validProgressions = [
             1 => [2], // From Open: can go to Under Review, Sent Back for Revision, or Completed
-            2 => [3],    // From Under Review: can go to Sent Back for Revision or Completed
+            2 => [3,4],    // From Under Review: can go to Sent Back for Revision or Completed
             3 => [4],       // From Sent Back for Revision: can go back to Completed
             4 => []         // From Completed: no further changes allowed
         ];
