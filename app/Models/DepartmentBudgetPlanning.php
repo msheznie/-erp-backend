@@ -135,7 +135,10 @@ class DepartmentBudgetPlanning extends Model
         'status',
         'planningCode',
         'workStatus',
-        'financeTeamStatus'
+        'financeTeamStatus',
+        'confirmed_yn',
+        'confirmed_by',
+        'confirmed_at',
     ];
 
     /**
@@ -156,7 +159,10 @@ class DepartmentBudgetPlanning extends Model
         'status' => 'integer',
         'planningCode' => 'string',
         'workStatus' => 'string',
-        'financeTeamStatus' => 'integer'
+        'financeTeamStatus' => 'integer',
+        'confirmed_yn' => 'integer',
+        'confirmed_by' => 'integer',
+        'confirmed_date' => 'date',
     ];
 
     /**
@@ -189,6 +195,10 @@ class DepartmentBudgetPlanning extends Model
 
     public function workflow() {
         return $this->belongsTo(WorkflowConfiguration::class, 'workflowID', 'id');
+    }
+
+    public function confirmedBy() {
+        return $this->belongsTo(Employee::class, 'confirmed_by', 'employeeSystemID');
     }
 
     /**

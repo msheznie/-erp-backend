@@ -701,7 +701,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 //                            ->where('status',1)
                             ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess','confirmedBy'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
