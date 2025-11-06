@@ -398,20 +398,23 @@ class AuthAuditService
             $os = 'iOS';
         }
 
-        // Browser detection
         $browser = 'Unknown';
-        if (preg_match('/chrome\/([0-9.]+)/i', $userAgent, $match)) {
+        if (preg_match('/edg\/([0-9.]+)/i', $userAgent, $match)) {
+            // Modern Edge format: Edg/version (Edge includes both Chrome/ and Edg/)
+            $browser = 'Edge/' . $match[1];
+        } elseif (preg_match('/edge\/([0-9.]+)/i', $userAgent, $match)) {
+            // Older Edge format: edge/version (legacy Edge)
+            $browser = 'Edge/' . $match[1];
+        } elseif (preg_match('/chrome\/([0-9.]+)/i', $userAgent, $match)) {
+            // Chrome: only match if Edg/ is not present (Edge has both Chrome/ and Edg/)
             $browser = 'Chrome/' . $match[1];
         } elseif (preg_match('/firefox\/([0-9.]+)/i', $userAgent, $match)) {
             $browser = 'Firefox/' . $match[1];
         } elseif (preg_match('/safari\/([0-9.]+)/i', $userAgent, $match)) {
-            if (!preg_match('/chrome/i', $userAgent)) {
+            // Safari: only match if Chrome/ and Edg/ are not present
+            if (!preg_match('/chrome|edg/i', $userAgent)) {
                 $browser = 'Safari/' . $match[1];
             }
-        } elseif (preg_match('/edge\/([0-9.]+)/i', $userAgent, $match)) {
-            $browser = 'Edge/' . $match[1];
-        } elseif (preg_match('/edg\/([0-9.]+)/i', $userAgent, $match)) {
-            $browser = 'Edge/' . $match[1];
         }
 
         return "$os $browser";
