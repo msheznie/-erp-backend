@@ -1119,4 +1119,15 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
         return 'Users login type updated successfully';
     }
     
+    public function getNotDischargedEmployeeswithoutCompany() {
+        $employees = Employee::where('discharegedYN', 0)->get();
+        return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+    }
+
+    public function getNotDischargedEmployeesWithCompany(Request $request) {
+        $input = $request->all();
+        $companyId = $input['selectedCompanyId'];
+        $employees = Employee::where('discharegedYN', 0)->where('empCompanySystemID', $companyId)->get();
+        return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+    }
 }

@@ -260,6 +260,8 @@ Route::group([], function(){
         });
     });
     Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees')->name('Get ALL Employees');
+    Route::post('getNotDischargedEmployeeswithoutCompany', 'EmployeeAPIController@getNotDischargedEmployeeswithoutCompany')->name('Get Not Discharged Employees without Company');
+    Route::post('getNotDischargedEmployeesWithCompany', 'EmployeeAPIController@getNotDischargedEmployeesWithCompany')->name('Get Not Discharged Employees with Company');
     Route::post('getCashFlowReports', 'CashFlowReportAPIController@getCashFlowReports')->name('Get Cash Flow Reports');
     Route::post('cashFlowConfirmation', 'CashFlowReportAPIController@cashFlowConfirmation')->name('Cash flow confirmation');
     Route::post('getCashFlowPullingItems', 'CashFlowReportAPIController@getCashFlowPullingItems')->name('Get Cash Flow pulling items');
