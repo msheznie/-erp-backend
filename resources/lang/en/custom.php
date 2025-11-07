@@ -1352,7 +1352,7 @@ return
     'customer_master_reffered_backs' => 'Customer Master Reffered Backs',
     'customer_master_retrieved_successfully' => 'Customer Master retrieved successfully',
     'customer_masters_retrieved_successfully' => 'Customer Masters retrieved successfully',
-    'customer_name' => 'Customer Name',
+    'customer_name' => 'Customer name',
     'customer_not_found' => 'Customer not found',
     'customer_not_found_1' => 'Customer not found.',
     'customer_receive_payment' => 'Customer Receive Payment',
@@ -7057,7 +7057,7 @@ return
     "this_category_can_be_delete" => "This category can be delete",
     // Customer Master Export Column Headers
     'primary_code' => 'Primary Code',
-    'secondary_code' => 'Secondary Code',
+    'secondary_code' => 'Secondary code',
     'city' => 'City',
     // Chart of Account Export translations
     'category_bl_or_pl' => 'Category BL or PL',

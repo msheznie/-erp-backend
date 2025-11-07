@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
+use App\Models\CustomerMasterCategory;
 use App\Models\CustomerInvoice;
 use App\Models\CustomerMaster;
 use App\Models\CustomerReceivePayment;
@@ -22,6 +23,13 @@ use App\Services\UserTypeService;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\CountryMaster;
+use App\Models\CurrencyMaster;
+use App\Models\CustomerContactDetails;
+use App\Models\SupplierContactType;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class CustomerMasterAPIService
 {
@@ -461,5 +469,594 @@ class CustomerMasterAPIService
                 'code' => 500
             ];
         }
+    }
+
+    public static function createCustomerMasterFromAPI($data, $manageTransaction = true): array {
+        $systemUser = UserTypeService::getSystemEmployee();
+        $db = $data['db'] ?? "";
+
+        $document = DocumentMaster::where('documentID', 'CUSTM')->first();
+        $data['documentSystemID'] = $document->documentSystemID;
+        $data['documentID'] = $document->documentID;
+        $data['createdUserID'] = $systemUser->empID;
+        $data['createdPcID'] = gethostname();
+
+        $customerMaster = CustomerMaster::create($data);
+
+        $currencyID = isset($data['currencyID']) && $data['currencyID'] !== null ? $data['currencyID'] : 1;
+        $isDefault = isset($data['currencyIsDefault']) && $data['currencyIsDefault'] !== null ? $data['currencyIsDefault'] : -1;
+
+        CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
+            'customerCode' => $customerMaster->CutomerCode,
+            'currencyID' => $currencyID,
+            'isDefault' => $isDefault,
+            'isAssigned' => -1,
+            'createdBy' => $systemUser->empID
+        ]);
+
+        if (isset($data['contactDetails']) && is_array($data['contactDetails']) && !empty($data['contactDetails'])) {
+            $defaultIndex = null;
+            foreach ($data['contactDetails'] as $index => $contact) {
+                if (isset($contact['isDefault']) && $contact['isDefault'] == -1) {
+                    if ($defaultIndex === null) {
+                        $defaultIndex = $index;
+                    } else {
+                        $data['contactDetails'][$index]['isDefault'] = 0;
+                    }
+                }
+            }
+            
+            if ($defaultIndex === null && count($data['contactDetails']) > 0) {
+                $defaultIndex = 0;
+                $data['contactDetails'][0]['isDefault'] = -1;
+            }
+            
+            if ($defaultIndex !== null) {
+                CustomerContactDetails::where('customerID', $customerMaster->customerCodeSystem)
+                    ->where('isDefault', -1)
+                    ->update(['isDefault' => 0]);
+            }
+            
+            foreach ($data['contactDetails'] as $contact) {
+                CustomerContactDetails::create([
+                    'customerID' => $customerMaster->customerCodeSystem,
+                    'contactTypeID' => $contact['contactTypeID'],
+                    'contactPersonName' => $contact['contactPersonName'],
+                    'contactPersonTelephone' => $contact['contactPersonTelephone'],
+                    'contactPersonFax' => $contact['contactPersonFax'] ?? null,
+                    'contactPersonEmail' => $contact['contactPersonEmail'],
+                    'isDefault' => $contact['isDefault'] ?? 0
+                ]);
+            }
+        }
+
+        $customerMaster['confirmedYN'] = 1;
+        $customerMaster['isAutoCreateDocument'] = true;
+
+        $updateCustomerMaster = CustomerMasterAPIService::updateCustomerMaster($customerMaster);
+
+        if(!$updateCustomerMaster['status']) {
+            if ($manageTransaction) {
+                DB::rollback();
+            }
+            return [
+                'status' => false,
+                'message' => $updateCustomerMaster['message'],
+                'code' => $updateCustomerMaster['code'] ?? 404
+            ];
+        }
+
+        $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
+        $autoApproveParams['db'] = $db;
+
+        $approveDocument = Helper::approveDocument($autoApproveParams);
+        if (!$approveDocument["success"]) {
+            if ($manageTransaction) {
+                DB::rollBack();
+            }
+            return [
+                'status' => false,
+                'message' => $approveDocument['message']
+            ];
+        }
+
+        if ($manageTransaction) {
+            DB::commit();
+        }
+        return [
+            'status' => true,
+            'data' => $customerMaster->refresh(),
+            'message' => 'Customer Master created successfully'
+        ];
+
+    }
+
+    public static function validateMasterData($request) {
+
+        $errorData = [];
+        $systemUser = UserTypeService::getSystemEmployee();
+        $companyId = $request['company_id'] ?? null;
+        $receivableAccount = isset($request['receivable_account']) ? $request['receivable_account'] : null;
+        $advanceAccount = isset($request['advance_account']) ? $request['advance_account'] : null;
+        $customerCountry = isset($request['customer_country']) ? $request['customer_country'] : null;
+        $creditLimit = isset($request['credit_limit']) ? $request['credit_limit'] : null;
+        $creditDays = isset($request['credit_days']) ? $request['credit_days'] : null;
+        $customerCategory = isset($request['customer_category']) ? $request['customer_category'] : null;
+        $customerRegistrationNo = isset($request['customer_registration_no']) ? $request['customer_registration_no'] : null;
+        $customerRegistrationExpiryDate = isset($request['customer_registration_expiry_date']) ? $request['customer_registration_expiry_date'] : null;
+        $vatEligible = isset($request['vat_eligible']) ? $request['vat_eligible'] : null;
+        $vatNumber = isset($request['vat_number']) ? $request['vat_number'] : null;
+        $vatPercentage = isset($request['vat_percentage']) ? $request['vat_percentage'] : null;
+
+        if (!empty($companyId)) {
+            $company = Company::where('companySystemID', $companyId)->first();
+
+            if(empty($company)){
+                $errorData[] = [
+                    'field' => "company_id",
+                    'message' => [trans('custom.company_not_found')]
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => "company_id",
+                'message' => [trans('custom.company_not_found')]
+            ];
+        }
+
+        if (!isset($request['secondary_code']) || $request['secondary_code'] === '' || $request['secondary_code'] === null) {
+            $errorData[] = [
+                'field' => "secondary_code",
+                'message' => [trans('custom.secondary_code') . ' is mandatory']
+            ];
+        } else {
+            $secondaryCode = $request['secondary_code'];
+            $existingCustomer = CustomerMaster::where('customerShortCode', $secondaryCode)->first();
+            if ($existingCustomer) {
+                $errorData[] = [
+                    'field' => "secondary_code",
+                    'message' => [trans('custom.secondary_code_already_exists')]
+                ];
+            } else {
+                $request['customerShortCode'] = $secondaryCode;
+            }
+        }
+
+        if (!isset($request['customer_name']) || $request['customer_name'] === '' || $request['customer_name'] === null) {
+            $errorData[] = [
+                'field' => "customer_name",
+                'message' => [trans('custom.customer_name') . ' is mandatory']
+            ];
+        } else {
+            $request['CustomerName'] = ($request['customer_name']);
+        }
+
+        if (isset($request['report_title']) && $request['report_title'] !== '' && $request['report_title'] !== null) {
+            $request['ReportTitle'] = $request['report_title'];
+        }  else {
+            $request['ReportTitle'] = isset($request['customer_name']) ? $request['customer_name'] : (isset($request['customer_name']) ? $request['customer_name'] : null);
+        }
+
+        self::validateChartOfAccount(
+            $receivableAccount,
+            "receivable_account",
+            "Receivable Account field is required",
+            $companyId,
+            $errorData,
+            $request,
+            function($chartOfAccount, &$request, &$errorData, $fieldName) {
+                if ($chartOfAccount->controlAccountsSystemID == 3) {
+                    $request['custGLAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                    $request['custGLaccount'] = $chartOfAccount->AccountCode;
+                } else {
+                    $errorData[] = [
+                        'field' => $fieldName,
+                        'message' => ["Selected GL code is a control account and cannot be used."]
+                    ];
+                }
+            }
+        );
+
+        self::validateChartOfAccount(
+            $advanceAccount,
+            "advance_account",
+            "Advance Account field is required",
+            $companyId,
+            $errorData,
+            $request,
+            function($chartOfAccount, &$request, &$errorData, $fieldName) {
+                if ($chartOfAccount->catogaryBLorPL == "BS") {
+                    $request['custAdvanceAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID ?? null;
+                    $request['custUnbilledAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID ?? null;
+                }
+            }
+        );
+
+        if ($customerCountry === null) {
+            $errorData[] = [
+                'field' => "customer_country",
+                'message' => ["Customer Country field is required"]
+            ];
+        }
+        else {
+            $country = CountryMaster::where('countryName', $customerCountry)->first();
+            if ($country) {
+                $request['customerCountry'] = $country->countryID;
+            }
+            else{
+                $errorData[] = [
+                    'field' => "customer_country",
+                    'message' => ["Selected Country does not match any record in the system."]
+                ];
+
+            }
+        }
+
+        if ($creditLimit === null) {
+            $errorData[] = [
+                'field' => "credit_limit",
+                'message' => ["Credit Limit field is required"]
+            ];
+        } else {
+            if (!is_numeric($creditLimit) || $creditLimit < 0) {
+                $errorData[] = [
+                    'field' => "credit_limit",
+                    'message' => ["Credit Limit must be a number and cannot be negative"]
+                ];
+            } 
+            else{
+                $request['creditLimit'] = $creditLimit;
+            }
+        }
+
+
+        if ($creditDays === null) {
+            $errorData[] = [
+                'field' => "credit_days",
+                'message' => ["Credit Period field is required"]
+            ];
+        }
+        else {
+            if (!is_numeric($creditDays) || $creditDays < 0) {
+                $errorData[] = [
+                    'field' => "credit_days",
+                    'message' => ["Credit Period must be a number and cannot be negative"]
+                ];
+            }
+            else{
+                $request['creditDays'] = $creditDays;
+            }
+        }
+
+        if ($customerCategory !== null && $customerCategory !== '') {
+            $customerCategoryMaster = CustomerMasterCategory::where('categoryDescription', $customerCategory)
+                ->where('companySystemID', $companyId)->first();
+            if ($customerCategoryMaster) {
+                $request['customerCategoryID'] = $customerCategoryMaster->categoryID;
+            } else {
+            $errorData[] = [
+                'field' => "customer_category",
+                'message' => ["Selected Customer Category does not match any record in the system."]
+            ];
+            }
+        }
+
+        if ($customerRegistrationNo !== null && $customerRegistrationNo !== '') {
+            $request['customer_registration_no'] = $customerRegistrationNo;
+            if ($customerRegistrationExpiryDate === null) {
+                $errorData[] = [
+                    'field' => "customer_registration_expiry_date",
+                    'message' => ["Customer Registration Expiry Date field is required when Customer Registration No is provided"]
+                ];
+            }
+            else{
+                if (self::validateAPIDate($request['customer_registration_expiry_date'])) {
+                    $request['customer_registration_expiry_date'] = Carbon::parse($request['customer_registration_expiry_date'])->format('Y-m-d') . ' 00:00:00';
+                }
+                else{
+                    $errorData[] = [
+                        'field' => "customer_registration_expiry_date",
+                        'message' => ["Customer Registration Expiry Date is not a valid date"]
+                    ];
+                }
+            }
+        }
+
+        if ($vatEligible !== null && $vatEligible !== '') {
+            if ($vatEligible != 1 && $vatEligible != 2) {
+                $errorData[] = [
+                    'field' => "vat_eligible",
+                    'message' => ["Invalid input, vat eligible must be 1 (Yes) or 2 (No)"]
+                ];
+            } else {
+                $request['vatEligible'] = (int)$vatEligible;
+            }
+        }
+
+        if ($vatNumber !== null && $vatNumber !== '') {
+            if (!is_numeric($vatNumber) || $vatNumber < 0) {
+                $errorData[] = [
+                    'field' => "vat_number",
+                    'message' => ["Value must be a number and cannot be negative."]
+                ];
+            } else {
+                $request['vatNumber'] = (int)$vatNumber;
+            }
+        }
+
+        if ($vatPercentage !== null && $vatPercentage !== '') {
+            if (!is_numeric($vatPercentage) || $vatPercentage < 0) {
+                $errorData[] = [
+                    'field' => "vat_percentage",
+                    'message' => ["Value must be a number and cannot be negative."]
+                ];
+            } else {
+                $request['vatPercentage'] = (int)$vatPercentage;
+            }
+        }
+
+        $contactDetails = isset($request['contact_details']) ? $request['contact_details'] : null;
+        $validatedContactDetails = [];
+
+        if ($contactDetails !== null && is_array($contactDetails) && isset($request['add_contact_details']) && $request['add_contact_details'] == 1) {
+            foreach ($contactDetails as $index => $contact) {
+                $contactType = isset($contact['contact_type']) ? $contact['contact_type'] : null;
+                $personName = isset($contact['person_name']) ? $contact['person_name'] : null;
+                $telephone = isset($contact['telephone']) ? $contact['telephone'] : null;
+                $fax = isset($contact['fax']) ? $contact['fax'] : null;
+                $email = isset($contact['email']) ? $contact['email'] : null;
+                $isDefault = isset($contact['is_default']) ? $contact['is_default'] : null;
+                
+                if ($contactType !== null && $contactType !== '') {
+                    $supplierContactType = SupplierContactType::where('supplierContactDescription', $contactType)->first();
+                    if (!$supplierContactType) {
+                        $errorData[] = [
+                            'field' => "contact_details[$index].contact_type",
+                            'message' => ["Contact type '{$contactType}' does not match any record in the system."]
+                        ];
+                    } else {
+                        $validatedContactDetails[] = [
+                            'contactTypeID' => $supplierContactType->supplierContactTypeID,
+                            'contactPersonName' => $personName,
+                            'contactPersonTelephone' => $telephone,
+                            'contactPersonFax' => $fax,
+                            'contactPersonEmail' => $email,
+                            'isDefault' => ($isDefault == 1) ? -1 : 0
+                        ];
+                    }
+                } else {
+                    $errorData[] = [
+                        'field' => "contact_details[$index].contact_type",
+                        'message' => ["Contact type is required"]
+                    ];
+                }
+                
+                if ($personName === null || $personName === '') {
+                    $errorData[] = [
+                        'field' => "contact_details[$index].person_name",
+                        'message' => ["Person name is required"]
+                    ];
+                }
+                
+                if ($telephone === null || $telephone === '') {
+                    $errorData[] = [
+                        'field' => "contact_details[$index].telephone",
+                        'message' => ["Telephone is required"]
+                    ];
+                }
+                
+                if ($email === null || $email === '') {
+                    $errorData[] = [
+                        'field' => "contact_details[$index].email",
+                        'message' => ["Email is required"]
+                    ];
+                } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $errorData[] = [
+                        'field' => "contact_details[$index].email",
+                        'message' => ["Email is not valid"]
+                    ];
+                }
+            }
+        }
+        
+        $currencyDetails = isset($request['currency_detials']) ? $request['currency_detials'] : (isset($request['currency_details']) ? $request['currency_details'] : null);
+
+        if ($currencyDetails !== null && is_array($currencyDetails)) {
+            $currencyCode = isset($currencyDetails['currency_code']) ? $currencyDetails['currency_code'] : null;
+            $isDefault = isset($currencyDetails['is_default']) ? $currencyDetails['is_default'] : null;
+
+            if ($currencyCode !== null && $currencyCode !== '') {
+                $currency = CurrencyMaster::where('CurrencyCode', $currencyCode)->first();
+                
+                if (!$currency) {
+                    $errorData[] = [
+                        'field' => "currency_detials.currency_code",
+                        'message' => ["The currency code not matching with system"]
+                    ];
+                } else {
+                    $request['currencyID'] = $currency->currencyID;
+                }
+            }
+
+            if ($isDefault !== null && $isDefault !== '') {
+                if ($isDefault != 1 && $isDefault != 2) {
+                    $errorData[] = [
+                        'field' => "currency_detials.is_default",
+                        'message' => ["Invalid input, currency_detials.is_default must be 1 (Yes) or 2 (No)"]
+                    ];
+                } else {
+                    if ($currencyCode !== null && $currencyCode !== '' && isset($request['currencyID'])) {
+                        $request['currencyIsDefault'] = ($isDefault == 1) ? -1 : 0;
+                    }
+                }
+            }
+        }
+
+        if (empty($errorData)) {
+            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
+            $lastSerialOrder = 1;
+            if(!empty($lastCustomer)) {
+                $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+            }
+
+            $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
+
+            $returnDataset = [
+                'status' => true,
+                'data' => [
+                    "primaryCompanySystemID" => $company->companySystemID ?? null,
+                    "primaryCompanyID" => $company->CompanyID ?? null,
+                    "customerCategoryID" => isset($request['customerCategoryID']) ? $request['customerCategoryID'] : null,
+                    "custGLAccountSystemID" => $request['custGLAccountSystemID'],
+                    "custUnbilledAccountSystemID" => $request['custUnbilledAccountSystemID'],
+                    "custAdvanceAccountSystemID" => $request['custAdvanceAccountSystemID'] ?? null,
+                    "companyLinkedToSystemID" => null,
+                    "customerShortCode" => $request['customerShortCode'],
+                    "CustomerName" => $request['CustomerName'],
+                    "ReportTitle" => $request['ReportTitle'],
+                    "customerAddress1" => isset($request['address_one']) ? $request['address_one'] : null,
+                    "customerAddress2" => isset($request['address_two']) ? $request['address_two'] : null,
+                    "customerCountry" => $request['customerCountry'],
+                    "customerCity" => isset($request['customer_city']) ? $request['customer_city'] : null,
+                    "customerLogo" => isset($request['customerLogo']) ? $request['customerLogo'] : null,
+                    "CustWebsite" => isset($request['customer_website']) ? $request['customer_website'] : null,
+                    "creditLimit" => $request['credit_limit'],
+                    "creditDays" => $request['credit_days'],
+                    "customer_registration_no" => isset($request['customer_registration_no']) ? $request['customer_registration_no'] : null,
+                    "customer_registration_expiry_date" => isset($request['customer_registration_expiry_date']) ? $request['customer_registration_expiry_date'] : null,
+                    "vatEligible" => isset($request['vatEligible']) ? $request['vatEligible'] : null,
+                    "vatNumber" => isset($request['vatNumber']) ? $request['vatNumber'] : null,
+                    "vatPercentage" => isset($request['vatPercentage']) ? $request['vatPercentage'] : null,
+                    "consignee_name" => isset($request['consignee_name']) ? $request['consignee_name'] : null,
+                    "consignee_address" => isset($request['consignee_address']) ? $request['consignee_address'] : null,
+                    "payment_terms" => isset($request['payment_terms']) ? $request['payment_terms'] : null,
+                    "consignee_contact_no" => isset($request['consignee_contact_no']) ? $request['consignee_contact_no'] : null,
+                    "isDelegation" => false,
+                    "companyLinkedTo" => null,
+                    "isAutoCreateDocument" => true,
+                    "custGLaccount" => $request['custGLAccountSystemID'],
+                    "custUnbilledAccount" => $request['custUnbilledAccountSystemID'],
+                    "custAdvanceAccount" => $request['custAdvanceAccountSystemID'] ?? null,
+                    "createdPcID" => gethostname(),
+                    "createdUserID" => $systemUser->empID,
+                    "documentSystemID" => 58,
+                    "documentID" => "CUSTM",
+                    "lastSerialOrder" => $lastSerialOrder,
+                    "CutomerCode" => $customerCode,
+                    "isCustomerActive" => 1,
+                    "currencyID" => isset($request['currencyID']) ? $request['currencyID'] : null,
+                    "currencyIsDefault" => isset($request['currencyIsDefault']) ? $request['currencyIsDefault'] : null,
+                    "contactDetails" => $validatedContactDetails
+                ]
+            ];
+        }
+        else {
+            $returnDataset = [
+                'status' => false,
+                'data' => $errorData
+            ];
+        }
+
+        return $returnDataset;
+    }
+
+    public static function validateAPIDate($date): bool {
+        $data = ['date' => $date];
+
+        $rules = [
+            'date' => [
+                'required',
+                'regex:/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/',
+                function ($attribute, $value, $fail) {
+                    $parts = explode('-', $value);
+                    if (!checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0])) {
+                        $fail("The $attribute is not a valid date.");
+                    }
+                }
+            ],
+        ];
+
+        $validator = Validator::make($data, $rules);
+
+        if (!$validator->fails()) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private static function validateChartOfAccount(
+        $accountCode,
+        $fieldName,
+        $requiredMessage,
+        $companyId,
+        &$errorData,
+        &$request,
+        $specificValidation
+    ) {
+        if ($accountCode === null) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => [$requiredMessage]
+            ];
+            return;
+        }
+
+        $chartOfAccount = ChartOfAccount::where('AccountCode', $accountCode)->first();
+
+        if (!$chartOfAccount) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code does not match any record in the system."]
+            ];
+            return;
+        }
+
+        if ($chartOfAccount->isApproved != 1) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code is not approved."]
+            ];
+            return;
+        }
+
+        if ($chartOfAccount->isActive != 1) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code is not active"]
+            ];
+            return;
+        }
+
+        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+            ->where('chartOfAccountSystemID', $chartOfAccount->chartOfAccountSystemID)->first();
+
+        if (!$chartOfAccountAssigned || $chartOfAccountAssigned->isAssigned != -1) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code is not assigned to the company."]
+            ];
+            return;
+        }
+
+        if ($chartOfAccountAssigned->isActive != 1) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code is not active"]
+            ];
+            return;
+        }
+
+        if ($chartOfAccountAssigned->isBank == 1) {
+            $errorData[] = [
+                'field' => $fieldName,
+                'message' => ["Selected GL code is bank gl code."]
+            ];
+            return;
+        }
+
+        $specificValidation($chartOfAccount, $request, $errorData, $fieldName);
     }
 }
