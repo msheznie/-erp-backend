@@ -8160,6 +8160,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
             //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', 0)
             ->with(['payment_master' => function ($query) {
                 $query->with(['transactioncurrency']);
@@ -8171,6 +8172,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
             //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', '>', 0)
             ->with(['matching_master' => function ($query) {
                 $query->with(['transactioncurrency']);
