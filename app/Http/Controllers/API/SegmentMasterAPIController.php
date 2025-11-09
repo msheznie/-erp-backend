@@ -763,7 +763,7 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         $allCompanies = Company::whereIn("companySystemID",$subCompanies)
-            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->select('companySystemID', 'CompanyID', 'CompanyName','isGroup')
             ->get();
 
         /** Yes and No Selection */

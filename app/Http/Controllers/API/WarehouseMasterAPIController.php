@@ -286,7 +286,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
         $allCompanies = Company::whereIn("companySystemID",$subCompanies)
-            ->select('companySystemID', 'CompanyID', 'CompanyName')
+            ->select('companySystemID', 'CompanyID', 'CompanyName', 'isGroup')
             ->get();
         /** all Locations Drop Down */
         $erpLocations = ErpLocation::where('is_deleted', 0)->select('locationID', 'locationName')->get();

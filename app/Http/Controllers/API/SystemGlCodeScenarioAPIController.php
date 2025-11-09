@@ -324,7 +324,7 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $current_companyId = $request['current_companyId'];
         $subCompanies = CompanyService::get_company_with_sub($current_companyId);
 
-        $company_list = Company::selectRaw("companySystemID AS value, CONCAT(CompanyID, ' - ', CompanyName) AS label")
+        $company_list = Company::selectRaw("companySystemID AS value, CONCAT(CompanyID, ' - ', CompanyName) AS label, isGroup")
             ->whereIn("companySystemID", $subCompanies)->get();
 
         $company_list = ($company_list)? $company_list->toArray(): [];
