@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.90.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.1...v10.90.0) (2025-11-09)
+
+
+### Features
+
+* **Attendance:** POMCO | Mobile Issue  [GHR-8478] ([#9182](https://github.com/pbsgears/Gears_BackEnd/issues/9182)) ([c69d8b3](https://github.com/pbsgears/Gears_BackEnd/commit/c69d8b36c420411f6cb416062f4d4295f05536b9))
+
 ## [10.89.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.0...v10.89.1) (2025-10-28)
 
 
