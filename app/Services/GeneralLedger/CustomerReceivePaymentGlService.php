@@ -251,8 +251,8 @@ class CustomerReceivePaymentGlService
 
                         if($valueRe->net_amount > 0){
                             $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentLocalAmount'] = (\Helper::roundValue((1 / $valueRe->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentRptAmount'] = (\Helper::roundValue((1 / $valueRe->companyReportingER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentLocalAmount'] = (\Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentRptAmount'] = (\Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
                             $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                             $data['serviceLineCode'] =  $valueRe->serviceLineCode;
                             array_push($finalData, $data); 
