@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateRecurringVoucherSetupAPIRequest;
 use App\Http\Requests\API\UpdateRecurringVoucherSetupAPIRequest;
 use App\Models\BudgetConsumedData;
@@ -672,13 +673,13 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-P',
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

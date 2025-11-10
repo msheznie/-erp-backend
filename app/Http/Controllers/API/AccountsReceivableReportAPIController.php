@@ -40,6 +40,7 @@ use App\Exports\AccountsReceivable\CustomerAgingDetailReport;
 use App\Exports\AccountsReceivable\CustomerBalanceSummaryReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerBalanceStatementReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerStatementOfAccountReport;
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\SentCustomerLedger;
 use App\Models\AccountsReceivableLedger;
@@ -2103,7 +2104,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2115,7 +2116,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2186,7 +2187,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
                     $htmlFooter = view('print.customer_aging_summary_footer', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2198,7 +2199,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2278,7 +2279,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $htmlHeader = view('print.customer_aging_detail_header', $dataArr);
                     $htmlFooter = view('print.customer_aging_detail_footer', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2290,7 +2291,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2359,7 +2360,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $html = view('print.customer_collection', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2371,7 +2372,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2454,7 +2455,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $htmlHeader = view('print.customer_statement_of_account_header', $dataArr);
             $htmlFooter = view('print.customer_statement_of_account_footer', $dataArr);
 
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -2466,7 +2467,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
@@ -2528,7 +2529,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $htmlHeader = view('print.customer_balance_statement_header', $dataArr);
             $htmlFooter = view('print.customer_balance_statement_footer', $dataArr);
 
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -2540,7 +2541,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

@@ -2679,13 +2679,13 @@ class PurchaseRequestAPIController extends AppBaseController
         if($isFromPortal){
             return $this->sendResponse($array, trans('custom.purchase_request_print_data'));
         }
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 
         $html = view('print.purchase_request', $array);
         $htmlFooter = view('print.purchase_request_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

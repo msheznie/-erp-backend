@@ -3,6 +3,7 @@
 namespace App\Jobs\Report;
 
 use App\helper\CommonJobService;
+use App\helper\Helper;
 use App\Models\Company;
 use App\Report\PdfReport;
 use App\Report\PrintPDFService;
@@ -87,13 +88,13 @@ class GeneratePdfJob implements ShouldQueue
             }
         }
 
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false, 'lang' => $languageCode);
 
 
         $html = view('print.supplier_statement',$dataArr);
         
         // Configure mPDF for landscape A4 format
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-L', // Landscape format
@@ -104,7 +105,7 @@ class GeneratePdfJob implements ShouldQueue
             'margin_bottom' => 16,
             'margin_header' => 9,
             'margin_footer' => 9
-        ];
+        ], $languageCode);
 
         $rootPaths = $this->rootPath;
         $fileName = trans('custom.supplier_statement_') . strtotime(date("Y-m-d H:i:s")).'_Part_'.$this->reportCount.'.pdf';

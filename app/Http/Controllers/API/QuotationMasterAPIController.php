@@ -1125,7 +1125,7 @@ class QuotationMasterAPIController extends AppBaseController
         $isRTL = ($lang === 'ar');
         
         // Configure mPDF for RTL support if Arabic
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4', 
@@ -1138,7 +1138,7 @@ class QuotationMasterAPIController extends AppBaseController
             'margin_bottom' => 50,  // Increased to accommodate footer content
             'margin_header' => 9,
             'margin_footer' => 9
-        ];
+        ], $lang);
         
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl';

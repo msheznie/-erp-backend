@@ -3566,13 +3566,13 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
         
         // Configure mPDF for RTL support
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4-P', 
             'setAutoTopMargin' => 'stretch', 
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
         
         // Add RTL support for Arabic
         if (app()->getLocale() == 'ar') {

@@ -9,8 +9,12 @@ class CreateExcel
 
     public static function process($data,$type,$fileName,$path_dir,$array=NULL)
     {
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
-        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat) {
+        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -24,25 +28,46 @@ class CreateExcel
                 $prebidFile = $lookup[$fileName] ?? 'Pre-bid Clarifications';
 
                 if (!empty($dataNew) && count($dataNew) > 0) {
-                    $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array) {
+                    $excel->sheet($faqFile, function ($sheet) use ($dataNew,$faqFile,$array,$fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
+
                         $i = 2;
                         $sheet->fromArray($dataNew, null, 'A1', true);
                         (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
 
-                        $sheet->row(1, function($row) {
+                        // Apply font to all cells
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
+
+                        $sheet->row(1, function($row) use ($fontFamily) {
                             $row->setBackground('#827e7e');
                             $row->setFont(array(
-                                'family'     => 'Calibri',
+                                'family'     => $fontFamily,
                                 'size'       => '12',
                                 'bold'       =>  true
                             ));
                         });
 
                         foreach ($dataNew as $valId) {
-                            $sheet->row($i, function($row) {
+                            $sheet->row($i, function($row) use ($fontFamily) {
                                 $row->setBackground('#ebdfdf');
                                 $row->setFont(array(
-                                    'family'     => 'Calibri',
+                                    'family'     => $fontFamily,
                                     'size'       => '12',
                                 ));
                             });
@@ -52,32 +77,53 @@ class CreateExcel
                     });
                 }
 
-                $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array) {
+                $excel->sheet($prebidFile, function ($sheet) use ($dataNewPrebid,$prebidFile,$array,$fontFamily) {
+                    // Set default font for entire sheet
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
+
                     $sheet->fromArray($dataNewPrebid, null, 'A1', true);
                     (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
-                    $sheet->row(1, function($row) {
+
+                    // Apply font to all cells
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
+                    $sheet->row(1, function($row) use ($fontFamily) {
                         $row->setBackground('#827e7e');
                         $row->setFont(array(
-                            'family'     => 'Calibri',
+                            'family'     => $fontFamily,
                             'size'       => '12',
                             'bold'       =>  true
                         ));
                     });
                     foreach ($array['parentIdList'] as $valId) {
-                        $sheet->row($valId, function($row) {
+                        $sheet->row($valId, function($row) use ($fontFamily) {
                             $row->setBackground('#CCCCCC');
                             $row->setFont(array(
-                                'family'     => 'Calibri',
+                                'family'     => $fontFamily,
                                 'size'       => '12'
                             ));
                         });
                     }
 
                     foreach ($array['nonParentIdList'] as $valId) {
-                        $sheet->row($valId, function($row) {
+                        $sheet->row($valId, function($row) use ($fontFamily) {
                             $row->setBackground('#ebdfdf');
                             $row->setFont(array(
-                                'family'     => 'Calibri',
+                                'family'     => $fontFamily,
                                 'size'       => '12',
                             ));
                         });
@@ -86,7 +132,14 @@ class CreateExcel
                 });
             }
             else {
-                $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array,$columnFormat) {
+                $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
+                    // Set default font for entire sheet first
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
 
                     $search = ['='];
 
@@ -115,14 +168,14 @@ class CreateExcel
                         $i = $i - 4;
                     }
 
-                    $sheet->cell('D1', function($cell) use($array)
+                    $sheet->cell('D1', function($cell) use($array,$fontFamily)
                     {
                         if(isset($array['title']))
                         {
                             $cell->setValue($array['title']);
                             $cell->setFont(array(
 
-                                'family'     => 'Calibri',
+                                'family'     => $fontFamily,
 
                                 'size'       => '15',
 
@@ -135,14 +188,14 @@ class CreateExcel
 
                     });
 
-                    $sheet->cell('D2', function($cell) use($array)
+                    $sheet->cell('D2', function($cell) use($array,$fontFamily)
                     {
                         if(isset($array['company_name']))
                         {
                             $cell->setValue($array['company_name']);
                             $cell->setFont(array(
 
-                                'family'     => 'Calibri',
+                                'family'     => $fontFamily,
 
                                 'size'       => '15',
 
@@ -221,15 +274,16 @@ class CreateExcel
                                 if(isset($array['company_vat_registration_number']))
                     
                                 {
-                    
-                                    $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);  
-                    
+                                    $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+                                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                                    $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);
+
                                     $cell->setFont(array(
                     
                        
-                    
-                                        'family'     => 'Calibri',
-                    
+
+                                        'family'     => $fontFamily,
+
                        
                     
                                         'size'       => '12',
@@ -257,9 +311,24 @@ class CreateExcel
                         $sheet->fromArray($data, null, 'A'.$i, false,true);
                     }
                     (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
+
+                    // Apply font to all data cells (after fromArray) using PhpSpreadsheet
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            // Get the underlying PhpSpreadsheet object
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            // Fallback: try direct method
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
 
-                    $sheet->row($i, function($row) {
+                    $sheet->row($i, function($row) use ($fontFamily) {
 
 
 
@@ -270,7 +339,7 @@ class CreateExcel
 
                         $row->setFont(array(
 
-                            'family'     => 'Calibri',
+                            'family'     => $fontFamily,
 
                             'size'       => '12',
 
@@ -312,11 +381,15 @@ class CreateExcel
     }
 
     public static function processDetailExport($data, $companyCode) {
-        $excel_content = \Excel::create('po_details_export', function($excel) use ($data) {
-            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
+        // Get language for font selection
+        $lang = app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $excel_content = \Excel::create('po_details_export', function($excel) use ($data, $fontFamily) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
-                        'name' => 'Calibri',
+                        'name' => $fontFamily,
                         'size' => 11,
                     ]
                 ]);
@@ -388,11 +461,11 @@ class CreateExcel
 
                     if ($isHeader) {
                         $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
-                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) {
+                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
                                 'size' => 12,
-                                'name' => 'Calibri'
+                                'name' => $fontFamily
                             ]);
                         });
                     }
@@ -429,15 +502,19 @@ class CreateExcel
 
     public static function fromDate($array,$sheet,$type)
     {
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
         if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
-            $sheet->cell('A5', function($cell) use($array,$type)
+            $sheet->cell('A5', function($cell) use($array,$type,$fontFamily)
             {
                 if(isset($array['from_date']))
                 {
                     $cell->setValue($type.' - '.$array['from_date']);
                     $cell->setFont(array(
 
-                        'family'     => 'Calibri',
+                        'family'     => $fontFamily,
 
                         'size'       => '12',
 
@@ -448,14 +525,14 @@ class CreateExcel
                 }
             });
         } else {
-            $sheet->cell('A3', function($cell) use($array,$type)
+            $sheet->cell('A3', function($cell) use($array,$type,$fontFamily)
             {
                 if(isset($array['from_date']))
                 {
                     $cell->setValue($type.' - '.$array['from_date']);
                     $cell->setFont(array(
 
-                        'family'     => 'Calibri',
+                        'family'     => $fontFamily,
 
                         'size'       => '12',
 
@@ -470,15 +547,19 @@ class CreateExcel
 
     public static function toDate($array,$sheet)
     {
-        $sheet->cell('A4', function($cell) use($array)
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $sheet->cell('A4', function($cell) use($array,$fontFamily)
         {
             if(isset($array))
             {
                 $cell->setValue(__('custom.to_date').' - '.$array['to_date']);
                 $cell->setFont(array(
-    
-                    'family'     => 'Calibri',
-    
+
+                    'family'     => $fontFamily,
+
                     'size'       => '12',
     
                     'bold'       =>  true
@@ -491,15 +572,19 @@ class CreateExcel
 
     public static function currency($array,$sheet,$col)
     {
-        $sheet->cell($col, function($cell) use($array)
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $sheet->cell($col, function($cell) use($array,$fontFamily)
         {
             if(isset($array['cur']))
             {
                 $cell->setValue(__('custom.currency').' - '.$array['cur']);  
                 $cell->setFont(array(
-    
-                    'family'     => 'Calibri',
-    
+
+                    'family'     => $fontFamily,
+
                     'size'       => '12',
     
                     'bold'       =>  true
@@ -512,14 +597,18 @@ class CreateExcel
 
     public static function branch($array,$sheet,$type)
     {
-        $sheet->cell('A3', function($cell) use($array,$type)
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $sheet->cell('A3', function($cell) use($array,$type,$fontFamily)
         {
             if(isset($array['company_name']))
             {
                 $cell->setValue($type.' - '.$array['company_name']);
                 $cell->setFont(array(
 
-                    'family'     => 'Calibri',
+                    'family'     => $fontFamily,
 
                     'size'       => '12',
 
@@ -534,14 +623,18 @@ class CreateExcel
 
     public static function selectedCurrency($array,$sheet,$type)
     {
-        $sheet->cell('A4', function($cell) use($array,$type)
+        // Get language for font selection
+        $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $sheet->cell('A4', function($cell) use($array,$type,$fontFamily)
         {
             if(isset($array['currencyName']) && !empty($array['currencyName']))
             {
                 $cell->setValue($type.' - '.$array['currencyName']);
                 $cell->setFont(array(
 
-                    'family'     => 'Calibri',
+                    'family'     => $fontFamily,
 
                     'size'       => '12',
 
@@ -604,11 +697,14 @@ class CreateExcel
     }
 
 
-     public static function processOpenRequestReport($data,$companyCode) {
+    public static function processOpenRequestReport($data,$companyCode) {
+        // Get language for font selection
+        $lang = app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
 
-        $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data) {
-       
-                $excel->sheet('open_requests', function ($sheet) use ($data) {
+        $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data, $fontFamily) {
+
+                $excel->sheet('open_requests', function ($sheet) use ($data, $fontFamily) {
 
                     $i = 1;
                   
@@ -621,11 +717,11 @@ class CreateExcel
                         }
                         $sheet->appendRow($headerRow);
 
-                        $sheet->row(1, function($row) {
+                        $sheet->row(1, function($row) use ($fontFamily) {
                             $row->setAlignment('left');
                             $row->setFontColor('#000000');
                             $row->setFont([
-                                'family' => 'Calibri',
+                                'family' => $fontFamily,
                                 'size'   => '12',
                                 'bold'   => true,
                             ]);
@@ -703,13 +799,17 @@ class CreateExcel
         return $path;
     }
 
-    public static function processPRDetailExport($data,$companyCode) 
+    public static function processPRDetailExport($data,$companyCode)
     {
-        $excel_content = \Excel::create('pr_details_export', function($excel) use ($data) {
-            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data) {
+        // Get language for font selection
+        $lang = app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        $excel_content = \Excel::create('pr_details_export', function($excel) use ($data, $fontFamily) {
+            $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
-                        'name' => 'Calibri',
+                        'name' => $fontFamily,
                         'size' => 11,
                     ]
                 ]);
@@ -751,11 +851,11 @@ class CreateExcel
                     
                     if ($isHeader) {
                         $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
-                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) {
+                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
                                 'size' => 12,
-                                'name' => 'Calibri'
+                                'name' => $fontFamily
                             ]);
                         });
                     }

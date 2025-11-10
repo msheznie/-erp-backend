@@ -3065,13 +3065,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     'lang' => $lang
                 );
                 $isRTL = ($lang === 'ar');
-                $mpdfConfig = [
+                $mpdfConfig = Helper::getMpdfConfig([
                     'tempDir' => public_path('tmp'),
                     'mode' => 'utf-8',
                     'format' => 'A4-L',
                     'setAutoTopMargin' => 'stretch',
                     'autoMarginPadding' => -10
-                ];
+                ], $lang);
                 if ($isRTL) {
                     $mpdfConfig['direction'] = 'rtl';
                 }

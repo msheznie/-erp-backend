@@ -16,6 +16,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateStockTransferAPIRequest;
 use App\Http\Requests\API\UpdateStockTransferAPIRequest;
 use App\Models\CompanyDocumentAttachment;
@@ -930,13 +931,13 @@ class StockTransferAPIController extends AppBaseController
         }
 
         $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
-
+        $lang = app()->getLocale();
         $array = array('entity' => $stockTransfer);
         $time = strtotime("now");
         $fileName = 'stock_transfer_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_transfer', $array);
         $htmlFooter = view('print.stock_transfer_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

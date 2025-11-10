@@ -2846,12 +2846,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
             'advanceDetailsTotalNet' => $advanceDetailsTotalNet
         );
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'receipt_voucher_' . $id . '_' . $time . '.pdf';
         $html = view('print.receipt_voucher', $order);
         $htmlFooter = view('print.receipt_voucher_footer', $order);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
