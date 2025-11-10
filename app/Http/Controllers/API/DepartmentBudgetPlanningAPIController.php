@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateDepartmentBudgetPlanningAPIRequest;
 use App\Jobs\ProcessDepartmentBudgetPlanningDetailsJob;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DeptBudgetPlanningTimeRequest;
+use App\Models\Revision;
 use App\Repositories\DepartmentBudgetPlanningRepository;
 use App\Rules\NoEmoji;
 use App\Services\TimeRequestExtensionService;
@@ -182,7 +183,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy'])->findWithoutFail($id);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy','revisions'])->findWithoutFail($id);
 
         $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
         if (empty($departmentBudgetPlanning)) {
@@ -414,8 +415,17 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         if($departmentBudgetPlanning->revisions->count() > 0){
             if ($input['workStatus'] == 1) {
-                return $this->sendError('Status cannot be changed to Not Started, already has a revision');
+                // return $this->sendError('Status cannot be changed to Not Started, already has a revision');
             }else {
+                if($input['workStatus']) {
+                    $latestRevision = $departmentBudgetPlanning->revisions->where('revisionStatus', $input['workStatus'] - 1)->last();
+
+                    Revision::find($latestRevision->id)->update([
+                        'revisionStatus' => $input['workStatus']
+                    ]);
+
+                }
+
                 $departmentBudgetPlanning->financeTeamStatus = 1;
                 $departmentBudgetPlanning->save();
             }
