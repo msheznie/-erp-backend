@@ -1006,7 +1006,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         ]);
         $input = $request->input();
         try {
-            $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningId']);
+            $budgetPlanning = DepartmentBudgetPlanning::with('timeExtensionRequests','revisions')->find($input['budgetPlanningId']);
             if(!isset($budgetPlanning))
                 return $this->sendError("Department Budget planning not found!",404);
             
@@ -1018,6 +1018,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
 
             $budgetPlanning->financeTeamStatus = $newStatus;
+
+
             $budgetPlanning->save();
             return $this->sendResponse("Finance team status updated",200);
 
