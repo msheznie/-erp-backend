@@ -115,6 +115,7 @@ class SegmentMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input,['companySystemID']);
             $input['masterID'] = is_array($input['masterID']) ? (int) $input['masterID'][0] : (int) $input['masterID'];
 
             if(isset($input['companySystemID']))

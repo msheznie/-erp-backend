@@ -100,6 +100,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
+        $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
 
         /** Validation massage : Common for Add & Update */
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';

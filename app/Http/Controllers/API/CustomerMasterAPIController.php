@@ -476,7 +476,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function store(CreateCustomerMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
+        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID','primaryCompanySystemID'));
        
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);

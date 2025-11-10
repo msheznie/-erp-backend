@@ -122,7 +122,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        //$input = $this->convertArrayToValue($input);
+        $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];

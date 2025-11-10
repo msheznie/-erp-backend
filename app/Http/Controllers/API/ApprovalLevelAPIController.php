@@ -227,6 +227,7 @@ class ApprovalLevelAPIController extends AppBaseController
     public function getGroupApprovalLevelDatatable(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
         return $this->approvalLevelRepository->getGroupApprovalLevelDatatable($input);
     }
 
