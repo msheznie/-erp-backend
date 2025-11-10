@@ -188,7 +188,7 @@
         }
 
         .footer {
-            bottom: 2px;
+            bottom: -45px;
         }
 
         .pagenum:before {
