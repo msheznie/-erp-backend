@@ -724,7 +724,7 @@ class JournalVoucherService
     }
 
 
-    public static function postRecurringVoucherSchedule($rrvSetupScheduleAutoID)
+    public static function postRecurringVoucherSchedule($db, $rrvSetupScheduleAutoID)
     {
         try {
             $rrvSchedule = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID', $rrvSetupScheduleAutoID)
@@ -765,7 +765,7 @@ class JournalVoucherService
                 'jvType' => 2,
                 'isRelatedPartyYN' => $rrvSchedule->master->isRelatedPartyYN,
                 'JVdate' => $rrvSchedule->processDate,
-                'isAutoCreateDocument' => true
+                'isAutoCreateDocument' => false
             ]);
             
             $controller = app(JvMasterAPIController::class);
@@ -897,6 +897,7 @@ class JournalVoucherService
                         $jvApprovePreCheckReturnData = $controller->approvalPreCheckJV($request);
 
                         if($jvApprovePreCheckReturnData['success']){
+                            $dataset['db'] = $db;
                             $request = new Request();
                             $request->replace($dataset);
                             $request->merge(['approvedComments' => '']);

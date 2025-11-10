@@ -207,7 +207,11 @@ class JvMasterAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($resultData['data'], trans('custom.jv_created_successfully'));
+                return [
+                    "success" => true,
+                    "data" => $resultData['data'],
+                    "message" => trans('custom.jv_created_successfully')
+                ];
             }
         } else {
             DB::rollback();

@@ -473,6 +473,14 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
     public function getNotPostedScheduleData(Request $request)
     {
         try {
+            $input = $request->all();
+            
+            if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                $sort = 'asc';
+            } else {
+                $sort = 'desc';
+            }
+            
             $companySystemID = $request['companyId'];
             $today = Carbon::today();
             
@@ -486,6 +494,15 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 ->with(['master']);
             
             return \DataTables::of($schedules)
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        if (isset($input['order'][0]['column']) && $input['order'][0]['column'] == 0) {
+                            $query->orderBy('rrvSetupScheduleAutoID', $input['order'][0]['dir']);
+                        }
+                    } else {
+                        $query->orderBy('rrvSetupScheduleAutoID', 'desc');
+                    }
+                })
                 ->filter(function ($query) use ($request) {
                     if ($request->has('search') && !empty($request->input('search')['value'])) {
                         $searchValue = $request->input('search')['value'];
@@ -501,6 +518,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                     }
                 })
                 ->addIndexColumn()
+                ->with('orderCondition', $sort)
                 ->addColumn('hasError', function($schedule) {
                     $error = RecurringVoucherScheduleError::where('rrvSetupScheduleAutoID', $schedule->rrvSetupScheduleAutoID)
                                                           ->first();
@@ -549,9 +567,9 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
                 return $this->sendError(trans('custom.recurring_voucher_setup_schedule_not_found'));
             }
             
-            
-            $result = JournalVoucherService::postRecurringVoucherSchedule($rrvSetupScheduleAutoID);
-            
+            $db = isset($request->db) ? $request->db : "";
+            $result = JournalVoucherService::postRecurringVoucherSchedule($db, $rrvSetupScheduleAutoID);
+
             if ($result['success']) {
                 return $this->sendResponse($result, $result['message']);
             } else {

@@ -9588,4 +9588,5 @@ return
     'rrv_setup_schedule_id_required' => 'معرف الجدول المتكرر مطلوب',
     'invalid_rrv_setup_schedule_id' => 'معرف الجدول المتكرر غير صالح',
     'recurring_voucher_setup_schedule_not_found' => 'الجدول المتكرر غير موجود',
+    'document_not_approved' => 'المستند غير موافق عليه',
   ];

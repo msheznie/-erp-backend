@@ -9692,4 +9692,5 @@ return
     'rrv_setup_schedule_id_required' => 'RRV Setup Schedule ID is required',
     'invalid_rrv_setup_schedule_id' => 'Invalid RRV Setup Schedule ID',
     'recurring_voucher_setup_schedule_not_found' => 'Recurring Voucher Setup Schedule not found',
+    'document_not_approved' => 'Document not approved',
   ];
