@@ -945,7 +945,7 @@ class FinancialReportAPIController extends AppBaseController
             $da->refType = 0;
 
             foreach($refAmounts as $amount) {
-                if($da->masterID == $amount->masterID) {
+                if(isset($da->masterID) && isset($amount->masterID) && $da->masterID == $amount->masterID) {
                     if(($da->type == 1 || $da->type == 4) && $da->employeeID == $amount->employeeID){
                         $da->referenceAmountLocal = $amount->referenceAmountLocal;
                         $da->referenceAmountRpt = $amount->referenceAmountRpt;
