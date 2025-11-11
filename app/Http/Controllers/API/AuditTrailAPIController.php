@@ -420,10 +420,34 @@ class AuditTrailAPIController extends AppBaseController
                 $formatedData[] = $lineData;
             }
 
-            $formatedData = collect($formatedData)->sortByDesc('date_time');
+            if(isset($input['isFromTracking']) && $input['isFromTracking']){
+                        // Sort by date_time
+                $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
+
+                $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
+                    return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
+                })->values()->all();
+            } else {
+                $formatedData = collect($formatedData)->sortByDesc('date_time');
+            }
 
             //make the formatedData unique by log_uuid
             $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
+            
+            // Get current locale for arrow conversion
+            $locale = app()->getLocale() ?: 'en';
+            
+            // Format date_time for each item and convert navigation path arrows
+            $formatedData = collect($formatedData)->map(function ($item) use ($locale) {
+                if (isset($item['date_time'])) {
+                    $item['date_time'] = $this->formatDateTime($item['date_time']);
+                }
+                // Convert navigation path arrows based on locale
+                if (isset($item['navigationPath'])) {
+                    $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
+                }
+                return $item;
+            })->all();
             
             if(isset($input['isExport']) && $input['isExport']){
                 return $formatedData;
@@ -522,6 +546,14 @@ class AuditTrailAPIController extends AppBaseController
         //make the formatedData unique by log_uuid
         $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
         
+        // Format date_time for each item
+        $formatedData = collect($formatedData)->map(function ($item) {
+            if (isset($item['date_time'])) {
+                $item['date_time'] = $this->formatDateTime($item['date_time']);
+            }
+            return $item;
+        })->all();
+        
         return $formatedData;
     }
 
@@ -567,6 +599,16 @@ class AuditTrailAPIController extends AppBaseController
             // Get date range filters for displaying in Excel
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
+            
+            // Convert date_time to RTL format for Arabic locale
+            if (app()->getLocale() == 'ar') {
+                $formatedData = collect($formatedData)->map(function ($item) {
+                    if (isset($item['date_time'])) {
+                        $item['date_time'] = $this->convertDateTimeToRTL($item['date_time']);
+                    }
+                    return $item;
+                })->all();
+            }
             
             // Prepare report data for Blade template
             $reportData = [
@@ -623,6 +665,16 @@ class AuditTrailAPIController extends AppBaseController
             // Get date range filters for displaying in Excel
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
+            
+            // Convert date_time to RTL format for Arabic locale
+            if (app()->getLocale() == 'ar') {
+                $formatedData = collect($formatedData)->map(function ($item) {
+                    if (isset($item['date_time'])) {
+                        $item['date_time'] = $this->convertDateTimeToRTL($item['date_time']);
+                    }
+                    return $item;
+                })->all();
+            }
             
             // Prepare report data for Blade template
             $reportData = [
@@ -739,7 +791,137 @@ class AuditTrailAPIController extends AppBaseController
         //make the formatedData unique by log_uuid
         $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
         
+        // Format date_time for each item and convert navigation path arrows
+        $formatedData = collect($formatedData)->map(function ($item) use ($locale) {
+            if (isset($item['date_time'])) {
+                $item['date_time'] = $this->formatDateTime($item['date_time']);
+            }
+            // Convert navigation path arrows based on locale
+            if (isset($item['navigationPath'])) {
+                $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
+            }
+            return $item;
+        })->all();
+        
         return $formatedData;
+    }
+
+    /**
+     * Format date_time to match frontend format: dd/MM/yyyy HH:mm AM/PM
+     * 
+     * @param string|Carbon $dateTime
+     * @param bool $rtl If true, format as RTL (AM/PM HH:mm:ss dd/MM/yyyy) for Arabic
+     * @return string
+     */
+    private function formatDateTime($dateTime, $rtl = false)
+    {
+        if (empty($dateTime)) {
+            return '';
+        }
+        
+        try {
+            // Parse the date_time (could be string or Carbon instance)
+            $carbon = $dateTime instanceof Carbon ? $dateTime : Carbon::parse($dateTime);
+            
+            // Format date as dd/MM/yyyy
+            $date = $carbon->format('d/m/Y');
+            
+            // Format time as 12-hour with AM/PM
+            $hour = (int)$carbon->format('H');
+            $minute = $carbon->format('i');
+            $second = $carbon->format('s');
+            
+            // Convert 24-hour to 12-hour format
+            $hour12 = $hour % 12;
+            if ($hour12 == 0) {
+                $hour12 = 12;
+            }
+            $ampm = $hour < 12 ? 'AM' : 'PM';
+            
+            if ($rtl) {
+                // RTL format: AM/PM HH:mm:ss dd/MM/yyyy (for Arabic)
+                return $ampm . ' ' . str_pad($hour12, 2, '0', STR_PAD_LEFT) . ':' . $minute . ':' . $second . ' ' . $date;
+            } else {
+                // LTR format: dd/MM/yyyy HH:mm:ss AM/PM
+                return $date . ' ' . str_pad($hour12, 2, '0', STR_PAD_LEFT) . ':' . $minute . ':' . $second . ' ' . $ampm;
+            }
+        } catch (\Exception $e) {
+            // Return original value if parsing fails
+            return $dateTime;
+        }
+    }
+
+    /**
+     * Convert formatted date_time from LTR to RTL format for Arabic exports
+     * Converts: "dd/MM/yyyy HH:mm:ss AM/PM" to "AM/PM HH:mm:ss dd/MM/yyyy"
+     * 
+     * @param string $formattedDateTime
+     * @return string
+     */
+    private function convertDateTimeToRTL($formattedDateTime)
+    {
+        if (empty($formattedDateTime)) {
+            return '';
+        }
+        
+        // Pattern: "dd/MM/yyyy HH:mm:ss AM/PM"
+        // Extract parts using regex
+        if (preg_match('/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}:\d{2})\s+(AM|PM)$/i', $formattedDateTime, $matches)) {
+            // Reorder: AM/PM HH:mm:ss dd/MM/yyyy
+            return $matches[3] . ' ' . $matches[2] . ' ' . $matches[1];
+        }
+        
+        // If pattern doesn't match, try to parse and reformat
+        try {
+            $carbon = Carbon::parse($formattedDateTime);
+            return $this->formatDateTime($carbon, true);
+        } catch (\Exception $e) {
+            return $formattedDateTime;
+        }
+    }
+
+    /**
+     * Convert navigation path arrows based on locale (RTL or LTR)
+     * Converts arrows in navigation paths to match the language direction
+     * 
+     * @param string $navigationPath
+     * @param string $locale
+     * @return string
+     */
+    private function convertNavigationPathArrows($navigationPath, $locale)
+    {
+        if (empty($navigationPath)) {
+            return $navigationPath;
+        }
+        
+        $isRTL = $this->isRTL($locale);
+        
+        // Replace arrows based on language direction
+        if ($isRTL) {
+            // Convert right arrows (→) to left arrows (←) for RTL languages
+            $navigationPath = str_replace(' → ', ' ← ', $navigationPath);
+            $navigationPath = str_replace('→', '←', $navigationPath);
+        } else {
+            // Convert left arrows (←) to right arrows (→) for LTR languages
+            $navigationPath = str_replace(' ← ', ' → ', $navigationPath);
+            $navigationPath = str_replace('←', '→', $navigationPath);
+        }
+        
+        return $navigationPath;
+    }
+
+    /**
+     * Check if a language is RTL (Right-to-Left)
+     * 
+     * @param string $languageCode
+     * @return bool
+     */
+    private function isRTL($languageCode)
+    {
+        // List of RTL language codes
+        $rtlLanguages = ['ar', 'he', 'fa', 'ur']; // Arabic, Hebrew, Persian, Urdu
+        
+        return in_array(strtolower($languageCode), $rtlLanguages);
     }
 
     /**
@@ -785,6 +967,15 @@ class AuditTrailAPIController extends AppBaseController
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
+            // Convert date_time to RTL format for Arabic locale
+            if (app()->getLocale() == 'ar') {
+                $formatedData = collect($formatedData)->map(function ($item) {
+                    if (isset($item['date_time'])) {
+                        $item['date_time'] = $this->convertDateTimeToRTL($item['date_time']);
+                    }
+                    return $item;
+                })->all();
+            }
 
             // Prepare report data for Blade template
             $reportData = [

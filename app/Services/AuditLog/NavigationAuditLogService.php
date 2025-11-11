@@ -259,7 +259,9 @@ class NavigationAuditLogService
             $navigationPaths = [];
             foreach ($activeLanguages as $lang) {
                 $breadcrumbs = array_reverse($breadcrumbsByLang[$lang]);
-                $navigationPaths[$lang] = implode(' → ', $breadcrumbs);
+                // Use appropriate arrow based on language direction (RTL or LTR)
+                $arrow = self::isRTL($lang) ? ' ← ' : ' → ';
+                $navigationPaths[$lang] = implode($arrow, $breadcrumbs);
             }
             
             return [
@@ -353,6 +355,20 @@ class NavigationAuditLogService
             Log::error('Failed to fetch active languages: ' . $e->getMessage());
             return ['en']; // Default fallback
         }
+    }
+
+    /**
+     * Check if a language is RTL (Right-to-Left)
+     * 
+     * @param string $languageCode
+     * @return bool
+     */
+    private static function isRTL($languageCode)
+    {
+        // List of RTL language codes
+        $rtlLanguages = ['ar', 'he', 'fa', 'ur']; // Arabic, Hebrew, Persian, Urdu
+        
+        return in_array(strtolower($languageCode), $rtlLanguages);
     }
 }
 
