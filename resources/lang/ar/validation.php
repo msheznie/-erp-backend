@@ -13,10 +13,10 @@ return [
     |
     */
 
-    'accepted' => 'حقل :attribute يجب قبوله.',
+    'accepted' => 'حقل :attribute مقبول.',
     'active_url' => 'حقل :attribute ليس عنوان URL صالحًا.',
     'after' => 'حقل :attribute يجب أن يكون تاريخًا بعد :date.',
-    'after_or_equal' => 'حقل :attribute يجب أن يكون تاريخًا بعد :date أو مساويًا له.',
+    'after_or_equal' => 'حقل :attribute يجب أن يكون تاريخًا بعد أو مساويًا لـ :date.',
     'alpha' => 'حقل :attribute يجب أن يحتوي على أحرف فقط.',
     'alpha_dash' => 'حقل :attribute لا يجوز أن يحتوي إلا على أحرف وأرقام وشرطات.',
     'alpha_num' => 'حقل :attribute لا يجوز أن يحتوي إلا على أحرف وأرقام.',
@@ -26,8 +26,8 @@ return [
     'between' => [
         'numeric' => 'حقل :attribute يجب أن يكون بين :min و :max.',
         'file' => 'حقل :attribute يجب أن يكون بين :min و :max كيلوبايت.',
-        'string' => 'حقل :attribute يجب أن يكون بين :min و :max من الأحرف.',
-        'array' => 'حقل :attribute يجب أن يحتوي على ما بين :min و :max من العناصر.',
+        'string' => 'حقل :attribute يجب أن يكون بين :min و :max حرف.',
+        'array' => 'حقل :attribute يجب أن يحتوي على ما بين :min و :max عناصر.',
     ],
     'boolean' => 'حقل :attribute يجب أن يكون صحيح أو خطأ.',
     'confirmed' => 'تأكيد حقل :attribute غير مطابق.',
@@ -107,80 +107,80 @@ return [
             'select' => 'حقل :attribute مطلوب.'
         ],
         'reportType' => [
-            'required' => 'حقل نوع التقرير مطلوب.',
+            'required' => 'حقل القطاع مطلوب.',
             'not_in' => 'حقل نوع التقرير مطلوب.'
         ],
         'reportType.*' => [
-            'required' => 'حقل نوع التقرير مطلوب.',
+            'required' => 'حقل القطاع مطلوب.',
             'not_in' => 'حقل نوع التقرير مطلوب.'
         ],
         'companySystemId' => [
-            'required' => 'معرف الشركة غير موجود.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'details' => [
-            'required' => 'تفاصيل إصدار المواد غير موجودة.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'itemIssueAutoId' => [
-            'required' => 'معرف إصدار المواد التلقائي غير موجود.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'reportTypeID' => [
-            'required' => 'حقل نوع التقرير مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'fromDate' => [
-            'required' => 'حقل تاريخ البداية مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'toDate' => [
-            'required' => 'حقل تاريخ النهاية مطلوب.',
+            'required' => 'حقل القطاع مطلوب.',
             'date' => 'تاريخ النهاية يجب أن يكون تاريخًا صالحًا.',
             'after_or_equal' => 'تاريخ النهاية يجب أن يكون بعد أو مساوي لتاريخ البداية.'
         ],
         'assetCategory' => [
-            'required' => 'حقل فئة الأصول مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'typeID' => [
-            'required' => 'حقل النوع مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'financePeriod' => [
-            'required' => 'حقل الفترة المالية مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'financeYear' => [
-            'required' => 'حقل السنة المالية مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'currencyID' => [
-            'required' => 'حقل العملة مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'fromMonth' => [
-            'required' => 'حقل شهر البداية مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'toMonth' => [
-            'required' => 'حقل شهر النهاية مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'year' => [
-            'required' => 'حقل السنة مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'month' => [
-            'required' => 'حقل الشهر مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'glAccounts' => [
-            'required' => 'حقل حسابات دفتر الأستاذ مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'assets' => [
-            'required' => 'حقل الأصول مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'SalesPersonName' => [
-            'required' => 'حقل اسم مندوب المبيعات مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'empSystemID' => [
-            'required' => 'حقل الموظف مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'receivableAutoID' => [
-            'required' => 'حقل حساب المستحقات مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'expenseAutoID' => [
-            'required' => 'حقل حساب المصروفات مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'salesPersonCurrencyID' => [
-            'required' => 'حقل عملة مندوب المبيعات مطلوب.'
+            'required' => 'حقل القطاع مطلوب.'
         ],
         'segmentID' => [
             'required' => 'حقل القطاع مطلوب.'
@@ -204,8 +204,8 @@ return [
         'companyFinanceYearID' => 'السنة المالية',
         'companyFinancePeriodID' => 'الفترة المالية',
         'tranferDate' => 'تاريخ التحويل',
-        'companyToSystemID' => 'إلى شركة',
-        'companyFromSystemID' => 'من شركة',
+        'companyToSystemID' => 'إلى المؤسسة',
+        'companyFromSystemID' => 'من المؤسسة',
         'wareHouseFrom' => 'من مستودع',
         'wareHouseLocation' => 'موقع المستودع',
         'purchaseReturnLocation' => 'الموقع',
@@ -216,8 +216,8 @@ return [
         'receivedDate' => 'تاريخ الإستلام',
         'issueRefNo' => 'رقم المرجع',
         'refNo' => 'رقم المرجع',
-        'comment' => 'تعليق',
-        'comments' => 'تعليقات',
+        'comment' => 'ملاحظة',
+        'comments' => 'التعليقات',
         'customerSystemID' => 'العميل',
         'customerID' => 'العميل',
         'issueType' => 'نوع الصرف',
@@ -230,14 +230,14 @@ return [
         'stockAdjustmentDate' => 'تاريخ المستند',
         'location' => 'الموقع',
         'priority' => 'الأولولية',
-        'wareHouseSystemCode' => 'مستودع',
+        'wareHouseSystemCode' => 'المستودع',
         'companySystemID' => 'الشركة',
         'documentDate' => 'تاريخ',
         'bankRecAsOf' => 'اعتبارًا من تاريخ',
         'bankAccountID' => 'حساب البنك',
         'bankID' => 'البنك',
         'templatesMasterAutoID' => 'قالب',
-        'budgetTransferFormAutoID' => 'معرف تحويل الميزانية',
+        'budgetTransferFormAutoID' => 'معرف المناقلة',
         'fromTemplateDetailID' => 'من تفاصيل القالب',
         'fromServiceLineSystemID' => 'من القسم',
         'fromChartOfAccountSystemID' => 'من رمز الحساب',
@@ -246,12 +246,12 @@ return [
         'toChartOfAccountSystemID' => 'إلى رقم الحساب',
         'adjustmentAmountRpt' => 'المبلغ ',
         'remarks' => 'ملاحظة',
-        'templateMasterID' => 'قالب',
+        'templateMasterID' => 'القالب',
         'processPeriod' => 'الشهر',
         'empType' => 'النوع',
         'expenseClaimCategoriesAutoID' => 'الفئة',
         'yearID' => 'السنة',
-        'reportTypeID' => 'معرف نوع التقرير',
+        'reportTypeID' => 'نوع التقرير',
         'chartOfAccountSystemID' => 'رمز الحساب العام',
         'accountCurrencyID' => 'العملة',
         'financeCategorySub' => 'الفئة المالية الفرعية',
@@ -260,12 +260,12 @@ return [
         'wareHouseDescription' => 'الوصف',
         'counterCode'   => 'رمز صندوق المحاسبة',
         'counterName'   => 'اسم صندوق المحاسبة',
-        'companyID'   => 'الشركة',
-        'companyId'   => 'الشركة',
+        'companyID'   => 'المؤسسة',
+        'companyId'   => 'المؤسسة',
         'startingBalance_transaction' => 'الرصيد الإفتتاحي',
         'endingBalance_transaction' => 'الرصيد الختامي',
         'counterID' => 'صندوق المحاسبة',
-        'secondaryItemCode' => 'رقم الجزء / الرقم المرجعي',
+        'secondaryItemCode' => 'رقم الجزء ',
         'itemDescription' => 'وصف المادة',
         'unit' => 'وحدة القياس',
         'shiftID' => 'الوردية',
@@ -292,7 +292,7 @@ return [
         'directPaymentPayeeEmpID' => 'المدفوع له',
         'directPaymentPayee' => 'أخر',
         'asOfDate' => 'حتى تاريخ',
-        'currencyID' => 'معرف العملة',
+        'currencyID' => 'العملة',
         'Docs' => 'المستندات',
         'warehouse' => 'المستودع',
         'Warehouse' => 'المستودع',
@@ -300,13 +300,13 @@ return [
         'toDate' => 'إلى تاريخ',
         'Items' => 'المواد',
         'reportType' => 'نوع التقرير',
-        'segment' => 'القطاع',
+        'segment' => 'مركز التكلفة',
         'suppliers' => 'المورّدون',
         'supplierGroup' => 'مجموعة المورّدين',
         'supEmpId' => 'معرّف موظف المورّد',
         'accounts' => 'الحسابات',
-        'chartOfAccountAllocationMasterID' => 'معرف تخصيص دليل الحسابات الرئيسي',
-        'allocationmaid' => 'معرف السيد الرئيسي للتخصيص',
+        'chartOfAccountAllocationMasterID' => 'معرف تخصيص دليل الحسابات ',
+        'allocationmaid' => 'معرف سجل التخصيص',
         'productLineID' => 'معرف خط الإنتاج',
         'percentage' => 'النسبة المئوية',
         'glCodes' => 'رموز الحسابات',
@@ -318,10 +318,10 @@ return [
         'subCategoryCode' => 'رمز الفئة الفرعية',
         'categoryName' => 'اسم الفئة',
         'categoryDescription' => 'وصف الفئة',
-        'assetCategory' => 'فئة الأصل',
+        'assetCategory' => 'فئة الأصول',
         'conversion' => 'تحويل',
         'contractID' => 'معرف العقد',
-        'servicelines' => 'خطوط الخدمة',
+        'servicelines' => 'مراكز التكلفة',
         'mainCategoryDescription' => 'وصف الفئة الرئيسية',
         'reportTypeID' => 'نوع التقرير',
         'fromDate' => 'من تاريخ',
@@ -335,7 +335,7 @@ return [
         'toMonth' => 'إلى شهر',
         'year' => 'السنة',
         'month' => 'الشهر',
-        'glAccounts' => 'حسابات دفتر الأستاذ',
+        'glAccounts' => 'الحسابات العامة',
         'assets' => 'الأصول',
         'SalesPersonName' => 'اسم مندوب المبيعات',
         'empSystemID' => 'الموظف',

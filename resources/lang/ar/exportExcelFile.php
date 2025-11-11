@@ -1,19 +1,19 @@
 <?php
 
 return [
-    'procurement_order' => 'أمر_التوريد',
+    'procurement_order' => 'أمر_الشراء',
     
     // Accounts Payable
     'supplier_invoice_master' => 'فاتورة_المورد_الرئيسية',
     'ec_monthly_addition' => 'إضافة_شهرية_لـ_EC',
-    'payment_voucher' => 'قسيمة_الدفع',
-    'payment_voucher_matching' => 'مطابقة_قسيمة_الدفع',
+    'payment_voucher' => 'سند_صرف',
+    'payment_voucher_matching' => 'مطابقة_سند_الصرف',
     'expense_claim' => 'مطالبة_المصروفات',
     
     // Accounts Receivable
     'customer_invoice' => 'فاتورة_العميل',
-    'receipt_voucher-matching' => 'مطابقة_قسيمة_الإيصال',
-    'receipt_voucher' => 'قسيمة_الإيصال',
+    'receipt_voucher-matching' => 'مطابقة_سند_إستلام متحصلات',
+    'receipt_voucher' => 'سند_إستلام متحصلات',
     
     // Sales & Marketing
     'sales_quotation' => 'عرض_أسعار_المبيعات',
@@ -27,16 +27,16 @@ return [
     'work_request' => 'طلب_عمل',
     
     // Inventory Management
-    'stock_transfer' => 'نقل_المخزون',
+    'stock_transfer' => 'تحويل_المخزون',
     'stock_receive' => 'استلام_المخزون',
-    'stock_count' => 'عد_المخزون',
+    'stock_count' => 'جرد_المخزون',
     'stock-adjustment' => 'تعديل_المخزون',
-    'purchase_return' => 'إرجاع_الشراء',
+    'purchase_return' => 'إرجاع_المشتريات',
     'material_return' => 'إرجاع_المواد',
     'material_requests' => 'طلبات_المواد',
     'material_issue' => 'صرف_المواد',
     'inventory_reclassification' => 'إعادة_تصنيف_المخزون',
-    'grv_master' => 'قسيمة_استلام_البضائع_الرئيسية',
+    'grv_master' => 'مستند_استلام_المواد_الرئيسية',
     
     // Treasury Management
     'bank_reconciliation' => 'التسوية_البنكية',
@@ -45,20 +45,20 @@ return [
     'transfer_bank' => 'قائمة_التحويل_البنكي',
     
     // General Ledger
-    'journal_vocher' => 'قسيمة_اليومية',
-    'journal_voucher' => 'قسيمة_اليومية',
-    'recurring_voucher' => 'قسيمة_متكررة',
+    'journal_vocher' => 'القيد_اليومي',
+    'journal_voucher' => 'القيد_اليومي',
+    'recurring_voucher' => 'القيد_اليومي',
     
     // Asset Management
     'asset_allocation' => 'تخصيص_الأصول',
     'asset_depreciation' => 'إهلاك_الأصول',
     
     // Budget Management
-    'budget_addition' => 'إضافة_الميزانية',
+    'budget_addition' => 'تعزيز_الميزانية',
     'budget_master' => 'الميزانية_الرئيسية',
-    'budget_transfer' => 'تحويل_الميزانية',
+    'budget_transfer' => 'مناقلة_الميزانية',
 
-    'customer_recipt_voucher' => 'قسيمة_الإيصال_العميل',
+    'customer_recipt_voucher' => 'سند_متحصلات_العميل',
     'saving_report' => 'تقرير_التوفير',
     'tax_deductibility' => 'تقرير_الخصم_الضريبي',
     'material_issue_register' => 'تقرير_صرف_المواد',
