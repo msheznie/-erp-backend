@@ -770,6 +770,10 @@ class JournalVoucherService
             
             $controller = app(JvMasterAPIController::class);
             $jvMasterReturnData = $controller->store($request);
+            
+            if ($jvMasterReturnData instanceof \Illuminate\Http\JsonResponse) {
+                $jvMasterReturnData = $jvMasterReturnData->getData(true);
+            }
 
             if(!$jvMasterReturnData['success']){
                 DB::rollBack();
