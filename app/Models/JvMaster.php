@@ -277,7 +277,8 @@ class JvMaster extends Model
         'reversalJV',
         'reversedYN',
         'stopReversalJV',
-        'isDelegation'
+        'isDelegation',
+        'isAutoCreate'
     ];
 
     /**
@@ -325,7 +326,8 @@ class JvMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'isAutoApprove' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'isAutoCreate' => 'boolean'
     ];
 
     /**

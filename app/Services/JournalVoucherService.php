@@ -765,7 +765,8 @@ class JournalVoucherService
                 'jvType' => 2,
                 'isRelatedPartyYN' => $rrvSchedule->master->isRelatedPartyYN,
                 'JVdate' => $rrvSchedule->processDate,
-                'isAutoCreateDocument' => false
+                'isAutoCreateDocument' => true,
+                'isAutoCreate' => false
             ]);
             
             $controller = app(JvMasterAPIController::class);
