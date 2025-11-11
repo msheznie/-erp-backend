@@ -3375,14 +3375,14 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	COSTUNIT,
 	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
 	CASE 
-    WHEN CAST('$asOfDate' AS DATE) > accumulated_depreciation_date 
+    WHEN CAST('$asOfDate' AS DATE) < accumulated_depreciation_date 
         THEN 0
     ELSE IFNULL(COSTUNIT, 0) - IFNULL(t.depAmountLocal, 0)
     END AS localnbv,
     costUnitRpt,
     IFNULL(depAmountRpt, 0) AS depAmountRpt,
     CASE 
-        WHEN CAST('$asOfDate' AS DATE) > accumulated_depreciation_date 
+        WHEN CAST('$asOfDate' AS DATE) < accumulated_depreciation_date 
             THEN 0
         ELSE IFNULL(costUnitRpt, 0) - IFNULL(depAmountRpt, 0)
     END AS rptnbv
@@ -4300,12 +4300,12 @@ WHERE
                         IFNULL( adDepAmountLocal, 0 ) AS adDepAmountLocal,
                         IFNULL( acDepAmountRpt, 0 ) AS acDepAmountRpt,
                         CASE 
-                        WHEN '$asOfDate' > erp_fa_asset_master.accumulated_depreciation_date 
+                        WHEN '$asOfDate' < erp_fa_asset_master.accumulated_depreciation_date 
                             THEN 0
                         ELSE IFNULL(erp_fa_asset_master.COSTUNIT, 0) - IFNULL(ad.adDepAmountLocal, 0)
                         END AS localnbv,                    
                         CASE 
-                            WHEN '$asOfDate' > erp_fa_asset_master.accumulated_depreciation_date 
+                            WHEN '$asOfDate' < erp_fa_asset_master.accumulated_depreciation_date 
                                 THEN 0
                             ELSE IFNULL(erp_fa_asset_master.costUnitRpt, 0) - IFNULL(ad.acDepAmountRpt, 0)
                         END AS rptnbv,
