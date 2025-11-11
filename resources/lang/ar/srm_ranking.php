@@ -47,7 +47,7 @@ return [
     'supplier_not_in_contract_master' => 'المورد غير موجود في سجلات إدارة العقود. يرجى إضافة المورد إلى سجلات إدارة العقود',
     'contract_master_created_success' => 'تم إنشاء سجل العقد بنجاح.',
     'supplier_bid_status_update_failed' => "حدث خطأ ما! لا يمكن تحديث حالة عرض المورد للمناقصة.",
-    'kyc_enable_request_sent' => "تم إرسال طلب تمكين التحقق من الهوية (KYC) بنجاح",
+    'kyc_enable_request_sent' => "تم إرسال طلب تمكين التحقق من هوية إعرف عميلك بنجاح",
     'unexpected_error_try_again' => "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا.",
     'unexpected_error' => "حدث خطأ غير متوقع.",
     "successfully_saved" => "تم الحفظ بنجاح"
