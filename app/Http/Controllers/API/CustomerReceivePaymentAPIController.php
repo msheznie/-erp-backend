@@ -631,18 +631,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterHeaderSumReport = 0;
         if ($input['documentType'] == 13) {
 
-            $customerReceiveAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountTrans');
+            $netAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('net_amount');
 
-            $customerReceiveAmountLocal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountLocal');
+            $netAmountLocal = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->localCurrencyER;
 
-            $customerReceiveAmountReport = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountRpt');
+            $netAmountReport = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->companyReportingER;
 
-            $masterHeaderSumTrans = $checkPreDirectSumTrans + $customerReceiveAmountTrans;
-            $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal;
-            $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
+            $masterHeaderSumTrans = $checkPreDirectSumTrans + $netAmount;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $netAmountLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport + $netAmountReport;
 
             $masterHeaderSumTrans = abs($masterHeaderSumTrans);
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
