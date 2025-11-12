@@ -483,16 +483,15 @@ class CustomerMasterAPIService
 
         $customerMaster = CustomerMaster::create($data);
 
-        $currencyID = isset($data['currencyID']) && $data['currencyID'] !== null ? $data['currencyID'] : 1;
-        $isDefault = isset($data['currencyIsDefault']) && $data['currencyIsDefault'] !== null ? $data['currencyIsDefault'] : -1;
-
-        CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
-            'customerCode' => $customerMaster->CutomerCode,
-            'currencyID' => $currencyID,
-            'isDefault' => $isDefault,
-            'isAssigned' => -1,
-            'createdBy' => $systemUser->empID
-        ]);
+        if (isset($data['currencyID']) && isset($data['currencyIsDefault'])) {
+            CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
+                'customerCode' => $customerMaster->CutomerCode,
+                'currencyID' =>  $data['currencyID'],
+                'isDefault' => $data['currencyIsDefault'],
+                'isAssigned' => -1,
+                'createdBy' => $systemUser->empID
+            ]);
+        }
 
         if (isset($data['contactDetails']) && is_array($data['contactDetails']) && !empty($data['contactDetails'])) {
             $defaultIndex = null;
@@ -646,13 +645,13 @@ class CustomerMasterAPIService
             $errorData,
             $request,
             function($chartOfAccount, &$request, &$errorData, $fieldName) {
-                if ($chartOfAccount->controlAccountsSystemID == 3) {
+                if ($chartOfAccount->controlAccountsSystemID == 3 && $chartOfAccount->controllAccountYN == 1) {
                     $request['custGLAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
                     $request['custGLaccount'] = $chartOfAccount->AccountCode;
                 } else {
                     $errorData[] = [
                         'field' => $fieldName,
-                        'message' => ["Selected GL code is a control account and cannot be used."]
+                        'message' => ["Selected GL code must control account and type should be BSA"]
                     ];
                 }
             }
@@ -666,9 +665,14 @@ class CustomerMasterAPIService
             $errorData,
             $request,
             function($chartOfAccount, &$request, &$errorData, $fieldName) {
-                if ($chartOfAccount->catogaryBLorPL == "BS") {
+                if ($chartOfAccount->catogaryBLorPL == "BS" && $chartOfAccount->controllAccountYN == 1) {
                     $request['custAdvanceAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID ?? null;
                     $request['custUnbilledAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID ?? null;
+                } else {
+                    $errorData[] = [
+                        'field' => $fieldName,
+                        'message' => ["Selected GL code must control account and type should be BS"]
+                    ];
                 }
             }
         );
@@ -751,10 +755,10 @@ class CustomerMasterAPIService
                 ];
             }
             else{
-                if (self::validateAPIDate($request['customer_registration_expiry_date'])) {
-                    $request['customer_registration_expiry_date'] = Carbon::parse($request['customer_registration_expiry_date'])->format('Y-m-d') . ' 00:00:00';
-                }
-                else{
+                try {
+                    $parsedDate = Carbon::parse($request['customer_registration_expiry_date']);
+                    $request['customer_registration_expiry_date'] = $parsedDate->format('Y-m-d') . ' 00:00:00';
+                } catch (\Exception $e) {
                     $errorData[] = [
                         'field' => "customer_registration_expiry_date",
                         'message' => ["Customer Registration Expiry Date is not a valid date"]
@@ -796,6 +800,17 @@ class CustomerMasterAPIService
             }
         }
 
+        $addContactDetails = isset($request['add_contact_details']) ? $request['add_contact_details'] : null;
+        
+        if ($addContactDetails !== null && $addContactDetails !== '') {
+            if ($addContactDetails != 1 && $addContactDetails != 2) {
+                $errorData[] = [
+                    'field' => "add_contact_details",
+                    'message' => ["Invalid input,add_contact_details must be 1 (Yes) or 2 (No)"]
+                ];
+            }
+        }
+
         $contactDetails = isset($request['contact_details']) ? $request['contact_details'] : null;
         $validatedContactDetails = [];
 
@@ -809,7 +824,7 @@ class CustomerMasterAPIService
                 $isDefault = isset($contact['is_default']) ? $contact['is_default'] : null;
                 
                 if ($contactType !== null && $contactType !== '') {
-                    $supplierContactType = SupplierContactType::where('supplierContactDescription', $contactType)->first();
+                    $supplierContactType = SupplierContactType::where('supplierContactTypeID', $contactType)->first();
                     if (!$supplierContactType) {
                         $errorData[] = [
                             'field' => "contact_details[$index].contact_type",
@@ -866,7 +881,7 @@ class CustomerMasterAPIService
             $currencyCode = isset($currencyDetails['currency_code']) ? $currencyDetails['currency_code'] : null;
             $isDefault = isset($currencyDetails['is_default']) ? $currencyDetails['is_default'] : null;
 
-            if ($currencyCode !== null && $currencyCode !== '') {
+            if ($currencyCode !== null && $currencyCode !== "") {
                 $currency = CurrencyMaster::where('CurrencyCode', $currencyCode)->first();
                 
                 if (!$currency) {
@@ -879,14 +894,15 @@ class CustomerMasterAPIService
                 }
             }
 
-            if ($isDefault !== null && $isDefault !== '') {
+            // Validate isDefault if provided - must be 1 or 2
+            if ($isDefault !== null && $isDefault !== "") {
                 if ($isDefault != 1 && $isDefault != 2) {
                     $errorData[] = [
                         'field' => "currency_detials.is_default",
                         'message' => ["Invalid input, currency_detials.is_default must be 1 (Yes) or 2 (No)"]
                     ];
                 } else {
-                    if ($currencyCode !== null && $currencyCode !== '' && isset($request['currencyID'])) {
+                    if (isset($request['currencyID'])) {
                         $request['currencyIsDefault'] = ($isDefault == 1) ? -1 : 0;
                     }
                 }
