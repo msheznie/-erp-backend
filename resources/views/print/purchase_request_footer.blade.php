@@ -1,4 +1,4 @@
-<div class="footer">
+<!-- <div class="footer">
     <table style="width:100%;">
         <tr>
             <td>
@@ -50,4 +50,4 @@
         </tr>
     </table>
 
-</div>
+</div> -->
