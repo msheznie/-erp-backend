@@ -36,7 +36,6 @@ class CustomerMasterAPIService
     use AuditLogsTrait;
 
     public static function validateCustomerMasterData($data): array {
-        // include common validation in UI & API
 
         if($data['custGLAccountSystemID'] == $data['custUnbilledAccountSystemID'] ){
             return [
@@ -266,7 +265,6 @@ class CustomerMasterAPIService
 
                 $employee = Helper::getEmployeeInfo();
 
-                //check policy 5
                 $policy = Helper::checkRestrictionByPolicy($input['primaryCompanySystemID'],5);
 
                 $customerId = $customerMaster->customerCodeSystem;
@@ -294,17 +292,14 @@ class CustomerMasterAPIService
 
                     $customerMaster = CustomerMaster::where('customerCodeSystem',$customerId)->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
                     CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
-                    // user activity log table
 
                     if($customerMaster){
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
                         $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
 
-                        // update in to user log table
                         foreach ($old_array as $key => $old){
                             if($old != $modified_array[$key]){
                                 $description = $employee->empName." Updated customer (".$customerMaster->CutomerCode.") from ".$old." To ".$modified_array[$key]."";
-                                // UserActivityLogger::createUserActivityLogArray($employee->employeeSystemID,$customerMasters->documentSystemID,$customerMasters->primaryCompanySystemID,$customerMasters->supplierCodeSystem,$description,$modified_array[$key],$old,$key);
                             }
                         }
                     }
@@ -409,13 +404,45 @@ class CustomerMasterAPIService
 
             if(isset($data['isAutoCreateDocument']) && $data['isAutoCreateDocument']) {
 
-                CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
-                    'customerCode' => $customerMaster->CutomerCode,
-                    'currencyID' => 1,
-                    'isDefault' => -1,
-                    'isAssigned' => -1,
-                    'createdBy' => $systemUser->empID
-                ]);
+                if (isset($data['currencyDetails']) && is_array($data['currencyDetails']) && !empty($data['currencyDetails'])) {
+                    $defaultIndex = null;
+                    foreach ($data['currencyDetails'] as $index => $currency) {
+                        if (isset($currency['isDefault']) && $currency['isDefault'] == -1) {
+                            if ($defaultIndex === null) {
+                                $defaultIndex = $index;
+                            } else {
+                                $data['currencyDetails'][$index]['isDefault'] = 0;
+                            }
+                        }
+                    }
+                    
+                    if ($defaultIndex !== null) {
+                        CustomerCurrency::where('customerCodeSystem', $customerMaster->customerCodeSystem)
+                            ->where('isDefault', -1)
+                            ->update(['isDefault' => 0]);
+                    }
+                    
+                    foreach ($data['currencyDetails'] as $currency) {
+                        if (isset($currency['currencyID'])) {
+                            CustomerCurrency::create([
+                                'customerCodeSystem' => $customerMaster->customerCodeSystem,
+                                'customerCode' => $customerMaster->CutomerCode,
+                                'currencyID' => $currency['currencyID'],
+                                'isDefault' => $currency['isDefault'] ?? 0,
+                                'isAssigned' => -1,
+                                'createdBy' => $systemUser->empID
+                            ]);
+                        }
+                    }
+                } else {
+                    CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
+                        'customerCode' => $customerMaster->CutomerCode,
+                        'currencyID' => 1,
+                        'isDefault' => -1,
+                        'isAssigned' => -1,
+                        'createdBy' => $systemUser->empID
+                    ]);
+                }
 
                 $customerMaster['confirmedYN'] = 1;
                 $customerMaster['isAutoCreateDocument'] = true;
@@ -483,14 +510,36 @@ class CustomerMasterAPIService
 
         $customerMaster = CustomerMaster::create($data);
 
-        if (isset($data['currencyID']) && isset($data['currencyIsDefault'])) {
-            CustomerCurrency::create(['customerCodeSystem' => $customerMaster->customerCodeSystem,
-                'customerCode' => $customerMaster->CutomerCode,
-                'currencyID' =>  $data['currencyID'],
-                'isDefault' => $data['currencyIsDefault'],
-                'isAssigned' => -1,
-                'createdBy' => $systemUser->empID
-            ]);
+        if (isset($data['currencyDetails']) && is_array($data['currencyDetails']) && !empty($data['currencyDetails'])) {
+            $defaultIndex = null;
+            foreach ($data['currencyDetails'] as $index => $currency) {
+                if (isset($currency['isDefault']) && $currency['isDefault'] == -1) {
+                    if ($defaultIndex === null) {
+                        $defaultIndex = $index;
+                    } else {
+                        $data['currencyDetails'][$index]['isDefault'] = 0;
+                    }
+                }
+            }
+            
+            if ($defaultIndex !== null) {
+                CustomerCurrency::where('customerCodeSystem', $customerMaster->customerCodeSystem)
+                    ->where('isDefault', -1)
+                    ->update(['isDefault' => 0]);
+            }
+            
+            foreach ($data['currencyDetails'] as $currency) {
+                if (isset($currency['currencyID'])) {
+                    CustomerCurrency::create([
+                        'customerCodeSystem' => $customerMaster->customerCodeSystem,
+                        'customerCode' => $customerMaster->CutomerCode,
+                        'currencyID' => $currency['currencyID'],
+                        'isDefault' => $currency['isDefault'] ?? 0,
+                        'isAssigned' => -1,
+                        'createdBy' => $systemUser->empID
+                    ]);
+                }
+            }
         }
 
         if (isset($data['contactDetails']) && is_array($data['contactDetails']) && !empty($data['contactDetails'])) {
@@ -876,34 +925,53 @@ class CustomerMasterAPIService
         }
         
         $currencyDetails = isset($request['currency_detials']) ? $request['currency_detials'] : (isset($request['currency_details']) ? $request['currency_details'] : null);
+        $validatedCurrencyDetails = [];
 
         if ($currencyDetails !== null && is_array($currencyDetails)) {
-            $currencyCode = isset($currencyDetails['currency_code']) ? $currencyDetails['currency_code'] : null;
-            $isDefault = isset($currencyDetails['is_default']) ? $currencyDetails['is_default'] : null;
-
-            if ($currencyCode !== null && $currencyCode !== "") {
-                $currency = CurrencyMaster::where('CurrencyCode', $currencyCode)->first();
-                
-                if (!$currency) {
-                    $errorData[] = [
-                        'field' => "currency_detials.currency_code",
-                        'message' => ["The currency code not matching with system"]
-                    ];
-                } else {
-                    $request['currencyID'] = $currency->currencyID;
-                }
+            if (isset($currencyDetails['currency_code']) || isset($currencyDetails['is_default'])) {
+                $currencyDetails = [$currencyDetails];
             }
 
-            // Validate isDefault if provided - must be 1 or 2
-            if ($isDefault !== null && $isDefault !== "") {
-                if ($isDefault != 1 && $isDefault != 2) {
-                    $errorData[] = [
-                        'field' => "currency_detials.is_default",
-                        'message' => ["Invalid input, currency_detials.is_default must be 1 (Yes) or 2 (No)"]
-                    ];
+            foreach ($currencyDetails as $index => $currencyDetail) {
+                $currencyCode = isset($currencyDetail['currency_code']) ? $currencyDetail['currency_code'] : null;
+                $isDefault = isset($currencyDetail['is_default']) ? $currencyDetail['is_default'] : null;
+
+                if ($currencyCode !== null && $currencyCode !== "") {
+                    $currency = CurrencyMaster::where('CurrencyCode', $currencyCode)->first();
+                    
+                    if (!$currency) {
+                        $errorData[] = [
+                            'field' => "currency_details[$index].currency_code",
+                            'message' => ["The currency code not matching with system"]
+                        ];
+                    } else {
+                        if ($isDefault !== null && $isDefault !== "") {
+                            if ($isDefault != 1 && $isDefault != 2) {
+                                $errorData[] = [
+                                    'field' => "currency_details[$index].is_default",
+                                    'message' => ["Invalid input, currency_details[$index].is_default must be 1 (Yes) or 2 (No)"]
+                                ];
+                            } else {
+                                $validatedCurrencyDetails[] = [
+                                    'currencyID' => $currency->currencyID,
+                                    'isDefault' => ($isDefault == 1) ? -1 : 0
+                                ];
+                            }
+                        } else {
+                            $validatedCurrencyDetails[] = [
+                                'currencyID' => $currency->currencyID,
+                                'isDefault' => null
+                            ];
+                        }
+                    }
                 } else {
-                    if (isset($request['currencyID'])) {
-                        $request['currencyIsDefault'] = ($isDefault == 1) ? -1 : 0;
+                    if ($isDefault !== null && $isDefault !== "") {
+                        if ($isDefault != 1 && $isDefault != 2) {
+                            $errorData[] = [
+                                'field' => "currency_details[$index].is_default",
+                                'message' => ["Invalid input, currency_details[$index].is_default must be 1 (Yes) or 2 (No)"]
+                            ];
+                        }
                     }
                 }
             }
@@ -961,8 +1029,7 @@ class CustomerMasterAPIService
                     "lastSerialOrder" => $lastSerialOrder,
                     "CutomerCode" => $customerCode,
                     "isCustomerActive" => 1,
-                    "currencyID" => isset($request['currencyID']) ? $request['currencyID'] : null,
-                    "currencyIsDefault" => isset($request['currencyIsDefault']) ? $request['currencyIsDefault'] : null,
+                    "currencyDetails" => $validatedCurrencyDetails,
                     "contactDetails" => $validatedContactDetails
                 ]
             ];
