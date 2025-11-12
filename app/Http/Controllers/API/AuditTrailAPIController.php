@@ -367,7 +367,11 @@ class AuditTrailAPIController extends AppBaseController
                 if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
                     $params2 .= ' | employeeId="'.$input['employeeId'].'"';
                 }
-                
+
+                if(isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != ''){
+                    $params2 .= ' | company_system_id="'.$input['companyId'].'"';
+                }
+
                 $params2 .= ' | locale="'.$locale.'"';
                 
                 $searchValue2 = $request->input('search.value');
