@@ -508,6 +508,18 @@ class CustomerMasterAPIService
         $data['createdUserID'] = $systemUser->empID;
         $data['createdPcID'] = gethostname();
 
+        $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
+        $lastSerialOrder = 1;
+        if(!empty($lastCustomer)) {
+            $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+        }
+
+        $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
+
+        $data['lastSerialOrder'] = $lastSerialOrder;
+        $data['CutomerCode'] = $customerCode;
+        $data['isCustomerActive'] = 1;
+
         $customerMaster = CustomerMaster::create($data);
 
         if (isset($data['currencyDetails']) && is_array($data['currencyDetails']) && !empty($data['currencyDetails'])) {
@@ -978,14 +990,6 @@ class CustomerMasterAPIService
         }
 
         if (empty($errorData)) {
-            $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
-            $lastSerialOrder = 1;
-            if(!empty($lastCustomer)) {
-                $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
-            }
-
-            $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
-
             $returnDataset = [
                 'status' => true,
                 'data' => [
@@ -1026,8 +1030,6 @@ class CustomerMasterAPIService
                     "createdUserID" => $systemUser->empID,
                     "documentSystemID" => 58,
                     "documentID" => "CUSTM",
-                    "lastSerialOrder" => $lastSerialOrder,
-                    "CutomerCode" => $customerCode,
                     "isCustomerActive" => 1,
                     "currencyDetails" => $validatedCurrencyDetails,
                     "contactDetails" => $validatedContactDetails
