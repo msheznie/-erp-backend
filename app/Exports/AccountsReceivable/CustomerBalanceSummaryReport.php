@@ -15,12 +15,12 @@ class CustomerBalanceSummaryReport
     public function getHeader()
     {
         return [
-          'Company ID',
-          'Company Name',
-          'Customer Code',
-          'Customer Name',
-          'Currency',
-          'Amount'
+          trans('custom.company_id'),
+          trans('custom.company_name'),
+          trans('custom.customer_code'),
+          trans('custom.customer_name'),
+          trans('custom.currency'),
+          trans('custom.amount'),
         ];
     }
 

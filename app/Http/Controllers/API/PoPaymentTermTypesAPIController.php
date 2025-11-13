@@ -49,7 +49,7 @@ class PoPaymentTermTypesAPIController extends AppBaseController
         $this->poPaymentTermTypesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->all();
 
-        return $this->sendResponse($poPaymentTermTypes->toArray(), 'Po Payment Term Types retrieved successfully');
+        return $this->sendResponse($poPaymentTermTypes->toArray(), trans('custom.po_payment_term_types_retrieved_successfully'));
     }
 
     /**
@@ -66,7 +66,7 @@ class PoPaymentTermTypesAPIController extends AppBaseController
 
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->create($input);
 
-        return $this->sendResponse($poPaymentTermTypes->toArray(), 'Po Payment Term Types saved successfully');
+        return $this->sendResponse($poPaymentTermTypes->toArray(), trans('custom.po_payment_term_types_saved_successfully'));
     }
 
     /**
@@ -83,10 +83,10 @@ class PoPaymentTermTypesAPIController extends AppBaseController
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermTypes)) {
-            return $this->sendError('Po Payment Term Types not found');
+            return $this->sendError(trans('custom.po_payment_term_types_not_found'));
         }
 
-        return $this->sendResponse($poPaymentTermTypes->toArray(), 'Po Payment Term Types retrieved successfully');
+        return $this->sendResponse($poPaymentTermTypes->toArray(), trans('custom.po_payment_term_types_retrieved_successfully'));
     }
 
     /**
@@ -106,12 +106,12 @@ class PoPaymentTermTypesAPIController extends AppBaseController
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermTypes)) {
-            return $this->sendError('Po Payment Term Types not found');
+            return $this->sendError(trans('custom.po_payment_term_types_not_found'));
         }
 
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->update($input, $id);
 
-        return $this->sendResponse($poPaymentTermTypes->toArray(), 'PoPaymentTermTypes updated successfully');
+        return $this->sendResponse($poPaymentTermTypes->toArray(), trans('custom.popaymenttermtypes_updated_successfully'));
     }
 
     /**
@@ -128,11 +128,11 @@ class PoPaymentTermTypesAPIController extends AppBaseController
         $poPaymentTermTypes = $this->poPaymentTermTypesRepository->findWithoutFail($id);
 
         if (empty($poPaymentTermTypes)) {
-            return $this->sendError('Po Payment Term Types not found');
+            return $this->sendError(trans('custom.po_payment_term_types_not_found'));
         }
 
         $poPaymentTermTypes->delete();
 
-        return $this->sendResponse($id, 'Po Payment Term Types deleted successfully');
+        return $this->sendResponse($id, trans('custom.po_payment_term_types_deleted_successfully'));
     }
 }

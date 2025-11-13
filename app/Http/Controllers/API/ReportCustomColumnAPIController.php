@@ -64,7 +64,7 @@ class ReportCustomColumnAPIController extends AppBaseController
         $this->reportCustomColumnRepository->pushCriteria(new LimitOffsetCriteria($request));
         $reportCustomColumns = $this->reportCustomColumnRepository->all();
 
-        return $this->sendResponse($reportCustomColumns->toArray(), 'Report Custom Columns retrieved successfully');
+        return $this->sendResponse($reportCustomColumns->toArray(), trans('custom.report_custom_columns_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class ReportCustomColumnAPIController extends AppBaseController
 
         $reportCustomColumn = $this->reportCustomColumnRepository->create($input);
 
-        return $this->sendResponse($reportCustomColumn->toArray(), 'Report Custom Column saved successfully');
+        return $this->sendResponse($reportCustomColumn->toArray(), trans('custom.report_custom_column_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class ReportCustomColumnAPIController extends AppBaseController
         $reportCustomColumn = $this->reportCustomColumnRepository->findWithoutFail($id);
 
         if (empty($reportCustomColumn)) {
-            return $this->sendError('Report Custom Column not found');
+            return $this->sendError(trans('custom.report_custom_column_not_found'));
         }
 
-        return $this->sendResponse($reportCustomColumn->toArray(), 'Report Custom Column retrieved successfully');
+        return $this->sendResponse($reportCustomColumn->toArray(), trans('custom.report_custom_column_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ReportCustomColumnAPIController extends AppBaseController
         $reportCustomColumn = $this->reportCustomColumnRepository->findWithoutFail($id);
 
         if (empty($reportCustomColumn)) {
-            return $this->sendError('Report Custom Column not found');
+            return $this->sendError(trans('custom.report_custom_column_not_found'));
         }
 
         $reportCustomColumn = $this->reportCustomColumnRepository->update($input, $id);
 
-        return $this->sendResponse($reportCustomColumn->toArray(), 'ReportCustomColumn updated successfully');
+        return $this->sendResponse($reportCustomColumn->toArray(), trans('custom.reportcustomcolumn_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class ReportCustomColumnAPIController extends AppBaseController
         $reportCustomColumn = $this->reportCustomColumnRepository->findWithoutFail($id);
 
         if (empty($reportCustomColumn)) {
-            return $this->sendError('Report Custom Column not found');
+            return $this->sendError(trans('custom.report_custom_column_not_found'));
         }
 
         $reportCustomColumn->delete();

@@ -1,7 +1,7 @@
 
 <html>
 <head>
-    <title>Supplier Evaluation Template</title>
+    <title>{{ __('custom.supplier_evaluation_template') }}</title>
     <style>
         @page {
             margin-left: 30px;
@@ -9,6 +9,66 @@
             margin-top: 30px;
             margin-bottom: 0px;
         }
+
+        /* RTL Support for Arabic */
+        @if(app()->getLocale() == 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+        }
+        
+        .rtl-text-left {
+            text-align: right !important;
+        }
+        
+        .rtl-text-right {
+            text-align: left !important;
+        }
+        
+        .rtl-float-left {
+            float: right !important;
+        }
+        
+        .rtl-float-right {
+            float: left !important;
+        }
+        
+        .rtl-margin-left {
+            margin-right: 0 !important;
+            margin-left: auto !important;
+        }
+        
+        .rtl-margin-right {
+            margin-left: 0 !important;
+            margin-right: auto !important;
+        }
+        
+        .rtl-padding-left {
+            padding-right: 0 !important;
+            padding-left: auto !important;
+        }
+        
+        .rtl-padding-right {
+            padding-left: 0 !important;
+            padding-right: auto !important;
+        }
+        
+        table {
+            direction: rtl;
+        }
+        
+        .table th, .table td {
+            text-align: right;
+        }
+        
+        .text-right {
+            text-align: left !important;
+        }
+        
+        .text-left {
+            text-align: right !important;
+        }
+        @endif
 
         body {
             font-size: 12px;
@@ -165,12 +225,12 @@
             <tr style="width: 100%">
                 <td valign="top" style="width: 40%">
                     <br>
-                    <span> <b>Supplier Code:</b> </span>
+                    <span> <b>{{ __('custom.supplier_code') }}:</b> </span>
                     <br>
                 </td>
                 <td valign="top" style="width: 50%">
                     <br>
-                    <span> <b>Supplier Name:</b> </span>
+                    <span> <b>{{ __('custom.supplier_name') }}:</b> </span>
                     <br>
                 </td>
             </tr>

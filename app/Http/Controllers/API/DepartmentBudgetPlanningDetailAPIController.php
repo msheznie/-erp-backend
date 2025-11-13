@@ -11,14 +11,20 @@ use App\Models\BudgetTemplate;
 use App\Models\BudgetTemplateColumn;
 use App\Models\BudgetTemplatePreColumn;
 use App\Models\CompanyDepartmentEmployee;
+use App\Models\CompanyDepartmentSegment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\ChartOfAccount;
 use App\Models\Employee;
 use App\Models\FixedAssetMaster;
 use App\Models\ItemMaster;
 use App\Models\Months;
+use App\Models\Revision;
+use App\Models\SegmentMaster;
+use App\Models\CompanyBudgetPlanning;
 use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
+use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
 use App\User;
 use Carbon\Carbon;
@@ -39,10 +45,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
     /** @var  DepartmentBudgetPlanningDetailRepository */
     private $departmentBudgetPlanningDetailRepository;
+    
+    /** @var  ChartOfAccountService */
+    private $chartOfAccountService;
 
-    public function __construct(DepartmentBudgetPlanningDetailRepository $departmentBudgetPlanningDetailRepo)
+    public function __construct(DepartmentBudgetPlanningDetailRepository $departmentBudgetPlanningDetailRepo, ChartOfAccountService $chartOfAccountService)
     {
         $this->departmentBudgetPlanningDetailRepository = $departmentBudgetPlanningDetailRepo;
+        $this->chartOfAccountService = $chartOfAccountService;
     }
 
     /**
@@ -60,7 +70,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $request->get('limit')
         );
 
-        return $this->sendResponse($departmentBudgetPlanningDetails->toArray(), 'Department Budget Planning Details retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetails->toArray(), trans('custom.department_budget_planning_details_retrieved_succe'));
     }
 
     /**
@@ -77,7 +87,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->create($input);
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'Department Budget Planning Detail saved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.department_budget_planning_detail_saved_successful'));
     }
 
     /**
@@ -94,10 +104,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'Department Budget Planning Detail retrieved successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.department_budget_planning_detail_retrieved_succes'));
     }
 
     /**
@@ -117,12 +127,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->update($input, $id);
 
-        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), 'DepartmentBudgetPlanningDetail updated successfully');
+        return $this->sendResponse($departmentBudgetPlanningDetail->toArray(), trans('custom.departmentbudgetplanningdetail_updated_successfull'));
     }
 
     /**
@@ -141,12 +151,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentBudgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($id);
 
         if (empty($departmentBudgetPlanningDetail)) {
-            return $this->sendError('Department Budget Planning Detail not found');
+            return $this->sendError(trans('custom.department_budget_planning_detail_not_found'));
         }
 
         $departmentBudgetPlanningDetail->delete();
 
-        return $this->sendSuccess('Department Budget Planning Detail deleted successfully');
+        return $this->sendSuccess(trans('custom.department_budget_planning_detail_deleted_successfully'));
     }
 
     /**
@@ -171,7 +181,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
         
         if (!$departmentPlanningId) {
-            return $this->sendError('Department Planning ID is required');
+            return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
         $employeeID =  \Helper::getEmployeeSystemID();
@@ -188,7 +198,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         try {
 
-            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
+            if($request->input('type') != 'company_budget_planning') {
+                $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
                 'budgetDelegateAccessDetails',
@@ -252,9 +263,61 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
+            // Handle segment filtering
+            $segments = $request->input('segments');
+            if (!empty($segments) && is_array($segments)) {
+                // Extract segment IDs from the segments array
+                $segmentIds = array_column($segments, 'id');
+                if (!empty($segmentIds)) {
+                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                        $q->whereIn('serviceLineSystemID', $segmentIds);
+                    });
+                }
+            }
+
             $total = $query->count();
 
             $data = $query->skip($offset)->take($pageSize)->get();
+
+            // Check financeTeamStatus and add isEnable field based on selectedGlSections
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+            $selectedGlSections = [];
+            $workflowMethod = null;
+            
+            if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3) {
+                if ($budgetPlanning->workflow) {
+                    $workflowMethod = $budgetPlanning->workflow->method;
+                }
+                $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+                
+                if ($revision && $revision->selectedGlSections) {
+                    $selectedGlSections = json_decode($revision->selectedGlSections, true);
+                }
+            }
+            
+            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod) {
+                $isEnable = true;
+                
+                if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3 && !empty($selectedGlSections)) {
+                    if ($workflowMethod == 1) {
+                        $isEnable = in_array($item->id, $selectedGlSections);
+                    } else {
+                        $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+                    }
+                }
+                
+                $item->isEnable = $isEnable;
+                return $item;
+            });
+            }
+            else {
+                $data = [];
+                $total = 0;
+            }
+
+            
 
             return response()->json([
                 'data' => $data,
@@ -265,7 +328,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             ]);
 
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving details - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_details') . $e->getMessage(), 500);
         }
     }
 
@@ -287,9 +350,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $detail->internal_status = $input['internal_status'];
             $detail->save();
 
-            return $this->sendResponse($detail, 'Internal status updated successfully');
+            return $this->sendResponse($detail, trans('custom.internal_status_updated_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error updating status - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_updating_status') . $e->getMessage(), 500);
         }
     }
 
@@ -304,7 +367,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $departmentPlanningId = $request->input('departmentPlanningId');
         
         if (!$departmentPlanningId) {
-            return $this->sendError('Department Planning ID is required');
+            return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
         try {
@@ -323,9 +386,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ')
                 ->first();
 
-            return $this->sendResponse($summary, 'Summary retrieved successfully');
+            return $this->sendResponse($summary, trans('custom.summary_retrieved_successfully'));
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving summary - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_summary') . $e->getMessage(), 500);
         }
     }
 
@@ -344,7 +407,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 ->first();
 
             if (!$budgetTemplate) {
-                return $this->sendError('Budget template not found or inactive');
+                return $this->sendError(trans('custom.budget_template_not_found_or_inactive'));
             }
 
             // Check if budget template has columns configured
@@ -358,10 +421,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'hasLinkRequestAmount' => $hasLinkRequestAmount
             ];
 
-            return $this->sendResponse($verificationData, 'Budget template configuration verified successfully');
+            return $this->sendResponse($verificationData, trans('custom.budget_template_configuration_verified_successfull'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error verifying budget template configuration - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_verifying_budget_template_configuration') . $e->getMessage(), 500);
         }
     }
 
@@ -430,8 +493,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
 
             }
-
-
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
             $entryID = null;
@@ -511,10 +572,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'entryID' => $entryID,
             ];
 
-            return $this->sendResponse($dataSet,'Budget detail template entries saved successfully');
+            return $this->sendResponse($dataSet,trans('custom.budget_detail_template_entries_saved_successfully'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error saving template entries - ' . $e->getMessage());
+            return $this->sendError(trans('custom.error_saving_template_entries') . $e->getMessage());
         }
     }
 
@@ -612,7 +673,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Validate budget detail exists
             $budgetDetail = DepartmentBudgetPlanningDetail::find($input['id']);
             if (!$budgetDetail) {
-                return $this->sendError('Budget detail not found');
+                return $this->sendError(trans('custom.budget_detail_not_found'));
             }
 
             $controller = app(CompanyBudgetPlanningAPIController::class);
@@ -734,10 +795,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $groupedEntries[$entry->entryID]['unitItems'] = count($itemData) > 0 ? $itemData->toArray() : [];
             }
 
-            return $this->sendResponse(array_values($groupedEntries), 'Budget detail template entries retrieved successfully');
+            return $this->sendResponse(array_values($groupedEntries), trans('custom.budget_detail_template_entries_retrieved_successfu'));
 
         } catch (\Exception $e) {
-            return $this->sendError('Error retrieving template entries - ' . $e->getMessage(), 500);
+            return $this->sendError(trans('custom.error_retrieving_template_entries') . $e->getMessage(), 500);
         }
     }
 
@@ -933,5 +994,116 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }else {
             return $this->sendError("Unable to update amount details",500);
         }
+    }
+
+    public function updateFinanceTeamStatus(Request $request)
+    {
+        $input = $request->validate([
+            'budgetPlanningId' => 'required|integer|exists:department_budget_plannings,id',
+            'financeTeamStatus' => 'required|integer|in:1,2,3,4'
+        ]);
+        $input = $request->input();
+        try {
+            $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningId']);
+            if(!isset($budgetPlanning))
+                return $this->sendError("Department Budget planning not found!",404);
+            
+            $currentStatus = $budgetPlanning->financeTeamStatus;
+            $newStatus = $input['financeTeamStatus'];
+
+            // if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
+            //     return $this->sendError("Status can only be changed forward.", 422);
+            // }
+
+            $budgetPlanning->financeTeamStatus = $newStatus;
+            $budgetPlanning->save();
+            return $this->sendResponse("Finance team status updated",200);
+
+        }catch (\Exception $exception)
+        {
+            return $this->sendError($exception->getMessage(),500);
+        }
+    }
+
+    /**
+     * Validate if status progression is allowed (forward only)
+     * 
+     * @param int $currentStatus
+     * @param int $newStatus
+     * @return bool
+     */
+    private function isValidStatusProgression($currentStatus, $newStatus)
+    {
+        // Status flow: 1 (Open) -> 2 (Under Review) -> 3 (Sent Back for Revision) -> 4 (Completed)
+        // Special case: From status 3 (Sent Back for Revision), can go back to 2 (Under Review)
+        
+        // Same status is always valid (no change)
+        if ($currentStatus == $newStatus) {
+            return true;
+        }
+        
+        // Define valid progressions
+        $validProgressions = [
+            1 => [2, 3, 4], // From Open: can go to Under Review, Sent Back for Revision, or Completed
+            2 => [3, 4],    // From Under Review: can go to Sent Back for Revision or Completed
+            3 => [4],       // From Sent Back for Revision: can go back to Completed
+            4 => []         // From Completed: no further changes allowed
+        ];
+        
+        return in_array($newStatus, $validProgressions[$currentStatus] ?? []);
+    }
+
+    public function getChartofAccountsByBudget(Request $request)
+    {
+        $input = $request->all();
+        
+        if (!isset($input['budgetPlanningId'])) {
+            return $this->sendError('Budget Planning ID is required');
+        }
+        
+        $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByBudgetPlanning($input['budgetPlanningId']);
+        
+        return $this->sendResponse($chartOfAccountSystemIDs, 'Chart of accounts retrieved successfully');
+    }
+
+    /**
+     * Get chart of accounts by revision GL sections
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getChartOfAccountsByRevisionGlSections(Request $request)
+    {
+        $input = $request->all();
+        
+        if (!isset($input['selectedGlSections']) || !isset($input['budgetPlanningId'])) {
+            return $this->sendError('Selected GL Sections and Budget Planning ID are required');
+        }
+        
+        $selectedGlSections = $input['selectedGlSections'];
+        $budgetPlanningId = $input['budgetPlanningId'];
+        
+        $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $budgetPlanningId);
+        
+        return $this->sendResponse($chartOfAccountSystemIDs, 'Chart of accounts retrieved successfully');
+    }
+
+    public function getDepartmentBudgetPlanningStatusesByCompany(Request $request)
+    {
+        $input = $request->all();
+
+        
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+
+        $query = DepartmentBudgetPlanning::with('department.hod.employee')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        return \DataTables::of($query)
+            ->addIndexColumn()
+            ->make(true);
+
     }
 }

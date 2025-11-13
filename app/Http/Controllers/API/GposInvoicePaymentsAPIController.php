@@ -75,7 +75,7 @@ class GposInvoicePaymentsAPIController extends AppBaseController
         $this->gposInvoicePaymentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->all();
 
-        return $this->sendResponse($gposInvoicePayments->toArray(), 'Gpos Invoice Payments retrieved successfully');
+        return $this->sendResponse($gposInvoicePayments->toArray(), trans('custom.gpos_invoice_payments_retrieved_successfully'));
     }
 
     /**
@@ -122,7 +122,7 @@ class GposInvoicePaymentsAPIController extends AppBaseController
 
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->create($input);
 
-        return $this->sendResponse($gposInvoicePayments->toArray(), 'Gpos Invoice Payments saved successfully');
+        return $this->sendResponse($gposInvoicePayments->toArray(), trans('custom.gpos_invoice_payments_saved_successfully'));
     }
 
     /**
@@ -169,10 +169,10 @@ class GposInvoicePaymentsAPIController extends AppBaseController
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->findWithoutFail($id);
 
         if (empty($gposInvoicePayments)) {
-            return $this->sendError('Gpos Invoice Payments not found');
+            return $this->sendError(trans('custom.gpos_invoice_payments_not_found'));
         }
 
-        return $this->sendResponse($gposInvoicePayments->toArray(), 'Gpos Invoice Payments retrieved successfully');
+        return $this->sendResponse($gposInvoicePayments->toArray(), trans('custom.gpos_invoice_payments_retrieved_successfully'));
     }
 
     /**
@@ -229,12 +229,12 @@ class GposInvoicePaymentsAPIController extends AppBaseController
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->findWithoutFail($id);
 
         if (empty($gposInvoicePayments)) {
-            return $this->sendError('Gpos Invoice Payments not found');
+            return $this->sendError(trans('custom.gpos_invoice_payments_not_found'));
         }
 
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->update($input, $id);
 
-        return $this->sendResponse($gposInvoicePayments->toArray(), 'GposInvoicePayments updated successfully');
+        return $this->sendResponse($gposInvoicePayments->toArray(), trans('custom.gposinvoicepayments_updated_successfully'));
     }
 
     /**
@@ -281,11 +281,11 @@ class GposInvoicePaymentsAPIController extends AppBaseController
         $gposInvoicePayments = $this->gposInvoicePaymentsRepository->findWithoutFail($id);
 
         if (empty($gposInvoicePayments)) {
-            return $this->sendError('Gpos Invoice Payments not found');
+            return $this->sendError(trans('custom.gpos_invoice_payments_not_found'));
         }
 
         $gposInvoicePayments->delete();
 
-        return $this->sendResponse($id, 'Gpos Invoice Payments deleted successfully');
+        return $this->sendResponse($id, trans('custom.gpos_invoice_payments_deleted_successfully'));
     }
 }

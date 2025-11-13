@@ -65,7 +65,7 @@ class POSStagMenuSalesMasterAPIController extends AppBaseController
         $this->pOSStagMenuSalesMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSStagMenuSalesMasters = $this->pOSStagMenuSalesMasterRepository->all();
 
-        return $this->sendResponse($pOSStagMenuSalesMasters->toArray(), 'P O S Stag Menu Sales Masters retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesMasters->toArray(), trans('custom.p_o_s_stag_menu_sales_masters_retrieved_successful'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSStagMenuSalesMasterAPIController extends AppBaseController
 
         $pOSStagMenuSalesMaster = $this->pOSStagMenuSalesMasterRepository->create($input);
 
-        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), 'P O S Stag Menu Sales Master saved successfully');
+        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), trans('custom.p_o_s_stag_menu_sales_master_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSStagMenuSalesMasterAPIController extends AppBaseController
         $pOSStagMenuSalesMaster = $this->pOSStagMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesMaster)) {
-            return $this->sendError('P O S Stag Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_master_not_found'));
         }
 
-        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), 'P O S Stag Menu Sales Master retrieved successfully');
+        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), trans('custom.p_o_s_stag_menu_sales_master_retrieved_successfull'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSStagMenuSalesMasterAPIController extends AppBaseController
         $pOSStagMenuSalesMaster = $this->pOSStagMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesMaster)) {
-            return $this->sendError('P O S Stag Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_master_not_found'));
         }
 
         $pOSStagMenuSalesMaster = $this->pOSStagMenuSalesMasterRepository->update($input, $id);
 
-        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), 'POSStagMenuSalesMaster updated successfully');
+        return $this->sendResponse($pOSStagMenuSalesMaster->toArray(), trans('custom.posstagmenusalesmaster_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSStagMenuSalesMasterAPIController extends AppBaseController
         $pOSStagMenuSalesMaster = $this->pOSStagMenuSalesMasterRepository->findWithoutFail($id);
 
         if (empty($pOSStagMenuSalesMaster)) {
-            return $this->sendError('P O S Stag Menu Sales Master not found');
+            return $this->sendError(trans('custom.p_o_s_stag_menu_sales_master_not_found'));
         }
 
         $pOSStagMenuSalesMaster->delete();

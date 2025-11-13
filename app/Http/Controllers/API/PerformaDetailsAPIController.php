@@ -65,7 +65,7 @@ class PerformaDetailsAPIController extends AppBaseController
         $this->performaDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $performaDetails = $this->performaDetailsRepository->all();
 
-        return $this->sendResponse($performaDetails->toArray(), 'Performa Details retrieved successfully');
+        return $this->sendResponse($performaDetails->toArray(), trans('custom.performa_details_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class PerformaDetailsAPIController extends AppBaseController
 
         $performaDetails = $this->performaDetailsRepository->create($input);
 
-        return $this->sendResponse($performaDetails->toArray(), 'Performa Details saved successfully');
+        return $this->sendResponse($performaDetails->toArray(), trans('custom.performa_details_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class PerformaDetailsAPIController extends AppBaseController
         $performaDetails = $this->performaDetailsRepository->findWithoutFail($id);
 
         if (empty($performaDetails)) {
-            return $this->sendError('Performa Details not found');
+            return $this->sendError(trans('custom.performa_details_not_found'));
         }
 
-        return $this->sendResponse($performaDetails->toArray(), 'Performa Details retrieved successfully');
+        return $this->sendResponse($performaDetails->toArray(), trans('custom.performa_details_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class PerformaDetailsAPIController extends AppBaseController
         $performaDetails = $this->performaDetailsRepository->findWithoutFail($id);
 
         if (empty($performaDetails)) {
-            return $this->sendError('Performa Details not found');
+            return $this->sendError(trans('custom.performa_details_not_found'));
         }
 
         $performaDetails = $this->performaDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($performaDetails->toArray(), 'PerformaDetails updated successfully');
+        return $this->sendResponse($performaDetails->toArray(), trans('custom.performadetails_updated_successfully'));
     }
 
     /**
@@ -271,11 +271,11 @@ class PerformaDetailsAPIController extends AppBaseController
         $performaDetails = $this->performaDetailsRepository->findWithoutFail($id);
 
         if (empty($performaDetails)) {
-            return $this->sendError('Performa Details not found');
+            return $this->sendError(trans('custom.performa_details_not_found'));
         }
 
         $performaDetails->delete();
 
-        return $this->sendResponse($id, 'Performa Details deleted successfully');
+        return $this->sendResponse($id, trans('custom.performa_details_deleted_successfully'));
     }
 }

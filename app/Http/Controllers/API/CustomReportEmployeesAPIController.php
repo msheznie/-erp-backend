@@ -114,6 +114,9 @@ class CustomReportEmployeesAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'employeeSystemID' => 'required|array',
             'user_report_id' => 'required'
+        ],[
+            'employeeSystemID.required' => trans('custom.employee_system_id_required'),
+            'user_report_id.required' => trans('custom.user_report_id_required'),
         ]);
 
         if ($validator->fails()) {

@@ -64,7 +64,7 @@ class PaymentVoucherBankChargeDetailsAPIController extends AppBaseController
         $this->paymentVoucherBankChargeDetailsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->all();
 
-        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), 'Payment Voucher Bank Charge Details retrieved successfully');
+        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), trans('custom.payment_voucher_bank_charge_details_retrieved_succ'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PaymentVoucherBankChargeDetailsAPIController extends AppBaseController
 
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->create($input);
 
-        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), 'Payment Voucher Bank Charge Details saved successfully');
+        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), trans('custom.payment_voucher_bank_charge_details_saved_successf'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PaymentVoucherBankChargeDetailsAPIController extends AppBaseController
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->findWithoutFail($id);
 
         if (empty($paymentVoucherBankChargeDetails)) {
-            return $this->sendError('Payment Voucher Bank Charge Details not found');
+            return $this->sendError(trans('custom.payment_voucher_bank_charge_details_not_found'));
         }
 
-        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), 'Payment Voucher Bank Charge Details retrieved successfully');
+        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), trans('custom.payment_voucher_bank_charge_details_retrieved_succ'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PaymentVoucherBankChargeDetailsAPIController extends AppBaseController
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->findWithoutFail($id);
 
         if (empty($paymentVoucherBankChargeDetails)) {
-            return $this->sendError('Payment Voucher Bank Charge Details not found');
+            return $this->sendError(trans('custom.payment_voucher_bank_charge_details_not_found'));
         }
 
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->update($input, $id);
 
-        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), 'PaymentVoucherBankChargeDetails updated successfully');
+        return $this->sendResponse($paymentVoucherBankChargeDetails->toArray(), trans('custom.paymentvoucherbankchargedetails_updated_successful'));
     }
 
     /**
@@ -288,15 +288,15 @@ class PaymentVoucherBankChargeDetailsAPIController extends AppBaseController
         $paymentVoucherBankChargeDetails = $this->paymentVoucherBankChargeDetailsRepository->findWithoutFail($id);
 
         if (empty($paymentVoucherBankChargeDetails)) {
-            return $this->sendError('Payment Voucher Bank Charge Detail not found');
+            return $this->sendError(trans('custom.payment_voucher_bank_charge_detail_not_found'));
         }
 
         if($paymentVoucherBankChargeDetails->master && $paymentVoucherBankChargeDetails->master->confirmedYN){
-            return $this->sendError('You cannot delete detail, this document already confirmed', 500);
+            return $this->sendError(trans('custom.you_cannot_delete_detail_this_document_already_con'), 500);
         }
 
         $paymentVoucherBankChargeDetails->delete();
 
-        return $this->sendResponse($id, 'Payment Voucher Bank Charge Detail deleted successfully');
+        return $this->sendResponse($id, trans('custom.payment_voucher_bank_charge_detail_deleted_success'));
     }
 }

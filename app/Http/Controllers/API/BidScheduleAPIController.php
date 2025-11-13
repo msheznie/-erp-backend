@@ -65,7 +65,7 @@ class BidScheduleAPIController extends AppBaseController
         $this->bidScheduleRepository->pushCriteria(new LimitOffsetCriteria($request));
         $bidSchedules = $this->bidScheduleRepository->all();
 
-        return $this->sendResponse($bidSchedules->toArray(), 'Bid Schedules retrieved successfully');
+        return $this->sendResponse($bidSchedules->toArray(), trans('custom.bid_schedules_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class BidScheduleAPIController extends AppBaseController
 
         $bidSchedule = $this->bidScheduleRepository->create($input);
 
-        return $this->sendResponse($bidSchedule->toArray(), 'Bid Schedule saved successfully');
+        return $this->sendResponse($bidSchedule->toArray(), trans('custom.bid_schedule_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class BidScheduleAPIController extends AppBaseController
         $bidSchedule = $this->bidScheduleRepository->findWithoutFail($id);
 
         if (empty($bidSchedule)) {
-            return $this->sendError('Bid Schedule not found');
+            return $this->sendError(trans('custom.bid_schedule_not_found'));
         }
 
-        return $this->sendResponse($bidSchedule->toArray(), 'Bid Schedule retrieved successfully');
+        return $this->sendResponse($bidSchedule->toArray(), trans('custom.bid_schedule_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class BidScheduleAPIController extends AppBaseController
         $bidSchedule = $this->bidScheduleRepository->findWithoutFail($id);
 
         if (empty($bidSchedule)) {
-            return $this->sendError('Bid Schedule not found');
+            return $this->sendError(trans('custom.bid_schedule_not_found'));
         }
 
         $bidSchedule = $this->bidScheduleRepository->update($input, $id);
 
-        return $this->sendResponse($bidSchedule->toArray(), 'BidSchedule updated successfully');
+        return $this->sendResponse($bidSchedule->toArray(), trans('custom.bidschedule_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class BidScheduleAPIController extends AppBaseController
         $bidSchedule = $this->bidScheduleRepository->findWithoutFail($id);
 
         if (empty($bidSchedule)) {
-            return $this->sendError('Bid Schedule not found');
+            return $this->sendError(trans('custom.bid_schedule_not_found'));
         }
 
         $bidSchedule->delete();

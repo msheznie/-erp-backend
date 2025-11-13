@@ -323,45 +323,45 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     public function storeBidFormat(Request $request)
     {
-       $input = $request->all();
-       $employee = \Helper::getEmployeeInfo();
-       /*$boq_applicable = 0;
-       if(isset($input['boq_applicable']) && $input['boq_applicable']){
-           $boq_applicable = 1;
-       }*/
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        /*$boq_applicable = 0;
+        if(isset($input['boq_applicable']) && $input['boq_applicable']){
+            $boq_applicable = 1;
+        }*/
 
-       $exist = TenderBidFormatMaster::where('tender_name',$input['tender_name'])
-           ->where('company_id',$input['companySystemID'])->first();
+        $exist = TenderBidFormatMaster::where('tender_name',$input['tender_name'])
+            ->where('company_id',$input['companySystemID'])->first();
 
-       if(!empty($exist)){
-           return ['success' => false, 'message' => trans('srm_masters.description_already_exists')];
-       }
+        if(!empty($exist)){
+            return ['success' => false, 'message' => trans('srm_masters.description_already_exists')];
+        }
 
         DB::beginTransaction();
         try {
-           // $data['boq_applicable']=$boq_applicable;
-           $data['tender_name']=$input['tender_name'];
-           $data['company_id']=$input['companySystemID'];
-           $data['created_by'] = $employee->employeeSystemID;
+            // $data['boq_applicable']=$boq_applicable;
+            $data['tender_name']=$input['tender_name'];
+            $data['company_id']=$input['companySystemID'];
+            $data['created_by'] = $employee->employeeSystemID;
 
-           $result = TenderBidFormatMaster::create($data);
+            $result = TenderBidFormatMaster::create($data);
 
-           if($result){
-               $detail_data = [
-                   'tender_id' =>   $result['id'],
-                   'label' => "Final Total",
-                   'field_type' => 4,
-                   'is_disabled' => 0,
-                   'boq_applicable' => 0,
-                   'finalTotalYn' => 1,
-                   'created_by' => $employee->employeeSystemID
-               ];
-               $detail_result = TenderBidFormatDetail::create($detail_data);
-               if($detail_result) {
-                   DB::commit();
-                   return ['success' => true, 'message' => trans('srm_masters.successfully_saved'), 'data' => $result];
-               }
-           }
+            if($result){
+                $detail_data = [
+                    'tender_id' =>   $result['id'],
+                    'label' => "Final Total",
+                    'field_type' => 4,
+                    'is_disabled' => 0,
+                    'boq_applicable' => 0,
+                    'finalTotalYn' => 1,
+                    'created_by' => $employee->employeeSystemID
+                ];
+                $detail_result = TenderBidFormatDetail::create($detail_data);
+                if($detail_result) {
+                    DB::commit();
+                    return ['success' => true, 'message' => trans('srm_masters.successfully_saved'), 'data' => $result];
+                }
+            }
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -441,14 +441,14 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     public function updatePriceBidDetail(Request $request)
     {
-        
-        
+
+
         $details = $request->get('details');
         $type = $request->get('val');
 
         $input = $this->convertArrayToSelectedValue($details, array('field_type'));
-        
-       
+
+
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
@@ -478,11 +478,11 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $id = $input['id'];
 
 
-        
+
 
         if(is_null($type))
         {
-          
+
             $result = $this->checkPirceBidItem($tender_id,$id);
 
             if($result['is_exit'])
@@ -492,13 +492,13 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                 ])];
             }
         }
-  
+
 
 
 
         DB::beginTransaction();
         try {
-            
+
             $data['is_disabled']= $input['is_disabled'];
             if($input['field_type'] != 2)
             {
@@ -508,7 +508,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             {
                 $data['boq_applicable']=$input['boq_applicable'];
             }
-   
+
             if($input['field_type'] == 4)
             {
                 $data['boq_applicable']= false;
@@ -518,12 +518,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             {
                 $data['formula_string']= null;
             }
-            
-           
+
+
             $data['label']=$input['label'];
             $data['field_type']=$input['field_type'];
             $data['updated_by'] = $employee->employeeSystemID;
-           
+
             $result = TenderBidFormatDetail::where('id',$input['id'])->update($data);
 
             if($result){
@@ -558,7 +558,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-           // $pricebid = self::priceBidExistInTender($input['id']);
+            // $pricebid = self::priceBidExistInTender($input['id']);
             /*if(empty($pricebid)) {
                 $data['boq_applicable'] = $boq_applicable;
             }*/
@@ -640,11 +640,11 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     }
 
     function priceBidExistInTender($id){
-       return PricingScheduleMaster::with(['tender_master'])->whereHas('tender_master')->where('price_bid_format_id',$id)->first();
+        return PricingScheduleMaster::with(['tender_master'])->whereHas('tender_master')->where('price_bid_format_id',$id)->first();
     }
 
     public function getBitFormatItems(Request $request)
-    {   
+    {
         $input = $request->all();
         $id = $input['id'];
         $bit_format_id = $input['tender_id'];
@@ -664,47 +664,47 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function addFormula(Request $request)
     {
         $input = $request->all();
-        
+
         $id = $input['detail_id'];
         $bit_format_id = $input['bit_format_id'];
         $formula = isset($input['formula']) ? $input['formula'] : null;
         $new_formula = null;
-        
+
         $p = '';
         $cont = '';
         $data = [];
-        $formula_arr = null;  
-  
+        $formula_arr = null;
+
         try {
-            
+
             foreach ($formula as $formula_row) {
-                if (trim($formula_row) != '') 
+                if (trim($formula_row) != '')
                 {
                     $val1 = '';
-    
+
                     $elementType = $formula_row[0];
-    
-                 
+
+
                     if ($elementType == '$') {
                         $elementArr = explode('$', $formula_row);
                         $val1 = 1;
                         $cont = $cont.$val1;
-             
+
                     }
                     else if ($elementType == '#') {
-                    $elementArr = explode('#', $formula_row);
-                    $val1 = 1;
-                    $cont = $cont.$val1;
+                        $elementArr = explode('#', $formula_row);
+                        $val1 = 1;
+                        $cont = $cont.$val1;
 
                     }
                     else if($elementType == '|')
                     {
-                        
+
                         $elementArr1 = explode('|', $formula_row);
                         $value = ($elementArr1[1]);
                         $cont = $cont.$value;
-                       
-                           
+
+
                     }
                     else if($elementType == '_')
                     {
@@ -717,29 +717,29 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                         {
                             $value2 = 1;
                         }
-    
-                        
+
+
                         $cont = $cont.$value2;
-                        
-    
+
+
                     }
                 }
-               
-            }
-           
 
-            
+            }
+
+
+
             $p = eval(' '.$cont.';');
 
 
 
-            } catch (\Exception $e) {
-               
-                Log::error($this->failed($e));
-                return ['success' => false, 'message' => $e];
-            }
+        } catch (\Exception $e) {
 
-     
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+
 
         if (!is_null($formula)) {
             if (is_array(($formula))) {
@@ -758,7 +758,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             $result = TenderBidFormatDetail::where('id',$id)->where('tender_id',$bit_format_id)->first();
             $result->formula_string = $new_formula;
             $result->save();
-          
+
 
 
             if($result){
@@ -767,7 +767,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             }
 
         } catch (\Exception $e) {
-             DB::rollback();
+            DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
@@ -779,8 +779,8 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     {
 
         $results = $request->all();
-       
-       
+
+
         $details = [];
         foreach($results as $key=>$val)
         {
@@ -788,96 +788,96 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             {   $p = '';
                 $cont = '';
                 $data = [];
-                $formula_arr = null;         
+                $formula_arr = null;
                 if (!is_null($val['formula_string'])) {
-                       
-                        if ($val['formula_string']) {
-                            $formula_arr = explode('~', $val['formula_string']);
+
+                    if ($val['formula_string']) {
+                        $formula_arr = explode('~', $val['formula_string']);
 
 
-                            foreach ($formula_arr as $formula_row) {
-                                if (trim($formula_row) != '') 
-                                {
-                                    $val1 = '';
+                        foreach ($formula_arr as $formula_row) {
+                            if (trim($formula_row) != '')
+                            {
+                                $val1 = '';
 
-                                    $elementType = $formula_row[0];
-                                    if ($elementType == '$') {
-                                        $elementArr = explode('$', $formula_row);
-                                        $value = intval($elementArr[1]);
-                                        foreach($results as $result)
+                                $elementType = $formula_row[0];
+                                if ($elementType == '$') {
+                                    $elementArr = explode('$', $formula_row);
+                                    $value = intval($elementArr[1]);
+                                    foreach($results as $result)
+                                    {
+                                        if($result['bid_format_detail_id'] == $value)
                                         {
-                                            if($result['bid_format_detail_id'] == $value)
+                                            if($result['typeId'] == 2)
                                             {
-                                                    if($result['typeId'] == 2)
-                                                    {
-                                                        if($result['value'] != null)
-                                                        {
-                                                            $val1 = $result['value'];
-                                                        }
-                                                        else
-                                                        {
-                                                            $val1 = 0;
-                                                        }
-                                                        
-                                                    }
-                                                    else if($result['typeId'] == 3)
-                                                    {
-                                                       
+                                                if($result['value'] != null)
+                                                {
+                                                    $val1 = $result['value'];
+                                                }
+                                                else
+                                                {
+                                                    $val1 = 0;
+                                                }
 
-                                                        if($result['value'] != null)
-                                                        {
-                                                            $val1 = $result['value']/100;
-                                                        }
-                                                        else
-                                                        {
-                                                            $val1 = 1;
-                                                        }
-                                                        
-                                                    }
-                                                $cont = $cont.$val1;
-                                                break;
                                             }
-                                            
-                                        }
-                                    }
-                                    else if($elementType == '|')
-                                    {
-                                        
-                                        $elementArr1 = explode('|', $formula_row);
-                                        $value = ($elementArr1[1]);
-                                        $cont = $cont.$value;
-                                       
-                                           
-                                    }
-                                    else if($elementType == '_')
-                                    {
-                                        $elementArr2 = explode('_', $formula_row);
-                                        if(empty($elementArr2[1]) || is_null($elementArr2))
-                                        {
-                                            $value2 = 0;
-                                        }
-                                        else
-                                        {
-                                            $value2 = ($elementArr2[1]);
-                                        }
+                                            else if($result['typeId'] == 3)
+                                            {
 
-                                        
-                                        $cont = $cont.$value2;
-                                        
+
+                                                if($result['value'] != null)
+                                                {
+                                                    $val1 = $result['value']/100;
+                                                }
+                                                else
+                                                {
+                                                    $val1 = 1;
+                                                }
+
+                                            }
+                                            $cont = $cont.$val1;
+                                            break;
+                                        }
 
                                     }
                                 }
-                               
+                                else if($elementType == '|')
+                                {
+
+                                    $elementArr1 = explode('|', $formula_row);
+                                    $value = ($elementArr1[1]);
+                                    $cont = $cont.$value;
+
+
+                                }
+                                else if($elementType == '_')
+                                {
+                                    $elementArr2 = explode('_', $formula_row);
+                                    if(empty($elementArr2[1]) || is_null($elementArr2))
+                                    {
+                                        $value2 = 0;
+                                    }
+                                    else
+                                    {
+                                        $value2 = ($elementArr2[1]);
+                                    }
+
+
+                                    $cont = $cont.$value2;
+
+
+                                }
                             }
 
-                            $p = eval('return '.$cont.';');
-                        } 
-                    
+                        }
+
+                        $p = eval('return '.$cont.';');
+                    }
+
                 }
                 $data[$key] = $p;
                 array_push($details,$data);
             }
-           
+
 
         }
 
@@ -896,12 +896,12 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             foreach($tender_details as $val)
             {
                 if (!is_null($val['formula_string'])) {
-                   
+
                     if ($val['formula_string']) {
                         $formula_arr = explode('~', $val['formula_string']);
 
                         foreach ($formula_arr as $formula_row) {
-                            if (trim($formula_row) != '') 
+                            if (trim($formula_row) != '')
                             {
                                 $elementType = $formula_row[0];
 
@@ -914,7 +914,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                                         $formulas = $formulas.','.$val['label'];
                                         break;
                                     }
-                               
+
                                 }
                             }
                         }
@@ -927,6 +927,6 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $data['formulas'] = $formulas;
         return $data;
     }
-  
+
 
 }

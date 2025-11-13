@@ -134,7 +134,8 @@ class DepartmentBudgetPlanning extends Model
         'workflowID',
         'status',
         'planningCode',
-        'workStatus'
+        'workStatus',
+        'financeTeamStatus'
     ];
 
     /**
@@ -154,7 +155,8 @@ class DepartmentBudgetPlanning extends Model
         'workflowID' => 'integer',
         'status' => 'integer',
         'planningCode' => 'string',
-        'workStatus' => 'string'
+        'workStatus' => 'string',
+        'financeTeamStatus' => 'integer'
     ];
 
     /**
@@ -207,6 +209,12 @@ class DepartmentBudgetPlanning extends Model
         return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', Auth::user()->employee_id);
 
     }
+
+    public function revisions()
+    {
+        return $this->hasMany(Revision::class, 'budgetPlanningId');
+    }
+
 
     /**
      * Get the work status label

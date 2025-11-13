@@ -64,7 +64,7 @@ class SrmTenderBidEmployeeDetailsEditLogAPIController extends AppBaseController
         $this->srmTenderBidEmployeeDetailsEditLogRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srmTenderBidEmployeeDetailsEditLogs = $this->srmTenderBidEmployeeDetailsEditLogRepository->all();
 
-        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLogs->toArray(), 'Srm Tender Bid Employee Details Edit Logs retrieved successfully');
+        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLogs->toArray(), trans('custom.srm_tender_bid_employee_details_edit_logs_retrieve'));
     }
 
     /**
@@ -118,7 +118,7 @@ class SrmTenderBidEmployeeDetailsEditLogAPIController extends AppBaseController
 
         $srmTenderBidEmployeeDetailsEditLog = $this->srmTenderBidEmployeeDetailsEditLogRepository->create($input);
 
-        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), 'Srm Tender Bid Employee Details Edit Log saved successfully');
+        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), trans('custom.srm_tender_bid_employee_details_edit_log_saved_suc'));
     }
 
     /**
@@ -166,10 +166,10 @@ class SrmTenderBidEmployeeDetailsEditLogAPIController extends AppBaseController
         $srmTenderBidEmployeeDetailsEditLog = $this->srmTenderBidEmployeeDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderBidEmployeeDetailsEditLog)) {
-            return $this->sendError('Srm Tender Bid Employee Details Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_bid_employee_details_edit_log_not_found'));
         }
 
-        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), 'Srm Tender Bid Employee Details Edit Log retrieved successfully');
+        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), trans('custom.srm_tender_bid_employee_details_edit_log_retrieved'));
     }
 
     /**
@@ -235,12 +235,12 @@ class SrmTenderBidEmployeeDetailsEditLogAPIController extends AppBaseController
         $srmTenderBidEmployeeDetailsEditLog = $this->srmTenderBidEmployeeDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderBidEmployeeDetailsEditLog)) {
-            return $this->sendError('Srm Tender Bid Employee Details Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_bid_employee_details_edit_log_not_found'));
         }
 
         $srmTenderBidEmployeeDetailsEditLog = $this->srmTenderBidEmployeeDetailsEditLogRepository->update($input, $id);
 
-        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), 'SrmTenderBidEmployeeDetailsEditLog updated successfully');
+        return $this->sendResponse($srmTenderBidEmployeeDetailsEditLog->toArray(), trans('custom.srmtenderbidemployeedetailseditlog_updated_success'));
     }
 
     /**
@@ -288,7 +288,7 @@ class SrmTenderBidEmployeeDetailsEditLogAPIController extends AppBaseController
         $srmTenderBidEmployeeDetailsEditLog = $this->srmTenderBidEmployeeDetailsEditLogRepository->findWithoutFail($id);
 
         if (empty($srmTenderBidEmployeeDetailsEditLog)) {
-            return $this->sendError('Srm Tender Bid Employee Details Edit Log not found');
+            return $this->sendError(trans('custom.srm_tender_bid_employee_details_edit_log_not_found'));
         }
 
         $srmTenderBidEmployeeDetailsEditLog->delete();

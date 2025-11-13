@@ -66,10 +66,10 @@ class CustomerInvoiceServices
                                         }
                                         
             if($isFromAPI && $checkDetailExistMatch){
-                return ['status' => false,'message'=>'the Invoice has been pulled to a Receipt Voucher'];
+                return ['status' => false,'message' => trans('custom.invoice_pulled_to_receipt_voucher')];
             } else {
                 if (!empty($codes)) {
-                        $message = 'Selected sales order–based customer invoice, pulled to ' . implode(', ', $codes) . '.';
+                        $message = trans('custom.selected_sales_order_pulled_to', ['codes' => implode(', ', $codes)]);
                         return ['status' => false, 'message' => $message];
                     }
 
@@ -121,12 +121,11 @@ class CustomerInvoiceServices
             }
             if($isExist)
             {
-                return ['status' => false,'message'=>'You cannot return  back to amend the Delivery Order  because a stock-out document already exists for one or more related items.
-                                            Allowing amendments at this stage may impact the existing stock-out document and affect the Weighted Average Cost (WAC) calculation'];
+                return ['status' => false,'message' => trans('custom.cannot_amend_delivery_order_stock_out')];
             }
           
             if($isFromAPI){
-                $input['returnComment'] = 'Customer invoice cancellation from API';
+                $input['returnComment'] = trans('custom.customer_invoice_cancellation_from_api');
             }
 
             //deleting from approval table
@@ -222,7 +221,7 @@ class CustomerInvoiceServices
 	{
         
         if ($masterData->canceledYN == -1) {
-            return ['status' => false,'message'=>'the Invoice is already cancelled'];
+            return ['status' => false,'message' => trans('custom.invoice_already_cancelled')];
         }
 
         $employee = UserTypeService::getSystemEmployee();

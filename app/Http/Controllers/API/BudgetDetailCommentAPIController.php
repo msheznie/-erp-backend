@@ -65,7 +65,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
         $this->budgetDetailCommentRepository->pushCriteria(new LimitOffsetCriteria($request));
         $budgetDetailComments = $this->budgetDetailCommentRepository->all();
 
-        return $this->sendResponse($budgetDetailComments->toArray(), 'Budget Detail Comments retrieved successfully');
+        return $this->sendResponse($budgetDetailComments->toArray(), trans('custom.budget_detail_comments_retrieved_successfully'));
     }
 
     /**
@@ -133,7 +133,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse([], 'Budget Detail Comment saved successfully');
+        return $this->sendResponse([], trans('custom.budget_detail_comment_saved_successfully'));
     }
 
     /**
@@ -180,10 +180,10 @@ class BudgetDetailCommentAPIController extends AppBaseController
         $budgetDetailComment = $this->budgetDetailCommentRepository->findWithoutFail($id);
 
         if (empty($budgetDetailComment)) {
-            return $this->sendError('Budget Detail Comment not found');
+            return $this->sendError(trans('custom.budget_detail_comment_not_found'));
         }
 
-        return $this->sendResponse($budgetDetailComment->toArray(), 'Budget Detail Comment retrieved successfully');
+        return $this->sendResponse($budgetDetailComment->toArray(), trans('custom.budget_detail_comment_retrieved_successfully'));
     }
 
     /**
@@ -240,12 +240,12 @@ class BudgetDetailCommentAPIController extends AppBaseController
         $budgetDetailComment = $this->budgetDetailCommentRepository->findWithoutFail($id);
 
         if (empty($budgetDetailComment)) {
-            return $this->sendError('Budget Detail Comment not found');
+            return $this->sendError(trans('custom.budget_detail_comment_not_found'));
         }
 
         $budgetDetailComment = $this->budgetDetailCommentRepository->update($input, $id);
 
-        return $this->sendResponse($budgetDetailComment->toArray(), 'BudgetDetailComment updated successfully');
+        return $this->sendResponse($budgetDetailComment->toArray(), trans('custom.budgetdetailcomment_updated_successfully'));
     }
 
     /**
@@ -292,7 +292,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
         $budgetDetailComment = $this->budgetDetailCommentRepository->findWithoutFail($id);
 
         if (empty($budgetDetailComment)) {
-            return $this->sendError('Budget Detail Comment not found');
+            return $this->sendError(trans('custom.budget_detail_comment_not_found'));
         }
 
         $budgetDetailComment->delete();
@@ -313,7 +313,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
                                                  ->get();
         }
 
-         return $this->sendResponse($budgetComments, 'Budget Detail Comments retrived successfully');
+         return $this->sendResponse($budgetComments, trans('custom.budget_detail_comments_retrived_successfully'));
 
     }
 }

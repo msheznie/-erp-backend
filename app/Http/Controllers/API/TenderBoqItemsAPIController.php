@@ -428,7 +428,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         $exist = $editOrAmend ?
             TenderBoqItemsEditLog::checkItemNameExists($input['item_name'], $mainWorkID, $id) :
-            TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID);
+            TenderBoqItems::checkItemNameExists($input['item_name'], $mainWorkID, $id);
 
         if(!empty($exist)){
             return ['success' => false, 'message' => trans('srm_tender_rfx.item_already_exists')];
@@ -484,19 +484,19 @@ class TenderBoqItemsAPIController extends AppBaseController
                     foreach($details as $main)
                     {
                         if(count($main->tender_boq_items) == 0)
-                        {   
+                        {
                             $isMainWorksComplete = false;
                             break;
                         }
-                       
+
                     }
-                   
+
                 }
 
                 $master['boq_status'] = ($isMainWorksComplete) ? 1 : 0;
                 $editOrAmend ? PricingScheduleMasterEditLog::where('amd_id', $mainwork->amd_pricing_schedule_master_id)->update($master) :
-                PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
-            
+                    PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+
                 DB::commit();
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted'), 'data' => $result];
             }
@@ -684,6 +684,6 @@ class TenderBoqItemsAPIController extends AppBaseController
             PricingScheduleDetailEditLog::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->amd_pricing_schedule_master_id, $versionID) :
             PricingScheduleDetail::getPricingScheduleMainWork($mainwork->tender_id, $mainwork->pricing_schedule_master_id);
 
-         return $output;                               
+        return $output;
     }
 }

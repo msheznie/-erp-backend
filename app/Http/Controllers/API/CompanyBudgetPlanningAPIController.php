@@ -18,8 +18,11 @@ use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\DepartmentUserBudgetControl;
+use App\Models\DeptBudgetPlanningTimeRequest;
+use App\Models\Revision;
 use App\Models\WorkflowConfiguration;
 use App\Repositories\CompanyBudgetPlanningRepository;
+use App\Services\BudgetPermissionService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -41,10 +44,14 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 {
     /** @var  CompanyBudgetPlanningRepository */
     private $companyBudgetPlanningRepository;
+    
+    /** @var  BudgetPermissionService */
+    private $budgetPermissionService;
 
-    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo)
+    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo, BudgetPermissionService $budgetPermissionService)
     {
         $this->companyBudgetPlanningRepository = $companyBudgetPlanningRepo;
+        $this->budgetPermissionService = $budgetPermissionService;
     }
 
     /**
@@ -84,7 +91,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $this->companyBudgetPlanningRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyBudgetPlannings = $this->companyBudgetPlanningRepository->all();
 
-        return $this->sendResponse($companyBudgetPlannings->toArray(), 'Company Budget Plannings retrieved successfully');
+        return $this->sendResponse($companyBudgetPlannings->toArray(), trans('custom.company_budget_plannings_retrieved_successfully'));
     }
 
     /**
@@ -195,7 +202,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'Budget Planning initiated successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
 
     /**
@@ -242,11 +249,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
+        $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
+        $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'Company Budget Planning retrieved successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.company_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -312,12 +321,12 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), 'CompanyBudgetPlanning updated successfully');
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
     }
 
     /**
@@ -365,7 +374,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
-            return $this->sendError('Company Budget Planning not found');
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
         $companyBudgetPlanning->delete();
@@ -375,113 +384,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
     public function getBudgetPlanningUserPermissions(Request $request) {
         $input = $request->all();
-
-        $companyId = $input['companyId'];
-
-        if (!isset($companyId)) {
-            return $this->sendError('Company ID not found');
+        $result = $this->budgetPermissionService->getBudgetPlanningUserPermissions($input);
+        
+        if (!$result['success']) {
+            return $this->sendError($result['message']);
         }
-
-
-        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] :  \Helper::getEmployeeSystemID();
-
-//        $employeeID = 110;
-        $userPermissions = [
-            'financeUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ],
-            'hodUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ],
-            'delegateUser' => [
-                'status' => false,
-                'access' => [],
-                'isActive' => true
-            ]
-        ];
-
-        $assignDepartments = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
-            ->where('isActive', 1)
-            ->whereHas('department', function($query) use ($companyId) {
-                $query->where('companySystemID', $companyId);
-            });
-
-        if ($assignDepartments) {
-            $isHODUser = (clone $assignDepartments)->whereHas('department', function($query) {
-                $query->where('isFinance', 0);
-            })
-            ->where('isHOD',1)->exists();
-
-            if ($isHODUser) {
-                $userPermissions['hodUser']['status'] = true;
-
-                // only get permission if budgetPlanningID is set
-                if (isset($input['budgetPlanningID'])) {
-                    // TODO: get hod parent & child permission from workflow configuration & return
-                    /**
-                     * HOD permission required in budget planning company & budget planning department view.
-                     * Inside that view call this function with budgetPlanningID
-                     * use $userPermissions['hodUser']['access']
-                     */
-                }
-            }
-
-            $isFinanceUser = (clone $assignDepartments)->whereHas('department', function($query) {
-                $query->where('isFinance', 1);
-            })->exists();
-
-            if ($isFinanceUser) {
-                $userPermissions['financeUser']['status'] = true;
-
-                $allBudgetControls = BudgetControl::where('isActive', 1)->get();
-
-                $departmentEmployeeID = (clone $assignDepartments)->whereHas('department', function($query) {
-                    $query->where('isFinance', 1);
-                })->pluck('departmentEmployeeSystemID');
-                $financeUserPermissions = DepartmentUserBudgetControl::where('departmentEmployeeSystemID', $departmentEmployeeID->first())->pluck('budgetControlID')->toArray();
-
-                $userPermissions['financeUser']['access'] = $allBudgetControls->mapWithKeys( function($budgetControl) use ($financeUserPermissions) {
-                    return [Str::slug($budgetControl->controlName, "_") => in_array($budgetControl->budgetControlID, $financeUserPermissions)];
-                });
-            }
-
-
-            // check if user is delegate & assign permissions
-            if (isset($input['departmentSystemID'])) {
-                $delegateeID = (clone $assignDepartments)->where('departmentSystemID', $input['departmentSystemID'])->pluck('departmentEmployeeSystemID')->first();
-                $delegateUserAccess = BudgetDelegateAccessRecord::where('delegatee_id', $delegateeID);
-            }
-            else {
-                $delegateeID = (clone $assignDepartments)->pluck('departmentEmployeeSystemID')->toArray();
-                $delegateUserAccess = BudgetDelegateAccessRecord::whereIn('delegatee_id', $delegateeID);
-            }
-
-            if ((count((clone $delegateUserAccess)->get()) > 0)) {
-                $userPermissions['delegateUser']['status'] = true;
-
-                // only get permission if departmentBudgetPlanningDetailID is set
-                if (isset($input['departmentBudgetPlanningDetailID'])) {
-                    $delegateUserAccessData = $delegateUserAccess->where('budget_planning_detail_id', $input['departmentBudgetPlanningDetailID'])->first();
-                    if(!empty($delegateUserAccessData) && ($delegateUserAccessData->status != 1 || $delegateUserAccessData->submission_time <= Carbon::today()->format('Y-m-d')))
-                    {
-                        $userPermissions['delegateUser']['isActive'] = false;
-                    }
-                    if (!empty($delegateUserAccessData)) {
-                        $preDelegateUserAccessData = BudgetDelegateAccess::where('is_active', 1)->get();
-                        $userExistingPermissions = is_array($delegateUserAccessData->access_permissions) ? $delegateUserAccessData->access_permissions : json_decode($delegateUserAccessData->access_permissions);
-                        $userPermissions['delegateUser']['access'] = $preDelegateUserAccessData->mapWithKeys(function($preDelegateUserAccess) use ($userExistingPermissions) {
-                            return [$preDelegateUserAccess->slug => in_array($preDelegateUserAccess->slug, $userExistingPermissions)];
-                        });
-                    }
-                }
-            }
-        }
-
-        return $this->sendResponse($userPermissions, 'User access retrieved successfully');
+        
+        return $this->sendResponse($result['data'], $result['message']);
     }
 
     public function getBudgetPlanningFormData(Request $request) {
@@ -524,13 +433,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
 
 
-                $newRequest = new Request();
-                $newRequest->replace([
+                $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
                     'companyId' => $companyId,
                     'delegateUser' =>  $employeeID
                 ]);
-                $controller = app(CompanyBudgetPlanningAPIController::class);
-                $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
                 if ($userPermission['success'] && $userPermission['data']['financeUser']['status']) {
                     $departmentPlanningCodes = $companyPlanningCodes;
@@ -634,7 +540,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             );
         }
 
-        return $this->sendResponse($output, 'Record retrieved successfully');
+        return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getBudgetPlanningMasterData(Request $request) {
@@ -741,9 +647,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
                 
                 if ($isFinanceUser) {
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
+                      
                 } else {
                     $hodDepartment = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
                         ->where('isHOD', 1)
@@ -761,7 +668,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -779,16 +686,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 //                            ->where('status',1)
                             ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['department','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
+
 
                     }
                     
 
                 }
 
+                if(isset($input['sltCompanyBudgetPlan'])) {
+                    $data->where('companyBudgetPlanningID', $input['sltCompanyBudgetPlan']);
+                }
                 if (array_key_exists('department', $input)) {
                     if (!is_null($request['department'])) {
                         $department = (array)$request['department'];
@@ -1083,7 +994,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $companyID = $data['primaryCompany'];
         }
         else {
-            return $this->sendError('Primary Company is required');
+            return $this->sendError(trans('custom.primary_company_is_required'));
         }
 
         $activeDepartments = CompanyDepartment::where('companySystemID', $companyID)
@@ -1150,7 +1061,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (isset($data['departmentID'])) {
                         $departmentBudgetPlanningState = DepartmentBudgetPlanning::where('departmentID', $data['departmentID'])->where('status', 1)->exists();
                         if ($departmentBudgetPlanningState) {
-                            return $this->sendError('Budget Planning is already in progress for this department');
+                            return $this->sendError(trans('custom.budget_planning_is_already_in_progress_for_this_de'));
                         }
                     }
                     break;
@@ -1158,7 +1069,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     if (isset($data['workflowID'])) {
                         $budgetPlanningStatus = CompanyBudgetPlanning::where('workflowID', $data['workflowID'])->where('status', 1)->exists();
                         if ($budgetPlanningStatus) {
-                            return $this->sendError('Budget Planning is already in progress');
+                            return $this->sendError(trans('custom.budget_planning_is_already_in_progress'));
                         }
                     }
                     break;
@@ -1214,6 +1125,176 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         } catch (\Exception $e) {
             return $this->sendError('Error processing delegate access: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get revisions by company budget planning ID, grouped by department
+     *
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/getRevisionsByCompanyBudget",
+     *      summary="getRevisionsByCompanyBudget",
+     *      tags={"CompanyBudgetPlanning"},
+     *      description="Get revisions by company budget planning ID, grouped by department",
+     *      @OA\Parameter(
+     *          name="companyBudgetId",
+     *          description="Company Budget Planning ID",
+     *          required=true,
+     *          in="query",
+     *          @OA\Schema(type="integer")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="object"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function getRevisionsByCompanyBudget(Request $request)
+    {
+        try {
+            $companyBudgetId = $request->get('companyBudgetId');
+            
+            if (!$companyBudgetId) {
+                return $this->sendError('Company Budget ID is required', 400);
+            }
+
+            $revisions = Revision::with([
+                'budgetPlanning.department.hod.employee',
+                'budgetPlanning',
+                'attachments',
+                'createdBy'
+            ])
+            ->whereHas('budgetPlanning', function ($query) use ($companyBudgetId) {
+                $query->where('companyBudgetPlanningID', $companyBudgetId);
+            });
+
+            return \DataTables::of($revisions)
+                ->addColumn('department', function ($revision) {
+                    $department = $revision->budgetPlanning->department ?? null;
+                    return $department ? $department->departmentCode : 'N/A';
+                })
+                ->addColumn('hod', function ($revision) {
+                    $department = $revision->budgetPlanning->department ?? null;
+                    if ($department && $department->hod && $department->hod->employee) {
+                        return $department->hod->employee->empFullName;
+                    }
+                    return 'N/A';
+                })
+                ->addColumn('statusText', function ($revision) {
+                    return $revision->revision_status_text;
+                })
+                ->addColumn('reviewBy', function ($revision) {
+                    return $revision->createdBy ? $revision->createdBy->empFullName : 'N/A';
+                })
+                ->addColumn('reviewComment', function ($revision) {
+                    return $revision->reviewComments;
+                })
+                ->addColumn('sendDateAndTime', function ($revision) {
+                    return $revision->sentDateTime ? $revision->sentDateTime->format('d/m/Y H:i') : null;
+                })
+                ->addColumn('attachment_count', function ($revision) {
+                    return $revision->attachments->count();
+                })
+                ->addColumn('reopenFields', function ($revision) {
+                    return $revision->reopenEditableSection;
+                })
+                ->addColumn('revisionCount', function ($revision) {
+                    return $revision->count();
+                })
+                ->addColumn('revisionTypeText', function ($revision) {
+                    return $revision->revision_type_text;
+                })
+                ->addColumn('submittedDate', function ($revision) {
+                    return $revision->submittedDate ? $revision->submittedDate->format('d/m/Y') : null;
+                })
+                ->addColumn('completionComments', function ($revision) {
+                    return $revision->completionComments;
+                })
+                ->addColumn('completedDateTime', function ($revision) {
+                    return $revision->completedDateTime ? $revision->completedDateTime->format('d/m/Y H:i') : null;
+                })
+                ->make(true);
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving revisions: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get time extension requests by company budget planning ID
+     *
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/getTimeExtensionRequestsByCompanyBudget",
+     *      summary="getTimeExtensionRequestsByCompanyBudget",
+     *      tags={"CompanyBudgetPlanning"},
+     *      description="Get time extension requests by company budget planning ID",
+     *      @OA\Parameter(
+     *          name="companyBudgetId",
+     *          description="Company Budget Planning ID",
+     *          required=true,
+     *          in="query",
+     *          @OA\Schema(type="integer")
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="object"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function getTimeExtensionRequestsByCompanyBudget(Request $request)
+    {
+        try {
+            $companyBudgetId = $request->get('companyBudgetPlanningId');
+            if (!$companyBudgetId) {
+                return $this->sendError('Company Budget ID is required', 400);
+            }
+
+            $timeExtensionRequests = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning.department.hod.employee')
+            ->whereHas('departmentBudgetPlanning', function ($query) use ($companyBudgetId) {
+                $query->where('companyBudgetPlanningID', $companyBudgetId);
+            });
+           
+            return \DataTables::of($timeExtensionRequests)
+                ->make(true);
+
+        } catch (\Exception $e) {
+            return $this->sendError('Error retrieving time extension requests: ' . $e->getMessage(), 500);
         }
     }
 }

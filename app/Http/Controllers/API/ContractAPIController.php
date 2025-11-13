@@ -64,7 +64,7 @@ class ContractAPIController extends AppBaseController
         $this->contractRepository->pushCriteria(new LimitOffsetCriteria($request));
         $contracts = $this->contractRepository->all();
 
-        return $this->sendResponse($contracts->toArray(), 'Contracts retrieved successfully');
+        return $this->sendResponse($contracts->toArray(), trans('custom.contracts_retrieved_successfully'));
     }
 
     /**

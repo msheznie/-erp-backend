@@ -142,7 +142,7 @@ class ReceiptAPIController extends AppBaseController
             $receiptVoucherIds = collect($createReceiptVoucher['data'])->pluck('custReceivePaymentAutoID')->toArray();
             $documentSystemID = 21;
             $this->storeToDocumentSystemMapping($documentSystemID,$receiptVoucherIds,$header);
-            return $this->sendResponse($createReceiptVoucher['data'],'Receipt Voucher Created Successfully!');
+            return $this->sendResponse($createReceiptVoucher['data'],trans('custom.receipt_voucher_created_successfully'));
 
         }else {
             if(isset($createReceiptVoucher['code']))

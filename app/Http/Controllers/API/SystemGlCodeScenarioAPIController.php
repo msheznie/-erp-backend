@@ -70,7 +70,7 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $this->systemGlCodeScenarioRepository->pushCriteria(new LimitOffsetCriteria($request));
         $systemGlCodeScenarios = $this->systemGlCodeScenarioRepository->all();
 
-        return $this->sendResponse($systemGlCodeScenarios->toArray(), 'System Gl Code Scenarios retrieved successfully');
+        return $this->sendResponse($systemGlCodeScenarios->toArray(), trans('custom.system_gl_code_scenarios_retrieved_successfully'));
     }
 
     /**
@@ -117,7 +117,7 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
 
         $systemGlCodeScenario = $this->systemGlCodeScenarioRepository->create($input);
 
-        return $this->sendResponse($systemGlCodeScenario->toArray(), 'System Gl Code Scenario saved successfully');
+        return $this->sendResponse($systemGlCodeScenario->toArray(), trans('custom.system_gl_code_scenario_saved_successfully'));
     }
 
     /**
@@ -164,10 +164,10 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $systemGlCodeScenario = $this->systemGlCodeScenarioRepository->findWithoutFail($id);
 
         if (empty($systemGlCodeScenario)) {
-            return $this->sendError('System Gl Code Scenario not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_not_found'));
         }
 
-        return $this->sendResponse($systemGlCodeScenario->toArray(), 'System Gl Code Scenario retrieved successfully');
+        return $this->sendResponse($systemGlCodeScenario->toArray(), trans('custom.system_gl_code_scenario_retrieved_successfully'));
     }
 
     /**
@@ -224,12 +224,12 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $systemGlCodeScenario = $this->systemGlCodeScenarioRepository->findWithoutFail($id);
 
         if (empty($systemGlCodeScenario)) {
-            return $this->sendError('System Gl Code Scenario not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_not_found'));
         }
 
         $systemGlCodeScenario = $this->systemGlCodeScenarioRepository->update($input, $id);
 
-        return $this->sendResponse($systemGlCodeScenario->toArray(), 'SystemGlCodeScenario updated successfully');
+        return $this->sendResponse($systemGlCodeScenario->toArray(), trans('custom.systemglcodescenario_updated_successfully'));
     }
 
     /**
@@ -276,7 +276,7 @@ class SystemGlCodeScenarioAPIController extends AppBaseController
         $systemGlCodeScenario = $this->systemGlCodeScenarioRepository->findWithoutFail($id);
 
         if (empty($systemGlCodeScenario)) {
-            return $this->sendError('System Gl Code Scenario not found');
+            return $this->sendError(trans('custom.system_gl_code_scenario_not_found'));
         }
 
         $systemGlCodeScenario->delete();

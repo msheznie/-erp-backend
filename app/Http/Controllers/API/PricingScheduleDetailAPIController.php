@@ -64,7 +64,7 @@ class PricingScheduleDetailAPIController extends AppBaseController
         $this->pricingScheduleDetailRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pricingScheduleDetails = $this->pricingScheduleDetailRepository->all();
 
-        return $this->sendResponse($pricingScheduleDetails->toArray(), 'Pricing Schedule Details retrieved successfully');
+        return $this->sendResponse($pricingScheduleDetails->toArray(), trans('custom.pricing_schedule_details_retrieved_successfully'));
     }
 
     /**
@@ -118,7 +118,7 @@ class PricingScheduleDetailAPIController extends AppBaseController
 
         $pricingScheduleDetail = $this->pricingScheduleDetailRepository->create($input);
 
-        return $this->sendResponse($pricingScheduleDetail->toArray(), 'Pricing Schedule Detail saved successfully');
+        return $this->sendResponse($pricingScheduleDetail->toArray(), trans('custom.pricing_schedule_detail_saved_successfully'));
     }
 
     /**
@@ -166,10 +166,10 @@ class PricingScheduleDetailAPIController extends AppBaseController
         $pricingScheduleDetail = $this->pricingScheduleDetailRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetail)) {
-            return $this->sendError('Pricing Schedule Detail not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_not_found'));
         }
 
-        return $this->sendResponse($pricingScheduleDetail->toArray(), 'Pricing Schedule Detail retrieved successfully');
+        return $this->sendResponse($pricingScheduleDetail->toArray(), trans('custom.pricing_schedule_detail_retrieved_successfully'));
     }
 
     /**
@@ -235,12 +235,12 @@ class PricingScheduleDetailAPIController extends AppBaseController
         $pricingScheduleDetail = $this->pricingScheduleDetailRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetail)) {
-            return $this->sendError('Pricing Schedule Detail not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_not_found'));
         }
 
         $pricingScheduleDetail = $this->pricingScheduleDetailRepository->update($input, $id);
 
-        return $this->sendResponse($pricingScheduleDetail->toArray(), 'PricingScheduleDetail updated successfully');
+        return $this->sendResponse($pricingScheduleDetail->toArray(), trans('custom.pricingscheduledetail_updated_successfully'));
     }
 
     /**
@@ -288,7 +288,7 @@ class PricingScheduleDetailAPIController extends AppBaseController
         $pricingScheduleDetail = $this->pricingScheduleDetailRepository->findWithoutFail($id);
 
         if (empty($pricingScheduleDetail)) {
-            return $this->sendError('Pricing Schedule Detail not found');
+            return $this->sendError(trans('custom.pricing_schedule_detail_not_found'));
         }
 
         $pricingScheduleDetail->delete();

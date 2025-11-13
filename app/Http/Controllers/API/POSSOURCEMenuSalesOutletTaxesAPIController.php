@@ -65,7 +65,7 @@ class POSSOURCEMenuSalesOutletTaxesAPIController extends AppBaseController
         $this->pOSSOURCEMenuSalesOutletTaxesRepository->pushCriteria(new LimitOffsetCriteria($request));
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->all();
 
-        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), 'P O S S O U R C E Menu Sales Outlet Taxes retrieved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_retrieve'));
     }
 
     /**
@@ -112,7 +112,7 @@ class POSSOURCEMenuSalesOutletTaxesAPIController extends AppBaseController
 
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->create($input);
 
-        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), 'P O S S O U R C E Menu Sales Outlet Taxes saved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_saved_su'));
     }
 
     /**
@@ -159,10 +159,10 @@ class POSSOURCEMenuSalesOutletTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesOutletTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Outlet Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_not_foun'));
         }
 
-        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), 'P O S S O U R C E Menu Sales Outlet Taxes retrieved successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_retrieve'));
     }
 
     /**
@@ -219,12 +219,12 @@ class POSSOURCEMenuSalesOutletTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesOutletTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Outlet Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_not_foun'));
         }
 
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->update($input, $id);
 
-        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), 'POSSOURCEMenuSalesOutletTaxes updated successfully');
+        return $this->sendResponse($pOSSOURCEMenuSalesOutletTaxes->toArray(), trans('custom.possourcemenusalesoutlettaxes_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class POSSOURCEMenuSalesOutletTaxesAPIController extends AppBaseController
         $pOSSOURCEMenuSalesOutletTaxes = $this->pOSSOURCEMenuSalesOutletTaxesRepository->findWithoutFail($id);
 
         if (empty($pOSSOURCEMenuSalesOutletTaxes)) {
-            return $this->sendError('P O S S O U R C E Menu Sales Outlet Taxes not found');
+            return $this->sendError(trans('custom.p_o_s_s_o_u_r_c_e_menu_sales_outlet_taxes_not_foun'));
         }
 
         $pOSSOURCEMenuSalesOutletTaxes->delete();

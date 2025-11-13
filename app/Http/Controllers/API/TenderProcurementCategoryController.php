@@ -67,7 +67,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
             'description' => 'required',
-           // 'description_in_secondary' => 'required',
+            // 'description_in_secondary' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -387,7 +387,7 @@ class TenderProcurementCategoryController extends AppBaseController
                 'code' => $input['description'],
             ]));
         }
-        
+
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();
 
         if($procurementCategory) {
@@ -589,4 +589,3 @@ class TenderProcurementCategoryController extends AppBaseController
         }
     }
 }
-

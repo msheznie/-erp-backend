@@ -213,7 +213,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->findWithoutFail($id);
 
         if (empty($assetCapitalizationDetail)) {
-            return $this->sendError('Asset Capitalization Detail not found');
+            return $this->sendError(trans('custom.asset_capitalization_detail_not_found'));
         }
 
         return $this->sendResponse($assetCapitalizationDetail->toArray(), trans('custom.not_found', ['attribute' => trans('custom.asset_capitalization_details')]));
@@ -273,7 +273,7 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->findWithoutFail($id);
 
         if (empty($assetCapitalizationDetail)) {
-            return $this->sendError('Asset Capitalization Detail not found');
+            return $this->sendError(trans('custom.asset_capitalization_detail_not_found'));
         }
 
         $assetCapitalizationDetail = $this->assetCapitalizationDetailRepository->update($input, $id);

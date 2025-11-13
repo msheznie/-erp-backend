@@ -40,40 +40,40 @@ class HRMSAPIController extends AppBaseController
                     $status = $dt['status'];
                     $employee = Employee::where('employeeSystemID', $dt['employee_id'])->first();
                     if (empty($employee)) {
-                        return $this->sendError('Employee not found');
+                        return $this->sendError(trans('custom.employee_not_found'));
                     }
                     UserToken::where('token', $request->user_token)->delete();
 
                     $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
-                        return $this->sendError('Company not found');
+                        return $this->sendError(trans('custom.company_not_found'));
                     }
 
                     $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
 
                     if (empty($dt['comments'])) {
-                        return $this->sendError('Narration field is required');
+                        return $this->sendError(trans('custom.narration_field_is_required'));
                     }
 
                     if (empty($dt['supplierInvoiceNo'])) {
-                        return $this->sendError('Supplier Invoice No field is required');
+                        return $this->sendError(trans('custom.supplier_invoice_no_field_is_required'));
                     }
 
                     if (empty($dt['supplierInvoiceDate'])) {
-                        return $this->sendError('Supplier Invoice Date field is required');
+                        return $this->sendError(trans('custom.supplier_invoice_date_field_is_required'));
                     }
 
                     if (empty($dt['documentType'])) {
-                        return $this->sendError('Document Type field is required');
+                        return $this->sendError(trans('custom.document_type_field_is_required'));
                     }
 
                     if (empty($dt['bookingDate'])) {
-                        return $this->sendError('Booking Date field is required');
+                        return $this->sendError(trans('custom.booking_date_field_is_required'));
                     }
 
                     $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('isActive', -1)->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
                     if (empty($financeYear)) {
-                        return $this->sendError('Finance Year not found');
+                        return $this->sendError(trans('custom.finance_year_not_found_1'));
                     }
 
                     $lastSerial = BookInvSuppMaster::where('companySystemID', $dt['companySystemID'])
@@ -89,7 +89,7 @@ class HRMSAPIController extends AppBaseController
 
                     $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 1)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->where('isActive', -1)->first();
                     if (empty($financePeriod)) {
-                        return $this->sendError('Finance Period not found');
+                        return $this->sendError(trans('custom.finance_period_not_found'));
                     }
 
                     $startYear = $financeYear->bigginingDate;
@@ -99,7 +99,7 @@ class HRMSAPIController extends AppBaseController
 
                     if($dt['documentType'] == 1) {
                         if (empty($dt['supplierID'])) {
-                            return $this->sendError('Supplier ID field is required');
+                            return $this->sendError(trans('custom.supplier_id_field_is_required'));
                         }
                     $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
                         'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'VATPercentage')
@@ -107,12 +107,12 @@ class HRMSAPIController extends AppBaseController
                         ->where('companySystemID', $dt['companySystemID'])
                         ->first();
                     if (empty($supplierAssignedDetail)) {
-                        return $this->sendError('Supplier not found');
+                        return $this->sendError(trans('custom.supplier_not_found'));
                     }
 
                     $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
                     if (empty($supplierCurr)) {
-                        return $this->sendError('Supplier currency not found');
+                        return $this->sendError(trans('custom.supplier_currency_not_found_1'));
                     }
                     if ($supplierCurr) {
                         $myCurr = $supplierCurr->currencyID;
@@ -168,7 +168,7 @@ class HRMSAPIController extends AppBaseController
                     );
                 } else if ($dt['documentType'] == 4){
                         if (empty($dt['currency'])) {
-                            return $this->sendError('Currency field is required');
+                            return $this->sendError(trans('custom.currency_field_is_required'));
                         }
                     $myCurr = $dt['currency'];
 
@@ -181,7 +181,7 @@ class HRMSAPIController extends AppBaseController
                     }
 
                     if (empty($dt['employeeID'])) {
-                            return $this->sendError('Employee field is required');
+                            return $this->sendError(trans('custom.employee_field_is_required'));
                     }
 
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
@@ -191,7 +191,7 @@ class HRMSAPIController extends AppBaseController
 
                     $employee = Employee::where('employeeSystemID', $dt['employeeID'])->first();
                     if (empty($employee)) {
-                        return $this->sendError('Employee not found', 500);
+                        return $this->sendError(trans('custom.employee_not_found'), 500);
                     }
 
                     $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, "employee-control-account");
@@ -250,7 +250,7 @@ class HRMSAPIController extends AppBaseController
                     if ($bookInvSupp->documentType == 1) {
                         $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
                         if (empty($supplierCurr)) {
-                            return $this->sendError('Customer currency not found');
+                            return $this->sendError(trans('custom.customer_currency_not_found_1'));
                         }
                         if ($supplierCurr) {
                             $myCurr = $supplierCurr->currencyID;
@@ -361,11 +361,11 @@ class HRMSAPIController extends AppBaseController
                 DB::commit();
 
             if($status == 1){
-                return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+                return $this->sendResponse($bookInvSupp, trans('custom.supplier_invoice_created_successfully'));
             }
 
             if($status == 2) {
-                return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+                return $this->sendResponse($bookInvSupp, trans('custom.supplier_invoice_created_successfully'));
             }
         }
         catch(\Exception $e){

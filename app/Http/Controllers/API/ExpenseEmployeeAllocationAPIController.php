@@ -74,7 +74,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $this->expenseEmployeeAllocationRepository->pushCriteria(new LimitOffsetCriteria($request));
         $expenseEmployeeAllocations = $this->expenseEmployeeAllocationRepository->all();
 
-        return $this->sendResponse($expenseEmployeeAllocations->toArray(), 'Expense Employee Allocations retrieved successfully');
+        return $this->sendResponse($expenseEmployeeAllocations->toArray(), trans('custom.expense_employee_allocations_retrieved_successfull'));
     }
 
     /**
@@ -129,7 +129,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                                                   ->first();
 
         if ($checkForAssetDuplicate) {
-            return $this->sendError("This employee is alreday allocated", 500);
+            return $this->sendError(trans('custom.employee_already_allocated'), 500);
         }
 
         $detailTotal = 0;
@@ -183,7 +183,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
             $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']);
             if (!$meterialissue) {
-                return $this->sendError("Meterial issues detail not found");
+                return $this->sendError(trans('custom.material_issues_detail_not_found'));
             }
             $detailTotal = $meterialissue->issueCostRptTotal;
             $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
@@ -204,7 +204,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
 
                 if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
-                    return $this->sendError("Assigned qty cannot be greater than detail qty.");
+                    return $this->sendError(trans('custom.assigned_qty_cannot_be_greater_than_detail_qty'));
                 }
             }
 
@@ -212,11 +212,11 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             $input['dateOfDeduction'] = $issueDate;
 
             if ($meterialissue->issueCostRptTotal == 0) {
-                return $this->sendError("Total Value cannot be zero.");
+                return $this->sendError(trans('custom.total_value_cannot_be_zero'));
             }
 
             if(is_numeric($input['amount']) != 1){
-                return $this->sendError("Please enter a numeric value to the amount field.");
+                return $this->sendError(trans('custom.enter_numeric_value_amount_field'));
             }
 
             $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
@@ -232,12 +232,12 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
 
         if ($newTotal > $detailTotal) {
-            return $this->sendError("Allocated amount cannot be greater than detail amount.");
+            return $this->sendError(trans('custom.allocated_amount_cannot_be_greater_than_detail_amount'));
         }
 
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->create($input);
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'Expense Employee Allocation saved successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expense_employee_allocation_saved_successfully'));
     }
 
     public function getAllocatedEmployeesForExpense(Request $request)
@@ -249,7 +249,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                                                   ->with(['employee'])
                                                   ->get();
 
-        return $this->sendResponse($allocatedEmployees, 'Data retrieved successfully');
+        return $this->sendResponse($allocatedEmployees, trans('custom.data_retrieved_successfully'));
     }
 
     /**
@@ -296,10 +296,10 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'Expense Employee Allocation retrieved successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expense_employee_allocation_retrieved_successfully'));
     }
 
     /**
@@ -356,12 +356,12 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->update($input, $id);
 
-        return $this->sendResponse($expenseEmployeeAllocation->toArray(), 'ExpenseEmployeeAllocation updated successfully');
+        return $this->sendResponse($expenseEmployeeAllocation->toArray(), trans('custom.expenseemployeeallocation_updated_successfully'));
     }
 
     /**
@@ -408,12 +408,12 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
         $expenseEmployeeAllocation = $this->expenseEmployeeAllocationRepository->findWithoutFail($id);
 
         if (empty($expenseEmployeeAllocation)) {
-            return $this->sendError('Expense Employee Allocation not found');
+            return $this->sendError(trans('custom.expense_employee_allocation_not_found'));
         }
 
         $expenseEmployeeAllocation->delete();
 
-        return $this->sendResponse([], 'Expense Employee Allocation deleted successfully');
+        return $this->sendResponse([], trans('custom.expense_employee_allocation_deleted_successfully'));
     }
 
     public function getEmployeeRecentAllocation(Request $request) {
@@ -435,7 +435,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         if(empty($materialIssue))
         {
-            return $this->sendError('Material Issue not found',500);
+            return $this->sendError(trans('custom.material_issue_not_found'),500);
         }
 
         
@@ -443,7 +443,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
 
         if(empty($activeFiancialYearID))
         {
-            return $this->sendError('Financial year not found',500);
+            return $this->sendError(trans('custom.financial_year_not_found'),500);
         }
 
 
@@ -475,6 +475,6 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                 ->get();
         }
 
-        return $this->sendResponse($data, 'Data retrieved successfully');
+        return $this->sendResponse($data, trans('custom.data_retrieved_successfully'));
     }
 }

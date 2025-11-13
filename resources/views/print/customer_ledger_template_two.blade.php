@@ -133,10 +133,10 @@
         </tr>
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span>{{ trans('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{ trans('custom.page') }} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -151,7 +151,7 @@
                     </td>
                     <td valign="top" style="width: 60%">
                         <br><br>
-                        <span class="font-weight-bold">Customer Ledger from {{ $fromDate }} to {{ $toDate }}</span>
+                        <span class="font-weight-bold">{{ trans('custom.customer_ledger_from_to') }} {{ $fromDate }} {{ trans('custom.to') }} {{ $toDate }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -174,14 +174,14 @@
             </tr>
             @foreach ($val as $key2 => $val2)
                 <tr style="width:100%">
-                    <th>Document Code</th>
-                    <th>Posted Date</th>
-                    <th>Account</th>
-                    <th>Invoice Number</th>
-                    <th>Invoice Date</th>
-                    <th>Document Narration</th>
-                    <th>Currency</th>
-                    <th>Amount</th>
+                    <th>{{ trans('custom.document_code') }}</th>
+                    <th>{{ trans('custom.posted_date') }}</th>
+                    <th>{{ trans('custom.account') }}</th>
+                    <th>{{ trans('custom.invoice_number') }}</th>
+                    <th>{{ trans('custom.invoice_date') }}</th>
+                    <th>{{ trans('custom.document_narration') }}</th>
+                    <th>{{ trans('custom.currency') }}</th>
+                    <th>{{ trans('custom.amount') }}</th>
                 </tr>
                 <tbody>
                 {{ $lineTotal1 = 0 }}
@@ -200,7 +200,7 @@
                 @endforeach
                 <tr width="100%">
                     <td colspan="7" style="border-bottom-color:white !important;border-left-color:white !important"
-                            class="text-right"><b>Total:</b></td>
+                            class="text-right"><b>{{ trans('custom.total') }}:</b></td>
                   
                     <td style="text-align: right"><b>{{ number_format($lineTotal1, $currencyDecimalPlace) }}</b></td>
                 </tr>

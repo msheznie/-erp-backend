@@ -69,7 +69,7 @@ class ItemSerialAPIController extends AppBaseController
         $this->itemSerialRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemSerials = $this->itemSerialRepository->all();
 
-        return $this->sendResponse($itemSerials->toArray(), 'Item Serials retrieved successfully');
+        return $this->sendResponse($itemSerials->toArray(), trans('custom.item_serials_retrieved_successfully'));
     }
 
     /**
@@ -116,7 +116,7 @@ class ItemSerialAPIController extends AppBaseController
 
         $itemSerial = $this->itemSerialRepository->create($input);
 
-        return $this->sendResponse($itemSerial->toArray(), 'Item Serial saved successfully');
+        return $this->sendResponse($itemSerial->toArray(), trans('custom.item_serial_saved_successfully'));
     }
 
     /**
@@ -163,10 +163,10 @@ class ItemSerialAPIController extends AppBaseController
         $itemSerial = $this->itemSerialRepository->findWithoutFail($id);
 
         if (empty($itemSerial)) {
-            return $this->sendError('Item Serial not found');
+            return $this->sendError(trans('custom.item_serial_not_found'));
         }
 
-        return $this->sendResponse($itemSerial->toArray(), 'Item Serial retrieved successfully');
+        return $this->sendResponse($itemSerial->toArray(), trans('custom.item_serial_retrieved_successfully'));
     }
 
     /**
@@ -226,11 +226,11 @@ class ItemSerialAPIController extends AppBaseController
                                      ->first();
 
         if ($checkSerialCode) {
-            return $this->sendError('Serial code cannot be duplicate');
+            return $this->sendError(trans('custom.serial_code_cannot_be_duplicate'));
         }
 
         if (isset($input['serialCode']) && strlen($input['serialCode']) > 50) {
-            return $this->sendError('Serial code length cannot greater than 50');
+            return $this->sendError(trans('custom.serial_code_length_cannot_greater_than_50'));
         }
 
         if (!preg_match('/^[a-zA-Z0-9\-\/]*$/', $input['serialCode'])) {
@@ -245,12 +245,12 @@ class ItemSerialAPIController extends AppBaseController
         $itemSerial = $this->itemSerialRepository->findWithoutFail($id);
 
         if (empty($itemSerial)) {
-            return $this->sendError('Item Serial not found');
+            return $this->sendError(trans('custom.item_serial_not_found'));
         }
 
         $itemSerial = $this->itemSerialRepository->update($input, $id);
 
-        return $this->sendResponse($itemSerial->toArray(), 'ItemSerial updated successfully');
+        return $this->sendResponse($itemSerial->toArray(), trans('custom.itemserial_updated_successfully'));
     }
 
     /**
@@ -297,11 +297,11 @@ class ItemSerialAPIController extends AppBaseController
         $itemSerial = $this->itemSerialRepository->findWithoutFail($id);
 
         if (empty($itemSerial)) {
-            return $this->sendError('Item Serial not found');
+            return $this->sendError(trans('custom.item_serial_not_found'));
         }
 
         if ($itemSerial->soldFlag) {
-            return $this->sendError('Item Serial cannot be deleted. It has been sold');
+            return $this->sendError(trans('custom.item_serial_cannot_be_deleted_it_has_been_sold'));
         }
 
         $delteSubProduct = DocumentSubProduct::where('productSerialID', $itemSerial->id)
@@ -310,7 +310,7 @@ class ItemSerialAPIController extends AppBaseController
 
         $itemSerial->delete();
 
-        return $this->sendResponse([], 'Item Serial deleted successfully');
+        return $this->sendResponse([], trans('custom.item_serial_deleted_successfully'));
     }
 
     public function generateItemSerialNumbers(Request $request)
@@ -334,7 +334,7 @@ class ItemSerialAPIController extends AppBaseController
                     return $this->sendError($resBatch['message'], 500);
                 } else {
                     DB::commit();
-                    return $this->sendResponse([], 'product batch generated successfully');
+                    return $this->sendResponse([], trans('custom.product_batch_generated_successfully'));
                 }
             }
 
@@ -390,7 +390,7 @@ class ItemSerialAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'product serial generated successfully');
+            return $this->sendResponse([], trans('custom.product_serial_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
@@ -454,7 +454,7 @@ class ItemSerialAPIController extends AppBaseController
                                          ->with(['serial_data', 'batch_data'])
                                          ->get();
 
-        return $this->sendResponse($subProducts, 'product serial retrieved successfully');
+        return $this->sendResponse($subProducts, trans('custom.product_serial_retrieved_successfully'));
     } 
 
     public function serialItemDeleteAllDetails(Request $request)
@@ -501,7 +501,7 @@ class ItemSerialAPIController extends AppBaseController
                                          ->delete();
 
 
-        return $this->sendResponse([], 'product serial deleted successfully');
+        return $this->sendResponse([], trans('custom.product_serial_deleted_successfully'));
     }
 
     public function getSerialNumbersForOut(Request $request)
@@ -581,7 +581,7 @@ class ItemSerialAPIController extends AppBaseController
                                     })
                                   ->get();
 
-        return $this->sendResponse($itemSerials, 'product serial retrived successfully');
+        return $this->sendResponse($itemSerials, trans('custom.product_serial_retrived_successfully'));
     }
 
     public function getSerialNumbersForReturn(Request $request)
@@ -624,7 +624,7 @@ class ItemSerialAPIController extends AppBaseController
                                   })
                                   ->get();
 
-        return $this->sendResponse($itemSerials, 'product serial retrived successfully');
+        return $this->sendResponse($itemSerials, trans('custom.product_serial_retrived_successfully'));
     }
 
     public function updateSoldStatusOfSerial(Request $request) 
@@ -705,7 +705,7 @@ class ItemSerialAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'product serial generated successfully');
+            return $this->sendResponse([], trans('custom.product_serial_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);
@@ -779,7 +779,7 @@ class ItemSerialAPIController extends AppBaseController
             }
 
             DB::commit();
-            return $this->sendResponse([], 'product serial generated successfully');
+            return $this->sendResponse([], trans('custom.product_serial_generated_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage(), 422);

@@ -19,6 +19,7 @@ Route::post('getAllBudgetTemplates', 'BudgetTemplateAPIController@getAllBudgetTe
 Route::get('getBudgetTemplateFormData', 'BudgetTemplateAPIController@getBudgetTemplateFormData')->name('Get budget template form data');
 Route::get('getBudgetTemplatesByType/{type}', 'BudgetTemplateAPIController@getBudgetTemplatesByType')->name('Get budget templates by type');
 Route::post('exportBudgetTemplates', 'BudgetTemplateAPIController@exportBudgetTemplates')->name('Export budget templates');
+Route::post('getSegmentOptionsByBudgetTemplate', 'BudgetTemplateAPIController@getSegmentOptionsByBudgetTemplate')->name('Get segments by budget template');
 
 // Budget Template Pre Columns routes
 Route::get('budget_template_pre_columns/grouped', 'BudgetTemplatePreColumnAPIController@getAvailableColumnsGrouped')->name('Get available columns grouped');
@@ -45,11 +46,25 @@ Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
+Route::post('deleteTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@deleteTimeExtensionRequest')->name('Delete time extension request');
+Route::post('acceptTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@acceptTimeExtensionRequest')->name('Accept time extension request');
 Route::post('generateTimeExtensionRequestCode', 'DepartmentBudgetPlanningAPIController@generateTimeExtensionRequestCode')->name('Generate time extension request code');
 Route::get('getTimeExtensionRequestAttachments/{timeRequestId}', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequestAttachments')->name('Get time extension request attachments');
 Route::post('downloadTimeExtensionAttachment', 'DepartmentBudgetPlanningAPIController@downloadTimeExtensionAttachment')->name('Download time extension attachment');
-Route::post('getReversions', 'DepartmentBudgetPlanningAPIController@getReversions')->name('Get reversions');
+Route::post('getReversions', 'RevisionAPIController@getRevisions')->name('Get reversions');
+Route::get('getRevisionsByCompanyBudget', 'CompanyBudgetPlanningAPIController@getRevisionsByCompanyBudget')->name('Get revisions by company budget');
+Route::post('getTimeExtensionRequestsByCompanyBudget', 'CompanyBudgetPlanningAPIController@getTimeExtensionRequestsByCompanyBudget')->name('Get time extension requests by company budget');
 Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIController@getOptionsForSelectedUnit')->name('Get options for selected unit');
+
+// Revision Routes
+Route::post('sendBackForRevision', 'RevisionAPIController@sendBackForRevision')->name('Send back for revision');
+Route::post('getRevisions', 'RevisionAPIController@getRevisions')->name('Get revisions');
+Route::post('completeRevision', 'RevisionAPIController@completeRevision')->name('Complete revision');
+Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
+Route::post('getRevisionDetails', 'RevisionAPIController@getRevisionDetails')->name('Get revision details with attachments');
+Route::get('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
+Route::get('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
+Route::resource('revisions', 'RevisionAPIController');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
@@ -57,6 +72,7 @@ Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlann
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
 Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount');
+Route::post('getDepartmentBudgetPlanningStatusesByCompany', 'DepartmentBudgetPlanningDetailAPIController@getDepartmentBudgetPlanningStatusesByCompany')->name('Get department budget planning details by company');
 
 // Budget Delegate Access Routes
 Route::post('getDelegateAccessRecords', 'BudgetDelegateAPIController@getDelegateAccessRecords')->name('Get delegate access records');
@@ -112,3 +128,18 @@ Route::post('getItemsForBudgetPlanningTemplateDetails', 'BudgetDetTemplateEntryD
 Route::post('deleteBudgetTemplateComment', 'BudgetTemplateCommentAPIController@deleteBudgetTemplateComment')->name('Delete budget template comment');
 Route::post('deleteTemplateDetailAttachment', 'BudgetPlanningDetailTempAttachmentAPIController@deleteTemplateDetailAttachment')->name('Delete budget template attachment');
 Route::post('updateBudgetTemplateComment', 'BudgetTemplateCommentAPIController@updateBudgetTemplateComment')->name('Update budget template comment');
+
+Route::post('updateFinanceTeamStatus', 'DepartmentBudgetPlanningDetailAPIController@updateFinanceTeamStatus')->name('Update finance team status');
+Route::post('getChartofAccountsByBudget', 'DepartmentBudgetPlanningDetailAPIController@getChartofAccountsByBudget');
+Route::post('getChartOfAccountsByRevisionGlSections', 'DepartmentBudgetPlanningDetailAPIController@getChartOfAccountsByRevisionGlSections')->name('Get chart of accounts by revision GL sections');
+
+// Department Budget Detail Comments Routes
+Route::get('department-budget-detail-comments/budget-detail/{budgetDetailId}', 'DepartmentBudgetDetailCommentAPIController@getByBudgetDetail')->name('Get department budget detail comments');
+Route::post('department-budget-detail-comments/save', 'DepartmentBudgetDetailCommentAPIController@save')->name('Save department budget detail comment');
+Route::put('department-budget-detail-comments/update/{id}', 'DepartmentBudgetDetailCommentAPIController@update')->name('Update department budget detail comment');
+Route::delete('department-budget-detail-comments/delete/{id}', 'DepartmentBudgetDetailCommentAPIController@destroy')->name('Delete department budget detail comment');
+Route::get('department-budget-detail-comments/count/{budgetDetailId}', 'DepartmentBudgetDetailCommentAPIController@getCommentsCount')->name('Get department budget detail comments count');
+Route::post('department-budget-detail-comments/bulk', 'DepartmentBudgetDetailCommentAPIController@getCommentsByBudgetDetailIds')->name('Get department budget detail comments bulk');
+Route::get('department-budget-detail-comments/paginated', 'DepartmentBudgetDetailCommentAPIController@getCommentsPaginated')->name('Get department budget detail comments paginated');
+Route::get('department-budget-detail-comments/recent', 'DepartmentBudgetDetailCommentAPIController@getRecentComments')->name('Get recent department budget detail comments');
+Route::resource('department-budget-detail-comments', 'DepartmentBudgetDetailCommentAPIController');

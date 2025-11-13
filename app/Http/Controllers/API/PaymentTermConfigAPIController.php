@@ -66,7 +66,7 @@ class PaymentTermConfigAPIController extends AppBaseController
         $this->paymentTermConfigRepository->pushCriteria(new LimitOffsetCriteria($request));
         $paymentTermConfigs = $this->paymentTermConfigRepository->all();
 
-        return $this->sendResponse($paymentTermConfigs->toArray(), 'Payment Term Configs retrieved successfully');
+        return $this->sendResponse($paymentTermConfigs->toArray(), trans('custom.payment_term_configs_retrieved_successfully'));
     }
 
     /**
@@ -120,7 +120,7 @@ class PaymentTermConfigAPIController extends AppBaseController
 
         $paymentTermConfig = $this->paymentTermConfigRepository->create($input);
 
-        return $this->sendResponse($paymentTermConfig->toArray(), 'Payment Term Config saved successfully');
+        return $this->sendResponse($paymentTermConfig->toArray(), trans('custom.payment_term_config_saved_successfully'));
     }
 
     /**
@@ -168,10 +168,10 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($id);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
-        return $this->sendResponse($paymentTermConfig->toArray(), 'Payment Term Config retrieved successfully');
+        return $this->sendResponse($paymentTermConfig->toArray(), trans('custom.payment_term_config_retrieved_successfully'));
     }
 
     /**
@@ -237,12 +237,12 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($id);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig = $this->paymentTermConfigRepository->update($input, $id);
 
-        return $this->sendResponse($paymentTermConfig->toArray(), 'PaymentTermConfig updated successfully');
+        return $this->sendResponse($paymentTermConfig->toArray(), trans('custom.paymenttermconfig_updated_successfully'));
     }
 
     /**
@@ -290,7 +290,7 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($id);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig->delete();
@@ -329,7 +329,7 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($id);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $configUpdateTempId = $paymentTermConfig->templateId;
@@ -348,7 +348,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             })
             ->delete();
 
-        return $this->sendResponse($paymentTermConfig, 'Description updated successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.description_updated_successfully'));
 
     }
 
@@ -359,7 +359,7 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($configId);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $templateID = $paymentTermConfig['templateId'];
@@ -373,7 +373,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             ->count();
 
         if ($pendingApprovalCount > 0) {
-            return $this->sendError('The template has already been applied to certain purchase orders.', 500);
+            return $this->sendError(trans('custom.the_template_has_already_been_applied_to_certain_p_1'), 500);
         }
         $paymentTermConfig = PaymentTermConfig::where('id', $configId)->update(['description' => '']);
 
@@ -389,7 +389,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             })
             ->delete();
 
-        return $this->sendResponse($paymentTermConfig, 'Description removed successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.description_removed_successfully'));
 
     }
 
@@ -400,12 +400,12 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($input['id']);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig = PaymentTermConfig::where('id', $input['id'])->update(['isSelected' => $input['isSelected']]);
 
-        return $this->sendResponse($paymentTermConfig, 'Payment term config updated successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.payment_term_config_updated_successfully'));
 
     }
 
@@ -416,12 +416,12 @@ class PaymentTermConfigAPIController extends AppBaseController
         $paymentTermConfig = $this->paymentTermConfigRepository->findWithoutFail($input['id']);
 
         if (empty($paymentTermConfig)) {
-            return $this->sendError('Payment Term Config not found');
+            return $this->sendError(trans('custom.payment_term_config_not_found'));
         }
 
         $paymentTermConfig = PaymentTermConfig::where('id', $input['id'])->update(['sortOrder' => $input['sortOrder']]);
 
-        return $this->sendResponse($paymentTermConfig, 'Payment term config sort order updated successfully');
+        return $this->sendResponse($paymentTermConfig, trans('custom.payment_term_config_sort_order_updated_successfull'));
 
     }
 }

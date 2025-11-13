@@ -73,7 +73,7 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $this->docCodeSetupTypeBasedRepository->pushCriteria(new LimitOffsetCriteria($request));
         $docCodeSetupTypeBaseds = $this->docCodeSetupTypeBasedRepository->all();
 
-        return $this->sendResponse($docCodeSetupTypeBaseds->toArray(), 'Doc Code Setup Type Baseds retrieved successfully');
+        return $this->sendResponse($docCodeSetupTypeBaseds->toArray(), trans('custom.doc_code_setup_type_baseds_retrieved_successfully'));
     }
 
     /**
@@ -127,7 +127,7 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
 
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->create($input);
 
-        return $this->sendResponse($docCodeSetupTypeBased->toArray(), 'Doc Code Setup Type Based saved successfully');
+        return $this->sendResponse($docCodeSetupTypeBased->toArray(), trans('custom.doc_code_setup_type_based_saved_successfully'));
     }
 
     /**
@@ -175,10 +175,10 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupTypeBased)) {
-            return $this->sendError('Doc Code Setup Type Based not found');
+            return $this->sendError(trans('custom.doc_code_setup_type_based_not_found'));
         }
 
-        return $this->sendResponse($docCodeSetupTypeBased->toArray(), 'Doc Code Setup Type Based retrieved successfully');
+        return $this->sendResponse($docCodeSetupTypeBased->toArray(), trans('custom.doc_code_setup_type_based_retrieved_successfully'));
     }
 
     /**
@@ -244,12 +244,12 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupTypeBased)) {
-            return $this->sendError('Doc Code Setup Type Based not found');
+            return $this->sendError(trans('custom.doc_code_setup_type_based_not_found'));
         }
 
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->update($input, $id);
 
-        return $this->sendResponse($docCodeSetupTypeBased->toArray(), 'DocCodeSetupTypeBased updated successfully');
+        return $this->sendResponse($docCodeSetupTypeBased->toArray(), trans('custom.doccodesetuptypebased_updated_successfully'));
     }
 
     /**
@@ -297,7 +297,7 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupTypeBased)) {
-            return $this->sendError('Doc Code Setup Type Based not found');
+            return $this->sendError(trans('custom.doc_code_setup_type_based_not_found'));
         }
 
         $docCodeSetupTypeBased->delete();
@@ -363,7 +363,7 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($docCodeSetupTypeBased->toArray(), 'Doc Code Setup Type Based retrieved successfully');
+        return $this->sendResponse($docCodeSetupTypeBased->toArray(), trans('custom.doc_code_setup_type_based_retrieved_successfully'));
 
 
     }
@@ -379,12 +379,12 @@ class DocCodeSetupTypeBasedAPIController extends AppBaseController
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->findWithoutFail($id);
 
         if (empty($docCodeSetupTypeBased)) {
-            return $this->sendError('Document Code Master not found');
+            return $this->sendError(trans('custom.document_code_master_not_found'));
         }
         unset($input['type']);
 
         $docCodeSetupTypeBased = $this->docCodeSetupTypeBasedRepository->update($input, $id);
 
-        return $this->sendResponse($docCodeSetupTypeBased->toArray(), 'Doc Code Setup Type Based updated successfully');
+        return $this->sendResponse($docCodeSetupTypeBased->toArray(), trans('custom.doc_code_setup_type_based_updated_successfully'));
     }
 }

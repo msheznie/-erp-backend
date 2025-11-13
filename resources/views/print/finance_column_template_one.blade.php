@@ -129,11 +129,11 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
-                <span>Printed By : {{$employeeData->empName}}</span>
+                <span>{{trans('custom.printed_date_time')}} : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>{{trans('custom.printed_by')}} : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
-                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+                <span style="float: right;">{{trans('custom.page')}} <span class="pagenum"></span></span><br>
             </td>
         </tr>
     </table>
@@ -151,8 +151,8 @@
         @if ($from_date != null && $to_date != null)
             <tr>
                 <td colspan="2" style="width:100%;text-align: center;">
-                    <span class="font-weight-bold">Period From :{{ $from_date }} |
-                        Period To : {{ $to_date }}</span>
+                    <span class="font-weight-bold">{{trans('custom.period_from')}} :{{ $from_date }} |
+                        {{trans('custom.period_to')}} : {{ $to_date }}</span>
                 </td>
             </tr>
         @endif
@@ -160,7 +160,7 @@
         @if ($month != null)
             <tr>
                 <td colspan="2" style="width:100%;text-align: center;">
-                    <span class="font-weight-bold">As of - {{$month}}</span>
+                    <span class="font-weight-bold">{{trans('custom.as_of')}} - {{$month}}</span>
                 </td>
             </tr>
         @endif
@@ -172,7 +172,7 @@
         </tr>
         <tr>
             <td colspan="2" style="width:100%;text-align: center;">
-                <span class="font-weight-bold">Currency: {{$currencyCode}}</span>
+                <span class="font-weight-bold">{{trans('custom.currency_label')}}: {{$currencyCode}}</span>
             </td>
         </tr>
         <br>
@@ -231,15 +231,15 @@
         </tr>
         <tr>
             @if($fourthLevel)
-                <th colspan="5">Description</th>
+                <th colspan="5">{{trans('custom.description')}}</th>
             @elseif($thirdLevel)
-                <th colspan="4">Description</th>
+                <th colspan="4">{{trans('custom.description')}}</th>
             @elseif($secondLevel)
-                <th colspan="3">Description</th>
+                <th colspan="3">{{trans('custom.description')}}</th>
             @elseif($firstLevel)
-                <th colspan="2">Description</th>
+                <th colspan="2">{{trans('custom.description')}}</th>
             @else
-                <th>Description</th>
+                <th>{{trans('custom.description')}}</th>
             @endif
             @foreach ($companyHeaderData as $company)
                     @foreach ($columnHeader as $column)
@@ -247,7 +247,7 @@
                 @endforeach
             @endforeach
             @if($columnTemplateID == 2)
-                <th>Total</th>
+                <th>{{trans('custom.total')}}</th>
             @endif
         </tr>
     </thead>
@@ -756,7 +756,7 @@
             {{-- end --}}
             @if($accountType == 3 && $loop->last)
                 <tr>
-                    <td><strong>Opening Balance</strong></td>
+                    <td><strong>{{trans('custom.opening_balance')}}</strong></td>
                     @if($firstLevel)
                     <td></td>
                     @endif
@@ -783,7 +783,7 @@
                     @endif
                 </tr>
                 <tr>
-                    <td><strong>Closing Balance</strong></td>
+                    <td><strong>{{trans('custom.closing_balance')}}</strong></td>
                     @if($firstLevel)
                     <td></td>
                     @endif
@@ -812,7 +812,7 @@
             @endif
             @if($accountType == 2 && $loop->last && $isUncategorize)
             <tr>
-                <td><strong>Uncategorized</strong></td>
+                <td><strong>{{trans('custom.uncategorized')}}</strong></td>
                 @if($firstLevel)
                 <td></td>
                 @endif
@@ -843,7 +843,7 @@
             @endif
             @if($accountType == 2 && $loop->last)
             <tr>
-                <td><strong>Grand Total</strong></td>
+                <td><strong>{{trans('custom.grand_total')}}</strong></td>
                 @if($firstLevel)
                 <td></td>
                 @endif
@@ -870,7 +870,7 @@
             @endif
             @if($accountType == 1 && $loop->last)
             <tr>
-                <td><strong>Uncategorized</strong></td>
+                <td><strong>{{trans('custom.uncategorized')}}</strong></td>
                 @if($firstLevel)
                 <td></td>
                 @endif
@@ -902,7 +902,7 @@
         @endforeach
         @if(sizeof($reportData) == 0)
             <tr>
-                <td colspan="{{sizeof($columnHeader) + sizeof($companyHeaderData)}}">No Records Found</td>
+                <td colspan="{{sizeof($columnHeader) + sizeof($companyHeaderData)}}">{{trans('custom.no_records_found')}}</td>
             </tr>
         @endif
     </tbody>

@@ -81,7 +81,7 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
         $this->itemReturnDetailsRefferedBackRepository->pushCriteria(new LimitOffsetCriteria($request));
         $itemReturnDetailsRefferedBacks = $this->itemReturnDetailsRefferedBackRepository->all();
 
-        return $this->sendResponse($itemReturnDetailsRefferedBacks->toArray(), 'Item Return Details Reffered Backs retrieved successfully');
+        return $this->sendResponse($itemReturnDetailsRefferedBacks->toArray(), trans('custom.item_return_details_reffered_backs_retrieved_succe'));
     }
 
     /**
@@ -128,7 +128,7 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
 
         $itemReturnDetailsRefferedBacks = $this->itemReturnDetailsRefferedBackRepository->create($input);
 
-        return $this->sendResponse($itemReturnDetailsRefferedBacks->toArray(), 'Item Return Details Reffered Back saved successfully');
+        return $this->sendResponse($itemReturnDetailsRefferedBacks->toArray(), trans('custom.item_return_details_reffered_back_saved_successful'));
     }
 
     /**
@@ -175,10 +175,10 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
         $itemReturnDetailsRefferedBack = $this->itemReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetailsRefferedBack)) {
-            return $this->sendError('Item Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_details_reffered_back_not_found'));
         }
 
-        return $this->sendResponse($itemReturnDetailsRefferedBack->toArray(), 'Item Return Details Reffered Back retrieved successfully');
+        return $this->sendResponse($itemReturnDetailsRefferedBack->toArray(), trans('custom.item_return_details_reffered_back_retrieved_succes'));
     }
 
     /**
@@ -235,12 +235,12 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
         $itemReturnDetailsRefferedBack = $this->itemReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetailsRefferedBack)) {
-            return $this->sendError('Item Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_details_reffered_back_not_found'));
         }
 
         $itemReturnDetailsRefferedBack = $this->itemReturnDetailsRefferedBackRepository->update($input, $id);
 
-        return $this->sendResponse($itemReturnDetailsRefferedBack->toArray(), 'ItemReturnDetailsRefferedBack updated successfully');
+        return $this->sendResponse($itemReturnDetailsRefferedBack->toArray(), trans('custom.itemreturndetailsrefferedback_updated_successfully'));
     }
 
     /**
@@ -287,12 +287,12 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
         $itemReturnDetailsRefferedBack = $this->itemReturnDetailsRefferedBackRepository->findWithoutFail($id);
 
         if (empty($itemReturnDetailsRefferedBack)) {
-            return $this->sendError('Item Return Details Reffered Back not found');
+            return $this->sendError(trans('custom.item_return_details_reffered_back_not_found'));
         }
 
         $itemReturnDetailsRefferedBack->delete();
 
-        return $this->sendResponse($id, 'Item Return Details Reffered Back deleted successfully');
+        return $this->sendResponse($id, trans('custom.item_return_details_reffered_back_deleted_successf'));
     }
 
 
@@ -304,7 +304,7 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
         $itemReturnMaster = ItemReturnMaster::find($rId);
 
         if (empty($itemReturnMaster)) {
-            return $this->sendError('Item Return not found');
+            return $this->sendError(trans('custom.item_return_not_found'));
         }
 
         $items = ItemReturnDetailsRefferedBack::where('itemReturnAutoID', $rId)
@@ -341,6 +341,6 @@ class ItemReturnDetailsRefferedBackAPIController extends AppBaseController
             }
         }
 
-        return $this->sendResponse($items->toArray(), 'Material Return Details retrieved successfully');
+        return $this->sendResponse($items->toArray(), trans('custom.material_return_details_retrieved_successfully'));
     }
 }

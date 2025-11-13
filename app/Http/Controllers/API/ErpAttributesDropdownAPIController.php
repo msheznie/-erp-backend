@@ -70,7 +70,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $this->erpAttributesDropdownRepository->pushCriteria(new LimitOffsetCriteria($request));
         $erpAttributesDropdowns = $this->erpAttributesDropdownRepository->all();
 
-        return $this->sendResponse($erpAttributesDropdowns->toArray(), 'Erp Attributes Dropdowns retrieved successfully');
+        return $this->sendResponse($erpAttributesDropdowns->toArray(), trans('custom.erp_attributes_dropdowns_retrieved_successfully'));
     }
 
 
@@ -82,7 +82,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
             $descriptionValidate = ErpAttributesDropdown::where('description', $input['description'])
                                                             ->where('attributes_id', $input['attributes_id'])->get();
             if (count($descriptionValidate) > 0){
-                return $this->sendError('Description Already Exists');
+                return $this->sendError(trans('custom.description_already_exists_1'));
             }
 
            
@@ -93,7 +93,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
             $this->auditLog($db, $attributes['attributes_id'], $uuid, "erp_attributes", "Attribute dropdown value " . $input['description']. " has been created", "C", $input, [], 22, 'erp_fa_asset_master');
             
         DB::commit();
-        return $this->sendResponse([], 'New Record Added Successfully');
+        return $this->sendResponse([], trans('custom.new_record_added_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
@@ -105,7 +105,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $attributes_id = $input[0];
         return$dropdownData = ErpAttributesDropdown::where('attributes_id',$attributes_id)->get();
 
-        return $this->sendResponse($dropdownData, 'Record retrieved successfully');
+        return $this->sendResponse($dropdownData, trans('custom.record_retrieved_successfully_1'));
     }
 
     public function getAttributesDropdownData(Request $request){
@@ -186,7 +186,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->create($input);
 
-        return $this->sendResponse($erpAttributesDropdown->toArray(), 'Erp Attributes Dropdown saved successfully');
+        return $this->sendResponse($erpAttributesDropdown->toArray(), trans('custom.erp_attributes_dropdown_saved_successfully'));
     }
 
     /**
@@ -233,10 +233,10 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->findWithoutFail($id);
 
         if (empty($erpAttributesDropdown)) {
-            return $this->sendError('Erp Attributes Dropdown not found');
+            return $this->sendError(trans('custom.erp_attributes_dropdown_not_found'));
         }
 
-        return $this->sendResponse($erpAttributesDropdown->toArray(), 'Erp Attributes Dropdown retrieved successfully');
+        return $this->sendResponse($erpAttributesDropdown->toArray(), trans('custom.erp_attributes_dropdown_retrieved_successfully'));
     }
 
     /**
@@ -293,12 +293,12 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->findWithoutFail($id);
 
         if (empty($erpAttributesDropdown)) {
-            return $this->sendError('Erp Attributes Dropdown not found');
+            return $this->sendError(trans('custom.erp_attributes_dropdown_not_found'));
         }
 
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->update($input, $id);
 
-        return $this->sendResponse($erpAttributesDropdown->toArray(), 'ErpAttributesDropdown updated successfully');
+        return $this->sendResponse($erpAttributesDropdown->toArray(), trans('custom.erpattributesdropdown_updated_successfully'));
     }
 
     /**
@@ -346,7 +346,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $erpAttributesDropdown = $this->erpAttributesDropdownRepository->findWithoutFail($id);
 
         if (empty($erpAttributesDropdown)) {
-            return $this->sendError('Erp Attributes Dropdown not found');
+            return $this->sendError(trans('custom.erp_attributes_dropdown_not_found'));
         }
         $attribute = ErpAttributes::find($id);
 
@@ -361,7 +361,7 @@ class ErpAttributesDropdownAPIController extends AppBaseController
                 ->count();
 
             if ($attributeFieldValidation > 0) {
-                return $this->sendError('Selected attribute drop down value have already been used for an asset', 500);
+                return $this->sendError(trans('custom.selected_attribute_drop_down_value_have_already_be'), 500);
             }
         $erpAttributesDropdown->delete();
 
@@ -369,6 +369,6 @@ class ErpAttributesDropdownAPIController extends AppBaseController
         $db = isset($input['db']) ? $input['db'] : '';
         $this->auditLog($db, $erpAttributesDropdown->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $erpAttributesDropdown->description . " has been deleted", "D", [], $erpAttributesDropdown->toArray(), 22, 'erp_fa_asset_master');
 
-        return $this->sendResponse([],'Erp Attributes Dropdown deleted successfully');
+        return $this->sendResponse([],trans('custom.erp_attributes_dropdown_deleted_successfully'));
     }
 }

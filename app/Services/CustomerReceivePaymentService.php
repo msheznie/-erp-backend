@@ -27,7 +27,7 @@ class CustomerReceivePaymentService
                 DB::rollBack();
                 return [
                     'status' => false,
-                    'message' => 'Selected Bank is not active'
+                    'message' => trans('custom.bank_not_active')
                 ];
             }
 
@@ -36,7 +36,7 @@ class CustomerReceivePaymentService
                 DB::rollBack();
                 return [
                     'status' => false,
-                    'message' => 'Selected Bank Account is not active'
+                    'message' => trans('custom.bank_account_not_active')
                 ];
             }
 
@@ -83,7 +83,7 @@ class CustomerReceivePaymentService
         if(!isset($input['paymentType'])){
             return [
                 'status' => false,
-                'message' => 'Payment Mode is required'
+                'message' => trans('custom.payment_mode_required')
             ];
         }
         $input['payment_type_id'] = $input['paymentType'];
@@ -92,7 +92,7 @@ class CustomerReceivePaymentService
         if (($input['documentType'] == 13 || $input['documentType'] == 15 ) && $input['customerID'] == '') {
             return [
                 'status' => false,
-                'message' => 'Customer is required'
+                'message' => trans('custom.customer_required')
             ];
         }
 
@@ -100,7 +100,7 @@ class CustomerReceivePaymentService
         if (empty($company)) {
             return [
                 'status' => false,
-                'message' => 'Company not found'
+                'message' => trans('custom.company_not_found')
             ];
         }
 
@@ -138,7 +138,7 @@ class CustomerReceivePaymentService
         if (($documentDate < $monthBegin) || ($documentDate > $monthEnd)) {
             return [
                 'status' => false,
-                'message' => 'Document date is not within the financial period!'
+                'message' => trans('custom.document_date_not_within_period')
             ];
         }
 
@@ -250,13 +250,13 @@ class CustomerReceivePaymentService
             $customerReceivePayments = CustomerReceivePayment::create($input);
             return [
                 'status' => true,
-                'message' => 'Receipt voucher created successfully',
+                'message' => trans('custom.receipt_voucher_created_successfully'),
                 'data' => $customerReceivePayments->toArray()
             ];
         } else {
             return [
                 'status' => false,
-                'message' => 'Receipt voucher document date should be between financial period start and end date'
+                'message' => trans('custom.receipt_voucher_date_validation')
             ];
         }
     }
@@ -275,7 +275,7 @@ class CustomerReceivePaymentService
         if(empty($serviceLine)){
             return [
                 'status' => false,
-                'message' => 'Department not found.'
+                'message' => trans('custom.department_not_found')
             ];
         }
         $inputData['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;
@@ -294,14 +294,14 @@ class CustomerReceivePaymentService
                 if (empty($bankGL)){
                     return [
                         'status' => false,
-                        'message' => 'Bank details not found.'
+                        'message' => trans('custom.bank_details_not_found')
                     ];
                 }
 
                 if ($bankGL->chartOfAccountSystemID == $chartOfAccount->chartOfAccountSystemID) {
                     return [
                         'status' => false,
-                        'message' => 'Cannot add. You are trying to select the same account.'
+                        'message' => trans('custom.cannot_select_same_account')
                     ];
                 }
                 $inputData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
@@ -359,7 +359,7 @@ class CustomerReceivePaymentService
 
         return [
             'status' => true,
-            'message' => 'Voucher details added successfully.'
+            'message' => trans('custom.voucher_details_added_successfully')
         ];
     }
 }

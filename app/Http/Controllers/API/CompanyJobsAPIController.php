@@ -65,7 +65,7 @@ class CompanyJobsAPIController extends AppBaseController
         $this->companyJobsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $companyJobs = $this->companyJobsRepository->all();
 
-        return $this->sendResponse($companyJobs->toArray(), 'Company Jobs retrieved successfully');
+        return $this->sendResponse($companyJobs->toArray(), trans('custom.company_jobs_retrieved_successfully'));
     }
 
     /**
@@ -112,7 +112,7 @@ class CompanyJobsAPIController extends AppBaseController
 
         $companyJobs = $this->companyJobsRepository->create($input);
 
-        return $this->sendResponse($companyJobs->toArray(), 'Company Jobs saved successfully');
+        return $this->sendResponse($companyJobs->toArray(), trans('custom.company_jobs_saved_successfully'));
     }
 
     /**
@@ -159,10 +159,10 @@ class CompanyJobsAPIController extends AppBaseController
         $companyJobs = $this->companyJobsRepository->findWithoutFail($id);
 
         if (empty($companyJobs)) {
-            return $this->sendError('Company Jobs not found');
+            return $this->sendError(trans('custom.company_jobs_not_found'));
         }
 
-        return $this->sendResponse($companyJobs->toArray(), 'Company Jobs retrieved successfully');
+        return $this->sendResponse($companyJobs->toArray(), trans('custom.company_jobs_retrieved_successfully'));
     }
 
     /**
@@ -219,12 +219,12 @@ class CompanyJobsAPIController extends AppBaseController
         $companyJobs = $this->companyJobsRepository->findWithoutFail($id);
 
         if (empty($companyJobs)) {
-            return $this->sendError('Company Jobs not found');
+            return $this->sendError(trans('custom.company_jobs_not_found'));
         }
 
         $companyJobs = $this->companyJobsRepository->update($input, $id);
 
-        return $this->sendResponse($companyJobs->toArray(), 'CompanyJobs updated successfully');
+        return $this->sendResponse($companyJobs->toArray(), trans('custom.companyjobs_updated_successfully'));
     }
 
     /**
@@ -271,7 +271,7 @@ class CompanyJobsAPIController extends AppBaseController
         $companyJobs = $this->companyJobsRepository->findWithoutFail($id);
 
         if (empty($companyJobs)) {
-            return $this->sendError('Company Jobs not found');
+            return $this->sendError(trans('custom.company_jobs_not_found'));
         }
 
         $companyJobs->delete();
