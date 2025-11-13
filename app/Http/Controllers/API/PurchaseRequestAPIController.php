@@ -2688,7 +2688,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
-        $mpdf->SetHTMLFooter($htmlFooter);
+//        $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');
     }

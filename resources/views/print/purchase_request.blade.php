@@ -544,5 +544,6 @@
 
     </div>
 </div>
+@include('print.purchase_request_footer')
 </body>
 </html>
