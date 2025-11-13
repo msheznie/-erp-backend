@@ -2,7 +2,7 @@
     @page {
         margin: 110px 30px 40px;
     }
-    font-family: 'dejavusans', DejaVu Sans, sans-serif;
+    /*font-family: 'dejavusans', DejaVu Sans, sans-serif;*/
     direction: rtl;
     unicode-bidi: bidi-override;
     #header {
@@ -29,12 +29,12 @@
 
     body {
         font-size: 10px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
+        font-family: 'Poppins', sans-serif !important;
     }
 
     @if(isset($lang) && $lang === 'ar')
     body {
-        font-family: 'Noto Sans Arabic', sans-serif;
+        font-family: 'Noto Sans Arabic', sans-serif !important;
     }
     @endif
 

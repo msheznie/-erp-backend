@@ -23,13 +23,14 @@
 
         body {
             background-color: #f6f6f6;
+            font-family: 'Poppins', sans-serif !important;
         }
 
         /* RTL Support for Arabic */
         [dir="rtl"] {
             direction: rtl !important;
             text-align: right !important;
-            font-family: 'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif !important;
+            font-family: 'Noto Sans Arabic', sans-serif !important;
         }
 
         [dir="rtl"] .content-block {
@@ -70,7 +71,7 @@
 
         /* Arabic font support */
         .arabic-text {
-            font-family: 'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif !important;
+            font-family: 'Noto Sans Arabic', sans-serif !important;
             direction: rtl !important;
             text-align: right !important;
         }
