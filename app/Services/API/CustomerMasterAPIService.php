@@ -671,16 +671,7 @@ class CustomerMasterAPIService
                 'message' => [trans('custom.secondary_code') . ' is mandatory']
             ];
         } else {
-            $secondaryCode = $request['secondary_code'];
-            $existingCustomer = CustomerMaster::where('customerShortCode', $secondaryCode)->first();
-            if ($existingCustomer) {
-                $errorData[] = [
-                    'field' => "secondary_code",
-                    'message' => [trans('custom.secondary_code_already_exists')]
-                ];
-            } else {
-                $request['customerShortCode'] = $secondaryCode;
-            }
+            $request['customerShortCode'] = $request['secondary_code'];
         }
 
         if (!isset($request['customer_name']) || $request['customer_name'] === '' || $request['customer_name'] === null) {
