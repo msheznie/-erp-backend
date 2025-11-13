@@ -2188,13 +2188,19 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
+            $whereQry = "CASE 
+                            WHEN finalAgingDetail.balanceAmountTrans = 0 THEN 0
+                            ELSE ROUND(finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces)
+                        END";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
+            $whereQry = "CASE 
+                            WHEN finalAgingDetail.balanceAmountTrans = 0 THEN 0
+                            ELSE ROUND(finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)
+                        END";
         }
 
         $results = \DB::select('SELECT
@@ -2452,7 +2458,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
 
-        return $this->exchangeGainLoss($results, $currency);
+        $data =  $this->exchangeGainLoss($results, $currency);
+        return $data;
     }
 
     function getSupplierStatementDetailsQRY($request)
