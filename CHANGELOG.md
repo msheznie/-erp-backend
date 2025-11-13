@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.91.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.90.0...v10.91.0) (2025-11-13)
+
+
+### Features
+
+* **common:** verify backend translation ([#9247](https://github.com/pbsgears/Gears_BackEnd/issues/9247)) ([b7078e4](https://github.com/pbsgears/Gears_BackEnd/commit/b7078e444fe4b43314453664c69188164b73b544))
+
 ## [10.90.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.1...v10.90.0) (2025-11-09)
 
 
