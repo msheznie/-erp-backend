@@ -9,6 +9,38 @@
     @endif
     <title>ERP Email</title>
     <style type="text/css">
+        @php
+            $currentLocale = $locale ?? app()->getLocale();
+            $emailFontFamily = ($currentLocale === 'ar') ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif";
+            $poppinsRegular = asset('fonts/Poppins-Regular.ttf');
+            $poppinsBold = asset('fonts/Poppins-Bold.ttf');
+            $notoSansRegular = asset('fonts/NotoSansArabic-Regular.ttf');
+            $notoSansBold = asset('fonts/NotoSansArabic-Bold.ttf');
+        @endphp
+        @font-face {
+            font-family: 'Poppins';
+            src: url('{{ $poppinsRegular }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Poppins';
+            src: url('{{ $poppinsBold }}') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Noto Sans Arabic';
+            src: url('{{ $notoSansRegular }}') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'Noto Sans Arabic';
+            src: url('{{ $notoSansBold }}') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
         img {
             max-width: 100%;
         }
@@ -23,7 +55,6 @@
 
         body {
             background-color: #f6f6f6;
-            font-family: 'Poppins', sans-serif !important;
         }
 
         /* RTL Support for Arabic */
@@ -196,62 +227,62 @@
         }
     </style>
 </head>
-<body style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; line-height: 1.6em; background-color: #f6f6f6; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }};"
+<body style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; width: 100% !important; height: 100%; line-height: 1.6em; background-color: #f6f6f6; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }};"
       bgcolor="#f6f6f6" dir="{{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}">
 
 <table class="body-wrap"
-       style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; width: 100%; background-color: #f6f6f6; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+       style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; width: 100%; background-color: #f6f6f6; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
        bgcolor="#f6f6f6" dir="{{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}">
-    <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-        <td style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;"
+    <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0;">
+        <td style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;"
             valign="top"></td>
         <td class="container" width="600"
-            style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+            style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; display: block !important; max-width: 600px !important; clear: both !important; margin: 0 auto; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
             valign="top" dir="{{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}">
             <div class="content {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl-force' : '' }}"
-                 style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 20px; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                 style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; max-width: 600px; display: block; margin: 0 auto; padding: 20px; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                  dir="{{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}">
                 <table class="main {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl-force' : '' }}" width="100%" cellpadding="0" cellspacing="0"
-                       style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; border-radius: 3px; background-color: #fff; margin: 0; border: 1px solid #e9e9e9; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                       style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; border-radius: 3px; background-color: #fff; margin: 0; border: 1px solid #e9e9e9; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                        bgcolor="#fff" dir="{{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}">
-                    <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0;">
+                    <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0;">
                         <td class="alert alert-warning header-center"
-                            style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center !important; border-radius: 3px 3px 0 0; background-color:{{ $color }}; margin: 0; padding: 20px; direction: ltr !important;"
+                            style="font-family: {{ $emailFontFamily }}; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center !important; border-radius: 3px 3px 0 0; background-color:{{ $color }}; margin: 0; padding: 20px; direction: ltr !important;"
                             align="center" bgcolor="#fff" valign="top" dir="ltr">
                             <strong style="text-align: center !important; direction: ltr !important; display: block !important;"> {{ $text }} </strong>
                         </td>
                     </tr>
-                    <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                    <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
                         <td class="content-wrap"
-                            style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                            style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                             valign="top">
                             <table width="100%" cellpadding="0" cellspacing="0"
-                                   style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
-                                <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                                   style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                                <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
                                     <td class="content-block"
-                                        style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                                        style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                                         valign="top">
                                         {{--{{$arr->to}}--}}
                                     </td>
                                 </tr>
-                                <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                                <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
                                     <td class="content-block"
-                                        style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                                        style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                                         valign="top">
                                         {{--{!! html_entity_decode(nl2br($content)) !!}--}}
                                         {!! $content !!}
                                     </td>
                                 </tr>
-                                <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'justify' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                                <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'justify' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
                                     <td class="content-block"
-                                        style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'justify' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                                        style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'justify' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                                         valign="top">
                                         <span> </span>
                                     </td>
                                 </tr>
-                                <tr style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'justify' : 'justify' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
+                                <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'justify' : 'justify' }}; text-justify: inter-word; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};">
                                     <td class="content-block"
-                                        style="font-family: {{ ($locale ?? app()->getLocale()) === 'ar' ? "'Tahoma', 'Arial', 'Helvetica Neue', Helvetica, sans-serif" : "'Helvetica Neue',Helvetica,Arial,sans-serif" }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'justify' : 'justify' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
+                                        style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'justify' : 'justify' }}; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }};"
                                         valign="top">
                                     </td>
                                 </tr>
@@ -260,21 +291,21 @@
                     </tr>
                 </table>
                 <div class="footer"
-                     style="height:50px;background-color: white;font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 10px; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }};">
+                     style="height:50px;background-color: white;font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 10px; direction: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'rtl' : 'ltr' }}; text-align: {{ ($locale ?? app()->getLocale()) === 'ar' ? 'right' : 'left' }};">
                     <table width="100%"
-                           style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
-                        <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
+                           style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0;">
+                        <tr style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; margin: 0;">
                             <td class="aligncenter content-block"
-                                style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;"
+                                style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;"
                                 align="center" valign="top">
-                                <span style="color:black">Copyright © {{ date('Y') }} OSOS Tech. All rights reserved. Powered by <span><a href="https://www.osos.om/" target=”_blank” style="color: #F55431 !important;text-decoration: none;">OSOS</a>
+                                <span style="color:black">Copyright © {{ date('Y') }} OSOS Tech. All rights reserved. Powered by <span><a href="https://www.osos.om/" target="_blank" style="color: #F55431 !important;text-decoration: none;">OSOS</a>
                             </td>
                         </tr>
                     </table>
                 </div>
             </div>
         </td>
-        <td style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;"
+        <td style="font-family: {{ $emailFontFamily }}; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0;"
             valign="top"></td>
     </tr>
 </table>
