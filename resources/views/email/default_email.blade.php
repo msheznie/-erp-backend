@@ -11,7 +11,7 @@
     <style type="text/css">
         @php
             $currentLocale = $locale ?? app()->getLocale();
-            $emailFontFamily = ($currentLocale === 'ar') ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif";
+            $emailFontFamily = ($currentLocale == 'ar') ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif";
             $poppinsRegular = url('fonts/Poppins-Regular.ttf');
             $poppinsBold = url('fonts/Poppins-Bold.ttf');
             $notoSansRegular = url('fonts/NotoSansArabic-Regular.ttf');
@@ -51,6 +51,7 @@
             width: 100% !important;
             height: 100%;
             line-height: 1.6em;
+            font-family: {{ $emailFontFamily }};
         }
 
         body {
