@@ -23,6 +23,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\SegmentMaster;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\TenderType;
+use App\Models\WorkflowConfiguration;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\DocumentApproved;
 use App\Repositories\ApprovalLevelRepository;
@@ -226,6 +227,7 @@ class ApprovalLevelAPIController extends AppBaseController
     public function getGroupApprovalLevelDatatable(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
         return $this->approvalLevelRepository->getGroupApprovalLevelDatatable($input);
     }
 
@@ -250,10 +252,14 @@ class ApprovalLevelAPIController extends AppBaseController
 
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
+        $workflows = WorkflowConfiguration::where('isActive', 1)->where('companySystemID', $selectedCompanyId)->get();
+
+
         $output = array('company' => $groupCompany,
             'document' => $document,
             'financeCategory' => $financeCategory,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
+            'workflows' => $workflows,
         );
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
@@ -326,6 +332,14 @@ class ApprovalLevelAPIController extends AppBaseController
                                                ->when(isset($input['approvalLevelID']), function($query) use ($input) {
                                                     $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
                                                })
+                                               ->when(
+                                                isset($input['workflow']),
+                                                    function ($query) use ($input) {
+                                                        $query->where(function ($query) use ($input) {
+                                                            $query->where('workflow', $input['workflow']);
+                                                        });
+                                                    }
+                                                )
                                                ->where('isActive', -1)
                                                ->first();
 

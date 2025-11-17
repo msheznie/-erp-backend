@@ -795,13 +795,13 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
-
+        $lang = app()->getLocale();
         $array = array('entity' => $materielRequest);
         $time = strtotime("now");
         $fileName = 'materiel_request' . $id . '_' . $time . '.pdf';
         $html = view('print.materiel_request', $array);
         $htmlFooter = view('print.materiel_request_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

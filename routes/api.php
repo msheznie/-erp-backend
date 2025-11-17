@@ -60,6 +60,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
             Route::post('payment-voucher','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
+            Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
@@ -1049,12 +1050,15 @@ Route::group(['middleware' => ['mobileServer']], function () {
     });
 
     if (env("LOG_ENABLE", false)) {
+        Route::get('updateUsersLoginType', 'EmployeeAPIController@updateUsersLoginType');
+        Route::get('migrateAuditLogs', 'AuditTrailAPIController@migrateAuditLogs');
         Route::get('runCronJob/{cron}', function ($cron) {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
     }
 });
+
 
 
 /*

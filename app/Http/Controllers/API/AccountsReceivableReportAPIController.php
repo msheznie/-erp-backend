@@ -40,6 +40,7 @@ use App\Exports\AccountsReceivable\CustomerAgingDetailReport;
 use App\Exports\AccountsReceivable\CustomerBalanceSummaryReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerBalanceStatementReport;
 use App\Exports\AccountsReceivable\CustomerStatement\CustomerStatementOfAccountReport;
+use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\SentCustomerLedger;
 use App\Models\AccountsReceivableLedger;
@@ -1141,11 +1142,36 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'k' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
-                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
+                    // Get font family based on locale
+                    $lang = app()->getLocale();
+                    $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat,$fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat,$fontFamily) {
+                            // Set default font for entire sheet
+                            $sheet->setStyle([
+                                'font' => [
+                                    'name' => $fontFamily,
+                                    'size' => 11,
+                                ]
+                            ]);
+
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
+
+                            // Apply font to all cells
+                            $lastRow = $sheet->getHighestRow();
+                            $lastColumn = $sheet->getHighestColumn();
+                            if ($lastRow > 0 && $lastColumn) {
+                                try {
+                                    $spreadsheet = $sheet->getDelegate();
+                                    $worksheet = $spreadsheet->getActiveSheet();
+                                    $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                } catch (\Exception $e) {
+                                    $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                }
+                            }
                             
                             // Set right-to-left for Arabic locale
                             if (app()->getLocale() == 'ar') {
@@ -1183,11 +1209,35 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
-                    return \Excel::create('create_customer_ledger_report', function ($excel) use ($outputData,$excelColumnFormat) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
+                    // Get font family based on locale
+                    $lang = app()->getLocale();
+                    $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat,$fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat,$fontFamily) {
+                            // Set default font for entire sheet
+                            $sheet->setStyle([
+                                'font' => [
+                                    'name' => $fontFamily,
+                                    'size' => 11,
+                                ]
+                            ]);
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);
+
+                            // Apply font to all cells
+                            $lastRow = $sheet->getHighestRow();
+                            $lastColumn = $sheet->getHighestColumn();
+                            if ($lastRow > 0 && $lastColumn) {
+                                try {
+                                    $spreadsheet = $sheet->getDelegate();
+                                    $worksheet = $spreadsheet->getActiveSheet();
+                                    $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                } catch (\Exception $e) {
+                                    $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                }
+                            }
                             
                             // Set right-to-left for Arabic locale
                             if (app()->getLocale() == 'ar') {
@@ -2103,7 +2153,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2115,7 +2165,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2186,7 +2236,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
                     $htmlFooter = view('print.customer_aging_summary_footer', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2198,7 +2248,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2278,7 +2328,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $htmlHeader = view('print.customer_aging_detail_header', $dataArr);
                     $htmlFooter = view('print.customer_aging_detail_footer', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2290,7 +2340,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2359,7 +2409,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $html = view('print.customer_collection', $dataArr);
 
-                    $mpdfConfig = [
+                    $mpdfConfig = Helper::getMpdfConfig([
                         'tempDir' => public_path('tmp'),
                         'mode' => 'utf-8',
                         'format' => 'A4-L',
@@ -2371,7 +2421,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'margin_bottom' => 16,
                         'margin_header' => 9,
                         'margin_footer' => 9
-                    ];
+                    ], $lang);
 
                     if ($isRTL) {
                         $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
@@ -2454,7 +2504,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $htmlHeader = view('print.customer_statement_of_account_header', $dataArr);
             $htmlFooter = view('print.customer_statement_of_account_footer', $dataArr);
 
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -2466,7 +2516,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
@@ -2528,7 +2578,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $htmlHeader = view('print.customer_balance_statement_header', $dataArr);
             $htmlFooter = view('print.customer_balance_statement_footer', $dataArr);
 
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -2540,7 +2590,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

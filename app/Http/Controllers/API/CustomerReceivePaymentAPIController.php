@@ -631,18 +631,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $masterHeaderSumReport = 0;
         if ($input['documentType'] == 13) {
 
-            $customerReceiveAmountTrans = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountTrans');
+            $netAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                ->sum('net_amount');
 
-            $customerReceiveAmountLocal = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountLocal');
+            $netAmountLocal = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->localCurrencyER;
 
-            $customerReceiveAmountReport = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
-                ->sum('receiveAmountRpt');
+            $netAmountReport = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->companyReportingER;
 
-            $masterHeaderSumTrans = $checkPreDirectSumTrans + $customerReceiveAmountTrans;
-            $masterHeaderSumLocal = $checkPreDirectSumLocal + $customerReceiveAmountLocal;
-            $masterHeaderSumReport = $checkPreDirectSumReport + $customerReceiveAmountReport;
+            $masterHeaderSumTrans = $checkPreDirectSumTrans + $netAmount;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $netAmountLocal;
+            $masterHeaderSumReport = $checkPreDirectSumReport + $netAmountReport;
 
             $masterHeaderSumTrans = abs($masterHeaderSumTrans);
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
@@ -726,6 +724,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'narration' => 'required',
             ]);
 
+            if ($input['documentType'] == 13 || $input['documentType'] == 15 || (isset($input['payeeTypeID']) && $input['payeeTypeID'] == 1)) {
+                $validator->addRules([
+                    'customerID' => 'required|numeric|min:1'
+                ]);
+            }
+
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
@@ -736,6 +740,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->count();
                 if ($customerReceivePaymentDetailCount == 0) {
                     return $this->sendError(trans('custom.every_receipt_voucher_should_have_at_least_one_item'), 500);
+                }
+
+                $sumDiscountGiven = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+                    ->sum('discount_given');
+                     
+                if($sumDiscountGiven < 0){
+                    $checkDiscountConfigured = SystemGlCodeScenarioDetail::where('companySystemID', $input['companySystemID'])
+                        ->where('systemGlScenarioID', 23)
+                        ->whereNotNull('chartOfAccountSystemID')
+                        ->where('chartOfAccountSystemID', '>', 0)
+                        ->first();
+        
+                    if(empty($checkDiscountConfigured)){
+                        return $this->sendError(trans('custom.discount_given_gl_not_assigned'), 500);
+                    }
                 }
             }
             else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
@@ -791,7 +810,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 })
                                 ->count();
 
-                            if ($checkAmount > 0) {
+                            if ($sumDiscountGiven == 0 && $checkAmount > 0) {
                                 return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         } elseif ($row['addedDocumentSystemID'] == 19) {
@@ -807,7 +826,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 })
                                 ->count();
 
-                            if ($checkAmount > 0) {
+                            if ($sumDiscountGiven == 0 && $checkAmount > 0) {
                                 return $this->sendError(trans('custom.amount_should_be_greater_than_zero_for_every_items'), 500);
                             }
                         }
@@ -1685,6 +1704,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'custTransactionCurrencyID' => 'required|numeric|min:1',
                 'narration' => 'required',
             ]);
+
+            if ($input['documentType'] == 13 || $input['documentType'] == 15 || (isset($input['payeeTypeID']) && $input['payeeTypeID'] == 1)) {
+                $validator->addRules([
+                    'customerID' => 'required|numeric|min:1'
+                ]);
+            }
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
@@ -2789,6 +2814,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $ciDetailTotTra = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                                                       ->where('matchingDocID', 0)
                                                       ->sum('receiveAmountTrans');
+        $discountTot = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            ->where('matchingDocID', 0)
+            ->sum('discount_given');
+            
+        $netTot = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
+            ->where('matchingDocID', 0)
+            ->sum('net_amount');
 
         $advanceDetailsTotalNet =  AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->sum('paymentAmount');
 
@@ -2804,18 +2836,20 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'localDecimal' => $localDecimal,
             'rptDecimal' => $rptDecimal,
             'directTotTra' => $directTotTra,
+            'discountTot' => $discountTot,
+            'netTot' => $netTot,
             'directTotalVAT' => $directTotalVAT,
             'directTotalNet' => $directTotalNet,
             'ciDetailTotTra' => $ciDetailTotTra,
             'isProjectBase' => $isProjectBase,
             'advanceDetailsTotalNet' => $advanceDetailsTotalNet
         );
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'receipt_voucher_' . $id . '_' . $time . '.pdf';
         $html = view('print.receipt_voucher', $order);
         $htmlFooter = view('print.receipt_voucher_footer', $order);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

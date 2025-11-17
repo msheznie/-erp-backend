@@ -16,6 +16,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateCreditNoteAPIRequest;
 use App\Http\Requests\API\UpdateCreditNoteAPIRequest;
@@ -1397,13 +1398,13 @@ class CreditNoteAPIController extends AppBaseController
             $htmlFooter = view('print.credit_note_template.credit_note_gulf_footer', $array);
 
             // Configure mPDF for RTL support if Arabic
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-P',
                 'setAutoTopMargin' => 'stretch',
                 'autoMarginPadding' => -10
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
@@ -1420,13 +1421,13 @@ class CreditNoteAPIController extends AppBaseController
             $html = view('print.credit_note', $array);
 
             // Configure mPDF for RTL support if Arabic
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4',
                 'setAutoTopMargin' => 'stretch',
                 'autoMarginPadding' => -10
-            ];
+            ], $lang);
 
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';

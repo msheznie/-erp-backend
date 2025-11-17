@@ -28,10 +28,14 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Repositories\UserRepository;
 use Response;
 use App\helper\CreateExcel;
 use App\Models\UserGroup;
+use App\Traits\AuditLogsTrait;
+use App\Services\AuditLog\NavigationAuditLogService;
+use App\Models\AccessTokens;
 
 /**
  * Class UserGroupAssignController
@@ -39,6 +43,8 @@ use App\Models\UserGroup;
  */
 class UserGroupAssignAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  UserGroupAssignRepository */
     private $userGroupAssignRepository;
     private $userRepository;
@@ -340,6 +346,22 @@ class UserGroupAssignAPIController extends AppBaseController
             }  
 
             $accessRights = array('isDelegation' => $isDelegation,'R' => $userGroupAssign->readonly, 'C' => $userGroupAssign->create ,'E' => $userGroupAssign->update, 'D' => $userGroupAssign->delete, 'P' => $userGroupAssign->print,'Ex' => $userGroupAssign->export);
+        }
+
+        try {
+            $user = \Auth::user();
+            $tokenId = $user && $user->token() ? $user->token()->id : null;
+            
+            $this->log('navigationAccess', [
+                'navigationMenuID' => $navigationMenuID,
+                'companyID' => $companyID,
+                'accessType' => NavigationAuditLogService::determineAccessType($request),
+                'userId' => $user ? $user->id : null,
+                'tokenId' => $tokenId,
+                'request' => NavigationAuditLogService::extractRequestData($request)
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log navigation access: ' . $e->getMessage());
         }
 
         return $this->sendResponse($accessRights, trans('custom.record_retrieved_successfully_1'));

@@ -20,6 +20,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\CreateExcel;
+use App\helper\Helper;
 use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
@@ -1327,11 +1328,12 @@ class ItemIssueMasterAPIController extends AppBaseController
             'isShowAllocatedAssetTable' => $isShowAllocatedAssetTable,
             'entity' => $materielIssue
         );
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);
         $htmlFooter = view('print.item_issue_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
@@ -1350,13 +1352,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
-
+        $lang = app()->getLocale();
         $array = array('entity' => $materielIssue);
         $time = strtotime("now");
         $fileName = 'item_issue_delivery' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue_delivery', $array);
         $htmlFooter = view('print.item_issue_delivery_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

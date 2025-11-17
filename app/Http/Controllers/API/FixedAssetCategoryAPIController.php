@@ -434,7 +434,7 @@ class FixedAssetCategoryAPIController extends AppBaseController
         }
 
         $companies = Company::whereIn('companySystemID', $subCompanies)
-            ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
+            ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label, isGroup')
             ->get();
 
         $output = array(

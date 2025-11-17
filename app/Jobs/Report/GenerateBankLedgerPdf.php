@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Report;
 
+use App\helper\Helper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -116,13 +117,14 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), $decimalPlace),
             'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), $decimalPlace),
             'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), $decimalPlace),
+            'lang' => $languageCode,
         );
 
         // Check if Arabic language for RTL support
         $isRTL = ($languageCode === 'ar');
 
         // Configure mPDF for RTL support if Arabic
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4-L', 
@@ -133,7 +135,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'margin_bottom' => 0,
             'margin_header' => 9,
             'margin_footer' => 9
-        ];
+        ], $languageCode);
         
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl';

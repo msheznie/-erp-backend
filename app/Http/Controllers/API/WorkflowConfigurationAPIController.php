@@ -167,12 +167,13 @@ class WorkflowConfigurationAPIController extends AppBaseController
          $createdWorkflow = $this->workflowConfigurationRepository->with('hodActions')->findWithoutFail($workflowConfiguration->id);
          $newValues = $createdWorkflow->toArray();
          
+         $narrationVariables = $input['workflowName'];
          $this->auditLog(
              $db, 
              $workflowConfiguration->id, 
              $uuid, 
              "erp_workflow_configurations",
-             "Workflow Configuration ".$input['workflowName']." has been created",
+             $narrationVariables,
              "C", 
              $newValues, 
              []
@@ -191,7 +192,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
                 $result->id, 
                 $uuid, 
                 "erp_workflow_configuration_hod_actions",
-                "HOD Action has been Added to Workflow Configuration",
+                "",
                 "C", 
                 $hodAction, 
                 [],
@@ -368,7 +369,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
                 $oldHodAction['id'], 
                 $uuid, 
                 "erp_workflow_configuration_hod_actions",
-                "HOD Action has been deleted during workflow update",
+                "",
                 "D", 
                 [], 
                 $oldHodAction,
@@ -393,7 +394,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
                 $newHodAction->id, 
                 $uuid, 
                 "erp_workflow_configuration_hod_actions",
-                "HOD Action has been created during workflow update",
+                "",
                 "C", 
                 $newHodAction->toArray(), 
                 [],
@@ -407,12 +408,13 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $newValues = $updatedWorkflow->toArray();
 
         // Add audit log for workflow configuration changes
+        $narrationVariables = $input['workflowName'];
         $this->auditLog(
             $db, 
             $id, 
             $uuid, 
             "erp_workflow_configurations", 
-            "Workflow Configuration ".$input['workflowName']." has been updated",
+            $narrationVariables,
             "U", 
             $newValues, 
             $oldValues
@@ -484,7 +486,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
                 $oldHodAction['id'], 
                 $uuid, 
                 "erp_workflow_configuration_hod_actions",
-                "HOD Action has been deleted during workflow deletion",
+                "",
                 "D", 
                 [], 
                 $oldHodAction,
@@ -498,12 +500,13 @@ class WorkflowConfigurationAPIController extends AppBaseController
         $workflowConfiguration->delete();
 
         // Add audit log for workflow configuration deletion
+        $narrationVariables = $oldValues['workflowName'];
         $this->auditLog(
             $db, 
             $id, 
             $uuid, 
             "erp_workflow_configurations",
-            "Workflow Configuration ".$oldValues['workflowName']." has been deleted",
+            $narrationVariables,
             "D", 
             [], 
             $oldValues
@@ -567,12 +570,13 @@ class WorkflowConfigurationAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
+        $narrationVariables = $workflowConfiguration->workflowName;
         $this->auditLog(
             $db,
             $input['id'],
             $uuid,
             "erp_workflow_configurations",
-            "Workflow Configuration ".$workflowConfiguration->workflowName." has been updated",
+            $narrationVariables,
             "U",
             $newValue,
             $oldValue

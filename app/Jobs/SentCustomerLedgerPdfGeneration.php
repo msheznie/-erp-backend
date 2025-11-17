@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\helper\Helper;
 use App\Models\Company;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -83,7 +84,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
 
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url);
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url,'lang' => $languageCode);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_one', $dataArr)->render();
@@ -97,7 +98,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
 
             $lang = app()->getLocale();
             $isRTL = ($lang === 'ar');
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -109,7 +110,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
             }
@@ -149,8 +150,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $outputArr[$val->concatCustomerName][$val->documentCurrency][] = $val;
                 }
             }
-
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']), 'toDate' => \Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url);
+            $lang = app()->getLocale();
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']), 'toDate' => \Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url, 'lang' => $lang);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_two', $dataArr)->render();
@@ -162,9 +163,8 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
             $fileName = trans('custom.customer_ledger') . $customerCodeSystem . '_' . $reportCount . '.pdf';
             $filePath = $path . '/' . $fileName;
 
-            $lang = app()->getLocale();
             $isRTL = ($lang === 'ar');
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'),
                 'mode' => 'utf-8',
                 'format' => 'A4-L',
@@ -176,7 +176,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 'margin_bottom' => 16,
                 'margin_header' => 9,
                 'margin_footer' => 9
-            ];
+            ], $lang);
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
             }

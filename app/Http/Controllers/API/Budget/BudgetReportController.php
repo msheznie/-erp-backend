@@ -96,10 +96,33 @@ class BudgetReportController extends AppBaseController
                     'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
-                return \Excel::create('budget_commitment_details_report', function ($excel) use ($outputData,$excelColumnFormat) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create('budget_commitment_details_report', function ($excel) use ($outputData,$excelColumnFormat, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->setColumnFormat($excelColumnFormat);
                         $sheet->loadView('export_report.budget.budget_commitment_details_report', $outputData);
+
+                        // Apply font to all cells after loading view
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
                         
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {

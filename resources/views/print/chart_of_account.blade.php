@@ -2,10 +2,15 @@
 <head>
     <title>{{ __('custom.chart_of_account') }}</title>
     <style>
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
         @if(isset($lang) && $lang === 'ar')
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
         }
         
         .text-left {
@@ -29,11 +34,6 @@
             margin-right: 30px;
             margin-top: 30px;
             margin-bottom: 0px;
-        }
-
-        body {
-            font-size: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
         h3 {

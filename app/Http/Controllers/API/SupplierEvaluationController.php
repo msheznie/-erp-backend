@@ -300,11 +300,11 @@ class SupplierEvaluationController extends AppBaseController
             'templateSections' => $templateSections,
             'templateComments' => $templateComments
         ];
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = trans('custom.supplier_evaluation_filename_prefix') . $id . '_' . $time . '.pdf';
         $html = view('print.supplier_evaluation', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->WriteHTML($html);

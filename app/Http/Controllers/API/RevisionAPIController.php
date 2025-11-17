@@ -353,11 +353,31 @@ class RevisionAPIController extends AppBaseController
         $input = $request->all();
 
         // Format the date properly
+        $submittedDateCarbon = null;
+        $newSubmissionDateCarbon = null;
+        
         if (isset($input['submittedDate'])) {
             try {
-                $input['submittedDate'] = Carbon::parse($input['submittedDate'])->format('Y-m-d');
+                $submittedDateCarbon = Carbon::createFromFormat('d/m/Y', $input['submittedDate']);
+                $input['submittedDate'] = $submittedDateCarbon->format('d-m-Y');
             } catch (\Exception $e) {
-                return $this->sendError('Invalid date format for submittedDate');
+                return $this->sendError('Invalid date format for submission date');
+            }
+        }
+
+        if (isset($input['newSubmissionDate'])) {
+            try {
+                $newSubmissionDateCarbon = Carbon::createFromFormat('d/m/Y', $input['newSubmissionDate']);
+                $input['newSubmissionDate'] = $newSubmissionDateCarbon->format('d-m-Y');
+            } catch (\Exception $e) {
+                return $this->sendError('Invalid date format for new submission date');
+            }
+        }
+
+        // Validate that newSubmissionDate is greater than or equal to submittedDate
+        if ($submittedDateCarbon && $newSubmissionDateCarbon) {
+            if ($newSubmissionDateCarbon->lt($submittedDateCarbon)) {
+                return $this->sendError('New Submission Date must be greater than or equal to original submission date');
             }
         }
 
@@ -383,7 +403,7 @@ class RevisionAPIController extends AppBaseController
                 return $this->sendError('Budget Planning not found');
             }
 
-            if($budgetPlanning->revisions->count() > 0){
+            if($budgetPlanning->revisions->where('revisionStatus', 1)->count() > 0){
                 return $this->sendError('Budget Planning already has a revision');
             }
 
@@ -391,11 +411,17 @@ class RevisionAPIController extends AppBaseController
                 $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
             }
 
+            // Convert dates to Y-m-d format for database storage
+            $submittedDateForDb = Carbon::createFromFormat('d-m-Y', $input['submittedDate'])->format('Y-m-d');
+            $newSubmissionDateForDb = isset($input['newSubmissionDate']) 
+                ? Carbon::createFromFormat('d-m-Y', $input['newSubmissionDate'])->format('Y-m-d') 
+                : null;
+
             // Prepare revision data
             $revisionData = [
                 'budgetPlanningId' => $input['budgetPlanningId'],
                 'submittedBy' => $input['submittedBy'],
-                'submittedDate' => $input['submittedDate'],
+                'submittedDate' => $submittedDateForDb,
                 'reviewComments' => $input['reviewComments'],
                 'revisionType' => $input['revisionType'],
                 'reopenEditableSection' => $input['reopenEditableSection'],
@@ -406,6 +432,11 @@ class RevisionAPIController extends AppBaseController
                 'created_by' => Helper::getEmployeeSystemID(),
                 'created_at' => Carbon::now()
             ];
+
+            // Add newSubmissionDate if provided
+            if ($newSubmissionDateForDb) {
+                $revisionData['newSubmissionDate'] = $newSubmissionDateForDb;
+            }
 
             // Create revision record
             $revision = $this->revisionRepository->create($revisionData);

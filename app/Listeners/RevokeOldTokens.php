@@ -32,7 +32,6 @@ class RevokeOldTokens
      */
     public function handle(AccessTokenCreated $event)
     {
-
       /*DB::table('oauth_access_tokens')
             ->where('id', '<>', $event->tokenId)
             ->where('user_id', $event->userId)
@@ -40,6 +39,13 @@ class RevokeOldTokens
             ->update(['revoked' => true]);*/
 
        if(!empty($event->tokenId)){
+            // Get the token and ensure session_id is set
+            $token = AccessTokens::find($event->tokenId);
+            if ($token && empty($token->session_id)) {
+                $token->session_id = AccessTokens::generateSessionId();
+                $token->save();
+            }
+            
             $logHistory = new UsersLogHistory();
             $user = User::with(['employee'])->find($event->userId);
             if($user){

@@ -7,6 +7,11 @@ class AuditRoutesTenantService
     public static function getTenantRoutes(){
         $lokiTenantRoutes = [
             'api/v1/auditLogs',
+            'api/v1/userAuditLogs',
+            'api/v1/exportUserAuditLogs',
+            'api/v1/navigationAccessLogs',
+            'api/v1/exportNavigationAccessLogs',
+            'api/v1/exportEventTrackingLogs',
             'api/v1/addItemAttributes',
             'api/v1/erp_attributes/{erp_attribute}',
             'api/v1/financeItemCategorySubsExpiryUpdate',
@@ -99,7 +104,10 @@ class AuditRoutesTenantService
             'api/v1/cancelDepartmentTimeExtensionRequests',
             'api/v1/company_budget_plannings',
             'api/v1/deleteBudgetPlanningTemplateDetailRow',
-            'api/v1/saveBudgetDetailTemplateEntries'
+            'api/v1/saveBudgetDetailTemplateEntries',
+            'api/v1/oauth/login_with_token',
+            'api/v1/logoutApiUser',
+            'api/v1/checkUserGroupAccessRights'
         ];
 
         return $lokiTenantRoutes;

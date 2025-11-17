@@ -464,6 +464,7 @@ class TaxAPIController extends AppBaseController
     public function getTaxMasterDatatable(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
         $tax = Tax::with(['authority', 'type'])->where('taxCategory','!=',1);
         $companiesByGroup = "";
 

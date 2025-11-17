@@ -691,7 +691,7 @@ class DeliveryOrderAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
-                return $this->sendResponseWithDetails($deliveryOrder->toArray(), trans('custom.delivery_order_confirmed_successfully'),1,$confirm['data'] ?? null);
+                return $this->sendReponseWithDetails($deliveryOrder->toArray(), trans('custom.delivery_order_confirmed_successfully'),1,$confirm['data'] ?? null);
             }
 
         }else{
@@ -1283,13 +1283,13 @@ WHERE
         
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-L', // Landscape format
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

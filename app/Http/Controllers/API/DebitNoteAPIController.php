@@ -2086,13 +2086,13 @@ class DebitNoteAPIController extends AppBaseController
             $htmlFooter = view('print.debit_note_template.debit_note_gulf_footer', $array);
             
             // Configure mPDF for RTL support if Arabic
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'), 
                 'mode' => 'utf-8', 
                 'format' => 'A4-P', 
                 'setAutoTopMargin' => 'stretch', 
                 'autoMarginPadding' => -10
-            ];
+            ], $lang);
             
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
@@ -2109,13 +2109,13 @@ class DebitNoteAPIController extends AppBaseController
             $html = view('print.debit_note', $array);
             
             // Configure mPDF for RTL support if Arabic
-            $mpdfConfig = [
+            $mpdfConfig = Helper::getMpdfConfig([
                 'tempDir' => public_path('tmp'), 
                 'mode' => 'utf-8', 
                 'format' => 'A4-L', 
                 'setAutoTopMargin' => 'stretch', 
                 'autoMarginPadding' => -10
-            ];
+            ], $lang);
             
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';

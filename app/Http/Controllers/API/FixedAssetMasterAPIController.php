@@ -1012,7 +1012,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
             if($fixedAssetMaster->approved == -1){
-                $this->auditLog($db, $input['faID'],$uuid, "erp_fa_asset_master", $previosValue['faCode']." has updated", "U", $newValue, $previosValue);
+                $narrationVariables = $previosValue['faCode'];
+                $this->auditLog($db, $input['faID'],$uuid, "erp_fa_asset_master", $narrationVariables, "U", $newValue, $previosValue);
             }
 
             DB::commit();

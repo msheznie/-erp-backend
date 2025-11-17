@@ -15,6 +15,12 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol"
     }
 
+    @if(isset($lang) && $lang === 'ar')
+    body {
+        font-family: 'Noto Sans Arabic', sans-serif;
+    }
+    @endif
+
     p,h3 {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol" !important;
     }

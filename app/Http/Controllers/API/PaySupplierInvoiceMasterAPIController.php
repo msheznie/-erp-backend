@@ -3154,13 +3154,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'bankChargeAndOthersTot' => $bankChargeAndOthersTot,
             'bankChargeCount' => $bankChargeCount
         );
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
 
         $fileName = 'payment_voucher_' . $id . '_' . $time . '.pdf';
         $html = view('print.payment_voucher', $order);
         $htmlFooter = view('print.payment_voucher_footer', $order);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
 

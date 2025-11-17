@@ -2,6 +2,7 @@
 
 namespace App\Jobs\DocumentAttachments;
 
+use App\helper\Helper;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -85,7 +86,7 @@ class CustomerStatementJob implements ShouldQueue
         $nowTime = time();
 
         $isRTL = ($languageCode === 'ar');
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-L',
@@ -97,7 +98,7 @@ class CustomerStatementJob implements ShouldQueue
             'margin_bottom' => 16,
             'margin_header' => 9,
             'margin_footer' => 9
-        ];
+        ], $languageCode);
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl';
         }

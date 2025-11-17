@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateExpenseClaimMasterAPIRequest;
 use App\Http\Requests\API\UpdateExpenseClaimMasterAPIRequest;
 use App\Models\ExpenseClaimMaster;
@@ -339,13 +340,13 @@ class ExpenseClaimMasterAPIController extends AppBaseController
         $isRTL = ($lang === 'ar');
         
         // Configure mPDF for RTL support if Arabic
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4-L', 
             'setAutoTopMargin' => 'stretch', 
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
         
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl';

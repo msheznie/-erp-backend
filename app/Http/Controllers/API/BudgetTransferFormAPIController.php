@@ -16,6 +16,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateBudgetTransferFormAPIRequest;
 use App\Http\Requests\API\UpdateBudgetTransferFormAPIRequest;
 use App\Models\BudgetTransferForm;
@@ -1340,13 +1341,13 @@ class BudgetTransferFormAPIController extends AppBaseController
         if($isFromPortal){
             return $this->sendResponse($array, trans('custom.budget_transfer_print_data'));
         }
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'budget_transfer' . $id . '_' . $time . '.pdf';
 
         $html = view('print.budget_transfer', $array);
         $htmlFooter = view('print.budget_transfer_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

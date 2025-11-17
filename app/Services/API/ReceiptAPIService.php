@@ -57,6 +57,16 @@ class ReceiptAPIService
         }
 
         foreach ($receipts as $receipt) {
+            $discountValidation = self::validateDiscountGiven($receipt);
+            if($discountValidation['status'] === 'fail') {
+                return ['status'=>'fail', "code" => 422,'data' => $discountValidation['data']];
+            }
+            
+            $discountGLValidation = self::validateDiscountGLAccount($receipt);
+            if($discountGLValidation['status'] === 'fail') {
+                return ['status'=>'fail', "code" => 422,'data' => $discountGLValidation['data']];
+            }
+            
             $receipt = self::serialCodeDetails($receipt);
             $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
             array_push($savedReceipts,["refNo" => $saveReceipt->narration, "custPaymentReceiveCode"=> $saveReceipt->custPaymentReceiveCode,'custReceivePaymentAutoID' => $saveReceipt->custReceivePaymentAutoID]);
@@ -1255,5 +1265,49 @@ class ReceiptAPIService
         }
 
         return $receipt;
+    }
+
+    private function validateDiscountGiven($receipt):Array {
+        if (isset($receipt->details) && is_array($receipt->details)) {
+            foreach ($receipt->details as $detailIndex => $detail) {
+                if (isset($detail['discountGiven']) && isset($detail['receiptAmount'])) {
+                    if ($detail['discountGiven'] > $detail['receiptAmount']) {
+                        return [
+                            'status' => 'fail',
+                            'data' => [
+                                'discountGiven' => ['The discount cannot exceed the payment amount.']
+                            ]
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return ['status' => 'success'];
+    }
+
+    private function validateDiscountGLAccount($receipt):Array {
+        if (isset($receipt->details) && is_array($receipt->details)) {
+            foreach ($receipt->details as $detailIndex => $detail) {
+                if (isset($detail['discountGiven']) && $detail['discountGiven'] > 0) {
+                    $checkDiscountConfigured = SystemGlCodeScenarioDetail::where('companySystemID', $receipt->companySystemID)
+                        ->where('systemGlScenarioID', 23)
+                        ->whereNotNull('chartOfAccountSystemID')
+                        ->where('chartOfAccountSystemID', '>', 0)
+                        ->first();
+            
+                    if(empty($checkDiscountConfigured)){
+                        return [
+                            'status' => 'fail',
+                            'data' => [
+                                'discountGiven' => ['Discount Given GL has not been assigned in the Chart of Account configuration']
+                            ]
+                        ];
+                    }
+                }
+            }
+        }
+        
+        return ['status' => 'success'];
     }
 }

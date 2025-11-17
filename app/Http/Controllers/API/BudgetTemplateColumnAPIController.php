@@ -52,7 +52,8 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $budgetTemplateColumn->templateColumnID, $uuid, "budget_template_columns", "Budget template column added", "C", $budgetTemplateColumn->toArray(), [], $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
+        // Static narration - send empty string for variables
+        $this->auditLog($db, $budgetTemplateColumn->templateColumnID, $uuid, "budget_template_columns", "", "C", $budgetTemplateColumn->toArray(), [], $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
 
         return $this->sendResponse($budgetTemplateColumn->toArray(), trans('custom.budget_template_column_saved_successfully'));
     }
@@ -93,7 +94,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "budget_template_columns", "Budget template column updated", "U", $budgetTemplateColumn->toArray(), $oldValues, $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
+        $this->auditLog($db, $id, $uuid, "budget_template_columns", "", "U", $budgetTemplateColumn->toArray(), $oldValues, $budgetTemplateColumn->budgetTemplateID, 'budget_templates');
 
         return $this->sendResponse($budgetTemplateColumn->toArray(), trans('custom.budget_template_column_updated_successfully'));
     }
@@ -133,7 +134,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "budget_template_columns", "Budget template column deleted", "D", [], $previousValue, $previousValue['budgetTemplateID'], 'budget_templates');
+        $this->auditLog($db, $id, $uuid, "budget_template_columns", "", "D", [], $previousValue, $previousValue['budgetTemplateID'], 'budget_templates');
 
         return $this->sendResponse($id, trans('custom.budget_template_column_deleted_successfully'));
     }
@@ -208,7 +209,7 @@ class BudgetTemplateColumnAPIController extends AppBaseController
             // Audit log for remove from template
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
-            $this->auditLog($db, $templateColumn->templateColumnID, $uuid, "budget_template_columns", "Budget template column removed from template", "D", [], $templateColumn->toArray(), $templateColumn->budgetTemplateID, 'budget_templates');
+            $this->auditLog($db, $templateColumn->templateColumnID, $uuid, "budget_template_columns", "", "D", [], $templateColumn->toArray(), $templateColumn->budgetTemplateID, 'budget_templates');
 
             return $this->sendResponse([], trans('custom.column_removed_from_template_successfully'));
         }

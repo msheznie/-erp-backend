@@ -292,7 +292,8 @@ class JvMasterReferredback extends Model
         'createdDateTime',
         'reversalDate',
         'timestamp',
-          'isDelegation'
+        'isDelegation',
+        'isAutoCreate'
     ];
 
     /**
@@ -341,7 +342,8 @@ class JvMasterReferredback extends Model
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'reversalDate' => 'date'
+        'reversalDate' => 'date',
+        'isAutoCreate' => 'boolean'
     ];
 
     /**

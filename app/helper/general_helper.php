@@ -10325,4 +10325,50 @@ class Helper
         return $localRate > 0 && $reportingRate > 0;
     }
 
+    /**
+     * Get mPDF configuration with language-specific font settings
+     *
+     * @param array $additionalConfig Additional configuration to merge
+     * @param string|null $lang Language code (e.g., 'en', 'ar'). If null, uses app locale
+     * @return array mPDF configuration array
+     */
+    public static function getMpdfConfig($additionalConfig = [], $lang = null)
+    {
+        // Get language from parameter or app locale
+        if ($lang === null) {
+            $lang = app()->getLocale();
+        }
+
+        // Get base config from config file
+        $baseConfig = config('mpdf', []);
+
+        // Set default font based on language
+        if ($lang === 'ar') {
+            $baseConfig['default_font'] = 'notosansarabic';
+        } else {
+            $baseConfig['default_font'] = 'poppins';
+        }
+
+        // Merge with additional config (additional config takes precedence)
+        return array_merge($baseConfig, $additionalConfig);
+    }
+
+    public static function getExcelFontFamily($lang = null)
+    {
+        // Get language from parameter or app locale
+        if ($lang === null) {
+            $lang = app()->getLocale();
+        }
+
+        // Return appropriate font based on language
+        // Using exact font names as they appear in Excel
+        if ($lang === 'ar') {
+            // Try 'Noto Sans Arabic' first, Excel will fallback if not available
+            return 'Noto Sans Arabic';
+        } else {
+            // Try 'Poppins' first, Excel will fallback if not available
+            return 'Poppins';
+        }
+    }
+
 }

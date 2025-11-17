@@ -72,14 +72,60 @@ class BudgetPermissionService
 
                 // only get permission if budgetPlanningID is set
                 if (isset($input['budgetPlanningID'])) {
-                    $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningID']);
+                    $budgetPlanning = DepartmentBudgetPlanning::with('timeExtensionRequests','revisions')->find($input['budgetPlanningID']);
+
+                    // Get the latest new_time from approved time extension requests (status = 2)
+                    $latestExtensionTime = null;
+                    $latestRevisionTime = null;
+
+                    if ($budgetPlanning->revisions->count() > 0) {
+                        $latestRevision = $budgetPlanning->revisions->sortByDesc('newSubmissionDate')->first();
+                        $latestRevisionTime = $latestRevision ? $latestRevision->newSubmissionDate : null;
+                    }
+
+                    if ($budgetPlanning->timeExtensionRequests->count() > 0) {
+                        $approvedExtensions = $budgetPlanning->timeExtensionRequests->where('status', 2);
+                        if ($approvedExtensions->count() > 0) {
+                            // Sort by new_time descending and get the first (latest) one
+                            $latestExtension = $approvedExtensions->sortByDesc('new_time')->first();
+                            $latestExtensionTime = $latestExtension ? $latestExtension->new_time : null;
+                        }
+                    }
 
                     $assignedDepartmentByBudget = CompanyDepartmentEmployee::with(['department'])->where('employeeSystemID',Auth::user()->employee_id)
                                                     ->where('isHOD',true)
                                                     ->where('isActive', 1)
                                                     ->first();
 
-                    if($budgetPlanning->submissionDate <= Carbon::today()->format('Y-m-d'))
+                    // Get the greater date between latestRevisionTime, latestExtensionTime, and submissionDate
+                    $dates = [];
+                    
+                    if ($latestRevisionTime) {
+                        $dates[] = Carbon::parse($latestRevisionTime);
+                    }
+                    
+                    if ($latestExtensionTime) {
+                        $dates[] = Carbon::parse($latestExtensionTime);
+                    }
+                    
+                    if ($budgetPlanning->submissionDate) {
+                        $dates[] = Carbon::parse($budgetPlanning->submissionDate);
+                    }
+                    
+                    // Get the maximum date from the available dates
+                    if (!empty($dates)) {
+                        $maxDate = $dates[0];
+                        foreach ($dates as $date) {
+                            if ($date->gt($maxDate)) {
+                                $maxDate = $date;
+                            }
+                        }
+                        $effectiveSubmissionDate = $maxDate->format('Y-m-d');
+                    } else {
+                        $effectiveSubmissionDate = Carbon::today()->format('Y-m-d');
+                    }
+                    
+                    if($effectiveSubmissionDate <= Carbon::today()->format('Y-m-d'))
                     {
                         $userPermissions['hodUser']['isActive'] = false;
                     }

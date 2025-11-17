@@ -97,6 +97,7 @@ use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CurrencyConversion;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
@@ -361,6 +362,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.supplier_invoice_not_found'));
         }
 
+        $bookInvSuppMaster['transCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['supplierTransactionCurrencyID'])->first()->CurrencyCode ?? null;
+        $bookInvSuppMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['companyReportingCurrencyID'])->first()->CurrencyCode ?? null;
+        $bookInvSuppMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['localCurrencyID'])->first()->CurrencyCode ?? null;
+
         return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_retrieved_successfully'));
     }
 
@@ -488,6 +493,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['supplierID'] = 0;
             $input['supplierTransactionCurrencyID'] = 0;
         }
+
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        if(!$checkErChange && ($bookInvSuppMaster->documentType == 1 || $bookInvSuppMaster->documentType == 4)) {
+            $this->bookInvSuppMasterRepository->applyMasterExchangeRatesToDetails($id);
+        }
+
+        $bookInvSuppMaster = $bookInvSuppMaster->refresh();
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($bookInvSuppMaster->supplierTransactionCurrencyID);
 
@@ -653,20 +665,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.document_date_not_within_financial_period'), 500);
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+        // $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
-        $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
-            ->where('companyPolicyCategoryID', 67)
-            ->where('isYesNO', 1)
-            ->first();
-        $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+        // $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+        //     ->where('companyPolicyCategoryID', 67)
+        //     ->where('isYesNO', 1)
+        //     ->first();
+        // $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-        if($policy == false || $input['documentType'] != 1) {
-            if ($companyCurrencyConversion) {
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            }
-        }
+        // if($policy == false || $input['documentType'] != 1) {
+        //     if ($companyCurrencyConversion) {
+        //         $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+        //         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+        //     }
+        // }
 
 
 
@@ -677,6 +689,39 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+                
+            if ($checkErChange && ($bookInvSuppMaster->documentType == 1 || $bookInvSuppMaster->documentType == 4)) {
+                // Get company currency information
+                $company = Company::find($input['companySystemID']);
+                $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+                
+                $localERDocument = Helper::roundValue($bookInvSuppMaster->localCurrencyER) ?? 0;
+                $reportingERDocument = Helper::roundValue($bookInvSuppMaster->companyReportingER) ?? 0;
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $bookInvSuppMaster->supplierTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                    $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                        "<p style='font-size: medium;'>" .
+                            trans('custom.previous_rates') . " " . 
+                            trans('custom.local_er') . " " . number_format($localERDocument, 7) . 
+                            " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                        "</p>" .
+                        "<p style='font-size: medium;'>" .
+                            trans('custom.current_rates') . " " . 
+                            trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                        "</p>" .
+                        "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+                        
+                        return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                }
+            }            
 
             $totalWhtAmount = $bookInvSuppMaster->whtAmount;
             $retentionPercentageVal = $bookInvSuppMaster->retentionPercentage;
@@ -2184,6 +2229,61 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
     }
 
+    public function setDefaultSupplierInvoiceExchangeRate($id, Request $request)
+    {
+        try {
+            $companyId = $request->companyId;
+            
+            $masterInvoice = BookInvSuppMaster::findOrFail($id);
+            
+            if (!$masterInvoice) {
+                return $this->sendError(trans('custom.supplier_invoice_not_found'), 404);
+            }
+
+            // Get local currency exchange rate
+            $localCurrency = Company::find($companyId)->localCurrencyID;
+            $localER = \Helper::currencyConversion($companyId, $masterInvoice->supplierTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localERValue = $localER['trasToLocER'] ?? 1;
+            
+            // Get reporting currency exchange rate
+            $reportingCurrency = Company::find($companyId)->reportingCurrency;
+            $reportingER = \Helper::currencyConversion($companyId, $masterInvoice->supplierTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingERValue = $reportingER['trasToRptER'] ?? 1;
+
+            // Recalculate local currency amounts
+            $masterVATAmountLocal = \Helper::roundValue($masterInvoice->VATAmount / $localERValue);
+            $masterNetAmountLocal = \Helper::roundValue($masterInvoice->netAmount / $localERValue);
+            $bookingAmountLocal = \Helper::roundValue($masterInvoice->bookingAmountTrans / $localERValue);
+
+            // Recalculate reporting currency amounts
+            $masterVATAmountRpt = \Helper::roundValue($masterInvoice->VATAmount / $reportingERValue);
+            $masterNetAmountRpt = \Helper::roundValue($masterInvoice->netAmount / $reportingERValue);
+            $bookingAmountRpt = \Helper::roundValue($masterInvoice->bookingAmountTrans / $reportingERValue);
+
+            // Update master invoice with new exchange rates and recalculated amounts
+            $masterInvoiceArray = array(
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue,
+                'VATAmountLocal' => $masterVATAmountLocal,
+                'netAmountLocal' => $masterNetAmountLocal,
+                'bookingAmountLocal' => $bookingAmountLocal,
+                'VATAmountRpt' => $masterVATAmountRpt,
+                'netAmountRpt' => $masterNetAmountRpt,
+                'bookingAmountRpt' => $bookingAmountRpt
+            );
+            
+            $masterInvoice->update($masterInvoiceArray);
+
+            return $this->sendResponse([
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue
+            ], trans('custom.default_exchange_rate_updated_successfully'));
+            
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_updating_exchange_rate'), 500);
+        }
+    }
+
     public function getInvoiceMasterRecord(Request $request)
     {
         $input = $request->all();
@@ -3040,13 +3140,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-P',
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

@@ -14,12 +14,16 @@
             margin-right: 30px;
             margin-top: 30px;
         }
-
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
         /* RTL Support for Arabic */
         @if(app()->getLocale() == 'ar')
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
         }
         
         .rtl-text-left {
@@ -90,11 +94,6 @@
             position: fixed;
             font-size: 10px;
             padding-top: -20px;
-        }
-
-        body {
-            font-size: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
         h3 {

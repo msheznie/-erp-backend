@@ -22,6 +22,7 @@
     body {
         direction: rtl;
         text-align: right;
+        font-family: 'Noto Sans Arabic', sans-serif;
     }
     
     .rtl-container {

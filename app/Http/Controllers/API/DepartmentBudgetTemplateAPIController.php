@@ -81,7 +81,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $departmentBudgetTemplate->departmentBudgetTemplateID, $uuid, "department_budget_templates", "Budget template assigned to department", "C", $departmentBudgetTemplate->toArray(), [], $input['departmentSystemID'], 'company_departments');
+        $this->auditLog($db, $departmentBudgetTemplate->departmentBudgetTemplateID, $uuid, "department_budget_templates", "", "C", $departmentBudgetTemplate->toArray(), [], $input['departmentSystemID'], 'company_departments');
 
         return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
     }
@@ -142,7 +142,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "department_budget_templates", "Department budget template updated", "U", $departmentBudgetTemplate->toArray(), $oldValues, $departmentBudgetTemplate->departmentSystemID, 'company_departments');
+        $this->auditLog($db, $id, $uuid, "department_budget_templates", "", "U", $departmentBudgetTemplate->toArray(), $oldValues, $departmentBudgetTemplate->departmentSystemID, 'company_departments');
 
         return $this->sendResponse($departmentBudgetTemplate->toArray(), $message);
     }
@@ -169,7 +169,7 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $this->auditLog($db, $id, $uuid, "department_budget_templates", "Department budget template deleted", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
+        $this->auditLog($db, $id, $uuid, "department_budget_templates", "", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
 
         return $this->sendResponse($id, trans('custom.department_budget_template_deleted_successfully'));
     }
