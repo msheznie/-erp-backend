@@ -662,10 +662,33 @@ class CreateExcel
             }
         }
 
-        $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat) {
-                       $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName) {
+                    $lang = app()->getLocale();
+                    $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
+                        $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName, $fontFamily) {
+                            // Set default font for entire sheet
+                            $sheet->setStyle([
+                                'font' => [
+                                    'name' => $fontFamily,
+                                    'size' => 11,
+                                ]
+                            ]);
                            $sheet->setColumnFormat($excelColumnFormat);
                            $sheet->loadView($templateName, $data);
+
+                            // Apply font to all cells after loading view
+                            $lastRow = $sheet->getHighestRow();
+                            $lastColumn = $sheet->getHighestColumn();
+                            if ($lastRow > 0 && $lastColumn) {
+                                try {
+                                    $spreadsheet = $sheet->getDelegate();
+                                    $worksheet = $spreadsheet->getActiveSheet();
+                                    $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                } catch (\Exception $e) {
+                                    $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                }
+                            }
                            
                            // Set right-to-left for Arabic locale
                             if($fileName != trans('custom.budget_template')) { 
