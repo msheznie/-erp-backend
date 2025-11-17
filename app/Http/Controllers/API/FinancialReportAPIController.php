@@ -9424,7 +9424,8 @@ GROUP BY id
                                     'requestCurrencyRpt'=>$requestCurrencyRpt,
                                     'decimalPlaceLocal'=>$decimalPlaceLocal,
                                     'decimalPlaceRpt'=>$decimalPlaceRpt,
-                                    'currencyId'=>$currencyId
+                                    'currencyId'=>$currencyId,
+                                    'lang'=>$lang
                                 );
 
                 $html = view('print.financial_trial_balance', $dataArr);
@@ -9503,6 +9504,7 @@ GROUP BY id
                 $reportData['employeeData'] = $employeeData;
                 $reportData['CompanyName'] = $companyName;
                 $lang = app()->getLocale();
+                $reportData['lang'] = $lang;
                 $html = view($templateName, $reportData);
 
                 if (count($input['companySystemID']) > 1) {

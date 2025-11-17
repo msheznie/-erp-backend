@@ -2908,13 +2908,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if(!isset($secondaryBankAccount)){
             return $this->sendError(trans('custom.bank_account_not_found_1'));
         }
-
-        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
+        $lang = app()->getLocale();
+        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount, 'lang' => $lang);
         $time = strtotime("now");
         $fileName = trans('custom.customer_invoice_') . $id . '_' . $time . '.pdf';
         $fileName_csv =  trans('custom.customer_invoice_') . $id . '_' . $time . '.csv';
         $fileName_xls = trans('custom.customer_invoice_') . $id . '_' . $time;
-        $lang = app()->getLocale();
      
 
         if ($printTemplate['printTemplateID'] == 2) {

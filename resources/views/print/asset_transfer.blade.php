@@ -32,7 +32,7 @@
             direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
 
-        @if(isset($lang) && $lang === 'ar')
+        @if(app()->getLocale() == 'ar')
         body {
             font-family: 'Noto Sans Arabic', sans-serif !important;
         }
