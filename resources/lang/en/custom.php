@@ -9693,4 +9693,16 @@ return
     'invalid_rrv_setup_schedule_id' => 'Invalid RRV Setup Schedule ID',
     'recurring_voucher_setup_schedule_not_found' => 'Recurring Voucher Setup Schedule not found',
     'document_not_approved' => 'Document not approved',
-  ];
+    'no_records_found_for_pulling_step' => 'No records found for pulling step-1 and chunk-:chunk',
+    'no_records_found_for_pulling_step_3' => 'No records found for pulling step-3',
+    'no_records_found_for_pulling_step_5' => 'No records found for pulling step-5',
+    'tenant_id_required' => 'tenantId is required',
+    'company_id_required' => 'companyId is required',
+    'attendance_data_required' => 'attendanceData is required',
+    'shift_data_required' => 'shiftData is required',
+    'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'Error in the Shift Schedule Unconfirmed Attendance pulling',
+    'no_dates_found_for_shift_schedule_pulling' => 'No dates found to proceed the Shift Schedule Unconfirmed Attendance pulling',
+    'failed_to_process_attendance_for_date' => 'Failed to process attendance for date :date with employees [:employees]',
+    'no_temp_data_found' => 'No temp data found',
+    'data_pulled_successfully' => 'Data pulled successfully'
+];

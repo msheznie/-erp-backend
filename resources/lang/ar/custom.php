@@ -9582,11 +9582,22 @@ return
     'auto_bank_reconciliation' => 'التسوية البنكية التلقائية',
     'cash_flow_amount_is_greater_than_applicable_amount' => 'مبلغ التدفق النقدي أكبر من المبلغ المطبق',
 
-
     'technical_system_errors' => 'خطأ فني في النظام',
     'schedule_created_for_past_period' => 'تم إنشاء الجدول لفترة مضت',
     'rrv_setup_schedule_id_required' => 'معرف الجدول المتكرر مطلوب',
     'invalid_rrv_setup_schedule_id' => 'معرف الجدول المتكرر غير صالح',
     'recurring_voucher_setup_schedule_not_found' => 'الجدول المتكرر غير موجود',
     'document_not_approved' => 'المستند غير موافق عليه',
-  ];
+    'no_records_found_for_pulling_step' => 'لم يتم العثور على سجلات لخطوة السحب الأولى والجزء-:chunk',
+    'no_records_found_for_pulling_step_3' => 'لم يتم العثور على سجلات لخطوة السحب الثالثة',
+    'no_records_found_for_pulling_step_5' => 'لم يتم العثور على سجلات لخطوة السحب الخامسة',
+    'tenant_id_required' => 'معرف المستأجر مطلوب',
+    'company_id_required' => 'معرف الشركة مطلوب',
+    'attendance_data_required' => 'بيانات الحضور مطلوبة',
+    'shift_data_required' => 'بيانات الوردية مطلوبة',
+    'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'خطأ في سحب حضور الوردية غير المؤكد',
+    'no_dates_found_for_shift_schedule_pulling' => 'لم يتم العثور على تواريخ للمتابعة في سحب حضور الوردية غير المؤكد',
+    'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
+    'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
+    'data_pulled_successfully' => 'تم سحب البيانات بنجاح'
+];
