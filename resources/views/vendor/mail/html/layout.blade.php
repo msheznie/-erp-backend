@@ -6,35 +6,39 @@
     @php
         $locale = app()->getLocale();
         $fontFamily = ($locale === 'ar') ? 'Noto Sans Arabic, sans-serif' : 'Poppins, sans-serif';
-        $poppinsRegular = url('fonts/Poppins-Regular.ttf');
-        $poppinsBold = url('fonts/Poppins-Bold.ttf');
-        $notoSansRegular = url('fonts/NotoSansArabic-Regular.ttf');
-        $notoSansBold = url('fonts/NotoSansArabic-Bold.ttf');
+        $poppinsRegular = asset('fonts/Poppins-Regular.ttf');
+        $poppinsBold = asset('fonts/Poppins-Bold.ttf');
+        $notoSansRegular = asset('fonts/NotoSansArabic-Regular.ttf');
+        $notoSansBold = asset('fonts/NotoSansArabic-Bold.ttf');
+        $poppinsRegularWoff = asset('fonts/Poppins-Regular.woff2');
+        $poppinsBoldWoff = asset('fonts/Poppins-Bold.woff2');
+        $notoSansRegularWoff = asset('fonts/NotoSansArabic-Regular.woff2');
+        $notoSansBoldWoff = asset('fonts/NotoSansArabic-Bold.woff2');
     @endphp
 </head>
 <body style="font-family: {{ $fontFamily }} !important;">
     <style>
         @font-face {
             font-family: 'Poppins';
-            src: url('{{ $poppinsRegular }}') format('truetype');
+            src: url('{{ $poppinsRegular }}') format('truetype'), url('{{ $poppinsRegularWoff }}') format('woff2');
             font-weight: 400;
             font-style: normal;
         }
         @font-face {
             font-family: 'Poppins';
-            src: url('{{ $poppinsBold }}') format('truetype');
+            src: url('{{ $poppinsBold }}') format('truetype'), url('{{ $poppinsBoldWoff }}') format('woff2');
             font-weight: 700;
             font-style: normal;
         }
         @font-face {
             font-family: 'Noto Sans Arabic';
-            src: url('{{ $notoSansRegular }}') format('truetype');
+            src: url('{{ $notoSansRegular }}') format('truetype'), url('{{ $notoSansRegularWoff }}') format('woff2');
             font-weight: 400;
             font-style: normal;
         }
         @font-face {
             font-family: 'Noto Sans Arabic';
-            src: url('{{ $notoSansBold }}') format('truetype');
+            src: url('{{ $notoSansBold }}') format('truetype'), url('{{ $notoSansBoldWoff }}') format('woff2');
             font-weight: 700;
             font-style: normal;
         }
