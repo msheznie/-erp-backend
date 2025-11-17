@@ -12,10 +12,10 @@
         @php
             $currentLocale = $locale ?? app()->getLocale();
             $emailFontFamily = ($currentLocale === 'ar') ? "'Noto Sans Arabic', sans-serif" : "'Poppins', sans-serif";
-            $poppinsRegular = asset('fonts/Poppins-Regular.ttf');
-            $poppinsBold = asset('fonts/Poppins-Bold.ttf');
-            $notoSansRegular = asset('fonts/NotoSansArabic-Regular.ttf');
-            $notoSansBold = asset('fonts/NotoSansArabic-Bold.ttf');
+            $poppinsRegular = url('fonts/Poppins-Regular.ttf');
+            $poppinsBold = url('fonts/Poppins-Bold.ttf');
+            $notoSansRegular = url('fonts/NotoSansArabic-Regular.ttf');
+            $notoSansBold = url('fonts/NotoSansArabic-Bold.ttf');
         @endphp
         @font-face {
             font-family: 'Poppins';
