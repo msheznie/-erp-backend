@@ -19,6 +19,12 @@
         color: black;
     }
 
+    @if(isset($lang) && $lang === 'ar')
+        body {
+        font-family: 'Noto Sans Arabic', sans-serif !important;
+    }
+    @endif
+
     h3 {
         font-size: 1.53125rem;
     }

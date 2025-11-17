@@ -2053,9 +2053,32 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $name = trans('custom.finance');
 
-                return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView($templateName, $reportData);
+
+                        // Apply font to all cells after loading view
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
                         
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
@@ -2076,9 +2099,31 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $name = trans('custom.finance');
 
-                    return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
+                    $lang = app()->getLocale();
+                    $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                    return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
+                            // Set default font for entire sheet
+                            $sheet->setStyle([
+                                'font' => [
+                                    'name' => $fontFamily,
+                                    'size' => 11,
+                                ]
+                            ]);
                             $sheet->loadView($templateName, $reportData);
+
+                            $lastRow = $sheet->getHighestRow();
+                            $lastColumn = $sheet->getHighestColumn();
+                            if ($lastRow > 0 && $lastColumn) {
+                                try {
+                                    $spreadsheet = $sheet->getDelegate();
+                                    $worksheet = $spreadsheet->getActiveSheet();
+                                    $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                } catch (\Exception $e) {
+                                    $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                }
+                            }
                              if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);

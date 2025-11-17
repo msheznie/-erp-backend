@@ -623,11 +623,32 @@ class AuditTrailAPIController extends AppBaseController
 
             // Generate Excel file using Blade template
             $fileName = trans('custom.user_audit_logs');
-            
-            return \Excel::create($fileName, function ($excel) use ($reportData) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+
+            $lang = app()->getLocale();
+            $fontFamily = \Helper::getExcelFontFamily($lang);
+
+            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
+                    // Set default font for entire sheet
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
                     $sheet->loadView('export_report.user_audit_logs', $reportData);
-                    
+
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -689,10 +710,32 @@ class AuditTrailAPIController extends AppBaseController
 
             // Generate Excel file using Blade template
             $fileName = trans('custom.event_tracking_logs');
-            
-            return \Excel::create($fileName, function ($excel) use ($reportData) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+
+            $lang = app()->getLocale();
+            $fontFamily = \Helper::getExcelFontFamily($lang);
+
+            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
+                    // Set default font for entire sheet
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
                     $sheet->loadView('export_report.event_tracking_logs', $reportData);
+
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
                     
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
@@ -990,10 +1033,33 @@ class AuditTrailAPIController extends AppBaseController
 
             // Generate Excel file using Blade template
             $fileName = trans('custom.navigation_access_logs');
-            
-            return \Excel::create($fileName, function ($excel) use ($reportData) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+
+            $lang = app()->getLocale();
+            $fontFamily = \Helper::getExcelFontFamily($lang);
+
+            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
+                    // Set default font for entire sheet
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
                     $sheet->loadView('export_report.navigation_access_logs', $reportData);
+
+                    // Apply font to all cells after loading view
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
                     
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {

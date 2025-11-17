@@ -1132,9 +1132,32 @@ class FinancialReportAPIController extends AppBaseController
             
             $templateName = "export_report.employee_ledger_report";
 
-            return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
+            $lang = app()->getLocale();
+            $fontFamily = \Helper::getExcelFontFamily($lang);
+
+            return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
+                    // Set default font for entire sheet
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
                     $sheet->loadView($templateName, $reportData);
+
+                    // Apply font to all cells after loading view
+                    $lastRow = $sheet->getHighestRow();
+                    $lastColumn = $sheet->getHighestColumn();
+                    if ($lastRow > 0 && $lastColumn) {
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        } catch (\Exception $e) {
+                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        }
+                    }
                     
                     // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
@@ -4007,10 +4030,33 @@ class FinancialReportAPIController extends AppBaseController
             'companyReportingCurrency' => $cur_rep,
         );
 
-        return \Excel::create('upload_budget_template', function ($excel) use ($output) {
-            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output) {
+        $lang = app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        return \Excel::create('upload_budget_template', function ($excel) use ($output, $fontFamily) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output, $fontFamily) {
+                // Set default font for entire sheet
+                $sheet->setStyle([
+                    'font' => [
+                        'name' => $fontFamily,
+                        'size' => 11,
+                    ]
+                ]);
                 $sheet->loadView('export_report.project_utilization_report', $output);
-                
+
+                // Apply font to all cells after loading view
+                $lastRow = $sheet->getHighestRow();
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastRow > 0 && $lastColumn) {
+                    try {
+                        $spreadsheet = $sheet->getDelegate();
+                        $worksheet = $spreadsheet->getActiveSheet();
+                        $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                    } catch (\Exception $e) {
+                        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                    }
+                }
+
                 // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -9359,7 +9405,7 @@ GROUP BY id
                         }
                     }
                 }
-
+                $lang = app()->getLocale();
                 $dataArr = array(   'output'=>$output,
                                     'employeeData'=>$employeeData,
                                     'fromDate' => \Helper::dateFormat($request->fromDate),
@@ -9383,7 +9429,7 @@ GROUP BY id
 
                 $html = view('print.financial_trial_balance', $dataArr);
 
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
 
@@ -9456,13 +9502,13 @@ GROUP BY id
 
                 $reportData['employeeData'] = $employeeData;
                 $reportData['CompanyName'] = $companyName;
-
+                $lang = app()->getLocale();
                 $html = view($templateName, $reportData);
 
                 if (count($input['companySystemID']) > 1) {
-                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A3-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                    $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A3-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 } else {
-                    $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                    $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 }
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
@@ -12697,10 +12743,33 @@ GROUP BY
 
         $fileName = trans('custom.finance');
 
-        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat) {
-            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat) {
+        $lang = app()->getLocale();
+        $fontFamily = \Helper::getExcelFontFamily($lang);
+
+        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
+                // Set default font for entire sheet
+                $sheet->setStyle([
+                    'font' => [
+                        'name' => $fontFamily,
+                        'size' => 11,
+                    ]
+                ]);
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
+
+                // Apply font to all cells after loading view
+                $lastRow = $sheet->getHighestRow();
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastRow > 0 && $lastColumn) {
+                    try {
+                        $spreadsheet = $sheet->getDelegate();
+                        $worksheet = $spreadsheet->getActiveSheet();
+                        $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                    } catch (\Exception $e) {
+                        $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                    }
+                }
                 
                 // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
