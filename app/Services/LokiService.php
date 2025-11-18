@@ -19,13 +19,14 @@ class LokiService
             $data = json_decode($response->getBody()->getContents(), true);
 
             $logEntriesAsArrays = array_map(function ($entry) {
-                return $entry['metric'];
+                $entry['metric']['log'] = $this->extractJsonFromLog($entry['metric']['log']);
+                return $entry;
             }, $data['data']['result']);
 
 
             usort($logEntriesAsArrays, function ($a, $b) {
-                $timestampA = strtotime(isset($a['date_time']) ? $a['date_time']: null);
-                $timestampB = strtotime(isset($b['date_time']) ? $b['date_time']: null);
+                $timestampA = strtotime(isset($a['metric']['log']['date_time']) ? $a['metric']['log']['date_time']: null);
+                $timestampB = strtotime(isset($b['metric']['log']['date_time']) ? $b['metric']['log']['date_time']: null);
 
                 return $timestampB - $timestampA;
             });
@@ -34,8 +35,6 @@ class LokiService
             return $logEntriesAsArrays;
 
         } catch (RequestException $e) {
-            \Log::error('Loki connection error: ' . $e->getMessage());
-            
             if ($e->hasResponse()) {
                 $statusCode = $e->getResponse()->getStatusCode();
                 $errorBody = $e->getResponse()->getBody()->getContents();
@@ -43,9 +42,6 @@ class LokiService
             } else {
                 return response()->json(['error' => 'Request failed: ' . $e->getMessage()], 500);
             }
-        } catch (\Exception $e) {
-            \Log::error('Loki service error: ' . $e->getMessage());
-            return [];
         }
 
     }
