@@ -334,12 +334,12 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
-            if ($tenantDomain != 'localhost:8000') {
-                $homeUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
+            if ($tenantDomain != 'localhost:8000' && env('APP_ENV') != 'local') {
+                 $homeUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
             } else {
-                $homeUrl = null;
+                 $homeUrl = null;
             }
 
             return $this->sendResponse(['homeUrl' => $homeUrl], trans('custom.successfully_redirected_to_home'));
