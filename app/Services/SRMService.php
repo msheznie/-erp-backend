@@ -41,6 +41,7 @@ use App\Models\ScheduleBidSubmission;
 use App\Models\SlotDetails;
 use App\Models\SlotMaster;
 use App\Models\PurchaseOrderDetails;
+use App\Models\SRMPublicLink;
 use App\Models\SRMSupplierValues;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SupplierCategory;
@@ -7053,6 +7054,33 @@ class SRMService
             'success' => true,
             'message' => 'Sub Categories successfully get',
             'data' => $data
+        ];
+    }
+
+    public function updateIsBidTenderStatus(Request $request)
+    {
+        $supplierUuid = filled($request->input('extra.supplierUuid')) ? $request->input('extra.supplierUuid') : $request->input('supplier_uuid');
+        if(empty($supplierUuid)){
+            return $this->generateResponse(false, 'Supplier uuid not found');
+        }
+
+        $data = [
+            'is_bid_tender' => 0
+        ];
+        $isUpdated = SupplierRegistrationLink::where('uuid', $supplierUuid)->update($data);
+
+        if (!$isUpdated) {
+            return [
+                'success' => false,
+                'message' => "Update Failed",
+                'data' => null
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Updated Successfully',
+            'data' => $isUpdated
         ];
     }
 }
