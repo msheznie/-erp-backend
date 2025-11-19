@@ -1237,7 +1237,7 @@ return
     'currency_conversion_master_retrieved_successfully' => 'Currency Conversion Master retrieved successfully',
     'currency_conversion_master_saved_successfully' => 'Currency Conversion Master saved successfully',
     'currency_conversion_masters_retrieved_successfully' => 'Currency Conversion Masters retrieved successfully',
-    'currency_conversions' => 'currency_conversions',
+    'currency_conversions' => 'Currency Conversions',
     'currency_conversions_retrieved_successfully' => 'Currency conversions retrieved successfully',
     'currency_denominations' => 'Currency Denominations',
     'currency_details_retrieved_successfully' => 'Currency details retrieved successfully',

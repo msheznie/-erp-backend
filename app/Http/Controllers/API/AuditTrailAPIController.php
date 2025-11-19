@@ -317,9 +317,8 @@ class AuditTrailAPIController extends AppBaseController
                 $toDate = Carbon::now();
                 $diff = $toDate->diffInDays($fromDate) + 1;
 
-
-                $params = 'rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
-
+                // Build line filter for crudType
+                $crudTypeFilter = '';
                 if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
                     $eventMap = [
                         '1' => 'C',
@@ -328,74 +327,55 @@ class AuditTrailAPIController extends AppBaseController
                     ];
                     
                     $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
-                    $params .= ' | crudType="'.$crudType.'"';
+                    $crudTypeFilter = ' |= `\"crudType\":\"'.$crudType.'\"`';
                 }
 
+                // Build line filter for employeeId
+                $employeeIdFilter = '';
                 if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
-                    $params .= ' | employeeId="'.$input['employeeId'].'"';
+                    $employeeIdFilter = ' |= `\"employeeId\":\"'.$input['employeeId'].'\"`';
                 }
 
+                // Build line filter for companyId
+                $companyIdFilter = '';
                 if(isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != ''){
-                    $params .= ' | company_system_id="'.$input['companyId'].'"';
+                    $companySystemId = $input['companyId'];
+                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric) or \"company_system_id\":\"1\" (string)
+                    // Use regex to match both numeric and string formats with escaped quotes
+                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*('.$companySystemId.'|\\\\\"'.$companySystemId.'\\\\\")`';
                 }
 
-                $params .= ' | locale="'.$locale.'"';
-                
+                // Build line filter for search
+                $searchFilter = '';
                 $searchValue = $request->input('search.value');
                 if (!empty($searchValue)) {
                     $escapedSearch = preg_quote($searchValue, '/');
-                    $params .= ' |~ `(?i)'.$escapedSearch.'`';
+                    $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
                 }
                 
-                $params .= ')';
+                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$crudTypeFilter.$employeeIdFilter.$companyIdFilter.$searchFilter.' | json ['.(int)$diff.'d])';
                 $params = 'query?query='.$params;
                 $data = $this->lokiService->getAuditLogs($params);
-
-                
-                $params2 = 'rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
-                if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
-                    $eventMap = [
-                        '1' => 'C',
-                        '2' => 'U',
-                        '3' => 'D',
-                    ];
-                    
-                    $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
-                    $params2 .= ' | crudType="'.$crudType.'"';
-                }
-
-                if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
-                    $params2 .= ' | employeeId="'.$input['employeeId'].'"';
-                }
-
-                if(isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != ''){
-                    $params2 .= ' | company_system_id="'.$input['companyId'].'"';
-                }
-
-                $params2 .= ' | locale="'.$locale.'"';
-                
-                $searchValue2 = $request->input('search.value');
-                if (!empty($searchValue2)) {
-                    $escapedSearch2 = preg_quote($searchValue2, '/');
-                    $params2 .= ' |~ `(?i)'.$escapedSearch2.'`';
-                }
-                
-                $params2 .= ')';
-                $params2 = 'query?query='.$params2;
-                $data2 = $this->lokiService->getAuditLogs($params2);
+                $data2 = [];
             } else {
                 $id = $input['id'];
                 $module = $input['module'];
                 $table = $this->lokiService->getAuditTables($module);
                 
-                // Optimize query using labels: env, channel, tenant (no table label to avoid high cardinality)
-                $params = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | transaction_id="'.$id.'" | table="'.$table.'" | locale="'.$locale.'" ['.$diff.'d])';
-
+                // Build line filters for transaction_id and table
+                $transactionIdFilter = ' |= `\"transaction_id\":\"'.$id.'\"`';
+                $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
+                
+                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$transactionIdFilter.$tableFilter.' | json ['.$diff.'d])';
+                $params = 'query?query='.$params;
                 $data = $this->lokiService->getAuditLogs($params);
 
+                // Build line filters for parent_id and parent_table
+                $parentIdFilter = ' |= `\"parent_id\":\"'.$id.'\"`';
+                $parentTableFilter = ' |= `\"parent_table\":\"'.$table.'\"`';
                 
-                $params2 = 'query?query=rate({env="'.$env.'",channel="audit",tenant="'.$uuid.'"} | json | parent_id="'.$id.'" | parent_table="'.$table.'" | locale="'.$locale.'" ['.$diff.'d])';
-
+                $params2 = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$parentIdFilter.$parentTableFilter.' | json ['.$diff.'d])';
+                $params2 = 'query?query='.$params2;
                 $data2 = $this->lokiService->getAuditLogs($params2);
 
             }
@@ -413,16 +393,25 @@ class AuditTrailAPIController extends AppBaseController
             $formatedData = [];
 
             foreach ($data as $key => $value) {
-                $lineData = $value;
-                $lineData['data'] = isset($value['data']) ? json_decode($value['data']) : [];
-                $formatedData[] = $lineData;
+                if (isset($value['metric']['log']['data'])) {
+                    $lineData = $value['metric']['log'];
+
+                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+
+                    $formatedData[] = $lineData;
+                }
             }
 
             foreach ($data2 as $key => $value) {
-                $lineData = $value;
-                $lineData['data'] = isset($value['data']) ? json_decode($value['data']) : [];
-                $formatedData[] = $lineData;
+                if (isset($value['metric']['log']['data'])) {
+                    $lineData = $value['metric']['log'];
+
+                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
+
+                    $formatedData[] = $lineData;
+                }
             }
+
 
             if(isset($input['isFromTracking']) && $input['isFromTracking']){
                         // Sort by date_time
@@ -496,9 +485,10 @@ class AuditTrailAPIController extends AppBaseController
         $diff = $toDate->diffInDays($fromDate) + 1;
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
+        $localeValue = app()->getLocale() ?: 'en';
         
-        $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
-        
+        // Build line filters for event
+        $eventFilter = '';
         if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
             $eventMap = [
                 '1' => trans('audit.login'),
@@ -508,24 +498,26 @@ class AuditTrailAPIController extends AppBaseController
             ];
             
             $eventValue = $eventMap[$input['event']] ?? $input['event'];
-            $query .= ' | event="'.$eventValue.'"';
+            $eventFilter = ' |= `\"event\":\"'.$eventValue.'\"`';
         }
 
+        // Build line filter for employeeId
+        $employeeIdFilter = '';
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
-            $query .= ' | employeeId="'.$empIdValue.'"';
+            $employeeIdFilter = ' |= `\"employeeId\":\"'.$empIdValue.'\"`';
         }
 
-        $localeValue = app()->getLocale() ?: 'en';
-        $query .= ' | locale="'.$localeValue.'"';
-        
+        // Build line filter for search
+        $searchFilter = '';
         $searchValue = $request->input('search.value');
         if (!empty($searchValue)) {
             $escapedSearch = preg_quote($searchValue, '/');
-            $query .= ' |~ `(?i)'.$escapedSearch.'`';
+            $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ')';
+        // $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
+        $query = 'rate({env="'.$env.'"}|= `\"channel\":\"auth\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$localeValue.'\"`'.$eventFilter.$employeeIdFilter.$searchFilter.' | json ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
         
         $data = $this->lokiService->getAuditLogs($params);
@@ -535,13 +527,17 @@ class AuditTrailAPIController extends AppBaseController
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
         }
 
-        // Handle empty data or non-array response
-        if (empty($data) || !is_array($data)) {
-            $data = [];
+        $formatedData = [];
+
+        foreach ($data as $key => $value) {
+            if (isset($value['metric']['log'])) {
+                $lineData = $value['metric']['log'];
+
+                $formatedData[] = $lineData;
+            }
         }
 
-        // Sort by date_time
-        $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
+        $formatedData = collect($formatedData)->sortByDesc('date_time');
 
         $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
             return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
@@ -773,48 +769,48 @@ class AuditTrailAPIController extends AppBaseController
         
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
         
-        $locale = app()->getLocale() ?: 'en';
-        $langFilter = $locale === 'ar' ? 'ar' : 'en';
+        $localeValue = app()->getLocale() ?: 'en';
         
-        $query = 'rate({env="'.$env.'",channel="navigation",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
-        
+        // Build line filter for employeeId
+        $employeeIdFilter = '';
         if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
             $empIdValue = $input['employeeId'];
-            $query .= ' | employeeId="'.$empIdValue.'"';
+            $employeeIdFilter = ' |= `\"employeeId\":\"'.$empIdValue.'\"`';
         }
 
+        // Build line filter for companyId
+        $companyIdFilter = '';
         if (isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != '') {
             $companyIdValue = $input['companyId'];
-            $query .= ' | companyID="'.$companyIdValue.'"';
+            $companyIdFilter = ' |= `\"companyID\":\"'.$companyIdValue.'\"`';
         }
         
-        // Add accessType filter if specified (supports numeric 1,2,3 -> read,create,edit)
+        // Build line filter for accessType
+        $accessTypeFilter = '';
         if (isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != '') {
             $accessTypeValue = $input['accessType'];
             if (is_numeric($accessTypeValue)) {
                 switch ((int)$accessTypeValue) {
-                    case 1: $accessTypeValue = trans('audit.read', [], $langFilter); break;
-                    case 2: $accessTypeValue = trans('audit.create', [], $langFilter); break;
-                    case 3: $accessTypeValue = trans('audit.edit', [], $langFilter); break;
-                    case 4: $accessTypeValue = trans('audit.delete', [], $langFilter); break;
-                    default: $accessTypeValue = trans('audit.read', [], $langFilter);
+                    case 1: $accessTypeValue = trans('audit.read', [], $localeValue); break;
+                    case 2: $accessTypeValue = trans('audit.create', [], $localeValue); break;
+                    case 3: $accessTypeValue = trans('audit.edit', [], $localeValue); break;
+                    case 4: $accessTypeValue = trans('audit.delete', [], $localeValue); break;
+                    default: $accessTypeValue = trans('audit.read', [], $localeValue);
                 }
             }
-            $query .= ' | accessType="'.$accessTypeValue.'"';
+            $accessTypeFilter = ' |= `\"accessType\":\"'.$accessTypeValue.'\"`';
         }
 
-        $localeValue = app()->getLocale() ?: 'en';
-        $query .= ' | locale="'.$localeValue.'"';
-        
-        // Add search filter if specified (searches across all fields in Loki)
+        // Build line filter for search
+        $searchFilter = '';
         $searchValue = $request->input('search.value');
         if (!empty($searchValue)) {
             // Escape special regex characters for Loki
             $escapedSearch = preg_quote($searchValue, '/');
-            $query .= ' |~ `(?i)'.$escapedSearch.'`';
+            $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
         }
         
-        $query .= ')';
+        $query = 'rate({env="'.$env.'"}|= `\"channel\":\"navigation\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$localeValue.'\"`'.$employeeIdFilter.$companyIdFilter.$accessTypeFilter.$searchFilter.' | json ['.(int)$diff.'d])';
         $params = 'query?query='.$query;
         
         $data = $this->lokiService->getAuditLogs($params);
@@ -823,13 +819,17 @@ class AuditTrailAPIController extends AppBaseController
             throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
         }
 
-        // Handle empty data or non-array response
-        if (empty($data) || !is_array($data)) {
-            $data = [];
+        $formatedData = [];
+
+        foreach ($data as $key => $value) {
+            if (isset($value['metric']['log'])) {
+                $lineData = $value['metric']['log'];
+
+                $formatedData[] = $lineData;
+            }
         }
 
-        // Sort by date_time
-        $formatedData = collect($data)->sortByDesc('date_time')->values()->all();
+        $formatedData = collect($formatedData)->sortByDesc('date_time');
 
         $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
             return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
@@ -839,13 +839,13 @@ class AuditTrailAPIController extends AppBaseController
         $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
         
         // Format date_time for each item and convert navigation path arrows
-        $formatedData = collect($formatedData)->map(function ($item) use ($locale) {
+        $formatedData = collect($formatedData)->map(function ($item) use ($localeValue) {
             if (isset($item['date_time'])) {
                 $item['date_time'] = $this->formatDateTime($item['date_time']);
             }
             // Convert navigation path arrows based on locale
             if (isset($item['navigationPath'])) {
-                $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
+                $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $localeValue                          );
             }
             return $item;
         })->all();
