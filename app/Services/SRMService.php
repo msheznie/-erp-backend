@@ -4304,9 +4304,12 @@ class SRMService
             $activeTab = 4;
         }
 
+        $getTenderBidSubmissionDates = TenderMaster::getTenderBidSubmissionDates($tenderId);
+
         $data['activeTab'] = $activeTab;
         $data['documentAttachedCountIdsCommercial'] = count($documentAttachedCountIdsCommercial);
         $data['documentAttachedCountIdsTechnical'] = count($documentAttachedCountIdsTechnical);
+        $data['tenderBidSubmissionDates'] = $getTenderBidSubmissionDates;
 
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
