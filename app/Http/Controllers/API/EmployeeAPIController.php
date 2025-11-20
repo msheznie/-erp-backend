@@ -1091,7 +1091,7 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
     }
 
     public function updateUsersLoginType() {
-        $tenants = CommonJobService::tenant_list();
+        $tenants = DB::table('tenant')->where('is_active', 1)->get();;
 
         if(count($tenants) == 0){
             Log::error("No tenants found");
