@@ -41,7 +41,7 @@ class Detail
             'payment_details_1' => 'required|string',
             'payment_details_2' => 'required|string',
             'beneficiary_name' => 'required|string',
-            'beneficiary_address1' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
+            'beneficiary_address1' => 'nullable|string|max:35|regex:#^[a-zA-Z0-9 /]+$#',
             'beneficiary_address2' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
             'institution_name_address_1' => 'required|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
             'institution_name_address_2' => 'nullable|string|max:35|regex:/^[a-zA-Z0-9 ]+$/',
