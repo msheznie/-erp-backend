@@ -84,7 +84,7 @@ class VendorFile
         $detailTitles = ['Section Index', 'Transfer Method', 'Credit Amount', 'Credit Currency', 'Exchange Rate', 'DealReferNo', 'ValueDate', 'Debit Account No', 'Credit Account No', 'TransactionReference', 'Debit Narrative', 'Debit Narrative 2', 'Credit Narrative', 'Payment Details 1', 'Payment Details 2', 'Payment Details 3', 'Payment Details 4', 'Beneficiary Name', 'Beneficiary Address 1', 'Beneficiary Address 2', 'Institution Name Address 1', 'Institution Name Address 2', 'Institution Name Address 3', 'Institution Name Address 4', 'Swift', 'Intermediary Account', 'Intermediary Swift', 'Intermediary Name', 'Intermediary Address 1', 'Intermediary Address 2', 'Intermediary Address 3', 'Charges Type', 'Sort Code of the beneficiary bank', 'IFSC', 'Fedwire', 'Email', 'Dispatch Mode', 'Transactor Code', 'Supporting Document Name'];
         
         // Create array of field names to preserve
-        $preserveFields = ['email','exchange_rate', 'beneficiary_address1', 'beneficiary_address2','institution_name_address_1','institution_name_address_2','institution_name_address_3','institution_name_address_4','intermediary_address1','intermediary_address2','intermediary_address3'];        $preserveFieldIndices = [];
+        $preserveFields = ['value_date','email','exchange_rate', 'beneficiary_address1', 'beneficiary_address2','institution_name_address_1','institution_name_address_2','institution_name_address_3','institution_name_address_4','intermediary_address1','intermediary_address2','intermediary_address3'];        $preserveFieldIndices = [];
         
         foreach ($this->detailsData as $rowIndex => $row) {
             $processedRow = [];
@@ -149,7 +149,11 @@ class VendorFile
             foreach ($row as $columnIndex => $value) {
                 if (is_string($value)) {
                     // Remove special characters, keeping only alphanumeric characters and spaces
-                    $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
+                    if($columnIndex != 6) {
+                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
+                    } else {
+                        $processedRow[$columnIndex] = $value;
+                    }
                 } else {
                     // Keep non-string values as they are
                     $processedRow[$columnIndex] = $value;
