@@ -6588,6 +6588,8 @@ return
     'ar_goods' => 'المواد',
     'ar_service' => 'الخدمات',
     'ar_subscription' => 'الاشتراك',
+    'ar_goods_and_services' => 'المواد والخدمات',
+    'sales_type' => 'نوع المبيعات',
     'type_not_allowed' => 'هذا النوع من الملفات غير مسموح برفعه.',
     'maximum_allowed_file_size' => 'تم تجاوز الحد الأقصى المسموح به لحجم الملف. يرجى رفع ملف أصغر من :sizeLimit',
     'unable_to_upload_the_attachment' => 'يتعذر رفع المرفق',
