@@ -338,11 +338,11 @@ class AuditTrailAPIController extends AppBaseController
 
                 // Build line filter for companyId
                 $companyIdFilter = '';
-                if(isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != ''){
+                if(isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
                     $companySystemId = $input['companyId'];
-                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric) or \"company_system_id\":\"1\" (string)
-                    // Use regex to match both numeric and string formats with escaped quotes
-                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*('.$companySystemId.'|\\\\\"'.$companySystemId.'\\\\\")`';
+                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
+                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
+                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
                 }
 
                 // Build line filter for search
