@@ -299,7 +299,7 @@ class BudgetNotificationService
    private function sendSubmissionDeadlineReachedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
         $this->sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
-        $this->sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+        // $this->sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
    }
 
    private function sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -457,13 +457,13 @@ class BudgetNotificationService
 
         // Get all finance users with their employee details eager loaded
         $financeUsers = CompanyDepartmentEmployee::with('employee')
-                        ->whereHas('department', function ($query) {
-                            $query->where('isFinance', 1)->where('isActive', 1);
+                        ->whereHas('department', function ($query) use ($budgetPlanning) {
+                            $query->where('companySystemID', $budgetPlanning->masterBudgetPlannings->companySystemID)
+                                    ->where('isFinance', 1)->where('isActive', 1);
                         })
                         ->where('isActive', 1)
                         ->get();
 
-      
         foreach($financeUsers as $financeUser) {
             // Check if employee exists and has an email
             if (!$financeUser->employee || !$financeUser->employee->empEmail) {
