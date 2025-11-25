@@ -213,7 +213,16 @@ class QuotationMasterRepository extends BaseRepository
                 $data[$x][trans('custom.reporting_amount')] = number_format($val->companyReportingAmount, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "");
 
                 $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);
-                $data[$x][trans('custom.sales_type')] = $val->salesType == 1 ? __('custom.ar_goods_and_services') : __('custom.ar_subscription');
+                $salesTypeDescription = '';
+                if(isset($val->salesType) && $val->salesType > 0) {
+                    if($val->salesType == 1) {
+                        $salesTypeDescription = __('custom.ar_goods_and_services');
+                    } elseif($val->salesType == 2) {
+                        $salesTypeDescription = __('custom.ar_subscription');
+                    }
+                }
+                $data[$x][trans('custom.sales_type')] = $salesTypeDescription;
+
 
                 $x++;
             }
