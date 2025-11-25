@@ -10,6 +10,7 @@ use App\Models\DeptBudgetPlanningTimeRequest;
 use App\Models\Revision;
 use App\Repositories\DepartmentBudgetPlanningRepository;
 use App\Rules\NoEmoji;
+use App\Services\BudgetNotificationService;
 use App\Services\TimeRequestExtensionService;
 use App\Traits\AuditLogsTrait;
 use Carbon\Carbon;
@@ -415,7 +416,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         if($departmentBudgetPlanning->revisions->count() > 0){
             if ($input['workStatus'] == 1) {
-                // return $this->sendError('Status cannot be changed to Not Started, already has a revision');
+                return $this->sendError('Status cannot be changed to Not Started, already has a revision');
             }else {
                 if($input['workStatus']) {
                     $latestRevision = $departmentBudgetPlanning->revisions->where('revisionStatus', $input['workStatus'] - 1)->last();
@@ -522,6 +523,11 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 );
             }
 
+            if($input['workStatus'] == 3)
+            {
+                $budgetPlanningNotificationService = new BudgetNotificationService();
+                $budgetPlanningNotificationService->sendNotification($departmentBudgetPlanning->id,'',$budgetPlanningDetails->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+            }
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
