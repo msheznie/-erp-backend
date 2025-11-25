@@ -149,3 +149,13 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::post('getChartofAccountsByBudget', 'DepartmentBudgetPlanningDetailAPIController@getChartofAccountsByBudget')->name('Get chart of accounts by budget');   
     });
 });
+
+// Budget Notification Routes
+Route::resource('budgetNotifications', 'DepartmentBudgetNotificationAPIController');
+Route::post('getAllBudgetNotificationDetails', 'DepartmentBudgetNotificationAPIController@getAllBudgetNotificationDetails')->name('Get all budget notification details');
+Route::get('budgetNotifications/{id}/details', 'DepartmentBudgetNotificationAPIController@getNotificationDetails')->name('Get notification details');
+Route::post('budgetNotificationDetails', 'DepartmentBudgetNotificationAPIController@storeNotificationDetail')->name('Create notification detail');
+Route::put('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPIController@updateNotificationDetail')->name('Update notification detail');
+Route::delete('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPIController@destroyNotificationDetail')->name('Delete notification detail');
+Route::get('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@getRecipients')->name('Get notification recipients');
+Route::post('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@storeRecipient')->name('Create notification recipient');

@@ -75,7 +75,7 @@ class BudgetDelegateService
             DB::beginTransaction();
 
             // Validate budget planning detail exists
-            $budgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->find($data['budget_planning_detail_id']);
+            $budgetPlanningDetail = $this->departmentBudgetPlanningDetailRepository->with('departmentBudgetPlanning.masterBudgetPlannings.company')->find($data['budget_planning_detail_id']);
 
             if(Carbon::parse($data['submission_time'])->lessThan(Carbon::today()) || Carbon::parse($data['submission_time'])->greaterThan(Carbon::parse($budgetPlanningDetail->time_for_submission)))
             {
@@ -124,6 +124,8 @@ class BudgetDelegateService
             // Create or update the record
             $record = $this->budgetDelegateAccessRecordRepository->createOrUpdate($recordData);
 
+            $budgetNotificationService = new BudgetNotificationService();
+            $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'task-delegation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
             DB::commit();
 
             return [
