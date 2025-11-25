@@ -18,6 +18,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreatePurchaseReturnAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseReturnAPIRequest;
 use App\Models\PurchaseReturnMasterRefferedBack;
@@ -1187,13 +1188,13 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
-
+        $lang = app()->getLocale();
         $array = array('entity' => $purchaseReturn);
         $time = strtotime("now");
         $fileName = 'purchase_return_' . $id . '_' . $time . '.pdf';
         $html = view('print.purchase_return', $array);
         $htmlFooter = view('print.purchase_return_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

@@ -250,7 +250,9 @@ class AssetDisposalTypeAPIController extends AppBaseController
 
         $assetDisposalType = $this->assetDisposalTypeRepository->update($input, $id);
 
-        $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", "{$input['departmentName']} - {$assetDisposalType->typeDescription} has updated", "U", $newValue, $previousValue);
+        // Extract only dynamic variables for narration
+        $narrationVariables = $input['departmentName'] . ' - ' . $assetDisposalType->typeDescription;
+        $this->auditLog($db, $transactionID, $uuid, "chart_of_account_config", $narrationVariables, "U", $newValue, $previousValue);
 
         return $this->sendResponse($assetDisposalType->toArray(), trans('custom.update', ['attribute' => trans('custom.asset_disposal_types')]));
     }

@@ -17,6 +17,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateStockReceiveAPIRequest;
 use App\Http\Requests\API\UpdateStockReceiveAPIRequest;
 use App\Models\Company;
@@ -796,13 +797,13 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
-
+        $lang = app()->getLocale();
         $array = array('entity' => $stockReceive);
         $time = strtotime("now");
         $fileName = 'stock_receive_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_receive', $array);
         $htmlFooter = view('print.stock_receive_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

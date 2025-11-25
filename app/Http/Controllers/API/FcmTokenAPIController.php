@@ -12,6 +12,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\AuditLogsTrait;
 
 /**
  * Class FcmTokenController
@@ -20,6 +21,8 @@ use Illuminate\Support\Facades\Auth;
 
 class FcmTokenAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+    
     /** @var  FcmTokenRepository */
     private $fcmTokenRepository;
 
@@ -331,12 +334,12 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
-            if ($tenantDomain != 'localhost:8000') {
-                $homeUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
+            if ($tenantDomain != 'localhost:8000' && env('APP_ENV') != 'local') {
+                 $homeUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";
             } else {
-                $homeUrl = null;
+                 $homeUrl = null;
             }
 
             return $this->sendResponse(['homeUrl' => $homeUrl], trans('custom.successfully_redirected_to_home'));
@@ -367,9 +370,9 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
-            if ($tenantDomain != 'localhost:8000') {
+            if ($tenantDomain != 'localhost:8000' && env('APP_ENV') != 'local') {
                  $logoutUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home?logout-from-hr=true";
             } else {
                  $logoutUrl = null;
@@ -378,6 +381,25 @@ class FcmTokenAPIController extends AppBaseController
             $resp = [];
             $logged = Auth::check();
             if ($logged) {
+                $user = Auth::user();
+                $employee = $user->employee;
+                
+                // Get session_id from the oauth_access_tokens table
+                $tokenId = $request->user()->token()->id;
+                $accessToken = \App\Models\AccessTokens::find($tokenId);
+                $sessionId = $accessToken && $accessToken->session_id ? $accessToken->session_id : null;
+                
+                // Log logout before revoking token
+                if ($sessionId && $employee) {
+                    $this->log('auth', [
+                        'event' => 'logout',
+                        'sessionId' => $sessionId,
+                        'user' => $user,
+                        'employee' => $employee,
+                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request)
+                    ]);
+                }
+                
                 $resp = $request->user()->token()->revoke();
             }
 
@@ -400,7 +422,7 @@ class FcmTokenAPIController extends AppBaseController
                 $subDomain = $url_array[1];
             }
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            $tenantDomain = str_replace('-erp', '', $subDomain);
 
             if ($tenantDomain != 'localhost:8000') {
                 $portalUrl = $scheme."://".$tenantDomain.".".env('APP_DOMAIAN')."/#/home";

@@ -2053,9 +2053,32 @@ class AssetManagementReportAPIController extends AppBaseController
 
                 $name = trans('custom.finance');
 
-                return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView($templateName, $reportData);
+
+                        // Apply font to all cells after loading view
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
                         
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
@@ -2076,9 +2099,31 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $name = trans('custom.finance');
 
-                    return \Excel::create($name, function ($excel) use ($reportData, $templateName) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
+                    $lang = app()->getLocale();
+                    $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                    return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
+                            // Set default font for entire sheet
+                            $sheet->setStyle([
+                                'font' => [
+                                    'name' => $fontFamily,
+                                    'size' => 11,
+                                ]
+                            ]);
                             $sheet->loadView($templateName, $reportData);
+
+                            $lastRow = $sheet->getHighestRow();
+                            $lastColumn = $sheet->getHighestColumn();
+                            if ($lastRow > 0 && $lastColumn) {
+                                try {
+                                    $spreadsheet = $sheet->getDelegate();
+                                    $worksheet = $spreadsheet->getActiveSheet();
+                                    $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                } catch (\Exception $e) {
+                                    $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                }
+                            }
                              if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
@@ -3375,14 +3420,14 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
 	COSTUNIT,
 	IFNULL( depAmountLocal, 0 ) AS depAmountLocal,
 	CASE 
-    WHEN CAST('$asOfDate' AS DATE) > accumulated_depreciation_date 
+    WHEN CAST('$asOfDate' AS DATE) < accumulated_depreciation_date 
         THEN 0
     ELSE IFNULL(COSTUNIT, 0) - IFNULL(t.depAmountLocal, 0)
     END AS localnbv,
     costUnitRpt,
     IFNULL(depAmountRpt, 0) AS depAmountRpt,
     CASE 
-        WHEN CAST('$asOfDate' AS DATE) > accumulated_depreciation_date 
+        WHEN CAST('$asOfDate' AS DATE) < accumulated_depreciation_date 
             THEN 0
         ELSE IFNULL(costUnitRpt, 0) - IFNULL(depAmountRpt, 0)
     END AS rptnbv
@@ -4300,12 +4345,12 @@ WHERE
                         IFNULL( adDepAmountLocal, 0 ) AS adDepAmountLocal,
                         IFNULL( acDepAmountRpt, 0 ) AS acDepAmountRpt,
                         CASE 
-                        WHEN '$asOfDate' > erp_fa_asset_master.accumulated_depreciation_date 
+                        WHEN '$asOfDate' < erp_fa_asset_master.accumulated_depreciation_date 
                             THEN 0
                         ELSE IFNULL(erp_fa_asset_master.COSTUNIT, 0) - IFNULL(ad.adDepAmountLocal, 0)
                         END AS localnbv,                    
                         CASE 
-                            WHEN '$asOfDate' > erp_fa_asset_master.accumulated_depreciation_date 
+                            WHEN '$asOfDate' < erp_fa_asset_master.accumulated_depreciation_date 
                                 THEN 0
                             ELSE IFNULL(erp_fa_asset_master.costUnitRpt, 0) - IFNULL(ad.acDepAmountRpt, 0)
                         END AS rptnbv,

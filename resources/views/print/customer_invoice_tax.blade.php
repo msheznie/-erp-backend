@@ -1,10 +1,17 @@
 <html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <style type="text/css">
     <!--
+    body {
+        font-size: 11.5px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        color: black;
+    }
+
     @if(isset($lang) && $lang === 'ar')
         body {
         direction: rtl;
         text-align: right;
+        font-family: 'Noto Sans Arabic', sans-serif;
     }
 
     .text-left {
@@ -35,12 +42,6 @@
         right: 0px;
         height: 0px;
         /*font-size: 10px;*/
-    }
-
-    body {
-        font-size: 11.5px;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        color: black;
     }
 
     h3 {

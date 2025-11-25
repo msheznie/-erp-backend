@@ -83,12 +83,13 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
                     $budgetPlanning = DepartmentBudgetPlanning::create($data);
 
+                    $narrationVariables = $budgetPlanning->planningCode;
                     $this->auditLog(
                         $db,
                         $budgetPlanning->id,
                         $this->uuid,
                         "department_budget_plannings",
-                        "Department budget planning ".$budgetPlanning->planningCode." has been created",
+                        $narrationVariables,
                         "C",
                         $budgetPlanning->toArray(),
                         [],

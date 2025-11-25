@@ -265,7 +265,8 @@ class UserAPIController extends AppBaseController
             'language',
             'profilepic',
             'user_data',
-            'isAdmin'
+            'isAdmin',
+            'employeeSystemID'
         ]);
 
         /*if($output->profilepic){

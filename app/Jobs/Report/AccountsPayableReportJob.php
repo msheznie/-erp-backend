@@ -102,8 +102,8 @@ class AccountsPayableReportJob implements ShouldQueue
         $suppliers = (array)$request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
-        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
-        $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
+        $controlAccountsSystemIDs = isset($request->controlAccountsSystemID) ? (array)$request->controlAccountsSystemID : [];
+        $controlAccountsSystemID = !empty($controlAccountsSystemIDs) ? collect($controlAccountsSystemIDs)->pluck('id')->toArray() : [];
 
         $currency = $request->currencyID;
 

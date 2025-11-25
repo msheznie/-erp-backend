@@ -3566,13 +3566,13 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
         
         // Configure mPDF for RTL support
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4-P', 
             'setAutoTopMargin' => 'stretch', 
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
         
         // Add RTL support for Arabic
         if (app()->getLocale() == 'ar') {
@@ -8044,7 +8044,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $paymentsInvoice = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
-            //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', 0)
             ->with(['payment_master' => function ($query) {
                 $query->with(['transactioncurrency']);
@@ -8055,7 +8055,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         $paymentsInvoiceMatch = PaySupplierInvoiceDetail::selectRaw('sum(paymentLocalAmount) as localAmount,
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
-            //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', '>', 0)
             ->with(['matching_master' => function ($query) {
                 $query->with(['transactioncurrency']);
@@ -8160,6 +8160,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,PayMasterAutoId,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
             //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', 0)
             ->with(['payment_master' => function ($query) {
                 $query->with(['transactioncurrency']);
@@ -8171,6 +8172,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                          sum(paymentComRptAmount) as rptAmount,bookingInvSystemCode,matchingDocID')
             ->where('bookingInvSystemCode', $invoiceMaster->bookingSuppMasInvAutoID)
             //->where('addedDocumentSystemID', 11)
+            ->where('companySystemID', $invoiceMaster->companySystemID)
             ->where('matchingDocID', '>', 0)
             ->with(['matching_master' => function ($query) {
                 $query->with(['transactioncurrency']);

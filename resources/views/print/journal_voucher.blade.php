@@ -2,10 +2,15 @@
 <head>
     <title>{{ __('custom.journal_voucher') }}</title>
     <style>
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
         @if(isset($lang) && $lang === 'ar')
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
         }
         
         .text-left {
@@ -46,11 +51,6 @@
             font-size: 10px;
             padding-bottom: 0px;
             padding-top: -10px;
-        }
-
-        body {
-            font-size: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
         h3 {

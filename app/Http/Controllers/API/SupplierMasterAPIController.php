@@ -1100,7 +1100,8 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                 }
 
-                $this->auditLog($db, $input['supplierCodeSystem'],$uuid, "suppliermaster", $input['primarySupplierCode']." has updated", "U", $newValue, $previosValue);
+                $narrationVariables = $input['primarySupplierCode'];
+                $this->auditLog($db, $input['supplierCodeSystem'],$uuid, "suppliermaster", $narrationVariables, "U", $newValue, $previosValue);
 
                 return $this->sendResponse($supplierMaster->toArray(), trans('custom.suppliermaster_updated_successfully'));
             }

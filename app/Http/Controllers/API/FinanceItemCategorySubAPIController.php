@@ -515,7 +515,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $db = isset($input['db']) ? $input['db'] : '';
             $newValue = ['isActive' => $input['isActive']];
 
-            $this->auditLog($db, $id,$uuid, "financeitemcategorysub", $financeItemCategorySub->categoryDescription." has updated", "U", $newValue, $previosValue);
+            $narrationVariables = $financeItemCategorySub->categoryDescription;
+            $this->auditLog($db, $id,$uuid, "financeitemcategorysub", $narrationVariables, "U", $newValue, $previosValue);
          }
 
         return $this->sendResponse($financeItemCategorySub->toArray(), trans('custom.finance_item_category_sub_updated_successfully'));
@@ -742,7 +743,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             \Artisan::call('reset:sub-category-values');
 
-            $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has updated", "U", $newValue, $previosValue);
+            $narrationVariables = $input['categoryDescription'];
+            $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $narrationVariables, "U", $newValue, $previosValue);
             
             return $this->sendResponse($itemCategorySubUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
         } else {
@@ -755,7 +757,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
                 $financeItemCategoryType->save();
             }
             
-            $this->auditLog($db, $itemCategorySubCreate['itemCategorySubID'],$uuid, "financeitemcategorysub", $input['categoryDescription']." has created", "C", $newValue, []);
+            $narrationVariables = $input['categoryDescription'];
+            $this->auditLog($db, $itemCategorySubCreate['itemCategorySubID'],$uuid, "financeitemcategorysub", $narrationVariables, "C", $newValue, []);
             
             return $this->sendResponse($itemCategorySubCreate, trans('custom.finance_item_category_sub_created_successfully'));
         }
@@ -778,7 +781,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $db = isset($input['db']) ? $input['db'] : '';
         $newValue = ['expiryYN' => $input['expiryYN']];
 
-        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
+        $narrationVariables = $originalData->categoryDescription;
+        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $narrationVariables, "U", $newValue, $previosValue);
 
         return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
 
@@ -798,7 +802,8 @@ class FinanceItemCategorySubAPIController extends AppBaseController
         $db = isset($input['db']) ? $input['db'] : '';
         $newValue = ['attributesYN' => $input['attributesYN']];
 
-        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $originalData->categoryDescription." has updated", "U", $newValue, $previosValue);
+        $narrationVariables = $originalData->categoryDescription;
+        $this->auditLog($db, $input['itemCategorySubID'],$uuid, "financeitemcategorysub", $narrationVariables, "U", $newValue, $previosValue);
 
         return $this->sendResponse($itemCategorySubExpiryUpdate, trans('custom.finance_item_category_sub_updated_successfully'));
     }

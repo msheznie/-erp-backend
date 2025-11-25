@@ -2188,13 +2188,19 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
+            $whereQry = "CASE 
+                            WHEN finalAgingDetail.balanceAmountTrans = 0 THEN 0
+                            ELSE ROUND(finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces)
+                        END";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
+            $whereQry = "CASE 
+                            WHEN finalAgingDetail.balanceAmountTrans = 0 THEN 0
+                            ELSE ROUND(finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)
+                        END";
         }
 
         $results = \DB::select('SELECT
@@ -2452,7 +2458,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
 
-        return $this->exchangeGainLoss($results, $currency);
+        $data =  $this->exchangeGainLoss($results, $currency);
+        return $data;
     }
 
     function getSupplierStatementDetailsQRY($request)
@@ -3569,14 +3576,14 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  )";
+            $whereQry = "(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  ) <> 0 AND round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  ) <> 0)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal>0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
-            $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)";
+            $whereQry = "(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces) <> 0 AND round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  ) <> 0)";
             $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
         if($type == 1) {
@@ -3859,7 +3866,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             '.$typeQry.'
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . ($currency == 1 ? $whereQry . ' <> 0' : $whereQry) . ' ORDER BY documentDate ASC) as grandFinal;');
 
 
 
@@ -6307,9 +6314,9 @@ ORDER BY
     public function pdfExportReport(Request $request)
     {
         $reportID = $request->reportID;
-
+        $languageCode = app()->getLocale() ?: 'en';
         // Configure mPDF for landscape A4 format
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-L', // Landscape format
@@ -6320,7 +6327,7 @@ ORDER BY
             'margin_bottom' => 16,
             'margin_header' => 9,
             'margin_footer' => 9
-        ];
+        ], $languageCode);
 
         switch ($reportID) {
             case 'APSS':
@@ -6444,9 +6451,8 @@ ORDER BY
                 }
             }
         }
-
-
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => $sentEmail);
+        $languageCode = app()->getLocale() ?: 'en';
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => $sentEmail, 'lang' => $languageCode);
 
         $html = view('print.supplier_statement', $dataArr);
 
@@ -6519,7 +6525,7 @@ ORDER BY
         if (!isset($input['suppliers'])) {
             return $this->sendError(trans('custom.suppliers_not_found'));
         }
-
+        $languageCode = app()->getLocale() ?: 'en';
         $suplliers = $input['suppliers'];
         $errorMessage = [];
         foreach ($suplliers as $key => $value) {
@@ -6542,7 +6548,7 @@ ORDER BY
                 $fileName = trans('custom.supplier_ledger_') . $nowTime.$supplierID . '.pdf';
                 $filePath = $path . '/' . $fileName;
 
-                $mpdfConfig = [
+                $mpdfConfig = Helper::getMpdfConfig([
                     'tempDir' => public_path('tmp'),
                     'mode' => 'utf-8',
                     'format' => 'A4-L',
@@ -6554,7 +6560,7 @@ ORDER BY
                     'margin_bottom' => 16,
                     'margin_header' => 9,
                     'margin_footer' => 9
-                ];
+                ], $languageCode);
 
                 $mpdf = new \Mpdf\Mpdf($mpdfConfig);
                 $mpdf->AddPage('L');
@@ -6675,7 +6681,8 @@ ORDER BY
                 $outputArr[$val->SupplierCode . " - " . $val->suppliername . " (" . $val->supplierGroupName . ")"][$val->documentCurrency][] = $val;
             }
         }
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'companylogo' => $companyLogo, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate));
+        $languageCode = app()->getLocale() ?: 'en';
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'companylogo' => $companyLogo, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'lang' => $languageCode);
         
         $html = view('print.supplier_ledger', $dataArr);
 

@@ -297,11 +297,13 @@ class ErpAttributesAPIController extends AppBaseController
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
             $db = isset($input['db']) ? $input['db'] : '';
 
-            $this->auditLog($db, $id,$uuid, "erp_attributes", "Attribute ".$erpAttributes->description." has deleted", "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id,$uuid, "erp_attributes", $narrationVariables, "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
         } else {
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
             $db = isset($input['db']) ? $input['db'] : '';
-            $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been deleted", "D", [], $erpAttributes->toArray(), 22, 'erp_fa_asset_master');
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "D", [], $erpAttributes->toArray(), 22, 'erp_fa_asset_master');
         }
 
 
@@ -360,7 +362,8 @@ class ErpAttributesAPIController extends AppBaseController
         $db = isset($input['db']) ? $input['db'] : '';
 
         if ($erpAttributes->document_id == "SUBCAT") {
-            $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been updated", "U", $newValue, $previousValue, $erpAttributes->document_master_id, 'financeitemcategorysub');
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, $erpAttributes->document_master_id, 'financeitemcategorysub');
         }
 
         return $this->sendResponse($attributesIsMandotaryUpdate, trans('custom.erp_attributes_updated_successfully'));
@@ -457,7 +460,8 @@ class ErpAttributesAPIController extends AppBaseController
         $previousValue = $erpAttributes->toArray();
         $newValue = $input;
 
-        $this->auditLog($db, $id, $uuid, "erp_attributes", "Attribute " . $erpAttributes->description . " has been updated", "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
+        $narrationVariables = $erpAttributes->description;
+        $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
         
         $documentMasterID = isset($input['document_master_id']) ? $input['document_master_id']: null;
         $isActive = isset($input['is_active']) ? $input['is_active']: null;
@@ -535,7 +539,8 @@ class ErpAttributesAPIController extends AppBaseController
         $previousValue = $dropdownValues->toArray();
         $newValue = $input;
 
-        $this->auditLog($db, $dropdownValues->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $dropdownValues->description . " has been updated", "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
+        $narrationVariables = $dropdownValues->description;
+        $this->auditLog($db, $dropdownValues->attributes_id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
 
         return $this->sendResponse($dropdownValuesUpdate, trans('custom.erp_attributes_updated_successfully'));
 

@@ -121,7 +121,12 @@ class CompanyBudgetPlanning extends Model
         'serialNo',
         'documentSystemID',
         'documentID',
-        'planningCode'
+        'planningCode',
+        'departmentStatus',
+        'financeStatus',
+        'confirmed_yn',
+        'confirmed_by',
+        'confirmed_at'
     ];
 
     /**
@@ -143,7 +148,12 @@ class CompanyBudgetPlanning extends Model
         'serialNo' => 'integer',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
-        'planningCode' => 'string'
+        'planningCode' => 'string',
+        'departmentStatus' => 'integer',
+        'financeStatus' => 'integer',
+        'confirmed_yn' => 'integer',
+        'confirmed_by' => 'integer',
+        'confirmed_date' => 'date'
     ];
 
     /**

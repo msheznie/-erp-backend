@@ -181,7 +181,8 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 
             $masterData = $financeItemCategorySubAssigned->toArray();
 
-            $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been updated", "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
+            $narrationVariables = $input['categoryDescription'];
+            $this->auditLog($db, $input['itemCategoryAssignedID'],$uuid, "financeitemcategorysubassigned", $narrationVariables, "U", $masterData, $previousValue, $input['itemCategorySubID'], 'financeitemcategorysub');
         } else {
 
             foreach($companies as $companie)
@@ -205,7 +206,8 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 $masterData = $financeItemCategorySubAssigned->toArray();
 
 
-                $this->auditLog($db, $financeItemCategorySubAssigned->itemCategoryAssignedID,$uuid, "financeitemcategorysubassigned", "Company Assign ".$input['categoryDescription']." has been created", "C", $masterData, [], $financeItemCategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
+                $narrationVariables = $input['categoryDescription'];
+                $this->auditLog($db, $financeItemCategorySubAssigned->itemCategoryAssignedID,$uuid, "financeitemcategorysubassigned", $narrationVariables, "C", $masterData, [], $financeItemCategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
             }
 
         }
@@ -321,7 +323,8 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
         $db = isset($input['db']) ? $input['db'] : '';
 
-        $this->auditLog($db, $id,$uuid, "financeitemcategorysubassigned", "Company Assign ".$financeItemcategorySubAssigned->categoryDescription." has been deleted", "D", [], $masterData, $financeItemcategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
+        $narrationVariables = $financeItemcategorySubAssigned->categoryDescription;
+        $this->auditLog($db, $id,$uuid, "financeitemcategorysubassigned", $narrationVariables, "D", [], $masterData, $financeItemcategorySubAssigned->itemCategorySubID, 'financeitemcategorysub');
 
         return $this->sendResponse($id, trans('custom.finance_itemcategory_sub_assigned_deleted_successf'));
     }

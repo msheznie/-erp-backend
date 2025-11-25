@@ -21,6 +21,7 @@ class RevisionRepository extends BaseRepository
         'budgetPlanningId',
         'submittedBy',
         'submittedDate',
+        'newSubmissionDate',
         'reviewComments',
         'revisionType',
         'reopenEditableSection',

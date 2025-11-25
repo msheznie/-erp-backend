@@ -207,7 +207,11 @@ class JvMasterAPIController extends AppBaseController
                 ];
             }
             else{
-                return $this->sendResponse($resultData['data'], trans('custom.jv_created_successfully'));
+                return [
+                    "success" => true,
+                    "data" => $resultData['data'],
+                    "message" => trans('custom.jv_created_successfully')
+                ];
             }
         } else {
             DB::rollback();
@@ -1674,13 +1678,13 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-P',
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

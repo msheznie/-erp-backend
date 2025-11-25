@@ -1700,9 +1700,9 @@ class GRVMasterAPIController extends AppBaseController
         $html = view('print.good_receipt_voucher_print_pdf', $grv);
         $time = strtotime("now");
         $fileName = 'good_receipt_voucher_' . $id . '_' . $time . '.pdf';
-
+        $lang = app()->getLocale();
         $htmlFooter = view('print.good_receipt_voucher_footer', $grv);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

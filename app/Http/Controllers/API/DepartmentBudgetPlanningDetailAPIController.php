@@ -546,7 +546,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
-                    "Budget planning detail record has been created",
+                    "",
                     "C",
                     $newValue->toArray(),
                     $oldValue
@@ -560,7 +560,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     $budgetDetailId,
                     $uuid,
                     "department_budget_planning_details_template_data",
-                    "Budget planning detail record has been updated",
+                    "",
                     "U",
                     $newValue->toArray(),
                     $oldValue
@@ -882,7 +882,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $budgetDetailId,
                 $uuid,
                 "department_budget_planning_details_template_data",
-                "Budget planning detail record has been deleted",
+                "",
                 "D",
                 [],
                 $oldValue->toArray()
@@ -1004,18 +1004,20 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         ]);
         $input = $request->input();
         try {
-            $budgetPlanning = DepartmentBudgetPlanning::find($input['budgetPlanningId']);
+            $budgetPlanning = DepartmentBudgetPlanning::with('timeExtensionRequests','revisions')->find($input['budgetPlanningId']);
             if(!isset($budgetPlanning))
                 return $this->sendError("Department Budget planning not found!",404);
             
             $currentStatus = $budgetPlanning->financeTeamStatus;
             $newStatus = $input['financeTeamStatus'];
 
-            // if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
-            //     return $this->sendError("Status can only be changed forward.", 422);
-            // }
+            if (!$this->isValidStatusProgression($currentStatus, $newStatus)) {
+                return $this->sendError("Status can only be changed forward.", 422);
+            }
 
             $budgetPlanning->financeTeamStatus = $newStatus;
+
+
             $budgetPlanning->save();
             return $this->sendResponse("Finance team status updated",200);
 
@@ -1044,8 +1046,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         
         // Define valid progressions
         $validProgressions = [
-            1 => [2, 3, 4], // From Open: can go to Under Review, Sent Back for Revision, or Completed
-            2 => [3, 4],    // From Under Review: can go to Sent Back for Revision or Completed
+            1 => [2], // From Open: can go to Under Review, Sent Back for Revision, or Completed
+            2 => [3,4],    // From Under Review: can go to Sent Back for Revision or Completed
             3 => [4],       // From Sent Back for Revision: can go back to Completed
             4 => []         // From Completed: no further changes allowed
         ];
@@ -1100,8 +1102,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
 
-        $query = DepartmentBudgetPlanning::with('department.hod.employee')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        $query = DepartmentBudgetPlanning::with('department.hod.employee','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
         return \DataTables::of($query)
+            ->addColumn('newDate', function ($row) {
+                if ($row->timeExtensionRequests->count() > 0) {
+                    $lastTimeExtension = $row->timeExtensionRequests->where('status', 2)->last();
+                    return $lastTimeExtension ? $lastTimeExtension->new_time : null;
+                } else {
+                    return null;
+                }
+            })
+            ->addColumn('submissionDate', function ($row) {
+                if ($row->timeExtensionRequests->count() > 0) {
+                    $firstTimeExtension = $row->timeExtensionRequests->first();
+                    return $firstTimeExtension ? $firstTimeExtension->current_submission_date : $row->submissionDate;
+                } else {
+                    return $row->submissionDate;
+                }
+            })
             ->addIndexColumn()
             ->make(true);
 

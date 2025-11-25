@@ -14,12 +14,16 @@
             margin-right: 30px;
             margin-top: 30px;
         }
-
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
         /* RTL Support for Arabic */
         @if(app()->getLocale() == 'ar')
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
         }
         
         .rtl-text-left {
@@ -90,11 +94,6 @@
             position: fixed;
             font-size: 10px;
             padding-top: -20px;
-        }
-
-        body {
-            font-size: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
 
         h3 {
@@ -872,10 +871,23 @@
                     </tr>
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_total') }}</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
-                        <td class="text-right border-bottom-remov border-top-remov"></td>
-                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.payment_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($ciDetailTotTra), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.total_discount_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(abs($discountTot), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.bank_charges_others') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra), $transDecimal)}}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_amount') }}</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($netTot+$directTotTra), $transDecimal)}}</td>
                     </tr>
                 @endif
                 

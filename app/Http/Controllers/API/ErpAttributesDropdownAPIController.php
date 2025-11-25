@@ -90,7 +90,8 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
             $db = isset($input['db']) ? $input['db'] : '';
-            $this->auditLog($db, $attributes['attributes_id'], $uuid, "erp_attributes", "Attribute dropdown value " . $input['description']. " has been created", "C", $input, [], 22, 'erp_fa_asset_master');
+            $narrationVariables = $input['description'];
+            $this->auditLog($db, $attributes['attributes_id'], $uuid, "erp_attributes", $narrationVariables, "C", $input, [], 22, 'erp_fa_asset_master');
             
         DB::commit();
         return $this->sendResponse([], trans('custom.new_record_added_successfully'));
@@ -367,7 +368,8 @@ class ErpAttributesDropdownAPIController extends AppBaseController
 
         $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
         $db = isset($input['db']) ? $input['db'] : '';
-        $this->auditLog($db, $erpAttributesDropdown->attributes_id, $uuid, "erp_attributes", "Attribute dropdown value " . $erpAttributesDropdown->description . " has been deleted", "D", [], $erpAttributesDropdown->toArray(), 22, 'erp_fa_asset_master');
+        $narrationVariables = $erpAttributesDropdown->description;
+        $this->auditLog($db, $erpAttributesDropdown->attributes_id, $uuid, "erp_attributes", $narrationVariables, "D", [], $erpAttributesDropdown->toArray(), 22, 'erp_fa_asset_master');
 
         return $this->sendResponse([],trans('custom.erp_attributes_dropdown_deleted_successfully'));
     }

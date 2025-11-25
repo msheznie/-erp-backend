@@ -357,6 +357,7 @@ class WarehouseRightsAPIController extends AppBaseController
     public function getWarehouseRightEmployees(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
         $selectedCompanyID = isset($input['selectedCompanyID']) ? $input['selectedCompanyID'] : false;
         $warehouseSystemID = isset($input['warehouseSystemID']) ? $input['warehouseSystemID'] : false;
         $employeeSystemID = isset($input['employeeSystemID']) ? $input['employeeSystemID'] : false;

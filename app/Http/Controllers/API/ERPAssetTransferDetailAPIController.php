@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateERPAssetTransferDetailAPIRequest;
 use App\Http\Requests\API\UpdateERPAssetTransferDetailAPIRequest;
 use App\Models\ERPAssetTransferDetail;
@@ -498,12 +499,12 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         }
         $transferDetails = $this->getAssetTransfer($id, $companyID);
 
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'asset_transfer.blade' . $id . '_' . $time . '.pdf';
         $html = view('print.asset_transfer', $transferDetails);
         
-        $mpdf = new \Mpdf\Mpdf([
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4',
@@ -514,7 +515,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             'margin_bottom' => 16,
             'margin_header' => 9,
             'margin_footer' => 9
-        ]);
+        ], $lang));
         
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');

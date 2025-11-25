@@ -37,6 +37,7 @@ class ReceiptAPIController extends AppBaseController
             '*.details.*.invoiceCode' => 'required_if:*.receiptType,2',
             '*.details.*.segmentCode' => 'required_if:*.receiptType,1,2,3',
             '*.details.*.receiptAmount' => 'required_if:*.receiptType,2',
+            '*.details.*.discountGiven' => 'nullable|numeric|min:0',
             '*.details.*.glCode' => 'required_if:*.receiptType,1',
             '*.details.*.amount' => 'required_if:*.receiptType,1,3',
             '*.pdcChequeData.*.chequeNo' => 'required_if:*.isPDCCheque,1',
@@ -77,6 +78,8 @@ class ReceiptAPIController extends AppBaseController
             '*.details.*.invoiceCode.required_if' => 'The invoice code is required when receipt type is 2.',
             '*.details.*.segmentCode.required_if' => 'The segment code is required when receipt type is 1, 2, or 3.',
             '*.details.*.receiptAmount.required_if' => 'The receipt amount is required when receipt type is 2.',
+            '*.details.*.discountGiven.numeric' => 'The discount given must be a valid number.',
+            '*.details.*.discountGiven.min' => 'Minus values are not allowed in the Discount Given',
             '*.details.*.glCode.required_if' => 'The GL code is required when receipt type is 1.',
             '*.details.*.amount.required_if' => 'The amount is required when receipt type is 1 or 3.',
             '*.pdcChequeData.*.chequeNo.required_if' => 'Cheque No is required',
@@ -125,6 +128,7 @@ class ReceiptAPIController extends AppBaseController
                         $validator->errors()->add("data.$index.customer", 'The customer field is required when receipt type is 2 or 3 or when receipt type is 1 and payee type is 1.');
                     }
                  }
+
             }
         });
 

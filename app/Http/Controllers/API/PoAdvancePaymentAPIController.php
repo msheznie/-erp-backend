@@ -598,13 +598,13 @@ ORDER BY
 
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-L', // Landscape format
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

@@ -100,6 +100,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $input = $request->all();
         $input = array_except($input, ['final_approved_by']);
+        $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
 
         /** Validation massage : Common for Add & Update */
         $accountCode = isset($input['AccountCode']) ? $input['AccountCode'] : '';
@@ -367,7 +368,8 @@ class ChartOfAccountAPIController extends AppBaseController
                         $data = ChartOfAccountAuditService::validateFieldsByPolicy($newDataValue, $previosDataValue, $policy ,$policyCAc);
                         $previosValue = $data['allowedpreviousValues'];
                         $newValue = $data['allowednewValues'];
-                        $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $previosDataValue['AccountCode']." has updated", "U", $newValue, $previosValue);
+                        $narrationVariables = $previosDataValue['AccountCode'];
+                        $this->auditLog($db, $input['chartOfAccountSystemID'],$uuid, "chartofaccounts", $narrationVariables, "U", $newValue, $previosValue);
                         return $this->sendResponse([], trans('custom.chart_of_account_updated_successfully_done'));
                     }
 
@@ -1175,13 +1177,13 @@ class ChartOfAccountAPIController extends AppBaseController
         
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
             'format' => 'A4-P',
             'setAutoTopMargin' => 'stretch',
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
 
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF

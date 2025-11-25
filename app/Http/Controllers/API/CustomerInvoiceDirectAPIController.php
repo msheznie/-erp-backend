@@ -2908,13 +2908,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if(!isset($secondaryBankAccount)){
             return $this->sendError(trans('custom.bank_account_not_found_1'));
         }
-
-        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
+        $lang = app()->getLocale();
+        $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount, 'lang' => $lang);
         $time = strtotime("now");
         $fileName = trans('custom.customer_invoice_') . $id . '_' . $time . '.pdf';
         $fileName_csv =  trans('custom.customer_invoice_') . $id . '_' . $time . '.csv';
         $fileName_xls = trans('custom.customer_invoice_') . $id . '_' . $time;
-
      
 
         if ($printTemplate['printTemplateID'] == 2) {
@@ -2922,7 +2921,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 $html = view('print.customer_invoice_tue', $array);
                 $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->SetHTMLFooter($htmlFooter);
@@ -2951,7 +2950,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 $html = view('print.APMC_customer_invoice', $array);
                 $htmlFooter = view('print.APMC_customer_invoice_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->SetHTMLFooter($htmlFooter);
@@ -2961,10 +2960,33 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
-                        
+
+                        // Apply font to all cells after loading view
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
+
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -2986,10 +3008,32 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
-                        
+
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
+
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -3004,7 +3048,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if($type == 1)
             {
                 $html = view('print.chromite_customer_invoice', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->WriteHTML($html);
@@ -3012,9 +3056,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
+
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
                         
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
@@ -3065,13 +3131,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     'lang' => $lang
                 );
                 $isRTL = ($lang === 'ar');
-                $mpdfConfig = [
+                $mpdfConfig = Helper::getMpdfConfig([
                     'tempDir' => public_path('tmp'),
                     'mode' => 'utf-8',
                     'format' => 'A4-L',
                     'setAutoTopMargin' => 'stretch',
                     'autoMarginPadding' => -10
-                ];
+                ], $lang);
                 if ($isRTL) {
                     $mpdfConfig['direction'] = 'rtl';
                 }
@@ -3101,7 +3167,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if($type == 1)
             {
                 $html = view('print.rihal_customer_invoice', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->WriteHTML($html);
@@ -3109,10 +3175,32 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_xls, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
+                $lang = app()->getLocale();
+                $fontFamily = \Helper::getExcelFontFamily($lang);
+
+                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
+                        // Set default font for entire sheet
+                        $sheet->setStyle([
+                            'font' => [
+                                'name' => $fontFamily,
+                                'size' => 11,
+                            ]
+                        ]);
                         $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
-                        
+
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            try {
+                                $spreadsheet = $sheet->getDelegate();
+                                $worksheet = $spreadsheet->getActiveSheet();
+                                $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            } catch (\Exception $e) {
+                                $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                            }
+                        }
+
                         // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -3129,7 +3217,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 $html = view('print.invoice_template.customer_invoice_hlb', $array);
                 $htmlFooter = view('print.invoice_template.customer_invoice_hlb_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->SetHTMLFooter($htmlFooter);
@@ -3235,7 +3323,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 $html = view('print.customer_invoice_tue_product_service', $array);
                 $htmlFooter = view('print.customer_invoice_tue_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->SetHTMLFooter($htmlFooter);
@@ -3264,7 +3352,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 // return $array;
                 $html = view('print.customer_invoice_template_ksa', $array);
                 $htmlFooter = view('print.customer_invoice_template_ksa_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
                 $mpdf->SetHTMLFooter($htmlFooter);

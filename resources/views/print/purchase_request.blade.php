@@ -8,12 +8,16 @@
             margin-top: 30px;
             margin-bottom: 0px;
         }
-
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
         /* RTL Support for Arabic */
         @if(app()->getLocale() == 'ar')
         body {
             direction: rtl;
             text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
         }
         
         .rtl-text-left {
@@ -68,11 +72,6 @@
             text-align: right !important;
         }
         @endif
-
-        body {
-            font-size: 12px;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-        }
 
         h3 {
             font-size: 24.5px;
@@ -189,7 +188,7 @@
         }
 
         .footer {
-            bottom: 40px;
+            bottom: -45px;
         }
 
         .pagenum:before {
@@ -250,6 +249,18 @@
         <tr style="width:100%">
             <td style="width: 50%">
                 <table>
+
+    <tr>
+        <td width="150px">
+            <span style="font-weight:bold; font-size: 16px;">{{ __('custom.pr_title') }}</span>
+        </td>
+        <td width="10px">
+            <span>:</span>
+        </td>
+        <td>
+            <span>{{ $request->prTitle ? $request->prTitle : '-' }}</span>
+        </td>
+    </tr>
 
                     <tr>
                         <td width="150px">
@@ -313,6 +324,38 @@
                         </td>
                         <td>
                             {{ $request->location_pdf?$request->location_pdf->locationName:'-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.pr_type') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            @php
+                                $prTypeLabels = [
+                                    1 => __('custom.single_source'),
+                                    2 => __('custom.closed_source'),
+                                    3 => __('custom.open_source'),
+                                    4 => __('custom.negotiated')
+                                ];
+                            @endphp
+                            {{ $request->prType ? ($prTypeLabels[$request->prType] ?? '-') : '-' }}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td width="150px">
+                            <span style="font-weight:bold;">{{ __('custom.justification') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight:bold;">:</span>
+                        </td>
+                        <td>
+                            {{ $request->justification ? $request->justification : '-' }}
                         </td>
                     </tr>
                 </table>
@@ -448,5 +491,6 @@
         </table>
     </div>
 </div>
+@include('print.purchase_request_footer')
 </body>
 </html>

@@ -75,7 +75,8 @@ class ApprovalLevel extends Model
         'timeStamp',
         'isDelegation',
         'tenderTypeId',
-        'tenderTypeCode'
+        'tenderTypeCode',
+        'workflow'
     ];
 
     /**
@@ -105,6 +106,7 @@ class ApprovalLevel extends Model
         'is_deleted' => 'integer',
         'tenderTypeId'=> 'integer',
         'tenderTypeCode' => 'string',
+        'workflow' => 'integer',
     ];
 
     /**

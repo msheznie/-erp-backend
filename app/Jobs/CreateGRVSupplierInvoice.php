@@ -50,7 +50,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
             $grvMaster = GRVMaster::find($this->grvMasterAutoID);
             if ($grvMaster) {
                 if ($grvMaster->interCompanyTransferYN == -1) {
-                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur , SUM(landingCost_TransCur) as landingCost_TransCur, VATAmount ,VATAmountLocal, VATAmountRpt ,grvDetailsID,vatMasterCategoryID,vatSubCategoryID,exempt_vat_portion,purchaseOrderMastertID,grvAutoID')->where('grvAutoID', $this->grvMasterAutoID)->first();
+                    $grvDetail = GRVDetails::selectRaw('SUM(landingCost_LocalCur) as landingCost_LocalCur,SUM(landingCost_RptCur) as landingCost_RptCur , SUM(landingCost_TransCur) as landingCost_TransCur, SUM(VATAmount) as VATAmount,SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt ,grvDetailsID,vatMasterCategoryID,vatSubCategoryID,exempt_vat_portion,purchaseOrderMastertID,grvAutoID')->where('grvAutoID', $this->grvMasterAutoID)->first();
                     $today = NOW();
                     $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $grvMaster->companySystemID)->where('bigginingDate', '<', NOW())->where('endingDate', '>', NOW())->first();
 
@@ -188,37 +188,40 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                         $bookInvSuppDet = $bookInvSuppDetRepo->create($supplierInvoiceDetail);
 
                         if($bookInvSuppDet){
-                            $details = [
-                                'bookingSupInvoiceDetAutoID' => $bookInvSuppDet->bookingSupInvoiceDetAutoID,
-                                'bookingSuppMasInvAutoID' => $bookInvSuppDet->bookingSuppMasInvAutoID,
-                                'unbilledgrvAutoID' => $grvMaster->UnbilledGRVAccountSystemID,
-                                'companySystemID' => $grvMaster->companySystemID,
-                                'grvDetailsID' => $grvDetail->grvDetailsID,
-                                'logisticID' => $grvMaster->grvLocation,
-                                'vatMasterCategoryID' => $grvDetail->vatMasterCategoryID,
-                                'vatSubCategoryID' => $grvDetail->vatSubCategoryID,
-                                'exempt_vat_portion' => $grvDetail->exempt_vat_portion,
-                                'purchaseOrderID' => $grvDetail->purchaseOrderMastertID,
-                                'grvAutoID' => $grvDetail->grvAutoID,
-                                'supplierTransactionCurrencyID' => $grvMaster->supplierTransactionCurrencyID,
-                                'supplierTransactionCurrencyER' => 1,
-                                'companyReportingCurrencyID' => $grvMaster->companyReportingCurrencyID,
-                                'companyReportingER' => $grvMaster->companyReportingER,
-                                'localCurrencyID' => $grvMaster->localCurrencyID,
-                                'localCurrencyER' => $grvMaster->localCurrencyER,
-                                'supplierInvoOrderedAmount' => 0,
-                                'supplierInvoAmount' =>$bookingAmountTrans,
-                                'transSupplierInvoAmount' =>$bookingAmountTrans,
-                                'localSupplierInvoAmount' =>$bookingAmountLocal,
-                                'rptSupplierInvoAmount' =>$bookingAmountRpt,
-                                'totTransactionAmount' =>$bookingAmountTrans,
-                                'totLocalAmount' =>$bookingAmountLocal,
-                                'totRptAmount' =>$bookingAmountRpt,
-                                'VATAmount' =>$VATAmount,
-                                'VATAmountLocal' =>$VATAmountLocal,
-                                'VATAmountRpt' =>$VATAmountRpt,
-                            ];
-                            $createInvoiceItemDetail = SupplierInvoiceItemDetail::create($details);
+                            $grvDetailsList = GRVDetails::where('grvAutoID', $this->grvMasterAutoID)->get();
+                            foreach ($grvDetailsList as $grvDetailItem) {
+                                $details = [
+                                    'bookingSupInvoiceDetAutoID' => $bookInvSuppDet->bookingSupInvoiceDetAutoID,
+                                    'bookingSuppMasInvAutoID' => $bookInvSuppDet->bookingSuppMasInvAutoID,
+                                    'unbilledgrvAutoID' => $grvMaster->UnbilledGRVAccountSystemID,
+                                    'companySystemID' => $grvMaster->companySystemID,
+                                    'grvDetailsID' => $grvDetailItem->grvDetailsID,
+                                    'logisticID' => $grvMaster->grvLocation,
+                                    'vatMasterCategoryID' => $grvDetailItem->vatMasterCategoryID,
+                                    'vatSubCategoryID' => $grvDetailItem->vatSubCategoryID,
+                                    'exempt_vat_portion' => $grvDetailItem->exempt_vat_portion,
+                                    'purchaseOrderID' => $grvDetailItem->purchaseOrderMastertID,
+                                    'grvAutoID' => $grvDetailItem->grvAutoID,
+                                    'supplierTransactionCurrencyID' => $grvMaster->supplierTransactionCurrencyID,
+                                    'supplierTransactionCurrencyER' => 1,
+                                    'companyReportingCurrencyID' => $grvMaster->companyReportingCurrencyID,
+                                    'companyReportingER' => $grvMaster->companyReportingER,
+                                    'localCurrencyID' => $grvMaster->localCurrencyID,
+                                    'localCurrencyER' => $grvMaster->localCurrencyER,
+                                    'supplierInvoOrderedAmount' => 0,
+                                    'supplierInvoAmount' =>$grvDetailItem->landingCost_TransCur,
+                                    'transSupplierInvoAmount' =>$grvDetailItem->landingCost_TransCur,
+                                    'localSupplierInvoAmount' =>$grvDetailItem->landingCost_LocalCur,
+                                    'rptSupplierInvoAmount' =>$grvDetailItem->landingCost_RptCur,
+                                    'totTransactionAmount' =>$grvDetailItem->landingCost_TransCur,
+                                    'totLocalAmount' =>$grvDetailItem->landingCost_LocalCur,
+                                    'totRptAmount' =>$grvDetailItem->landingCost_RptCur,
+                                    'VATAmount' =>$grvDetailItem->VATAmount,
+                                    'VATAmountLocal' =>$grvDetailItem->VATAmountLocal,
+                                    'VATAmountRpt' =>$grvDetailItem->VATAmountRpt,
+                                ];
+                                $createInvoiceItemDetail = SupplierInvoiceItemDetail::create($details);
+                            }
                         }
                     }
 

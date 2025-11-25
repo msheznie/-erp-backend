@@ -79,6 +79,7 @@ use App\Models\CustomerReceivePayment;
 use App\Models\QuotationMaster;
 use App\Models\MatchDocumentMaster;
 use App\Traits\AuditLogsTrait;
+use App\Traits\DocumentSystemMappingTrait;
 use App\Models\SalesReturn;
 use App\Models\ItemIssueMaster;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -97,6 +98,7 @@ class CustomerMasterAPIController extends AppBaseController
     private $itemMasterRepository;
 
     use AuditLogsTrait;
+    use DocumentSystemMappingTrait;
 
     public function __construct(ItemMasterRepository $itemMasterRepo,SupplierMasterRepository $supplierMasterRepo,CustomerMasterRepository $customerMasterRepo, UserRepository $userRepo)
     {
@@ -474,7 +476,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function store(CreateCustomerMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
+        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID','primaryCompanySystemID'));
        
         if (isset($input['gl_account'])) {
             unset($input['gl_account']);
@@ -578,6 +580,7 @@ class CustomerMasterAPIController extends AppBaseController
             $input['createdUserID'] = $empId;
 
             $customerMaster = CustomerMasterAPIService::storeCustomerMasterFromAPI($input);
+
         }
 
         if ($customerMaster['status']) {
@@ -3110,6 +3113,154 @@ class CustomerMasterAPIController extends AppBaseController
             ->get();
 
         return $this->sendResponse($customers, trans('custom.customer_master_retrieved_successfully'));
+    }
+
+    public function createCustomerMasterAPI(Request $request){
+
+        $input = $request->all();
+        $header = $request->header('Authorization');
+        $customerMasters = $input['customer_masters'] ?? null;
+
+        if (empty($customerMasters) || !is_array($customerMasters)) {
+            return $this->sendError("customer_masters array is required", 422);
+        }
+
+        if (count($customerMasters) > 50) {
+            return $this->sendError("Maximum 50 customers can be posted at once", 422);
+        }
+
+        $masterDatasets = $errorDocuments = $successDocuments = [];
+        $headerData = ['status' => false , 'errors' => []];
+        $masterIndex = 0;
+        $customerCodeSystemIds = [];
+
+        foreach ($customerMasters as $customerMaster) {
+            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster);
+            
+            if (!$datasetMaster['status']) {
+                $headerData['errors'] = $datasetMaster['data'] ?? [];
+            }
+
+            if (empty($headerData['errors'])) {
+                $datasetMaster['data']['secondary_code'] = $customerMaster['secondary_code'] ?? "";
+                $datasetMaster['data']['initialIndex'] = $masterIndex;
+                $masterDatasets[] = $datasetMaster['data'];
+            } else {
+                $identifier = $customerMaster['secondary_code'] ?? "";
+                $errorDocuments[] = self::createErrorResponseDataArray(
+                    $identifier,
+                    $masterIndex,
+                    $headerData
+                );
+
+                $headerData = ['status' => false , 'errors' => []];
+            }
+
+            $masterIndex++;
+        }
+
+        if(!empty($masterDatasets)) {
+            DB::beginTransaction();
+
+            try {
+                foreach ($masterDatasets as $masterDataset) {
+                    $secondaryCode = $masterDataset['secondary_code'] ?? "";
+                    $initialIndex = $masterDataset['initialIndex'] ?? 0;
+                    
+                    try {
+                        $masterInsert = CustomerMasterAPIService::createCustomerMasterFromAPI($masterDataset, false);
+
+                        if($masterInsert['status']) {
+                            $customerCode = $masterInsert['data']->CutomerCode ?? $masterDataset['CutomerCode'] ?? "";
+                            $customerCodeSystem = $masterInsert['data']->customerCodeSystem ?? null;
+                            
+                            if ($customerCodeSystem) {
+                                $customerCodeSystemIds[] = $customerCodeSystem;
+                            }
+                            
+                            $successDocuments[] = self::createSuccessResponseDataArray(
+                                $customerCodeSystem,
+                                $initialIndex,
+                                $customerCode
+                            );
+                        } else {
+                            $identifier = $masterInsert['data']->customerCodeSystem ?? $secondaryCode;
+                            $errorHeaderData = ['status' => false, 'errors' => [[
+                                'field' => "",
+                                'message' => [$masterInsert['message'] ?? "Customer creation failed"]
+                            ]]];
+                            $errorDocuments[] = self::createErrorResponseDataArray(
+                                $identifier,
+                                $initialIndex,
+                                $errorHeaderData
+                            );
+                        }
+                    } catch (\Exception $e) {
+                        $errorHeaderData = ['status' => false, 'errors' => [[
+                            'field' => "",
+                            'message' => [$e->getMessage()]
+                        ]]];
+                        $error = self::createErrorResponseDataArray(
+                            $secondaryCode,
+                            $initialIndex,
+                            $errorHeaderData
+                        );
+                        $errorDocuments[] = $error;
+                    }
+                }
+
+                DB::commit();
+                
+                if (!empty($customerCodeSystemIds)) {
+                    $documentSystemID = 58;
+                    $this->storeToDocumentSystemMapping($documentSystemID, $customerCodeSystemIds, $header);
+                }
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return $this->sendError("Transaction failed: " . $e->getMessage(), 500);
+            }
+        }
+
+        $returnData = [];
+
+        if(!empty($errorDocuments)) {
+            $returnData[] = [
+                'success' => false,
+                'message' => "Validation Failed",
+                'code' => 422,
+                'errors' => $errorDocuments,
+            ];
+        }
+
+        if(!empty($successDocuments)) {
+            $returnData[] = [
+                'success' => true,
+                'message' => "Customer Master created successfully",
+                'code' => 200,
+                'data' => $successDocuments,
+            ];
+        }
+ 
+        return $this->sendResponse($returnData, trans('custom.customer_master_retrieved_successfully'));
+
+    }
+
+    public static function createErrorResponseDataArray($customerCodeSystem,$masterIndex, $headerData): array {
+        return [
+            'identifier' => [
+                'unique-key' => $customerCodeSystem,
+                'index' => $masterIndex + 1
+            ],
+            'headerData' => [$headerData]
+        ];
+    }
+
+    public static function createSuccessResponseDataArray($customerCodeSystem,$masterIndex,$code): array {
+        return [
+            "Customer master No" => $customerCodeSystem,
+            "Posting" => "Success",
+            "reference" => $code
+        ];
     }
 
 }

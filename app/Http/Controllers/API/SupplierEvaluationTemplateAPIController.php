@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateSupplierEvaluationTemplateAPIRequest;
 use App\Http\Requests\API\UpdateSupplierEvaluationTemplateAPIRequest;
 use App\Models\SupplierEvaluationTemplate;
@@ -394,12 +395,12 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
 
 
 
-
+        $lang = app()->getLocale();
         $time = strtotime("now");
         $fileName = 'evaluation_template_' . $id . '_' . $time . '.pdf';
 
         $html = view('print.evaluation_template', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
         $mpdf->AddPage('P');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->WriteHTML($html);

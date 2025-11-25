@@ -43,15 +43,39 @@ class AccessTokens extends Model
         //'created' => logHistory::class
     ];
 
- /*   public static function boot() {
+    public static function boot() {
         parent::boot();
-        static::created(function($accessToken) {
-            Log::info("Access Tokens Created Event Fire: ".$accessToken);
-            Event:fire('accessTokens.created', $accessToken);
+        static::creating(function($accessToken) {
+            // Generate session_id if not already set
+            if (empty($accessToken->session_id)) {
+                $accessToken->session_id = self::generateSessionId();
+            }
         });
-    }*/
+    }
+
+    /**
+     * Generate a unique session ID starting with SID followed by incrementing number
+     *
+     * @return string
+     */
+    public static function generateSessionId()
+    {
+        // Get the highest session ID number
+        $lastSession = self::where('session_id', 'LIKE', 'SID%')
+            ->selectRaw('CAST(SUBSTRING(session_id, 4) AS UNSIGNED) as session_num')
+            ->orderBy('session_num', 'desc')
+            ->first();
+        
+        $nextNumber = 1;
+        if ($lastSession && isset($lastSession->session_num)) {
+            $nextNumber = (int)$lastSession->session_num + 1;
+        }
+        
+        return 'SID' . $nextNumber;
+    }
 
     public $fillable = [
+        'id',
         'user_id',
         'client_id',
         'name',
@@ -59,7 +83,8 @@ class AccessTokens extends Model
         'revoked',
         'expires_at',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'session_id'
     ];
 
     /**
@@ -75,7 +100,8 @@ class AccessTokens extends Model
         'scopes' => 'string',
         'revoked' => 'boolean',
         'created_at' => 'string',
-        'updated_at' => 'string'
+        'updated_at' => 'string',
+        'session_id' => 'string'
     ];
 
     /**

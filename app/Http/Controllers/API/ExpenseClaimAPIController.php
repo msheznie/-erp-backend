@@ -541,13 +541,13 @@ class ExpenseClaimAPIController extends AppBaseController
                 $expenseClaim->localCurrencyCode = $expenseClaim->company->localcurrency->CurrencyCode;
             }
         }
-
+        $lang = app()->getLocale();
         $array = array('entity' => $expenseClaim);
         $time = strtotime("now");
         $fileName = 'expense_claim' . $id . '_' . $time . '.pdf';
         $html = view('print.expense_claim', $array);
         $htmlFooter = view('print.expense_claim_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);

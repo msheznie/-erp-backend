@@ -29,7 +29,12 @@ use App\Services\AuditLog\ItemMasterAuditService;
 use App\Services\AuditLog\AssetCostAuditService;
 use App\Services\AuditLog\SegmentMasterAuditService;
 use App\Services\AuditLog\SupplierMasterAuditService;
+use App\Services\AuditLog\AuditLogCommonService;
 use Illuminate\Support\Facades\Log;
+use App\Models\AccessTokens;
+use App\Models\Employee;
+use App\Models\ERPLanguageMaster;
+use Illuminate\Support\Str;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -46,13 +51,13 @@ class AuditLogJob implements ShouldQueue
     protected $parentID;
     protected $parentTable;
     protected $user;
-
+    protected $tokenId;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user)
+    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user, $tokenId)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -74,6 +79,7 @@ class AuditLogJob implements ShouldQueue
         $this->parentID = $parentID;
         $this->parentTable = $parentTable;
         $this->user = $user;
+        $this->tokenId = $tokenId;
     }
 
     /**
@@ -167,21 +173,83 @@ class AuditLogJob implements ShouldQueue
         }
 
         if (!empty($data)) {
-            Log::useFiles(storage_path() . '/logs/audit.log');
+            $employee = Employee::find($this->user);
+            $accessToken = AccessTokens::find($this->tokenId);
 
-            Log::info('data:',[
-                        'channel' => 'audit',
-                        'transaction_id' => (string) $this->transactionID,
-                        'table' => $this->table,
-                        'user_name' => $this->user,
-                        'tenant_uuid' => $this->tenant_uuid,
-                        'crudType' => $this->crudType,
-                        'narration' => $this->narration,
-                        'date_time' => date('Y-m-d H:i:s'),
-                        'parent_id' => (string) $this->parentID,
-                        'parent_table' => $this->parentTable,
-                        'data' => json_encode($data),
-                    ]);
+            $narrationVariables = $this->narration;
+            
+            $languages = self::getActiveLanguages();
+
+            $docCode = AuditLogCommonService::getDocCompanyCode(
+                $this->transactionID,
+                $this->table,
+                $this->parentID,
+                $this->parentTable,
+                'docCodeColumn'
+            );
+
+            $companySystemId = AuditLogCommonService::getDocCompanyCode(
+                $this->transactionID,
+                $this->table,
+                $this->parentID,
+                $this->parentTable,
+                'companySystemIdColumn'
+            );
+
+            Log::useFiles(storage_path() . '/logs/audit.log');
+            
+            foreach ($languages as $locale) {
+                $translatedNarration = AuditLogCommonService::translateNarration(
+                    $narrationVariables,  
+                    $this->table,
+                    $this->crudType,
+                    $locale,
+                    $this->parentTable  
+                );
+                
+                $logData = [
+                    'channel' => 'audit',
+                    'transaction_id' => (string) $this->transactionID,
+                    'table' => $this->table,
+                    'user_name' => $employee ? $employee->empName : '-',
+                    'role' => $employee ? Employee::getDesignation($employee->employeeSystemID ?? null) : '-',
+                    'employeeId' => $employee ? $employee->empID : '-',
+                    'tenant_uuid' => $this->tenant_uuid,
+                    'crudType' => $this->crudType,
+                    'narration' => $translatedNarration,
+                    'session_id' => $accessToken ? $accessToken->session_id : '-',
+                    'date_time' => date('Y-m-d H:i:s'),
+                    'module' => 'finance',
+                    'parent_id' => (string) $this->parentID,
+                    'parent_table' => $this->parentTable,
+                    'data' => json_encode($data),
+                    'locale' => $locale,  
+                    'company_system_id' => $companySystemId,
+                    'doc_code' => $docCode,
+                    'log_uuid' => bin2hex(random_bytes(16)),
+                ];
+                
+                Log::info('data:', $logData);
+            }
+        }
+    }
+    
+    /**
+     * Get active languages from system
+     * 
+     * @return array
+     */
+    private static function getActiveLanguages()
+    {
+        try {
+            $languages = ERPLanguageMaster::where('isActive', 1)
+                ->pluck('languageShortCode')
+                ->toArray();
+            
+            return !empty($languages) ? $languages : ['en'];
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch active languages: ' . $e->getMessage());
+            return ['en']; 
         }
     }
 }

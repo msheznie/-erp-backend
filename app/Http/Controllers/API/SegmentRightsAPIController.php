@@ -218,6 +218,7 @@ class SegmentRightsAPIController extends AppBaseController
     public function getSegmentRightEmployees(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input,['selectedCompanyID']);
         $selectedCompanyID = isset($input['selectedCompanyID']) ? $input['selectedCompanyID'] : false;
         $servicelineSystemID = isset($input['servicelineSystemID']) ? $input['servicelineSystemID'] : false;
         $employeeSystemID = isset($input['employeeSystemID']) ? $input['employeeSystemID'] : false;

@@ -122,7 +122,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        //$input = $this->convertArrayToValue($input);
+        $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
@@ -1156,7 +1156,8 @@ class ItemMasterAPIController extends AppBaseController
                     $itemMasterCategoryType->save();
                 }
 
-                $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $newValue['primaryCode']." has updated", "U", $newValue, $previosValue);
+                $narrationVariables = $newValue['primaryCode'];
+                $this->auditLog($db, $input['itemCodeSystem'],$uuid, "itemmaster", $narrationVariables, "U", $newValue, $previosValue);
            
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],

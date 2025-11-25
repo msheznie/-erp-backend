@@ -53,7 +53,8 @@ class Revision extends Model
         'created_by',
         'modified_by',
         'created_at',
-        'modified_at'
+        'modified_at',
+        'newSubmissionDate'
     ];
 
     /**
@@ -78,7 +79,8 @@ class Revision extends Model
         'created_by' => 'integer',
         'modified_by' => 'integer',
         'created_at' => 'datetime',
-        'modified_at' => 'datetime'
+        'modified_at' => 'datetime',
+        'newSubmissionDate' => 'date'
     ];
 
     /**
@@ -164,11 +166,11 @@ class Revision extends Model
     {
         switch ($this->revisionStatus) {
             case 1:
-                return 'Active';
+                return 'Not Started';
             case 2:
-                return 'Completed';
+                return 'In Progress';
             case 3:
-                return 'Cancelled';
+                return 'Submitted to Finance';
             default:
                 return 'Unknown';
         }

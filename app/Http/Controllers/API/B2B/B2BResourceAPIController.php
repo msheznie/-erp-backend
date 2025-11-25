@@ -130,7 +130,7 @@ class B2BResourceAPIController extends AppBaseController
             $batchNo = Carbon::make($rs['payment_voucher']['BPVdate'])->year . '\\' . end($documentCode) . '\\' . $lastPart;
             $detailObject->setCreditAccountNo($creditAccountNo);
             $detailObject->setTransactionReference($batchNo);
-            $detailObject->setDebitNarrative(substr($rs['payment_voucher']['BPVNarration'], 0, 35));
+            $detailObject->setDebitNarrative(substr(htmlspecialchars_decode($rs['payment_voucher']['BPVNarration']), 0, 35));
             $detailObject->setDebitNarrative2("");
             $detailObject->setCreditNarrative("");
             $detailObject->setPaymentDetails1("800");

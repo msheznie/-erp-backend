@@ -18,7 +18,9 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\CommonJobService;
 use App\helper\CompanyService;
+use App\Jobs\UpdateUsersLoginTypeJob;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateEmployeeAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeAPIRequest;
@@ -42,6 +44,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
+use PSpell\Config;
 use Response;
 use App\Models\BookInvSuppMaster;
 use App\Models\CustomerReceivePayment;
@@ -1086,5 +1089,45 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
 
         return $converted;
     }
+
+    public function updateUsersLoginType() {
+        $tenants = DB::table('tenant')->where('is_active', 1)->get();;
+
+        if(count($tenants) == 0){
+            Log::error("No tenants found");
+            return;
+        }
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            try {
+                $loginType = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();
+
+                if ($loginType && isset($loginType->loginType)) {
+                    // Dispatch job to update users login type
+                    UpdateUsersLoginTypeJob::dispatch($tenantDb, $loginType->loginType, $tenant->id);
+                } else {
+                    Log::warning("No login type found for tenant: " . $tenantDb);
+                }
+
+            } catch (\Exception $e) {
+                Log::error("Error dispatching update login type job for tenant: " . $tenantDb . " - " . $e->getMessage());
+            }
+        }
+
+        return 'Users login type updated successfully';
+    }
     
+    public function getNotDischargedEmployeeswithoutCompany() {
+        $employees = Employee::where('discharegedYN', 0)->get();
+        return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+    }
+
+    public function getNotDischargedEmployeesWithCompany(Request $request) {
+        $input = $request->all();
+        $companyId = $input['selectedCompanyId'];
+        $employees = Employee::where('discharegedYN', 0)->where('empCompanySystemID', $companyId)->get();
+        return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+    }
 }

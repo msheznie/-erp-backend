@@ -5,6 +5,7 @@ namespace App\Services\API;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\CustomerInvoice;
+use App\helper\Helper;
 
 class CustomerInvoiceReceiptDetailsService
 {
@@ -15,6 +16,7 @@ class CustomerInvoiceReceiptDetailsService
         $customerInvoiceDetailsObj = self::setAccountLedgerDetails($details,$customerInvoiceDetailsObj);
         $customerInvoiceDetailsObj = self::setAmountDetails($details,$customerInvoiceDetailsObj,$receiptVoucher);
         $customerInvoiceDetailsObj = self::setCompanyDetails($receiptVoucher,$customerInvoiceDetailsObj);
+        
         $validation = self::validateTotalAmount($details,$customerInvoiceDetailsObj);
         if($validation['status'] === 'success') {
             $receiptVoucher->details()->create($customerInvoiceDetailsObj->toArray());
@@ -64,10 +66,18 @@ class CustomerInvoiceReceiptDetailsService
 
     private static function setAmountDetails($details,$customerInvoiceDetailsObj,$receiptVoucher):CustomerReceivePaymentDetail {
 
-        $receivedAmountConversion = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $customerInvoiceDetailsObj->custReceivePaymentAutoID, $details['receiptAmount']);
-        $customerInvoiceDetailsObj->receiveAmountRpt = \Helper::roundValue($receivedAmountConversion['reportingAmount']);
-        $customerInvoiceDetailsObj->receiveAmountLocal = \Helper::roundValue($receivedAmountConversion['localAmount']);
+        $receivedAmountConversion = Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $customerInvoiceDetailsObj->custReceivePaymentAutoID, $details['receiptAmount']);
+        $customerInvoiceDetailsObj->receiveAmountRpt = Helper::roundValue($receivedAmountConversion['reportingAmount']);
+        $customerInvoiceDetailsObj->receiveAmountLocal = Helper::roundValue($receivedAmountConversion['localAmount']);
         $customerInvoiceDetailsObj->receiveAmountTrans = $details['receiptAmount'];
+        
+        if (isset($details['discountGiven']) && $details['discountGiven'] !== null) {
+            $customerInvoiceDetailsObj->discount_given = -$details['discountGiven'];
+            $customerInvoiceDetailsObj->net_amount = $details['receiptAmount'] - $details['discountGiven'];
+        } else {
+            $customerInvoiceDetailsObj->net_amount = $details['receiptAmount'];
+        }
+        
         $totalAmountReceived = CustomerReceivePaymentDetail::where('arAutoID',$customerInvoiceDetailsObj->arAutoID)->sum('receiveAmountTrans');
         $customerInvoiceDetailsObj->custbalanceAmount = ($customerInvoiceDetailsObj->bookingAmountTrans - ($totalAmountReceived + $customerInvoiceDetailsObj->receiveAmountTrans));
         return $customerInvoiceDetailsObj;

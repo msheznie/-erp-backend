@@ -3829,13 +3829,13 @@ ORDER BY
         $isRTL = ($lang === 'ar');
         
         // Configure mPDF for RTL support if Arabic
-        $mpdfConfig = [
+        $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
             'mode' => 'utf-8', 
             'format' => 'A4', 
             'setAutoTopMargin' => 'stretch', 
             'autoMarginPadding' => -10
-        ];
+        ], $lang);
         
         if ($isRTL) {
             $mpdfConfig['direction'] = 'rtl';
