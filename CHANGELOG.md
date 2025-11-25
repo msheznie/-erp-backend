@@ -1,6 +1,64 @@
 # Changelog
 
 
+## [10.91.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.1...v10.91.2) (2025-11-24)
+
+
+### Miscellaneous Chores
+
+* release 10.91.1 ([5c39e77](https://github.com/pbsgears/Gears_BackEnd/commit/5c39e7773ecb29b763f7bd49ebcada28c6e4698c))
+
+## [10.91.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.0...v10.91.1) (2025-11-19)
+
+
+### Miscellaneous Chores
+
+* release 10.91.0 ([8114f8f](https://github.com/pbsgears/Gears_BackEnd/commit/8114f8fc70a76549048f12ede0789cf8a4482c8a))
+
+## [10.91.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.90.0...v10.91.0) (2025-11-13)
+
+
+### Features
+
+* **common:** verify backend translation ([#9247](https://github.com/pbsgears/Gears_BackEnd/issues/9247)) ([b7078e4](https://github.com/pbsgears/Gears_BackEnd/commit/b7078e444fe4b43314453664c69188164b73b544))
+
+## [10.90.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.1...v10.90.0) (2025-11-09)
+
+
+### Features
+
+* **Attendance:** POMCO | Mobile Issue  [GHR-8478] ([#9182](https://github.com/pbsgears/Gears_BackEnd/issues/9182)) ([c69d8b3](https://github.com/pbsgears/Gears_BackEnd/commit/c69d8b36c420411f6cb416062f4d4295f05536b9))
+
+## [10.89.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.0...v10.89.1) (2025-10-28)
+
+
+### Bug Fixes
+
+* **procurement:** issue on PO print fixes [GCP-16199] ([#9161](https://github.com/pbsgears/Gears_BackEnd/issues/9161)) ([e44ef26](https://github.com/pbsgears/Gears_BackEnd/commit/e44ef2667f932b90e11155e3b1921134f81a14a7))
+
+## [10.89.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.2...v10.89.0) (2025-10-25)
+
+
+### Features
+
+* **Shift:** Portal | EA | Past date shift changes for pulled attendance [GHR-6372] ([#9122](https://github.com/pbsgears/Gears_BackEnd/issues/9122)) ([e8654d7](https://github.com/pbsgears/Gears_BackEnd/commit/e8654d719513467b6977097ae45ace9a33346c57))
+
+## [10.88.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.1...v10.88.2) (2025-10-22)
+
+
+### Miscellaneous Chores
+
+* release 10.88.1 ([de5fe67](https://github.com/pbsgears/Gears_BackEnd/commit/de5fe67d893e4384466418f0475a30c103048e56))
+
+## [10.88.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.88.0...v10.88.1) (2025-10-19)
+
+
+### Bug Fixes
+
+* **accounts receivable:** Fixed rv duplicated issue [GCP-15889] ([#9110](https://github.com/pbsgears/Gears_BackEnd/issues/9110)) ([32c233a](https://github.com/pbsgears/Gears_BackEnd/commit/32c233a9a3a34ead30db2314b8223665f93a681a))
+* **general ledger:** GRV Print Showing Error message[GCP-15873] ([#9097](https://github.com/pbsgears/Gears_BackEnd/issues/9097)) ([8e72fbd](https://github.com/pbsgears/Gears_BackEnd/commit/8e72fbd77e02cb671128d29b7f0b279579daf70e))
+* **procurement:** PR print not wokring issue fixes [GCP-15898] ([#9112](https://github.com/pbsgears/Gears_BackEnd/issues/9112)) ([350ecd8](https://github.com/pbsgears/Gears_BackEnd/commit/350ecd8a094832cff85c3f40004c8d3feb38844a))
+
 ## [10.87.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.86.1...v10.87.0) (2025-10-11)
 
 

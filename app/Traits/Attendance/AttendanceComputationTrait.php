@@ -286,7 +286,7 @@ trait AttendanceComputationTrait{
 
     function lateHoursComputation(){
 
-        if (!$this->isShiftHoursSet) {
+        if (!$this->isShiftHoursSet || !$this->clockIn) {
             return false;
         }
 
