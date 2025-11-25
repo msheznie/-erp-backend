@@ -392,23 +392,25 @@
                             @endif
                         </td>
                     </tr>
-                    <tr>
-                        <td width="50px">
-                            <span style="font-weight: bold;">{{ __('custom.sales_type') }}</span>
-                        </td>
-                        <td width="10px">
-                            <span style="font-weight: bold;">:</span>
-                        </td>
-                        <td>
-                            @if(isset($masterdata->salesType) && $masterdata->salesType == 1)
-                                {{ __('custom.ar_goods_and_services') }}
-                            @elseif(isset($masterdata->salesType) && $masterdata->salesType == 2)
-                                {{ __('custom.ar_subscription') }}
-                            @else
-                                {{ __('custom.unknown') }}
-                            @endif
-                        </td>
-                    </tr>
+                    @if(isset($masterdata->salesType) && $masterdata->salesType > 0)
+                        <tr>
+                            <td width="50px">
+                                <span style="font-weight: bold;">{{ __('custom.sales_type') }}</span>
+                            </td>
+                            <td width="10px">
+                                <span style="font-weight: bold;">:</span>
+                            </td>
+                            <td>
+                                @if(isset($masterdata->salesType) && $masterdata->salesType == 1)
+                                    {{ __('custom.ar_goods_and_services') }}
+                                @elseif(isset($masterdata->salesType) && $masterdata->salesType == 2)
+                                    {{ __('custom.ar_subscription') }}
+                                @else
+                                    {{ __('custom.unknown') }}
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                 </table>
             </td>
         </tr>
