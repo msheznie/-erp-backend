@@ -755,6 +755,12 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
         }
 
+        if(isset($input['mol_applicable']) && ($input['mol_applicable'] == 1 || $input['mol_applicable'] === true || $input['mol_applicable'] === 'yes')){
+            if(!isset($input['mol_payment_mode']) || (isset($input['mol_payment_mode']) && $input['mol_payment_mode'] == null)){
+                return $this->sendError(trans('custom.mol_payment_mode_is_required'));
+            }
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -896,6 +902,12 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($input['omanization']) && ($input['omanization'] > 100))
         {
             return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
+        }
+
+        if(isset($input['mol_applicable']) && ($input['mol_applicable'] == 1 || $input['mol_applicable'] === true || $input['mol_applicable'] === 'yes')){
+            if(!isset($input['mol_payment_mode']) || (isset($input['mol_payment_mode']) && $input['mol_payment_mode'] == null)){
+                return $this->sendError(trans('custom.mol_payment_mode_is_required'));
+            }
         }
 
         if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
