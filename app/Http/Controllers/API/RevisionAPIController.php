@@ -442,7 +442,7 @@ class RevisionAPIController extends AppBaseController
             $revision = $this->revisionRepository->create($revisionData);
 
             // Update budget planning status to "Sent Back for Revision"
-            $budgetPlanning->update(['financeTeamStatus' => 3]);
+            $budgetPlanning->update(['financeTeamStatus' => 3, 'workStatus' => 1]);
 
             // Handle attachments if provided
             if (isset($input['attachments']) && is_array($input['attachments']) && !empty($input['attachments'])) {
