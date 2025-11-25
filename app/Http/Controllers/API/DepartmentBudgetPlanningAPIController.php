@@ -186,7 +186,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy','revisions'])->findWithoutFail($id);
 
-        $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($departmentBudgetPlanning->submissionDate)->lessThan(Carbon::now());
+        $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
+
+        $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
         if (empty($departmentBudgetPlanning)) {
             return $this->sendError(trans('custom.department_budget_planning_not_found'));
         }
@@ -1225,7 +1227,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         if(!empty($input['timeExtensionRequests'])) {
             if(!is_null(collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'])) {
                 $newDate = collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'];
-                $newDate = Carbon::parse($newDate)->addDays(1)->format('Y-m-d');
+                $newDate = Carbon::parse($newDate)->format('Y-m-d');
             }
         }
 

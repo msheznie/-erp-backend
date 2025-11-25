@@ -56,4 +56,3 @@ class BudgetDeadlineNotification extends Command
         $this->info('Budget deadline notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }
-

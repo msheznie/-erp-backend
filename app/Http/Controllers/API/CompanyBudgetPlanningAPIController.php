@@ -1052,7 +1052,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $departmentsWithoutHOD = [];
         $departmentsWithoutBudgetTemplate = [];
         $departmentsWithoutSegments = [];
-        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
+        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('isActive', 1)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
 
 
         $workflow = WorkflowConfiguration::find($data['workflow']);
@@ -1195,7 +1195,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegation-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
             }
 
             return $this->sendResponse([
