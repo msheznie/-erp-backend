@@ -119,11 +119,11 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        if($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']){
-        $checkForActiveApprovalLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
-                                                    ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
-                                                    ->where('isActive', -1)
-                                                    ->first();
+        if(($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']) || (isset($input['isPRTypeApproval']) && $input['isPRTypeApproval'] == -1)) {
+            $checkForActiveApprovalLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
+                ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
+                ->where('isActive', -1)
+                ->first();
 
             if ($checkForActiveApprovalLevel) {
              return $this->sendError(trans('custom.there_is_an_approval_level_created_for_this_docume'), 500);
