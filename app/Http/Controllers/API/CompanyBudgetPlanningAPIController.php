@@ -1048,10 +1048,14 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $departmentsWithoutHOD = [];
         $departmentsWithoutBudgetTemplate = [];
         $departmentsWithoutSegments = [];
+        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
 
-        if($data['budgetType'] == 1) {
 
-           foreach($activeDepartments as $department) {
+        $workflow = WorkflowConfiguration::find($data['workflow']);
+
+        if($workflow->method == 1) {
+
+           foreach($finalDepartments as $department) {
                 $segments = CompanyDepartmentSegment::where('departmentSystemID', $department->departmentSystemID)
                     ->where('isActive', 1)
                     ->get();
@@ -1064,12 +1068,12 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     $errorMessage = 'The segments are not assigned for the following department(s)';
         
                     $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutSegments);
-                    return $this->sendError($errorMessage, 404, ['template_error']);
+                    return $this->sendError($errorMessage, 404,  ['hod_error']);
                 }
             }
         }
 
-        foreach ($activeDepartments as $department) {
+        foreach ($finalDepartments as $department) {
             // Check if this is a child department (has parentDepartmentID)
             $isChildDepartment = !empty($department->parentDepartmentID);
             
@@ -1086,7 +1090,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
 
-        foreach ($allDepartments as $department) {
+        foreach ($finalDepartments as $department) {
             $budgetTemplate = DepartmentBudgetTemplate::where('departmentSystemID', $department->departmentSystemID)
                 ->where('isActive', 1)
                 ->first();
