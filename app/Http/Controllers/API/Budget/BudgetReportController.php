@@ -39,6 +39,7 @@ class BudgetReportController extends AppBaseController
             ->with('isGroup', $checkIsGroup->isGroup)
             ->with('currencyID', "")
             ->with('total', $output['total'])
+            ->with('date', $output['date'])
             ->with('decimalPlace', 2)
             ->with('currencyCode', "")
             ->addIndexColumn()
