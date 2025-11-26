@@ -62,8 +62,8 @@ Route::post('getRevisions', 'RevisionAPIController@getRevisions')->name('Get rev
 Route::post('completeRevision', 'RevisionAPIController@completeRevision')->name('Complete revision');
 Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
 Route::post('getRevisionDetails', 'RevisionAPIController@getRevisionDetails')->name('Get revision details with attachments');
-Route::get('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
-Route::get('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
+Route::post('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
+Route::post('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
 Route::resource('revisions', 'RevisionAPIController');
 
 // Department Budget Planning Details Routes
