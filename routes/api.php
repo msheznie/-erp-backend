@@ -1019,6 +1019,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
         });
     });
+    });
     
     /*
      * Start SRM related routes
