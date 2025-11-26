@@ -9765,5 +9765,6 @@ return
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'Asset Depreciation PDF report has been sent to queue',
     'asset_depreciation_report_pdf_generated' => 'Asset Depreciation Report PDF has been generated.',
     'mol_contribution' => 'Mol Contribution',
-    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.'
+    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.',
+    'pr_type_is_not_selected' => 'PR Type is mandatory because approval is enabled based on the PR Type.'
   ];
