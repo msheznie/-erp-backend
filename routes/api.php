@@ -1000,27 +1000,24 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('updateRoleRoutes', 'RouteAPIController@updateRoleRoutes');
 
         require __DIR__.'/../routes/hrms/jobRoutes.php';
-
-        Route::group(['middleware' => 'max_memory_limit'], function () {
-            Route::group(['middleware' => 'max_execution_limit'], function () {
-                Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
-            });
-        });
-
-        Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
-        Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
-        Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
-        Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
-        Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
     });
 
     Route::group(['middleware' => ['tenantById', 'cors']], function (){
         Route::get('pull_company_details', 'POS\PosAPIController@pullCompanyDetails');
         Route::group(['middleware' => ['thirdPartyApis', 'thirdPartyApiLogger', 'hrms_employee']], function () {
-            Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
-            Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
-            Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
-            require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
+        Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
+        Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
+        Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
+        require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
+        Route::group(['middleware' => ['max_memory_limit']], function () {
+            Route::group(['middleware' => ['max_execution_limit']], function () {
+                Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
+            });
+        Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
+        Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
+        Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
+        Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
+        Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
         });
     });
     
