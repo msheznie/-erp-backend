@@ -832,7 +832,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
 
-        $query = \App\Models\DeptBudgetPlanningTimeRequest::with(['creator'])
+        $query = \App\Models\DeptBudgetPlanningTimeRequest::with(['creator', 'reviewer'])
             ->forBudgetPlanning($budgetPlanningId)
             ->select([
                 'id',
@@ -872,8 +872,16 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             ->addColumn('created_by_name', function ($row) {
                 return $row->creator ? $row->creator->name : 'Unknown';
             })
+            ->addColumn('review_by', function ($row) {
+                if ($row->reviewer) {
+                    $fullName = $row->reviewer->empFullName ?? '';
+                    $empID = $row->reviewer->empID ?? '';
+                    return $fullName . ($empID ? ' (' . $empID . ')' : '');
+                }
+                return '';
+            })
             ->addColumn('new_time', function ($row) {
-                return isset($row->new_time) ? $row->new_time : $row->current_submission_date;
+                return isset($row->new_time) ? $row->new_time : $row->date_of_request;
             })
             ->addColumn('attachment_count', function ($row) {
                 return $row->attachments_count;
