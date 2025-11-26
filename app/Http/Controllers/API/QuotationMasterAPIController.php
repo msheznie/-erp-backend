@@ -1592,6 +1592,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
@@ -1607,6 +1608,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
