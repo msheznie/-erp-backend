@@ -9599,7 +9599,7 @@ return
     'invalid_rrv_setup_schedule_id' => 'معرف الجدول المتكرر غير صالح',
     'recurring_voucher_setup_schedule_not_found' => 'الجدول المتكرر غير موجود',
     'document_not_approved' => 'المستند غير موافق عليه',
-
+    'pr_type_is_not_selected' => 'نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.',
     'file_type_required' => 'نوع الملف مطلوب.',
     'file_type_string'   => 'يجب أن يكون نوع الملف نصًا.',
     'file_size_required' => 'حجم الملف مطلوب.',
@@ -9647,5 +9647,5 @@ return
     'direct_grv' => 'إيصال استلام مباشر',
     'supplier_invoice' => 'فاتورة المورد',
     'sme' => 'صغيرة ومتوسطة',
-    'llc' => 'ذ.م.م',
+    'llc' => 'ذ.م.م'
   ];

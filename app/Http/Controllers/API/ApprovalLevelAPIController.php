@@ -340,6 +340,9 @@ class ApprovalLevelAPIController extends AppBaseController
                                                         });
                                                     }
                                                 )
+                                               ->when(isset($input['documentSystemID']) && $input['documentSystemID'] == 1 && isset($input['prType']), function ($query) use ($input) {
+                                                    $query->where('prType', $input['prType']);
+                                                })
                                                ->where('isActive', -1)
                                                ->first();
 

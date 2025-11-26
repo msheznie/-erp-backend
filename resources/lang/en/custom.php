@@ -9754,4 +9754,5 @@ return
     'supplier_invoice' => 'Supplier Invoice',
     'sme' => 'SME',
     'llc' => 'LLC',
+    'pr_type_is_not_selected' => 'PR Type is mandatory because approval is enabled based on the PR Type.'
   ];
