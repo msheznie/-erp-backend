@@ -872,6 +872,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             ->addColumn('created_by_name', function ($row) {
                 return $row->creator ? $row->creator->name : 'Unknown';
             })
+            ->addColumn('reviewed_by', function ($row) {
+                return null;
+            })
             ->addColumn('review_by', function ($row) {
                 if ($row->reviewer) {
                     $fullName = $row->reviewer->empFullName ?? '';
