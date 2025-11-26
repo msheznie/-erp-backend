@@ -420,10 +420,11 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }else {
                 if($input['workStatus']) {
                     $latestRevision = $departmentBudgetPlanning->revisions->where('revisionStatus', $input['workStatus'] - 1)->last();
-
-                    Revision::find($latestRevision->id)->update([
-                        'revisionStatus' => $input['workStatus']
-                    ]);
+                    if($latestRevision) {
+                        Revision::find($latestRevision->id)->update([
+                            'revisionStatus' => $input['workStatus']
+                        ]);
+                    }
 
                 }
 
@@ -506,9 +507,10 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             }
 
+
             // Update only the status field
             $updateData = ['workStatus' => $input['workStatus']];
-            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->update($updateData, $input['budgetPlanningId']);
+            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('masterBudgetPlannings','budgetPlanningDetails')->update($updateData, $input['budgetPlanningId']);
 
             if ($input['workStatus'] == 2 && !empty($departmentBudgetPlanning->budgetPlanningDetails)) {
 
@@ -526,7 +528,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             if($input['workStatus'] == 3)
             {
                 $budgetPlanningNotificationService = new BudgetNotificationService();
-                $budgetPlanningNotificationService->sendNotification($departmentBudgetPlanning->id,'',$budgetPlanningDetails->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $budgetPlanningNotificationService->sendNotification($departmentBudgetPlanning->id,'',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
             }
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
