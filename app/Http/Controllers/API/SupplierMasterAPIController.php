@@ -53,6 +53,8 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierSubCategoryAssign;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\YesNoSelection;
+use App\Models\ItemAssigned;
+use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
 use App\Models\SupplierMasterRefferedBack;
@@ -1459,6 +1461,56 @@ class SupplierMasterAPIController extends AppBaseController
             'segment' => $segment
         );
         return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
+    }
+
+    /**
+     * Get ICV Suppliers and Items
+     * GET /getICVSuppliersAndItems
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getICVSuppliersAndItems(Request $request)
+    {
+        $companyId = $request->selectedCompanyId;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $company = Company::find($companyId);
+        $companyName = $company ? $company->CompanyName : '';
+        $currencyName = '';
+        $companyCountry = $company ? $company->companyCountry : null;
+        
+        if ($company && $company->localCurrencyID) {
+            $currency = CurrencyMaster::find($company->localCurrencyID);
+            $currencyName = $currency ? $currency->CurrencyCode : '';
+        }
+  
+        $supplierMaster = SupplierAssigned::whereHas('master', function ($query) use ($companyID, $companyCountry) {
+            $query->whereIN('companySystemID', $companyID)->where('approvedYN', 1);
+            if ($companyCountry) {
+                $query->where('supplierCountryID', $companyCountry);
+            }
+        })
+        ->groupBy('supplierCodeSytem')
+        ->get();
+
+        $items = ItemAssigned::whereIN('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->groupBy('itemCodeSystem')
+            ->get();
+
+        $output = array(
+            'suppliers' => $supplierMaster,
+            'items' => $items,
+            'companyName' => $companyName,
+            'currencyName' => $currencyName
+        );
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
 
