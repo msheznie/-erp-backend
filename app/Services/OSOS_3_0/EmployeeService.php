@@ -221,14 +221,17 @@ class EmployeeService
             $data->servicePeriod = $periodDisplay;
         }
 
-         $this->employeeData = [
+            $imageData = $this->getProfileImageData($data->imageUrl);
+
+        $this->employeeData = [
              "Code" => $data->ECode,
              "Name" => $data->Ename2,
              "EmployeeStatus" => $data->empStatus,
              "DateOfJoined" => $data->dateOfJoin,
              "ServicePeriod" => $data->servicePeriod,
              "DateOfBirth" => $data->dateOfBirth,
-             "ImageUrl" => $data->imageUrl,
+             "profileImage" => $imageData['profileImage'],
+             "profileImageExtension" => $imageData['profileImageExtension'],
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => false,
