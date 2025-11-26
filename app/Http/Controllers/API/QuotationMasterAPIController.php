@@ -812,7 +812,13 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isYesNO', 1)
             ->exists();
 
+        $salesTypes = [
+                ['value' => 1, 'label' => __('custom.ar_goods_and_services')],
+                // ['value' => 2, 'label' => __('custom.ar_subscription')],
+            ];
+
         $output = array(
+            'salesTypes' => $salesTypes,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
