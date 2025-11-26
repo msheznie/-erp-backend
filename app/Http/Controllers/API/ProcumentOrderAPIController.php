@@ -3564,7 +3564,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
         $time = strtotime("now");
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
-        
+        $lang = app()->getLocale();
+
         // Configure mPDF for RTL support
         $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 

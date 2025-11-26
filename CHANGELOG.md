@@ -1,6 +1,34 @@
 # Changelog
 
 
+## [10.92.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.2...v10.92.0) (2025-11-25)
+
+
+### Miscellaneous Chores
+
+* release 10.92.0 ([f6e8fd1](https://github.com/pbsgears/Gears_BackEnd/commit/f6e8fd156673b187366bb96211135ce02f68cb8a))
+
+## [10.91.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.1...v10.91.2) (2025-11-24)
+
+
+### Miscellaneous Chores
+
+* release 10.91.1 ([5c39e77](https://github.com/pbsgears/Gears_BackEnd/commit/5c39e7773ecb29b763f7bd49ebcada28c6e4698c))
+
+## [10.91.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.0...v10.91.1) (2025-11-19)
+
+
+### Miscellaneous Chores
+
+* release 10.91.0 ([8114f8f](https://github.com/pbsgears/Gears_BackEnd/commit/8114f8fc70a76549048f12ede0789cf8a4482c8a))
+
+## [10.91.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.90.0...v10.91.0) (2025-11-13)
+
+
+### Features
+
+* **common:** verify backend translation ([#9247](https://github.com/pbsgears/Gears_BackEnd/issues/9247)) ([b7078e4](https://github.com/pbsgears/Gears_BackEnd/commit/b7078e444fe4b43314453664c69188164b73b544))
+
 ## [10.90.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.89.1...v10.90.0) (2025-11-09)
 
 
