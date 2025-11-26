@@ -98,7 +98,8 @@ class FinancialReportAPIController extends AppBaseController
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
         $departments1 = collect(\Helper::getCompanyServicelineWithMaster($selectedCompanyId));
-      
+        $years = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $selectedCompanyId)->get();
+
 
         $departments2Info = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
                                             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
@@ -227,7 +228,8 @@ class FinancialReportAPIController extends AppBaseController
             'companiesByGroup' => $companiesByGroup,
             'isGroup' => $isGroup,
             'columns' => $columns,
-            'defaultSelectedColumns' => ReportCustomColumn::whereIn('id',$defaultSelectedColumns)->get()
+            'defaultSelectedColumns' => ReportCustomColumn::whereIn('id',$defaultSelectedColumns)->get(),
+            'years' => $years,
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
@@ -560,13 +562,26 @@ class FinancialReportAPIController extends AppBaseController
             case 'BCD':
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'companyFinanceYearID' => 'required',
                     'glCodes' => 'required',
                     'currencyID' => 'required',
                     'selectedServicelines' => 'required',
                     // 'contracts' => 'required'
                 ]);
+
+
+
+                $companyFinanceYearID = $request->companyFinanceYearID;
+
+                $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
+
+                if (empty($companyFinanceYear)) {
+                    return $this->sendError(trans('custom.finance_year_not_found'));
+                }
+
+                $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+                $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+     
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
