@@ -167,6 +167,7 @@ class DeliveryOrderAPIController extends AppBaseController
             'serviceLineSystemID.required' => trans('custom.segment_field_is_required'),
             'wareHouseSystemCode.required' => trans('custom.warehouse_field_is_required'),
             'deliveryOrderDate.required' => trans('custom.document_date_required'),
+            'salesType.required' => trans('custom.please_select_sales_type'),
         ];
 
         $validator = \Validator::make($input, [
@@ -179,7 +180,8 @@ class DeliveryOrderAPIController extends AppBaseController
             'companyFinancePeriodID' => 'required',
             'serviceLineSystemID' => 'required',
             'wareHouseSystemCode' => 'required',
-            'deliveryOrderDate' => 'required|date'
+            'deliveryOrderDate' => 'required|date',
+            'salesType' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
@@ -188,7 +190,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
         $input['deliveryOrderDate'] = new Carbon($input['deliveryOrderDate']);
 
-        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','companyFinancePeriodID','companyFinanceYearID'));
+        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','companyFinancePeriodID','companyFinanceYearID','salesType'));
 
         $CompanyFinanceYear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->first();
         $input['FYBiggin'] = $CompanyFinanceYear->bigginingDate;
@@ -409,7 +411,7 @@ class DeliveryOrderAPIController extends AppBaseController
         }
 
 
-        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
+        $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID','salesType'));
         $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
@@ -808,6 +810,11 @@ class DeliveryOrderAPIController extends AppBaseController
         $taxData = TaxMaster::where('taxType', 2)
                             ->where('companySystemID', $companyId)
                             ->get();
+        $salesTypes = [
+                ['value' => 1, 'label' => __('custom.ar_goods_and_services')],
+                // ['value' => 2, 'label' => __('custom.ar_subscription')],
+            ];
+            
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -822,7 +829,8 @@ class DeliveryOrderAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'orderType' => $orderType,
             'companyFinanceYear'=>$companyFinanceYear,
-            'wareHouses'=>$wareHouses
+            'wareHouses'=>$wareHouses,
+            'salesTypes'=>$salesTypes
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
@@ -872,6 +880,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
+            ->where('salesType', $deliveryOrder->salesType)
             ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
@@ -889,6 +898,7 @@ class DeliveryOrderAPIController extends AppBaseController
             ->where('serviceLineSystemID', $deliveryOrder->serviceLineSystemID)
             ->where('customerSystemCode', $deliveryOrder->customerID)
             ->where('transactionCurrencyID', $deliveryOrder->transactionCurrencyID)
+            ->where('salesType', $deliveryOrder->salesType)
             ->whereDate('documentDate', '<=',$deliveryOrder->deliveryOrderDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
