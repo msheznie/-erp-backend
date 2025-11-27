@@ -274,7 +274,7 @@ class VerifyCsrfTokenForApi
             'api/v1/workflow_configurations/{workflow_configuration}',
             'api/v1/download-revision-attachment',
             'api/v1/view-revision-attachment',
-            
+            'api/v1/printAssetDepreciation',
         ];
     }
 }

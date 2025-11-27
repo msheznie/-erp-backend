@@ -9735,5 +9735,10 @@ return
     'supplier_invoice' => 'Supplier Invoice',
     'sme' => 'SME',
     'llc' => 'LLC',
-    'pr_type_is_not_selected' => 'PR Type is mandatory because approval is enabled based on the PR Type.'
+    'pr_type_is_not_selected' => 'PR Type is mandatory because approval is enabled based on the PR Type.',
+    'asset_depreciation_print' => 'Asset Depreciation',
+    'financial_period' => 'Financial Period',
+    'dep_type' => 'Depreciation Type',
+    'monthly_dep' => 'Monthly Depreciation',
+    'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'Asset Depreciation PDF report has been sent to queue',
   ];

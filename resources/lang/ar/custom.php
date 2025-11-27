@@ -9628,5 +9628,10 @@ return
     'direct_grv' => 'إيصال استلام مباشر',
     'supplier_invoice' => 'فاتورة المورد',
     'sme' => 'صغيرة ومتوسطة',
-    'llc' => 'ذ.م.م'
+    'llc' => 'ذ.م.م',
+    'asset_depreciation_print' => 'إهلاك الأصل',
+    'financial_period' => 'الفترة المالية',
+    'dep_type' => 'نوع الإهلاك',
+    'monthly_dep' => 'الإهلاك الشهري',
+    'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'تم إرسال تقرير استهلاك الأصول الثابتة (PDF) إلى قائمة الانتظار',
   ];
