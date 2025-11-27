@@ -12,10 +12,12 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateFixedAssetDepreciationMasterAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetDepreciationMasterAPIRequest;
 use App\Jobs\CreateDepreciation;
 use App\Jobs\CreateDepreciationAmend;
+use App\Jobs\Report\AssetDepreciationPdfJob;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyFinancePeriod;
@@ -463,7 +465,12 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var FixedAssetDepreciationMaster $fixedAssetDepreciationMaster */
-        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by'])->findWithoutFail($id);
+        $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->with(['confirmed_by', 'company', 'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('rejectedYN', 0)
+                    ->whereIn('documentSystemID', [23]);
+            }
+        ])->findWithoutFail($id);
 
         if (empty($fixedAssetDepreciationMaster)) {
             return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
@@ -1160,5 +1167,91 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    /**
+     * Display the specified Asset Depreciation print.
+     * GET|HEAD /printAssetDepreciation
+     *
+     * @param  Request $request
+     *
+     * @return Response
+     */
+    public function printAssetDepreciation(Request $request)
+    {
+        $id = $request->get('id');
+
+        /** @var FixedAssetDepreciationMaster $assetDepreciation */
+        $assetDepreciation = $this->fixedAssetDepreciationMasterRepository->with([
+            'created_by',
+            'confirmed_by',
+            'company',
+            'financeperiod_by',
+            'approved_by' => function ($query) {
+                $query->with('employee')
+                    ->where('rejectedYN', 0)
+                    ->where('documentSystemID', 23);
+            }
+        ])->findWithoutFail($id);
+
+        if (empty($assetDepreciation)) {
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
+        }
+
+        $depreciationPeriods = FixedAssetDepreciationPeriod::with([
+            'maincategory_by',
+            'financecategory_by',
+            'serviceline_by'
+        ])->where('depMasterAutoID', $id)->get();
+
+        $assetDepreciation->details = $depreciationPeriods;
+
+        if ($assetDepreciation->depLocalCur) {
+            $assetDepreciation->localcurrency = \App\Models\CurrencyMaster::find($assetDepreciation->depLocalCur);
+        }
+        if ($assetDepreciation->depRptCur) {
+            $assetDepreciation->rptcurrency = \App\Models\CurrencyMaster::find($assetDepreciation->depRptCur);
+        }
+
+        if ($assetDepreciation->companyFinanceYearID) {
+            $assetDepreciation->financeYear = CompanyFinanceYear::find($assetDepreciation->companyFinanceYearID);
+        }
+
+        $array = array(
+            'dbdata' => $assetDepreciation,
+            'showFooterDetails' => true,
+            'showHeader' => true,
+            'startingRowNumber' => true,
+            'totalFromJob' => false
+        );
+
+        $lang = app()->getLocale();
+        $time = strtotime("now");
+        $fileName = 'asset_depreciation_' . $id . '_' . $time . '.pdf';
+
+        $html = view('print.asset_depreciation', $array);
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
+    }
+
+    public function generateAssetDepBulkPDF(Request $request)
+    {
+        $id = $request->get('id');
+        $dataBase = $request->get('db', '');
+        $languageCode = app()->getLocale() ?: 'en';
+
+        $assetDepreciation = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
+
+        if (empty($assetDepreciation)) {
+            return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
+        }
+        $employeeID = \Helper::getEmployeeSystemID();
+
+        AssetDepreciationPdfJob::dispatch($dataBase, $id, [$employeeID], $languageCode)->onQueue('reporting');
+
+        return $this->sendResponse([], trans('custom.asset_depreciation_pdf_report_has_been_sent_to_queue'));
     }
 }
