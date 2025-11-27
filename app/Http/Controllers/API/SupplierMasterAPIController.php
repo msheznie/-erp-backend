@@ -1491,7 +1491,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
   
         $supplierMaster = SupplierAssigned::whereHas('master', function ($query) use ($companyID, $companyCountry) {
-            $query->whereIN('companySystemID', $companyID)->where('approvedYN', 1);
+            $query->whereIN('companySystemID', $companyID)->where('isBlocked', false)->where('approvedYN', 1);
             if ($companyCountry) {
                 $query->where('supplierCountryID', $companyCountry);
             }
