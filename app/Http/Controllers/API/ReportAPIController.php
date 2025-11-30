@@ -923,7 +923,6 @@ class ReportAPIController extends AppBaseController
                 $data = array();
                 $x = 0;
                 foreach ($output as $val) {
-                    // Determine "made_from" based on documentType and source_type
                     $madeFrom = '';
                     if (isset($val->documentType) && $val->documentType == 0) {
                         $madeFrom = trans('custom.pr_po_grv');
@@ -1522,7 +1521,7 @@ class ReportAPIController extends AppBaseController
                 DB::raw('CASE 
                     WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
                     THEN det2.supplierInvoAmount
-                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(grvd.VATPercentage, 0) / 100))
+                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(grvd.VATPercentage, 0) / (100 + grvd.VATPercentage)))
                 END as netAmount'),
                 'grvd.supplierPartNumber',
                 'grvd.unitOfMeasure',
@@ -1535,7 +1534,8 @@ class ReportAPIController extends AppBaseController
             ->join('erp_bookinvsuppmaster as master', 'det.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID')
             ->leftJoin('erp_bookinvsupp_item_det as det2', function($join) {
                 $join->on('det2.grvDetailsID', '=', 'grvd.grvDetailsID')
-                     ->on('det2.vatSubCategoryID', '=', 'grvd.vatSubCategoryID');
+                     ->on('det2.vatSubCategoryID', '=', 'grvd.vatSubCategoryID')
+                     ->on('det2.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID');
             })
             ->leftJoin('suppliermaster as supplier', 'supplier.supplierCodeSystem', '=', 'master.supplierID')
             ->leftJoin('currencymaster as currency', 'currency.currencyID', '=', 'master.supplierTransactionCurrencyID')
@@ -1551,10 +1551,7 @@ class ReportAPIController extends AppBaseController
             ->whereIn('master.companySystemID', $companyID)
             ->whereIn('master.supplierID', $suppliers)
             ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
-            ->whereIn('grvd.itemCode', $items)
-            ->when($contractName != '', function ($q) use ($contractName) {
-                $q->where('master.comments', 'LIKE', "%{$contractName}%");
-            });
+            ->whereIn('grvd.itemCode', $items);
 
    
         $query2 = DB::table('supplier_invoice_items as items')
@@ -1614,10 +1611,7 @@ class ReportAPIController extends AppBaseController
             ->whereIn('master.companySystemID', $companyID)
             ->whereIn('master.supplierID', $suppliers)
             ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
-            ->whereIn('items.itemCode', $items)
-            ->when($contractName != '', function ($q) use ($contractName) {
-                $q->where('master.comments', 'LIKE', "%{$contractName}%");
-            });
+            ->whereIn('items.itemCode', $items);
 
 
         $query3 = DB::table('erp_grvdetails as grvd')
@@ -1654,7 +1648,7 @@ class ReportAPIController extends AppBaseController
                 DB::raw('CASE 
                     WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
                     THEN det2.supplierInvoAmount
-                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(pod.VATPercentage, 0) / 100))
+                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(pod.VATPercentage, 0) / (100 + grvd.VATPercentage)))
                 END as netAmount'),
                 'grvd.supplierPartNumber',
                 'grvd.unitOfMeasure',
@@ -1667,7 +1661,8 @@ class ReportAPIController extends AppBaseController
             ->join('erp_bookinvsuppmaster as master', 'det.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID')
             ->leftJoin('erp_purchaseorderdetails as pod', 'pod.purchaseOrderDetailsID', '=', 'grvd.purchaseOrderDetailsID')
             ->leftJoin('erp_bookinvsupp_item_det as det2', function($join) {
-                $join->on('det2.grvDetailsID', '=', 'grvd.grvDetailsID');
+                $join->on('det2.grvDetailsID', '=', 'grvd.grvDetailsID')
+                     ->on('det2.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID');
             })
             ->leftJoin('suppliermaster as supplier', 'supplier.supplierCodeSystem', '=', 'master.supplierID')
             ->leftJoin('currencymaster as currency', 'currency.currencyID', '=', 'master.supplierTransactionCurrencyID')
@@ -1683,14 +1678,8 @@ class ReportAPIController extends AppBaseController
             ->whereIn('master.companySystemID', $companyID)
             ->whereIn('master.supplierID', $suppliers)
             ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
-            ->whereIn('grvd.itemCode', $items)
-            ->when($contractName != '', function ($q) use ($contractName) {
-                $q->where('master.comments', 'LIKE', "%{$contractName}%");
-            });
+            ->whereIn('grvd.itemCode', $items);
 			
-			
-			
-       
       
         $bindings = array_merge($query1->getBindings(), $query2->getBindings(), $query3->getBindings());
         
