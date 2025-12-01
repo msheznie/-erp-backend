@@ -242,10 +242,14 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                     'url' => "",
                     'path' => $zipPath,
                 ];
-                Log::error("Send report to user id: {$this->userIds}");
+
                 $notificationResult = WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds, $db);
-                Log::error("Notification sent");
-                Storage::disk('local_public')->deleteDirectory($rootPaths);
+                Log::info("Send report to user id: " . json_encode((array) $this->userIds));
+                if (Storage::disk('local_public')->exists($rootPaths)) {
+                    Storage::disk('local_public')->deleteDirectory($rootPaths);
+                    Log::info("Temporary folder deleted: $rootPaths");
+                }
+                Log::info("Report sent");
             } else {
                 Log::error("ZIP file does not exist after creation: {$zipFullPath}");
             }
