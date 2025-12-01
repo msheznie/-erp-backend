@@ -117,7 +117,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
                         Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
-
+                        Route::post('generateAssetDepBulkPDF', 'FixedAssetDepreciationMasterAPIController@generateAssetDepBulkPDF');
                         Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                         Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');

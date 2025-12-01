@@ -200,7 +200,7 @@ class Helper
             $companiesByGroup = (array)$company;
         }
 
-        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT_WS(" - ",case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end,serviceline.ServiceLineDes) as ServiceLineDes')
             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
             ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
             ->where('serviceline.approved_yn', 1)
