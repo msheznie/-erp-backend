@@ -9653,4 +9653,5 @@ return
     'dep_type' => 'نوع الإهلاك',
     'monthly_dep' => 'الإهلاك الشهري',
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'تم إرسال تقرير استهلاك الأصول الثابتة (PDF) إلى قائمة الانتظار',
+    'asset_depreciation_report_pdf_generated' => 'تم إنشاء ملف PDF لتقرير إهلاك الأصول.',
   ];
