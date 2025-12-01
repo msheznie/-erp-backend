@@ -1,6 +1,20 @@
 # Changelog
 
 
+## [10.93.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.0...v10.93.1) (2025-11-27)
+
+
+### Bug Fixes
+
+* **procurement:** Fixed po print issue [GCP-17781] ([#9306](https://github.com/pbsgears/Gears_BackEnd/issues/9306)) ([2ef21b9](https://github.com/pbsgears/Gears_BackEnd/commit/2ef21b9f06551b2db387822f422c0a45d62b27c8))
+
+## [10.93.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.92.0...v10.93.0) (2025-11-26)
+
+
+### Features
+
+* **OSOS 3.0:** Update Employee and User Profile Synchronization Service to Handle Base64 Profile Image [GHR-8821] ([#9240](https://github.com/pbsgears/Gears_BackEnd/issues/9240)) ([34e58c1](https://github.com/pbsgears/Gears_BackEnd/commit/34e58c1f75e1a03849b284cfb8a7d468c8ca3a22))
+
 ## [10.92.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.2...v10.92.0) (2025-11-25)
 
 
