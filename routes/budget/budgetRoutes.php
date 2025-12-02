@@ -68,6 +68,7 @@ Route::resource('revisions', 'RevisionAPIController');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
+Route::post('exportBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@exportBudgetPlanningDetails')->name('Export budget planning details to Excel');
 Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlanningDetailAPIController@updateInternalStatus')->name('Update department budget planning detail status');
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');

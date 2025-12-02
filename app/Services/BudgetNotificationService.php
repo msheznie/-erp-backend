@@ -145,6 +145,27 @@ class BudgetNotificationService
             case 'deadline-warning':
                 $this->sendDeadlineWarningEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
+            case 'submission-deadline-reached':
+                $this->sendSubmissionDeadlineReachedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'delegatee-submission':
+                $this->sendDelegateeSubmissionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'final-submission-to-finance':
+                $this->sendFinalSubmissionToFinanceEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'finance-rejects-for-revision':
+                $this->sendFinanceRejectsForRevisionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'time-extension-request-submitted':
+                $this->sendTimeExtensionRequestSubmittedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'extension-request-approved':
+                $this->sendTimeExtentionApprovedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
+            case 'extension-request-rejected':
+                $this->sendTimeExtensionRequestCancelledEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                break;
         }
 
    }
@@ -162,11 +183,13 @@ class BudgetNotificationService
 
         $hod = $department->hod->employee;
 
+        $baseurl = config('app.url');
+        $linkUrl = $baseurl . '/#/budget-planning/planning';
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
             'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'link' => $departmentBudgetPlanning->link ?? 'N/A'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">' . $linkUrl . '</a>'
         ];
 
         $emails = array(
@@ -182,19 +205,37 @@ class BudgetNotificationService
 
    private function sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company')->find($departmentBudgetPlanningID);
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+
+        $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
 
         $delegatee = CompanyDepartmentEmployee::with('employee')->find($this->delegateID);
-        
-        $placeholders = [
-            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
-            'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
-            'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'DelegateeName' => $delegatee->employee->empName.' ('.$delegatee->employee->empID.')',
-        ];
 
+        if(empty($revision)) {
+            $placeholders = [
+                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+                'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                'DelegateeName' => $delegatee->employee->empName.' ('.$delegatee->employee->empID.')',
+            ];
+    
+    
+        }else {
+            $placeholders = [
+                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+                'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                'DelegateeName' => $delegatee->employee->empName.' ('.$delegatee->employee->empID.')',
+                'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
+            ];
+            $budgetNotifications = BudgetNotification::where('slug', 'hod-re-delegates-revision')->first();
+
+        }
+
+            
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
+        
 
         $emails = array(
             'empEmail' => $delegatee->employee->empEmail,
@@ -211,20 +252,20 @@ class BudgetNotificationService
    private function sendDelegationConfirmationEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company')->find($departmentBudgetPlanningID);
-        $delegatee = Employee::find($this->delegateID);
+        $delegatee = CompanyDepartmentEmployee::with('employee')->find($this->delegateID);
 
         $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
             'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
+            'DelegateeName' => $delegatee->employee->empName.' ('.$delegatee->employee->empID.')',
         ];
 
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
         $emails = array(
-            'empEmail' => $delegatee->empEmail,
+            'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
@@ -243,13 +284,35 @@ class BudgetNotificationService
 
    }
 
+   private function sendSubmissionDeadlineReachedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $this->sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+        $this->sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+   }
+
    private function sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company')->find($departmentBudgetPlanningID);
-        $placeholders = [
-            'RecipientName' =>  $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
-            'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-        ];
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+        $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
+        $departmentBudgetYear = CompanyFinanceYear::find($departmentBudgetPlanning->yearID);
+
+        if(empty($revision)) {
+            $placeholders = [
+                'RecipientName' =>  $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+            ];
+        } else {
+            $placeholders = [
+                'RecipientName' =>  $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
+                'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+            ];
+
+            $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
+        }
+
 
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
@@ -261,19 +324,23 @@ class BudgetNotificationService
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
         );
 
+
         \Email::sendEmailErp($emails);
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails.budgetDelegateAccessDetails')->find($departmentBudgetPlanningID);
+        $budgetPlanning = DepartmentBudgetPlanning::with('budgetPlanningDetails.budgetDelegateAccessDetails','revisions')->find($departmentBudgetPlanningID);
+        $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
 
         $today = Carbon::today();
         $twoDaysFromNow = $today->copy()->addDays(2);
 
         $departmentBudgetPlanningDetails = $budgetPlanning->budgetPlanningDetails;
-        foreach($departmentBudgetPlanningDetails as $departmentBudgetPlanningDetail) {
+        $departmentBudgetYear = CompanyFinanceYear::find($departmentBudgetPlanning->yearID);
 
+
+        foreach($departmentBudgetPlanningDetails as $departmentBudgetPlanningDetail) {
             if($departmentBudgetPlanningDetail->budgetDelegateAccessDetails->count() > 0) {
                 $budgetDelegateAccessDetails = $departmentBudgetPlanningDetail->budgetDelegateAccessDetails->where('submission_time', '>', $today)->where('submission_time', '<=', $twoDaysFromNow);
                 if($budgetDelegateAccessDetails->count() > 0) {
@@ -281,10 +348,22 @@ class BudgetNotificationService
                         $delegatee = $budgetDelegateAccessDetail->delegatee;
                        
                         $employee = Employee::find($delegatee->employeeSystemID);
-                        $placeholders = [
-                            'RecipientName' => $employee->empName.' ('.$employee->empID.')',
-                            'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-                        ];
+
+                        if(empty($revision)) {
+                            $placeholders = [
+                                'RecipientName' => $employee->empName.' ('.$employee->empID.')',
+                                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                                'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                            ];
+                        }else {
+                            $placeholders = [
+                                'RecipientName' => $employee->empName.' ('.$employee->empID.')',
+                                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                                'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                                'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
+                            ];
+                            $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
+                        }
 
                         $subjectTemplate = $budgetNotifications->subject;
                         $bodyTemplate = $budgetNotifications->body;
@@ -302,8 +381,202 @@ class BudgetNotificationService
             }
 
         }
+   }
 
+   private function sendDelegateeSubmissionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+        $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
+        $delegatee = Employee::find($this->delegateID);
+
+        if(empty($revision)) {
+            $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+            'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
+            'Budget Review Dashboard' => 'N/A'
+        ];
+        }else {
+            $placeholders = [
+                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+                'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+                'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
+                'ResubmissionDate' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
+                'Budget Review Dashboard' => 'N/A'
+            ];
+
+            $budgetNotifications = BudgetNotification::where('slug', 'revision-resubmission')->first();
+        }
+
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
+        
+        $emails = array(
+            'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
+            'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+            'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+        );
+
+        \Email::sendEmailErp($emails);
+   }
+
+   private function sendFinalSubmissionToFinanceEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company')->find($departmentBudgetPlanningID);
+        
+        $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+            'SubmissionDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A'
+        ];
+
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
+
+        // Get all finance users with their employee details eager loaded
+        $financeUsers = CompanyDepartmentEmployee::with('employee')
+                        ->whereHas('department', function ($query) {
+                            $query->where('isFinance', 1)->where('isActive', 1);
+                        })
+                        ->where('isActive', 1)
+                        ->get();
+
+      
+        foreach($financeUsers as $financeUser) {
+            // Check if employee exists and has an email
+            if (!$financeUser->employee || !$financeUser->employee->empEmail) {
+                continue;
+            }
+
+            $emails = array(
+                'empEmail' => $financeUser->employee->empEmail,
+                'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+                'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            );
+    
+            \Email::sendEmailErp($emails);
+        }
 
    }
-}
 
+   private function sendFinanceRejectsForRevisionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+        
+        $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
+            'RevisionDeadline' => $budgetPlanning->revisions->where('revisionStatus', 1)->first()->newSubmissionDate,
+            'FinanceComments' => $budgetPlanning->revisions->where('revisionStatus', 1)->first()->reviewComments
+        ];
+
+
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
+
+        $emails = array(
+            'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
+            'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+            'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+        );
+
+
+        \Email::sendEmailErp($emails);
+   }
+
+
+   private function sendTimeExtensionRequestSubmittedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
+        
+        $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 1)->first();
+
+        // Get all department users with their employee details eager loaded
+        $financeUsers = CompanyDepartmentEmployee::with('employee')
+                        ->whereHas('department', function ($query) {
+                        $query->where('isFinance', 1)->where('isActive', 1);
+                        })
+                        ->where('isActive', 1)
+                        ->get();
+
+        $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'RequestedDeadline' => date('d/m/Y', strtotime($timeExtenionRequest->date_of_request)) ?? 'N/A',
+            'ExtensionReason' => $timeExtenionRequest->reason_for_extension,
+        ];
+
+        foreach($financeUsers as $financeUser) {
+            // Check if employee exists and has an email
+            if (!$financeUser->employee || !$financeUser->employee->empEmail) {
+                continue;
+            }
+
+            $emails = array(
+                'empEmail' => $financeUser->employee->empEmail,
+                'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+                'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            );
+    
+            \Email::sendEmailErp($emails);
+        }
+   }
+
+
+   public function sendTimeExtentionApprovedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
+
+        $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 2)->first();
+
+
+        $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'ApprovedDeadline' => date('d/m/Y', strtotime($timeExtenionRequest->new_time)) ?? date('d/m/Y', strtotime($timeExtenionRequest->current_submission_date)),
+        ];
+
+        
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
+
+        $emails = array(
+            'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
+            'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+            'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+        );
+
+
+        \Email::sendEmailErp($emails);
+   }
+
+   private function sendTimeExtensionRequestCancelledEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
+   {
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
+        
+        $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 3)->first();
+        
+        $placeholders = [
+            'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
+            'OriginalDeadline' => date('d/m/Y', strtotime($timeExtenionRequest->current_submission_date)),
+            'FinanceComments' => $timeExtenionRequest->review_comments,
+        ];
+        
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
+
+        $emails = array(
+            'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
+            'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+            'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+        );
+
+        \Email::sendEmailErp($emails);
+        
+   }
+
+}
