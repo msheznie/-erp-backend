@@ -1189,7 +1189,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegation-confirmation', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegation-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
             }
 
             return $this->sendResponse([

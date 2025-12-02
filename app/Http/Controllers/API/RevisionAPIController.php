@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Services\BudgetNotificationService;
 use Response;
 use App\helper\Helper;
 use App\Models\DepartmentBudgetPlanning;
@@ -21,7 +22,8 @@ use App\Services\ChartOfAccountService;
 use App\Models\RevisionAttachment;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-
+use Auth;
+use App\Models\BudgetNotification;
 /**
  * Class RevisionAPIController
  * @package App\Http\Controllers\API
@@ -399,6 +401,8 @@ class RevisionAPIController extends AppBaseController
             // Check if budget planning exists
             $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
             
+
+
             if (!$budgetPlanning) {
                 return $this->sendError('Budget Planning not found');
             }
@@ -448,6 +452,11 @@ class RevisionAPIController extends AppBaseController
             if (isset($input['attachments']) && is_array($input['attachments']) && !empty($input['attachments'])) {
                 $this->storeRevisionAttachments($revision->id, $input['attachments'], $input['companySystemID']);
             }
+
+
+            // send revision email
+            $budgetPlanningNotificationService = new BudgetNotificationService();
+            $budgetPlanningNotificationService->sendNotification($budgetPlanning->id,'finance-rejects-for-revision',$budgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
 
             // Log the action
             // $this->logAuditTrail('Revision', 'Created', $revision->id, 'Revision created for budget planning ID: ' . $input['budgetPlanningId']);

@@ -404,6 +404,32 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
     {
         $companyId = $request->input('companyId');
 
+        if ($companyId) {
+            // Check if notification details exist for this company
+            $existingCount = BudgetNotificationDetail::where('companySystemID', $companyId)->count();
+            
+            if ($existingCount == 0) {
+                // Insert default notification details for this company
+                $now = now();
+                $kickOffNotifications = BudgetNotification::all();
+                foreach($kickOffNotifications as $kickOffNotification){ 
+                    if($kickOffNotification->slug == 'task-delegation' || $kickOffNotification->slug == 'deadline-warning'){
+                        $reminderTime = 48;
+                    }else{
+                        $reminderTime = 0;
+                    }
+                    BudgetNotificationDetail::insert([
+                        [
+                            'notification_id' => $kickOffNotification->id,
+                            'companySystemID' => $companyId,
+                            'reminderTime' => $reminderTime,
+                            'isActive' => true,
+                        ]
+                    ]);
+                }
+            }
+        }
+
         $query = BudgetNotificationDetail::with('notification')
             ->whereHas('notification');
 

@@ -3,25 +3,25 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Jobs\BudgetDeadlineNotificationJob;
+use App\Jobs\BudgetSubmissionDeadlineReachedNotificationJob;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 
-class BudgetDeadlineNotification extends Command
+class BudgetSubmissionDeadlineReachedNotification extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'command:budgetDeadlineNotification';
+    protected $signature = 'command:budgetSubmissionDeadlineReachedNotification';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Budget Deadline Notification Scheduler - Sends notifications for approaching budget deadlines';
+    protected $description = 'Budget Submission Deadline Reached Notification Scheduler - Sends notifications for budget submissions that have passed their deadline';
 
     /**
      * Create a new command instance.
@@ -40,7 +40,7 @@ class BudgetDeadlineNotification extends Command
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-deadline-notification.log');
+        Log::useFiles(storage_path() . '/logs/budget-submission-deadline-reached-notification.log');
 
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {
@@ -50,10 +50,9 @@ class BudgetDeadlineNotification extends Command
 
         foreach ($tenants as $tenant) {
             $tenant_database = $tenant->database;
-            BudgetDeadlineNotificationJob::dispatch($tenant_database);
+            BudgetSubmissionDeadlineReachedNotificationJob::dispatch($tenant_database);
         }
 
-        $this->info('Budget deadline notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
+        $this->info('Budget submission deadline reached notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }
-
