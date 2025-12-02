@@ -656,7 +656,8 @@ class PaySupplierInvoiceMaster extends Model
         'AdvanceAccount',
         'employeeAdvanceAccountSystemID',
         'employeeAdvanceAccount',
-        'isDelegation'
+        'isDelegation',
+        'BPVcustomerID'
     ];
 
     /**
@@ -772,7 +773,8 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedPc' => 'string',
         'bankAccountBalance' => 'float',
         'applyVAT' => 'integer',
-        'payment_mode' => 'integer'
+        'payment_mode' => 'integer',
+        'BPVcustomerID' => 'integer'
     ];
 
     /**
@@ -802,6 +804,11 @@ class PaySupplierInvoiceMaster extends Model
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'BPVcustomerID', 'customerCodeSystem');
     }
 
     public function bankaccount()

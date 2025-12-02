@@ -54,6 +54,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerAssigned;
 use App\Models\CustomerReceivePayment;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectPaymentReferback;
@@ -1660,6 +1661,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $employeeID = (array)$employeeID;
         $employeeID = collect($employeeID)->pluck('id');
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+        
+
         $projectID = $request['projectID'];
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
@@ -1697,6 +1703,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['employeeID'])){
             unset($input['employeeID']);
         }
+        if(empty($input['customerID'])){
+            unset($input['customerID']);
+        }
         if(empty($input['year'])){
             unset($input['year']);
         }
@@ -1710,7 +1719,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['chequePaymentYN']);
         }
 
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy,$customerID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -1753,6 +1762,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $supplier = $supplier->where('isActive', 1);
             }
             $supplier = $supplier->get();
+
+            $customer = CustomerAssigned::whereIn("companySystemID", $subCompanies);
+            if (isset($request['type']) && $request['type'] != 'filter') {
+                $customer = $customer->where('isActive', 1);
+            }
+            $customer = $customer->whereHas('customer_master', function($q) {
+                $q->where('approvedYN', 1);
+            })->get();
 
             $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                 array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
@@ -1852,6 +1869,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'month' => $month,
                 'years' => $years,
                 'supplier' => $supplier,
+                'customer' => $customer,
                 'chequeRegistryPolicy' => $is_exist_policy_GCNFCR ? true : false,
                 'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
                 'payee' => $payee,

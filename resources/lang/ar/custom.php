@@ -6567,7 +6567,7 @@ return
     'bank_amount' => 'مبلغ البنك',
     'payment_code' => 'رمز الدفع',
     'payment_type' => 'نوع الدفع',
-    'sup_emp_other' => 'المورد / الموظف / أخرى',
+    'sup_emp_other' => 'المورد / الموظف / العميل / أخرى',
     'expense_claim_date' => 'تاريخ المطالبة بالمصروفات',
     'cancelled_by' => 'ألغاه',
     'cancelled_at' => 'أُلغي في',
