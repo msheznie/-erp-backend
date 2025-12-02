@@ -349,7 +349,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         },'supplier' => function($query){
             $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType');
         },'employee' => function($query){
-            $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
+            $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID,empCompanySystemID');
         },'transactioncurrency'=> function($query){
             $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
         },'direct_customer_invoice' => function($query) {
