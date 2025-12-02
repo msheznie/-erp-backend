@@ -6649,7 +6649,7 @@ return
     'bank_amount' => 'Bank Amount',
     'payment_code' => 'Payment Code',
     'payment_type' => 'Payment Type',
-    'sup_emp_other' => 'Supplier / Employee / Other',
+    'sup_emp_other' => 'Supplier / Employee / Customer / Other',
 
     'expense_claim_date' => 'Expense Claim Date',
 
