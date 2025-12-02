@@ -281,5 +281,6 @@ class VerifyCsrfTokenForApi
             'api/v1/getDocumentTracingData',
             'api/v1/createAuditLog'
         ];
+
     }
 }
