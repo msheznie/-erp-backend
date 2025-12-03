@@ -280,12 +280,12 @@
                 @if(isset($dbdata->details) && count($dbdata->details) > 0)
                     @foreach($dbdata->details as $index => $detail)
                         <tr>
-                            <td>{{ isset($startingRowNumber) ? ($startingRowNumber + $index) : ($index + 1) }}</td>
-                            <td style="padding-left: 5px;">{{ $detail->faCode ?? '-' }}</td>
-                            <td style="padding-left: 5px;">{{ $detail->assetDescription ?? '-' }}</td>
-                            <td style="padding-left: 5px;">@if(isset($detail->serviceline_by)){{ $detail->serviceline_by->ServiceLineDes }}@else - @endif</td>
-                            <td style="padding-left: 5px;">@if(isset($detail->financecategory_by)){{ $detail->financecategory_by->financeCatDescription }}@else - @endif</td>
-                            <td style="padding-left: 5px;">@if(isset($detail->maincategory_by)){{ $detail->maincategory_by->catDescription }}@else - @endif</td>
+                            <td style="padding-left: 3px; padding-right: 3px;">{{ isset($startingRowNumber) ? ($startingRowNumber + $index) : ($index + 1) }}</td>
+                            <td style="padding-left: 5px; padding-right: 3px;">{{ $detail->faCode ?? '-' }}</td>
+                            <td style="padding-left: 5px; padding-right: 3px;">{{ $detail->assetDescription ?? '-' }}</td>
+                            <td style="padding-left: 5px; padding-right: 3px;">@if(isset($detail->serviceline_by)){{ $detail->serviceline_by->ServiceLineDes }}@else - @endif</td>
+                            <td style="padding-left: 5px; padding-right: 3px;">@if(isset($detail->financecategory_by)){{ $detail->financecategory_by->financeCatDescription }}@else - @endif</td>
+                            <td style="padding-left: 5px; padding-right: 3px;">@if(isset($detail->maincategory_by)){{ $detail->maincategory_by->catDescription }}@else - @endif</td>
                             <td class="text-right" style="padding-right: 5px;">{{ number_format($detail->depPercent ?? 0, 2) }}%</td>
                             <td class="text-right" style="padding-right: 5px;">{{ number_format($detail->COSTUNIT ?? 0, isset($dbdata->localcurrency) ? $dbdata->localcurrency->DecimalPlaces : 2) }}</td>
                             <td class="text-right" style="padding-right: 5px;">{{ number_format($detail->costUnitRpt ?? 0, isset($dbdata->rptcurrency) ? $dbdata->rptcurrency->DecimalPlaces : 2) }}</td>
