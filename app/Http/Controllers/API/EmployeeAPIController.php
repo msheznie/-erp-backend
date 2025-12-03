@@ -242,9 +242,16 @@ class EmployeeAPIController extends AppBaseController
                      ->where('erp_paysupplierinvoicemaster.approved', -1)
                      ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
             })
+            ->leftJoin('erp_debitnote', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_debitnote.empID')
+                     ->where('erp_debitnote.type', 2)
+                     ->where('erp_debitnote.approved', -1)
+                     ->whereIn('erp_debitnote.companySystemID', $childCompanies);
+            })
             ->where(function ($query) {
                 $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
-                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                      ->orWhereNotNull('erp_debitnote.empID');
             })
             ->groupBy('employees.employeeSystemID');
 
