@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.93.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.1...v10.93.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* **srm:** ERP user cannot confirm a tender even if there is already an active approval level [GSUP-4561] ([635e547](https://github.com/pbsgears/Gears_BackEnd/commit/635e547c4fc4cb57795943f32b309441718d967d))
+
 ## [10.93.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.0...v10.93.1) (2025-11-27)
 
 
