@@ -1536,6 +1536,9 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->when($invoice->salesType == 4, function($query) {
+                $query->where('salesType', 1);
+            })
             ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
