@@ -23,6 +23,7 @@ use App\Jobs\AssetCostingUpload\AssetCostingUpload;
 use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
+use App\Models\AssetWarranty;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -2730,6 +2731,345 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    /**
+     * Get asset details by asset codes
+     * 
+     * @param Request $request
+     * @return Response
+     */
+    public function getAssetDetails(Request $request) {
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'asset_codes' => 'required|array|min:1|max:100',
+        ], [
+            'asset_codes.required' => 'asset_codes array is required',
+            'asset_codes.array' => 'asset_codes must be an array',
+            'asset_codes.min' => 'At least one asset code is required',
+            'asset_codes.max' => 'Maximum 100 asset codes are allowed',
+        ]);
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->errors()->first();
+            return $this->sendError($errorMessage, 422);
+        }
+
+        $companySystemID = $input['company_id'];
+        $assetCodes = $input['asset_codes'];
+
+        // Validate each asset code
+        foreach ($assetCodes as $assetCode) {
+            $asset = FixedAssetMaster::where('faCode', $assetCode)
+                ->ofCompany([$companySystemID])
+                ->first();
+
+            if (!$asset) {
+                return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
+            }
+
+            if ($asset->approved != -1) {
+                $approvalStatus = $this->getApprovalStatus($asset);
+                return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
+            }
+
+            if ($asset->DIPOSED == -1) {
+                return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+            }
+        }
+
+        try {
+            $today = \Carbon\Carbon::now();
+
+            $company = Company::select('companySystemID', 'localCurrencyID', 'reportingCurrency')
+                ->with([
+                    'localcurrency' => function($query) {
+                        $query->select('currencyID', 'DecimalPlaces');
+                    },
+                    'reportingcurrency' => function($query) {
+                        $query->select('currencyID', 'DecimalPlaces');
+                    }
+                ])
+                ->find($companySystemID);
+
+            $assets = FixedAssetMaster::whereIn('faCode', $assetCodes)
+                ->ofCompany([$companySystemID])
+                ->with([
+                    'departmentMaster' => function($query) {
+                        $query->select('departmentSystemID', 'DepartmentID');
+                    },
+                    'department' => function($query) {
+                        $query->select('serviceLineSystemID', 'ServiceLineCode');
+                    },
+                    'location' => function($query) {
+                        $query->select('locationID', 'locationName');
+                    },
+                    'asset_type' => function($query) {
+                        $query->select('typeID', 'typeDes');
+                    },
+                    'category_by' => function($query) {
+                        $query->select('faCatID', 'catDescription');
+                    },
+                    'sub_category_by' => function($query) {
+                        $query->select('faCatSubID', 'catDescription');
+                    },
+                    'sub_category_by2' => function($query) {
+                        $query->select('faCatSubID', 'catDescription');
+                    },
+                    'sub_category_by3' => function($query) {
+                        $query->select('faCatSubID', 'catDescription');
+                    },
+                    'finance_category' => function($query) {
+                        $query->select('faFinanceCatID', 'financeCatDescription');
+                    },
+                    'posttogl_by' => function($query) {
+                        $query->select('chartOfAccountSystemID', 'AccountDescription');
+                    },
+                    'depperiod_by' => function($query) use ($today) {
+                        $query->whereHas('master_by', function ($q) use ($today) {
+                            $q->where('approved', -1)
+                            ->where('depDate', '<', $today);
+                        })
+                        ->selectRaw('faID, SUM(depAmountLocal) as totalDepAmountLocal, SUM(depAmountRpt) as totalDepAmountRpt')
+                        ->groupBy('faID');
+                    },
+                    'group_all_to' => function($query) {
+                        $query->where('approved', -1);
+                    },
+                    'insurance_detail' => function($query) {
+                        $query->with([
+                            'policy_by' => function($q) {
+                                $q->select('insurancePolicyTypesID', 'policyDescription');
+                            },
+                            'location_by' => function($q) {
+                                $q->select('locationID', 'locationName');
+                            }
+                        ]);
+                    },
+                    'warranty_detail' => function($query) {
+                        $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
+                    }
+                ])
+                ->get();
+
+            $result = [];
+
+            foreach ($assets as $asset) {
+
+                $assetData = [
+                    'assetCode' => $asset->faCode ?? null,
+                    'department' => $asset->departmentMaster ? $asset->departmentMaster->DepartmentID : null,
+                    'segment' => $asset->department ? $asset->department->ServiceLineCode : null,
+                    'serialNmber' => $asset->faUnitSerialNo ?? null,
+                    'description' => $asset->assetDescription ?? null,
+                    'manufacture' => $asset->MANUFACTURE ?? null,
+                    'dateAcquired' => $this->formatDates($asset, 'dateAQ'),
+                    'comments' => $asset->COMMENTS ?? null,
+                    'location' => $asset->location ? $asset->location->locationName : null,
+                    'lastPhysicalVerifiedDate' => $this->formatDates($asset, 'lastVerifiedDate'),
+                    'assetBarcode' => $asset->faBarcode ?? null,
+                    'assetType' => $asset->asset_type ? $asset->asset_type->typeDes : null,
+                    'depStartDate' => $this->formatDates($asset, 'dateDEP'),
+                    'lifeTimeInYears' => $asset->depMonth ?? null,
+                    'depPercentage' => $asset->DEPpercentage ? round($asset->DEPpercentage, 7) : null,
+                    'unitPriceLocal' => $this->formatValues($asset, 'COSTUNIT', $company->localcurrency->DecimalPlaces, 'local'),
+                    'unitPriceRPT' => $this->formatValues($asset, 'costUnitRpt', $company->reportingcurrency->DecimalPlaces, 'rpt'),
+                    'accumulatedDepreciationAmountLocal' => $asset->depperiod_by ? $this->formatValues($asset->depperiod_by, 'totalDepAmountLocal', $company->localcurrency->DecimalPlaces, 'local') : 0,
+                    'accumulatedDepreciationAmountRPT' => $asset->depperiod_by ? $this->formatValues($asset->depperiod_by, 'totalDepAmountRpt', $company->reportingcurrency->DecimalPlaces, 'rpt') : 0,
+                    'accumulatedDepreciationDate' => $this->formatDates($asset, 'accumulated_depreciation_date'),
+                    'residualValueLocal' => $this->formatValues($asset, 'salvage_value', $company->localcurrency->DecimalPlaces, 'local'),
+                    'residualValueRPT' => $this->formatValues($asset, 'salvage_value_rpt', $company->reportingcurrency->DecimalPlaces, 'rpt'),
+                    'documentDate' => $this->formatDates($asset, 'documentDate'),
+                ];
+
+                $operationGrouping = [
+                    'mainCategory' => $asset->category_by ? $asset->category_by->catDescription : null,
+                    'subCategory' => $asset->sub_category_by ? $asset->sub_category_by->catDescription : null,
+                    'subCategory2' => $asset->sub_category_by2 ? $asset->sub_category_by2->catDescription : null,
+                    'subCategory3' => $asset->sub_category_by3 ? $asset->sub_category_by3->catDescription : null,
+                ];
+
+                $assetData['operationGrouping'] = $operationGrouping;
+
+                $financeGrouping = [
+                    'auditCategory' => $asset->finance_category ? $asset->finance_category->financeCatDescription : null,
+                    'costAccount' => $asset->COSTGLCODEdes ?? null,
+                    'accDepGLCode' => $asset->ACCDEPGLCODEdes ?? null,
+                    'depGLCode' => $asset->DEPGLCODEdes ?? null,
+                    'disPoGLCode' => $asset->DISPOGLCODEdes ?? null,
+                    'postToGL' => $asset->postToGLYN == 1 ? 'Yes' : 'No',
+                    'postToGLAccount' => $asset->posttogl_by ? $asset->posttogl_by->AccountDescription : null
+                ];
+
+                $assetData['financeGrouping'] = $financeGrouping;
+
+                $groupAssetData = [];
+                foreach ($asset->group_all_to as $groupAsset) {
+                    $groupAssetData[] = [
+                        'originDocID' => $groupAsset->docOriginDocumentID ?? null,
+                        'assetCode' => $groupAsset->faCode ?? null,
+                        'assetDescription' => $groupAsset->assetDescription ?? null,
+                        'costDate' => $this->formatDates($groupAsset, 'documentDate'),
+                        'localAmount' => $this->formatValues($groupAsset, 'COSTUNIT', $company->localcurrency->DecimalPlaces, 'local'),
+                        'rptAmount' => $this->formatValues($groupAsset, 'costUnitRpt', $company->reportingcurrency->DecimalPlaces, 'rpt')
+                    ];
+                }
+
+                $assetData['groupAsset'] = $groupAssetData;
+
+                $insuranceData = [];
+                foreach ($asset->insurance_detail as $insurance) {
+                    $insuranceData[] = [
+                        'insuredYN' => $insurance->insuredYN == 1 ? 'Yes' : 'No',
+                        'policy' => $insurance->policy_by ? $insurance->policy_by->policyDescription : null,
+                        'policyNumber' => $insurance->policyNumber ?? null,
+                        'dateOfInsurance' => $this->formatDates($insurance, 'dateOfInsurance'),
+                        'dateOfExpiry' => $this->formatDates($insurance, 'dateOfExpiry'),
+                        'insuredValue' => $this->formatValues($insurance, 'insuredValue', $company->localcurrency->DecimalPlaces, 'local'),
+                        'insurerName' => $insurance->insurerName ?? null,
+                        'location' => $insurance->location_by ? $insurance->location_by->locationName : null,
+                        'buildingNumber' => $insurance->buildingNumber ?? null,
+                        'openClosedArea' => $insurance->openClosedArea ?? null,
+                        'containerNumber' => $insurance->containerNumber ?? null,
+                        'movingStatus' => $insurance->movingItem == 1 ? 'Yes' : 'No'
+                    ];
+                }
+
+                $assetData['insurance'] = $insuranceData;
+
+                $warrantyData = [];
+                foreach ($asset->warranty_detail as $warranty) {
+                    $warrantyData[] = [
+                        'warrantyProvider' => $warranty->warranty_provider ?? null,
+                        'startDate' => $this->formatDates($warranty, 'start_date'),
+                        'endDate' => $this->formatDates($warranty, 'end_date'),
+                        'warrantyCoverage' => $warranty->warranty_coverage ?? null
+                    ];
+                }
+
+                $assetData['warranty'] = $warrantyData;
+
+                $erpAttributes = ErpAttributes::withTrashed()
+                    ->with(['fieldOptions', 'attributeValues' => function($query) use ($asset) {
+                        $query->where('document_master_id', $asset->faID)
+                            ->orWhere('document_master_id', null);
+                    }])
+                    ->where('document_id', "ASSETCOST")
+                    ->where(function ($query) use ($asset) {
+                        $query->where(function ($q) use ($asset) {
+                            $q->where('document_master_id', $asset->faID)
+                                ->where('is_active', 1)
+                                ->whereNull('deleted_at');
+                        })
+                        ->orWhere(function ($q) use ($asset) {
+                            $q->whereNull('document_master_id')
+                                ->where(function ($subQ) use ($asset) {
+                                    $subQ->where(function ($condition1Q) use ($asset) {
+                                        if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                                            $condition1Q->where('is_active', 1)
+                                                ->whereNull('deleted_at');
+                                        } else {
+                                            $condition1Q->whereRaw('1 = 1');
+                                        }
+                                    })
+                                    ->where(function ($condition2Q) use ($asset) {
+                                        if ($asset->approved == -1) {
+                                            $condition2Q->where(function ($approvedQ) use ($asset) {
+                                                $approvedQ->where(function ($activeQ) use ($asset) {
+                                                    $activeQ->where('is_active', 1)
+                                                        ->orWhere(function ($inactiveQ) use ($asset) {
+                                                            $inactiveQ->where('is_active', 0)
+                                                                ->where(function ($dateQ) use ($asset) {
+                                                                    $dateQ->whereNull('inactivated_at')
+                                                                        ->orWhere('inactivated_at', '>', $asset->approvedDate);
+                                                                });
+                                                        });
+                                                })
+                                                ->where(function ($deletedQ) use ($asset) {
+                                                    $deletedQ->whereNull('deleted_at')
+                                                        ->orWhere('deleted_at', '>', $asset->approvedDate);
+                                                });
+                                            });
+                                        } else {
+                                            $condition2Q->whereRaw('1 = 1');
+                                        }
+                                    });
+                                });
+                        });
+                    })
+                    ->get();
+
+                $erpAttributesData = [];
+                foreach ($erpAttributes as $erpAttribute) {
+                    $attributeData = [
+                        'description' => $erpAttribute->description ?? null,
+                        'mandatory' => $erpAttribute->is_mendatory ? 'Yes' : 'No',
+                        'field' => null
+                    ];
+
+                    foreach ($erpAttribute->attributeValues as $attributeValue) {
+                        $value = $attributeValue->value;
+                        
+                        if ($erpAttribute->field_type_id == 3) {
+                            $dropdownOption = $erpAttribute->fieldOptions->firstWhere('id', $value);
+                            if ($dropdownOption) {
+                                $value = $dropdownOption->description;
+                            }
+                        }
+
+                        $attributeData['field'] = $value;
+                    }
+
+                    $erpAttributesData[] = $attributeData;
+                }
+
+                $assetData['attributes'] = $erpAttributesData;
+
+                $result[] = $assetData;
+            }
+
+            return $this->sendResponse($result, 'Asset details retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    public function formatDates($dataset, $dateField) {
+        return $dataset->$dateField ? Carbon::parse($dataset->$dateField)->format('d-m-Y') : null;
+    }
+
+    public function formatValues($dataset, $valueField, $decimalPlaces = null, $type = 'local') {
+        if(isset($dataset->$valueField) && is_numeric($dataset->$valueField)) {
+            if(isset($decimalPlaces)) {
+                return round($dataset->$valueField, $decimalPlaces);
+            }
+
+            return round($dataset->$valueField, $type == 'local' ? 3 : 2);
+        }
+
+        return null;
+    }
+
+    private function getApprovalStatus($asset) {
+        if ($asset->approved == 0) {
+            $pendingApprovals = DocumentApproved::where('documentSystemCode', $asset->faID)
+                ->where('documentSystemID', 22)
+                ->where('approvedYN', 0)
+                ->where('rejectedYN', 0)
+                ->orderBy('approvalLevelID', 'asc')
+                ->first();
+            
+            if ($pendingApprovals) {
+                return 'Pending Approval at Level ' . $pendingApprovals->rollLevelOrder;
+            }
+            
+            return 'Not Approved';
+        } else {
+            return 'Rejected';
+        }
     }
 
 }
