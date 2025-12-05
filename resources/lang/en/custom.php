@@ -9764,4 +9764,5 @@ return
     'monthly_dep' => 'Monthly Depreciation',
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'Asset Depreciation PDF report has been sent to queue',
     'asset_depreciation_report_pdf_generated' => 'Asset Depreciation Report PDF has been generated.',
+    'mol_contribution' => 'Mol Contribution',
   ];

@@ -703,6 +703,16 @@
                             @if($masterdata->documentType == 1 && $isProjectBase)
                                 <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
                             @endif
+                            <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.mol_contribution') }}</td>
+                            <td class="text-right"
+                                    style="background-color: rgb(215,215,215)">{{number_format($masterdata->mol_amount, $transDecimal)}}
+                            </td>
+                        </tr>
+                        <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                            <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                            @if($masterdata->documentType == 1 && $isProjectBase)
+                                <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                            @endif
                             <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.net_of_retention_amount') }}</td>
                             @if($masterdata->rcmActivated)
                                 <td class="text-right"
