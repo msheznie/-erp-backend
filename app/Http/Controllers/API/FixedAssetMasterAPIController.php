@@ -1349,7 +1349,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
         $financeCat = AssetFinanceCategory::find($fixedAssetMaster->AUDITCATOGARY);
-        $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
+        $isAuditEnabled = $financeCat ? $financeCat->enableEditing : 0;
+        $output = ['isAuditEnabled' => $isAuditEnabled,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
