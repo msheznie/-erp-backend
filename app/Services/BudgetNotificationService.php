@@ -556,8 +556,7 @@ class BudgetNotificationService
    private function sendTimeExtensionRequestCancelledEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
-        
-        $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 3)->first();
+        $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->whereIn('status', [3, 4])->first();
         
         $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,

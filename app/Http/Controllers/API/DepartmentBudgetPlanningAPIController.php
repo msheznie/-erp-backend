@@ -706,6 +706,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             // Create time extension request using Eloquent model
             $timeRequest = \App\Models\DeptBudgetPlanningTimeRequest::create($requestData);
 
+            $budgetPlanning = \App\Models\DepartmentBudgetPlanning::with(['masterBudgetPlannings.company'])->find($input['budgetPlanningId']);
+
             // Handle base64 file attachments
             if (isset($input['attachments']) && is_array($input['attachments'])) {
                 foreach ($input['attachments'] as $attachment) {
@@ -764,7 +766,6 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $fileName = 'TIME_EXT_' . $timeRequest->id . '_' . $attachmentRecord->id . '.' . $extension;
 
                     // Get company information for file path
-                    $budgetPlanning = \App\Models\DepartmentBudgetPlanning::with(['masterBudgetPlannings.company'])->find($input['budgetPlanningId']);
                     $companySystemID = $budgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
                     $companyId = $budgetPlanning->masterBudgetPlannings->company->CompanyID ?? 'DEFAULT';
 
@@ -1252,7 +1253,17 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $timeExtensionRequest->save();
 
         // Update submission dates for budget planning and its details
-        $this->updateSubmissionDates($timeExtensionRequest);
+        $timeExtensionRequest = $this->updateSubmissionDates($timeExtensionRequest);
+
+        $departmentBudgetPlanning = $timeExtensionRequest->departmentBudgetPlanning;
+
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
+
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
 
         $budgetNotificationService = new BudgetNotificationService();
         $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
@@ -1313,5 +1324,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             //     'time_for_submission' => $newSubmissionDate
             // ]);
         }
+
+        return $timeExtensionRequest;
     }
 }
