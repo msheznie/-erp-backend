@@ -287,7 +287,7 @@ class ApprovalLevelAPIController extends AppBaseController
                 $query->where('isCategoryWiseApproval', 0)
                     ->whereNull('categoryID');
             })
-            ->when(isset($input['serviceLineWise']) && $input['serviceLineWise'], function($query) use ($input){
+            ->when(isset($input['serviceLineSystemID']) && isset($input['serviceLineWise']) && $input['serviceLineWise'], function($query) use ($input){
                 $query->where('serviceLineWise', 1)
                     ->where('serviceLineSystemID', $input['serviceLineSystemID']);
             })
