@@ -110,6 +110,7 @@ use App\Services\ValidateDocumentAmend;
 use DateTime;
 use App\Models\Tax;
 use App\Services\GeneralLedgerService;
+use App\Models\MolContribution;
 
 /**
  * Class BookInvSuppMasterController
@@ -347,7 +348,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType');
+            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType,mol_applicable,mol_rate');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -365,6 +366,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster['transCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['supplierTransactionCurrencyID'])->first()->CurrencyCode ?? null;
         $bookInvSuppMaster['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['companyReportingCurrencyID'])->first()->CurrencyCode ?? null;
         $bookInvSuppMaster['localCurrencyCode'] = CurrencyMaster::where('currencyID',$bookInvSuppMaster['localCurrencyID'])->first()->CurrencyCode ?? null;
+
+        $molData = $this->checkMolApplicable($bookInvSuppMaster);
+        $bookInvSuppMaster['isMolApplicable'] = $molData['isMolApplicable'];
+        
+        if (isset($bookInvSuppMaster['mol_applicable']) && isset($bookInvSuppMaster['mol_rate'])) {
+            if ($bookInvSuppMaster['mol_applicable']) {
+                $bookInvSuppMaster['mol_calculation_type'] = $molData['mol_calculation_type'];
+                $bookInvSuppMaster['mol_setup_id'] = $molData['mol_setup_id'];
+            }
+        } else {
+            if ($molData['isMolApplicable']) {
+                $bookInvSuppMaster['mol_rate'] = $molData['mol_rate'];
+                $bookInvSuppMaster['mol_calculation_type'] = $molData['mol_calculation_type'];
+                $bookInvSuppMaster['mol_setup_id'] = $molData['mol_setup_id'];
+            }
+        }
 
         return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_retrieved_successfully'));
     }
@@ -1446,6 +1463,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+            $molSetupId = isset($input['mol_setup_id']) ? $input['mol_setup_id'] : ($bookInvSuppMaster->mol_setup_id ?? 0);
+            $isMolApplicable = isset($input['isMolApplicable']) ? $input['isMolApplicable'] : ($bookInvSuppMaster->mol_applicable ?? 0);
+            
+            if ($isMolApplicable == 1 && $molSetupId > 0) {
+                $molContribution = MolContribution::find($molSetupId);
+                if ($molContribution && (empty($molContribution->authority_id) || $molContribution->authority_id == 0)) {
+                    return $this->sendError(trans('custom.mol_authority_not_assigned'), 500);
+                }
+            }
+
             $params = array(
                 'autoID' => $id,
                 'company' => $input["companySystemID"],
@@ -1491,6 +1518,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
             \Helper::updateSupplierItemWhtAmount($id,$bookInvSuppMaster);
 
         }
+
+        if (isset($input['isMolApplicable']) && $input['isMolApplicable'] == 1 && ($input['documentType'] == 0 || $input['documentType'] == 1)) {
+            $molAmount = isset($input['mol_amount']) ? $input['mol_amount'] : 0;
+            if ($molAmount > 0) {
+                $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+                $bookingAmountTrans = $bookInvSuppMaster->bookingAmountTrans - $molAmount;
+                
+                $molAmountLocalConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['localCurrencyID'], $molAmount);
+                $bookingAmountLocal = $bookInvSuppMaster->bookingAmountLocal - ($molAmountLocalConversion['localAmount'] ?? 0);
+                
+                $molAmountRptConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['companyReportingCurrencyID'], $molAmount);
+                $bookingAmountRpt = $bookInvSuppMaster->bookingAmountRpt - ($molAmountRptConversion['reportingAmount'] ?? 0);
+                
+                $bookInvSuppMaster->update([
+                    'bookingAmountTrans' => \Helper::roundValue($bookingAmountTrans),
+                    'bookingAmountLocal' => \Helper::roundValue($bookingAmountLocal),
+                    'bookingAmountRpt' => \Helper::roundValue($bookingAmountRpt)
+                ]);
+                $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+            }
+        }
+
         return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
@@ -2090,6 +2139,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
+            }
+
+            $bookInvSuppMasterForValidation = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+            $molSetupId = isset($input['mol_setup_id']) ? $input['mol_setup_id'] : ($bookInvSuppMasterForValidation->mol_setup_id ?? 0);
+            $isMolApplicable = isset($input['isMolApplicable']) ? $input['isMolApplicable'] : ($bookInvSuppMasterForValidation->mol_applicable ?? 0);
+            
+            if ($isMolApplicable == 1 && $molSetupId > 0) {
+                $molContribution = MolContribution::find($molSetupId);
+                if ($molContribution && (empty($molContribution->authority_id) || $molContribution->authority_id == 0)) {
+                    return $this->sendError(trans('custom.mol_authority_not_assigned'), 500);
+                }
             }
 
             $params = array(
@@ -3694,5 +3754,44 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse(array('externalReference' => $externalReference),"Supplier invoice creation is sent to queue!");
     }
 
+    private function checkMolApplicable($bookInvSuppMaster)
+    {
+        $molContribution = MolContribution::where('company_id', $bookInvSuppMaster->companySystemID)
+            ->where('status', true)
+            ->first();
+        
+        $hasMolContribution = $molContribution !== null;
+        $isMolApplicable = $hasMolContribution;
+        
+        $molRate = 0;
+        $molCalculationType = 0;
+        $molSetupId = 0;
+        
+        if ($isMolApplicable && $hasMolContribution) {
+            $supplierMolRate = 0;
+            if (isset($bookInvSuppMaster->supplierID) && $bookInvSuppMaster->supplierID > 0) {
+                $supplier = SupplierMaster::where('supplierCodeSystem', $bookInvSuppMaster->supplierID)->first();
+                if ($supplier) {
+                    $supplierMolRate = $supplier->mol_rate ?? 0;
+                }
+            }
+            
+            if ($supplierMolRate > 0) {
+                $molRate = $supplierMolRate;
+            } else {
+                $molRate = $molContribution->mol_percentage ?? 0;
+            }
+            
+            $molCalculationType = $molContribution->mol_calculation_type_id ?? 0;
+            $molSetupId = $molContribution->id ?? 0;
+        }
+        
+        return [
+            'isMolApplicable' => $isMolApplicable,
+            'mol_rate' => $molRate,
+            'mol_calculation_type' => $molCalculationType,
+            'mol_setup_id' => $molSetupId
+        ];
+    }
 
 }
