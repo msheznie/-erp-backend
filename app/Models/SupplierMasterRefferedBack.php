@@ -454,6 +454,9 @@ class SupplierMasterRefferedBack extends Model
         'modifiedUserSystemID',
         'advanceAccountSystemID',
         'AdvanceAccount',
+        'mol_applicable',
+        'mol_rate',
+        'mol_payment_mode',
          'isDelegation'
     ];
 
@@ -533,7 +536,10 @@ class SupplierMasterRefferedBack extends Model
         'blockedDate' => 'datetime',
         'blockedReason' => 'string',
         'jsrsNo',
-        'jsrsExpiry'
+        'jsrsExpiry',
+        'mol_applicable' => 'integer',
+        'mol_rate' => 'float',
+        'mol_payment_mode' => 'integer',
     ];
 
     /**
