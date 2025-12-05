@@ -8,6 +8,7 @@ use App\Models\MolContribution;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\SupplierAssigned;
+use App\Models\BookInvSuppMaster;
 use App\Repositories\MolContributionRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -113,6 +114,15 @@ class MolContributionAPIController extends AppBaseController
     public function store(CreateMolContributionAPIRequest $request)
     {
         $input = $request->all();
+
+        $existingMol = MolContribution::where('company_id', $input['company_id'])
+            ->where('contribution_type', $input['contribution_type'])
+            ->where('mol_calculation_type_id', $input['mol_calculation_type_id'])
+            ->exists();
+
+        if ($existingMol) {
+            return $this->sendError(trans('custom.mol_setup_duplicate_combination'));
+        }
 
         if (isset($input['status']) && ($input['status'] == 1 || $input['status'] === true)) {
             MolContribution::where('company_id', $input['company_id'])
@@ -243,6 +253,25 @@ class MolContributionAPIController extends AppBaseController
         }
 
         $companyId = $input['company_id'] ?? $molContribution->company_id;
+        $contributionType = $input['contribution_type'] ?? $molContribution->contribution_type;
+        $molCalculationTypeId = $input['mol_calculation_type_id'] ?? $molContribution->mol_calculation_type_id;
+
+        $existingMol = MolContribution::where('company_id', $companyId)
+            ->where('contribution_type', $contributionType)
+            ->where('mol_calculation_type_id', $molCalculationTypeId)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($existingMol) {
+            return $this->sendError(trans('custom.mol_setup_duplicate_combination'));
+        }
+
+        if (isset($input['status']) && ($input['status'] == 0 || $input['status'] === false)) {
+            $hasTransactions = BookInvSuppMaster::where('mol_setup_id', $id)->exists();
+            if ($hasTransactions) {
+                return $this->sendError(trans('custom.mol_setup_cannot_be_deactivated'));
+            }
+        }
 
         if (isset($input['status']) && ($input['status'] == 1 || $input['status'] === true)) {
             MolContribution::where('company_id', $companyId)
@@ -302,6 +331,11 @@ class MolContributionAPIController extends AppBaseController
 
         if (empty($molContribution)) {
             return $this->sendError('Mol Contribution not found');
+        }
+
+        $hasTransactions = BookInvSuppMaster::where('mol_setup_id', $id)->exists();
+        if ($hasTransactions) {
+            return $this->sendError(trans('custom.mol_setup_cannot_be_deactivated'));
         }
 
         $molContribution->delete();
