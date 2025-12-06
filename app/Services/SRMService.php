@@ -68,6 +68,7 @@ use App\Models\TenderPaymentDetail;
 use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Models\BookInvSuppMaster;
+use App\Models\SrmPOAcknowledgement;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SRMPublicLinkRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
@@ -103,6 +104,7 @@ use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Config;
+use App\Services\WebPushNotificationService;
 class SRMService
 {
     private $POService = null;
@@ -221,6 +223,9 @@ class SRMService
                     (
                         'supplierCodeSystem', 'primarySupplierCode'
                     );
+                },
+                'po_acknowledgement' => function ($q) {
+                    $q->select('id', 'po_id', 'supplier_id');
                 }
             ])
             ->orderBy('createdDateTime', 'desc');
@@ -7086,4 +7091,151 @@ class SRMService
             'data' => $isUpdated
         ];
     }
-}
+
+    public function acknowledgePo(Request $request){
+        try {
+            return DB::transaction(function () use ($request) {
+                $validationResult = $this->validateAcknowledgePoRequest($request);
+                if (isset($validationResult['error'])) {
+                    return $validationResult['error'];
+                }
+
+                $validatedData = $validationResult['data'];
+                $purchaseOrderID = $validatedData['purchaseOrderID'];
+                $supplierID = $validatedData['supplierID'];
+                $comment = $request->input('extra.comment', '-');
+                $purchaseOrder = $validatedData['purchaseOrder'];
+                $poCreator = $validatedData['poCreator'];
+                $supplierName = $validatedData['supplierName'];
+
+                $acknowledgement = SrmPOAcknowledgement::create([
+                    'po_id' => $purchaseOrderID,
+                    'supplier_id' => $supplierID,
+                    'comment' => $comment,
+                    'created_by' => $supplierID
+                ]);
+                
+                $this->sendPoAcknowledgementEmail($purchaseOrder, $poCreator, $supplierName, $comment);
+
+                $this->sendPoAcknowledgementNotification($purchaseOrder, $poCreator, $supplierName);
+
+                return $this->generateResponse(true, 'Purchase Order acknowledged successfully');
+            });
+        } catch (\Exception $e) {
+            return $this->generateResponse(false, 'Failed to acknowledge PO: ' . $e->getMessage());
+        }
+    }
+
+    private function validateAcknowledgePoRequest(Request $request)
+    {
+        $rules = [
+            'extra.purchaseOrderID' => 'required',
+            'supplier_uuid' => 'required|string',
+        ];
+
+        $messages = [
+            'extra.purchaseOrderID.required' => 'Purchase Order ID is required',
+            'supplier_uuid.required' => 'Supplier UUID is required',
+            'supplier_uuid.string' => 'Supplier UUID must be a string',
+        ];
+
+        $validator = Validator::make($request->all(), $rules, $messages);
+
+        if ($validator->fails()) {
+            return ['error' => $this->generateResponse(false, $validator->errors()->first())];
+        }
+
+        $purchaseOrderID = $request->input('extra.purchaseOrderID');
+        $supplierUuid = $request->input('supplier_uuid');
+
+        $supplierID = self::getSupplierIdByUUID($supplierUuid);
+        if (!$supplierID) {
+            return ['error' => $this->generateResponse(false, 'Invalid supplier UUID')];
+        }
+
+        $purchaseOrder = ProcumentOrder::select('purchaseOrderID', 'purchaseOrderCode', 'supplierID','createdUserSystemID', 'companySystemID')
+            ->where('purchaseOrderID', $purchaseOrderID)
+            ->first();
+        
+        if (!$purchaseOrder) {
+            return ['error' => $this->generateResponse(false, 'Purchase Order not found')];
+        }
+
+        if ($purchaseOrder->supplierID != $supplierID) {
+            return ['error' => $this->generateResponse(false, 'Access Denied: Supplier does not match Purchase Order')];
+        }
+
+        $existingAck = SrmPOAcknowledgement::getSupplierAcknowledgement($purchaseOrderID, $supplierID);
+        if ($existingAck) {
+            return ['error' => $this->generateResponse(false, 'Purchase Order already acknowledged')];
+        }
+
+        $poCreator = null;
+        if ($purchaseOrder->createdUserSystemID) {
+            $poCreator = Employee::where('employeeSystemID', $purchaseOrder->createdUserSystemID)
+                ->first();
+        }
+        
+        if (!$poCreator || !$poCreator->empEmail) {
+            return ['error' => $this->generateResponse(false, 'PO creator email not found')];
+        }
+
+        $supplierData = SupplierMaster::where('supplierCodeSystem', $supplierID)->first();
+        $supplierName = $supplierData ? $supplierData->supplierName : 'Supplier';
+
+        return [
+            'data' => [
+                'purchaseOrderID' => $purchaseOrderID,
+                'supplierID' => $supplierID,
+                'purchaseOrder' => $purchaseOrder,
+                'poCreator' => $poCreator,
+                'supplierName' => $supplierName,
+            ]
+        ];
+    }
+
+    private function sendPoAcknowledgementEmail($purchaseOrder, $poCreator, $supplierName, $comment)
+    {
+        $poNumber = $purchaseOrder->purchaseOrderCode;
+        $buyerName = $poCreator->empName ?? $poCreator->empFullName ?? 'Buyer';
+        $subject = "Purchase Order Acknowledgement – PO# {$poNumber}";
+        
+        $emailBody = "Dear {$buyerName},<br/><br/>";
+        $emailBody .= "We would like to inform you that the Purchase Order {$poNumber} has been acknowledged by {$supplierName} through the Supplier Portal.<br/><br/>";
+        
+        if (!empty($comment) && $comment !== '-') {
+            $emailBody .= "Supplier Comment: {$comment}<br/><br/>";
+        }
+        
+        $emailBody .= "Thank you for your continued collaboration.<br/><br/>";
+        $emailBody .= "Best regards,<br/>{$supplierName}";
+        
+        $dataEmail = [
+            'companySystemID' => $purchaseOrder->companySystemID,
+            'alertMessage' => $subject,
+            'empEmail' => $poCreator->empEmail,
+            'emailAlertMessage' => $emailBody,
+        ];
+        
+        \Email::sendEmailErp($dataEmail);
+    }
+
+    private function sendPoAcknowledgementNotification($purchaseOrder, $poCreator, $supplierName)
+    {
+        $poNumber = $purchaseOrder->purchaseOrderCode;
+
+        $notificationData = [
+            'title' => 'Purchase Order Acknowledged',
+            'body' => "Purchase Order {$poNumber} has been acknowledged by {$supplierName}",
+            'url' => ""
+        ];
+    
+        WebPushNotificationService::sendNotification(
+            $notificationData,
+            4,
+            [$poCreator->employeeSystemID],
+            '',
+            'user'
+        );
+    }
+}   
