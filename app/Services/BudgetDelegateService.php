@@ -125,6 +125,7 @@ class BudgetDelegateService
             $record = $this->budgetDelegateAccessRecordRepository->createOrUpdate($recordData);
 
             $budgetNotificationService = new BudgetNotificationService();
+            $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'delegation-confirmation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
             $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'task-delegation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
             DB::commit();
 

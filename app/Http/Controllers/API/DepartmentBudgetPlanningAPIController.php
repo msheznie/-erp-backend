@@ -379,7 +379,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError('Budget Planning ID is required');
             }
 
-            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions')->findWithoutFail($input['budgetPlanningId']);
+            $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions','masterBudgetPlannings')->findWithoutFail($input['budgetPlanningId']);
 
             if($departmentBudgetPlanning->financeTeamStatus != 4 && $input['confirmed_yn'] == 1) {
                 return $this->sendError('Finance Team Status must be completed before confirming');
@@ -408,7 +408,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }
 
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
-        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions')->findWithoutFail($input['budgetPlanningId']);
+        $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('revisions','masterBudgetPlannings')->findWithoutFail($input['budgetPlanningId']);
 
         if (empty($departmentBudgetPlanning)) {
             return $this->sendError(trans('custom.department_budget_planning_not_found'));
@@ -528,8 +528,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             if($input['workStatus'] == 3)
             {
                 $budgetPlanningNotificationService = new BudgetNotificationService();
-                $budgetPlanningNotificationService->sendNotification($departmentBudgetPlanning->id,'',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $budgetPlanningNotificationService->sendNotification($departmentBudgetPlanning->id,'final-submission-to-finance',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
             }
+
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
@@ -705,6 +706,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             // Create time extension request using Eloquent model
             $timeRequest = \App\Models\DeptBudgetPlanningTimeRequest::create($requestData);
 
+            $budgetPlanning = \App\Models\DepartmentBudgetPlanning::with(['masterBudgetPlannings.company'])->find($input['budgetPlanningId']);
+
             // Handle base64 file attachments
             if (isset($input['attachments']) && is_array($input['attachments'])) {
                 foreach ($input['attachments'] as $attachment) {
@@ -763,7 +766,6 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $fileName = 'TIME_EXT_' . $timeRequest->id . '_' . $attachmentRecord->id . '.' . $extension;
 
                     // Get company information for file path
-                    $budgetPlanning = \App\Models\DepartmentBudgetPlanning::with(['masterBudgetPlannings.company'])->find($input['budgetPlanningId']);
                     $companySystemID = $budgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
                     $companyId = $budgetPlanning->masterBudgetPlannings->company->CompanyID ?? 'DEFAULT';
 
@@ -789,6 +791,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
 
+            $budgetNotificationService = new BudgetNotificationService();
+            $budgetNotificationService->sendNotification($input['budgetPlanningId'],'extension-request-submitted',$budgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
             // Add audit log
             $uuid = $request->get('tenant_uuid', 'local');
             $db = $request->get('db', '');
@@ -1156,6 +1160,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $timeExtensionRequest->reviewed_at = now();
         $timeExtensionRequest->save();
 
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-rejected',$timeExtensionRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
@@ -1210,7 +1217,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function acceptTimeExtensionRequest(Request $request) {
         $input = $request->all();
 
-        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning')->find($input['id']);
+        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::with('departmentBudgetPlanning.masterBudgetPlannings')->find($input['id']);
 
         $newDate = null;
 
@@ -1246,7 +1253,21 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $timeExtensionRequest->save();
 
         // Update submission dates for budget planning and its details
-        $this->updateSubmissionDates($timeExtensionRequest);
+        $timeExtensionRequest = $this->updateSubmissionDates($timeExtensionRequest);
+
+        $departmentBudgetPlanning = $timeExtensionRequest->departmentBudgetPlanning;
+
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
+
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
+
+        $budgetNotificationService = new BudgetNotificationService();
+        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+
 
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
@@ -1303,5 +1324,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             //     'time_for_submission' => $newSubmissionDate
             // ]);
         }
+
+        return $timeExtensionRequest;
     }
 }

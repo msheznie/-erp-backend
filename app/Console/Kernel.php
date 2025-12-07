@@ -97,6 +97,11 @@ class Kernel extends ConsoleKernel
             ->dailyAt('00:00')
             ->withoutOverlapping();
 
+        $schedule->command('command:budgetSubmissionDeadlineReachedNotification')
+            ->timezone('Asia/Muscat')
+            ->dailyAt('00:00')
+            ->withoutOverlapping();
+
       /*  $schedule->command('sendTenderBidOpeningReminders')
             ->timezone('Asia/Muscat')
             ->everyMinute()
