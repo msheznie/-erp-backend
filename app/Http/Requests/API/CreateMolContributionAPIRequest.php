@@ -15,7 +15,8 @@ class CreateMolContributionAPIRequest extends APIRequest
     public function rules()
     {
         $rules = MolContribution::$rules;
-        $rules['description'] = 'required|unique:mol_contribution,description';
+        $rules['description'] = 'required|unique:mol_contribution,description,NULL,id,company_id,' . $this->company_id;
+
         
         return $rules;
     }
