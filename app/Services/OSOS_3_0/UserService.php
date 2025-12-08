@@ -84,49 +84,16 @@ class UserService
 
                 $je = json_decode($body, true);
 
-                if (!is_array($je)) {
-                    $logData = [
-                        'message' => 'Invalid or empty JSON response from API',
-                        'id' => $this->id
-                    ];
+                if (!isset($je['id'])) {
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id];
                     return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
                 }
 
-                $userRefId = null;
-
-                if ($this->postType === 'POST') {
-                    if (empty($je['id'])) {
-                        $logData = [
-                            'message' => 'Cannot Find Reference id from response',
-                            'id' => $this->id
-                        ];
-                        return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
-                    }
-
-                    $userRefId = $je['id'];
-                }
-
-                else {
-                    if (empty($je['userConfig']['id'])) {
-                        $logData = [
-                            'message' => 'Cannot Find Reference id from response',
-                            'id' => $this->id
-                        ];
-                        return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
-                    }
-
-                    $userRefId = $je['userConfig']['id'];
-                }
-
-                $this->insertOrUpdateThirdPartyPivotTable($userRefId);
+                $this->insertOrUpdateThirdPartyPivotTable($je['id']);
                 $logData = ['message' => "Api user {$this->operation} successfully processed", 'id' => $this->id];
                 $this->insertToLogTb($logData, 'info', 'User', $this->companyId);
+                return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
-                return [
-                    'status' => true,
-                    'message' => $logData['message'],
-                    'code' => $statusCode
-                ];
             }
 
             if ($statusCode == 400) {
@@ -215,8 +182,7 @@ class UserService
                         WHEN g.genderID = 2 THEN 'Miss'
                     END as empTitle,
                     CONCAT(IFNULL(e.EDOB, '2000-01-01'), 'T18:30:00.000Z') as dateOfBirth,
-                    DATE_FORMAT(IFNULL(e.EDOB, '2000-01-01'), '%d/%m/%Y') as hiddenDateOfBirth,
-                    e.EmpImage as imageUrl")
+                    DATE_FORMAT(IFNULL(e.EDOB, '2000-01-01'), '%d/%m/%Y') as hiddenDateOfBirth")
             ->join('srp_employeesdetails as e', function ($join) {
                 $join->on('e.EIdNo', '=', 'u.employee_id');
             })
@@ -236,8 +202,6 @@ class UserService
         $companyId = $this->getOtherReferenceId($data->companyId, 5);
         $employeeId = $this->getOtherReferenceId($this->empId, 4);
 
-        $imageData = $this->getProfileImageData($data->imageUrl);
-
         $this->userData = [
             "activeCompany" => $companyId,
             "company" => [
@@ -252,8 +216,6 @@ class UserService
             "gender" => $data->gender,
             "dateOfBirth" => $data->dateOfBirth,
             "hiddenDateOfBirth" => $data->hiddenDateOfBirth,
-            "profileImage" => $imageData['profileImage'],
-            "profileImageExtension" => $imageData['profileImageExtension'],
             "isActive" => true,
             "language" => "en-US",
             "mobileNo" => $data->EcMobile,
@@ -264,7 +226,7 @@ class UserService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->userData['id'] = $this->masterUuId;
+            $this->userData['Id'] = $this->masterUuId;
         }
     }
 
