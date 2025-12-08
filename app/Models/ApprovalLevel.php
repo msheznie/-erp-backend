@@ -145,12 +145,10 @@ class ApprovalLevel extends Model
     public function category(){
         return $this->belongsTo('App\Models\FinanceItemCategoryMaster','categoryID','itemCategoryID');
     }
-    public static function isExistsTenderType($tenderTypeId, $companySystemID, $documentSystemID)
+    public static function isExistsTenderType($tenderTypeId)
     {
         return ApprovalLevel::where('isActive', -1)
             ->where('tenderTypeId', $tenderTypeId)
-            ->where('companySystemID', $companySystemID)
-            ->where('documentSystemID', $documentSystemID)
             ->exists();
     }
 }

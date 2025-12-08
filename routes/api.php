@@ -1055,10 +1055,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
-        Route::get('confirmAPICreatedReceiptVouchers', 'ReceiptAPIController@confirmAPICreatedReceiptVouchers');
     }
 });
-
 
 
 

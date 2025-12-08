@@ -2,8 +2,6 @@
 namespace App\Traits\OSOS_3_0;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 trait JobCommonFunctions{
     function insertToLogTb($logData, $type, $desc, $companyId){
@@ -77,8 +75,8 @@ trait JobCommonFunctions{
                 break;
             case 'user':
                 $this->url = ($this->postType === 'DELETE')
-                    ? "v2/api/Users/{$this->masterUuId}"
-                    : 'v2/api/Users';
+                    ? "api/Users/{$this->masterUuId}"
+                    : 'api/Users';
                 break;
             case 'fos':
                 $this->url = ($this->postType === 'DELETE')
@@ -179,60 +177,5 @@ trait JobCommonFunctions{
         return DB::table('third_party_pivot_record')
             ->where('pivot_table_id', 5)
             ->first();
-    }
-
-    function getProfileImageData($imageUrl = null)
-    {
-        $profileImage = null;
-        $profileImageExtension = null;
-        $defaultImages = ['images/users/female.png', 'images/users/male.png'];
-        $imageUrl = trim($imageUrl);
-
-        if (empty($imageUrl) || in_array($imageUrl, $defaultImages, true)) {
-            return [
-                'profileImage' => null,
-                'profileImageExtension' => null,
-            ];
-        }
-
-        try {
-            if (Storage::disk('s3')->exists($imageUrl)) {
-                $fileContent = Storage::disk('s3')->get($imageUrl);
-                if ($fileContent !== false) {
-                    $pathInfo = pathinfo($imageUrl);
-                    $extension = isset($pathInfo['extension']) ? strtolower($pathInfo['extension']) : '';
-
-                    // Map extension to full MIME type
-                    $mimeTypes = [
-                        'jpg' => 'image/jpeg',
-                        'jpeg' => 'image/jpeg',
-                        'png' => 'image/png',
-                        'gif' => 'image/gif',
-                    ];
-
-                    if (!isset($mimeTypes[$extension])) {
-                        $logData = ['message' => 'image mime type does not exists', 'id' => $this->id];
-                        $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
-                        return [
-                            'profileImage' => null,
-                            'profileImageExtension' => null,
-                        ];
-                    }
-
-                    $mimeType = $mimeTypes[$extension];
-                    $base64String = base64_encode($fileContent);
-                    $profileImage = 'data:' . $mimeType . ';base64,' . $base64String;
-                    $profileImageExtension = '.' . $extension;
-                }
-            }
-        } catch (\Exception $e) {
-            $logData = ['message' => 'Failed to get image data'. $e->getMessage(), 'id' => $this->id];
-            return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
-        }
-
-        return [
-            'profileImage' => $profileImage,
-            'profileImageExtension' => $profileImageExtension,
-        ];
     }
 }

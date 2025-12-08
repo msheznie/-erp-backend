@@ -3354,7 +3354,7 @@ class Helper
                                 }
 
                                 $tenderTypeId = $params["tenderTypeId"];
-                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId, $params["company"], $reference_document_id);
+                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId);
                                 $approvalLevel->where(function ($query) use ($tenderTypeId, $tenderApprovalLevel) {
                                     $tenderApprovalLevel
                                         ? $query->where('tenderTypeId', $tenderTypeId)
