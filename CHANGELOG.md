@@ -1,6 +1,14 @@
 # Changelog
 
 
+## [10.94.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.0...v10.94.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+
 ## [10.94.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.2...v10.94.0) (2025-12-04)
 
 
