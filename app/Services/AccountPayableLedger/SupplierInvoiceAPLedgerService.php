@@ -12,6 +12,7 @@ use App\Models\PurchaseReturn;
 use App\Models\Taxdetail;
 use App\Models\CompanyPolicyMaster;
 use App\Models\BookInvSuppDet;
+use App\Models\MolContribution;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -159,6 +160,18 @@ class SupplierInvoiceAPLedgerService
             $retentionLocal = 0;
             $retentionInvoiceAmount = 0;
             $retentionRpt = 0;
+
+            $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0) {
+                $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $molAmount;
+                $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $molAmount;
+
+                $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                $data['localAmount'] = $data['localAmount'] - \Helper::roundValue($molAmountLocalConversion['localAmount'] ?? 0);
+
+                $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                $data['comRptAmount'] = $data['comRptAmount'] - \Helper::roundValue($molAmountRptConversion['reportingAmount'] ?? 0);
+            }
 
             $whtTrans = 0;
             $whtLocal = 0;
@@ -326,6 +339,32 @@ class SupplierInvoiceAPLedgerService
             }
 
             array_push($finalData, $data);
+
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
+                $molContribution = MolContribution::find($masterData->mol_setup_id);
+                $molAuthority = $molContribution ? $molContribution->authority_id : null;
+                if ($molAuthority) {
+                    $molSupplier = SupplierMaster::where('supplierCodeSystem', $molAuthority)->first();
+                    $molData = $data;
+                    $molData['supplierCodeSystem'] = $molSupplier->supplierCodeSystem ?? $molAuthority;
+                    $molData['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+                    $molData['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
+
+                    $molData['supplierInvoiceAmount'] = \Helper::roundValue($molAmount);
+                    $molData['supplierDefaultAmount'] = \Helper::roundValue($molAmount);
+
+                    $molLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                    $molData['localAmount'] = \Helper::roundValue($molLocalConversion['localAmount'] ?? 0);
+
+                    $molRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                    $molData['comRptAmount'] = \Helper::roundValue($molRptConversion['reportingAmount'] ?? 0);
+
+                    $molData['isRetention'] = 0;
+                    $molData['isWHT'] = 0;
+
+                    array_push($finalData, $molData);
+                }
+            }
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
