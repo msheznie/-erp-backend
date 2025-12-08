@@ -841,6 +841,10 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
                     }
     
                     if ($claim->confirmedYN == 2) {
+                        $documentDetails[] = [
+                            'documentCode' => $claim->expenseClaimCode,
+                            'documentType' => 'Expense Claim',
+                        ];
                         $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = 1;
                     }
                 }
