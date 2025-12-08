@@ -180,7 +180,7 @@ class Appointment extends Model
 
     public function grv()
     {
-        return $this->hasOne('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
+        return $this->hasMany('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
     }
 
     public function invoice()

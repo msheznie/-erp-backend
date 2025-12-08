@@ -5701,7 +5701,6 @@ class SRMService
 
     public function createInvoice(Request $request)
     {
-
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
         $data['attachmentsList'] = $request->input('extra.attachments');
@@ -5744,13 +5743,33 @@ class SRMService
             }
         }
 
-        $acc_d = DeliveryAppointmentInvoice::dispatch($data);
+        $grvMasters = \App\Models\GRVMaster::where('deliveryAppoinmentID', $data['id'])
+            ->select('grvAutoID', 'grvPrimaryCode', 'supplierTransactionCurrencyID')
+            ->get();
+
+        if ($grvMasters->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'No GRV found for this appointment. Please create GRV first.',
+                'data' => []
+            ];
+        }
+
+        $dispatchedJobs = [];
+        foreach ($grvMasters as $grvMaster) {
+            $grvData = $data;
+            $grvData['grvAutoID'] = $grvMaster->grvAutoID;
+            $grvData['grvPrimaryCode'] = $grvMaster->grvPrimaryCode;
+            $grvData['supplierTransactionCurrencyID'] = $grvMaster->supplierTransactionCurrencyID;
+
+            $dispatchedJobs[] = \App\Jobs\DeliveryAppointmentInvoice::dispatch($grvData);
+        }
+
         return [
             'success' => true,
             'message' => 'Invoice created successfully',
             'data' => $data
         ];
-
     }
 
     public function convertArrayToSelectedValue ($input,$params){

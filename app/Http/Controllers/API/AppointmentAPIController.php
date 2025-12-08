@@ -569,8 +569,49 @@ class AppointmentAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, trans('srm_supplier_management.successfully_created'));
+        try {
+            $appointment = Appointment::with([
+                'detail.po_master:purchaseOrderID,supplierTransactionCurrencyID,serviceLineSystemID'
+            ])->find($input['documentSystemCode']);
+
+            if (!$appointment) {
+                return $this->sendError('Appointment not found');
+            }
+
+            $currencyGroups = $appointment->detail
+                ->filter(function ($detail) {
+                    return $detail->po_master;
+                })
+                ->groupBy(function ($detail) {
+                    return $detail->po_master->supplierTransactionCurrencyID;
+                })
+                ->map(function ($group) {
+                    return $group->pluck('id')->toArray();
+                })
+                ->toArray();
+
+            $dispatchedJobs = [];
+
+            if (count($currencyGroups) === 1) {
+                $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($input);
+            } else {
+                foreach ($currencyGroups as $currencyId => $appointmentDetailIds) {
+                    $groupInput = array_merge($input, [
+                        'currencyId' => $currencyId,
+                        'appointmentDetailIds' => $appointmentDetailIds,
+                    ]);
+
+                    $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($groupInput);
+                }
+            }
+
+            return $this->sendResponse($dispatchedJobs, trans('srm_supplier_management.successfully_created'));
+
+        } catch (\Throwable $e) {
+            return $this->sendError(
+                trans('srm_supplier_management.something_went_wrong') . ' ' . $e->getMessage()
+            );
+        }
     }
 }
