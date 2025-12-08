@@ -117,7 +117,7 @@ class ReceiptAPIService
                         'receipt' => true,
                         'sendMail' => false,
                         'sendNotication' => false,
-                        'isAutoCreateDocument' => true
+                        'isAutoCreateDocument' => true,
                         'fromUpload' => true
                     );
 
@@ -126,7 +126,7 @@ class ReceiptAPIService
                     $confirmation = \Helper::confirmDocument($params);
                     if(!$confirmation['success'])
                     {
-                        throw new \Exception('Document confirmation failed');
+                        throw new \Exception('Document confirmation failed: ' . ($confirmation['message'] ?? 'Unknown error'));
                     }
 
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $saveReceipt->custReceivePaymentAutoID)->where('documentSystemID', $saveReceipt->documentSystemID)->get();
