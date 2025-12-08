@@ -4,10 +4,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\StoreReceiptApiRequest;
+use App\Models\DocumentApproved;
+use App\Models\CustomerReceivePayment;
 use App\Mapper\LaravelValidationToAPIJSON;
 use App\Services\API\ReceiptAPIService;
 use App\Traits\DocumentSystemMappingTrait;
 use Illuminate\Http\Request;
+use App\Services\UserTypeService;
+use Illuminate\Support\Facades\Log;
+use App\helper\CommonJobService;
+
 
 class ReceiptAPIController extends AppBaseController
 {
@@ -155,5 +161,88 @@ class ReceiptAPIController extends AppBaseController
             return $this->sendAPIError("Receipt voucher creation failed",500,$createReceiptVoucher['message']);
 
         }
+    }
+
+
+    public function confirmAPICreatedReceiptVouchers(Request $request)
+    {
+        $input = $request->all();
+
+        $header = $input['system'].' 0000000000';
+
+        try {
+            Log::useFiles(storage_path() . '/logs/receipt_voucher_api_confirmation_logs.log');
+
+            $tenants = CommonJobService::tenant_list();
+            if(count($tenants) == 0){
+                return  "tenant list is empty";
+            }
+
+
+            foreach ($tenants as $tenant){
+                $tenantDb = $tenant->database;
+
+                Log::info('checking the db : '.$tenantDb);
+                CommonJobService::db_switch($tenantDb);
+                $employee = UserTypeService::getSystemEmployee();
+
+                $receiptVouchers = CustomerReceivePayment::where('confirmedYN', 0)
+                                    ->where('createdUserSystemID',$employee->employeeSystemID)
+                                    ->get();
+
+                foreach ($receiptVouchers as $receipt){
+                
+                    $params = array('autoID' => $receipt->custReceivePaymentAutoID,
+                    'company' => $receipt->companySystemID,
+                    'document' => $receipt->documentSystemID,
+                    'segment' => '',
+                    'category' => '',
+                    'amount' => '',
+                    'receipt' => true,
+                    'sendMail' => false,
+                    'sendNotication' => false,
+                    'isAutoCreateDocument' => true,
+                    'fromUpload' => true
+                    );
+                    $confirmation = \Helper::confirmDocument($params);
+
+                    if(!$confirmation['success']) {
+                        Log::error('Document confirmation failed ('.$receipt->custPaymentReceiveCode.') : ' . ($confirmation['message'] ?? 'Unknown error'));
+                        continue;
+                    }
+
+                    $documentApproveds = DocumentApproved::where('documentSystemCode', $receipt->custReceivePaymentAutoID)->where('documentSystemID', $receipt->documentSystemID)->get();
+
+                    foreach ($documentApproveds as $documentApproved)
+                    {
+                        $documentApproved["approvedComments"] = "Generated Receipt Voucher through API";
+                        $documentApproved["db"] = $tenantDb;
+                        $documentApproved['empID'] = $receipt->approvedByUserSystemID;
+                        $documentApproved['documentSystemID'] = $receipt->documentSystemID;
+                        $documentApproved['approvedDate'] = $receipt->approvedDate;
+                        $documentApproved['sendMail'] = false;
+                        $documentApproved['sendNotication'] = false;
+                        $documentApproved['isCheckPrivilages'] = false;
+                        $documentApproved['isAutoCreateDocument'] = true;
+                        $approval = \Helper::approveDocument($documentApproved);
+                        
+                        if(!$approval['success'])
+                        {
+                            Log::error('Document approval failed ('.$receipt->custPaymentReceiveCode.') : ' . ($approval['message'] ?? 'Unknown error'));
+                            continue;
+                        }
+                    }
+
+                    $this->storeToDocumentSystemMapping($receipt->documentSystemID,$receipt->custReceivePaymentAutoID,$header);
+
+                }
+            }
+
+            return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendAPIError("Error confirming receipt vouchers",500,['error' => $e->getMessage()]);
+        }
+      
     }
 }
