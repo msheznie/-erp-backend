@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use App\Services\UserTypeService;
 use Illuminate\Support\Facades\Log;
 use App\helper\CommonJobService;
+use App\Jobs\ProcessTenantReceiptVouchers;
 
 
 class ReceiptAPIController extends AppBaseController
@@ -178,64 +179,11 @@ class ReceiptAPIController extends AppBaseController
                 return  "tenant list is empty";
             }
 
-
+            // Dispatch a job for each tenant
             foreach ($tenants as $tenant){
                 $tenantDb = $tenant->database;
-
-                Log::info('checking the db : '.$tenantDb);
-                CommonJobService::db_switch($tenantDb);
-                $employee = UserTypeService::getSystemEmployee();
-
-                $receiptVouchers = CustomerReceivePayment::where('confirmedYN', 0)
-                                    ->where('createdUserSystemID',$employee->employeeSystemID)
-                                    ->get();
-
-                foreach ($receiptVouchers as $receipt){
-                
-                    $params = array('autoID' => $receipt->custReceivePaymentAutoID,
-                    'company' => $receipt->companySystemID,
-                    'document' => $receipt->documentSystemID,
-                    'segment' => '',
-                    'category' => '',
-                    'amount' => '',
-                    'receipt' => true,
-                    'sendMail' => false,
-                    'sendNotication' => false,
-                    'isAutoCreateDocument' => true,
-                    'fromUpload' => true
-                    );
-                    $confirmation = \Helper::confirmDocument($params);
-
-                    if(!$confirmation['success']) {
-                        Log::error('Document confirmation failed ('.$receipt->custPaymentReceiveCode.') : ' . ($confirmation['message'] ?? 'Unknown error'));
-                        continue;
-                    }
-
-                    $documentApproveds = DocumentApproved::where('documentSystemCode', $receipt->custReceivePaymentAutoID)->where('documentSystemID', $receipt->documentSystemID)->get();
-
-                    foreach ($documentApproveds as $documentApproved)
-                    {
-                        $documentApproved["approvedComments"] = "Generated Receipt Voucher through API";
-                        $documentApproved["db"] = $tenantDb;
-                        $documentApproved['empID'] = $receipt->approvedByUserSystemID;
-                        $documentApproved['documentSystemID'] = $receipt->documentSystemID;
-                        $documentApproved['approvedDate'] = $receipt->approvedDate;
-                        $documentApproved['sendMail'] = false;
-                        $documentApproved['sendNotication'] = false;
-                        $documentApproved['isCheckPrivilages'] = false;
-                        $documentApproved['isAutoCreateDocument'] = true;
-                        $approval = \Helper::approveDocument($documentApproved);
-                        
-                        if(!$approval['success'])
-                        {
-                            Log::error('Document approval failed ('.$receipt->custPaymentReceiveCode.') : ' . ($approval['message'] ?? 'Unknown error'));
-                            continue;
-                        }
-                    }
-
-                    $this->storeToDocumentSystemMapping($receipt->documentSystemID,$receipt->custReceivePaymentAutoID,$header);
-
-                }
+                Log::info('Dispatching job for tenant: ' . $tenantDb);
+                ProcessTenantReceiptVouchers::dispatch($tenantDb, $header);
             }
 
             return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
