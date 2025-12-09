@@ -1064,12 +1064,14 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     $departmentsWithoutSegments[] = $department->departmentCode;
                 }
                 
-                if (!empty($departmentsWithoutSegments)) {
-                    $errorMessage = 'The segments are not assigned for the following department(s)';
-        
-                    $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutSegments);
-                    return $this->sendError($errorMessage, 404,  ['hod_error']);
-                }
+            }
+
+
+            if (!empty($departmentsWithoutSegments)) {
+                $errorMessage = 'The segments are not assigned for the following department(s)';
+    
+                $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutSegments);
+                return $this->sendError($errorMessage, 404,  ['hod_error']);
             }
         }
 
