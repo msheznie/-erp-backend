@@ -1166,7 +1166,10 @@ class SRMService
             ])->get()
             ->transform(function ($data) {
                 return $this->appointmentDetailFormat($data);
-            });
+            })
+            ->sortBy('purchaseOrderID')
+            ->values()
+            ->all();
         $result['detail'] = $detail;
         $result['purchaseOrderCode'] = '';
         if (count($detail) > 0) {
