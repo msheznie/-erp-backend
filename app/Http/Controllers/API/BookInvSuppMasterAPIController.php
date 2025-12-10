@@ -1540,6 +1540,22 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
+        $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+        $molData = $this->checkMolApplicable($bookInvSuppMaster);
+        
+        $bookInvSuppMaster->update([
+            'mol_applicable' => $molData['isMolApplicable'],
+            'mol_rate' => $molData['mol_rate'],
+            'mol_calculation_type' => $molData['mol_calculation_type'],
+            'mol_setup_id' => $molData['mol_setup_id'],
+        ]);
+        
+        $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+        $bookInvSuppMaster['isMolApplicable'] = $molData['isMolApplicable'];
+        $bookInvSuppMaster['mol_rate'] = $molData['mol_rate'];
+        $bookInvSuppMaster['mol_calculation_type'] = $molData['mol_calculation_type'];
+        $bookInvSuppMaster['mol_setup_id'] = $molData['mol_setup_id'];
+
         return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
 
@@ -3761,29 +3777,36 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             ->first();
         
         $hasMolContribution = $molContribution !== null;
-        $isMolApplicable = $hasMolContribution;
+        $isMolApplicable = false;
         
         $molRate = 0;
         $molCalculationType = 0;
         $molSetupId = 0;
         
-        if ($isMolApplicable && $hasMolContribution) {
+        if ($hasMolContribution) {
             $supplierMolRate = 0;
+            $supplierMolApplicable = false;
+            
             if (isset($bookInvSuppMaster->supplierID) && $bookInvSuppMaster->supplierID > 0) {
                 $supplier = SupplierMaster::where('supplierCodeSystem', $bookInvSuppMaster->supplierID)->first();
                 if ($supplier) {
                     $supplierMolRate = $supplier->mol_rate ?? 0;
+                    $supplierMolApplicable = $supplier->mol_applicable ?? false;
                 }
             }
             
-            if ($supplierMolRate > 0) {
-                $molRate = $supplierMolRate;
-            } else {
-                $molRate = $molContribution->mol_percentage ?? 0;
-            }
+            $isMolApplicable = $hasMolContribution && $supplierMolApplicable;
             
-            $molCalculationType = $molContribution->mol_calculation_type_id ?? 0;
-            $molSetupId = $molContribution->id ?? 0;
+            if ($isMolApplicable) {
+                if ($supplierMolRate > 0) {
+                    $molRate = $supplierMolRate;
+                } else {
+                    $molRate = $molContribution->mol_percentage ?? 0;
+                }
+                
+                $molCalculationType = $molContribution->mol_calculation_type_id ?? 0;
+                $molSetupId = $molContribution->id ?? 0;
+            }
         }
         
         return [

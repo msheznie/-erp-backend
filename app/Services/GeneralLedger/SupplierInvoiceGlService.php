@@ -397,6 +397,7 @@ class SupplierInvoiceGlService
 
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
