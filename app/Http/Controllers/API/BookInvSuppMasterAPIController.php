@@ -1540,21 +1540,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
-        $bookInvSuppMaster = $bookInvSuppMaster->refresh();
-        $molData = $this->checkMolApplicable($bookInvSuppMaster);
-        
-        $bookInvSuppMaster->update([
-            'mol_applicable' => $molData['isMolApplicable'],
-            'mol_rate' => $molData['mol_rate'],
-            'mol_calculation_type' => $molData['mol_calculation_type'],
-            'mol_setup_id' => $molData['mol_setup_id'],
-        ]);
-        
-        $bookInvSuppMaster = $bookInvSuppMaster->refresh();
-        $bookInvSuppMaster['isMolApplicable'] = $molData['isMolApplicable'];
-        $bookInvSuppMaster['mol_rate'] = $molData['mol_rate'];
-        $bookInvSuppMaster['mol_calculation_type'] = $molData['mol_calculation_type'];
-        $bookInvSuppMaster['mol_setup_id'] = $molData['mol_setup_id'];
 
         return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
@@ -1615,6 +1600,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
+
+        $previousSupplierID = $bookInvSuppMaster->supplierID;
 
         if (empty($bookInvSuppMaster)) {
             return $this->sendError(trans('custom.supplier_invoice_not_found'));
@@ -2206,6 +2193,24 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($id);
+
+        if ($previousSupplierID != $bookInvSuppMaster->supplierID) {
+            $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+            $molData = $this->checkMolApplicable($bookInvSuppMaster);
+
+            $bookInvSuppMaster->update([
+                'mol_applicable' => $molData['isMolApplicable'],
+                'mol_rate' => $molData['mol_rate'],
+                'mol_calculation_type' => $molData['mol_calculation_type'],
+                'mol_setup_id' => $molData['mol_setup_id'],
+            ]);
+
+            $bookInvSuppMaster = $bookInvSuppMaster->refresh();
+            $bookInvSuppMaster['isMolApplicable'] = $molData['isMolApplicable'];
+            $bookInvSuppMaster['mol_rate'] = $molData['mol_rate'];
+            $bookInvSuppMaster['mol_calculation_type'] = $molData['mol_calculation_type'];
+            $bookInvSuppMaster['mol_setup_id'] = $molData['mol_setup_id'];
+        }
 
         return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
