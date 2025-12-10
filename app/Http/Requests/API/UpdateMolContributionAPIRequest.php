@@ -15,15 +15,11 @@ class UpdateMolContributionAPIRequest extends APIRequest
     public function rules()
     {
         $rules = MolContribution::$rules;
-        
+
         $id = $this->route('mol_contribution') ?? $this->route('id') ?? $this->route('molContribution');
-        
-        if ($id) {
-            $rules['description'] = 'required|unique:mol_contribution,description,' . $id . ',id';
-        } else {
-            $rules['description'] = 'required|unique:mol_contribution,description';
-        }
-        
+
+        $rules['description'] = 'required|unique:mol_contribution,description,' . ($id ?? 'NULL') . ',id,company_id,' . $this->company_id;
+
         return $rules;
     }
 
