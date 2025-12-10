@@ -594,7 +594,15 @@ class AppointmentAPIController extends AppBaseController
             $dispatchedJobs = [];
 
             if (count($currencyGroups) === 1) {
-                $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($input);
+                $currencyId = array_key_first($currencyGroups);
+                $appointmentDetailIds = $currencyGroups[$currencyId];
+
+                $groupInput = array_merge($input, [
+                    'currencyId' => $currencyId,
+                    'appointmentDetailIds' => $appointmentDetailIds,
+                ]);
+
+                $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($groupInput);
             } else {
                 foreach ($currencyGroups as $currencyId => $appointmentDetailIds) {
                     $groupInput = array_merge($input, [
