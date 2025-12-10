@@ -191,7 +191,7 @@ class SRMService
         $query = ProcumentOrder::select('purchaseOrderCode', 'referenceNumber', 'expectedDeliveryDate', 'supplierName',
             'narration', 'createdDateTime', 'poConfirmedDate', 'approvedDate', 'poTotalSupplierTransactionCurrency',
             'grvRecieved', 'invoicedBooked', 'createdUserSystemID', 'serviceLineSystemID', 'supplierID',
-            'supplierTransactionCurrencyID', 'purchaseOrderID', 'documentSystemID', 'companySystemID')
+            'supplierTransactionCurrencyID', 'purchaseOrderID', 'documentSystemID', 'companySystemID', 'poLocation')
             ->where('approved', -1)
             ->where('supplierID', $supplierID)
             ->where('poType_N', '!=', 5)
@@ -226,6 +226,9 @@ class SRMService
                 },
                 'po_acknowledgement' => function ($q) {
                     $q->select('id', 'po_id', 'supplier_id');
+                },
+                'location' => function ($q) {
+                    $q->select('locationID','locationName');
                 }
             ])
             ->orderBy('createdDateTime', 'desc');
