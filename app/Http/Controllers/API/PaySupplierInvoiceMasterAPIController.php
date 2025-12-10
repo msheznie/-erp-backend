@@ -1602,7 +1602,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
                 $query->with('segment');
             }, 'bankaccount'=> function($query){
                 $query->with('currency');
@@ -3101,7 +3101,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['project','supplier', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
                 $query->with('segment');
             }, 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
@@ -3213,6 +3213,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 'erp_paysupplierinvoicemaster.*',
                 'employees.empName As created_emp',
                 'suppliermaster.supplierName',
+                'customermaster.CustomerName',
                 'suppliercurrency.CurrencyCode as supplierCurrencyCode',
                 'suppliercurrency.DecimalPlaces as supplierCurrencyDecimalPlaces',
                 'bankcurrency.CurrencyCode as bankCurrencyCode',
@@ -3275,6 +3276,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->leftJoin('employees', 'erp_paysupplierinvoicemaster.createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('erp_expenseclaimtype', 'expenseClaimOrPettyCash', 'erp_expenseclaimtype.expenseClaimTypeID')
             ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
+            ->leftJoin('customermaster', 'customermaster.customerCodeSystem', 'erp_paysupplierinvoicemaster.BPVcustomerID')
             ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
             ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')
             ->where('erp_documentapproved.rejectedYN', 0)
@@ -3331,6 +3333,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 'employees.empName As created_emp',
                 'erp_documentapproved.documentApprovedID',
                 'suppliermaster.supplierName',
+                'customermaster.CustomerName',
                 'suppliercurrency.CurrencyCode as supplierCurrencyCode',
                 'suppliercurrency.DecimalPlaces as supplierCurrencyDecimalPlaces',
                 'bankcurrency.CurrencyCode as bankCurrencyCode',
@@ -3358,6 +3361,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->where('erp_documentapproved.approvedYN', -1)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
             ->leftJoin('suppliermaster', 'suppliermaster.supplierCodeSystem', 'erp_paysupplierinvoicemaster.BPVsupplierID')
+            ->leftJoin('customermaster', 'customermaster.customerCodeSystem', 'erp_paysupplierinvoicemaster.BPVcustomerID')
             ->leftJoin('currencymaster as suppliercurrency', 'suppliercurrency.currencyID', 'supplierTransCurrencyID')
             ->leftJoin('currencymaster as bankcurrency', 'bankcurrency.currencyID', 'BPVbankCurrency')
             ->where('erp_documentapproved.rejectedYN', 0)

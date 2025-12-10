@@ -228,16 +228,18 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('payeeTypeID', $input)) {
             $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
             if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVsupplierID', "!=", NULL);
+                $paymentVoucher->where('BPVsupplierID', "!=", NULL)->where('BPVsupplierID', '!=', 0);
             }
             if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL);
+                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL)->where('directPaymentPayeeEmpID', '!=', 0);
             }
             if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
                 $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
             }
             if (($payeeTypeID == 4) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVcustomerID', "!=", NULL);
+                $paymentVoucher->where('BPVcustomerID', "!=", NULL)->where(function($query) {
+                    $query->whereNull('directPaymentPayeeEmpID')->orWhere('directPaymentPayeeEmpID', 0);
+                });
             }
         }
 
