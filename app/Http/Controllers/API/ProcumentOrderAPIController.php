@@ -5329,7 +5329,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
-        if ($checkIsGroup->isGroup) {
+        if (isset($checkIsGroup->isGroup) && $checkIsGroup->isGroup) {
             $companyID = \Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
