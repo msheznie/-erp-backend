@@ -698,6 +698,7 @@
                                     style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal)}}</td>
                             @endif
                         </tr>
+                        @if($masterdata->mol_applicable)
                         <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                             <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                             @if($masterdata->documentType == 1 && $isProjectBase)
@@ -708,6 +709,7 @@
                                     style="background-color: rgb(215,215,215)">{{number_format($masterdata->mol_amount, $transDecimal)}}
                             </td>
                         </tr>
+                        @endif
                         <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                             <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                             @if($masterdata->documentType == 1 && $isProjectBase)
