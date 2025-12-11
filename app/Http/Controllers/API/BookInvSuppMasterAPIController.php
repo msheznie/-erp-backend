@@ -1464,7 +1464,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             $molSetupId = isset($input['mol_setup_id']) ? $input['mol_setup_id'] : ($bookInvSuppMaster->mol_setup_id ?? 0);
-            $isMolApplicable = isset($input['isMolApplicable']) ? $input['isMolApplicable'] : ($bookInvSuppMaster->mol_applicable ?? 0);
+            $isMolApplicable = isset($input['mol_applicable']) ? $input['mol_applicable'] : ($bookInvSuppMaster->mol_applicable ?? 0);
             
             if ($isMolApplicable == 1 && $molSetupId > 0) {
                 $molContribution = MolContribution::find($molSetupId);
