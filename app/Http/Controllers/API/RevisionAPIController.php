@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Services\BudgetNotificationService;
 use Response;
 use App\helper\Helper;
 use App\Models\DepartmentBudgetPlanning;
@@ -21,7 +22,8 @@ use App\Services\ChartOfAccountService;
 use App\Models\RevisionAttachment;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-
+use Auth;
+use App\Models\BudgetNotification;
 /**
  * Class RevisionAPIController
  * @package App\Http\Controllers\API
@@ -399,6 +401,8 @@ class RevisionAPIController extends AppBaseController
             // Check if budget planning exists
             $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
             
+
+
             if (!$budgetPlanning) {
                 return $this->sendError('Budget Planning not found');
             }
@@ -442,12 +446,17 @@ class RevisionAPIController extends AppBaseController
             $revision = $this->revisionRepository->create($revisionData);
 
             // Update budget planning status to "Sent Back for Revision"
-            $budgetPlanning->update(['financeTeamStatus' => 3]);
+            $budgetPlanning->update(['financeTeamStatus' => 3, 'workStatus' => 1]);
 
             // Handle attachments if provided
             if (isset($input['attachments']) && is_array($input['attachments']) && !empty($input['attachments'])) {
-                $this->storeRevisionAttachments($revision->id, $input['attachments']);
+                $this->storeRevisionAttachments($revision->id, $input['attachments'], $input['companySystemID']);
             }
+
+
+            // send revision email
+            $budgetPlanningNotificationService = new BudgetNotificationService();
+            $budgetPlanningNotificationService->sendNotification($budgetPlanning->id,'finance-rejects-for-revision',$budgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
 
             // Log the action
             // $this->logAuditTrail('Revision', 'Created', $revision->id, 'Revision created for budget planning ID: ' . $input['budgetPlanningId']);
@@ -584,24 +593,33 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
         
-        if (!isset($input['filePath']) || !isset($input['fileName'])) {
+        if (!isset($input['id'])) {
             return $this->sendError('File path and file name are required');
+        }   
+
+        $attachment = RevisionAttachment::find($input['id']);
+        if (empty($attachment)) {
+            return $this->sendError('Attachment not found');
         }
 
-        $filePath = urldecode($input['filePath']);
-        $fileName = urldecode($input['fileName']);
+        $filePath = urldecode($attachment->filePath);
+        $fileName = urldecode($attachment->fileName);
+
+        $companySystemID = $input['companySystemID'] ?? 1;
+
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
         try {
             // Check if file exists
-            if (!Storage::disk('local')->exists($filePath)) {
+            if (!Storage::disk($disk)->exists($filePath)) {
                 return $this->sendError('File not found at path: ' . $filePath, 404);
             }
 
             // Get file contents
-            $fileContents = Storage::disk('local')->get($filePath);
+            $fileContents = Storage::disk($disk)->get($filePath);
             
             // Get file MIME type
-            $mimeType = Storage::disk('local')->mimeType($filePath);
+            $mimeType = Storage::disk($disk)->mimeType($filePath);
             
             // Return file download response
             return response($fileContents, 200)
@@ -624,23 +642,32 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
         
-        if (!isset($input['filePath'])) {
+        if (!isset($input['id'])) {
             return $this->sendError('File path is required');
         }
 
-        $filePath = urldecode($input['filePath']);
+        $attachment = RevisionAttachment::find($input['id']);
+        if (empty($attachment)) {
+            return $this->sendError('Attachment not found');
+        }
+
+        $filePath = urldecode($attachment->filePath);
+
+        $companySystemID = $input['companySystemID'] ?? 1;
+
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
         try {
             // Check if file exists
-            if (!Storage::disk('local')->exists($filePath)) {
+            if (!Storage::disk($disk)->exists($filePath)) {
                 return $this->sendError('File not found at path: ' . $filePath, 404);
             }
 
             // Get file contents
-            $fileContents = Storage::disk('local')->get($filePath);
+            $fileContents = Storage::disk($disk)->get($filePath);
             
             // Get file MIME type
-            $mimeType = Storage::disk('local')->mimeType($filePath);
+            $mimeType = Storage::disk($disk)->mimeType($filePath);
             
             // Return file view response
             return response($fileContents, 200)
@@ -809,14 +836,14 @@ class RevisionAPIController extends AppBaseController
      * @return void
      * @throws \Exception
      */
-    private function storeRevisionAttachments($revisionId, $attachments)
+    private function storeRevisionAttachments($revisionId, $attachments, $companySystemID)
     {
         foreach ($attachments as $attachment) {
             // Validate attachment data
             $this->validateRevisionAttachment($attachment);
             
             // Process and store the attachment
-            $this->processRevisionAttachment($revisionId, $attachment);
+            $this->processRevisionAttachment($revisionId, $attachment, $companySystemID);
         }
     }
 
@@ -879,10 +906,12 @@ class RevisionAPIController extends AppBaseController
      * @param array $attachment
      * @throws \Exception
      */
-    private function processRevisionAttachment($revisionId, $attachment)
+    private function processRevisionAttachment($revisionId, $attachment, $companySystemID)
     {
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
+
         try {
-            return DB::transaction(function () use ($revisionId, $attachment) {
+            return DB::transaction(function () use ($revisionId, $attachment, $disk) {
                 $extension = pathinfo($attachment['fileName'], PATHINFO_EXTENSION);
                 if (empty($extension) && isset($attachment['fileType'])) {
                     $extension = str_replace(['image/', 'application/', 'text/'], '', $attachment['fileType']);
@@ -916,12 +945,12 @@ class RevisionAPIController extends AppBaseController
 
                 // Ensure directory exists
                 $directory = 'REVISIONS/' . $revisionId;
-                if (!Storage::disk('local')->exists($directory)) {
-                    Storage::disk('local')->makeDirectory($directory);
+                if (!Storage::disk($disk)->exists($directory)) {
+                    Storage::disk($disk)->makeDirectory($directory);
                 }
 
                 // Store file to storage
-                Storage::disk('local')->put($filePath, $decodedFile);
+                Storage::disk($disk)->put($filePath, $decodedFile);
 
                 // Update attachment record with file path
                 $attachmentRecord->update([

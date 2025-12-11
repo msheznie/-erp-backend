@@ -82,6 +82,7 @@ use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
 use App\Models\Tax;
 use App\Models\SupplierMaster;
+use App\Models\MolContribution;
 
 
 class SupplierInvoiceGlService
@@ -338,6 +339,19 @@ class SupplierInvoiceGlService
                 }
             }
 
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1)) {
+                $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
+                if ($molAmount > 0) {
+                    $data['documentTransAmount'] = $data['documentTransAmount'] + $molAmount;
+                    
+                    $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] + ($molAmountLocalConversion['localAmount'] ?? 0);
+                    
+                    $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                    $data['documentRptAmount'] = $data['documentRptAmount'] + ($molAmountRptConversion['reportingAmount'] ?? 0);
+                }
+            }
+
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
@@ -349,8 +363,41 @@ class SupplierInvoiceGlService
             $data['timestamp'] = \Helper::currentDateTime();
             array_push($finalData, $data);
 
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1)) {
+                if ($masterData->documentType != 4) {
+                    $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
+                    if ($molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
+                        $molContribution = MolContribution::find($masterData->mol_setup_id);
+                        $molAuthority = null;
+                        if ($molContribution && $molContribution->authority_id) {
+                            $molAuthority = $molContribution->authority_id;
+                            $supplier = SupplierMaster::where('supplierCodeSystem', $molAuthority)->with('liablity_account')->first();
+                            if ($supplier) {
+                                $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
+                            }
+                        }
+
+                        $data['chartOfAccountSystemID'] = $molAuthority != null && isset($supplier) ? $supplier->liablity_account->chartOfAccountSystemID : null;
+                        $data['glCode'] = $molAuthority != null && isset($supplier) ? $supplier->liablity_account->AccountCode : null;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        if ($masterData->documentType == 0 || $masterData->documentType == 1) {
+                            $data['documentTransAmount'] = \Helper::roundValue($molAmount) * -1;
+                            
+                            $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                            $data['documentLocalAmount'] = \Helper::roundValue($molAmountLocalConversion['localAmount'] ?? 0) * -1;
+                            
+                            $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                            $data['documentRptAmount'] = \Helper::roundValue($molAmountRptConversion['reportingAmount'] ?? 0) * -1;
+                        }
+                        array_push($finalData, $data);
+                    }
+                }
+            }
+
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);

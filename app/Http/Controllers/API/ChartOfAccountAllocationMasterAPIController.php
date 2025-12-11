@@ -256,10 +256,29 @@ class ChartOfAccountAllocationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $company = Company::find($input['companySystemID']);
-        if(!empty($company)){
-            $input['companyID'] = $company->CompanyID;
-        }else{
+
+        $messages = [
+            'allocationmaid.required' => trans('custom.validation_allocation_master_id_required')
+        ];
+        $validator = \Validator::make($input, [
+            'allocationmaid' => 'required|numeric|min:1',
+            'chartOfAccountSystemID' => 'required|numeric|min:1',
+            'companySystemID' => 'required|numeric|min:1',
+            'serviceLineSystemID' => 'required|numeric|min:1'
+        ], $messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        if (isset($input['companySystemID'])) {
+            $company = Company::find($input['companySystemID']);
+            if (!empty($company)) {
+                $input['companyID'] = $company->CompanyID;
+            } else {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_data')]));
+            }
+        } else {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_data')]));
         }
 
