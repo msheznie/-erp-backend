@@ -62,6 +62,11 @@ class LeaveCarryForwardComputationService
         
         $this->getMonthWiseDate();
 
+        if (empty($this->monthDet)) {
+            $this->insertToLogTb('Leave computation policy is not set with any value', 'error');
+            return;
+        }
+
         if (empty($this->periodData['endDate'])) {
             $msg = 'Period End date not exists!';
             $this->insertToLogTb($msg, 'error');
