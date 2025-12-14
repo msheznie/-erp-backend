@@ -1,6 +1,15 @@
 # Changelog
 
 
+## [10.95.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.1...v10.95.0) (2025-12-14)
+
+
+### Features
+
+* **administration:** HRMS| Restriction on Company Policy - Leave computation [GHR-9042] ([#9308](https://github.com/pbsgears/Gears_BackEnd/issues/9308)) ([9044abb](https://github.com/pbsgears/Gears_BackEnd/commit/9044abb783d9019faa3e272329a47799b3d9dfad))
+* **Api:** Secure Vulnerable ERP API Endpoint related to HRMS [GHR-8884] ([#9303](https://github.com/pbsgears/Gears_BackEnd/issues/9303)) ([b84db2a](https://github.com/pbsgears/Gears_BackEnd/commit/b84db2a916b70df851abce6ad75f9572dc23b1e5))
+* **Attendance:** Preserve Leave Status Even When Employee Clocks In/Out [GHR-9259] ([#9357](https://github.com/pbsgears/Gears_BackEnd/issues/9357)) ([c217523](https://github.com/pbsgears/Gears_BackEnd/commit/c21752312ec52951231990e99f53d3577142fd2f))
+
 ## [10.94.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.0...v10.94.1) (2025-12-08)
 
 
