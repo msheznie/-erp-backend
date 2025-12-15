@@ -802,8 +802,16 @@ class TenderMaster extends Model
             ])
             ->get();
     }
+
     public function all_approvals()
     {
         return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['id', 'document_system_id']);
+    }
+
+    public function latestTenderEditLog()
+    {
+        return $this->hasMany(SrmTenderMasterEditLog::class, 'id', 'id')
+            ->whereNotNull('version_id')
+            ->orderBy('amd_id', 'desc');
     }
 }
