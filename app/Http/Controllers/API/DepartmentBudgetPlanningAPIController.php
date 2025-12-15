@@ -1260,15 +1260,6 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $budgetNotificationService = new BudgetNotificationService();
         $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
 
-
-        $budgetNotificationService = new BudgetNotificationService();
-        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
-
-
-        $budgetNotificationService = new BudgetNotificationService();
-        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
-
-
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
