@@ -9717,5 +9717,23 @@ return
     'no_dates_found_for_shift_schedule_pulling' => 'No dates found to proceed the Shift Schedule Unconfirmed Attendance pulling',
     'failed_to_process_attendance_for_date' => 'Failed to process attendance for date :date with employees [:employees]',
     'no_temp_data_found' => 'No temp data found',
-    'data_pulled_successfully' => 'Data pulled successfully'
+    'data_pulled_successfully' => 'Data pulled successfully',
+
+    // Procurement Lifecycle Report
+    'pr_value' => 'PR Value',
+    'pr_approvals' => 'PR Approvals',
+    'po_approvals' => 'PO Approvals',
+    'tender_code' => 'Tender/RFX Code',
+    'tender_approvals' => 'Tender/RFX Approvals',
+    'bid_submission_date' => 'Bid Submission Date',
+    'technical_evaluation_date' => 'Technical Evaluation Date',
+    'commercial_evaluation_date' => 'Commercial Evaluation Date',
+    'published_date' => 'Published Date',
+    'contract_code' => 'Contract Code',
+    'contract_variation' => 'Contract Variation',
+    'contract_variation_types' => 'Contract Variation Types',
+    'commencement_date' => 'Commencement Date',
+    'agreement_signed_date' => 'Agreement Signed Date',
+    'contract_end_date' => 'Contract End Date',
+    'procurement_lifecycle_report' => 'Procurement Lifecycle Report',
 ];

@@ -799,4 +799,9 @@ class ProcumentOrder extends Model
     {
         return $this->belongsTo('\App\Models\SrmPOAcknowledgement', 'purchaseOrderID', 'po_id');
     }
+
+    public function all_approvals()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
+    }
 }

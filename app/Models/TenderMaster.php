@@ -5,6 +5,7 @@ namespace App\Models;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use Awobaz\Compoships\Compoships;
 /**
  * @SWG\Definition(
  *      definition="TenderMaster",
@@ -207,6 +208,7 @@ use Carbon\Carbon;
 class TenderMaster extends Model
 {
     use SoftDeletes;
+    use Compoships;
     public $table = 'srm_tender_master';
 
     const CREATED_AT = 'created_at';
@@ -799,5 +801,9 @@ class TenderMaster extends Model
                 }
             ])
             ->get();
+    }
+    public function all_approvals()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['id', 'document_system_id']);
     }
 }
