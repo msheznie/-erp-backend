@@ -355,8 +355,10 @@ class RevisionAPIController extends AppBaseController
         $input = $request->all();
 
         // Format the date properly
-        $submittedDateCarbon = null;
         $newSubmissionDateCarbon = null;
+        
+
+        $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
         
         if (isset($input['submittedDate'])) {
             try {
@@ -377,8 +379,8 @@ class RevisionAPIController extends AppBaseController
         }
 
         // Validate that newSubmissionDate is greater than or equal to submittedDate
-        if ($submittedDateCarbon && $newSubmissionDateCarbon) {
-            if ($newSubmissionDateCarbon->lt($submittedDateCarbon)) {
+        if ($budgetPlanning && $newSubmissionDateCarbon) {
+            if ($newSubmissionDateCarbon->lt($budgetPlanning->submissionDate)) {
                 return $this->sendError('New Submission Date must be greater than or equal to original submission date');
             }
         }
@@ -392,6 +394,7 @@ class RevisionAPIController extends AppBaseController
             'reopenEditableSection' => 'required|string|in:full_section,gl_section',
             'attachments' => 'nullable|array'
         ]);
+
 
         if ($validator->fails()) {
             return $this->sendAPIError('Validation Error.', 422, $validator->errors()->toArray());
@@ -411,10 +414,16 @@ class RevisionAPIController extends AppBaseController
                 return $this->sendError('Budget Planning already has a revision');
             }
 
-            if(!empty($input['selectedGlSections'])){
-                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+
+            if(strcmp($input['reopenEditableSection'], 'full_section') == 0){
+                $chartOfAccounts = $this->chartOfAccountService->getChartOfAccountsByBudgetPlanning($input['budgetPlanningId']);
+                $input['selectedGlSections'] = collect($chartOfAccounts)->pluck('chartOfAccountSystemID')->toArray();
             }
 
+            if(!empty($input['selectedGlSections']) && strcmp($input['reopenEditableSection'], 'gl_section') == 0){
+                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+            }
+            
             // Convert dates to Y-m-d format for database storage
             $submittedDateForDb = Carbon::createFromFormat('d-m-Y', $input['submittedDate'])->format('Y-m-d');
             $newSubmissionDateForDb = isset($input['newSubmissionDate']) 
@@ -436,6 +445,7 @@ class RevisionAPIController extends AppBaseController
                 'created_by' => Helper::getEmployeeSystemID(),
                 'created_at' => Carbon::now()
             ];
+
 
             // Add newSubmissionDate if provided
             if ($newSubmissionDateForDb) {
