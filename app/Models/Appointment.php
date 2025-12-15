@@ -210,4 +210,10 @@ class Appointment extends Model
             ->count();
     }
 
+    public static function getAppointmentData($id){
+        return self::with([
+            'detail.po_master:purchaseOrderID,supplierTransactionCurrencyID,serviceLineSystemID',
+            'detail.getPoDetails:purchaseOrderDetailsID,noQty,itemPrimaryCode,companySystemID'
+        ])->find($id);
+    }
 }

@@ -529,7 +529,7 @@ class AppointmentAPIController extends AppBaseController
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info = trans('srm_masters.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
+                $info = trans('srm_supplier_management.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
                     'code1' => $detail->itemPrimaryCode,
                     'code2' => $detail->purchaseOrderCode,
                     'code3' => $detail->planned_qty,
@@ -571,12 +571,15 @@ class AppointmentAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         try {
-            $appointment = Appointment::with([
-                'detail.po_master:purchaseOrderID,supplierTransactionCurrencyID,serviceLineSystemID'
-            ])->find($input['documentSystemCode']);
+            $appointment = Appointment::getAppointmentData($input['documentSystemCode']);
 
             if (!$appointment) {
                 return $this->sendError('Appointment not found');
+            }
+
+            $validationResult = $this->appointmentRepository->validateAppointmentQuantities($input['documentSystemCode']);
+            if (!$validationResult['success']) {
+                return $this->sendError($validationResult['message']);
             }
 
             $currencyGroups = $appointment->detail
