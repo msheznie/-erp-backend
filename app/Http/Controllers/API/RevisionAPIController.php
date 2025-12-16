@@ -16,6 +16,8 @@ use App\Services\BudgetNotificationService;
 use Response;
 use App\helper\Helper;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\DepBudgetTemplateGl;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\Employee;
 use App\Services\ChartOfAccountService;
@@ -806,24 +808,76 @@ class RevisionAPIController extends AppBaseController
                     ->make(true);
             }
 
-            // Use the service to get chart of accounts based on workflow method
-            $chartOfAccounts = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $revision->budgetPlanningId);
-
-            // Convert to collection if it's an array
-            if (is_array($chartOfAccounts)) {
-                $chartOfAccounts = collect($chartOfAccounts);
+            // Get budget planning to determine workflow method
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($revision->budgetPlanningId);
+            
+            if (!$budgetPlanning) {
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
             }
 
-            // Return DataTables response
-            return \DataTables::of($chartOfAccounts)
-                ->addIndexColumn()
-                ->addColumn('gl_code_description', function($row) {
-                    $accountCode = isset($row->AccountCode) ? $row->AccountCode : (isset($row['AccountCode']) ? $row['AccountCode'] : '');
-                    $accountDescription = isset($row->AccountDescription) ? $row->AccountDescription : (isset($row['AccountDescription']) ? $row['AccountDescription'] : '');
-                    return $accountCode . ' - ' . $accountDescription;
-                })
-                ->rawColumns(['gl_code_description'])
-                ->make(true);
+            $isMethod1 = $budgetPlanning->workflow && $budgetPlanning->workflow->method == 1;
+
+            if ($isMethod1) {
+                // Method 1: Include segment information with optimized joins
+                $query = DepartmentBudgetPlanningDetail::query()
+                    ->whereIn('department_budget_planning_details.id', $selectedGlSections)
+                    ->join('dep_budget_template_gl', 'department_budget_planning_details.budget_template_gl_id', '=', 'dep_budget_template_gl.depBudgetTemplateGlID')
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->leftJoin('company_departments_segments', 'department_budget_planning_details.department_segment_id', '=', 'company_departments_segments.departmentSegmentSystemID')
+                    ->leftJoin('serviceline', 'company_departments_segments.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                    ->select(
+                        'department_budget_planning_details.id as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription',
+                        DB::raw('COALESCE(serviceline.ServiceLineDes, "N/A") as segmentDescription')
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            } else {
+                // Method 2: Standard chart of accounts with optimized joins
+                $query = DepBudgetTemplateGl::query()
+                    ->whereIn('dep_budget_template_gl.depBudgetTemplateGlID', $selectedGlSections)
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->select(
+                        'dep_budget_template_gl.depBudgetTemplateGlID as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription'
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            }
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving revision GL codes: ' . $e->getMessage());
