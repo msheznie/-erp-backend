@@ -780,8 +780,6 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        
-
         $validator = \Validator::make($input, [
             'revisionId' => 'required|integer'
         ]);
@@ -802,13 +800,30 @@ class RevisionAPIController extends AppBaseController
             $selectedGlSections = json_decode($revision->selectedGlSections, true);
 
             if (empty($selectedGlSections) || !is_array($selectedGlSections)) {
-                return $this->sendResponse(['data' => []], 'No GL codes assigned to this revision');
+                // Return empty DataTables response
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
             }
 
             // Use the service to get chart of accounts based on workflow method
-            $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $revision->budgetPlanningId);
+            $chartOfAccounts = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $revision->budgetPlanningId);
 
-            return $this->sendResponse(['data' => $chartOfAccountSystemIDs], 'Revision GL codes retrieved successfully');
+            // Convert to collection if it's an array
+            if (is_array($chartOfAccounts)) {
+                $chartOfAccounts = collect($chartOfAccounts);
+            }
+
+            // Return DataTables response
+            return \DataTables::of($chartOfAccounts)
+                ->addIndexColumn()
+                ->addColumn('gl_code_description', function($row) {
+                    $accountCode = isset($row->AccountCode) ? $row->AccountCode : (isset($row['AccountCode']) ? $row['AccountCode'] : '');
+                    $accountDescription = isset($row->AccountDescription) ? $row->AccountDescription : (isset($row['AccountDescription']) ? $row['AccountDescription'] : '');
+                    return $accountCode . ' - ' . $accountDescription;
+                })
+                ->rawColumns(['gl_code_description'])
+                ->make(true);
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving revision GL codes: ' . $e->getMessage());
