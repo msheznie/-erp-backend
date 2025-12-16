@@ -435,22 +435,22 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         }else {
             //prevent status change if new status is 0
             if ($input['workStatus'] == 1) {
-                return $this->sendError('Status cannot be changed to Not Started');
+                return $this->sendError('Status cannot be changed to Not Started',500);
             }
 
             if (($input['workStatus'] == 3) && ($departmentBudgetPlanning->workStatus == 1)) {
-                return $this->sendError('Status cannot be changed to Submitted');
+                return $this->sendError('Status cannot be changed to Submitted',500);
             }
 
             if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
-                return $this->sendError('Status cannot be changed from submitted');
+                return $this->sendError('Status cannot be changed from submitted',500);
             }
 
         }
 
 
         if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
-            return $this->sendError('Status cannot be changed from submitted');
+            return $this->sendError('Status cannot be changed from submitted',500);
         }
 
         try {
@@ -500,6 +500,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                         }
                     }
                 }
+
                 
                 if (count($invalidDelegateAccess) > 0 && $input['validationTwo'] === false) {
                     return $this->sendError('Not all delegated users have submitted their budgets to the HOD. Are you sure you want to proceed?',422);
@@ -509,7 +510,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
 
             // Update only the status field
-            $updateData = ['workStatus' => $input['workStatus']];
+            $updateData = ['workStatus' => $input['workStatus'] , 'submitted_at' => ($input['workStatus'] == 3) ? now() : null];
             $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('masterBudgetPlannings','budgetPlanningDetails')->update($updateData, $input['budgetPlanningId']);
 
             if ($input['workStatus'] == 2 && !empty($departmentBudgetPlanning->budgetPlanningDetails)) {
@@ -1230,9 +1231,17 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
 
         if(!is_null($newDate)) {
-           if(Carbon::parse($newDate)->lessThan(Carbon::parse($timeExtensionRequest->current_submission_date)))
+           $newDateCarbon = Carbon::parse($newDate);
+           $currentDateCarbon = Carbon::parse($timeExtensionRequest->current_submission_date);
+           
+           if($newDateCarbon->lessThan($currentDateCarbon))
            {
                 return $this->sendError('New date cannot be less than the original submission date');
+           }
+           
+           if($newDateCarbon->equalTo($currentDateCarbon))
+           {
+                return $this->sendError('New date cannot be equal to the original submission date');
            }
         }
 
@@ -1259,14 +1268,6 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
         $budgetNotificationService = new BudgetNotificationService();
         $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
-
-
-        $budgetNotificationService = new BudgetNotificationService();
-        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
-
-
-        $budgetNotificationService = new BudgetNotificationService();
-        $budgetNotificationService->sendNotification($timeExtensionRequest->department_budget_planning_id,'extension-request-approved',$timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
 
 
         // Add audit log

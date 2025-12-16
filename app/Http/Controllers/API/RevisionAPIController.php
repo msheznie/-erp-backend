@@ -16,6 +16,8 @@ use App\Services\BudgetNotificationService;
 use Response;
 use App\helper\Helper;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\DepBudgetTemplateGl;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\Employee;
 use App\Services\ChartOfAccountService;
@@ -355,8 +357,10 @@ class RevisionAPIController extends AppBaseController
         $input = $request->all();
 
         // Format the date properly
-        $submittedDateCarbon = null;
         $newSubmissionDateCarbon = null;
+        
+
+        $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
         
         if (isset($input['submittedDate'])) {
             try {
@@ -377,8 +381,8 @@ class RevisionAPIController extends AppBaseController
         }
 
         // Validate that newSubmissionDate is greater than or equal to submittedDate
-        if ($submittedDateCarbon && $newSubmissionDateCarbon) {
-            if ($newSubmissionDateCarbon->lt($submittedDateCarbon)) {
+        if ($budgetPlanning && $newSubmissionDateCarbon) {
+            if ($newSubmissionDateCarbon->lt($budgetPlanning->submissionDate)) {
                 return $this->sendError('New Submission Date must be greater than or equal to original submission date');
             }
         }
@@ -392,6 +396,7 @@ class RevisionAPIController extends AppBaseController
             'reopenEditableSection' => 'required|string|in:full_section,gl_section',
             'attachments' => 'nullable|array'
         ]);
+
 
         if ($validator->fails()) {
             return $this->sendAPIError('Validation Error.', 422, $validator->errors()->toArray());
@@ -411,10 +416,16 @@ class RevisionAPIController extends AppBaseController
                 return $this->sendError('Budget Planning already has a revision');
             }
 
-            if(!empty($input['selectedGlSections'])){
-                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+
+            if(strcmp($input['reopenEditableSection'], 'full_section') == 0){
+                $chartOfAccounts = $this->chartOfAccountService->getChartOfAccountsByBudgetPlanning($input['budgetPlanningId']);
+                $input['selectedGlSections'] = collect($chartOfAccounts)->pluck('chartOfAccountSystemID')->toArray();
             }
 
+            if(!empty($input['selectedGlSections']) && strcmp($input['reopenEditableSection'], 'gl_section') == 0){
+                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+            }
+            
             // Convert dates to Y-m-d format for database storage
             $submittedDateForDb = Carbon::createFromFormat('d-m-Y', $input['submittedDate'])->format('Y-m-d');
             $newSubmissionDateForDb = isset($input['newSubmissionDate']) 
@@ -436,6 +447,7 @@ class RevisionAPIController extends AppBaseController
                 'created_by' => Helper::getEmployeeSystemID(),
                 'created_at' => Carbon::now()
             ];
+
 
             // Add newSubmissionDate if provided
             if ($newSubmissionDateForDb) {
@@ -770,8 +782,6 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        
-
         $validator = \Validator::make($input, [
             'revisionId' => 'required|integer'
         ]);
@@ -792,13 +802,82 @@ class RevisionAPIController extends AppBaseController
             $selectedGlSections = json_decode($revision->selectedGlSections, true);
 
             if (empty($selectedGlSections) || !is_array($selectedGlSections)) {
-                return $this->sendResponse(['data' => []], 'No GL codes assigned to this revision');
+                // Return empty DataTables response
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
             }
 
-            // Use the service to get chart of accounts based on workflow method
-            $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $revision->budgetPlanningId);
+            // Get budget planning to determine workflow method
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($revision->budgetPlanningId);
+            
+            if (!$budgetPlanning) {
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
+            }
 
-            return $this->sendResponse(['data' => $chartOfAccountSystemIDs], 'Revision GL codes retrieved successfully');
+            $isMethod1 = $budgetPlanning->workflow && $budgetPlanning->workflow->method == 1;
+
+            if ($isMethod1) {
+                // Method 1: Include segment information with optimized joins
+                $query = DepartmentBudgetPlanningDetail::query()
+                    ->whereIn('department_budget_planning_details.id', $selectedGlSections)
+                    ->join('dep_budget_template_gl', 'department_budget_planning_details.budget_template_gl_id', '=', 'dep_budget_template_gl.depBudgetTemplateGlID')
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->leftJoin('company_departments_segments', 'department_budget_planning_details.department_segment_id', '=', 'company_departments_segments.departmentSegmentSystemID')
+                    ->leftJoin('serviceline', 'company_departments_segments.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                    ->select(
+                        'department_budget_planning_details.id as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription',
+                        DB::raw('COALESCE(serviceline.ServiceLineDes, "N/A") as segmentDescription')
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            } else {
+                // Method 2: Standard chart of accounts with optimized joins
+                $query = DepBudgetTemplateGl::query()
+                    ->whereIn('dep_budget_template_gl.depBudgetTemplateGlID', $selectedGlSections)
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->select(
+                        'dep_budget_template_gl.depBudgetTemplateGlID as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription'
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            }
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving revision GL codes: ' . $e->getMessage());

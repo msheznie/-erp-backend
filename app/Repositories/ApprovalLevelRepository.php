@@ -92,16 +92,17 @@ class ApprovalLevelRepository extends BaseRepository
             }
         }
 
-        if (array_key_exists('workflow', $input)) {
-            if ($input['workflow'] > 0) {
-                $approvalLevel->where('workflow', $input['workflow']);
-            }
-        }
 
         if (array_key_exists('isActive', $input)) {
 
             $approvalLevel->where('isActive', $input['isActive']);
 
+        }
+
+        if (array_key_exists('workflow', $input)) {
+            if ($input['workflow'] > 0) {
+                $approvalLevel->where('workflow', $input['workflow']);
+            }
         }
 
         if ($search) {
@@ -112,6 +113,7 @@ class ApprovalLevelRepository extends BaseRepository
         }
 
         $approvalLevel->where('companySystemID',$input['globalCompanyId']);
+
 
         return \DataTables::eloquent($approvalLevel)
             ->order(function ($query) use ($input) {
