@@ -945,10 +945,11 @@ GROUP BY
                 $detail_arr['createdPcID'] = gethostname();
                 $detail_arr['createdUserID'] = $user->employee['empID'];
                 $detail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
-                $detail_arr['debitAmount'] = $new['balanceCost'];
+                $amountToUse = isset($new['amount']) && $new['amount'] > 0 ? floatval($new['amount']) : floatval($new['balanceCost']);
+                $detail_arr['debitAmount'] = $amountToUse;
                 $detail_arr['creditAmount'] = 0;
 
-                $totalRevenueAmount += $new['balanceCost'];
+                $totalRevenueAmount += $amountToUse;
 
                 $temp_serviceLineSystemID = $new['serviceLineSystemID'];
                 $temp_serviceLineCode = $new['serviceLine'];

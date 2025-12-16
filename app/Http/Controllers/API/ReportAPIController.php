@@ -18,6 +18,16 @@ use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\ProcumentOrder;
+use App\Models\BookInvSuppMaster;
+use App\Models\BookInvSuppDet;
+use App\Models\DirectInvoiceDetails;
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\GRVDetails;
+use App\Models\GRVMaster;
+use App\Models\PaySupplierInvoiceDetail;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\CurrencyMaster;
+use App\Models\SupplierMaster;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Services\Procument\Report\PoAnalysisService;
 use Carbon\Carbon;
@@ -63,6 +73,18 @@ class ReportAPIController extends AppBaseController
                     'categories' => 'required',
                     'subCategories' => 'required',
                     'year' => 'required'
+                ]);
+
+                if ($validator->fails()) {
+                    return $this->sendError($validator->messages(), 422);
+                }
+                break;
+            case 'ICV':
+                $validator = \Validator::make($request->all(), [
+                    'fromDate' => 'required',
+                    'toDate' => 'required|date|after_or_equal:fromDate',
+                    'suppliers' => 'required',
+                    'items' => 'required'
                 ]);
 
                 if ($validator->fails()) {
@@ -774,6 +796,29 @@ class ReportAPIController extends AppBaseController
                     ->with('orderCondition', $sort)
                     ->make(true);
                 break;
+            case 'ICV': //ICV Report
+                $input = $request->all();
+                if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                    $sort = 'asc';
+                } else {
+                    $sort = 'desc';
+                }
+
+                $output = $this->icvReport($input);
+
+                return \DataTables::of($output)
+                    ->addColumn('Actions', 'Actions', "Actions")
+                    ->order(function ($query) use ($input) {
+                        if (request()->has('order')) {
+                            if ($input['order'][0]['column'] == 0) {
+                               // $query->orderBy('purchaseOrderID', $input['order'][0]['dir']);
+                            }
+                        }
+                    })
+                    ->addIndexColumn()
+                    ->with('orderCondition', $sort)
+                    ->make(true);
+                break;
             default:
                 return $this->sendError(trans('custom.no_report_id_found'));
         }
@@ -868,6 +913,59 @@ class ReportAPIController extends AppBaseController
                      return $this->sendResponse($basePath, trans('custom.success_export'));
                 }
 
+
+                break;
+            case 'ICV': //ICV Report
+                $input = $request->all();
+                $type = $request->type;
+                $output = $this->icvReport($input)->get();
+
+                $data = array();
+                $x = 0;
+                foreach ($output as $val) {
+                    $madeFrom = '';
+                    if (isset($val->documentType) && $val->documentType == 0) {
+                        $madeFrom = trans('custom.pr_po_grv');
+                    } elseif (isset($val->documentType) && $val->documentType == 2) {
+                        $madeFrom = trans('custom.direct_grv');
+                    } elseif (isset($val->documentType) && $val->documentType == 3) {
+                        $madeFrom = trans('custom.supplier_invoice');
+                    }
+
+                    $data[$x] = array(
+                        trans('custom.contract_reference_number') => '-',
+                        trans('custom.contract_name') => '-',
+                        trans('custom.item_name') => isset($val->itemDescription) ? $val->itemDescription : '',
+                        trans('custom.item_code') => isset($val->itemPrimaryCode) ? $val->itemPrimaryCode : '',
+                        trans('custom.received_quantity') => isset($val->noQty) ? number_format($val->noQty, 2) : '',
+                        trans('custom.made_from') => $madeFrom,
+                        trans('custom.cr_number') => $val->registrationNumber,
+                        trans('custom.vendor_classification') => trans('custom.sme').' - '.$val->isSMEYN.' , '.trans('custom.llc').' - '.$val->isLCCYN, 
+                        trans('custom.supplier_name') => isset($val->supplierName) ? $val->supplierName : '',
+                        trans('custom.invoice_number') => isset($val->bookingInvCode) ? $val->bookingInvCode : '',
+                        trans('custom.invoice_date') => isset($val->supplierInvoiceDate) ? Helper::dateFormat($val->supplierInvoiceDate) : '',
+                        trans('custom.invoice_amount') => isset($val->netAmount) ? number_format($val->netAmount, 2) : '',
+                        trans('custom.currency') => isset($val->currency) ? $val->currency : '',
+                        trans('custom.paid_amount') => isset($val->supplierPaymentAmount) ? number_format($val->supplierPaymentAmount, 2) : '',
+                        trans('custom.payment_date') => isset($val->paymentDate) ? Helper::dateFormat($val->paymentDate) : ''
+                    );
+                    $x++;
+                }
+
+                $companyMaster = Company::find(isset($request->companySystemID) ? $request->companySystemID : null);
+                $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
+                $detail_array = array(
+                    'company_code' => $companyCode,
+                );
+                $doc_name = trans('custom.icv_report');
+                $path = 'procurement/report/icv/excel/';
+                $basePath = CreateExcel::process($data, $type, $doc_name, $path, $detail_array);
+
+                if ($basePath == '') {
+                    return $this->sendError(trans('custom.unable_to_export_excel'));
+                } else {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             default:
@@ -1356,6 +1454,238 @@ class ReportAPIController extends AppBaseController
         {
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }
+    }
+
+    /**
+     * ICV Report Query
+     * Get all supplier invoices matching suppliers and items
+     *
+     * @param array $input
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function icvReport($input)
+    {
+        $startDate = new Carbon($input['fromDate']);
+        $startDate = $startDate->format('Y-m-d');
+
+        $endDate = new Carbon($input['toDate']);
+        $endDate = $endDate->format('Y-m-d');
+        $companyID = "";
+        $checkIsGroup = Company::find($input['companySystemID']);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($input['companySystemID']);
+        } else {
+            $companyID = (array)$input['companySystemID'];
+        }
+
+        $suppliers = (array)$input['suppliers'];
+        $suppliers = collect($suppliers)->pluck('supplierCodeSytem');
+
+        $items = (array)$input['items'];
+        $items = collect($items)->pluck('itemCodeSystem');
+
+        $contractName = isset($input['contractName']) ? $input['contractName'] : '';
+
+
+        $query1 = DB::table('erp_grvdetails as grvd')
+            ->select(
+                'master.bookingSuppMasInvAutoID',
+                 DB::raw('CAST(master.documentType AS UNSIGNED) as documentType'),
+                'master.bookingInvCode',
+                'master.supplierInvoiceNo',
+                'master.supplierInvoiceDate',
+                'master.bookingDate',
+                'master.supplierID',
+                'supplier.supplierName',
+                'supplier.registrationNumber',
+                DB::raw('CASE WHEN supplier.isLCCYN = 1 THEN "Yes" WHEN supplier.isLCCYN = 0 THEN "No" ELSE "" END as isLCCYN'),
+                DB::raw('CASE WHEN supplier.isSMEYN = 1 THEN "Yes" WHEN supplier.isSMEYN = 0 THEN "No" ELSE "" END as isSMEYN'),
+                'master.companySystemID',
+                'master.comments',
+                'master.secondaryRefNo',
+                'master.supplierTransactionCurrencyID',
+                'currency.CurrencyName as currency',
+                'master.localCurrencyID',
+                'master.bookingAmountTrans',
+                'master.bookingAmountLocal',
+                'master.bookingAmountRpt',
+                'grvd.grvDetailsID',
+                'grvd.itemCode',
+                'grvd.itemPrimaryCode',
+                'grvd.itemDescription',
+                'grvd.noQty',
+                'grvd.unitCost',
+                'grvd.VATAmount',
+                'grvd.VATPercentage',
+                'det2.supplierInvoAmount',
+                DB::raw('CASE 
+                    WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
+                    THEN det2.supplierInvoAmount
+                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(grvd.VATPercentage, 0) / (100 + grvd.VATPercentage)))
+                END as netAmount'),
+                'grvd.supplierPartNumber',
+                'grvd.unitOfMeasure',
+                 DB::raw("'GRV' as source_type"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_master.BPVdate ELSE NULL END as paymentDate"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_detail.supplierPaymentAmount ELSE NULL END as supplierPaymentAmount")
+            )
+            ->join('erp_grvmaster as grvm', 'grvd.grvAutoID', '=', 'grvm.grvAutoID')
+            ->join('erp_bookinvsuppdet as det', 'grvm.grvAutoID', '=', 'det.grvAutoID')
+            ->join('erp_bookinvsuppmaster as master', 'det.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID')
+            ->leftJoin('erp_bookinvsupp_item_det as det2', function($join) {
+                $join->on('det2.grvDetailsID', '=', 'grvd.grvDetailsID')
+                     ->on('det2.vatSubCategoryID', '=', 'grvd.vatSubCategoryID')
+                     ->on('det2.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID');
+            })
+            ->leftJoin('suppliermaster as supplier', 'supplier.supplierCodeSystem', '=', 'master.supplierID')
+            ->leftJoin('currencymaster as currency', 'currency.currencyID', '=', 'master.supplierTransactionCurrencyID')
+            ->leftJoin('erp_tax_vat_sub_categories as vat_sub', 'grvd.vatSubCategoryID', '=', 'vat_sub.taxVatSubCategoriesAutoID')
+            ->leftJoin('erp_taxmaster_new as tax_master', 'vat_sub.taxMasterAutoID', '=', 'tax_master.taxMasterAutoID')
+            ->leftJoin('erp_paysupplierinvoicedetail as pay_detail', function($join) {
+                $join->on('pay_detail.bookingInvSystemCode', '=', 'master.bookingSuppMasInvAutoID')
+                     ->where('pay_detail.addedDocumentSystemID', '=', 11);
+            })
+            ->leftJoin('erp_paysupplierinvoicemaster as pay_master', 'pay_master.PayMasterAutoId', '=', 'pay_detail.PayMasterAutoId')
+            ->where('master.approved', -1)
+            ->where('master.documentType', 2)
+            ->whereIn('master.companySystemID', $companyID)
+            ->whereIn('master.supplierID', $suppliers)
+            ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
+            ->whereIn('grvd.itemCode', $items);
+
+   
+        $query2 = DB::table('supplier_invoice_items as items')
+            ->select(
+                'master.bookingSuppMasInvAutoID',
+                 DB::raw('CAST(master.documentType AS UNSIGNED) as documentType'),
+                'master.bookingInvCode',
+                'master.supplierInvoiceNo',
+                'master.supplierInvoiceDate',
+                'master.bookingDate',
+                'master.supplierID',
+                'supplier.supplierName',
+                'supplier.registrationNumber',
+                DB::raw('CASE WHEN supplier.isLCCYN = 1 THEN "Yes" WHEN supplier.isLCCYN = 0 THEN "No" ELSE "" END as isLCCYN'),
+                DB::raw('CASE WHEN supplier.isSMEYN = 1 THEN "Yes" WHEN supplier.isSMEYN = 0 THEN "No" ELSE "" END as isSMEYN'),
+                'master.companySystemID',
+                'master.comments',
+                'master.secondaryRefNo',
+                'master.supplierTransactionCurrencyID',
+                'currency.CurrencyName as currency',
+                'master.localCurrencyID',
+                'master.bookingAmountTrans',
+                'master.bookingAmountLocal',
+                'master.bookingAmountRpt',
+                 DB::raw('NULL as grvDetailsID'),
+                'items.itemCode',
+                'items.itemPrimaryCode',
+                'items.itemDescription',
+                'items.noQty',
+                'items.unitCost',
+                'items.VATAmount',
+                'items.VATAmount',
+                'items.VATAmount',
+                DB::raw('CASE 
+                    WHEN vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
+                    THEN (items.noQty * items.unitCost + items.noQty * COALESCE(items.VATAmount, 0))
+                    ELSE (items.noQty * items.unitCost)
+                END as netAmount'),
+                'items.supplierPartNumber',
+                'items.unitOfMeasure',
+                 DB::raw("'DIRECT' as source_type"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_master.BPVdate ELSE NULL END as paymentDate"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_detail.supplierPaymentAmount ELSE NULL END as supplierPaymentAmount")
+            )
+            ->join('erp_bookinvsuppmaster as master', 'items.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID')
+            ->leftJoin('suppliermaster as supplier', 'supplier.supplierCodeSystem', '=', 'master.supplierID')
+            ->leftJoin('currencymaster as currency', 'currency.currencyID', '=', 'master.supplierTransactionCurrencyID')
+            ->leftJoin('erp_tax_vat_sub_categories as vat_sub', 'items.vatSubCategoryID', '=', 'vat_sub.taxVatSubCategoriesAutoID')
+            ->leftJoin('erp_taxmaster_new as tax_master', 'vat_sub.taxMasterAutoID', '=', 'tax_master.taxMasterAutoID')
+            ->leftJoin('erp_paysupplierinvoicedetail as pay_detail', function($join) {
+                $join->on('pay_detail.bookingInvSystemCode', '=', 'master.bookingSuppMasInvAutoID')
+                     ->where('pay_detail.addedDocumentSystemID', '=', 11);
+            })
+            ->leftJoin('erp_paysupplierinvoicemaster as pay_master', 'pay_master.PayMasterAutoId', '=', 'pay_detail.PayMasterAutoId')
+            ->where('master.approved', -1)
+            ->where('master.documentType', 3)
+            ->whereIn('master.companySystemID', $companyID)
+            ->whereIn('master.supplierID', $suppliers)
+            ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
+            ->whereIn('items.itemCode', $items);
+
+
+        $query3 = DB::table('erp_grvdetails as grvd')
+            ->select(
+                'master.bookingSuppMasInvAutoID',
+                 DB::raw('CAST(master.documentType AS UNSIGNED) as documentType'),
+                'master.bookingInvCode',
+                'master.supplierInvoiceNo',
+                'master.supplierInvoiceDate',
+                'master.bookingDate',
+                'master.supplierID',
+                'supplier.supplierName',
+                'supplier.registrationNumber',
+                DB::raw('CASE WHEN supplier.isLCCYN = 1 THEN "Yes" WHEN supplier.isLCCYN = 0 THEN "No" ELSE "" END as isLCCYN'),
+                DB::raw('CASE WHEN supplier.isSMEYN = 1 THEN "Yes" WHEN supplier.isSMEYN = 0 THEN "No" ELSE "" END as isSMEYN'),
+                'master.companySystemID',
+                'master.comments',
+                'master.secondaryRefNo',
+                'master.supplierTransactionCurrencyID',
+                'currency.CurrencyName as currency',
+                'master.localCurrencyID',
+                'master.bookingAmountTrans',
+                'master.bookingAmountLocal',
+                'master.bookingAmountRpt',
+                'grvd.grvDetailsID',
+                'grvd.itemCode',
+                'grvd.itemPrimaryCode',
+                'grvd.itemDescription',
+                'grvd.noQty',
+                'grvd.unitCost',
+                'grvd.VATAmount',
+                'pod.VATPercentage',
+                'det2.supplierInvoAmount',
+                DB::raw('CASE 
+                    WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
+                    THEN det2.supplierInvoAmount
+                    ELSE (det2.supplierInvoAmount - (det2.supplierInvoAmount * COALESCE(pod.VATPercentage, 0) / (100 + grvd.VATPercentage)))
+                END as netAmount'),
+                'grvd.supplierPartNumber',
+                'grvd.unitOfMeasure',
+                 DB::raw("'GRV' as source_type"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_master.BPVdate ELSE NULL END as paymentDate"),
+                 DB::raw("CASE WHEN pay_master.approved = -1 THEN pay_detail.supplierPaymentAmount ELSE NULL END as supplierPaymentAmount")
+            )
+            ->join('erp_grvmaster as grvm', 'grvd.grvAutoID', '=', 'grvm.grvAutoID')
+            ->join('erp_bookinvsuppdet as det', 'grvm.grvAutoID', '=', 'det.grvAutoID')
+            ->join('erp_bookinvsuppmaster as master', 'det.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID')
+            ->leftJoin('erp_purchaseorderdetails as pod', 'pod.purchaseOrderDetailsID', '=', 'grvd.purchaseOrderDetailsID')
+            ->leftJoin('erp_bookinvsupp_item_det as det2', function($join) {
+                $join->on('det2.grvDetailsID', '=', 'grvd.grvDetailsID')
+                     ->on('det2.bookingSuppMasInvAutoID', '=', 'master.bookingSuppMasInvAutoID');
+            })
+            ->leftJoin('suppliermaster as supplier', 'supplier.supplierCodeSystem', '=', 'master.supplierID')
+            ->leftJoin('currencymaster as currency', 'currency.currencyID', '=', 'master.supplierTransactionCurrencyID')
+            ->leftJoin('erp_tax_vat_sub_categories as vat_sub', 'pod.vatSubCategoryID', '=', 'vat_sub.taxVatSubCategoriesAutoID')
+            ->leftJoin('erp_taxmaster_new as tax_master', 'vat_sub.taxMasterAutoID', '=', 'tax_master.taxMasterAutoID')
+            ->leftJoin('erp_paysupplierinvoicedetail as pay_detail', function($join) {
+                $join->on('pay_detail.bookingInvSystemCode', '=', 'master.bookingSuppMasInvAutoID')
+                     ->where('pay_detail.addedDocumentSystemID', '=', 11);
+            })
+            ->leftJoin('erp_paysupplierinvoicemaster as pay_master', 'pay_master.PayMasterAutoId', '=', 'pay_detail.PayMasterAutoId')
+            ->where('master.approved', -1)
+            ->where('master.documentType', 0)
+            ->whereIn('master.companySystemID', $companyID)
+            ->whereIn('master.supplierID', $suppliers)
+            ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
+            ->whereIn('grvd.itemCode', $items);
+			
+      
+        $bindings = array_merge($query1->getBindings(), $query2->getBindings(), $query3->getBindings());
+        
+        $unionSql = "({$query1->toSql()} UNION ALL {$query2->toSql()} UNION ALL {$query3->toSql()}) as icv_report";
+        
+        return DB::table(DB::raw($unionSql))->setBindings($bindings);
     }
 
 }

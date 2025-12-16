@@ -276,7 +276,8 @@ class VerifyCsrfTokenForApi
             'api/v1/download-revision-attachment',
             'api/v1/view-revision-attachment',
             'api/v1/getAllDepartmentEmployees',
-            
+            'api/v1/printAssetDepreciation',
+            'api/v1/getDocumentTracingData'
         ];
     }
 }

@@ -692,6 +692,13 @@ class TenderMaster extends Model
             ->first();
     }
 
+    public static function getTenderBidSubmissionDates($tenderId)
+    {
+        return TenderMaster::select('id','bid_submission_opening_date', 'bid_submission_closing_date')
+            ->where('id', $tenderId)
+            ->first();
+    }
+
     public static function getTenderByUuid($tenderUuid)
     {
         return self::where('uuid', $tenderUuid)

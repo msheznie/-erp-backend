@@ -61,6 +61,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('payment-voucher','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
             Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
+            Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
@@ -117,7 +118,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
                         Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
-
+                        Route::post('generateAssetDepBulkPDF', 'FixedAssetDepreciationMasterAPIController@generateAssetDepBulkPDF');
                         Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                         Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
@@ -1056,8 +1057,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
+        Route::get('confirmAPICreatedReceiptVouchers', 'ReceiptAPIController@confirmAPICreatedReceiptVouchers');
     }
 });
+
 
 
 
