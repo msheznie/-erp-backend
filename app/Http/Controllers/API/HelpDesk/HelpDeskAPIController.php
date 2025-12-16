@@ -59,7 +59,7 @@ class HelpDeskAPIController extends AppBaseController
         $valResp = $this->commonValidations($request);
         if(!$valResp['status']){
             $logData = ['message' => $valResp['message']];
-            $this->insertToLogTb($logData, 'error', 'Employee', $this->thirdParty['company_id']);
+            return $this->insertToLogTb($logData, 'error', 'Employee', $this->thirdParty['company_id']);
         }
 
         $postType = $request->postType;
