@@ -1231,9 +1231,17 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
 
         if(!is_null($newDate)) {
-           if(Carbon::parse($newDate)->lessThan(Carbon::parse($timeExtensionRequest->current_submission_date)))
+           $newDateCarbon = Carbon::parse($newDate);
+           $currentDateCarbon = Carbon::parse($timeExtensionRequest->current_submission_date);
+           
+           if($newDateCarbon->lessThan($currentDateCarbon))
            {
                 return $this->sendError('New date cannot be less than the original submission date');
+           }
+           
+           if($newDateCarbon->equalTo($currentDateCarbon))
+           {
+                return $this->sendError('New date cannot be equal to the original submission date');
            }
         }
 
