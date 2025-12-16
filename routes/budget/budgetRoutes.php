@@ -3,6 +3,8 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateBudgetReport', 'Budget\BudgetReportController@generateReport');
         Route::post('exportBudgetReport', 'Budget\BudgetReportController@export');
+        Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
+
     });
 });
 
@@ -60,7 +62,6 @@ Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIContr
 Route::post('sendBackForRevision', 'RevisionAPIController@sendBackForRevision')->name('Send back for revision');
 Route::post('getRevisions', 'RevisionAPIController@getRevisions')->name('Get revisions');
 Route::post('completeRevision', 'RevisionAPIController@completeRevision')->name('Complete revision');
-Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
 Route::post('getRevisionDetails', 'RevisionAPIController@getRevisionDetails')->name('Get revision details with attachments');
 Route::post('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
 Route::post('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
