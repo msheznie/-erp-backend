@@ -838,7 +838,7 @@ class RevisionAPIController extends AppBaseController
                 return \DataTables::of($query)
                     ->addIndexColumn()
                     ->addColumn('gl_code_description', function($row) {
-                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                        return $row->segmentDescription . ' - ' . $row->AccountCode . ' - ' . $row->AccountDescription;
                     })
                     ->filterColumn('gl_code_description', function($query, $keyword) {
                         $query->where(function($q) use ($keyword) {
