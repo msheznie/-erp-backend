@@ -61,6 +61,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('payment-voucher','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
             Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
+            Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
@@ -117,7 +118,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
                         Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
-
+                        Route::post('generateAssetDepBulkPDF', 'FixedAssetDepreciationMasterAPIController@generateAssetDepBulkPDF');
                         Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                         Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
@@ -999,28 +1000,26 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::get('updateRoleRoutes', 'RouteAPIController@updateRoleRoutes');
 
         require __DIR__.'/../routes/hrms/jobRoutes.php';
-
-        Route::group(['middleware' => 'max_memory_limit'], function () {
-            Route::group(['middleware' => 'max_execution_limit'], function () {
-                Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
-            });
-        });
-
-        Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
-        Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
-        Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
-        Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
-        Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
     });
 
     Route::group(['middleware' => ['tenantById', 'cors']], function (){
         Route::get('pull_company_details', 'POS\PosAPIController@pullCompanyDetails');
         Route::group(['middleware' => ['thirdPartyApis', 'thirdPartyApiLogger', 'hrms_employee']], function () {
-            Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
-            Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
-            Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
-            require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
+        Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
+        Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
+        Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
+        require __DIR__.'/../routes/osos_3_0/osos_3_0.php';
+        Route::group(['middleware' => ['max_memory_limit']], function () {
+            Route::group(['middleware' => ['max_execution_limit']], function () {
+                Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
+            });
+        Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
+        Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
+        Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
+        Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
+        Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
         });
+    });
     });
     
     /*
@@ -1056,8 +1055,10 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Artisan::call($cron);
             return 'CRON Job run successfully';
         });
+        Route::get('confirmAPICreatedReceiptVouchers', 'ReceiptAPIController@confirmAPICreatedReceiptVouchers');
     }
 });
+
 
 
 

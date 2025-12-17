@@ -1142,6 +1142,12 @@ class BookInvSuppDetAPIController extends AppBaseController
             }])
             ->get();
 
-        return $this->sendResponse($items->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.grv_invoice_details')]));
+        $itemsArray = $items->map(function($item) {
+            $itemArray = $item->toArray();
+            $itemArray['vatAmountSum'] = $item->getSupplierInvoiceItemDetailsVATAmountSum();
+            return $itemArray;
+        })->toArray();
+
+        return $this->sendResponse($itemsArray, trans('custom.retrieve', ['attribute' => trans('custom.grv_invoice_details')]));
     }
 }

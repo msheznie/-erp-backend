@@ -15,7 +15,10 @@ class LeaveBalanceValidationHelper
         $date =$asOfDate == '' ? date('Y-m-d'): date('Y-m-d',strtotime($asOfDate));        
         $leaveBalanceBasedOn = SME::leaveBalanceBasedOn($companyId);
         
-        
+        if (empty($leaveBalanceBasedOn)) {
+            return ['status' => false, 'message' => 'Leave computation policy is not set with any value'];
+        }
+
         if( $leaveBalanceBasedOn == 3 ){/* Payroll_year_based_validation; */
             
             $data = DB::table('srp_erp_hrperiodmaster')
@@ -74,9 +77,13 @@ class LeaveBalanceValidationHelper
     
     public static function validate_month($companyId, $asOfDate=null)
     {        
-        $date = $asOfDate == '' ? date('Y-m-d'): date('Y-m-d',strtotime($asOfDate));        
+        $date = $asOfDate == '' ? date('Y-m-d'): date('Y-m-d',strtotime($asOfDate));
             
         $leaveBalanceBasedOn = SME::leaveBalanceBasedOn($companyId);
+        if (empty($leaveBalanceBasedOn)) {
+            $data = [];
+            return ['status' => false, 'details' => $data];
+        }
 
         if( $leaveBalanceBasedOn == 3 ){
             $data = DB::table('srp_erp_hrperiod')

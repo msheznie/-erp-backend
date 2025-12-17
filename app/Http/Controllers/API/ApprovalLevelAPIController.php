@@ -278,84 +278,75 @@ class ApprovalLevelAPIController extends AppBaseController
     public function approvalLevelValidation($input, $activate = false)
     {
         $checkDuplicateApproval = ApprovalLevel::where('companySystemID', $input["companySystemID"])
-                                               ->where('documentSystemID', $input['documentSystemID'])
-                                               ->when(isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1), function($query) use ($input){
-                                                    $query->where('isCategoryWiseApproval', -1)
-                                                          ->where('categoryID', $input['categoryID']);
-                                               })
-                                               ->when((isset($input['isCategoryWiseApproval']) && !$input['isCategoryWiseApproval']) || !isset($input['isCategoryWiseApproval']), function($query) {
-                                                    $query->where('isCategoryWiseApproval', 0)
-                                                          ->whereNull('categoryID');
-                                               })
-                                               ->when(isset($input['serviceLineWise']) && $input['serviceLineWise'], function($query) use ($input){
-                                                    $query->where('serviceLineWise', 1)
-                                                          ->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                                               })
-                                                ->when(
-                                                    isset($input['tenderTypeId']) && $input['tenderTypeId'] == -1,
-                                                    function ($query) {
-                                                        $query->where(function ($query) {
-                                                            $query->where('tenderTypeId', -1)
-                                                                ->orWhereNull('tenderTypeId');
-                                                        });
-                                                    }
-                                                )
-                                                ->when(
-                                                    array_key_exists('tenderTypeId', $input) && $input['tenderTypeId'] != -1 && !is_null($input['tenderTypeId']),
-                                                    function ($query) use ($input) {
-                                                        $query->where('tenderTypeId', $input['tenderTypeId']);
-                                                    }
-                                                )
-                                                ->when(
-                                                    !array_key_exists('tenderTypeId', $input) || is_null($input['tenderTypeId']),
-                                                    function ($query) {
-                                                        $query->where(function ($query) {
-                                                            $query->where('tenderTypeId', -1)
-                                                                ->orWhereNull('tenderTypeId');
-                                                        });
-                                                    }
-                                                )
-                                               ->when((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']), function($query) {
-                                                    $query->where('serviceLineWise', 0)
-                                                          ->whereNull('serviceLineSystemID');
-                                               })
-                                               ->when(isset($input['valueWise']) && $input['valueWise'], function($query) use ($input){
-                                                    $query->where('valueWise', 1)
-                                                          ->where('valueFrom', $input['valueFrom'])
-                                                          ->where('valueTo', $input['valueTo']);
-                                               })
-                                               ->when((isset($input['valueWise']) && !$input['valueWise']) || !isset($input['valueWise']), function($query) {
-                                                    $query->where('valueWise', 0)
-                                                          ->where('valueFrom', 0)
-                                                          ->where('valueTo', 0);
-                                               })
-                                               ->when(isset($input['approvalLevelID']), function($query) use ($input) {
-                                                    $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
-                                               })
-                                               ->when(
-                                                isset($input['workflow']),
-                                                    function ($query) use ($input) {
-                                                        $query->where(function ($query) use ($input) {
-                                                            $query->where('workflow', $input['workflow']);
-                                                        });
-                                                    }
-                                                )
-                                               ->where('isActive', -1)
-                                               ->first();
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->when(isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1), function($query) use ($input){
+                $query->where('isCategoryWiseApproval', -1)
+                    ->where('categoryID', $input['categoryID']);
+            })
+            ->when((isset($input['isCategoryWiseApproval']) && !$input['isCategoryWiseApproval']) || !isset($input['isCategoryWiseApproval']), function($query) {
+                $query->where('isCategoryWiseApproval', 0)
+                    ->whereNull('categoryID');
+            })
+            ->when(isset($input['serviceLineSystemID']) && isset($input['serviceLineWise']) && $input['serviceLineWise'], function($query) use ($input){
+                $query->where('serviceLineWise', 1)
+                    ->where('serviceLineSystemID', $input['serviceLineSystemID']);
+            })
+            ->when((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']), function($query) {
+                $query->where('serviceLineWise', 0)
+                    ->whereNull('serviceLineSystemID');
+            })
+            ->when(isset($input['valueWise']) && $input['valueWise'], function($query) use ($input){
+                $query->where('valueWise', 1)
+                    ->where('valueFrom', $input['valueFrom'])
+                    ->where('valueTo', $input['valueTo']);
+            })
+            ->when((isset($input['valueWise']) && !$input['valueWise']) || !isset($input['valueWise']), function($query) {
+                $query->where('valueWise', 0)
+                    ->where('valueFrom', 0)
+                    ->where('valueTo', 0);
+            })
+            ->when(isset($input['tenderTypeId']) && $input['tenderTypeId'] == -1, function ($query) {
+                $query->where(function ($query) {
+                    $query->where('tenderTypeId', -1)
+                        ->orWhereNull('tenderTypeId');
+                });
+            })
+            ->when(array_key_exists('tenderTypeId', $input) && $input['tenderTypeId'] != -1 && !is_null($input['tenderTypeId']), function ($query) use ($input) {
+                $query->where('tenderTypeId', $input['tenderTypeId']);
+            })
+            ->when(!array_key_exists('tenderTypeId', $input) || is_null($input['tenderTypeId']), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('tenderTypeId', -1)
+                        ->orWhereNull('tenderTypeId');
+                });
+            })
+            ->when(isset($input['approvalLevelID']), function($query) use ($input) {
+                $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
+            })
+            ->when(isset($input['workflow']), function ($query) use ($input) {
+                $query->where(function ($query) use ($input) {
+                    $query->where('workflow', $input['workflow']);
+                });
+            })
+            ->when($activate && (isset($input['documentSystemID']) && $input['documentSystemID'] == 1), function ($query) use ($input) {
+                $query->where('prType', $input['prType']);
+            })
+            ->where('isActive', -1)
+            ->first();
 
         if ($checkDuplicateApproval) {
             return ['status' => false, 'message' => trans('custom.approval_level_already_exists')];
         }
 
         $checkPreviousLevels = ApprovalLevel::where('companySystemID', $input["companySystemID"])
-                                            ->where('documentSystemID', $input['documentSystemID'])
-                                            ->where(function($query) {
-                                                $query->where('isCategoryWiseApproval', -1)
-                                                      ->orWhere('serviceLineWise', 1)
-                                                      ->orWhere('valueWise', 1);
-                                            })
-                                            ->where('isActive', -1)
-                                            ->first();
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->where(function($query) {
+                $query->where('isCategoryWiseApproval', -1)
+                    ->orWhere('serviceLineWise', 1)
+                    ->orWhere('valueWise', 1);
+            })
+            ->where('isActive', -1)
+            ->first();
 
         $action = $activate ? "active/inactive" : "create";
 
@@ -374,8 +365,8 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if ($activate) {
             $documentConf = CompanyDocumentAttachment::where('companySystemID', $input["companySystemID"])
-                                               ->where('documentSystemID', $input['documentSystemID'])
-                                               ->first();
+                ->where('documentSystemID', $input['documentSystemID'])
+                ->first();
 
             if ($documentConf) {
                 $isCategoryWiseApproval = isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1) ? -1 : 0;

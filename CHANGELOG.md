@@ -1,6 +1,52 @@
 # Changelog
 
 
+## [10.95.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.1...v10.95.0) (2025-12-14)
+
+
+### Features
+
+* **administration:** HRMS| Restriction on Company Policy - Leave computation [GHR-9042] ([#9308](https://github.com/pbsgears/Gears_BackEnd/issues/9308)) ([9044abb](https://github.com/pbsgears/Gears_BackEnd/commit/9044abb783d9019faa3e272329a47799b3d9dfad))
+* **Api:** Secure Vulnerable ERP API Endpoint related to HRMS [GHR-8884] ([#9303](https://github.com/pbsgears/Gears_BackEnd/issues/9303)) ([b84db2a](https://github.com/pbsgears/Gears_BackEnd/commit/b84db2a916b70df851abce6ad75f9572dc23b1e5))
+* **Attendance:** Preserve Leave Status Even When Employee Clocks In/Out [GHR-9259] ([#9357](https://github.com/pbsgears/Gears_BackEnd/issues/9357)) ([c217523](https://github.com/pbsgears/Gears_BackEnd/commit/c21752312ec52951231990e99f53d3577142fd2f))
+
+## [10.94.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.0...v10.94.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+
+## [10.94.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.2...v10.94.0) (2025-12-04)
+
+
+### Features
+
+* **srm:** Add “Enable KYC” Option in User Management for Bid Tender Suppliers [GSUP-4437] ([#9273](https://github.com/pbsgears/Gears_BackEnd/issues/9273)) ([6271655](https://github.com/pbsgears/Gears_BackEnd/commit/627165589b11ed382f3f43a25132d93a6fef4625))
+* **srm:** Supplier Portal Tender/RFX bids submission closing time countdown [GSUP-4472] ([#9276](https://github.com/pbsgears/Gears_BackEnd/issues/9276)) ([d078208](https://github.com/pbsgears/Gears_BackEnd/commit/d078208cc489a0cc7a454e98c734b01391570430))
+
+## [10.93.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.1...v10.93.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* **srm:** ERP user cannot confirm a tender even if there is already an active approval level [GSUP-4561] ([635e547](https://github.com/pbsgears/Gears_BackEnd/commit/635e547c4fc4cb57795943f32b309441718d967d))
+
+## [10.93.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.0...v10.93.1) (2025-11-27)
+
+
+### Bug Fixes
+
+* **procurement:** Fixed po print issue [GCP-17781] ([#9306](https://github.com/pbsgears/Gears_BackEnd/issues/9306)) ([2ef21b9](https://github.com/pbsgears/Gears_BackEnd/commit/2ef21b9f06551b2db387822f422c0a45d62b27c8))
+
+## [10.93.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.92.0...v10.93.0) (2025-11-26)
+
+
+### Features
+
+* **OSOS 3.0:** Update Employee and User Profile Synchronization Service to Handle Base64 Profile Image [GHR-8821] ([#9240](https://github.com/pbsgears/Gears_BackEnd/issues/9240)) ([34e58c1](https://github.com/pbsgears/Gears_BackEnd/commit/34e58c1f75e1a03849b284cfb8a7d468c8ca3a22))
+
 ## [10.92.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.2...v10.92.0) (2025-11-25)
 
 

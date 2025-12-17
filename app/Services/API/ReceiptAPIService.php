@@ -32,6 +32,7 @@ use App\Models\Taxdetail;
 use App\Services\PaymentVoucherServices;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReceiptAPIService
 {
@@ -48,79 +49,86 @@ class ReceiptAPIService
 
 
     public function storeReceiptVoucherData($receipts,$db) {
-        $savedReceipts = array();
-        $errorDetails = array();
+        try {
+            $savedReceipts = array();
+            $errorDetails = array();
 
-        $structuredError = [];
-        if($this->isError) {
-            return ['status'=>'fail', "code" => 422,'data' => $this->validationErrorArray];
-        }
+            $structuredError = [];
+            if($this->isError) {
+                return ['status'=>'fail', "code" => 422,'data' => $this->validationErrorArray];
+            }
 
-        foreach ($receipts as $receipt) {
-            $discountValidation = self::validateDiscountGiven($receipt);
-            if($discountValidation['status'] === 'fail') {
-                return ['status'=>'fail', "code" => 422,'data' => $discountValidation['data']];
-            }
-            
-            $discountGLValidation = self::validateDiscountGLAccount($receipt);
-            if($discountGLValidation['status'] === 'fail') {
-                return ['status'=>'fail', "code" => 422,'data' => $discountGLValidation['data']];
-            }
-            
-            $receipt = self::serialCodeDetails($receipt);
-            $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
-            array_push($savedReceipts,["refNo" => $saveReceipt->narration, "custPaymentReceiveCode"=> $saveReceipt->custPaymentReceiveCode,'custReceivePaymentAutoID' => $saveReceipt->custReceivePaymentAutoID]);
-            if($saveReceipt) {
-                foreach ($receipt->details as $detail) {
-                    $result = ReceiptDetailsAPIService::storeReceiptDetails($detail,$saveReceipt);
-                    if($result['status'] === 'fail') {
-                        $isFailed = true;
-                        array_push($errorDetails,$detail['invoiceCode']);
+            foreach ($receipts as $receipt) {
+                $discountValidation = self::validateDiscountGiven($receipt);
+                if($discountValidation['status'] === 'fail') {
+                    return ['status'=>'fail', "code" => 422,'data' => $discountValidation['data']];
+                }
+                
+                $discountGLValidation = self::validateDiscountGLAccount($receipt);
+                if($discountGLValidation['status'] === 'fail') {
+                    return ['status'=>'fail', "code" => 422,'data' => $discountGLValidation['data']];
+                }
+                
+                $receipt = self::serialCodeDetails($receipt);
+                
+                $saveReceipt = CustomerReceivePayment::create($receipt->toArray());
+                
+                if($saveReceipt) {
+                    foreach ($receipt->details as $detail) {
+                        $result = ReceiptDetailsAPIService::storeReceiptDetails($detail,$saveReceipt);
+                        if($result['status'] === 'fail') {
+                            $isFailed = true;
+                            array_push($errorDetails,$detail['invoiceCode']);
+                            throw new \Exception('Failed to store receipt details for invoice: ' . $detail['invoiceCode']);
+                        }
                     }
-                }
 
-                if(!empty($receipt->pdcChequeData) && $saveReceipt->pdcChequeYN)
-                {
-                    $pdcChequeMapedData = collect($receipt->pdcChequeData)->map(function($pdcChque) use ($saveReceipt) {
-                        return [
-                            "documentSystemID" => $saveReceipt->documentSystemID,
-                            "documentmasterAutoID" => $saveReceipt->custReceivePaymentAutoID,
-                            "paymentBankID" => $saveReceipt->bankID,
-                            "companySystemID" => $saveReceipt->companySystemID,
-                            "currencyID" => $saveReceipt->custTransactionCurrencyID,
-                            "chequeNo" => $pdcChque['chequeNo'],
-                            "chequeDate" => $pdcChque['chequeDate'],
-                            "chequeStatus" => 0,
-                            "amount" => $pdcChque['amount'],
-                            "timestamp" => "2025-06-05 10:37:12",
-                            "comments" => $pdcChque['comment'] ?? null,
-                            "chequePrinted" => 0
-                        ];
-                    })->toArray();
+                    if(!empty($receipt->pdcChequeData) && $saveReceipt->pdcChequeYN)
+                    {
+                        $pdcChequeMapedData = collect($receipt->pdcChequeData)->map(function($pdcChque) use ($saveReceipt) {
+                            return [
+                                "documentSystemID" => $saveReceipt->documentSystemID,
+                                "documentmasterAutoID" => $saveReceipt->custReceivePaymentAutoID,
+                                "paymentBankID" => $saveReceipt->bankID,
+                                "companySystemID" => $saveReceipt->companySystemID,
+                                "currencyID" => $saveReceipt->custTransactionCurrencyID,
+                                "chequeNo" => $pdcChque['chequeNo'],
+                                "chequeDate" => $pdcChque['chequeDate'],
+                                "chequeStatus" => 0,
+                                "amount" => $pdcChque['amount'],
+                                "timestamp" => "2025-06-05 10:37:12",
+                                "comments" => $pdcChque['comment'] ?? null,
+                                "chequePrinted" => 0
+                            ];
+                        })->toArray();
 
-                  $savePdcCheque =   PdcLog::insert($pdcChequeMapedData);;
+                      $savePdcCheque =   PdcLog::insert($pdcChequeMapedData);;
 
-                }
-
+                    }
 
 
-                $params = array('autoID' => $saveReceipt->custReceivePaymentAutoID,
-                    'company' => $saveReceipt->companySystemID,
-                    'document' => $saveReceipt->documentSystemID,
-                    'segment' => '',
-                    'category' => '',
-                    'amount' => '',
-                    'receipt' => true,
-                    'sendMail' => false,
-                    'sendNotication' => false,
-                    'isAutoCreateDocument' => true
-                );
 
-                $receipt = self::setTaxDetails($saveReceipt);
+                    $params = array('autoID' => $saveReceipt->custReceivePaymentAutoID,
+                        'company' => $saveReceipt->companySystemID,
+                        'document' => $saveReceipt->documentSystemID,
+                        'segment' => '',
+                        'category' => '',
+                        'amount' => '',
+                        'receipt' => true,
+                        'sendMail' => false,
+                        'sendNotication' => false,
+                        'isAutoCreateDocument' => true,
+                        'fromUpload' => true
+                    );
 
-                $confirmation = \Helper::confirmDocument($params);
-                if($confirmation['success'])
-                {
+                    $receipt = self::setTaxDetails($saveReceipt);
+
+                    $confirmation = \Helper::confirmDocument($params);
+                    if(!$confirmation['success'])
+                    {
+                        throw new \Exception('Document confirmation failed: ' . ($confirmation['message'] ?? 'Unknown error'));
+                    }
+
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $saveReceipt->custReceivePaymentAutoID)->where('documentSystemID', $saveReceipt->documentSystemID)->get();
 
                     foreach ($documentApproveds as $documentApproved)
@@ -135,15 +143,22 @@ class ReceiptAPIService
                         $documentApproved['isCheckPrivilages'] = false;
                         $documentApproved['isAutoCreateDocument'] = true;
                         $approval = \Helper::approveDocument($documentApproved);
-
+                        
+                        if(!$approval['success'])
+                        {
+                            throw new \Exception('Document approval failed: ' . ($approval['message'] ?? 'Unknown error'));
+                        }
                     }
-
-
+                    
+                    // Only add to saved receipts if everything succeeds
+                    array_push($savedReceipts,["refNo" => $saveReceipt->narration, "custPaymentReceiveCode"=> $saveReceipt->custPaymentReceiveCode,'custReceivePaymentAutoID' => $saveReceipt->custReceivePaymentAutoID]);
                 }
             }
-        }
 
-        return ['status'=> 'success','message' => trans('custom.receipt_voucher_created_successfully'),'data' => $savedReceipts];
+            return ['status'=> 'success','message' => trans('custom.receipt_voucher_created_successfully'),'data' => $savedReceipts];
+        } catch (\Exception $e) {
+            return ['status'=>'fail', "code" => 500,'data' => ['error' => $e->getMessage()]];
+        }
 
     }
 

@@ -200,7 +200,7 @@ class Helper
             $companiesByGroup = (array)$company;
         }
 
-        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT_WS(" - ",case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end,serviceline.ServiceLineDes) as ServiceLineDes')
             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
             ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
             ->where('serviceline.approved_yn', 1)
@@ -3353,7 +3353,7 @@ class Helper
                                 }
 
                                 $tenderTypeId = $params["tenderTypeId"];
-                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId);
+                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId, $params["company"], $reference_document_id);
                                 $approvalLevel->where(function ($query) use ($tenderTypeId, $tenderApprovalLevel) {
                                     $tenderApprovalLevel
                                         ? $query->where('tenderTypeId', $tenderTypeId)
@@ -10340,17 +10340,18 @@ class Helper
         }
 
         // Get base config from config file
-        $baseConfig = config('mpdf', []);
+//        $baseConfig = config('mpdf', []);
 
         // Set default font based on language
-        if ($lang === 'ar') {
-            $baseConfig['default_font'] = 'notosansarabic';
-        } else {
-            $baseConfig['default_font'] = 'poppins';
-        }
+//        if ($lang === 'ar') {
+//            $baseConfig['default_font'] = 'notosansarabic';
+//        } else {
+//            $baseConfig['default_font'] = 'poppins';
+//        }
 
         // Merge with additional config (additional config takes precedence)
-        return array_merge($baseConfig, $additionalConfig);
+//        return array_merge($baseConfig, $additionalConfig);
+        return $additionalConfig;
     }
 
     public static function getExcelFontFamily($lang = null)
