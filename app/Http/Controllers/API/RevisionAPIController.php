@@ -382,8 +382,9 @@ class RevisionAPIController extends AppBaseController
 
         // Validate that newSubmissionDate is greater than or equal to submittedDate
         if ($budgetPlanning && $newSubmissionDateCarbon) {
-            if ($newSubmissionDateCarbon->lt($budgetPlanning->submissionDate)) {
-                return $this->sendError('New Submission Date must be greater than or equal to original submission date');
+            $currentDate = Carbon::now()->startOfDay();
+            if ($newSubmissionDateCarbon->lt($currentDate)) {
+                return $this->sendError('New Submission Date must be greater than or equal to current date');
             }
         }
 
