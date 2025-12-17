@@ -513,7 +513,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $updateData = ['workStatus' => $input['workStatus'] , 'submitted_at' => ($input['workStatus'] == 3) ? now() : null];
             $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with('masterBudgetPlannings','budgetPlanningDetails')->update($updateData, $input['budgetPlanningId']);
 
-            if ($input['workStatus'] == 2 && empty($departmentBudgetPlanning->budgetPlanningDetails)) {
+            if ($input['workStatus'] == 2 && $departmentBudgetPlanning->budgetPlanningDetails->isEmpty()) {
 
                 // Get database from request (added by TenantEnforce middleware)
                 $db = $request->input('db', '');
