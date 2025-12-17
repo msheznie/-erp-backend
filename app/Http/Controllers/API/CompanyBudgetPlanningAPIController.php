@@ -1020,6 +1020,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.primary_company_is_required'));
         }
 
+
+        if(Carbon::parse($data['dateOfSubmission'])->lessThan(now())) {
+            return $this->sendError('The date of submission should be greater than the current date',404,['duplicate_budget_planning']);
+        }
         
         $duplicateBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyID)
             ->where('status', 1)
