@@ -162,10 +162,10 @@ class DepartmentBudgetDetailCommentAPIController extends AppBaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
         try {
-            $comment = BudgetDetailComment::find($id);
+            $comment = BudgetDetailComment::find($request->commentId);
 
             if (!$comment) {
                 return $this->sendError('Department budget detail comment not found');
