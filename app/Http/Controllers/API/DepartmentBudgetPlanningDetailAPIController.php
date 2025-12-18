@@ -1226,7 +1226,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
 
-        $query = DepartmentBudgetPlanning::with('department.hod.employee','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        $query = DepartmentBudgetPlanning::with('department.hod.employee','revisions','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
         return \DataTables::of($query)
             ->addColumn('newDate', function ($row) {
                 if ($row->timeExtensionRequests->count() > 0) {
