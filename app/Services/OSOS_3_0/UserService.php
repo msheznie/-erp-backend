@@ -24,10 +24,11 @@ class UserService
     protected $pivotTableId;
     protected $masterUuId;
     protected $empId;
+    protected $userOnly;
 
     use JobCommonFunctions;
 
-    public function __construct($dataBase, $id, $empId, $postType, $thirdPartyData)
+    public function __construct($dataBase, $id, $empId, $postType, $thirdPartyData, $userOnly)
     {
 
         $this->dataBase = $dataBase;
@@ -40,6 +41,7 @@ class UserService
         $this->apiExternalUrl = $thirdPartyData['api_external_url'];
         $this->companyId = $thirdPartyData['company_id'];
         $this->thirdPartyData = $thirdPartyData;
+        $this->userOnly = $userOnly;
 
         $this->getOperation();
         $this->getPivotTableId(6);
@@ -264,7 +266,15 @@ class UserService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->userData['id'] = $this->masterUuId;
+            if (empty($this->masterUuId)) {
+                $this->postType = "POST";
+            }else {
+                $this->userData['id'] = $this->masterUuId;
+            }
+        }
+
+        if (!empty($this->userOnly)) {
+            unset($this->userData['EmployeeId']);
         }
     }
 

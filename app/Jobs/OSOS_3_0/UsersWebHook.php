@@ -19,6 +19,7 @@ class UsersWebHook implements ShouldQueue
     protected $postType;
     protected $thirdPartyData;
     protected $dataBase;
+    protected $userOnly;
     use JobCommonFunctions;
 
     /**
@@ -26,7 +27,7 @@ class UsersWebHook implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dataBase, $postType, $id, $thirdPartyData)
+    public function __construct($dataBase, $postType, $id, $thirdPartyData, $userOnly = null)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -42,6 +43,7 @@ class UsersWebHook implements ShouldQueue
         $this->id = $id;
         $this->postType = $postType;
         $this->thirdPartyData = $thirdPartyData;
+        $this->userOnly = $userOnly;
     }
 
     /**
@@ -61,7 +63,9 @@ class UsersWebHook implements ShouldQueue
             return $this->insertToLogTb($logData, 'error', 'User', $this->thirdPartyData['company_id']);
         }
 
-        $service = new UserService($this->dataBase, $userData->userId, $empId, $this->postType, $this->thirdPartyData);
+        $service = new UserService(
+            $this->dataBase, $userData->userId, $empId, $this->postType, $this->thirdPartyData, $this->userOnly
+        );
         $resp = $service->execute();
 
         if(isset($resp['status']) && !$resp['status']){
@@ -77,7 +81,7 @@ class UsersWebHook implements ShouldQueue
                 $this->insertToLogTb($logData, 'info', $desc, $this->thirdPartyData['company_id']);
 
                 $service = new UserService(
-                    $this->dataBase, $userId, $empId, $this->postType, $this->thirdPartyData
+                    $this->dataBase, $userId, $empId, $this->postType, $this->thirdPartyData, $this->userOnly
                 );
 
                 $resp = $service->execute();
