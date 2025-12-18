@@ -389,7 +389,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterList(Request $request)
     {
         $input = $request->all();
-
+        $documentSystemId = isset($input['rfx']) && $input['rfx'] ? 113 : 108;
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -400,11 +400,25 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input){
+        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input, $documentSystemId){
             $q->select('documentSystemCode','status')
                 ->where('companySystemID', $companyId)
-                ->where('documentSystemID', isset($input['rfx']) && $input['rfx'] ? 113 : 108);
-        }])->where('company_id', $companyId);
+                ->where('documentSystemID', $documentSystemId);
+        }, 'latestTenderEditLog' => function ($q) use ($documentSystemId) {
+            $q->select('id','version_id')
+            ->whereHas('documentModifyRequest', function ($q1) use ($documentSystemId) {
+                $q1->where('requested_document_master_id', $documentSystemId);
+            })
+                ->with(['documentModifyRequest' => function ($q1) use ($documentSystemId) {
+                    $q1->select('requested_document_master_id','documentSystemCode')
+                    ->where('requested_document_master_id', $documentSystemId);
+                }])
+                ->orderBy('amd_id', 'desc')
+                ->limit(1);
+        }, 'tenderSupplierAssignee' => function ($q) use ($companyId) {
+            $q->where('mail_sent',0)
+            ->where('company_id', $companyId);
+        } ])->where('company_id', $companyId);
 
         $filters = $this->getFilterData($input);
 

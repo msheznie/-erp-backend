@@ -794,4 +794,14 @@ class ProcumentOrder extends Model
         return ProcumentOrder::select('supplierID')
             ->where('purchaseOrderID', $id)->first();
     }
+
+    public function po_acknowledgement()
+    {
+        return $this->belongsTo('\App\Models\SrmPOAcknowledgement', 'purchaseOrderID', 'po_id');
+    }
+
+    public function all_approvals()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
+    }
 }

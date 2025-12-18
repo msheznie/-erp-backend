@@ -3687,4 +3687,68 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.unexpected_error') . $ex->getMessage());
         }
     }
+    public function procurementLifecycleReport(Request $request)
+    {
+        try {
+            $companyId = $request->get('companyId');
+            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId);
+
+            return \DataTables::of($result)
+                    ->addIndexColumn()
+                    ->order(function () {})
+                    ->make(true);
+
+        } catch (\Throwable $e) {
+            return $this->sendError(
+                trans('custom.unexpected_error') . ': ' . $e->getMessage()
+            );
+        }
+    }
+
+    public function exportProcurementLifecycleReport(Request $request)
+    {
+        try {
+            $companyId = $request->input('companyId');
+            $type = $request->get('type', 'xlsx');
+            
+            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId);
+            $data = $this->purchaseRequestRepository->formatProcurementLifecycleDataForExport($result);
+
+            $exportPath = $this->generateExcelExport($data, $type, $companyId);
+
+            if (empty($exportPath)) {
+                return $this->sendError(trans('custom.unable_to_export_excel'));
+            }
+
+            return $this->sendResponse($exportPath, trans('custom.success_export'));
+
+        } catch (\Throwable $e) {
+            Log::error('Export Procurement Lifecycle Report Error', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return $this->sendError(
+                trans('custom.unexpected_error') . ': ' . $e->getMessage()
+            );
+        }
+    }
+    private function generateExcelExport(array $data, string $type, int $companyId): string
+    {
+        $docName = trans('custom.procurement_lifecycle_report');
+        $docNamePath = 'procurement_lifecycle/';
+        $path = 'procurement/report/' . $docNamePath . 'excel/';
+
+        $companyMaster = Company::find($companyId);
+        $companyCode = $companyMaster->CompanyID ?? 'common';
+
+        $detailArray = [
+            'company_code' => $companyCode,
+        ];
+
+        return CreateExcel::process($data, $type, $docName, $path, $detailArray);
+    }
+
 }

@@ -529,7 +529,7 @@ class AppointmentAPIController extends AppBaseController
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info = trans('srm_masters.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
+                $info = trans('srm_supplier_management.the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity', [
                     'code1' => $detail->itemPrimaryCode,
                     'code2' => $detail->purchaseOrderCode,
                     'code3' => $detail->planned_qty,
@@ -569,8 +569,60 @@ class AppointmentAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $acc_d = DeliveryAppoinmentGRV::dispatch($input);
 
-        return $this->sendResponse($acc_d, trans('srm_supplier_management.successfully_created'));
+        try {
+            $appointment = Appointment::getAppointmentData($input['documentSystemCode']);
+
+            if (!$appointment) {
+                return $this->sendError('Appointment not found');
+            }
+
+            $validationResult = $this->appointmentRepository->validateAppointmentQuantities($input['documentSystemCode']);
+            if (!$validationResult['success']) {
+                return $this->sendError($validationResult['message']);
+            }
+
+            $currencyGroups = $appointment->detail
+                ->filter(function ($detail) {
+                    return $detail->po_master;
+                })
+                ->groupBy(function ($detail) {
+                    return $detail->po_master->supplierTransactionCurrencyID;
+                })
+                ->map(function ($group) {
+                    return $group->pluck('id')->toArray();
+                })
+                ->toArray();
+
+            $dispatchedJobs = [];
+
+            if (count($currencyGroups) === 1) {
+                $currencyId = array_key_first($currencyGroups);
+                $appointmentDetailIds = $currencyGroups[$currencyId];
+
+                $groupInput = array_merge($input, [
+                    'currencyId' => $currencyId,
+                    'appointmentDetailIds' => $appointmentDetailIds,
+                ]);
+
+                $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($groupInput);
+            } else {
+                foreach ($currencyGroups as $currencyId => $appointmentDetailIds) {
+                    $groupInput = array_merge($input, [
+                        'currencyId' => $currencyId,
+                        'appointmentDetailIds' => $appointmentDetailIds,
+                    ]);
+
+                    $dispatchedJobs[] = DeliveryAppoinmentGRV::dispatch($groupInput);
+                }
+            }
+
+            return $this->sendResponse($dispatchedJobs, trans('srm_supplier_management.successfully_created'));
+
+        } catch (\Throwable $e) {
+            return $this->sendError(
+                trans('srm_supplier_management.something_went_wrong') . ' ' . $e->getMessage()
+            );
+        }
     }
 }
