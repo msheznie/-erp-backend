@@ -80,7 +80,7 @@ class TenderPurchaseRequest extends Model
                             $q->select('id', 'contractCode', 'startDate', 'endDate', 'agreementSignDate')
                                 ->with([
                                     'contract_status' => function ($q) {
-                                        $q->select('id', 'contract_history_id', 'status')
+                                        $q->select('id', 'contract_history_id', 'status', 'contract_id')
                                             ->whereIn('status', [1, 2, 3, 4, 5, 6]);
                                     }
                                 ]);
