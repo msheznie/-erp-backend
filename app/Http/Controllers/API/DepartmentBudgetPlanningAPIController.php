@@ -1227,7 +1227,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         if(!empty($input['timeExtensionRequests'])) {
             if(!is_null(collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'])) {
                 $newDate = collect($input['timeExtensionRequests'])->where('id', $input['id'])->first()['new_time'];
-                $newDate = Carbon::parse($newDate)->addDays(1)->format('Y-m-d');
+                $newDate = Carbon::parse($newDate)->format('Y-m-d');
             }
         }
 
