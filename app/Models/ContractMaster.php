@@ -171,7 +171,7 @@ class ContractMaster extends Model
 
     public function contract_status()
     {
-        return $this->hasMany(ContractStatusHistory::class, 'id', 'contract_id');
+        return $this->hasMany(ContractStatusHistory::class, 'contract_id','id');
     }
 
 
