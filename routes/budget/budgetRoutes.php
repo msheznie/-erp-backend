@@ -3,6 +3,8 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
         Route::post('generateBudgetReport', 'Budget\BudgetReportController@generateReport');
         Route::post('exportBudgetReport', 'Budget\BudgetReportController@export');
+        Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
+
     });
 });
 
@@ -60,14 +62,14 @@ Route::post('getOptionsForSelectedUnit', 'DepartmentBudgetPlanningDetailAPIContr
 Route::post('sendBackForRevision', 'RevisionAPIController@sendBackForRevision')->name('Send back for revision');
 Route::post('getRevisions', 'RevisionAPIController@getRevisions')->name('Get revisions');
 Route::post('completeRevision', 'RevisionAPIController@completeRevision')->name('Complete revision');
-Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
 Route::post('getRevisionDetails', 'RevisionAPIController@getRevisionDetails')->name('Get revision details with attachments');
-Route::get('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
-Route::get('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
+Route::post('download-revision-attachment', 'RevisionAPIController@downloadRevisionAttachment')->name('Download revision attachment');
+Route::post('view-revision-attachment', 'RevisionAPIController@viewRevisionAttachment')->name('View revision attachment');
 Route::resource('revisions', 'RevisionAPIController');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
+Route::post('exportBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@exportBudgetPlanningDetails')->name('Export budget planning details to Excel');
 Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlanningDetailAPIController@updateInternalStatus')->name('Update department budget planning detail status');
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
@@ -149,3 +151,13 @@ Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::post('getChartofAccountsByBudget', 'DepartmentBudgetPlanningDetailAPIController@getChartofAccountsByBudget')->name('Get chart of accounts by budget');   
     });
 });
+
+// Budget Notification Routes
+Route::resource('budgetNotifications', 'DepartmentBudgetNotificationAPIController');
+Route::post('getAllBudgetNotificationDetails', 'DepartmentBudgetNotificationAPIController@getAllBudgetNotificationDetails')->name('Get all budget notification details');
+Route::get('budgetNotifications/{id}/details', 'DepartmentBudgetNotificationAPIController@getNotificationDetails')->name('Get notification details');
+Route::post('budgetNotificationDetails', 'DepartmentBudgetNotificationAPIController@storeNotificationDetail')->name('Create notification detail');
+Route::put('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPIController@updateNotificationDetail')->name('Update notification detail');
+Route::delete('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPIController@destroyNotificationDetail')->name('Delete notification detail');
+Route::get('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@getRecipients')->name('Get notification recipients');
+Route::post('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@storeRecipient')->name('Create notification recipient');

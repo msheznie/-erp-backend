@@ -125,7 +125,8 @@ class BudgetPermissionService
                         $effectiveSubmissionDate = Carbon::today()->format('Y-m-d');
                     }
                     
-                    if($effectiveSubmissionDate <= Carbon::today()->format('Y-m-d'))
+                    $submissionEndDate = Carbon::parse($effectiveSubmissionDate)->endOfDay();
+                    if($submissionEndDate <= Carbon::today())
                     {
                         $userPermissions['hodUser']['isActive'] = false;
                     }

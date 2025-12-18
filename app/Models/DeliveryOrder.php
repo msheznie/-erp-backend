@@ -435,7 +435,8 @@ class DeliveryOrder extends Model
         'customerVATEligible',
         'timestamp',
         'isDelegation',
-        'isBulkItemJobRun'
+        'isBulkItemJobRun',
+        'salesType'
     ];
 
     /**
@@ -523,7 +524,8 @@ class DeliveryOrder extends Model
         'selectedForCustomerInvoice' => 'integer',
         'selectedForSalesReturn' => 'integer',
         'timestamp' => 'datetime',
-        'isBulkItemJobRun' => 'boolean'
+        'isBulkItemJobRun' => 'boolean',
+        'salesType' => 'integer'
     ];
 
     /**

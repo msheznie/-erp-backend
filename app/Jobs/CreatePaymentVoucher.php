@@ -35,6 +35,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\Models\CustomerMaster;
+use App\Models\CustomerAssigned;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -562,7 +564,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
         if (isset($request['payee_type'])) {
             if (is_int($request['payee_type'])) {
-                if (in_array($request['payee_type'],[1,2,3])) {
+                if (in_array($request['payee_type'],[1,2,3,4])) {
 
                     switch ($request['payee_type']) {
                         // Validate Supplier
@@ -675,6 +677,62 @@ class CreatePaymentVoucher implements ShouldQueue
                                 ];
                             }
 
+                            break;
+                        // Validate Customer
+                        case 4:
+                            if (!isset($request['customer'])) {
+                                $errorData[] = [
+                                    'field' => "customer",
+                                    'message' => ["customer field is required."]
+                                ];
+                            }
+
+                            if (isset($request['customer'])) {
+                                $customer = CustomerMaster::where('customerCodeSystem', $request['customer'])
+                                    ->first();
+
+                                if ($customer) {
+                                    if ($customer->approvedYN == 1) {
+                                        $customerAssign = CustomerAssigned::where('customerCodeSystem', $customer->customerCodeSystem)
+                                            ->where('companySystemID', $companyId)
+                                            ->where('isAssigned', -1)
+                                            ->first();
+
+                                        if ($customerAssign && $customerAssign->isAssigned == -1) {
+                                            if ($customerAssign->isActive != 1) {
+                                                $errorData[] = [
+                                                    'field' => "customer",
+                                                    'message' => ["Selected customer is not active."]
+                                                ];
+                                            }
+                                        }
+                                        else {
+                                            $errorData[] = [
+                                                'field' => "customer",
+                                                'message' => ["Selected customer is not assigned to the company."]
+                                            ];
+                                        }
+                                    }
+                                    else {
+                                        $errorData[] = [
+                                            'field' => "customer",
+                                            'message' => ["Selected customer is not approved."]
+                                        ];
+                                    }
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "customer",
+                                        'message' => ["Selected Payee type (customer) is not available in the system."]
+                                    ];
+                                }
+                            }
+                            else {
+                                $errorData[] = [
+                                    'field' => "customer",
+                                    'message' => ["customer field is required."]
+                                ];
+                            }
                             break;
                     }
                 }
@@ -1162,6 +1220,9 @@ class CreatePaymentVoucher implements ShouldQueue
                     break;
                 case 3:
                     $returnDataset['data']['directPaymentPayee'] = $request['other'];
+                    break;
+                case 4:
+                    $returnDataset['data']['BPVcustomerID'] = $customer->customerCodeSystem;
                     break;
             }
         }

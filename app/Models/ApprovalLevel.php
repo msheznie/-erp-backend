@@ -76,7 +76,8 @@ class ApprovalLevel extends Model
         'isDelegation',
         'tenderTypeId',
         'tenderTypeCode',
-        'workflow'
+        'workflow',
+        'prType'
     ];
 
     /**
@@ -107,6 +108,7 @@ class ApprovalLevel extends Model
         'tenderTypeId'=> 'integer',
         'tenderTypeCode' => 'string',
         'workflow' => 'integer',
+        'prType' => 'integer'
     ];
 
     /**
