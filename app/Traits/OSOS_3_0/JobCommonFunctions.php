@@ -1,0 +1,238 @@
+<?php
+namespace App\Traits\OSOS_3_0;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+
+trait JobCommonFunctions{
+    function insertToLogTb($logData, $type, $desc, $companyId){
+
+        $data = [
+            'company_id'=> $companyId,
+            'module'=> 'OSOS 3.0',
+            'description'=> $desc,
+            'scenario_id'=> 0,
+            'processed_for'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'logged_at'=> Carbon::now()->format('Y-m-d H:i:s'),
+            'log_type'=> $type,
+            'log_data'=> json_encode($logData),
+        ];
+
+        DB::table('job_logs')->insert($data);
+    }
+
+    function commonValidations($req){
+
+        if(empty($req->postType)){
+            $error = 'Post request type is required';
+            return ['status' =>false, 'message'=> $error];
+
+        }
+
+        if(empty($this->thirdParty['api_key'])){
+            $error = 'Api key not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->thirdParty['api_external_key'])){
+            $error = 'Api external key not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->thirdParty['api_external_url'])){
+            $error = 'Api external url not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->thirdParty['company_id'])){
+            $error = 'Api company not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        return ['status' =>true, 'message'=> 'success'];
+    }
+
+    function getUrl($funcName) {
+        switch ($funcName) {
+            case 'location':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/locations/{$this->masterUuId}"
+                    : 'v2/api/locations';
+                break;
+            case 'designation':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/designations/{$this->masterUuId}"
+                    : 'v2/api/designations';
+                break;
+            case 'department':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/departments/{$this->masterUuId}"
+                    : 'v2/api/departments';
+                break;
+            case 'employee':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/employees/{$this->masterUuId}"
+                    : 'v2/api/employees';
+                break;
+            case 'user':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/Users/{$this->masterUuId}"
+                    : 'v2/api/Users';
+                break;
+            case 'fos':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/fieldOfStudy/{$this->masterUuId}"
+                    : 'v2/api/hrm/fieldOfStudy';
+                break;
+            case 'education':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/education/{$this->masterUuId}"
+                    : 'v2/api/hrm/education';
+                break;
+            case 'certificate':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/certificate/{$this->masterUuId}"
+                    : 'v2/api/hrm/certificate';
+                break;
+            case 'experience':
+                $this->url = ($this->postType === 'DELETE')
+                    ? "v2/api/hrm/experience/{$this->masterUuId}"
+                    : 'v2/api/hrm/experience';
+                break;
+            default:
+                $this->url = '';
+                break;
+        }
+    }
+
+    function getPivotTableId($id){
+        $this->pivotTableId =  DB::table('pivot_tbl_reference')
+            ->where('id', $id)
+            ->value('id');
+    }
+
+    function getOperation(){
+        $operations = [
+            'POST' => 'save',
+            'PUT' => 'update',
+            'DELETE' => 'delete',
+        ];
+
+        $this->operation = $operations[$this->postType] ?? null;
+    }
+
+    function getReferenceId(){
+        $this->masterUuId = DB::table('third_party_pivot_record')
+            ->where('pivot_table_id', $this->pivotTableId)
+            ->where('system_id', $this->id)
+            ->where('third_party_sys_det_id', $this->detailId)
+            ->value('reference_id');
+    }
+
+    function capture400Err($msgBody, $description){
+        return $this->insertToLogTb($msgBody, 'error', $description, $this->companyId);
+    }
+
+    function insertOrUpdateThirdPartyPivotTable($referenceId)
+    {
+        if ($this->postType != 'POST') {
+            return true;
+        }
+
+        $existingRecord = $this->checkRecordExits();
+
+        if (!empty($existingRecord)) {
+            return True;
+        }
+
+        return $this->saveThirdPivotTable($referenceId);
+
+    }
+
+    function saveThirdPivotTable($referenceId){
+        return DB::table('third_party_pivot_record')->insert([
+            'third_party_sys_det_id' => $this->detailId,
+            'pivot_table_id' => $this->pivotTableId,
+            'system_id' => $this->id,
+            'reference_id' => $referenceId
+        ]);
+    }
+
+    function checkRecordExits(){
+        return DB::table('third_party_pivot_record')
+            ->where('third_party_sys_det_id', $this->detailId)
+            ->where('pivot_table_id', $this->pivotTableId)
+            ->where('system_id', $this->id)
+            ->first();
+    }
+
+    function getOtherReferenceId($id, $pivotTbId) {
+        return DB::table('third_party_pivot_record')
+            ->where('third_party_sys_det_id', $this->detailId)
+            ->where('pivot_table_id', $pivotTbId)
+            ->where('system_id', $id)
+            ->value('reference_id');
+    }
+
+    function validateCompanyReference() {
+        return DB::table('third_party_pivot_record')
+            ->where('pivot_table_id', 5)
+            ->first();
+    }
+
+    function getProfileImageData($imageUrl = null)
+    {
+        $profileImage = null;
+        $profileImageExtension = null;
+        $defaultImages = ['images/users/female.png', 'images/users/male.png'];
+        $imageUrl = trim($imageUrl);
+
+        if (empty($imageUrl) || in_array($imageUrl, $defaultImages, true)) {
+            return [
+                'profileImage' => null,
+                'profileImageExtension' => null,
+            ];
+        }
+
+        try {
+            if (Storage::disk('s3')->exists($imageUrl)) {
+                $fileContent = Storage::disk('s3')->get($imageUrl);
+                if ($fileContent !== false) {
+                    $pathInfo = pathinfo($imageUrl);
+                    $extension = isset($pathInfo['extension']) ? strtolower($pathInfo['extension']) : '';
+
+                    // Map extension to full MIME type
+                    $mimeTypes = [
+                        'jpg' => 'image/jpeg',
+                        'jpeg' => 'image/jpeg',
+                        'png' => 'image/png',
+                        'gif' => 'image/gif',
+                    ];
+
+                    if (!isset($mimeTypes[$extension])) {
+                        $logData = ['message' => 'image mime type does not exists', 'id' => $this->id];
+                        $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
+                        return [
+                            'profileImage' => null,
+                            'profileImageExtension' => null,
+                        ];
+                    }
+
+                    $mimeType = $mimeTypes[$extension];
+                    $base64String = base64_encode($fileContent);
+                    $profileImage = 'data:' . $mimeType . ';base64,' . $base64String;
+                    $profileImageExtension = '.' . $extension;
+                }
+            }
+        } catch (\Exception $e) {
+            $logData = ['message' => 'Failed to get image data'. $e->getMessage(), 'id' => $this->id];
+            return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
+        }
+
+        return [
+            'profileImage' => $profileImage,
+            'profileImageExtension' => $profileImageExtension,
+        ];
+    }
+}

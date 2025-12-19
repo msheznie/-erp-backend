@@ -1,0 +1,388 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\CustomerReceivePayment;
+use InfyOm\Generator\Common\BaseRepository;
+use App\helper\StatusService;
+
+/**
+ * Class CustomerReceivePaymentRepository
+ * @package App\Repositories
+ * @version August 24, 2018, 11:58 am UTC
+ *
+ * @method CustomerReceivePayment findWithoutFail($id, $columns = ['*'])
+ * @method CustomerReceivePayment find($id, $columns = ['*'])
+ * @method CustomerReceivePayment first($columns = ['*'])
+*/
+class CustomerReceivePaymentRepository extends BaseRepository
+{
+    /**
+     * @var array
+     */
+    protected $fieldSearchable = [
+        'companySystemID',
+        'companyID',
+        'documentSystemID',
+        'documentID',
+        'serialNo',
+        'companyFinanceYearID',
+        'FYBiggin',
+        'FYPeriodDateFrom',
+        'FYEnd',
+        'FYPeriodDateTo',
+        'PayMasterAutoId',
+        'intercompanyPaymentID',
+        'intercompanyPaymentCode',
+        'custPaymentReceiveCode',
+        'custPaymentReceiveDate',
+        'narration',
+        'customerID',
+        'customerGLCodeSystemID',
+        'customerGLCode',
+        'custTransactionCurrencyID',
+        'custTransactionCurrencyER',
+        'bankID',
+        'bankAccount',
+        'bankCurrency',
+        'bankCurrencyER',
+        'payeeYN',
+        'PayeeSelectEmp',
+        'PayeeEmpID',
+        'PayeeName',
+        'PayeeCurrency',
+        'custChequeNo',
+        'custChequeDate',
+        'custChequeBank',
+        'receivedAmount',
+        'localCurrencyID',
+        'localCurrencyER',
+        'localAmount',
+        'companyRptCurrencyID',
+        'companyRptCurrencyER',
+        'companyRptAmount',
+        'bankAmount',
+        'confirmedYN',
+        'confirmedByEmpSystemID',
+        'confirmedByEmpID',
+        'confirmedByName',
+        'confirmedDate',
+        'approved',
+        'approvedDate',
+        'postedDate',
+        'trsCollectedYN',
+        'trsCollectedByEmpID',
+        'trsCollectedByEmpName',
+        'trsCollectedDate',
+        'trsClearedYN',
+        'trsClearedDate',
+        'trsClearedByEmpID',
+        'trsClearedByEmpName',
+        'trsClearedAmount',
+        'bankClearedYN',
+        'bankClearedAmount',
+        'bankReconciliationDate',
+        'bankClearedDate',
+        'bankClearedByEmpID',
+        'bankClearedByEmpName',
+        'documentType',
+        'matchInvoice',
+        'matchingConfirmedYN',
+        'matchingConfirmedByEmpID',
+        'matchingConfirmedByName',
+        'matchingConfirmedDate',
+        'RollLevForApp_curr',
+        'expenseClaimOrPettyCash',
+        'createdUserGroup',
+        'createdUserID',
+        'createdPcID',
+        'modifiedUser',
+        'modifiedPc',
+        'createdDateTime',
+        'timestamp',
+        'isFromApi'
+    ];
+
+    /**
+     * Configure the Model
+     **/
+    public function model()
+    {
+        return CustomerReceivePayment::class;
+    }
+
+    public function customerReceiveListQuery($request, $input, $search = null)
+    {
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
+        $employeeID = $request['employeeID'];
+        $employeeID = (array)$employeeID;
+        $employeeID = collect($employeeID)->pluck('id');
+
+        $master = CustomerReceivePayment::where('erp_customerreceivepayment.companySystemID', $input['companyId'])
+            ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
+            ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
+            ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('employees AS payee', 'erp_customerreceivepayment.PayeeEmpID', '=', 'payee.employeeSystemID')
+            ->leftjoin('erp_projectmaster', 'erp_customerreceivepayment.projectID', '=', 'erp_projectmaster.id')
+            ->leftJoin('document_system_mapping', function ($join) {
+                $join->on('erp_customerreceivepayment.custReceivePaymentAutoID', '=', 'document_system_mapping.documentId')
+                    ->where('document_system_mapping.documentSystemId', '=', 21);
+            })
+            ->leftjoin('third_party_systems', 'document_system_mapping.thirdPartySystemId', '=', 'third_party_systems.id')
+            ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
+            ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
+            ->leftjoin('paymentType_languages', function ($join) {
+                $join->on('paymentType_languages.paymentTypeId', '=', 'payment_type.id')
+                    ->where('paymentType_languages.languageCode', '=', 'ar');
+            })
+            ->leftJoin('erp_bankledger', function ($join) {
+                $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
+                $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
+                $join->on('erp_bankledger.documentSystemID', '=', 'erp_customerreceivepayment.documentSystemID');
+            })->distinct()
+            ->where('erp_customerreceivepayment.documentSystemID', $input['documentId']);
+
+        if (array_key_exists('confirmedYN', $input)) {
+                if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
+                    $master->where('erp_customerreceivepayment.confirmedYN', $input['confirmedYN']);
+                }
+            }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $master->whereIn('erp_customerreceivepayment.createdUserSystemID', $createdBy);
+            }
+
+        }
+        if (array_key_exists('approved', $input)) {
+            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
+                $master->where('erp_customerreceivepayment.approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $master->where('erp_customerreceivepayment.cancelYN', $input['cancelYN']);
+            }
+        }
+
+        if (array_key_exists('month', $input)) {
+            if ($input['month'] && !is_null($input['month'])) {
+                $master->whereMonth('custPaymentReceiveDate', '=', $input['month']);
+            }
+        }
+
+        if (array_key_exists('year', $input)) {
+            if ($input['year'] && !is_null($input['year'])) {
+                $master->whereYear('custPaymentReceiveDate', '=', $input['year']);
+            }
+        }
+        if (array_key_exists('documentType', $input)) {
+            if ($input['documentType'] && !is_null($input['documentType'])) {
+                $master->where('documentType', '=', $input['documentType']);
+            }
+        }
+        if (array_key_exists('payeeTypeID', $input) && array_key_exists('documentType', $input)) {
+            if ($input['payeeTypeID'] && !is_null($input['payeeTypeID']) && $input['documentType'] && !is_null($input['documentType'])) {
+                if($input['documentType'] == 14){
+                    if($input['payeeTypeID'] == 1){
+                        $master->where('erp_customerreceivepayment.customerID', '!=',null)->where('erp_customerreceivepayment.customerID', '!=',0);
+                    }
+                    if($input['payeeTypeID'] == 2){
+                        $master->where('erp_customerreceivepayment.PayeeEmpID', '>', 0);
+                    }
+                    if($input['payeeTypeID'] == 3){
+                        $master->where('erp_customerreceivepayment.PayeeName', '!=',null);
+                    }
+                }
+
+            }
+        }
+        if (array_key_exists('trsClearedYN', $input)) {
+            $trsClearedYN = isset($input['trsClearedYN']) && $input['trsClearedYN'] !== ''
+                ? (int)$input['trsClearedYN']
+                : null;
+
+            if (!is_null($trsClearedYN)) {
+                if ($trsClearedYN === 0) {
+                    // For NO: include both 0 and NULL
+                    $master->where(function($q) {
+                        $q->where('erp_bankledger.trsClearedYN', 0)
+                        ->orWhereNull('erp_bankledger.trsClearedYN');
+                    });
+                } else {
+                    $master->where('erp_bankledger.trsClearedYN', $trsClearedYN);
+                }
+            }
+        }
+        if (array_key_exists('paymentType', $input)) {
+            if ($input['paymentType'] && !is_null($input['paymentType'])) {
+                $master->where('payment_type.id', '=', $input['paymentType']);
+            }
+        }
+        if (array_key_exists('projectID', $input)) {
+            if ($input['projectID'] && !is_null($input['projectID'])) {
+                $master->whereIn('projectID', $projectID);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID']  && count($customerID) > 0) {
+                $master->whereIn('customerID', $customerID);
+            }
+        }
+
+        if (array_key_exists('employeeID', $input)) {
+            if ($input['employeeID'] && count($employeeID) > 0 && count($customerID) == 0) {
+                $master->whereIn('PayeeEmpID', $employeeID);
+            }
+            if(isset($employeeID[0])) {
+                if ($employeeID && count($employeeID) > 0 && count($customerID) > 0 && $employeeID[0] != 0) {
+                    $master->orWhereIn('PayeeEmpID', $employeeID);
+                }
+            }
+        }
+
+        $master = $master->select([
+            'custPaymentReceiveCode','erp_customerreceivepayment.postedDate',
+            'transCurr.CurrencyCode as transCurrencyCode',
+            'bankCurr.CurrencyCode as bankCurrencyCode',
+            'documentType',
+            'erp_customerreceivepayment.approvedDate',
+            'erp_customerreceivepayment.confirmedDate',
+            'erp_customerreceivepayment.createdDateTime',
+            'custPaymentReceiveDate',
+            'erp_customerreceivepayment.narration',
+            'erp_customerreceivepayment.PayeeEmpID',
+            'erp_customerreceivepayment.customerID',
+            'employees.empName',
+            'transCurr.DecimalPlaces as transDecimal',
+            'bankCurr.DecimalPlaces as bankDecimal',
+            'erp_customerreceivepayment.refferedBackYN',
+            'erp_customerreceivepayment.confirmedYN',
+            'erp_customerreceivepayment.approved',
+            'erp_customerreceivepayment.cancelYN',
+            'custReceivePaymentAutoID',
+            'erp_customerreceivepayment.documentSystemID',
+            'customermaster.CutomerCode',
+            'customermaster.CustomerName',
+            'receivedAmount as receivedAmount',
+            'bankAmount as bankAmount',
+            'erp_bankledger.trsClearedYN as trsClearedYN',
+            'payment_type.description as paymentType',
+            'paymentType_languages.description as paymentTypeAr',
+            'projectID',
+            'erp_projectmaster.description as project_description',
+            'payee.empID',
+            'payee.empName as employeeName',
+            'erp_customerreceivepayment.PayeeName',
+            'erp_customerreceivepayment.payeeTypeID',
+            'document_system_mapping.id as document_system_mapping',
+            'third_party_systems.description as descriptionThirdParty'
+        ]);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $master = $master->where(function ($query) use ($search, $search_without_comma) {
+                $query->Where('custPaymentReceiveCode', 'LIKE', "%{$search}%")
+                    ->orwhere('employees.empName', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
+                    ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                    ->orwhere('erp_customerreceivepayment.PayeeName', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%")
+                    ->orWhere('payment_type.description', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_projectmaster.description', 'LIKE', "%{$search}%")
+                    ->orWhere('erp_customerreceivepayment.receivedAmount', 'LIKE', "%{$search_without_comma}%")
+                    ->orWhere('erp_customerreceivepayment.bankAmount', 'LIKE', "%{$search_without_comma}%");
+            });
+        }
+
+        return $master;
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                if($val->documentType == 13){
+                    $receiptType = trans('custom.customer_invoice_receipt');
+                }
+                if($val->documentType == 14){
+                    $receiptType = trans('custom.direct_receipt');
+                }
+                if($val->documentType == 15){
+                    $receiptType = trans('custom.advance_receipt');
+                }
+
+                $payeeType = '';
+                if($val->payeeTypeID ==1){
+                    $payeeType = trans('custom.customer');
+                }
+                if($val->payeeTypeID == 2){
+                    $payeeType = trans('custom.employee');
+                }
+                if($val->payeeTypeID == 3){
+                    $payeeType = trans('custom.other');
+                }
+                
+                if(isset($val->transDecimal) && $val->transDecimal != null){
+                    $transDecimal = $val->transDecimal;
+                } else {
+                    $transDecimal = 0;
+                }
+
+                if(isset($val->bankDecimal) && $val->bankDecimal != null){
+                    $bankDecimal = $val->bankDecimal;
+                } else {
+                    $bankDecimal = 0;
+                }
+                $data[$x][trans('custom.rv_brv_code')] = $val->custPaymentReceiveCode;
+                $data[$x][trans('custom.rv_receipt_type')] = $receiptType;
+                $data[$x][trans('custom.customer')] = $val->CutomerCode;
+                $data[$x][trans('custom.customer_name')] = $val->CustomerName;
+                $data[$x][trans('custom.bank')] = $val->bank? $val->bank->bankName : '';
+                $data[$x][trans('custom.account_no')] = $val->bank? $val->bank->AccountNo : '';
+                $data[$x][trans('custom.payee_type')] = $payeeType? $payeeType : '';
+                $data[$x][trans('custom.other')] = $val->PayeeName? $val->PayeeName : '';
+                $data[$x][trans('custom.project')] = $val->project? $val->project->description : '';
+                $data[$x][trans('custom.rv_brv_date')] = \Helper::dateFormat($val->custPaymentReceiveDate);
+                $data[$x][trans('custom.narration')] = $val->narration;
+                $data[$x][trans('custom.created_by')] = $val->empName;
+                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.rv_confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.rv_approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.transaction_currency')] = $val->transCurrencyCode;
+                $data[$x][trans('custom.transaction_amount')] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
+                $data[$x][trans('custom.bank_currency')] = $val->bankCurrencyCode;
+                $data[$x][trans('custom.rv_bank_amount')] = $val->bankAmount? number_format(abs($val->bankAmount), $bankDecimal, ".", "") : '';
+
+				$data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localCurrency? $val->localCurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.local_amount')] = $val->localCurrency? number_format($val->localAmount,  $val->localCurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptCurrency? $val->rptCurrency->CurrencyCode : '') : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptCurrency? number_format($val->companyRptAmount,  $val->rptCurrency->DecimalPlaces, ".", "") : '';
+
+                $data[$x][trans('custom.rv_treasury_cleared')] = $val->trsClearedYN == -1? trans('custom.yes') : trans('custom.no');
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
+    }
+}

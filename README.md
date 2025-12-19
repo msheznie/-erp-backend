@@ -1,93 +1,145 @@
-# erp-backend
+# ERP Backend Development Setup
 
+[![Laravel](https://img.shields.io/badge/Laravel-5.5-orange.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-%5E7.2-blue.svg)](https://php.net)
 
+## Requirements
 
-## Getting started
+- PHP ^7.2
+- PHP extensions: pdo, openssl, tokenizer, xml, mbstring, curl, ldap, intl, pdo_mysql, zip, gd, ctype, date, dom, exif, ftp, gettext, hash, libxml, pcre
+- Composer - ^1.10.1
+- Node - ^14
+- MySQL - 8.0.22
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Server Configuration (PHP):
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+Ensure the following PHP configurations in your php.ini file:
 
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.osos.om/php/applications/erp/erp-backend.git
-git branch -M main
-git push -uf origin main
-```
-
-## Integrate with your tools
-
-- [ ] [Set up project integrations](https://gitlab.osos.om/php/applications/erp/erp-backend/-/settings/integrations)
-
-## Collaborate with your team
-
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
-
-## Test and Deploy
-
-Use the built-in continuous integration in GitLab.
-
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+- memory_limit: 128M.
+- max_execution_time: 30
+- max_file_uploads: 20
+- post_max_size: 30M
+- upload_max_filesize: 30M
 
 ## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
+1. Clone the repository: `git clone git@github.com:pbsgears/Gears_BackEnd.git`
+2. Navigate to the project directory: `cd Gears_BackEnd`
+3. Install PHP dependencies: `composer install`
+4. Copy the example environment file: `cp .env.example .env`
+5. Generate an application key: `php artisan key:generate`
+6. Generate an passport keys: `php artisan passport:keys`
+7. Configure your database in the `.env` file
+8. Run the development server: `php artisan serve`
+9. Visit `http://localhost:8000` in your browser
+
+## Application Configuration:
+
+Env File Configuration:
+Update the following configurations in your .env file:
+
+- Database configuration
+- Mail configuration
+- Storage configuration
+   
 ## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+This project serves as the backend for an ERP application and integrates with various third-party applications through its APIs. To get started, follow the installation steps mentioned above.
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Running the Application
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+To run the application, use the default Laravel Artisan serve command:
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+```bash
+php artisan serve
+```
+By default, this will host the application at http://localhost:8000. If you need to change the port, make sure to update it not only in the Artisan serve command but also in the frontend of the application. The frontend uses a proxy to connect to the backend, and the port configuration must be consistent.
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
+### Running through docker-composer
 
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+Pull the frontend and backend into same directory, and create a docker-compose.yml in the root directory with following content
 
-## License
-For open source projects, say how it is licensed.
+```
+version: "3.5"
+services:
+  backend:
+    image: ososerp/ubuntu-php-7.2:latest
+    container_name: erp-backend
+    ports:
+      - 8000:8080
+    volumes:
+      - ./Gears_BackEnd:/var/www/html:delegated
+    working_dir: /var/www/html
+    networks:
+      - gears
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+  frontend:
+    image: node:10.16.3-alpine
+    container_name: erp-frontend
+    working_dir: /app
+    ports:
+      - 4200:4200
+    volumes:
+      - ./Gears_FrontEnd:/app:delegated
+      - /app/node_modules
+    command: sh -c "npm install && npm start -- --host 0.0.0.0 --port 4200 --disable-host-check --proxy-config proxy.conf.docker.json"
+    networks:
+      - gears
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+
+networks:
+  gears:
+    driver: bridge
+    name: gears
+```
+
+then docker-compose up
+
+## Development Instructions
+
+### Creating Models from Database Table
+
+To create a model from a database table, you can use the following Artisan command provided by InfyOm. For example, let's create a model for the `users` table:
+
+```bash
+php artisan infyom:api_scaffold User --fromTable --tableName=users --skip=scaffold_controller,scaffold_requests,scaffold_routes,views
+```
+### Rolling Back Created Models
+If you need to rollback the models created using InfyOm, you can use the following command. For instance, to rollback the User model created earlier, use:
+
+```bash
+php artisan infyom:rollback User api_scaffold
+```
+### Queue Server
+To process jobs in the background, it's recommended to run the queue server. Since most of the jobs in this project use the sync driver, the queue is set to database. Start the queue server with the following command:
+
+```bash
+php artisan queue:work database --tries=3
+```
+Additionally, we have jobs specifically designed to run on a single worker, please run the following command:
+```bash
+php artisan queue:work database --tries=3 --queue=single
+```
+This ensures that the queue server handles jobs with the 'single' queue designation separately,
+
+### Conventional Commits
+To use conventional commits for better versioning and changelog management, install Node.js dependencies by running:
+```bash
+npm install
+```
+After making changes, commit them using:
+```bash
+npm run commit
+```
+Follow the interactive prompts to create a standardized commit message based on the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
+
+### Pull Request Titles
+
+When submitting a pull request, please ensure that the title follows the conventional commit format. The format should be as follows:
+
+```markdown
+feat(inventory|procurement|sourcing management|supplier management|custom report|sales & marketing|POS|treasury management|logistics|configuration|approval setup|navigation|group report|system admin|asset management|general ledger|accounts receivable|accounts payable): A short message [Jira issue no]

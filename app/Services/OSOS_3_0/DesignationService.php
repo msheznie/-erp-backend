@@ -1,0 +1,194 @@
+<?php
+
+namespace App\Services\OSOS_3_0;
+
+use App\Jobs\OSOS_3_0\DesignationWebHook;
+use App\Traits\OSOS_3_0\JobCommonFunctions;
+use GuzzleHttp\Client;
+use Illuminate\Support\Facades\DB;
+
+class DesignationService
+{
+    protected $apiExternalKey;
+    protected $apiExternalUrl;
+    protected $designationData;
+    protected $thirdPartyData;
+    protected $id;
+    protected $postType;
+    protected $url;
+    protected $detailId;
+    protected $apiKey;
+    protected $dataBase;
+
+    protected $companyId;
+    protected $operation;
+    protected $pivotTableId;
+    protected $masterUuId;
+
+    use JobCommonFunctions;
+
+    public function __construct($dataBase, $id, $postType, $thirdPartyData){
+
+        $this->dataBase = $dataBase;
+        $this->postType = trim(strtoupper($postType),'"');
+        $this->id = $id;
+        $this->detailId = $thirdPartyData['id'];
+        $this->apiKey = $thirdPartyData['api_key'];
+        $this->apiExternalKey = $thirdPartyData['api_external_key'];
+        $this->apiExternalUrl = $thirdPartyData['api_external_url'];
+        $this->companyId = $thirdPartyData['company_id'];
+        $this->thirdPartyData = $thirdPartyData;
+
+        $this->getOperation();
+        $this->getPivotTableId(2);
+        $this->getDesignationData();
+        $this->getUrl('designation');
+    }
+
+    function execute(){
+        try {
+            
+            $valResp =$this->validateApiResponse();
+
+            if(!$valResp['status']){
+                $logData = ['message' => $valResp['message'], 'id' => $this->id ];
+                return $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
+            }
+
+            $logData = [
+                'message' => "Designation about to trigger: " . $this->id. ' - '. $this->designationData['Name'], 
+                'id' => $this->id 
+            ];
+            $this->insertToLogTb($logData, 'info', 'Designation', $this->companyId);
+
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+                'auth-key' =>  $this->apiExternalKey,
+                'menu-id' =>  'default'
+            ];
+
+            $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
+                'headers' => $headers,
+                'body' => json_encode($this->designationData)
+            ]);
+
+            $statusCode = $res->getStatusCode();
+            $body = $res->getBody()->getContents();
+
+            if (in_array($statusCode, [200, 201])) {
+
+                $je = json_decode($body, true);
+
+                if(!isset($je['id'])){
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                    return $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
+                }
+
+                $this->insertOrUpdateThirdPartyPivotTable($je['id']);
+                $logData = ['message' => "Api Designation {$this->operation} successfully processed", 'id' => $this->id ];
+                $this->insertToLogTb($logData, 'info', 'Designation', $this->companyId);
+                return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
+
+            }
+
+            if ($statusCode == 400) {
+                $msg = $res->getBody();
+                $logData = ['message' => json_decode($msg), 'id' => $this->id ];
+                $this->capture400Err($logData, 'Designation');
+                return ['status' => false, 'message' => $msg, 'code' => $statusCode];
+            }
+
+        } catch (\Exception $e) {
+
+            $exStatusCode = $e->getCode();
+            if ($exStatusCode == 400) {
+                $msg = $e->getMessage();
+                $logData = ['message' => $msg, 'id' => '' ];
+                return $this->capture400Err($logData, 'Designation');
+            }
+
+            $msg = "Exception \n";
+            $msg .= "operation : ".$this->operation."\n";
+            $msg .= "message : ".$e->getMessage()."\n";
+            $msg .= "file : ".$e->getFile()."\n";
+            $msg .= "line no : ".$e->getLine()."\n";
+
+            $logData = ['message' =>  $msg, 'id' => $this->id ];
+            $this->insertToLogTb($logData, 'error', 'Designation', $this->companyId);
+            
+            return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
+        }
+    }
+
+    function validateApiResponse(){
+
+        if(empty($this->id)){
+            $error = 'Designation id is required';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->pivotTableId)){
+            $error = 'Pivot table reference not found check pivot_tbl_reference.id';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if (empty($this->designationData)) {
+            $error = 'Designation not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if($this->postType != 'POST'){
+            if(empty($this->designationData['Id'])){
+                $error = 'Reference id not found';
+                return ['status' =>false, 'message'=> $error];
+            }
+        }
+
+        if(empty($this->designationData['Code'])){
+            $error = 'Designation code not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        if(empty($this->validateCompanyReference())){
+            $error = 'Company reference not found';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+        return ['status' =>true, 'message'=> 'success'];
+    }
+
+    function getDesignationData()
+    {
+        $data = DB::table('srp_designation')
+            ->selectRaw("DesignationID as id, DesDescription as Name, 
+                job_description as Description,
+                CASE 
+                    WHEN isDeleted = 1 THEN 2 
+                    WHEN is_active = 0 THEN 1 
+                    WHEN is_active = 1 THEN 0
+                END as Status, 
+                isDeleted,
+                Erp_companyID as companyId")
+            ->where('DesignationID', $this->id)
+            ->first();
+
+        if(empty($data)){
+            return;
+        }
+
+        $this->designationData = [
+            "Code" => (string)$data->id,
+            "Name" => $data->Name,
+            "Description" => $data->Description,
+            "Status" => $data->Status,
+            "IsDeleted" => ($data->isDeleted === 1) ,
+            "CompanyId" => $this->getOtherReferenceId($data->companyId, 5)
+        ];
+
+        if($this->postType != "POST"){
+            $this->getReferenceId();
+            $this->designationData['Id'] = $this->masterUuId;
+        }
+    }
+}

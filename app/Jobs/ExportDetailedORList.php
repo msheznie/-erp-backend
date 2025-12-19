@@ -1,0 +1,65 @@
+<?php
+
+namespace App\Jobs;
+
+use App\helper\CommonJobService;
+use App\Services\OpenRequests\ExportORDetailExcel;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\Log;
+
+class ExportDetailedORList implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public $data;
+    public $dispatch_db;
+    public $code;
+    public $userId;
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($dispatch_db, $input,$code, $userId)
+    {
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                self::onConnection('database_main');
+            }else{
+                self::onConnection('database');
+            }
+        }else{
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
+        }
+
+
+        $this->data = $input;
+        $this->dispatch_db = $dispatch_db;
+        $this->code = $code;
+        $this->userId = $userId;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $db = $this->dispatch_db;
+        Log::useFiles(storage_path() . '/logs/po_detail_excel_export.log');
+        CommonJobService::db_switch($db);
+
+        try {
+            (new ExportORDetailExcel($this->data,$this->code, $this->userId))->export();
+        } catch (\Exception $e) {
+            Log::error('Export failed.', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+        }
+    }
+}

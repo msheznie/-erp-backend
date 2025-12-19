@@ -1,0 +1,544 @@
+<?php
+
+namespace App\Services\Inventory;
+
+use App\helper\CommonJobService;
+use App\helper\inventory;
+use App\Models\Company;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\DeliveryOrder;
+use App\Models\ErpProjectMaster;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\ItemAssigned;
+use App\Models\ItemCategoryTypeMaster;
+use App\Models\ItemClientReferenceNumberMaster;
+use App\Models\ItemIssueDetails;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemMaster;
+use App\Models\ItemMasterCategoryType;
+use App\Models\MaterielRequest;
+use App\Models\MiBulkUploadErrorLog;
+use App\Models\PurchaseReturn;
+use App\Models\StockTransfer;
+use App\Models\WarehouseMaster;
+use Illuminate\Support\Facades\Log;
+use PhpParser\Node\Expr\Array_;
+use function foo\func;
+
+class MaterialIssueService
+{
+
+    public static  function validateRequestWithQty($input): array {
+        $materielRequest = MaterielRequest::where('RequestID',$input['reqDocID'])->first();
+        $totalQuantityRequested = $materielRequest->details->sum('quantityRequested');
+        $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$input['reqDocID'])->get();
+        $totalIssuedQty = 0;
+        foreach ($materielIssue as $mi) {
+            $totalIssuedQty += $mi->details->sum('qtyIssued');
+        }
+
+        if($totalQuantityRequested != 0 && ($totalQuantityRequested == $totalIssuedQty)) {
+            return ['message' => trans('custom.items_fully_issued_for_request')];
+        }
+        return [];
+    }
+
+    public static  function getMaterialRequest($subCompanies,$request,$input,$confirmYn):Array {
+
+        $search = $input['search'];
+
+        $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
+            ->where("approved", -1)
+            ->where("cancelledYN", 0)
+            ->where("serviceLineSystemID", $request['serviceLineSystemID']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $materielRequests = $materielRequests->where(function ($query) use ($search) {
+                $query->where('itemIssueCode', 'LIKE', "%{$search}%")
+                    ->orWhere('comment', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
+        $data = array();
+        foreach ($materielRequests as $mr) {
+            $totalQuantityRequested = $mr->details->sum('quantityRequested');
+            $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$mr->RequestID)->get();
+            $totalIssuedQty = 0;
+            foreach ($materielIssue as $mi) {
+                $totalIssuedQty += $mi->details->sum('qtyIssued');
+            }
+
+            if($confirmYn == 1) {
+                array_push($data,$mr->only(['RequestCode','RequestID']));
+            }else {
+                if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
+                    array_push($data,$mr->only(['RequestCode','RequestID']));
+                }
+            }
+
+
+        }
+
+        return $data;
+    }
+
+
+
+    public static function getItemDetailsForMaterialIssue($input):Array {
+        $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $input['reqDocID'])->first();
+        if(isset($materielRequest)) {
+            $issuedQty = 0;
+            $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
+            if($input['issueType'] == 2) {
+                foreach($materielIssue as $mi) {
+                    $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                }
+
+                $input['issuedQty'] = $issuedQty;
+                $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
+                $input['qtyIssued'] = $input['qtyAvailableToIssue'];
+                $input['qtyIssuedDefaultMeasure'] = $input['qtyAvailableToIssue'];
+                return $input;
+
+            }
+        }
+        return $input;
+    }
+
+     public static function getItemDetailsForMaterialIssueUpdate($input):Array {
+        $materielIssueParent = ItemIssueMaster::where('itemIssueAutoID',$input['itemIssueAutoID'])->first();
+        $materielRequest = MaterielRequest::select(['RequestID'])->where('RequestID', $materielIssueParent->reqDocID)->first();
+        if($materielIssueParent->issueType ==   2) {
+            $materielAllIssues = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->get();
+
+            $issuedQty = 0;
+            if(count($materielAllIssues) == 1 ) {
+                $issuedQty = $input['qtyIssued'] ;
+            }else {
+                $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->whereNotIn('itemIssueAutoID',[$input['itemIssueAutoID']])->get();
+                foreach($materielIssue as $mi) {
+                    $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
+                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                }
+            }
+
+            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
+            return $input;
+
+        }else {
+            return $input;
+
+        }
+
+    }
+
+    public static function addMultipleItems($items,$materialIssue) {
+        $materialIssue = ItemIssueMaster::find($materialIssue['itemIssueAutoID']);
+        $materialIssue->upload_job_status = 0;
+        $materialIssue->isBulkItemJobRun = 0;
+        $materialIssue->successDetailsCount = 0;
+        $materialIssue->excelRowCount = 0;
+        $materialIssue->save();
+
+        $validatedItems = self::uploadValidations($items, $materialIssue);
+
+        if (!empty($validatedItems['itemDetails'])) {
+            foreach ($validatedItems['itemDetails'] as $key => $value) {
+                ItemIssueDetails::create($value);
+            }
+        }
+
+        if (!empty($validatedItems['errorLog'])) {
+            self::errorLogUpdate($validatedItems['errorLog'], $materialIssue['itemIssueAutoID']);
+        }
+
+        Log::info(trans('custom.add_material_issue_multiple_items_end'));
+        $materialIssue = ItemIssueMaster::find($materialIssue['itemIssueAutoID']);
+        $materialIssue->upload_job_status = 1;
+        $materialIssue->isBulkItemJobRun = 0;
+        $materialIssue->successDetailsCount = $validatedItems['successCount'];
+        $materialIssue->excelRowCount = $validatedItems['excelRowCount'];
+        $materialIssue->save();
+    }
+
+    public static function uploadValidations($excelRows, $materialIssue) {
+        $rowNumber = 7;
+        $validationErrorMsg = $validatedItemsArray = [];
+        $successCount = $excelRowCount = 0;
+
+        foreach ($excelRows as $rowData) {
+            $isValidationError = 0;
+
+            $isDeleteLineAvailable = false;
+
+            if(
+                (!array_key_exists('item_code',$rowData) || is_null($rowData['item_code']))
+                &&
+                (!array_key_exists('item_description',$rowData) || is_null($rowData['item_description']))
+                &&
+                (!array_key_exists('qty',$rowData) || is_null($rowData['qty']))
+            ) {
+                $isDeleteLineAvailable = true;
+            }
+
+            if (!$isDeleteLineAvailable) {
+                if (isset($rowData['item_code']) && $rowData['item_code'] != null) {
+                    $companyId = $materialIssue['companySystemID'];
+                    $categoryType = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
+                    })->where('isActive',1)
+                        ->where('itemApprovedYN',1)
+                        ->where('primaryCode', trim($rowData['item_code']))
+                        ->first();
+
+                    if ($categoryType) {
+                        $checkTheCategoryType = ItemMasterCategoryType::whereIn('categoryTypeID', ItemCategoryTypeMaster::purchaseItems())
+                            ->where('itemCodeSystem', $categoryType->itemCodeSystem)
+                            ->first();
+
+                        if (!$checkTheCategoryType) {
+                            $validationErrorMsg[] = trans('custom.inventory_items_should_be_purchase_type', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+
+                        $checkItemExist = ItemIssueDetails::where('itemIssueAutoID', $materialIssue['itemIssueAutoID'])->where('itemCodeSystem', $categoryType->itemCodeSystem)->first();
+                        if(!empty($checkItemExist)) {
+                            $validationErrorMsg[] = trans('custom.items_already_added_material_issue', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        } else {
+                            $validatedArraylist = collect($excelRows)->take(($rowNumber) - 7);
+                            if(!$validatedArraylist->isEmpty()) {
+                                $itemCodeSystemArray = collect($validatedArraylist)->pluck('item_code');
+                                if ($itemCodeSystemArray->contains($rowData['item_code'])) {
+                                    $validationErrorMsg[] = trans('custom.items_already_added_excel_sheet', ['row' => $rowNumber]);
+                                    $isValidationError = 1;
+                                }
+                            }
+                        }
+
+                        if(isset($rowData['qty']) && is_numeric($rowData['qty']) && $rowData['qty'] > 0) {
+                            $data = array(
+                                'companySystemID' => $materialIssue['companySystemID'],
+                                'itemCodeSystem' => $categoryType->itemCodeSystem,
+                                'wareHouseId' => $materialIssue['wareHouseFrom']
+                            );
+                            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
+
+                            if (($rowData['qty'] > $itemCurrentCostAndQty['currentStockQty']) || ($rowData['qty'] > $itemCurrentCostAndQty['currentWareHouseStockQty'])) {
+                                $validationErrorMsg[] = trans('custom.stock_qty_zero_cannot_issue_excel', ['row' => $rowNumber]);
+                                $isValidationError = 1;
+                            }
+                        }
+
+                        $checkMaterialIssue = ItemIssueMaster::where('itemIssueAutoID', '!=', $materialIssue['itemIssueAutoID'])
+                            ->where('companySystemID', $materialIssue['companySystemID'])
+                            ->where('wareHouseFrom', $materialIssue['wareHouseFrom'])
+                            ->select([
+                                'erp_itemissuemaster.itemIssueAutoID',
+                                'erp_itemissuemaster.companySystemID',
+                                'erp_itemissuemaster.wareHouseFromCode',
+                                'erp_itemissuemaster.itemIssueCode',
+                                'erp_itemissuemaster.approved'
+                            ])
+                            ->groupBy(
+                                'erp_itemissuemaster.itemIssueAutoID',
+                                'erp_itemissuemaster.companySystemID',
+                                'erp_itemissuemaster.wareHouseFromCode',
+                                'erp_itemissuemaster.itemIssueCode',
+                                'erp_itemissuemaster.approved'
+                            )
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
+                            })
+                            ->where('approved', 0)
+                            ->first();
+
+                        if (!empty($checkMaterialIssue)) {
+                            $validationErrorMsg[] = trans('custom.material_issue_pending_approval', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+
+                        $checkStockTransfer = StockTransfer::where('companySystemID', $materialIssue['companySystemID'])
+                            ->where('locationFrom', $materialIssue['wareHouseFrom'])
+                            ->select([
+                                'erp_stocktransfer.stockTransferAutoID',
+                                'erp_stocktransfer.companySystemID',
+                                'erp_stocktransfer.locationFrom',
+                                'erp_stocktransfer.stockTransferCode',
+                                'erp_stocktransfer.approved'
+                            ])
+                            ->groupBy(
+                                'erp_stocktransfer.stockTransferAutoID',
+                                'erp_stocktransfer.companySystemID',
+                                'erp_stocktransfer.locationFrom',
+                                'erp_stocktransfer.stockTransferCode',
+                                'erp_stocktransfer.approved'
+                            )
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
+                            })
+                            ->where('approved', 0)
+                            ->first();
+
+                        if (!empty($checkStockTransfer)) {
+                            $validationErrorMsg[] = trans('custom.stock_transfer_pending_approval', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+
+                        $checkInvoice = CustomerInvoiceDirect::where('companySystemID', $materialIssue['companySystemID'])
+                            ->select([
+                                'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                                'erp_custinvoicedirect.bookingInvCode',
+                                'erp_custinvoicedirect.wareHouseSystemCode',
+                                'erp_custinvoicedirect.approved'
+                            ])
+                            ->groupBy(
+                                'erp_custinvoicedirect.custInvoiceDirectAutoID',
+                                'erp_custinvoicedirect.companySystemID',
+                                'erp_custinvoicedirect.bookingInvCode',
+                                'erp_custinvoicedirect.wareHouseSystemCode',
+                                'erp_custinvoicedirect.approved'
+                            )
+                            ->whereHas('issue_item_details', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
+                            })
+                            ->where('approved', 0)
+                            ->where('canceledYN', 0)
+                            ->first();
+
+                        if (!empty($checkInvoice)) {
+                            $validationErrorMsg[] = trans('custom.customer_invoice_pending_approval', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+
+                        $checkDeliveryOrder = DeliveryOrder::where('companySystemID', $materialIssue['companySystemID'])
+                            ->select([
+                                'erp_delivery_order.deliveryOrderID',
+                                'erp_delivery_order.deliveryOrderCode'
+                            ])
+                            ->groupBy(
+                                'erp_delivery_order.deliveryOrderID',
+                                'erp_delivery_order.companySystemID'
+                            )
+                            ->whereHas('detail', function ($query) use ($categoryType) {
+                                $query->where('itemCodeSystem', $categoryType->itemCodeSystem);
+                            })
+                            ->where('approvedYN', 0)
+                            ->first();
+
+                        if (!empty($checkDeliveryOrder)) {
+                            $validationErrorMsg[] = trans('custom.delivery_order_pending_approval', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+
+                        $checkPurchaseReturn = PurchaseReturn::where('companySystemID', $materialIssue['companySystemID'])
+                            ->select([
+                                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                                'erp_purchasereturnmaster.companySystemID',
+                                'erp_purchasereturnmaster.purchaseReturnLocation',
+                                'erp_purchasereturnmaster.purchaseReturnCode',
+                            ])
+                            ->groupBy(
+                                'erp_purchasereturnmaster.purhaseReturnAutoID',
+                                'erp_purchasereturnmaster.companySystemID',
+                                'erp_purchasereturnmaster.purchaseReturnLocation'
+                            )
+                            ->whereHas('details', function ($query) use ($categoryType) {
+                                $query->where('itemCode', $categoryType->itemCodeSystem);
+                            })
+                            ->where('approved', 0)
+                            ->first();
+
+                        if (!empty($checkPurchaseReturn)) {
+                            $validationErrorMsg[] = trans('custom.purchase_return_pending_approval', ['row' => $rowNumber]);
+                            $isValidationError = 1;
+                        }
+                    }
+                    else {
+                        $validationErrorMsg[] = trans('custom.item_code_not_match_system', ['row' => $rowNumber]);
+                        $isValidationError = 1;
+                    }
+                }
+                else {
+                    $validationErrorMsg[] = trans('custom.item_code_not_updated', ['row' => $rowNumber]);
+                    $isValidationError = 1;
+                }
+
+                if (!isset($rowData['item_description'])) {
+                    $validationErrorMsg[] = trans('custom.item_description_not_updated', ['row' => $rowNumber]);
+                    $isValidationError = 1;
+                }
+
+                if (isset($rowData['project']) && $rowData['project'] != null) {
+                    $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
+                    if (!$projectId) {
+                        $validationErrorMsg[] = trans('custom.project_code_not_match_system', ['row' => $rowNumber]);
+                        $isValidationError = 1;
+                    }
+                }
+
+                if (!isset($rowData['qty'])) {
+                    $validationErrorMsg[] = trans('custom.item_qty_not_updated', ['row' => $rowNumber]);
+                    $isValidationError = 1;
+                }
+                else if (!is_numeric($rowData['qty'])) {
+                    $validationErrorMsg[] = trans('custom.quantity_should_be_numeric', ['row' => $rowNumber]);
+                    $isValidationError = 1;
+                }
+                else if ($rowData['qty'] < 0) {
+                    $validationErrorMsg[] = trans('custom.quantity_should_be_positive', ['row' => $rowNumber]);
+                    $isValidationError = 1;
+                }
+
+                if($isValidationError == 0) {
+
+                    $item['itemIssueAutoID'] = $materialIssue['itemIssueAutoID'];
+                    $item['itemIssueCode'] = $materialIssue['itemIssueCode'];
+                    $item['p1'] =  $materialIssue['purchaseOrderNo'];
+                    $item['comments'] = $rowData['comment'] ?? null;
+
+                    $company = Company::where('companySystemID', $materialIssue['companySystemID'])->first();
+                    if($company) {
+                        $item['localCurrencyID'] = $company->localCurrencyID;
+                        $item['reportingCurrencyID'] = $company->reportingCurrency;
+                    }
+
+                    $item['clientReferenceNumber'] = NULL;
+                    $item['selectedForBillingOP'] = 0;
+                    $item['selectedForBillingOPtemp'] = 0;
+                    $item['opTicketNo'] = 0;
+
+                    $itemData = ItemAssigned::where('itemPrimaryCode', $rowData['item_code'])
+                        ->where('companySystemID', $materialIssue['companySystemID'])
+                        ->first();
+
+                    if($itemData) {
+                        $item['itemCodeSystem'] = $itemData->itemCodeSystem;
+                        $item['itemPrimaryCode'] = $itemData->itemPrimaryCode;
+                        $item['itemUnitOfMeasure'] = $itemData->itemUnitOfMeasure;
+                        $item['unitOfMeasureIssued'] = $itemData->itemUnitOfMeasure;
+
+                        if ($itemData->maximunQty) {
+                            $item['maxQty'] = $itemData->maximunQty;
+                        } else {
+                            $item['maxQty'] = 0;
+                        }
+
+                        if ($itemData->minimumQty) {
+                            $item['minQty'] = $itemData->minimumQty;
+                        } else {
+                            $item['minQty'] = 0;
+                        }
+
+                        $item['itemFinanceCategoryID'] = $itemData->financeCategoryMaster;
+                        $item['itemFinanceCategorySubID'] = $itemData->financeCategorySub;
+
+                        $item['trackingType'] = $itemData->trackingType ?? null;
+
+                        $item['itemDescription'] = $rowData['item_description'];
+
+                        $item['convertionMeasureVal'] = 1;
+                        $item['qtyRequested'] = 0;
+                        $item['qtyIssued'] = $rowData['qty'];
+                        $item['qtyIssuedDefaultMeasure'] = $rowData['qty'];
+
+                        $mfq_no = $materialIssue['mfqJobID'];
+
+                        $data = array(
+                            'companySystemID' => $materialIssue['companySystemID'],
+                            'itemCodeSystem' => $itemData['itemCodeSystem'] ?: null,
+                            'wareHouseId' => $materialIssue['wareHouseFrom']
+                        );
+
+                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
+
+                        $item['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+                        $item['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                        $item['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                        $item['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+                        $item['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+                        $item['issueCostLocalTotal'] = $item['issueCostLocal'] * $item['qtyIssuedDefaultMeasure'];
+                        $item['issueCostRptTotal'] = $item['issueCostRpt'] * $item['qtyIssuedDefaultMeasure'];
+
+                        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $materialIssue['companySystemID'])
+                            ->where('mainItemCategoryID', $item['itemFinanceCategoryID'])
+                            ->where('itemCategorySubID', $item['itemFinanceCategorySubID'])
+                            ->first();
+
+                        if ($financeItemCategorySubAssigned) {
+                            if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($materialIssue['wareHouseFrom'])) {
+                                $item['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                                $item['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                                $item['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($materialIssue['wareHouseFrom']);
+                                $item['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($materialIssue['wareHouseFrom']);
+                            }
+                            else {
+                                $item['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                                $item['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                                $item['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                                $item['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                            }
+
+                            $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+                        }
+
+                        if ($materialIssue['customerSystemID'] && $materialIssue['companySystemID'] && $materialIssue['contractUIID']) {
+                            $clientReferenceNumber = ItemClientReferenceNumberMaster::where('companySystemID', $materialIssue['companySystemID'])
+                                ->where('itemSystemCode', $item['itemCodeSystem'])
+                                ->where('customerID', $materialIssue['customerSystemID'])
+                                ->where('contractUIID', $materialIssue['contractUIID'])
+                                ->first();
+
+                            if (!empty($clientReferenceNumber)) {
+                                $item['clientReferenceNumber'] = $clientReferenceNumber->clientReferenceNumber;
+                            }
+                        }
+
+                        if (isset($rowData['project']) && $rowData['project'] !== null) {
+                            $projectId = ErpProjectMaster::where('projectCode', trim($rowData['project']))->first();
+                            if($projectId) {
+                                $item['detail_project_id'] = $projectId->id;
+                            }
+                        }
+                        else{
+                            $item['detail_project_id'] = null;
+                        }
+
+                        array_push($validatedItemsArray,$item);
+
+                        $successCount += 1;
+                    }
+                }
+
+                $excelRowCount++;
+            }
+
+            $rowNumber++;
+        }
+
+        $data = [
+            'itemDetails' => $validatedItemsArray,
+            'errorLog' => $validationErrorMsg,
+            'successCount' => $successCount,
+            'excelRowCount' => $excelRowCount
+        ];
+
+        return $data;
+    }
+
+    public static function errorLogUpdate($errorData, $documentSystemId)
+    {
+        foreach ($errorData as $details) {
+            $insertError = [
+                'documentSystemID' => $documentSystemId,
+                'error' => $details
+            ];
+
+            MiBulkUploadErrorLog::create($insertError);
+        }
+    }
+
+}

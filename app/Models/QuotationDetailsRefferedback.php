@@ -1,0 +1,335 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="QuotationDetailsRefferedback",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="quotationDetailRefferedBackID",
+ *          description="quotationDetailRefferedBackID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="quotationDetailsID",
+ *          description="quotationDetailsID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="quotationMasterID",
+ *          description="quotationMasterID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="versionNo",
+ *          description="versionNo",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemAutoID",
+ *          description="itemAutoID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemSystemCode",
+ *          description="itemSystemCode",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemDescription",
+ *          description="itemDescription",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemCategory",
+ *          description="itemCategory",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="defaultUOMID",
+ *          description="defaultUOMID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="itemReferenceNo",
+ *          description="itemReferenceNo",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="defaultUOM",
+ *          description="defaultUOM",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="unitOfMeasureID",
+ *          description="unitOfMeasureID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="unitOfMeasure",
+ *          description="unitOfMeasure",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="conversionRateUOM",
+ *          description="conversionRateUOM",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="requestedQty",
+ *          description="requestedQty",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="invoicedYN",
+ *          description="invoicedYN",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="comment",
+ *          description="comment",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="remarks",
+ *          description="remarks",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="unittransactionAmount",
+ *          description="unittransactionAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountPercentage",
+ *          description="discountPercentage",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountAmount",
+ *          description="discountAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="discountTotal",
+ *          description="discountTotal",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="transactionAmount",
+ *          description="transactionAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyLocalAmount",
+ *          description="companyLocalAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyReportingAmount",
+ *          description="companyReportingAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="customerAmount",
+ *          description="customerAmount",
+ *          type="number",
+ *          format="float"
+ *      ),
+ *      @SWG\Property(
+ *          property="companySystemID",
+ *          description="companySystemID",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="companyID",
+ *          description="companyID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserGroup",
+ *          description="createdUserGroup",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdPCID",
+ *          description="createdPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserID",
+ *          description="createdUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="createdUserName",
+ *          description="createdUserName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedPCID",
+ *          description="modifiedPCID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserID",
+ *          description="modifiedUserID",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="modifiedUserName",
+ *          description="modifiedUserName",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="timesReferred",
+ *          description="timesReferred",
+ *          type="integer",
+ *          format="int32"
+ *      )
+ * )
+ */
+class QuotationDetailsRefferedback extends Model
+{
+
+    public $table = 'erp_quotationdetailsrefferedback';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timestamp';
+
+    protected $primaryKey = 'quotationDetailRefferedBackID';
+
+    public $fillable = [
+        'quotationDetailsID',
+        'quotationMasterID',
+        'versionNo',
+        'itemAutoID',
+        'itemSystemCode',
+        'itemDescription',
+        'itemCategory',
+        'defaultUOMID',
+        'itemReferenceNo',
+        'defaultUOM',
+        'unitOfMeasureID',
+        'unitOfMeasure',
+        'conversionRateUOM',
+        'requestedQty',
+        'invoicedYN',
+        'comment',
+        'remarks',
+        'unittransactionAmount',
+        'discountPercentage',
+        'discountAmount',
+        'discountTotal',
+        'transactionAmount',
+        'companyLocalAmount',
+        'companyReportingAmount',
+        'wacValueLocal',
+        'wacValueReporting',
+        'customerAmount',
+        'companySystemID',
+        'companyID',
+        'createdUserGroup',
+        'createdPCID',
+        'createdUserID',
+        'createdDateTime',
+        'createdUserName',
+        'modifiedPCID',
+        'modifiedUserID',
+        'modifiedDateTime',
+        'modifiedUserName',
+        'timesReferred',
+        'fullyOrdered',
+        'doQuantity',
+        'soQuotationDetailID',
+        'soQuantity',
+        'qtyIssuedDefaultMeasure',
+        'soQuotationMasterID',
+        'timestamp'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'quotationDetailRefferedBackID' => 'integer',
+        'quotationDetailsID' => 'integer',
+        'quotationMasterID' => 'integer',
+        'versionNo' => 'integer',
+        'itemAutoID' => 'integer',
+        'itemSystemCode' => 'string',
+        'itemDescription' => 'string',
+        'itemCategory' => 'string',
+        'defaultUOMID' => 'integer',
+        'itemReferenceNo' => 'string',
+        'defaultUOM' => 'string',
+        'unitOfMeasureID' => 'integer',
+        'unitOfMeasure' => 'string',
+        'conversionRateUOM' => 'float',
+        'requestedQty' => 'float',
+        'invoicedYN' => 'integer',
+        'comment' => 'string',
+        'remarks' => 'string',
+        'unittransactionAmount' => 'float',
+        'discountPercentage' => 'float',
+        'discountAmount' => 'float',
+        'discountTotal' => 'float',
+        'transactionAmount' => 'float',
+        'companyLocalAmount' => 'float',
+        'companyReportingAmount' => 'float',
+        'wacValueLocal' => 'float',
+        'wacValueReporting' => 'float',
+        'customerAmount' => 'float',
+        'companySystemID' => 'integer',
+        'companyID' => 'string',
+        'createdUserGroup' => 'integer',
+        'createdPCID' => 'string',
+        'createdUserID' => 'string',
+        'createdUserName' => 'string',
+        'modifiedPCID' => 'string',
+        'modifiedUserID' => 'string',
+        'modifiedUserName' => 'string',
+        'timesReferred' => 'integer',
+        'fullyOrdered' => 'integer',
+        'doQuantity' => 'float',
+        'soQuotationDetailID' => 'integer', 
+        'soQuantity' => 'float', 
+        'qtyIssuedDefaultMeasure' => 'float', 
+        'soQuotationMasterID' => 'integer', 
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+        
+    ];
+
+    
+}

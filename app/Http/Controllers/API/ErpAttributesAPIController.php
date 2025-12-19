@@ -1,0 +1,557 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateErpAttributesAPIRequest;
+use App\Http\Requests\API\UpdateErpAttributesAPIRequest;
+use App\Models\ErpAttributes;
+use App\Models\ErpAttributeValues;
+use App\Models\FixedAssetMaster;
+use App\Repositories\ErpAttributesRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use App\Models\ErpAttributesDropdown;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Traits\AuditLogsTrait;
+
+/**
+ * Class ErpAttributesController
+ * @package App\Http\Controllers\API
+ */
+
+class ErpAttributesAPIController extends AppBaseController
+{
+    /** @var  ErpAttributesRepository */
+    private $erpAttributesRepository;
+    use AuditLogsTrait;
+    
+    public function __construct(ErpAttributesRepository $erpAttributesRepo)
+    {
+        $this->erpAttributesRepository = $erpAttributesRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/erpAttributes",
+     *      summary="Get a listing of the ErpAttributes.",
+     *      tags={"ErpAttributes"},
+     *      description="Get all ErpAttributes",
+     *      produces={"application/json"},
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @SWG\Items(ref="#/definitions/ErpAttributes")
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->erpAttributesRepository->pushCriteria(new RequestCriteria($request));
+        $this->erpAttributesRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $erpAttributes = $this->erpAttributesRepository->all();
+
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_retrieved_successfully'));
+    }
+
+    /**
+     * @param CreateErpAttributesAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Post(
+     *      path="/erpAttributes",
+     *      summary="Store a newly created ErpAttributes in storage",
+     *      tags={"ErpAttributes"},
+     *      description="Store ErpAttributes",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ErpAttributes that should be stored",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ErpAttributes")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ErpAttributes"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateErpAttributesAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $erpAttributes = $this->erpAttributesRepository->create($input);
+
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_saved_successfully'));
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Get(
+     *      path="/erpAttributes/{id}",
+     *      summary="Display the specified ErpAttributes",
+     *      tags={"ErpAttributes"},
+     *      description="Get ErpAttributes",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ErpAttributes",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ErpAttributes"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ErpAttributes $erpAttributes */
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if (empty($erpAttributes)) {
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
+        }
+
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_retrieved_successfully'));
+    }
+
+    /**
+     * @param int $id
+     * @param UpdateErpAttributesAPIRequest $request
+     * @return Response
+     *
+     * @SWG\Put(
+     *      path="/erpAttributes/{id}",
+     *      summary="Update the specified ErpAttributes in storage",
+     *      tags={"ErpAttributes"},
+     *      description="Update ErpAttributes",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ErpAttributes",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Parameter(
+     *          name="body",
+     *          in="body",
+     *          description="ErpAttributes that should be updated",
+     *          required=false,
+     *          @SWG\Schema(ref="#/definitions/ErpAttributes")
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ErpAttributes"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateErpAttributesAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ErpAttributes $erpAttributes */
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if (empty($erpAttributes)) {
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
+        }
+
+        $erpAttributes = $this->erpAttributesRepository->update($input, $id);
+
+        return $this->sendResponse($erpAttributes->toArray(), trans('custom.erp_attributes_updated_successfully'));
+        
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @SWG\Delete(
+     *      path="/erpAttributes/{id}",
+     *      summary="Remove the specified ErpAttributes from storage",
+     *      tags={"ErpAttributes"},
+     *      description="Delete ErpAttributes",
+     *      produces={"application/json"},
+     *      @SWG\Parameter(
+     *          name="id",
+     *          description="id of ErpAttributes",
+     *          type="integer",
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @SWG\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @SWG\Schema(
+     *              type="object",
+     *              @SWG\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @SWG\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @SWG\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id, Request $request)
+    {
+        $input = $request->all();
+        /** @var ErpAttributes $erpAttributes */
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if (empty($erpAttributes)) {
+            return $this->sendError(trans('custom.erp_attributes_not_found'));
+        }
+
+        $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+            ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+            ->where('erp_attribute_values.attribute_id', $id)
+            ->where('erp_fa_asset_master.confirmedYN', 1)
+            ->where('erp_fa_asset_master.approved', 0)
+            ->count();
+
+        if($attributeActiveValidation > 0){
+            return $this->sendError(trans('custom.there_are_some_pending_assets_awaiting_approval'), 500);
+        }
+
+        if ($erpAttributes->document_id == "SUBCAT") {
+
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id,$uuid, "erp_attributes", $narrationVariables, "D", [], $erpAttributes->toArray(), $erpAttributes->document_master_id, 'financeitemcategorysub');
+        } else {
+            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+            $db = isset($input['db']) ? $input['db'] : '';
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "D", [], $erpAttributes->toArray(), 22, 'erp_fa_asset_master');
+        }
+
+
+
+        $erpAttributes->delete();
+
+        $erpAttributes = ErpAttributes::where('document_master_id',$erpAttributes->document_master_id)->where('id', $id)->withTrashed()->first();
+
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($documentMasterID != null){
+            if ($erpAttributes->deleted_at != null) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $erpAttributes->document_master_id)->update(['is_active' => 0]);
+            }
+        } else {
+            $attributes= ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')->where('erp_attribute_values.attribute_id', $id)->get();
+
+            foreach ($attributes as $attribute){
+                $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                $asset = FixedAssetMaster::find($attribute->document_master_id);
+                if ($asset->confirmedYN == 0){
+                    ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                }
+                if ($asset->confirmedYN == 1 && $asset->approved == 0) {
+                    if ($erpAttributes->deleted_at != null && $asset->createdDateAndTime > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+                if ($asset->approved == -1) {
+                    if ($erpAttributes->deleted_at != null && $asset->approvedDate > $erpAttributes->deleted_at) {
+                        ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                }
+            }
+        }
+
+        return $this->sendResponse([],trans('custom.erp_attributes_deleted_successfully'));
+    }
+
+    public function itemAttributesIsMandotaryUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        $is_mendatory = ($input['is_mendatory']) ? 1 : 0;
+
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+        $previousValue = $erpAttributes->toArray();
+
+        $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)
+        ->update(['is_mendatory' => $is_mendatory]);
+
+        $newValue = ['is_mendatory' => $is_mendatory];
+
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if ($erpAttributes->document_id == "SUBCAT") {
+            $narrationVariables = $erpAttributes->description;
+            $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, $erpAttributes->document_master_id, 'financeitemcategorysub');
+        }
+
+        return $this->sendResponse($attributesIsMandotaryUpdate, trans('custom.erp_attributes_updated_successfully'));
+
+    }
+
+    public function assetCostAttributesUpdate(Request $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('field_type_id'));
+
+        $id = $input['id'];
+
+        $erpAttributes = $this->erpAttributesRepository->findWithoutFail($id);
+
+        if($erpAttributes->is_active != $input['is_active'] && $input['is_active'] == 0){
+            $attributeActiveValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                ->where('erp_attribute_values.attribute_id', $id)
+                ->where('erp_fa_asset_master.confirmedYN', 1)
+                ->where('erp_fa_asset_master.approved', 0)
+                ->count();
+
+            if($attributeActiveValidation > 0){
+                return $this->sendError(trans('custom.there_are_some_pending_assets_awaiting_approval'), 500);
+            }
+        }
+
+        if($erpAttributes->field_type_id != $input['field_type_id']){
+            $attribute = ErpAttributes::find($id);
+            if($attribute->document_master_id == null) {
+                $attributeFieldValidation = ErpAttributeValues::selectRaw('erp_fa_asset_master.faID')
+                    ->join('erp_fa_asset_master', 'erp_attribute_values.document_master_id', '=', 'erp_fa_asset_master.faID')
+                    ->where('erp_attribute_values.attribute_id', $id)
+                    ->where('erp_attribute_values.value', '!=', null)
+                    ->where('erp_fa_asset_master.confirmedYN', 1)
+                    ->count();
+
+                if ($attributeFieldValidation > 0) {
+                    return $this->sendError(trans('custom.selected_attributes_have_already_been_used_for_an_'), 500);
+                }
+            }
+
+            if($erpAttributes->field_type_id == 3){
+                $dropdownValues = ErpAttributesDropdown::where('attributes_id',$erpAttributes->id)->count();
+                 if($dropdownValues > 0){
+                     return $this->sendError(trans('custom.unable_to_update_dropdown_value_is_added_for_the_attribute'), 500);
+                 }
+             }
+        }
+
+        if($erpAttributes->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError(trans('custom.unable_to_update_description_is_empty'), 500);
+            }
+            $attributesValidateDescription = ErpAttributes::where('description', $input['description'])->count();
+            if($attributesValidateDescription > 0){
+                return $this->sendError(trans('custom.unable_to_update_description_already_exist'), 500);
+            }
+             
+        }
+
+        if(isset($input['is_active']) && $input['is_active'] == false)
+        {
+            $inactivatedAt = \Helper::currentDateTime();
+        } else {
+            $inactivatedAt = null;
+        }
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        if(isset($input['field_type']) ){
+            unset($input['field_type']);
+        }
+
+        $updateData = [
+            'description' => $input['description'],
+            'field_type_id' => $input['field_type_id'],
+            'is_mendatory' => $input['is_mendatory'],
+            'is_active' => $input['is_active'],
+            'inactivated_at' => $inactivatedAt
+        ];
+        $attributesUpdate = ErpAttributes::where('id', $id)
+        ->update($updateData);
+
+        $previousValue = $erpAttributes->toArray();
+        $newValue = $input;
+
+        $narrationVariables = $erpAttributes->description;
+        $this->auditLog($db, $id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
+        
+        $documentMasterID = isset($input['document_master_id']) ? $input['document_master_id']: null;
+        $isActive = isset($input['is_active']) ? $input['is_active']: null;
+
+        $erpAttributes = ErpAttributes::where('document_master_id', $documentMasterID)->where('id', $id)->withTrashed()->first();
+        $documentMasterID = isset($erpAttributes->document_master_id) ? $erpAttributes->document_master_id: null;
+
+        if($isActive == 0) {
+            if ($documentMasterID != null) {
+
+                if ($erpAttributes->is_active == 0) {
+                    ErpAttributeValues::where('erp_attribute_values.attribute_id', $id)->where('erp_attribute_values.document_master_id', $documentMasterID)->update(['is_active' => 0]);
+                }
+            } else {
+                $attributes = ErpAttributeValues::selectRaw('erp_attribute_values.attribute_id, erp_attribute_values.document_master_id, erp_attribute_values.id')
+                    ->where('erp_attribute_values.attribute_id', $id)->get();
+                foreach ($attributes as $attribute) {
+                    $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
+                    $asset = FixedAssetMaster::find($attribute->document_master_id);
+
+                    if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                    }
+                    if ($asset->approved == -1) {
+                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                            ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->sendResponse($attributesUpdate, trans('custom.erp_attributes_updated_successfully'));
+
+    }
+
+    public function dropdownValuesUpdate(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+
+        $dropdownValues = ErpAttributesDropdown::where('id',$id)->first();
+
+        ErpAttributeValues::where('attribute_id',$dropdownValues->attributes_id)->where('value', $id)->update(['color' => $input['color']]);
+
+
+        if($dropdownValues->description != $input['description']){
+            if(empty($input['description'])){
+                return $this->sendError(trans('custom.unable_to_update_description_is_empty'), 500);
+            }
+            $dropdownValidateDescription = ErpAttributesDropdown::where('description', $input['description'])->count();
+            if($dropdownValidateDescription > 0){
+                return $this->sendError(trans('custom.unable_to_update_description_already_exist'), 500);
+            }
+             
+        }
+
+        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid'] : 'local';
+        $db = isset($input['db']) ? $input['db'] : '';
+
+        if(isset($input['tenant_uuid']) ){
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db']) ){
+            unset($input['db']);
+        }
+
+        $updateData = [
+            'description' => $input['description'],
+            'color' => $input['color']
+        ];
+        $dropdownValuesUpdate = ErpAttributesDropdown::where('id', $id)
+        ->update($updateData);
+
+        $previousValue = $dropdownValues->toArray();
+        $newValue = $input;
+
+        $narrationVariables = $dropdownValues->description;
+        $this->auditLog($db, $dropdownValues->attributes_id, $uuid, "erp_attributes", $narrationVariables, "U", $newValue, $previousValue, 22, 'erp_fa_asset_master');
+
+        return $this->sendResponse($dropdownValuesUpdate, trans('custom.erp_attributes_updated_successfully'));
+
+    }
+
+    public function itemAttributesDelete(Request $request){
+        $input = $request->all();
+        $id = $input['id'];
+        $attributesIsMandotaryUpdate = ErpAttributes::where('id', $id)->delete();
+
+        return $this->sendResponse($attributesIsMandotaryUpdate, trans('custom.erp_attributes_deleted_successfully'));
+
+    }
+}
