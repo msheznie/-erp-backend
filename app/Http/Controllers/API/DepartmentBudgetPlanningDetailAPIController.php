@@ -404,11 +404,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $selectedGlSections = [];
             $workflowMethod = null;
             
-            if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3) {
+            if ($budgetPlanning) {
                 if ($budgetPlanning->workflow) {
                     $workflowMethod = $budgetPlanning->workflow->method;
                 }
                 $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
+                    ->whereIn('revisionStatus', [1, 2])
                     ->orderBy('created_at', 'desc')
                     ->first();
                 
@@ -420,7 +421,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased) {
                 $isEnable = true;
                 
-                if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3 && !empty($selectedGlSections)) {
+                if ($budgetPlanning  && !empty($selectedGlSections)) {
                     if ($workflowMethod == 1 && !$isGLBased) {
                         $isEnable = in_array($item->id, $selectedGlSections);
                     } else {
@@ -428,6 +429,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     }
                 }
                 
+                if($budgetPlanning->workStatus == 3 ){
+                    $isEnable = false;
+                }
                 $item->isEnable = $isEnable;
                 return $item;
             });
@@ -1222,7 +1226,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
 
-        $query = DepartmentBudgetPlanning::with('department.hod.employee','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        $query = DepartmentBudgetPlanning::with('department.hod.employee','revisions','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
         return \DataTables::of($query)
             ->addColumn('newDate', function ($row) {
                 if ($row->timeExtensionRequests->count() > 0) {

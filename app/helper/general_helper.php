@@ -10340,17 +10340,18 @@ class Helper
         }
 
         // Get base config from config file
-        $baseConfig = config('mpdf', []);
+//        $baseConfig = config('mpdf', []);
 
         // Set default font based on language
-        if ($lang === 'ar') {
-            $baseConfig['default_font'] = 'notosansarabic';
-        } else {
-            $baseConfig['default_font'] = 'poppins';
-        }
+//        if ($lang === 'ar') {
+//            $baseConfig['default_font'] = 'notosansarabic';
+//        } else {
+//            $baseConfig['default_font'] = 'poppins';
+//        }
 
         // Merge with additional config (additional config takes precedence)
-        return array_merge($baseConfig, $additionalConfig);
+//        return array_merge($baseConfig, $additionalConfig);
+        return $additionalConfig;
     }
 
     public static function getExcelFontFamily($lang = null)

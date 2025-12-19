@@ -382,8 +382,9 @@ class RevisionAPIController extends AppBaseController
 
         // Validate that newSubmissionDate is greater than or equal to submittedDate
         if ($budgetPlanning && $newSubmissionDateCarbon) {
-            if ($newSubmissionDateCarbon->lt($budgetPlanning->submissionDate)) {
-                return $this->sendError('New Submission Date must be greater than or equal to original submission date');
+            $currentDate = Carbon::now()->startOfDay();
+            if ($newSubmissionDateCarbon->lt($currentDate)) {
+                return $this->sendError('New Submission Date must be greater than or equal to current date');
             }
         }
 
@@ -837,7 +838,7 @@ class RevisionAPIController extends AppBaseController
                 return \DataTables::of($query)
                     ->addIndexColumn()
                     ->addColumn('gl_code_description', function($row) {
-                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                        return $row->segmentDescription . ' - ' . $row->AccountCode . ' - ' . $row->AccountDescription;
                     })
                     ->filterColumn('gl_code_description', function($query, $keyword) {
                         $query->where(function($q) use ($keyword) {

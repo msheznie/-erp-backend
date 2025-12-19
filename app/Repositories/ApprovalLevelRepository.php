@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ApprovalLevel;
 use App\Models\Company;
+use App\Models\WorkflowConfiguration;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -122,6 +123,9 @@ class ApprovalLevelRepository extends BaseRepository
                         $query->orderBy('approvalLevelID', $input['order'][0]['dir']);
                     }
                 }
+            })
+            ->addColumn('workflowDescription', function ($approvalLevel) {
+                return ($approvalLevel->workflow) ? WorkflowConfiguration::find($approvalLevel->workflow)->workflowName : null;
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
