@@ -7254,13 +7254,11 @@ class SRMService
             'body' => "Purchase Order {$poNumber} has been acknowledged by {$supplierName}",
             'url' => ""
         ];
-    
+
         WebPushNotificationService::sendNotification(
             $notificationData,
-            4,
-            [$poCreator->employeeSystemID],
-            '',
-            'user'
+            3,
+            [$poCreator->employeeSystemID]
         );
     }
 }   
