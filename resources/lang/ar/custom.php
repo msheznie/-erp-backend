@@ -9611,5 +9611,23 @@ return
     'no_dates_found_for_shift_schedule_pulling' => 'لم يتم العثور على تواريخ للمتابعة في سحب حضور الوردية غير المؤكد',
     'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
-    'data_pulled_successfully' => 'تم سحب البيانات بنجاح'
+    'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
+
+    // Procurement Lifecycle Report
+    'pr_value' => 'قيمة طلب الشراء',
+    'pr_approvals' => 'موافقات طلب الشراء',
+    'po_approvals' => 'موافقات أمر الشراء',
+    'tender_code' => 'رمز المناقصة/طلب العروض',
+    'tender_approvals' => 'موافقات المناقصة/طلب العروض',
+    'bid_submission_date' => 'تاريخ تقديم العطاءات',
+    'technical_evaluation_date' => 'تاريخ التقييم الفني',
+    'commercial_evaluation_date' => 'تاريخ التقييم التجاري',
+    'published_date' => 'تاريخ النشر',
+    'contract_code' => 'رمز العقد',
+    'contract_variation' => 'تعديل العقد',
+    'contract_variation_types' => 'أنواع تعديل العقد',
+    'commencement_date' => 'تاريخ البدء',
+    'agreement_signed_date' => 'تاريخ توقيع الاتفاقية',
+    'contract_end_date' => 'تاريخ انتهاء العقد',
+    'procurement_lifecycle_report' => 'تقرير دورة حياة المشتريات',
 ];

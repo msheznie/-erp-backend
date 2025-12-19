@@ -351,4 +351,12 @@ class GRVDetails extends Model
     {
         return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
     }
+    public static function getDirectPOGrv($po_detail_id){
+        return self::selectRaw('SUM(noQty - COALESCE(returnQty, 0)) as totalReceivedQty')
+            ->where('purchaseOrderDetailsID', $po_detail_id)
+            ->whereHas('grv_master', function($query) {
+                $query->where('grvCancelledYN', '!=', -1);
+            })
+            ->first();
+    }
 }
