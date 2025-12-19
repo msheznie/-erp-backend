@@ -1,0 +1,125 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+/**
+ * @SWG\Definition(
+ *      definition="EvaluationCriteriaScoreConfig",
+ *      required={""},
+ *      @SWG\Property(
+ *          property="id",
+ *          description="id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="criteria_detail_id",
+ *          description="criteria_detail_id",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="label",
+ *          description="label",
+ *          type="string"
+ *      ),
+ *      @SWG\Property(
+ *          property="score",
+ *          description="score",
+ *          type="number",
+ *          format="number"
+ *      ),
+ *      @SWG\Property(
+ *          property="created_at",
+ *          description="created_at",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="created_by",
+ *          description="created_by",
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @SWG\Property(
+ *          property="updated_at",
+ *          description="updated_at",
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @SWG\Property(
+ *          property="updated_by",
+ *          description="updated_by",
+ *          type="integer",
+ *          format="int32"
+ *      )
+ * )
+ */
+class EvaluationCriteriaScoreConfig extends Model
+{
+
+    public $table = 'srm_evaluation_criteria_score_config';
+
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
+
+
+
+
+    public $fillable = [
+        'criteria_detail_id',
+        'label',
+        'fromTender',
+        'score',
+        'created_by',
+        'updated_by'
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'id' => 'integer',
+        'criteria_detail_id' => 'integer',
+        'label' => 'string',
+        'score' => 'float',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
+        'fromTender'=> 'integer'
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [
+
+    ];
+
+    public static function getEvalScore($id, $fromTender)
+    {
+        return self::select('id','criteria_detail_id','label','score')
+            ->where('fromTender', 0)
+            ->where('criteria_detail_id', $id)
+            ->get();
+    }
+
+    public static function getEvalScoreForAmend($criteriaDetailID)
+    {
+        return self::select('id', 'criteria_detail_id', 'fromTender', 'label', 'score', 'created_at', 'created_by',
+        'updated_at', 'updated_by')->where('criteria_detail_id', $criteriaDetailID)->get();
+    }
+    public static function getCriteriaBaseScore($criteriaID){
+        return self::where('criteria_detail_id', $criteriaID)->first();
+    }
+    public static function getAllEvaluationCriteriaScore($fromTender, $criteria_detail_id){
+        return self::where('fromTender', $fromTender)
+            ->where('criteria_detail_id', $criteria_detail_id)
+            ->get();
+    }
+}

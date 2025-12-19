@@ -1,0 +1,507 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\helper\Helper;
+use App\Http\Requests\API\CreateCompanyDepartmentEmployeeAPIRequest;
+use App\Http\Requests\API\UpdateCompanyDepartmentEmployeeAPIRequest;
+use App\Models\CompanyDepartmentEmployee;
+use App\Models\DepBudgetPlDetColumn;
+use App\Models\DepBudgetPlDetEmpColumn;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
+use App\Models\DepartmentBudgetPlanning;
+use App\Models\Employee;
+use App\Models\CompanyDepartment;
+use App\Models\BudgetControl;
+use App\Models\DepartmentUserBudgetControl;
+use App\Models\User;
+use App\Repositories\CompanyDepartmentEmployeeRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Traits\AuditLogsTrait;
+use Yajra\DataTables\DataTables;
+use Auth;
+use DB;
+
+/**
+ * Class CompanyDepartmentEmployeeController
+ * @package App\Http\Controllers\API
+ */
+
+class CompanyDepartmentEmployeeAPIController extends AppBaseController
+{
+    use AuditLogsTrait;
+
+    /** @var  CompanyDepartmentEmployeeRepository */
+    private $companyDepartmentEmployeeRepository;
+
+    public function __construct(CompanyDepartmentEmployeeRepository $companyDepartmentEmployeeRepo)
+    {
+        $this->companyDepartmentEmployeeRepository = $companyDepartmentEmployeeRepo;
+    }
+
+    /**
+     * Get all department employees with DataTables
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getAllDepartmentEmployees(Request $request)
+    {
+        $departmentSystemID = $request->get('departmentSystemID');
+        $draw = $request->get('draw'); // Check if DataTables request
+        
+        if (!$departmentSystemID) {
+            return $this->sendError(trans('custom.department_id_is_required'));
+        }
+
+        $query = CompanyDepartmentEmployee::where('departmentSystemID', $departmentSystemID)
+                 ->with(['employee', 'department'])
+                 ->orderBy('departmentEmployeeSystemID', 'asc')
+                 ->get();
+
+        // If draw parameter exists, return DataTables format
+        if ($draw !== null) {
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('employeeCode', function ($departmentEmployee) {
+                    return $departmentEmployee->employee ? $departmentEmployee->employee->empID : '';
+                })
+                ->addColumn('employeeName', function ($departmentEmployee) {
+                    return $departmentEmployee->employee ? $departmentEmployee->employee->empName : '';
+                })
+                ->addColumn('hodStatus', function ($departmentEmployee) {
+                    return $departmentEmployee->isHOD == 1 ? 'Yes' : 'No';
+                })
+                ->addColumn('activeStatus', function ($departmentEmployee) {
+                    return $departmentEmployee->isActive == 1 ? 'Active' : 'Inactive';
+                })
+                ->make(true);
+        }
+
+
+        $employeeId = Auth::user()->employee_id;
+        // Get all employees from finance department
+        $financeDepartmentEmployees = CompanyDepartment::with('employees.employee')->where('isFinance', 1)->where('companySystemID', 1)->first();
+        
+        // Format finance department employees
+        $financeEmployees = collect();
+        if ($financeDepartmentEmployees && $financeDepartmentEmployees->employees) {
+            $financeEmployees = $financeDepartmentEmployees->employees->map(function ($departmentEmployee) {
+                return [
+                    'id' => $departmentEmployee->employee ? $departmentEmployee->employee->employeeSystemID : null,
+                    'name' => $departmentEmployee->employee ? $departmentEmployee->employee->empFullName : '',
+                    'employee_code' => $departmentEmployee->employee ? $departmentEmployee->employee->empID : '',
+                    'email' => $departmentEmployee->employee ? $departmentEmployee->employee->empEmail : '',
+                    'department_name' => $departmentEmployee->department ? $departmentEmployee->department->departmentName : '',
+                    'department_id' => $departmentEmployee->departmentSystemID,
+                    'is_hod' => $departmentEmployee->isHOD == 1,
+                    'is_active' => $departmentEmployee->isActive == 1
+                ];
+            })->filter(function ($employee) {
+                // Only return active employees
+                return $employee['is_active'] && $employee['id'] !== null;
+            });
+        }
+       
+        // Return simple array format for @mention functionality
+        $formattedEmployees = $query->map(function ($departmentEmployee) {
+            return [
+                'id' => $departmentEmployee->employee ? $departmentEmployee->employee->employeeSystemID : null,
+                'name' => $departmentEmployee->employee ? $departmentEmployee->employee->empFullName : '',
+                'employee_code' => $departmentEmployee->employee ? $departmentEmployee->employee->empID : '',
+                'email' => $departmentEmployee->employee ? $departmentEmployee->employee->empEmail : '',
+                'department_name' => $departmentEmployee->department ? $departmentEmployee->department->departmentName : '',
+                'department_id' => $departmentEmployee->departmentSystemID,
+                'is_hod' => $departmentEmployee->isHOD == 1,
+                'is_active' => $departmentEmployee->isActive == 1
+            ];
+        })->filter(function ($employee) {
+            // Only return active employees
+            return $employee['is_active'] && $employee['id'] !== null;
+        });
+
+        // Merge department employees with finance employees
+        $allEmployees = $formattedEmployees->merge($financeEmployees)->unique('id');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Department employees retrieved successfully',
+            'data' => $allEmployees
+        ]);
+    }
+
+    /**
+     * Get form data for department employees
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getDepartmentEmployeeFormData(Request $request)
+    {
+        try {
+            // Get all active employees (not discharged)
+            $employees = DB::table('employees')
+                ->where('isActive', 1)
+                ->where('isDischarge', 0)
+                ->select('employeeSystemID as value', 
+                        DB::raw("CONCAT(employeeCode, ' | ', employeeName) as label"))
+                ->orderBy('employeeName')
+                ->get()
+                ->toArray();
+
+            return $this->sendResponse([
+                'employees' => $employees,
+                'yesNoSelection' => [
+                    ['value' => 0, 'label' => 'No'],
+                    ['value' => 1, 'label' => 'Yes']
+                ]
+            ], 'Form data retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_retrieving_form_data'));
+        }
+    }
+
+    /**
+     * Store a newly created department employee
+     *
+     * @param CreateCompanyDepartmentEmployeeAPIRequest $request
+     * @return Response
+     */
+    public function store(CreateCompanyDepartmentEmployeeAPIRequest $request)
+    {
+        $input = $request->all();
+
+        try {
+            DB::beginTransaction();
+
+            // Handle bulk employee assignment
+            if (isset($input['employees']) && is_array($input['employees'])) {
+                $results = [];
+                $errorMessages = [];
+
+                foreach ($input['employees'] as $employeeData) {
+                    $processedData = $this->processUpdateData($employeeData);
+
+                    // Validate HOD constraints
+                    if ($processedData['isHOD'] == 1) {
+                        // Check if employee is already HOD in another department
+                        if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'])) {
+                            $errorMessages[] = trans('custom.employee_already_hod_in_another_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
+                            continue;
+                        }
+
+                        // Check if department already has HOD
+                        if ($this->companyDepartmentEmployeeRepository->departmentHasHOD($processedData['departmentSystemID'])) {
+                            $errorMessages[] = trans('custom.this_department_already_has_an_hod_assigned');
+                            continue;
+                        }
+                    }
+
+                    // Check if employee is already assigned to this department
+                    $exists = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                                                      ->where('employeeSystemID', $processedData['employeeSystemID'])
+                                                      ->exists();
+                    if ($exists) {
+                        $errorMessages[] = trans('custom.employee_already_assigned_to_department', ['employeeCode' => Employee::getEmployeeCode($processedData['employeeSystemID'])]);
+                        continue;
+                    }
+
+                    $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->create($processedData);
+                    
+                    // Auto-assign budget controls if finance department
+                    $this->autoAssignBudgetControlsForFinance($companyDepartmentEmployee->departmentEmployeeSystemID);
+
+                    $this->autoAssignDepartmentBudgetPlanningColumnData($processedData, $employeeData['companyID']);
+                    
+                    // Audit log
+                    $uuid = $request->get('tenant_uuid', 'local');
+                    $db = $request->get('db', '');
+                    $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "", "C", $companyDepartmentEmployee->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
+                    
+                    $results[] = $companyDepartmentEmployee;
+                }
+                
+                if (!empty($errorMessages)) {
+                    DB::rollback();
+                    return $this->sendError(trans('custom.some_employees_could_not_be_assigned') . implode(', ', $errorMessages));
+                }
+                DB::commit();
+
+                return $this->sendResponse($results, count($results) . ' ' . trans('custom.employees_assigned_to_department_successfully'));
+            }
+            else {
+                // Handle single employee assignment (backward compatibility)
+                $processedData = $this->processUpdateData($input);
+
+                // Validate HOD constraints
+                if ($processedData['isHOD'] == 1) {
+                    // Check if employee is already HOD in another department
+                    if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'])) {
+                        return $this->sendError(trans('custom.this_employee_is_already_hod_in_another_department'));
+                    }
+
+                    // Check if department already has HOD
+                    if ($this->companyDepartmentEmployeeRepository->departmentHasHOD($processedData['departmentSystemID'])) {
+                        return $this->sendError(trans('custom.this_department_already_has_an_hod_assigned'));
+                    }
+                }
+
+                $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->create($processedData);
+
+                // Auto-assign budget controls if finance department
+                $this->autoAssignBudgetControlsForFinance($companyDepartmentEmployee->departmentEmployeeSystemID);
+
+                $this->autoAssignDepartmentBudgetPlanningColumnData($processedData, $input['companyID']);
+
+                // Audit log
+                $uuid = $request->get('tenant_uuid', 'local');
+                $db = $request->get('db', '');
+                $this->auditLog($db, $companyDepartmentEmployee->departmentEmployeeSystemID, $uuid, "company_departments_employees", "", "C", $companyDepartmentEmployee->toArray(), [], $processedData['departmentSystemID'], 'company_departments');
+
+                DB::commit();
+
+                return $this->sendResponse($companyDepartmentEmployee->toArray(), trans('custom.employee_assigned_to_department_successfully'));
+            }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError(trans('custom.error_assigning_employee_to_department').$e->getMessage());
+        }
+    }
+
+    public function autoAssignDepartmentBudgetPlanningColumnData($data, $companyID) {
+        $companyDepartment = CompanyDepartment::find($data['departmentSystemID']);
+        if ($companyDepartment->isFinance == 1) {
+            $this->storeTableColumns($data['employeeSystemID'], $companyID);
+        }
+        else {
+            if ($data['isHOD'] == 1) {
+                $this->storeTableColumns($data['employeeSystemID'], $companyID);
+            }
+        }
+    }
+
+    public function storeTableColumns($data, $companyID) {
+        $insertData = [];
+        $defaultColumns = DepBudgetPlDetColumn::where('isDefault', 1)->get();
+        foreach ($defaultColumns as $defaultColumn) {
+            $insertData[] = [
+                'companySystemID' => $companyID,
+                'empID' => $data,
+                'columnID' => $defaultColumn->id
+            ];
+        }
+
+        if (count($insertData) > 0) {
+            DepBudgetPlDetEmpColumn::insert($insertData);
+        }
+    }
+    /**
+     * Update the specified department employee
+     *
+     * @param int $id
+     * @param UpdateCompanyDepartmentEmployeeAPIRequest $request
+     * @return Response
+     */
+    public function update($id, UpdateCompanyDepartmentEmployeeAPIRequest $request)
+    {
+        $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->find($id);
+
+        if (empty($companyDepartmentEmployee)) {
+            return $this->sendError(trans('custom.department_employee_not_found'));
+        }
+
+        $input = $request->all();
+        $oldValues = $companyDepartmentEmployee->toArray();
+
+        try {
+            DB::beginTransaction();
+
+            // Process array inputs to single values
+            $processedData = $this->processUpdateData($input);
+
+            $user = User::with(['employee'])->find(Auth::id());
+
+            // Handle HOD logic
+            if ($processedData['isHOD'] == 1) {
+                // Check if employee is already HOD in another department (excluding current)
+                if ($this->companyDepartmentEmployeeRepository->isEmployeeHODInAnotherDepartment($processedData['employeeSystemID'], $processedData['departmentSystemID'])) {
+                    return $this->sendError(trans('custom.this_employee_is_already_hod_in_another_department'));
+                }
+
+                $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->pluck('employeeSystemID')->toArray();
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+
+                $employees = CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->pluck('employeeSystemID')->toArray();
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::whereIn('empID', $employees)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+
+                // Remove HOD status from any existing HOD in this department
+                CompanyDepartmentEmployee::where('departmentSystemID', $processedData['departmentSystemID'])
+                    ->where('isHOD', 1)
+                    ->where('departmentEmployeeSystemID', '!=', $id)
+                    ->update(['isHOD' => 0]);
+
+                $this->storeTableColumns($companyDepartmentEmployee->employeeSystemID,$user->employee->empCompanySystemID);
+            }
+            else {
+                if ($companyDepartmentEmployee->isHOD == 1) {
+                    DepBudgetPlDetEmpColumn::where('empID', $companyDepartmentEmployee->employeeSystemID)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+            }
+
+            $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->update($processedData, $id);
+
+            // Audit log
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog($db, $id, $uuid, "company_departments_employees", "", "U", $companyDepartmentEmployee->toArray(), $oldValues, $processedData['departmentSystemID'], 'company_departments');
+
+            DB::commit();
+
+            return $this->sendResponse($companyDepartmentEmployee->toArray(), trans('custom.department_employee_updated_successfully'));
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError(trans('custom.error_updating_department_employee'), 404,['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Remove the specified department employee
+     *
+     * @param int $id
+     * @return Response
+     */
+    public function destroy($id, Request $request)
+    {
+        $companyDepartmentEmployee = $this->companyDepartmentEmployeeRepository->find($id);
+
+        if (empty($companyDepartmentEmployee)) {
+            return $this->sendError(trans('custom.department_employee_not_found'));
+        }
+
+        try {
+            $previousValue = $companyDepartmentEmployee->toArray();
+
+            if ($companyDepartmentEmployee->isHOD == 1) {
+                $user = User::with(['employee'])->find(Auth::id());
+
+                if ($user->employee->empCompanySystemID) {
+                    DepBudgetPlDetEmpColumn::where('empID', $companyDepartmentEmployee->employeeSystemID)->where('companySystemID', $user->employee->empCompanySystemID)->delete();
+                }
+            }
+            
+            $companyDepartmentEmployee->delete();
+
+            // Audit log
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog($db, $id, $uuid, "company_departments_employees", "", "D", [], $previousValue, $previousValue['departmentSystemID'], 'company_departments');
+
+            return $this->sendResponse($id, trans('custom.employee_removed_from_department_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_removing_employee_from_department'), ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Process update data to handle arrays and convert to proper format
+     *
+     * @param array $input
+     * @return array
+     */
+    private function processUpdateData($input)
+    {
+        $allowedFields = [
+            'departmentSystemID', 'employeeSystemID', 'isHOD', 'isActive'
+        ];
+        
+        $processedData = [];
+        
+        foreach ($allowedFields as $field) {
+            if (isset($input[$field])) {
+                $value = $input[$field];
+                
+                // Convert array to single value
+                if (is_array($value)) {
+                    $value = count($value) > 0 ? $value[0] : null;
+                }
+                
+                // Cast specific fields to integers
+                switch ($field) {
+                    case 'isHOD':
+                    case 'isActive':
+                    case 'departmentSystemID':
+                    case 'employeeSystemID':
+                        $processedData[$field] = is_numeric($value) ? (int)$value : $value;
+                        break;
+                    default:
+                        $processedData[$field] = $value;
+                        break;
+                }
+            }
+        }
+        
+        return $processedData;
+    }
+
+    /**
+     * Auto-assign all budget controls to employee if department is finance
+     */
+    private function autoAssignBudgetControlsForFinance($departmentEmployeeSystemID)
+    {
+        try {
+            // Get department info through the employee assignment
+            $departmentEmployee = CompanyDepartmentEmployee::find($departmentEmployeeSystemID);
+            if (!$departmentEmployee) {
+                return;
+            }
+
+            $department = CompanyDepartment::find($departmentEmployee->departmentSystemID);
+            if (!$department) {
+                return;
+            }
+
+            if ($department->isFinance) {
+                // Get all active budget controls
+                $budgetControls = BudgetControl::where('isActive', 1)->get();
+                
+                // Assign all budget controls to this employee
+                foreach ($budgetControls as $budgetControl) {
+                    // Check if already assigned to avoid duplicates
+                    $exists = DepartmentUserBudgetControl::where('departmentEmployeeSystemID', $departmentEmployeeSystemID)
+                                                        ->where('budgetControlID', $budgetControl->budgetControlID)
+                                                        ->exists();
+                    
+                    if (!$exists) {
+                        DepartmentUserBudgetControl::create([
+                            'departmentEmployeeSystemID' => $departmentEmployeeSystemID,
+                            'budgetControlID' => $budgetControl->budgetControlID
+                        ]);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error but don't fail the main process
+            \Log::error('Error auto-assigning budget controls: ' . $e->getMessage());
+        }
+    }
+} 

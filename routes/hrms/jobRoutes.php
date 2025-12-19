@@ -1,0 +1,17 @@
+<?php
+Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
+Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+Route::get('travel-request-notification', 'HRJobInvokeAPIController@sendTravelRequestNotifications');
+Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
+Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailDebug');
+Route::get('maximum-leave-carry-forward-debug', 'HRJobInvokeAPIController@maximumLeaveCarryForwardDebug');
+Route::get('hr-document-notification', 'HRJobInvokeAPIController@sendHrDocNotifications');
+Route::get('return-to-work-notification', 'HRJobInvokeAPIController@sendReturnToWorkNotifications');
+Route::get('employee-profile-creation-notification', 'HRJobInvokeAPIController@sendEmpProfileCreateNotifications');
+Route::get('hrNotificationDebug', 'HRJobInvokeAPIController@hrNotificationDebug');
+Route::get('clockOutJobCall', 'HRJobInvokeAPIController@clockOutJobCall');
+Route::get('crossDayClockOutJobCall', 'HRJobInvokeAPIController@crossDayClockOutJobCall');
+Route::get('leaveAccrualJobCallDebug', 'HRJobInvokeAPIController@leaveAccrualJobCallDebug');
+Route::get('delegationJobCallDebug', 'HRJobInvokeAPIController@delegationJobCallDebug');
+Route::get('empDesignationUpdateNotification', 'HRJobInvokeAPIController@sendEmpDesignationUpdateNotification');
+Route::post('unconfirmed-attendance-pull', 'HRJobInvokeAPIController@unConfirmedAttendancePull');

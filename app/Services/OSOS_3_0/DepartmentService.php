@@ -1,0 +1,183 @@
+<?php
+namespace App\Services\OSOS_3_0;
+
+ use GuzzleHttp\Client;
+ use Illuminate\Support\Facades\DB;
+ use App\Traits\OSOS_3_0\JobCommonFunctions;
+
+ class DepartmentService{
+     protected $apiExternalKey;
+     protected $apiExternalUrl;
+     protected $departmentData = [];
+     protected $thirdPartyData;
+     protected $id;
+     protected $postType;
+     protected $url;
+     protected $detailId;
+     protected $apiKey;
+     protected $dataBase;
+
+     protected $companyId;
+     protected $operation;
+     protected $pivotTableId;
+     protected $masterUuId;
+
+     use JobCommonFunctions;
+
+     public function __construct($dataBase, $id, $postType, $thirdPartyData){
+
+         $this->dataBase = $dataBase;
+         $this->postType = trim(strtoupper($postType),'"');
+         $this->id = $id;
+         $this->detailId = $thirdPartyData['id'];
+         $this->apiKey = $thirdPartyData['api_key'];
+         $this->apiExternalKey = $thirdPartyData['api_external_key'];
+         $this->apiExternalUrl = $thirdPartyData['api_external_url'];
+         $this->companyId = $thirdPartyData['company_id'];
+         $this->thirdPartyData = $thirdPartyData;
+
+         $this->getOperation();
+         $this->getPivotTableId(3);
+         $this->getDepartmentData();
+         $this->getUrl('department');
+     }
+
+     function execute(){
+         try {
+                        
+            $valResp =$this->validateApiResponse();
+
+             if(!$valResp['status']){
+                $logData = ['message' => $valResp['message'], 'id' => $this->id];
+                 return $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
+             }
+
+             $depName = ($this->postType != 'DELETE')? ' - '. $this->departmentData['Name'] : '';
+             $msg = "Department about to trigger: " . $this->id . $depName;
+
+             $logData = ['message' => $msg, 'id' => $this->id ];
+             $this->insertToLogTb($logData, 'info', 'Department', $this->companyId);
+
+             $client = new Client();
+             $headers = [
+                 'content-type' => 'application/json',
+                 'auth-key' =>  $this->apiExternalKey,
+                 'menu-id' =>  'default'
+             ];
+
+             $res = $client->request("$this->postType", $this->apiExternalUrl . $this->url, [
+                 'headers' => $headers,
+                 'body' => json_encode($this->departmentData)
+             ]);
+
+             $statusCode = $res->getStatusCode();
+             $body = $res->getBody()->getContents();
+
+             if (in_array($statusCode, [200, 201])) {
+
+                 $je = json_decode($body, true);
+
+                 if(!isset($je['id'])){
+                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id ];
+                     return $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
+                 }
+
+                 $this->insertOrUpdateThirdPartyPivotTable($je['id']);
+                 $logData = [
+                     'message' => "Api department {$this->operation} successfully processed",
+                     'id' => $this->id
+                 ];
+                 $this->insertToLogTb($logData, 'info', 'Department', $this->companyId);
+                 return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
+
+             }
+
+             if ($statusCode == 400) {
+                 $msg = $res->getBody();
+                 $logData = ['message' => json_decode($msg), 'id' => $this->id ];
+                 return $this->capture400Err($logData, 'Department');
+             }
+         } catch (\Exception $e) {
+
+             $exStatusCode = $e->getCode();
+             if ($exStatusCode == 400) {
+                 $msg = $e->getMessage();
+                 $logData = ['message' => $msg, 'id' => $this->id ];
+                 return $this->capture400Err($logData, 'Department');
+             }
+
+             $msg = "Exception \n";
+             $msg .= "operation : ".$this->operation."\n";;
+             $msg .= "message : ".$e->getMessage()."\n";;
+             $msg .= "file : ".$e->getFile()."\n";;
+             $msg .= "line no : ".$e->getLine()."\n";;
+
+             $logData = ['message' =>  $msg, 'id' => $this->id];
+             $this->insertToLogTb($logData, 'error', 'Department', $this->companyId);
+            
+            return ['status' => false, 'message' => $msg, 'code' => $exStatusCode];
+         }
+     }
+
+     function validateApiResponse(){
+
+         if(empty($this->id)){
+             $error = 'Department id is required';
+             return ['status' =>false, 'message'=> $error];
+         }
+
+        if(empty($this->pivotTableId)){
+            $error = 'Pivot table reference not found check pivot_tbl_reference.id';
+            return ['status' =>false, 'message'=> $error];
+        }
+
+         if (empty($this->departmentData) && $this->postType != 'DELETE') {
+             $error = 'Department not found';
+             return ['status' =>false, 'message'=> $error];
+         }
+
+         if(empty($this->departmentData['Id']) && $this->postType != 'POST'){
+             $error = 'Reference id not found';
+             return ['status' =>false, 'message'=> $error];
+         }
+
+         if(empty($this->departmentData['Code']) && $this->postType != 'DELETE'){
+             $error = 'Department code not found';
+             return ['status' =>false, 'message'=> $error];
+         }
+
+         if(empty($this->validateCompanyReference())){
+             $error = 'Company reference not found';
+             return ['status' =>false, 'message'=> $error];
+         }
+
+         return ['status' =>true, 'message'=> 'success'];
+     }
+
+     function getDepartmentData()
+     {
+         $data = DB::table('srp_departmentmaster')
+             ->selectRaw("DepartmentMasterID as Code, DepartmentDes as Name, '' as Description, Erp_companyID,
+                IF(isActive = 0, 1, 0) as Status")
+             ->where('DepartmentMasterID', $this->id)
+             ->first();
+
+         if($this->postType != "POST") {
+             $this->getReferenceId();
+             $this->departmentData['Id'] = $this->masterUuId;
+         }
+
+         if(empty($data)){
+             return;
+         }
+
+         $this->departmentData = array_merge([
+             "Code" => (string)$data->Code,
+             "Name" => $data->Name,
+             "Description" => $data->Description,
+             "Status" => $data->Status,
+             "IsDeleted" => false,
+             "CompanyId" => $this->getOtherReferenceId($data->Erp_companyID, 5)
+         ], $this->departmentData);
+     }
+ }

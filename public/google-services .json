@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1094173026647",
+    "firebase_url": "https://gears-erp.firebaseio.com",
+    "project_id": "gears-erp",
+    "storage_bucket": "gears-erp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1094173026647:android:06f48a90255a54f0933612",
+        "android_client_info": {
+          "package_name": "com.gears.gearserp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1094173026647-pqjdd6ua1isbsm7g7p0cgc67dfust72n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBo-e0zh5d6ZS-QtmbJS66IKvJ0O37q9go"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1094173026647-pqjdd6ua1isbsm7g7p0cgc67dfust72n.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

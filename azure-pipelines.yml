@@ -1,0 +1,33 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+resources:
+  pipelines:
+  - pipeline: pbsgears.Gears_FrontEnd
+    source: pbsgears.Gears_FrontEnd
+    trigger:
+      branches:
+        include:
+        - dev
+
+trigger:
+      branches:
+        include:
+        - dev
+
+pool:
+  name : 'Build-Dev'
+  demands:
+   - agent.name -equals PBS-UAT-APP
+  
+steps:
+- checkout: self
+  clean: fales
+  
+- script: sudo composer install
+  displayName: 'Composer Install'
+
+
+...
