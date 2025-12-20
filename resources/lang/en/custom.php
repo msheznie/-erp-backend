@@ -9089,6 +9089,7 @@ return
     'fixed_assets_cannot_add_to_quotations' => 'Fixed assets cannot be added to quotations',
     'item_not_found_or_no_category_type' => 'Item not found or has no category type',
     'only_sales_items_can_add_to_quotations' => 'Only sales items can be added to quotations',
+    'only_service_items_can_add_to_quotations_for_sales_type_subscription' => 'Only service items can be added to quotations for sales type subscription',
     'quotation_success' => 'success',
     'sales_document_not_found' => 'Sales :type not found',
     'sales_order_should_have_payment_term' => 'Sales Order should have at least one payment term',
