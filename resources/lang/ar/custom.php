@@ -9013,6 +9013,7 @@ return
     'fixed_assets_cannot_add_to_quotations' => 'لا يمكن إضافة الأصول الثابتة إلى العروض',
     'item_not_found_or_no_category_type' => 'المادة غير موجود أو ليس له نوع فئة',
     'only_sales_items_can_add_to_quotations' => 'يمكن إضافة عناصر المبيعات فقط إلى العروض',
+    'only_service_items_can_add_to_quotations_for_sales_type_subscription' => 'يمكن إضافة عناصر الخدمة فقط إلى العروض لنوع المبيعات الاشتراك',
     'quotation_success' => 'نجح',
     'sales_document_not_found' => 'مستند المبيعات :type غير موجود',
     'sales_order_should_have_payment_term' => 'يجب أن يكون لطلب البيع على الأقل شرط دفع واحد',
