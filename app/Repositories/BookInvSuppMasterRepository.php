@@ -181,10 +181,29 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.confirmedYN',
                 'erp_bookinvsuppmaster.documentType',
                 'erp_bookinvsuppmaster.approved',
-                'erp_bookinvsuppmaster.supplierInvoiceNo',
                 'erp_bookinvsuppmaster.postedDate',
                 'erp_bookinvsuppmaster.supplierInvoiceDate',
-                'erp_bookinvsuppmaster.isBulkItemJobRun'
+                'erp_bookinvsuppmaster.isBulkItemJobRun',
+                DB::raw('COALESCE(
+                    CASE 
+                        WHEN erp_bookinvsuppmaster.documentType IN (1, 4) THEN (
+                            SELECT COALESCE(SUM(VATAmount), 0)
+                            FROM erp_directinvoicedetails
+                            WHERE erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        WHEN erp_bookinvsuppmaster.documentType = 3 THEN (
+                            SELECT COALESCE(SUM(VATAmount * noQty), 0)
+                            FROM supplier_invoice_items
+                            WHERE supplier_invoice_items.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        WHEN erp_bookinvsuppmaster.documentType IN (0,2) THEN (
+                         SELECT COALESCE(SUM(erp_bookinvsupp_item_det.VATAmount), 0) 
+                                FROM erp_bookinvsupp_item_det
+                                WHERE erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        ELSE 0
+                    END, 0
+                ) as vatAmount')
             ]);
 
 
@@ -234,6 +253,7 @@ class BookInvSuppMasterRepository extends BaseRepository
  
                 $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.vat')] = $val->vatAmount? number_format($val->vatAmount,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.reporting_currency')] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
