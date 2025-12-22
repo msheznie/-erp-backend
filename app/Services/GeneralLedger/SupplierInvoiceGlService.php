@@ -339,7 +339,7 @@ class SupplierInvoiceGlService
                 }
             }
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1)) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2)) {
                 $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
                 if ($molAmount > 0) {
                     if ($masterData->documentType == 0) {
@@ -373,7 +373,7 @@ class SupplierInvoiceGlService
             $data['timestamp'] = \Helper::currentDateTime();
             array_push($finalData, $data);
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1)) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2)) {
                 if ($masterData->documentType != 4) {
                     $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
                     if ($molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
@@ -391,7 +391,7 @@ class SupplierInvoiceGlService
                         $data['glCode'] = $molAuthority != null && isset($supplier) ? $supplier->liablity_account->AccountCode : null;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        if ($masterData->documentType == 0 || $masterData->documentType == 1) {
+                        if ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) {
                             $data['documentTransAmount'] = \Helper::roundValue($molAmount) * -1;
                             
                             if ($masterData->documentType == 0) {

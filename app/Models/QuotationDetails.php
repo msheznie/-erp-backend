@@ -254,7 +254,9 @@ class QuotationDetails extends Model
         'VATAmountRpt',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'VATApplicableOn'
+        'VATApplicableOn',
+        'userQty',
+        'totalSoBalanceQty'
     ];
 
     /**
@@ -311,7 +313,9 @@ class QuotationDetails extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
-        'VATApplicableOn' => 'integer'
+        'VATApplicableOn' => 'integer',
+        'userQty' => 'float',
+        'totalSoBalanceQty' => 'float'
     ];
 
     /**

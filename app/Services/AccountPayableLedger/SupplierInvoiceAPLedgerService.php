@@ -329,7 +329,7 @@ class SupplierInvoiceAPLedgerService
                 }
             }
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) && $molAmount > 0) {
                 if ($masterData->documentType == 0) {
                     $localER = ExchangeSetupConfig::calculateLocalER($data['supplierInvoiceAmount'], $data['localAmount']);
                     $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
@@ -352,7 +352,7 @@ class SupplierInvoiceAPLedgerService
 
             array_push($finalData, $data);
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) && $molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
                 $molContribution = MolContribution::find($masterData->mol_setup_id);
                 $molAuthority = $molContribution ? $molContribution->authority_id : null;
                 if ($molAuthority) {

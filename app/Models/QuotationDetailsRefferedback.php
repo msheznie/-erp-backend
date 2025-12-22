@@ -267,7 +267,9 @@ class QuotationDetailsRefferedback extends Model
         'soQuantity',
         'qtyIssuedDefaultMeasure',
         'soQuotationMasterID',
-        'timestamp'
+        'timestamp',
+        'userQty',
+        'totalSoBalanceQty'
     ];
 
     /**
@@ -320,6 +322,8 @@ class QuotationDetailsRefferedback extends Model
         'soQuantity' => 'float', 
         'qtyIssuedDefaultMeasure' => 'float', 
         'soQuotationMasterID' => 'integer', 
+        'userQty' => 'float',
+        'totalSoBalanceQty' => 'float',
     ];
 
     /**
