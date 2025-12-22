@@ -419,7 +419,7 @@ class QuotationDetailsAPIController extends AppBaseController
             $quotationDetailss = $this->quotationDetailsRepository->update($input, $id);
 
 
-            if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2 && ($quotationDetails->requestedQty != $input['requestedQty'])) {
+            if ($quotationMasterData->documentSystemID == 68 && $quotationMasterData->quotationType == 2 && ($quotationDetails->requestedQty != $input['requestedQty'] || $quotationDetails->userQty != $input['userQty'])) {
                 $this->updateCopiedQty($input);
             }
 
@@ -446,26 +446,56 @@ class QuotationDetailsAPIController extends AppBaseController
 
             $soQuotationMasterID = $input['soQuotationMasterID'];
 
-            //checking the fullyOrdered or partial in po
-            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
-                                        ->where('soQuotationDetailID', $input['soQuotationDetailID'])
-                                        ->first();
+            if ($qoMaster->salesType == 2) {
+                $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty*userQty),0) as totalNoQty'))
+                    ->where('soQuotationDetailID', $input['soQuotationDetailID'])
+                    ->first();
+                if(empty($detailSum)){
+                    return $this->sendError(trans('custom.item_not_found'));
+                }
+                $totalAddedQty = $detailSum['totalNoQty'];
 
-            $totalAddedQty = $detailSum['totalNoQty'];
+                $quotationDetailData = QuotationDetails::find($input['soQuotationDetailID']);
 
-
-            $quotationDetailData = QuotationDetails::find($input['soQuotationDetailID']);
-
-            if ($quotationDetailData->requestedQty == $totalAddedQty) {
-                $fullyOrdered = 2;
+                if ($quotationDetailData->requestedQty * $quotationDetailData->userQty == $totalAddedQty) {
+                    $fullyOrdered = 2;
+                } else {
+                    $fullyOrdered = 1;
+                }
             } else {
-                $fullyOrdered = 1;
+                //checking the fullyOrdered or partial in po
+                $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
+                                            ->where('soQuotationDetailID', $input['soQuotationDetailID'])
+                                            ->first();
+
+                if(empty($detailSum)){
+                    return $this->sendError(trans('custom.item_not_found'));
+                }
+                $totalAddedQty = $detailSum['totalNoQty'];
+
+
+                $quotationDetailData = QuotationDetails::find($input['soQuotationDetailID']);
+
+                if ($quotationDetailData->requestedQty == $totalAddedQty) {
+                    $fullyOrdered = 2;
+                } else {
+                    $fullyOrdered = 1;
+                }
             }
 
-            $new = [];
-            $new['qtyIssuedDefaultMeasure'] = $input['requestedQty'];
 
-            $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'];
+            $new = [];
+            if ($qoMaster->salesType == 2) {
+                $new['qtyIssuedDefaultMeasure'] = $input['requestedQty'] * $input['userQty'];
+            } else {
+                $new['qtyIssuedDefaultMeasure'] = $input['requestedQty'];
+            }
+
+            if ($qoMaster->salesType == 2) {
+                $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'] * $input['userQty'];
+            } else {
+                $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'];
+            }
 
             $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
 
@@ -570,6 +600,10 @@ class QuotationDetailsAPIController extends AppBaseController
                         ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
                         ->first();
 
+                    if(empty($detailSum)){
+                        return $this->sendError(trans('custom.item_not_found'));
+                    }
+
                     $updatedQuoQty = $detailSum['totalQty'];
 
                     if ($updatedQuoQty == 0) {
@@ -642,6 +676,10 @@ class QuotationDetailsAPIController extends AppBaseController
                             $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
                                 ->where('soQuotationDetailID', $cvDeatil['soQuotationDetailID'])
                                 ->first();
+
+                            if(empty($detailSum)){
+                                return $this->sendError(trans('custom.item_not_found'));
+                            }
 
                             $updatedQuoQty = $detailSum['totalQty'];
 
@@ -777,9 +815,16 @@ WHERE
         foreach ($input['detailTable'] as $newValidation) {
             if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
 
-                $messages = [
-                    'required' => trans('custom.so_quantity_field_is_required'),
-                ];
+                if (isset($input['salesType']) && $input['salesType'] == 2) {
+                    $messages = [
+                        'required' => trans('custom.unit_qty_field_is_required'),
+                    ];
+                } else {
+                    $messages = [
+                        'required' => trans('custom.so_quantity_field_is_required'),
+                    ];
+                }
+
 
                 $validator = \Validator::make($newValidation, [
                     'noQty' => 'required',
@@ -791,8 +836,40 @@ WHERE
                 }
             }
 
+            // Validation for salesType = 2: unitQty field
+            if (isset($input['salesType']) && $input['salesType'] == 2) {
 
-            $remaingQty = $newValidation['requestedQty'] - $newValidation['soTakenQty'];
+                // Validation for salesType = 2: userQty field
+                if (($newValidation['isChecked'] && isset($newValidation['userQty']) && $newValidation['userQty'] == "") || ($newValidation['isChecked'] && isset($newValidation['userQty']) && $newValidation['userQty'] == 0) || ($newValidation['isChecked'] == '' && isset($newValidation['userQty']) && $newValidation['userQty'] > 0)) {
+
+                    $messages = [
+                        'required' => trans('custom.user_qty_field_is_required'),
+                    ];
+
+                    $validator = \Validator::make($newValidation, [
+                        'userQty' => 'required',
+                        'isChecked' => 'required',
+                    ], $messages);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                }
+            }
+
+            // Update noQty = noQty * userQty when salesType = 2
+            if (isset($input['salesType']) && $input['salesType'] == 2) {
+                foreach ($input['detailTable'] as $key => $detail) {
+                    if (isset($detail['noQty']) && isset($detail['userQty']) && $detail['userQty'] > 0) {
+                        $input['detailTable'][$key]['requestedQty'] = $detail['noQty'];
+                        $input['detailTable'][$key]['noQty'] = $detail['noQty'] * $detail['userQty'];
+                    }
+                }
+                $remaingQty = $newValidation['totalSoBalanceQty'] - $newValidation['soTakenQty'];
+            } else {
+                $remaingQty = $newValidation['requestedQty'] - $newValidation['soTakenQty'];
+            }
+
 
             if ($remaingQty < $newValidation['noQty']) {
                 return $this->sendError(trans('custom.so_qty_cannot_be_greater_than_balance'));
@@ -856,22 +933,42 @@ WHERE
                     $soQuotationMasterID = $new['quotationMasterID'];
                     if ($new['isChecked'] && $new['noQty'] > 0) {
 
-                        //checking the fullyOrdered or partial in po
-                        $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
-                            ->where('soQuotationDetailID', $new['quotationDetailsID'])
-                            ->first();
+                        if ($qoMaster->salesType == 2) {
+                            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty*userQty),0) as totalNoQty'))
+                                ->where('soQuotationDetailID', $new['quotationDetailsID'])
+                                ->first();
+                        } else {
+                            $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalNoQty'))
+                                ->where('soQuotationDetailID', $new['quotationDetailsID'])
+                                ->first();
+                        }
+                        if(empty($detailSum)){
+                            return $this->sendError(trans('custom.item_not_found'));
+                        }
 
                         $totalAddedQty = $new['noQty'] + $detailSum['totalNoQty'];
 
-                        if ($new['requestedQty'] == $totalAddedQty) {
-                            $fullyOrdered = 2;
+                        if ($qoMaster->salesType == 2) {
+                            if ($new['requestedQty'] * $new['userQty'] == $totalAddedQty) {
+                                $fullyOrdered = 2;
+                            } else {
+                                $fullyOrdered = 1;
+                            }
                         } else {
-                            $fullyOrdered = 1;
+                            if ($new['requestedQty'] == $totalAddedQty) {
+                                $fullyOrdered = 2;
+                            } else {
+                                $fullyOrdered = 1;
+                            }
                         }
 
+                        $requestedQty = $new['requestedQty'];
+                        if ($qoMaster->salesType == 2) {
+                            $requestedQty = $new['requestedQty'] * $new['userQty'];
+                        }
 
                         // checking the qty request is matching with sum total
-                        if ($new['requestedQty'] >= $new['noQty']) {
+                        if ($requestedQty >= $new['noQty']) {
 
                             if($new['itemAutoID'] != 0) {
                                 $item = ItemAssigned::where('itemCodeSystem', $new['itemAutoID'])
@@ -885,11 +982,12 @@ WHERE
                             }
 
                             $new['qtyIssuedDefaultMeasure'] = $new['noQty'];
-                            $new['requestedQty'] = $new['noQty'];
+                            $new['requestedQty'] = $new['requestedQty'];
                             $new['soQuotationMasterID'] = $new['quotationMasterID'];
                             $new['quotationMasterID'] = $salesOrderID;
 
                             $totalNetcost = ($new['unittransactionAmount'] - $new['discountAmount']) * $new['noQty'];
+                            $netCostWithoutUserQty = ($new['unittransactionAmount'] - $new['discountAmount']);
 
                             $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
 
@@ -932,8 +1030,8 @@ WHERE
                                         $new['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
                                     }
                                 } else {
-                                    if ($totalNetcost > 0) {
-                                        $new['VATAmount'] = (($totalNetcost / 100) * $vatDetails['percentage']);
+                                    if ($netCostWithoutUserQty > 0) {
+                                        $new['VATAmount'] = (($netCostWithoutUserQty / 100) * $vatDetails['percentage']);
                                     }
                                 }
 

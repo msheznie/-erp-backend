@@ -4307,6 +4307,8 @@ return
     'quotation_version_details_saved_successfully' => 'تم حفظ تفاصيل إصدار عرض السعر بنجاح',
     'false' => 'خطأ',
     'so_quantity_field_is_required' => 'حقل كمية أمر البيع مطلوب',
+    'unit_qty_field_is_required' => 'حقل كمية الوحدة مطلوب',
+    'user_qty_field_is_required' => 'حقل كمية المستخدم مطلوب',
     'quotationdetailsrefferedback_updated_successfully' => 'تم تحديث إرجاع تفاصيل عرض السعر بنجاح',
     'quotationmasterrefferedback_updated_successfully' => 'تم تحديث إرجاع السجل الرئيسي لعرض السعر بنجاح',
     'quotationmasterversion_updated_successfully' => 'تم تحديث إصدار السجل الرئيسي لعرض السعر بنجاح',
