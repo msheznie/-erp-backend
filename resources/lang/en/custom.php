@@ -4352,6 +4352,8 @@ return
     'success' => 'Success',
     'false' => 'False',
     'so_quantity_field_is_required' => 'SO quantity field is required',
+    'unit_qty_field_is_required' => 'Unit Qty field is required',
+    'user_qty_field_is_required' => 'User Qty field is required',
     'quotationdetailsrefferedback_updated_successfully' => 'QuotationDetailsRefferedback updated successfully',
     'quotationmasterrefferedback_updated_successfully' => 'QuotationMasterRefferedback updated successfully',
     'quotationmasterversion_updated_successfully' => 'QuotationMasterVersion updated successfully',
