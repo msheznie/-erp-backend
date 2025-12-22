@@ -814,7 +814,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $salesTypes = [
                 ['value' => 1, 'label' => __('custom.ar_goods_and_services')],
-                // ['value' => 2, 'label' => __('custom.ar_subscription')],
+                ['value' => 2, 'label' => __('custom.ar_subscription')],
             ];
 
         $output = array(
@@ -869,6 +869,16 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
         $fromSalesQuotation = isset($input['fromSalesQuotation'])?$input['fromSalesQuotation']:0;
+        if(isset($input['salesType']) && $input['salesType'] != null){
+            $salesType = $input['salesType'];
+            if($salesType == 2){
+                $categories = [2];
+            } else {
+                $categories = [1,2,4];
+            }
+        }else{
+            $categories = [1,2,4];
+        }
 
         $items = ItemAssigned::where('companySystemID', $companySystemID)
             ->where('isActive', 1)
@@ -885,7 +895,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         if($fromSalesQuotation == 1){
-            $items = $items->whereIn('financeCategoryMaster',[1,2,4]);
+            $items = $items->whereIn('financeCategoryMaster', $categories);
         }
         $items = $items
             ->take(20)
@@ -2099,6 +2109,15 @@ class QuotationMasterAPIController extends AppBaseController
                      // check if the item is available or not
                      $itemMasterData = ItemMaster::where('primaryCode', $finalRecords['item_code'])->first();
                      if($itemMasterData) {
+
+                        if(isset($input['salesType']) && $input['salesType'] != null){
+                            $salesType = $input['salesType'];
+                            if($salesType == 2){
+                                if($itemMasterData->financeCategoryMaster != 2){
+                                    return $this->sendError(trans('custom.only_service_items_can_add_to_quotations_for_sales_type_subscription'), 500);
+                                }
+                            }
+                        }
                          // get item category type
                          $itemCategoryType = (array) json_decode($itemMasterData->categoryType);
                          // check item category type is only purchase type

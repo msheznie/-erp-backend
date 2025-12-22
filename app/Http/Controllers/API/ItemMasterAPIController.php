@@ -1859,7 +1859,17 @@ class ItemMasterAPIController extends AppBaseController
                 $query->whereDoesntHave('quotationDetails', function($query) use ($input) {
                     $query->where('quotationMasterID', $input['quotationId']);
                 });
-                $query->where('financeCategoryMaster', '!=' ,3);
+                if(isset($input['salesType']) && $input['salesType'] != null){
+                    $salesType = $input['salesType'];
+                    if($salesType == 2){
+                        $categories = [2];
+                    } else {
+                        $categories = [1,2,4];
+                    }
+                } else {
+                    $categories = [1,2,4];
+                }
+                $query->whereIn('financeCategoryMaster', $categories);
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
