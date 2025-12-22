@@ -2745,33 +2745,27 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetDetails(Request $request) {
         $input = $request->all();
 
-        // Check if both parameters are provided
-        if (isset($input['asset_codes']) && isset($input['audit_categories'])) {
+        // Check if both parameters are provided and non-empty
+        $hasAssetCodes = isset($input['asset_codes']) && is_array($input['asset_codes']) && !empty($input['asset_codes']);
+        $hasAuditCategories = isset($input['audit_categories']) && is_array($input['audit_categories']) && !empty($input['audit_categories']);
+        
+        if ($hasAssetCodes && $hasAuditCategories) {
             return $this->sendError('You can only provide either asset_codes or audit_categories, not both', 422);
         }
 
-        // Check if neither parameter is provided
-        if (!isset($input['asset_codes']) && !isset($input['audit_categories'])) {
-            return $this->sendError('Either asset_codes or audit_categories is required', 422);
-        }
-
         $validator = \Validator::make($input, [
-            'asset_codes' => 'sometimes|required_without:audit_categories|array|min:1',
-            'audit_categories' => 'sometimes|required_without:asset_codes|array|min:1',
+            'asset_codes' => 'sometimes|array',
+            'audit_categories' => 'sometimes|array',
             'page' => 'sometimes|integer|min:1',
-            'per_page' => 'sometimes|integer|min:1|max:5',
+            'per_page' => 'sometimes|integer|min:1|max:50',
         ], [
-            'asset_codes.required_without' => 'asset_codes is required when audit_categories is not provided',
             'asset_codes.array' => 'asset_codes must be an array',
-            'asset_codes.min' => 'At least one asset code is required',
-            'audit_categories.required_without' => 'audit_categories is required when asset_codes is not provided',
             'audit_categories.array' => 'audit_categories must be an array',
-            'audit_categories.min' => 'At least one audit category is required',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
             'per_page.integer' => 'per_page must be an integer',
             'per_page.min' => 'per_page must be at least 1',
-            'per_page.max' => 'per_page cannot exceed 5',
+            'per_page.max' => 'per_page cannot exceed 50',
         ]);
 
         if ($validator->fails()) {
@@ -2780,8 +2774,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companySystemID = $input['company_id'];
-        $searchByAssetCodes = isset($input['asset_codes']);
-        $searchByAuditCategory = isset($input['audit_categories']);
+        $searchByAssetCodes = $hasAssetCodes;
+        $searchByAuditCategory = $hasAuditCategories;
 
         $assetCodes = [];
         $auditCategories = [];
@@ -2847,7 +2841,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             // Get pagination parameters
             $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 5);
+            $perPage = $request->get('per_page', 10);
 
             // Build the query based on search type
             $query = FixedAssetMaster::ofCompany([$companySystemID]);
@@ -2870,6 +2864,10 @@ class FixedAssetMasterAPIController extends AppBaseController
                     });
                 });
             }
+
+            // Apply common filters for all queries (only approved and not disposed assets)
+            $query->where('approved', -1)
+                  ->where('DIPOSED', '!=', -1);
             
             $query->with([
                 'departmentMaster' => function($query) {
@@ -2927,6 +2925,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
                 }
             ]);
+
 
             $query->orderBy('faID', 'asc');
 
