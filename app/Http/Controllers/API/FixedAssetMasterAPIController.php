@@ -64,6 +64,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Pagination\LengthAwarePaginator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -2744,13 +2745,33 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetDetails(Request $request) {
         $input = $request->all();
 
+        // Check if both parameters are provided
+        if (isset($input['asset_codes']) && isset($input['audit_categories'])) {
+            return $this->sendError('You can only provide either asset_codes or audit_categories, not both', 422);
+        }
+
+        // Check if neither parameter is provided
+        if (!isset($input['asset_codes']) && !isset($input['audit_categories'])) {
+            return $this->sendError('Either asset_codes or audit_categories is required', 422);
+        }
+
         $validator = \Validator::make($input, [
-            'asset_codes' => 'required|array|min:1|max:100',
+            'asset_codes' => 'sometimes|required_without:audit_categories|array|min:1',
+            'audit_categories' => 'sometimes|required_without:asset_codes|array|min:1',
+            'page' => 'sometimes|integer|min:1',
+            'per_page' => 'sometimes|integer|min:1|max:5',
         ], [
-            'asset_codes.required' => 'asset_codes array is required',
+            'asset_codes.required_without' => 'asset_codes is required when audit_categories is not provided',
             'asset_codes.array' => 'asset_codes must be an array',
             'asset_codes.min' => 'At least one asset code is required',
-            'asset_codes.max' => 'Maximum 100 asset codes are allowed',
+            'audit_categories.required_without' => 'audit_categories is required when asset_codes is not provided',
+            'audit_categories.array' => 'audit_categories must be an array',
+            'audit_categories.min' => 'At least one audit category is required',
+            'page.integer' => 'page must be an integer',
+            'page.min' => 'page must be at least 1',
+            'per_page.integer' => 'per_page must be an integer',
+            'per_page.min' => 'per_page must be at least 1',
+            'per_page.max' => 'per_page cannot exceed 5',
         ]);
 
         if ($validator->fails()) {
@@ -2759,25 +2780,54 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companySystemID = $input['company_id'];
-        $assetCodes = $input['asset_codes'];
+        $searchByAssetCodes = isset($input['asset_codes']);
+        $searchByAuditCategory = isset($input['audit_categories']);
 
-        // Validate each asset code
-        foreach ($assetCodes as $assetCode) {
-            $asset = FixedAssetMaster::where('faCode', $assetCode)
-                ->ofCompany([$companySystemID])
-                ->first();
+        $assetCodes = [];
+        $auditCategories = [];
 
-            if (!$asset) {
-                return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
+        // Validate asset codes if provided
+        if ($searchByAssetCodes) {
+            $assetCodes = $input['asset_codes'];
+            
+            // Validate each asset code
+            foreach ($assetCodes as $assetCode) {
+                $asset = FixedAssetMaster::where('faCode', $assetCode)
+                    ->ofCompany([$companySystemID])
+                    ->first();
+
+                if (!$asset) {
+                    return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
+                }
+
+                if ($asset->approved != -1) {
+                    $approvalStatus = $this->getApprovalStatus($asset);
+                    return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
+                }
+
+                if ($asset->DIPOSED == -1) {
+                    return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+                }
             }
+        }
 
-            if ($asset->approved != -1) {
-                $approvalStatus = $this->getApprovalStatus($asset);
-                return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
-            }
+        // Validate audit categories if provided
+        if ($searchByAuditCategory) {
+            $auditCategories = $input['audit_categories'];
+            
+            // Validate each audit category
+            foreach ($auditCategories as $auditCategory) {
+                
+                // Check if any assets exist with this audit category for the company
+                $auditCategoryExists = FixedAssetMaster::ofCompany([$companySystemID])
+                    ->whereHas('finance_category', function($query) use ($auditCategory) {
+                        $query->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                    })
+                    ->exists();
 
-            if ($asset->DIPOSED == -1) {
-                return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+                if (!$auditCategoryExists) {
+                    return $this->sendError("The audit category '{$auditCategory}' not matching with system", 422);
+                }
             }
         }
 
@@ -2795,66 +2845,94 @@ class FixedAssetMasterAPIController extends AppBaseController
                 ])
                 ->find($companySystemID);
 
-            $assets = FixedAssetMaster::whereIn('faCode', $assetCodes)
-                ->ofCompany([$companySystemID])
-                ->with([
-                    'departmentMaster' => function($query) {
-                        $query->select('departmentSystemID', 'DepartmentID');
-                    },
-                    'department' => function($query) {
-                        $query->select('serviceLineSystemID', 'ServiceLineCode');
-                    },
-                    'location' => function($query) {
-                        $query->select('locationID', 'locationName');
-                    },
-                    'asset_type' => function($query) {
-                        $query->select('typeID', 'typeDes');
-                    },
-                    'category_by' => function($query) {
-                        $query->select('faCatID', 'catDescription');
-                    },
-                    'sub_category_by' => function($query) {
-                        $query->select('faCatSubID', 'catDescription');
-                    },
-                    'sub_category_by2' => function($query) {
-                        $query->select('faCatSubID', 'catDescription');
-                    },
-                    'sub_category_by3' => function($query) {
-                        $query->select('faCatSubID', 'catDescription');
-                    },
-                    'finance_category' => function($query) {
-                        $query->select('faFinanceCatID', 'financeCatDescription');
-                    },
-                    'posttogl_by' => function($query) {
-                        $query->select('chartOfAccountSystemID', 'AccountDescription');
-                    },
-                    'depperiod_by' => function($query) use ($today) {
-                        $query->whereHas('master_by', function ($q) use ($today) {
-                            $q->where('approved', -1)
-                            ->where('depDate', '<', $today);
-                        })
-                        ->selectRaw('faID, SUM(depAmountLocal) as totalDepAmountLocal, SUM(depAmountRpt) as totalDepAmountRpt')
-                        ->groupBy('faID');
-                    },
-                    'group_all_to' => function($query) {
-                        $query->where('approved', -1);
-                    },
-                    'insurance_detail' => function($query) {
-                        $query->with([
-                            'policy_by' => function($q) {
-                                $q->select('insurancePolicyTypesID', 'policyDescription');
-                            },
-                            'location_by' => function($q) {
-                                $q->select('locationID', 'locationName');
-                            }
-                        ]);
-                    },
-                    'warranty_detail' => function($query) {
-                        $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
-                    }
-                ])
-                ->get();
+            // Get pagination parameters
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 5);
 
+            // Build the query based on search type
+            $query = FixedAssetMaster::ofCompany([$companySystemID]);
+            
+            if ($searchByAssetCodes) {
+                // Filter by asset codes
+                $query->whereIn('faCode', $assetCodes);
+            } 
+            elseif ($searchByAuditCategory) {
+                // Filter by audit categories
+                $query->whereHas('finance_category', function($subQ) use ($auditCategories) {
+                    $subQ->where(function($qq) use ($auditCategories) {
+                        foreach ($auditCategories as $index => $auditCategory) {
+                            if ($index == 0) {
+                                $qq->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            } else {
+                                $qq->orWhere('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            }
+                        }
+                    });
+                });
+            }
+            
+            $query->with([
+                'departmentMaster' => function($query) {
+                    $query->select('departmentSystemID', 'DepartmentID');
+                },
+                'department' => function($query) {
+                    $query->select('serviceLineSystemID', 'ServiceLineCode');
+                },
+                'location' => function($query) {
+                    $query->select('locationID', 'locationName');
+                },
+                'asset_type' => function($query) {
+                    $query->select('typeID', 'typeDes');
+                },
+                'category_by' => function($query) {
+                    $query->select('faCatID', 'catDescription');
+                },
+                'sub_category_by' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by2' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by3' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'finance_category' => function($query) {
+                    $query->select('faFinanceCatID', 'financeCatDescription');
+                },
+                'posttogl_by' => function($query) {
+                    $query->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+                'depperiod_by' => function($query) use ($today) {
+                    $query->whereHas('master_by', function ($q) use ($today) {
+                        $q->where('approved', -1)
+                        ->where('depDate', '<', $today);
+                    })
+                    ->selectRaw('faID, SUM(depAmountLocal) as totalDepAmountLocal, SUM(depAmountRpt) as totalDepAmountRpt')
+                    ->groupBy('faID');
+                },
+                'group_all_to' => function($query) {
+                    $query->where('approved', -1);
+                },
+                'insurance_detail' => function($query) {
+                    $query->with([
+                        'policy_by' => function($q) {
+                            $q->select('insurancePolicyTypesID', 'policyDescription');
+                        },
+                        'location_by' => function($q) {
+                            $q->select('locationID', 'locationName');
+                        }
+                    ]);
+                },
+                'warranty_detail' => function($query) {
+                    $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
+                }
+            ]);
+
+            $query->orderBy('faID', 'asc');
+
+            $assets = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Prepare the result data
             $result = [];
 
             foreach ($assets as $asset) {
@@ -3031,7 +3109,22 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $result[] = $assetData;
             }
 
-            return $this->sendResponse($result, 'Asset details retrieved successfully');
+            // Transform the paginated collection with our result data
+            $transformedItems = collect($result);
+            
+            // Create a new paginator with transformed data, preserving pagination metadata
+            $paginatedResult = new LengthAwarePaginator(
+                $transformedItems,
+                $assets->total(),
+                $assets->perPage(),
+                $assets->currentPage(),
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            return $this->sendResponse($paginatedResult->toArray(), 'Asset details retrieved successfully');
 
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);
