@@ -183,8 +183,11 @@ class BudgetNotificationService
 
         $hod = $department->hod->employee;
 
-        $baseurl = config('app.url');
-        $linkUrl = $baseurl . '/#/budget-planning/planning';
+        $baseurl = \Helper::checkDomai();
+        $parsedUrl = parse_url($baseurl);
+        $domain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
+        $linkUrl = $domain . '/#/budget-planning/planning';
+        
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
@@ -199,7 +202,7 @@ class BudgetNotificationService
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
         );
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
 
    }
 
@@ -245,7 +248,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
 
    }
 
@@ -272,7 +275,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
 
    }
 
@@ -325,7 +328,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -375,7 +378,7 @@ class BudgetNotificationService
                             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
                         );
 
-                        \Email::sendEmailErp($emails);
+                        \Email::sendEmail($emails);
                     }
                 }
             }
@@ -418,7 +421,7 @@ class BudgetNotificationService
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
         );
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
    }
 
    private function sendFinalSubmissionToFinanceEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -456,7 +459,7 @@ class BudgetNotificationService
                 'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
             );
     
-            \Email::sendEmailErp($emails);
+            \Email::sendEmail($emails);
         }
 
    }
@@ -484,7 +487,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
    }
 
 
@@ -521,7 +524,7 @@ class BudgetNotificationService
                 'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
             );
     
-            \Email::sendEmailErp($emails);
+            \Email::sendEmail($emails);
         }
    }
 
@@ -550,7 +553,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
    }
 
    private function sendTimeExtensionRequestCancelledEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -574,7 +577,7 @@ class BudgetNotificationService
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
         );
 
-        \Email::sendEmailErp($emails);
+        \Email::sendEmail($emails);
         
    }
 
