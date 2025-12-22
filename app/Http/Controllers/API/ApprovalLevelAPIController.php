@@ -79,10 +79,12 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
 
-        $approvalLevelValidation = $this->approvalLevelValidation($input);
+        if(isset($input['documentSystemID']) && ($input['documentSystemID'] != 1)){
+            $approvalLevelValidation = $this->approvalLevelValidation($input);
 
-        if (!$approvalLevelValidation['status']) {
-            return $this->sendError($approvalLevelValidation['message'], 500);
+            if (!$approvalLevelValidation['status']) {
+                return $this->sendError($approvalLevelValidation['message'], 500);
+            }
         }
 
         $companyID = Company::where('companySystemID', $input["companySystemID"])->first();
@@ -328,7 +330,7 @@ class ApprovalLevelAPIController extends AppBaseController
                     $query->where('workflow', $input['workflow']);
                 });
             })
-            ->when($activate && (isset($input['documentSystemID']) && $input['documentSystemID'] == 1), function ($query) use ($input) {
+            ->when($activate && (isset($input['documentSystemID']) && $input['documentSystemID'] == 1) && (isset($input['prTypeWise']) && $input['prTypeWise']), function ($query) use ($input) {
                 $query->where('prType', $input['prType']);
             })
             ->where('isActive', -1)

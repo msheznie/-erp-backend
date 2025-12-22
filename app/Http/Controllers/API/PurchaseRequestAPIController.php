@@ -2131,7 +2131,8 @@ class PurchaseRequestAPIController extends AppBaseController
                 'document' => $purchaseRequest->documentSystemID,
                 'segment' => $input['serviceLineSystemID'],
                 'category' => $input['financeCategory'],
-                'amount' => $amount
+                'amount' => $amount,
+                'prType' => $input['prType']
             );
 
             $confirm = \Helper::confirmDocument($params);
