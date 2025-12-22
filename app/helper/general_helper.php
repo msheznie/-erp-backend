@@ -5406,8 +5406,7 @@ class Helper
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $link = env('SRM_LINK');
-                                    $loginLink = str_replace("/register/", "/", $link);
+                                    $loginLink = rtrim(config('srm.url.loginLink'), '/register/');
                                     $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]);
                                     $dataEmail['alertMessage'] = trans('email.registration_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
