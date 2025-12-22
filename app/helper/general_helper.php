@@ -3294,6 +3294,7 @@ class Helper
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
                                 $isValueWise = $policy->isAmountApproval;
+                                $isPRTypeWise = $policy->isPRTypeApproval;
                                 $isAttachment = $policy->isAttachmentYN;
 
                                 $fromCiUpload = false;
@@ -3378,6 +3379,18 @@ class Helper
                                 }
                             }
 
+                            if ($isPRTypeWise && ($reference_document_id == 1)) {
+                                if (array_key_exists('prType', $params)) {
+                                    if ($params["prType"]) {
+                                        $approvalLevel->where('prType', $params["prType"]);
+                                        $approvalLevel->where('prTypeWise', 1);
+                                    } else {
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                    }
+                                } else {
+                                    return ['success' => false, 'message' => trans('custom.pr_type_parameter_missing')];
+                                }
+                            }
 
                             $output = $approvalLevel->first();
 
@@ -3412,6 +3425,19 @@ class Helper
                                             }
                                         } else {
                                             return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                        }
+                                    }
+
+                                    if ($isPRTypeWise && ($reference_document_id == 1)) {
+                                        if (array_key_exists('prType', $params)) {
+                                            if ($params["prType"]) {
+                                                $approvalLevel->where('prType', $params["prType"]);
+                                                $approvalLevel->where('prTypeWise', 1);
+                                            } else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.pr_type_parameter_missing')];
                                         }
                                     }
 

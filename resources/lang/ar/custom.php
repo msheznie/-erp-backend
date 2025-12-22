@@ -9658,4 +9658,5 @@ return
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'تم إرسال تقرير استهلاك الأصول الثابتة (PDF) إلى قائمة الانتظار',
     'asset_depreciation_report_pdf_generated' => 'تم إنشاء ملف PDF لتقرير إهلاك الأصول.',
     'mol_contribution' => 'مساهمة المول',
+    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.'
   ];

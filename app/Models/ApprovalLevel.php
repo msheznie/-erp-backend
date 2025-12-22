@@ -77,7 +77,8 @@ class ApprovalLevel extends Model
         'tenderTypeId',
         'tenderTypeCode',
         'workflow',
-        'prType'
+        'prType',
+        'prTypeWise'
     ];
 
     /**
@@ -108,7 +109,8 @@ class ApprovalLevel extends Model
         'tenderTypeId'=> 'integer',
         'tenderTypeCode' => 'string',
         'workflow' => 'integer',
-        'prType' => 'integer'
+        'prType' => 'integer',
+        'prTypeWise' => 'integer'
     ];
 
     /**
