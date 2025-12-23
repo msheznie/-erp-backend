@@ -421,6 +421,7 @@ class TenderFinalBidsAPIController extends AppBaseController
     {
         $tenderId = $request->get('id');
         $employeeID = $request->get('userID');
+        $lang = $request->get('lang', 'en');
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
@@ -448,13 +449,44 @@ class TenderFinalBidsAPIController extends AppBaseController
 
         $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
-        $time = strtotime("now");
-        $fileName = 'Minutes_of_Tender_Awarding' . $time . '.pdf';
         $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData);
+        $time = strtotime("now");
+        $fileName = 'supplier_ranking_summary' . $tenderId . '_' . $time . '.pdf';
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4-P',
+            'setAutoTopMargin' => 'stretch',
+            'autoMarginPadding' => -10
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.minutes_of_tender_awarding_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printSupplierInvoice: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+       /* $time = strtotime("now");
+        $fileName = 'Minutes_of_Tender_Awarding' . $time . '.pdf';
+
         $html = view('print.minutes_of_tender_awarding_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);*/
 
     }
 

@@ -1,4 +1,4 @@
-<html>
+<html dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" lang="{{ app()->getLocale() }}">
 <head>
     <title>{{ __('custom.minutes_of_tender_awarding') }}</title>
     <style>
@@ -28,7 +28,14 @@
         body {
             font-size: 12px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
+
+        @if(app()->getLocale() == 'ar')
+        body {
+            font-family: 'Noto Sans Arabic', sans-serif !important;
+        }
+        @endif
 
         h3 {
             font-size: 24.5px;
@@ -58,7 +65,7 @@
 
 
         .font-weight-bold {
-            font-weight: 700 !important;
+            font-weight: 500 !important;
         }
 
         .table thead th {
@@ -131,13 +138,13 @@
     <table style="width:100%; border: none">
         <tr>
             <td width="40%" style="border: none"><span
-                        class="font-weight-bold">Printed By :</span> {{$employeeData->empName}}
+                        class="font-weight-bold">{{ __('custom.printed_by') }} : </span> {{$employeeData->empName}}
             </td>
         </tr>
     </table>
     <table style="width:100%; border: none">
         <tr>
-            <td style="border: none"><span class="font-weight-bold">Printed Date & Time :</span>{{date('d/m/Y h:i A')}}</span><br></td>
+            <td style="border: none"><span class="font-weight-bold">{{ __('custom.printed_date_time') }} :</span>{{date('d/m/Y h:i A')}}</span><br></td>
         </tr>
         <tr>
             &nbsp;
@@ -153,7 +160,7 @@
             <td style="width:33%;font-size: 10px;vertical-align: top; border: none; border: none">
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top; border: none">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
                 @if ($company)
                     {{$company->CompanyName}}
                 @endif
@@ -178,8 +185,8 @@
                     <br>
                     <table style="border: none">
                         <tr>
-                            <td width="100px" style="border: none">
-                                <span style="font-size: 18px;font-weight: 400">Minutes of Tender Awarding</span>
+                            <td style="border: none">
+                                <span style="font-size: 18px;font-weight: 400">{{ __('custom.minutes_of_tender_awarding') }}</span>
                             </td>
                         </tr>
                     </table>
@@ -189,7 +196,7 @@
     <hr style="color: #d3d9df">
     <br>
     <br>
-    <table style="width:100%; font-size: 12px;">
+    <table style="width:100%; font-size: 11px;">
         <tbody>
         <tr>
             <td><strong>Tender Code:</strong></td>
