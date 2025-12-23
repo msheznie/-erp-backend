@@ -9752,5 +9752,9 @@ return
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'Asset Depreciation PDF report has been sent to queue',
     'asset_depreciation_report_pdf_generated' => 'Asset Depreciation Report PDF has been generated.',
     'mol_contribution' => 'Mol Contribution',
-    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.'
+    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.',
+    'deduct_from_invoice' => 'Deduct from Invoice (Supplier)',
+    'organization_bears_wht' => 'Organization Bears WHT',
+    'supplier_has_pending_documents' => 'Supplier cannot be amended as the supplier selected has pending documents',
+    'use_of_supplier_checking_done' => 'Use of supplier checking is done',
   ];

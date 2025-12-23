@@ -174,7 +174,8 @@ class SupplierMaster extends Model
         'mol_applicable',
         'mol_rate',
         'mol_payment_mode',
-        'isDelegation'
+        'isDelegation',
+        'paymentMethod'
     ];
 
     /**
@@ -261,7 +262,8 @@ class SupplierMaster extends Model
         'whtType' => 'integer',
         'mol_applicable' => 'integer',
         'mol_rate' => 'float',
-        'mol_payment_mode' => 'integer'
+        'mol_payment_mode' => 'integer',
+        'paymentMethod' => 'integer'
     ];
 
     /**

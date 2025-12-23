@@ -9645,5 +9645,9 @@ return
     'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'تم إرسال تقرير استهلاك الأصول الثابتة (PDF) إلى قائمة الانتظار',
     'asset_depreciation_report_pdf_generated' => 'تم إنشاء ملف PDF لتقرير إهلاك الأصول.',
     'mol_contribution' => 'مساهمة المول',
-    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.'
+    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.',
+    'deduct_from_invoice' => 'طريقة الدفع (المورد)',
+    'organization_bears_wht' => 'المؤسسة تدفع WHT',
+    'supplier_has_pending_documents' => 'لا يمكن تعديل المورد كونه لديه مستندات معلقة',
+    'use_of_supplier_checking_done' => 'تم التحقق من المورد بنجاح',
   ];

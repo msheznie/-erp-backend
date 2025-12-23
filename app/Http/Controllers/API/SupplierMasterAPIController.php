@@ -89,6 +89,7 @@ use App\Repositories\SupplierBlockRepository;
 use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
+use App\helper\CheckPendingDoc;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1098,7 +1099,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $newValue['isLCCYN'] = isset($input['isLCCYN'])?$input['isLCCYN']:-1;
                 $newValue['isSMEYN'] = isset($input['isSMEYN'])?$input['isSMEYN']:-1;
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN','omanization']), $id);
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN','omanization','paymentMethod']), $id);
                 SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN']));
                 // user activity log table
                 if($supplierMaster){
@@ -2538,6 +2539,17 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             $successMessages[] = trans('custom.use_of_advance_account_checking_payment');
             $amendable['advanceAmendable'] = true;
+        }
+        $amendable['whtPaymentMethodAmendable'] = true;
+        $documentIds = [3,11,4];
+        foreach($documentIds as $documentId) {
+            $output = CheckPendingDoc::process($documentId,$input['supplierID'],$supplierMaster->primaryCompanySystemID);
+            if($output['value'] == false) {
+                $errorMessages[] = trans('custom.supplier_has_pending_documents');
+                $amendable['whtPaymentMethodAmendable'] = false;
+                break;
+            }
+            
         }
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
