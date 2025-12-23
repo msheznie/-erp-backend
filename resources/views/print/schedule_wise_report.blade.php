@@ -1,7 +1,34 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>{{ __('custom.item_supplier') }}</title>
+    <title> </title>
     <style>
+        body {
+            font-size: 11px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
+        }
+
+        .text-left {
+            text-align: right !important;
+        }
+
+        .text-right {
+            text-align: left !important;
+        }
+
+        table {
+            direction: rtl;
+        }
+
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
         table, th, td {
             border: 1px solid black;
             border-collapse: collapse;

@@ -4817,6 +4817,7 @@ class TenderMasterAPIController extends AppBaseController
         $employeeID = $request->get('userID');
         $companyId = $request->get('companySystemID');
         $isNegotiation = $request->get('isNegotiation');
+        $lang = $request->get('lang', 'en');
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
@@ -4863,11 +4864,48 @@ class TenderMasterAPIController extends AppBaseController
         $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids,
             'isNegotiation' => $isNegotiation,
             'tenderBidsSupplierList' => $tenderBidsSupplierList,
-            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails);
-        $html = view('print.minutes_of_bid_opening_print', $order);
+            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails,
+            'lang' => $lang);
+        /*$html = view('print.minutes_of_bid_opening_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);*/
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 10,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.minutes_of_bid_opening_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in getTenderBidOpeningReport: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+
 
     }
 

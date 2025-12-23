@@ -375,6 +375,8 @@ class TenderFinalBidsAPIController extends AppBaseController
     {
         $tenderId = $request->get('id');
         $employeeID = $request->get('userID');
+        $lang = $request->get('lang', 'en');
+
         $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')
             ->where('id', $tenderId)
             ->first();
@@ -410,11 +412,48 @@ class TenderFinalBidsAPIController extends AppBaseController
         $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
         $time = strtotime("now");
         $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
-        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData);
+        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData, 'lang' => $lang);
+
+        // Check if Arabic language for RTL support
+        $isRTL = ($lang === 'ar');
+
+        // Configure mPDF for RTL support if Arabic
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 30,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+
         $html = view('print.final_bid_summary_print', $order);
+
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            \Log::error('mPDF Error in getFinalBidsReport: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+       /* $html = view('print.final_bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);*/
     }
 
     public function getTenderAwardingReport(Request $request)
@@ -449,7 +488,7 @@ class TenderFinalBidsAPIController extends AppBaseController
 
         $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
-        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData);
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData,  'lang' => $lang);
         $time = strtotime("now");
         $fileName = 'supplier_ranking_summary' . $tenderId . '_' . $time . '.pdf';
 
@@ -458,9 +497,16 @@ class TenderFinalBidsAPIController extends AppBaseController
         $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'),
             'mode' => 'utf-8',
-            'format' => 'A4-P',
+            'format' => 'A4',
             'setAutoTopMargin' => 'stretch',
-            'autoMarginPadding' => -10
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 20,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
         ], $lang);
 
         if ($isRTL) {

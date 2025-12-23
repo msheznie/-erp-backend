@@ -1,6 +1,6 @@
-<html dir="{{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }}" lang="{{ app()->getLocale() }}">
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
-    <title>{{ __('custom.minutes_of_tender_awarding') }}</title>
+    <title> </title>
     <style>
         @page {
             margin-left: 30px;
@@ -31,9 +31,27 @@
             direction: {{ app()->getLocale() == 'ar' ? 'rtl' : 'ltr' }};
         }
 
-        @if(app()->getLocale() == 'ar')
+        @if(isset($lang) && $lang === 'ar')
         body {
-            font-family: 'Noto Sans Arabic', sans-serif !important;
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
+        }
+
+        .text-left {
+            text-align: right !important;
+        }
+
+        .text-right {
+            text-align: left !important;
+        }
+
+        table {
+            direction: rtl;
+        }
+
+        .table th, .table td {
+            text-align: right;
         }
         @endif
 
