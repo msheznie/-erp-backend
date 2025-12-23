@@ -64,6 +64,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Pagination\LengthAwarePaginator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -2789,17 +2790,38 @@ class FixedAssetMasterAPIController extends AppBaseController
                     ->ofCompany([$companySystemID])
                     ->first();
 
-            if (!$asset) {
-                return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
-            }
+                if (!$asset) {
+                    return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
+                }
 
-            if ($asset->approved != -1) {
-                $approvalStatus = $this->getApprovalStatus($asset);
-                return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
-            }
+                if ($asset->approved != -1) {
+                    $approvalStatus = $this->getApprovalStatus($asset);
+                    return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
+                }
 
-            if ($asset->DIPOSED == -1) {
-                return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+                if ($asset->DIPOSED == -1) {
+                    return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+                }
+            }
+        }
+
+        // Validate audit categories if provided
+        if ($searchByAuditCategory) {
+            $auditCategories = $input['audit_categories'];
+            
+            // Validate each audit category
+            foreach ($auditCategories as $auditCategory) {
+                
+                // Check if any assets exist with this audit category for the company
+                $auditCategoryExists = FixedAssetMaster::ofCompany([$companySystemID])
+                    ->whereHas('finance_category', function($query) use ($auditCategory) {
+                        $query->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                    })
+                    ->exists();
+
+                if (!$auditCategoryExists) {
+                    return $this->sendError("The audit category '{$auditCategory}' not matching with system", 422);
+                }
             }
         }
 
@@ -2904,6 +2926,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             ]);
 
+
+            $query->orderBy('faID', 'asc');
+
+            $assets = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Prepare the result data
             $result = [];
 
             foreach ($assets as $asset) {
@@ -3080,7 +3108,22 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $result[] = $assetData;
             }
 
-            return $this->sendResponse($result, 'Asset details retrieved successfully');
+            // Transform the paginated collection with our result data
+            $transformedItems = collect($result);
+            
+            // Create a new paginator with transformed data, preserving pagination metadata
+            $paginatedResult = new LengthAwarePaginator(
+                $transformedItems,
+                $assets->total(),
+                $assets->perPage(),
+                $assets->currentPage(),
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            return $this->sendResponse($paginatedResult->toArray(), 'Asset details retrieved successfully');
 
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage(), 500);
