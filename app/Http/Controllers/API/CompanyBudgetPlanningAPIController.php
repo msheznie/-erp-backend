@@ -1052,7 +1052,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $departmentsWithoutHOD = [];
         $departmentsWithoutBudgetTemplate = [];
         $departmentsWithoutSegments = [];
-        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
+        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('isActive', 1)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
 
 
         $workflow = WorkflowConfiguration::find($data['workflow']);
