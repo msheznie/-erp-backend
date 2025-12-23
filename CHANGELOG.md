@@ -1,6 +1,21 @@
 # Changelog
 
 
+## [10.96.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.95.0...v10.96.0) (2025-12-19)
+
+
+### Features
+
+* **Delivery Appointment:** Show PO when creating Delivery Appointment [GSUP-4526] ([#9372](https://github.com/pbsgears/Gears_BackEnd/issues/9372)) ([3c69944](https://github.com/pbsgears/Gears_BackEnd/commit/3c69944405fccab011ca85e9761c53d456db6688))
+* **Purchase Order:** Show PO delivery location in Supplier Portal PO View [GSUP-4517] ([#9375](https://github.com/pbsgears/Gears_BackEnd/issues/9375)) ([ac45644](https://github.com/pbsgears/Gears_BackEnd/commit/ac456448dd04c328f3ac22efc03387c191949077))
+* **srm:** GRV Creation Based on Delivery Appointment validation [GSUP-4596] ([#9392](https://github.com/pbsgears/Gears_BackEnd/issues/9392)) ([54c4300](https://github.com/pbsgears/Gears_BackEnd/commit/54c4300c4544a24d1ba94af48fdb27650f0d62b2))
+* **srm:** GRV creation based on Delivery Appointment Validation Enhancement [GSUP-4567] ([#9362](https://github.com/pbsgears/Gears_BackEnd/issues/9362)) ([fd3dcf9](https://github.com/pbsgears/Gears_BackEnd/commit/fd3dcf9ba1e8f65bac6d9a29067826a170bcd5c7))
+* **srm:** PO Acknowledgement function [GSUP-4351] ([#9353](https://github.com/pbsgears/Gears_BackEnd/issues/9353)) ([2ecd8c7](https://github.com/pbsgears/Gears_BackEnd/commit/2ecd8c7415e2786a03e4c2d62ca86cbb418fbf6b))
+* **srm:** Procurement lifecycle report [GSUP-3376] ([#9385](https://github.com/pbsgears/Gears_BackEnd/issues/9385)) ([45c6328](https://github.com/pbsgears/Gears_BackEnd/commit/45c63281ea3ae91de10f04df7542c328668b190d))
+* **srm:** tender notification senario changes [GSUP-2213] ([#9386](https://github.com/pbsgears/Gears_BackEnd/issues/9386)) ([a072ab4](https://github.com/pbsgears/Gears_BackEnd/commit/a072ab4ce73d51de8797eedeb9c0dbb088073a70))
+* **Supplier KYC:** Supplier Management | Supplier KYC enhancement [GSUP-4527] ([#9370](https://github.com/pbsgears/Gears_BackEnd/issues/9370)) ([4c6b593](https://github.com/pbsgears/Gears_BackEnd/commit/4c6b59309fc71892883c0c3570a7272a76c75522))
+* **Tender:** Change the Invite supplier option for Tender, show the option in the Tender View page [GSUP-2248] ([#9395](https://github.com/pbsgears/Gears_BackEnd/issues/9395)) ([d050e2f](https://github.com/pbsgears/Gears_BackEnd/commit/d050e2f6d9e84030b9aa31717de1701216f2373c))
+
 ## [10.95.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.1...v10.95.0) (2025-12-14)
 
 
