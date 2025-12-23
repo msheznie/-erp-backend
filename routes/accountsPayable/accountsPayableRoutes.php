@@ -68,6 +68,7 @@ Route::group([], function(){
     Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote')->name('Get details by debit note');
     Route::put('debitNoteLocalUpdate/{id}', 'DebitNoteAPIController@debitNoteLocalUpdate')->name('Debit note local update');
     Route::put('debitNoteReportingUpdate/{id}','DebitNoteAPIController@debitNoteReportingUpdate')->name('Debit note reporting update');
+    Route::put('debitNoteSetDefaultExchangeRate/{id}', 'DebitNoteAPIController@setDefaultExchangeRate')->name('Set default debit note exchange rate');
     Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen')->name('Debit note reopen');
     Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory')->name('Get debit note payment status history');
     Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote')->name('Amend debit Note');

@@ -98,7 +98,8 @@ class QuotationMasterRefferedbackRepository extends BaseRepository
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'salesType'
     ];
 
     /**

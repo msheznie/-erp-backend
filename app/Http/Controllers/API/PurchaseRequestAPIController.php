@@ -323,6 +323,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $companyFinanceYear = \Helper::companyFinanceYear($companyId);
 
+        $prTypeApproval = CompanyDocumentAttachment::where('companySystemID', $companyId)->where('documentSystemID', 1)->first();
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -340,7 +341,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'financialYears' => $financialYears,
             'conditions' => $conditions,
             'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0,
-            'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false
+            'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false,
+            'isPRTypeApprovalOn' => isset($prTypeApproval) && $prTypeApproval->isPRTypeApproval == -1
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
@@ -2082,6 +2084,13 @@ class PurchaseRequestAPIController extends AppBaseController
                 }
             }
 
+            if(isset($input['prType']) && ($input['prType'] == 0 || $input['prType'] == null)) {
+                $prTypeApproval = CompanyDocumentAttachment::where('companySystemID', $purchaseRequest->companySystemID)->where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+                if($prTypeApproval && $prTypeApproval->isPRTypeApproval == -1) {
+                    return $this->sendError(trans('custom.pr_type_is_not_selected'), 500);
+                }
+            }
+
             $checkItems = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->count();
 
@@ -2122,7 +2131,8 @@ class PurchaseRequestAPIController extends AppBaseController
                 'document' => $purchaseRequest->documentSystemID,
                 'segment' => $input['serviceLineSystemID'],
                 'category' => $input['financeCategory'],
-                'amount' => $amount
+                'amount' => $amount,
+                'prType' => $input['prType']
             );
 
             $confirm = \Helper::confirmDocument($params);

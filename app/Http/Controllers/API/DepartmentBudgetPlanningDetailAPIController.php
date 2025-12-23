@@ -27,6 +27,8 @@ use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
 use App\User;
+use App\helper\CreateExcel;
+use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -266,29 +268,148 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Handle segment filtering
             $segments = $request->input('segments');
             if (!empty($segments) && is_array($segments)) {
-                // Extract segment IDs from the segments array
-                $segmentIds = array_column($segments, 'id');
+                // Handle both array of objects and array of IDs
+                if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
+                    $segmentIds = array_column($segments, 'id');
+                } else {
+                    $segmentIds = $segments; // Already an array of IDs
+                }
                 if (!empty($segmentIds)) {
                     $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
-                        $q->whereIn('serviceLineSystemID', $segmentIds);
+                        $q->whereHas('segment', function ($q2) use ($segmentIds) {
+                            $q2->whereIn('serviceLineSystemID', $segmentIds);
+                        });
                     });
                 }
             }
 
-            $total = $query->count();
+            // Handle Parent GL filtering
+            $parentGLs = $request->input('parentGLs');
+            if (!empty($parentGLs) && is_array($parentGLs)) {
+                // Handle both array of strings and array of objects
+                $parentGLValues = [];
+                foreach ($parentGLs as $gl) {
+                    if (is_array($gl) && isset($gl['id'])) {
+                        $parentGLValues[] = $gl['id'];
+                    } elseif (is_string($gl)) {
+                        $parentGLValues[] = $gl;
+                    }
+                }
+                if (!empty($parentGLValues)) {
+                    $query->whereHas('budgetTemplateGl', function ($q) use ($parentGLValues) {
+                        $q->whereHas('chartOfAccount', function ($q2) use ($parentGLValues) {
+                            $q2->whereHas('templateCategoryDetails', function ($q3) use ($parentGLValues) {
+                                $q3->whereIn('description', $parentGLValues);
+                            });
+                        });
+                    });
+                }
+            }
 
-            $data = $query->skip($offset)->take($pageSize)->get();
+            // Handle GL Description filtering
+            $glDescriptions = $request->input('glDescriptions');
+            if (!empty($glDescriptions) && is_array($glDescriptions)) {
+                // Handle both array of strings and array of objects
+                $glDescValues = [];
+                foreach ($glDescriptions as $desc) {
+                    if (is_array($desc) && isset($desc['id'])) {
+                        $glDescValues[] = $desc['id'];
+                    } elseif (is_string($desc)) {
+                        $glDescValues[] = $desc;
+                    }
+                }
+                if (!empty($glDescValues)) {
+                    $query->whereHas('budgetTemplateGl', function ($q) use ($glDescValues) {
+                        $q->whereHas('chartOfAccount', function ($q2) use ($glDescValues) {
+                            $q2->where(function ($q3) use ($glDescValues) {
+                                foreach ($glDescValues as $glDesc) {
+                                    // Format: "AccountCode - AccountDescription"
+                                    $parts = explode(' - ', $glDesc, 2);
+                                    if (count($parts) == 2) {
+                                        $q3->orWhere(function ($q4) use ($parts) {
+                                            $q4->where('AccountCode', $parts[0])
+                                               ->where('AccountDescription', $parts[1]);
+                                        });
+                                    }
+                                }
+                            });
+                        });
+                    });
+                }
+            }
+
+            // Check if GL-based grouping is requested
+            $isGLBased = $request->input('isGLBased', false);
+            
+            if ($isGLBased) {
+                // Group by GL and aggregate amounts
+                // Get all data for grouping (without pagination for grouping)
+                $allData = $query->get();
+                
+                // Group by budget_template_gl_id and aggregate
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    $glId = $item->budget_template_gl_id;
+                    
+                    if (!isset($groupedData[$glId])) {
+                        // Use the first item as base and modify it
+                        // Create a new model instance to preserve relationships and accessors
+                        $groupedItem = $item->replicate();
+                        
+                        // Reset amount fields to 0 for aggregation
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        
+                        // Remove segment for GL-based view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        
+                        // Ensure relationships are loaded
+                        if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
+                            $groupedItem->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                        }
+                        if (!$groupedItem->relationLoaded('responsiblePerson')) {
+                            $groupedItem->load('responsiblePerson');
+                        }
+                        
+                        $groupedData[$glId] = $groupedItem;
+                    }
+                    
+                    // Sum up all amount fields
+                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                // Convert to collection and apply pagination
+                $groupedCollection = collect(array_values($groupedData));
+                $total = $groupedCollection->count();
+                $data = $groupedCollection->slice($offset, $pageSize)->values();
+            } else {
+                $total = $query->count();
+                $data = $query->skip($offset)->take($pageSize)->get();
+            }
 
             // Check financeTeamStatus and add isEnable field based on selectedGlSections
             $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
             $selectedGlSections = [];
             $workflowMethod = null;
             
-            if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3) {
+            if ($budgetPlanning) {
                 if ($budgetPlanning->workflow) {
                     $workflowMethod = $budgetPlanning->workflow->method;
                 }
                 $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
+                    ->whereIn('revisionStatus', [1, 2])
                     ->orderBy('created_at', 'desc')
                     ->first();
                 
@@ -297,17 +418,20 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
             
-            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod) {
+            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased) {
                 $isEnable = true;
                 
-                if ($budgetPlanning && $budgetPlanning->financeTeamStatus == 3 && !empty($selectedGlSections)) {
-                    if ($workflowMethod == 1) {
+                if ($budgetPlanning  && !empty($selectedGlSections)) {
+                    if ($workflowMethod == 1 && !$isGLBased) {
                         $isEnable = in_array($item->id, $selectedGlSections);
                     } else {
                         $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
                     }
                 }
                 
+                if($budgetPlanning->workStatus == 3 ){
+                    $isEnable = false;
+                }
                 $item->isEnable = $isEnable;
                 return $item;
             });
@@ -1102,7 +1226,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
 
-        $query = DepartmentBudgetPlanning::with('department.hod.employee','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
+        $query = DepartmentBudgetPlanning::with('department.hod.employee','revisions','timeExtensionRequests')->where('companyBudgetPlanningID',$input['companyBudgetPlanningId'])->orderBy('id', $sort);;
         return \DataTables::of($query)
             ->addColumn('newDate', function ($row) {
                 if ($row->timeExtensionRequests->count() > 0) {
@@ -1123,5 +1247,206 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             ->addIndexColumn()
             ->make(true);
 
+    }
+
+    /**
+     * Export budget planning details to Excel
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function exportBudgetPlanningDetails(Request $request)
+    {
+        try {
+            $input = $request->all();
+            $departmentPlanningId = $request->input('budgetPlanningId');
+
+            if (!$departmentPlanningId) {
+                return $this->sendError(trans('custom.department_planning_id_is_required'));
+            }
+
+            $employeeID = \Helper::getEmployeeSystemID();
+            $newRequest = new Request();
+            $newRequest->replace([
+                'companyId' => $request->input('companySystemID'),
+                'departmentBudgetPlanningDetailID' => $departmentPlanningId,
+                'delegateUser' => $employeeID
+            ]);
+            $controller = app(CompanyBudgetPlanningAPIController::class);
+            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+            $query = DepartmentBudgetPlanningDetail::with([
+                'departmentSegment.segment',
+                'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
+                'responsiblePerson'
+            ]);
+
+            if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
+                $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)->pluck('departmentEmployeeSystemID')->toArray();
+                $query->whereHas('budgetDelegateAccessDetails', function ($q) use ($delegateIDs) {
+                    $q->whereIn('delegatee_id', $delegateIDs);
+                });
+            }
+
+            $query->forDepartmentPlanning($departmentPlanningId);
+
+            // Apply search filter
+            $search = $request->input('search');
+            if ($search && is_string($search)) {
+                $search = str_replace("\\", "\\\\", $search);
+                $query = $query->where(function ($query) use ($search) {
+                    $query->whereHas('budgetTemplateGl', function ($q1) use ($search) {
+                        $q1->whereHas('chartOfAccount', function ($q2) use ($search) {
+                            $q2->where('controlAccounts', 'LIKE', "%{$search}%")
+                                ->orWhere('AccountCode', 'LIKE', "%{$search}%")
+                                ->orWhere('AccountDescription', 'LIKE', "%{$search}%");
+                        });
+                    })
+                    ->orWhereHas('departmentSegment', function ($q3) use ($search) {
+                        $q3->whereHas('segment', function ($q4) use ($search) {
+                            $q4->where('ServiceLineCode', 'LIKE', "%{$search}%")
+                                ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
+                        });
+                    });
+                });
+            }
+
+            // Handle segment filtering
+            $segments = $request->input('segments');
+            if (!empty($segments) && is_array($segments)) {
+                if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
+                    $segmentIds = array_column($segments, 'id');
+                } else {
+                    $segmentIds = $segments;
+                }
+                if (!empty($segmentIds)) {
+                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                        $q->whereHas('segment', function ($q2) use ($segmentIds) {
+                            $q2->whereIn('serviceLineSystemID', $segmentIds);
+                        });
+                    });
+                }
+            }
+
+            // Handle Parent GL filtering
+            $parentGLs = $request->input('parentGLs');
+            if (!empty($parentGLs) && is_array($parentGLs)) {
+                $parentGLValues = [];
+                foreach ($parentGLs as $gl) {
+                    if (is_array($gl) && isset($gl['id'])) {
+                        $parentGLValues[] = $gl['id'];
+                    } elseif (is_string($gl)) {
+                        $parentGLValues[] = $gl;
+                    }
+                }
+                if (!empty($parentGLValues)) {
+                    $query->whereHas('budgetTemplateGl', function ($q) use ($parentGLValues) {
+                        $q->whereHas('chartOfAccount', function ($q2) use ($parentGLValues) {
+                            $q2->whereHas('templateCategoryDetails', function ($q3) use ($parentGLValues) {
+                                $q3->whereIn('description', $parentGLValues);
+                            });
+                        });
+                    });
+                }
+            }
+
+            // Handle GL Description filtering
+            $glDescriptions = $request->input('glDescriptions');
+            if (!empty($glDescriptions) && is_array($glDescriptions)) {
+                $glDescValues = [];
+                foreach ($glDescriptions as $desc) {
+                    if (is_array($desc) && isset($desc['id'])) {
+                        $glDescValues[] = $desc['id'];
+                    } elseif (is_string($desc)) {
+                        $glDescValues[] = $desc;
+                    }
+                }
+                if (!empty($glDescValues)) {
+                    $query->whereHas('budgetTemplateGl', function ($q) use ($glDescValues) {
+                        $q->whereHas('chartOfAccount', function ($q2) use ($glDescValues) {
+                            $q2->where(function ($q3) use ($glDescValues) {
+                                foreach ($glDescValues as $glDesc) {
+                                    $parts = explode(' - ', $glDesc, 2);
+                                    if (count($parts) == 2) {
+                                        $q3->orWhere(function ($q4) use ($parts) {
+                                            $q4->where('AccountCode', $parts[0])
+                                               ->where('AccountDescription', $parts[1]);
+                                        });
+                                    }
+                                }
+                            });
+                        });
+                    });
+                }
+            }
+
+            $dataset = $query->orderBy('id', 'desc')->get();
+
+            $data = array();
+            $x = 0;
+            foreach ($dataset as $val) {
+                $x++;
+                $data[$x]['#'] = $x;
+                $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
+                    ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
+                    : '';
+                $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
+                    ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
+                    : '';
+                $data[$x]['Parent GL'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
+                    ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
+                    : '';
+                $data[$x]['GL Description'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
+                    ? ($val->budgetTemplateGl->chartOfAccount->AccountCode . ' - ' . $val->budgetTemplateGl->chartOfAccount->AccountDescription) 
+                    : '';
+                $data[$x]['Responsible Person'] = $val->responsiblePerson 
+                    ? $val->responsiblePerson->empName 
+                    : '';
+                $data[$x]['Request Amount'] = number_format($val->request_amount ?? 0, 2);
+                $data[$x]['Time for Submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
+                $data[$x]['Previous Year Budget'] = number_format($val->previous_year_budget ?? 0, 2);
+                $data[$x]['Current Year Budget'] = number_format($val->current_year_budget ?? 0, 2);
+                $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
+                $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
+                $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
+            }
+
+            $companyMaster = Company::find($request->input('companySystemID'));
+            $companyCode = $companyMaster->CompanyID ?? 'common';
+            $detail_array = array(
+                'company_code' => $companyCode,
+            );
+
+            $fileName = 'budget_planning_details';
+            $path = 'system/budget_planning_details/excel/';
+            $type = 'xls';
+            $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+
+            if ($basePath == '') {
+                return $this->sendError('Unable to export excel');
+            } else {
+                return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
+
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_exporting_excel') . ': ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Get internal status label
+     *
+     * @param int $status
+     * @return string
+     */
+    private function getInternalStatusLabel($status)
+    {
+        switch ($status) {
+            case 1: return 'Pending';
+            case 2: return 'Approved';
+            case 3: return 'Rejected';
+            case 4: return 'Under Review';
+            default: return 'N/A';
+        }
     }
 }
