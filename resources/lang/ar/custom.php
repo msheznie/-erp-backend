@@ -4,6 +4,9 @@ return
     [
     'default' => 'افتراضي',
     'so_qty_cannot_be_greater_than_balance' => 'لا يمكن أن تكون كمية طلب المبيعات أكبر من كمية الرصيد',
+    'total_qty_exceeds_remaining_quotation_qty' => 'الكمية الإجمالية (كمية الوحدة × كمية المستخدم) تتجاوز كمية عرض السعر المتبقية. يرجى تقليل القيم والمحاولة مرة أخرى.',
+    'cannot_exceed_quotation_user_qty' => 'لا يمكن تجاوز كمية المستخدم لعرض السعر. المسموح: :value',
+    'cannot_exceed_quotation_unit_qty' => 'لا يمكن تجاوز كمية الوحدة لعرض السعر. المسموح: :value',
     'selected_item_already_added' => 'المادة المحدد مضاف بالفعل. يرجى التحقق مرة أخرى',
     'no_items_selected_to_add' => 'لم يتم اختيار أي عناصر للإضافة',
     'item_not_configured_for_sales' => 'هذه المادة غير مُكوّنة للمبيعات.',

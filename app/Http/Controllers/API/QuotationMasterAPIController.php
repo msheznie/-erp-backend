@@ -545,15 +545,28 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         // updating header amounts
-        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
-                                                     COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
-                                                     COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
-                                                     COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
-                                                     COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
-                                                     COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
-                                                     COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
-                                                     ")
-                                         ->where('quotationMasterID', $id)->first();
+        if(isset($input['salesType']) && $input['salesType'] == 2){
+            $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                            COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                            COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                            COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                            COALESCE(SUM(VATAmount * requestedQty * userQty),0) as totalVATAmount,
+                            COALESCE(SUM(VATAmountLocal * requestedQty * userQty),0) as totalVATAmountLocal,
+                            COALESCE(SUM(VATAmountRpt * requestedQty * userQty),0) as totalVATAmountRpt
+                            ")
+                            ->where('quotationMasterID', $id)->first();
+        } else {
+            $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                            COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                            COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                            COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                            COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
+                            COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
+                            COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
+                            ")
+                            ->where('quotationMasterID', $id)->first();
+        }
+
         $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
         $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
         $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
@@ -1642,7 +1655,7 @@ class QuotationMasterAPIController extends AppBaseController
                             FROM
                                 erp_quotationdetails quotationdetails
                                 INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
+                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty * userQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
                             WHERE
                                 quotationdetails.quotationMasterID = ' . $id . ' 
                                 AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInDOorCI != 1');

@@ -4,6 +4,9 @@ return
     [
     'default' => 'Default',
     'so_qty_cannot_be_greater_than_balance' => 'SO Qty cannot be greater than SO balance Qty',
+    'total_qty_exceeds_remaining_quotation_qty' => 'The total quantity (Unit Qty × User Qty) exceeds the remaining quotation quantity. Please reduce the values and try again.',
+    'cannot_exceed_quotation_user_qty' => 'Cannot exceed quotation User Qty. allowed: :value',
+    'cannot_exceed_quotation_unit_qty' => 'Cannot exceed quotation Unit Qty. allowed: :value',
     'selected_item_already_added' => 'Selected item is already added. Please check again',
     'no_items_selected_to_add' => 'No items selected to add.',
     'item_not_configured_for_sales' => 'This item is not configured for sales.',

@@ -594,11 +594,18 @@ class QuotationDetailsAPIController extends AppBaseController
                                                                 'closedYN' => 0
                                                             ]);
 
+                    if($quotationMaster->salesType == 2){
+                        //checking the fullyOrdered or partial in po
+                        $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty*userQty),0) as totalQty'))
+                            ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
+                            ->first();
+                    } else {
+                        //checking the fullyOrdered or partial in po
+                        $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
+                            ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
+                            ->first();
+                    }
 
-                    //checking the fullyOrdered or partial in po
-                    $detailSum = QuotationDetails::select(DB::raw('COALESCE(SUM(requestedQty),0) as totalQty'))
-                        ->where('soQuotationDetailID', $quotationDetails->soQuotationDetailID)
-                        ->first();
 
                     if(empty($detailSum)){
                         return $this->sendError(trans('custom.item_not_found'));
@@ -608,6 +615,13 @@ class QuotationDetailsAPIController extends AppBaseController
 
                     if ($updatedQuoQty == 0) {
                         $fullyOrdered = 0;
+                        if($quotationMaster->salesType == 2){
+                            $updateQuotationMaster = QuotationMaster::find($quotationDetails->soQuotationMasterID)
+                            ->update([
+                                'selectedForSalesOrder' => 0,
+                                'closedYN' => 0
+                            ]);
+                        }
                     } else {
                         $fullyOrdered = 1;
                     }
@@ -812,28 +826,28 @@ WHERE
             return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
+        foreach ($input['detailTable'] as $key => $detail) {
+            if (isset($detail['noQty']) && isset($detail['userQty'])) {
+                $input['detailTable'][$key]['noQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
+                $input['detailTable'][$key]['userQty'] = is_string($detail['userQty']) ? (float)$detail['userQty'] : $detail['userQty'];
+                $input['detailTable'][$key]['unitQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
+                $input['detailTable'][$key]['userQtyInput'] = is_string($detail['userQtyInput']) ? (float)$detail['userQtyInput'] : $detail['userQtyInput'];
+                $input['detailTable'][$key]['userRequestedQty'] = is_string($detail['userRequestedQty']) ? (float)$detail['userRequestedQty'] : $detail['userRequestedQty'];
+            }
+        }
+
         foreach ($input['detailTable'] as $newValidation) {
-            if (($newValidation['isChecked'] && $newValidation['noQty'] == "") || ($newValidation['isChecked'] && $newValidation['noQty'] == 0) || ($newValidation['isChecked'] == '' && $newValidation['noQty'] > 0)) {
+            // Convert noQty to numeric for proper comparison
+            $noQtyValue = isset($newValidation['noQty']) ? (float)$newValidation['noQty'] : 0;
+            if (($newValidation['isChecked'] && ($newValidation['noQty'] == "" || $noQtyValue == 0)) || ($newValidation['isChecked'] == '' && $noQtyValue > 0)) {
 
                 if (isset($input['salesType']) && $input['salesType'] == 2) {
-                    $messages = [
-                        'required' => trans('custom.unit_qty_field_is_required'),
-                    ];
+                    $errorMessage = trans('custom.unit_qty_field_is_required');
                 } else {
-                    $messages = [
-                        'required' => trans('custom.so_quantity_field_is_required'),
-                    ];
+                    $errorMessage = trans('custom.so_quantity_field_is_required');
                 }
 
-
-                $validator = \Validator::make($newValidation, [
-                    'noQty' => 'required',
-                    'isChecked' => 'required',
-                ], $messages);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
+                return $this->sendError(['noQty' => [$errorMessage]], 422);
             }
 
             // Validation for salesType = 2: unitQty field
@@ -861,21 +875,39 @@ WHERE
             if (isset($input['salesType']) && $input['salesType'] == 2) {
                 foreach ($input['detailTable'] as $key => $detail) {
                     if (isset($detail['noQty']) && isset($detail['userQty']) && $detail['userQty'] > 0) {
-                        $input['detailTable'][$key]['requestedQty'] = $detail['noQty'];
+                        $input['detailTable'][$key]['unitQty'] = $detail['noQty'];
+                        $input['detailTable'][$key]['requestedQty'] = $detail['totalSoBalanceQty'];
                         $input['detailTable'][$key]['noQty'] = $detail['noQty'] * $detail['userQty'];
                     }
                 }
                 $remaingQty = $newValidation['totalSoBalanceQty'] - $newValidation['soTakenQty'];
+                $validQty = $newValidation['noQty'] * $newValidation['userQty'];
             } else {
                 $remaingQty = $newValidation['requestedQty'] - $newValidation['soTakenQty'];
+                $validQty = $newValidation['noQty'];
             }
 
-
-            if ($remaingQty < $newValidation['noQty']) {
-                return $this->sendError(trans('custom.so_qty_cannot_be_greater_than_balance'));
+            if(isset($newValidation['requestedUnitQty'])){
+                if($newValidation['requestedUnitQty'] < $newValidation['unitQty']){
+                    return $this->sendError(str_replace(':value', $newValidation['requestedUnitQty'], trans('custom.cannot_exceed_quotation_unit_qty')));
+                }
             }
+
+            if(isset($newValidation['userRequestedQty'])){
+                if($newValidation['userRequestedQty'] < $newValidation['userQtyInput']){
+                    return $this->sendError(str_replace(':value', $newValidation['userRequestedQty'], trans('custom.cannot_exceed_quotation_user_qty')));
+                }
+            }
+
+            if ($remaingQty < $validQty) {  
+                if($input['salesType'] == 2){
+                    return $this->sendError(trans('custom.total_qty_exceeds_remaining_quotation_qty'));
+                } else {
+                    return $this->sendError(trans('custom.so_qty_cannot_be_greater_than_balance'));
+                }
+            }
+
         }
-
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
@@ -928,7 +960,7 @@ WHERE
                     ->where('quotationMasterID', $salesOrderID)
                     ->where('soQuotationDetailID', $new['quotationDetailsID'])
                     ->first();
-
+                    $soQuotationMasterID = $new['quotationMasterID'];
                 if (empty($qoDetailExist)) {
                     $soQuotationMasterID = $new['quotationMasterID'];
                     if ($new['isChecked'] && $new['noQty'] > 0) {
@@ -948,24 +980,13 @@ WHERE
 
                         $totalAddedQty = $new['noQty'] + $detailSum['totalNoQty'];
 
-                        if ($qoMaster->salesType == 2) {
-                            if ($new['requestedQty'] * $new['userQty'] == $totalAddedQty) {
-                                $fullyOrdered = 2;
-                            } else {
-                                $fullyOrdered = 1;
-                            }
+                        if ($new['requestedQty'] == $totalAddedQty) {
+                            $fullyOrdered = 2;
                         } else {
-                            if ($new['requestedQty'] == $totalAddedQty) {
-                                $fullyOrdered = 2;
-                            } else {
-                                $fullyOrdered = 1;
-                            }
+                            $fullyOrdered = 1;
                         }
 
                         $requestedQty = $new['requestedQty'];
-                        if ($qoMaster->salesType == 2) {
-                            $requestedQty = $new['requestedQty'] * $new['userQty'];
-                        }
 
                         // checking the qty request is matching with sum total
                         if ($requestedQty >= $new['noQty']) {
@@ -982,7 +1003,13 @@ WHERE
                             }
 
                             $new['qtyIssuedDefaultMeasure'] = $new['noQty'];
-                            $new['requestedQty'] = $new['requestedQty'];
+                            if($qoMaster->salesType == 2){
+                                $new['requestedQty'] = $new['unitQty'];
+                                $new['totalSoBalanceQty'] = $new['userQty'] * $new['unitQty'];
+                            } else {
+                                $new['requestedQty'] = $new['noQty'];
+                                $new['totalSoBalanceQty'] = $new['noQty'];
+                            }
                             $new['soQuotationMasterID'] = $new['quotationMasterID'];
                             $new['quotationMasterID'] = $salesOrderID;
 
@@ -1010,6 +1037,10 @@ WHERE
                             unset($new['modifiedUserName']);
                             unset($new['noQty']);
                             unset($new['soTakenQty']);
+                            unset($new['userQtyInput']);
+                            unset($new['userRequestedQty']);
+                            unset($new['requestedUnitQty']);
+                            unset($new['unitQty']);
                             $new['soQuotationDetailID'] = $new['quotationDetailsID'];
                             
                             $new['createdPCID'] = gethostname();
@@ -1084,13 +1115,29 @@ WHERE
     }
 
     private function updateSalesQuotationOrderStatus($quotationMasterID){
-
+        $quotationMaster = QuotationMaster::where('quotationMasterID',$quotationMasterID)->first();
+        if(empty($quotationMaster)){
+            throw new \Exception(trans('custom.quotation_master_not_found'));
+        }
         $status = 0;
         $isInDO = 0;
-        $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
-
+        if($quotationMaster->salesType == 2){
+            $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)
+                ->select(DB::raw('COALESCE(SUM(requestedQty*userQty),0) as totalQty'))
+                ->first();
+            $invQty = $invQty ? $invQty->totalQty : 0;
+        } else {
+            $invQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
+        }
         if($invQty!=0) {
-            $quotationQty = QuotationDetails::where('quotationMasterID',$quotationMasterID)->sum('requestedQty');
+            if($quotationMaster->salesType == 2){
+                $quotationQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)
+                    ->select(DB::raw('COALESCE(SUM(requestedQty*userQty),0) as totalQty'))
+                    ->first();
+                $quotationQty = $quotationQty ? $quotationQty->totalQty : 0;
+            } else {
+                $quotationQty = QuotationDetails::where('soQuotationMasterID',$quotationMasterID)->sum('requestedQty');
+            }
             if($invQty == $quotationQty){
                 $status = 2;    // fully invoiced
             }else{
