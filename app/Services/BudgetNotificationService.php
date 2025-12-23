@@ -137,7 +137,7 @@ class BudgetNotificationService
                 $this->sendKickOffEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'task-delegation':
-                $this->sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                // $this->sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'delegation-confirmation':
                 $this->sendDelegationConfirmationEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
