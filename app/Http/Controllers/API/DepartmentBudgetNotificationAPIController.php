@@ -413,7 +413,7 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
                 $now = now();
                 $kickOffNotifications = BudgetNotification::all();
                 foreach($kickOffNotifications as $kickOffNotification){ 
-                    if($kickOffNotification->slug == 'task-delegation' || $kickOffNotification->slug == 'deadline-warning'){
+                    if($kickOffNotification->slug == 'deadline-warning'){
                         $reminderTime = 48;
                     }else{
                         $reminderTime = 0;
