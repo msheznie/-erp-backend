@@ -724,13 +724,29 @@ class QuotationDetailsAPIController extends AppBaseController
         $detail = DB::select('SELECT
 	quotationdetails.*,
 	erp_quotationmaster.serviceLineSystemID,
+	erp_quotationmaster.salesType,
 	"" AS isChecked,
 	"" AS noQty,
 	IFNULL(dodetails.invTakenQty,0) as invTakenQty 
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,quotationDetailsID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY quotationDetailsID ) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
+	LEFT JOIN ( 
+		SELECT 
+			erp_customerinvoiceitemdetails.customerItemDetailID,
+			erp_customerinvoiceitemdetails.quotationDetailsID,
+			erp_quotationmaster_inner.salesType,
+			SUM( 
+				CASE 
+					WHEN erp_quotationmaster_inner.salesType = 2 THEN erp_customerinvoiceitemdetails.qtyIssuedDefaultMeasure * IFNULL(erp_customerinvoiceitemdetails.userQty, 1)
+					ELSE erp_customerinvoiceitemdetails.qtyIssuedDefaultMeasure 
+				END
+			) AS invTakenQty 
+		FROM erp_customerinvoiceitemdetails 
+		INNER JOIN erp_quotationdetails qd ON erp_customerinvoiceitemdetails.quotationDetailsID = qd.quotationDetailsID
+		INNER JOIN erp_quotationmaster erp_quotationmaster_inner ON qd.quotationMasterID = erp_quotationmaster_inner.quotationMasterID
+		GROUP BY erp_customerinvoiceitemdetails.quotationDetailsID, erp_quotationmaster_inner.salesType
+	) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
 	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
