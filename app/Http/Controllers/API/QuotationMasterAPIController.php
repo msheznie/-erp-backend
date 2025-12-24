@@ -1562,6 +1562,9 @@ class QuotationMasterAPIController extends AppBaseController
             ->when($invoice->salesType == 4, function($query) {
                 $query->where('salesType', 1);
             })
+            ->when($invoice->salesType == 3, function($query) {
+                $query->where('salesType', 2);
+            })
             ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
