@@ -555,7 +555,12 @@ class email
 
 
                 $data['isEmailSend'] = 0;
-                $temp = trans('email.hi') . " " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
+
+                if($data['docSystemID'] == 133){
+                    $temp = $data['emailAlertMessage'] . $footer;
+                }else {
+                    $temp = trans('email.hi') . " " . $data['empName'] . ',' . $data['emailAlertMessage'] . $footer;
+                }
 
                 $data['emailAlertMessage'] = $temp;
 
