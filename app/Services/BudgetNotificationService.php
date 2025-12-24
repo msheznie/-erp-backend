@@ -137,10 +137,10 @@ class BudgetNotificationService
                 $this->sendKickOffEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'task-delegation':
-                // $this->sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                $this->sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'delegation-confirmation':
-                $this->sendDelegationConfirmationEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+                // $this->sendDelegationConfirmationEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'deadline-warning':
                 $this->sendDeadlineWarningEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
@@ -195,11 +195,14 @@ class BudgetNotificationService
             'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">' . $linkUrl . '</a>'
         ];
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $hod->empEmail,
             'companySystemID' => $departmentBudgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $hod->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
         \Email::sendEmail($emails);
@@ -240,11 +243,14 @@ class BudgetNotificationService
         $bodyTemplate = $budgetNotifications->body;
         
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $delegatee->employee->empEmail,
             'companySystemID' => $departmentBudgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $delegatee->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
 
@@ -267,11 +273,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks,
+            'empSystemID' => $budgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
 
@@ -320,11 +329,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $departmentBudgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
 
@@ -371,11 +383,14 @@ class BudgetNotificationService
                         $subjectTemplate = $budgetNotifications->subject;
                         $bodyTemplate = $budgetNotifications->body;
 
-                        $emails = array(
+                        $emails[] = array(
                             'empEmail' => $employee->empEmail,
                             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
                             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-                            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+                            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+                            'empSystemID' => $employee->employeeSystemID,
+                            'docSystemID' => 133,
+                            'docSystemCode' => $departmentBudgetPlanningID
                         );
 
                         \Email::sendEmail($emails);
@@ -414,11 +429,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
         
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $budgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
         \Email::sendEmail($emails);
@@ -452,11 +470,14 @@ class BudgetNotificationService
                 continue;
             }
 
-            $emails = array(
+            $emails[] = array(
                 'empEmail' => $financeUser->employee->empEmail,
                 'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
                 'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+                'empSystemID' => $financeUser->employee->employeeSystemID,
+                'docSystemID' => 133,
+                'docSystemCode' => $departmentBudgetPlanningID
             );
     
             \Email::sendEmail($emails);
@@ -479,11 +500,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $departmentBudgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
 
@@ -517,11 +541,14 @@ class BudgetNotificationService
                 continue;
             }
 
-            $emails = array(
+            $emails[] = array(
                 'empEmail' => $financeUser->employee->empEmail,
                 'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
                 'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+                'empSystemID' => $financeUser->employee->employeeSystemID,
+                'docSystemID' => 133,
+                'docSystemCode' => $departmentBudgetPlanningID
             );
     
             \Email::sendEmail($emails);
@@ -545,11 +572,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $departmentBudgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
 
@@ -570,11 +600,14 @@ class BudgetNotificationService
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
 
-        $emails = array(
+        $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
             'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false), // Subject doesn't need line breaks
-            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true) // Body needs line breaks
+            'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
+            'empSystemID' => $departmentBudgetPlanning->department->hod->employee->employeeSystemID,
+            'docSystemID' => 133,
+            'docSystemCode' => $departmentBudgetPlanningID
         );
 
         \Email::sendEmail($emails);
