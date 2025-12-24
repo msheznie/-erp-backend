@@ -23,6 +23,7 @@ use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderMaster;
 use App\Models\VatReturnFillingMaster;
 use App\Models\AssetDisposalMaster;
+use App\Models\DepartmentBudgetPlanning;
 use App\Models\AssetVerification;
 use App\Models\BankAccount;
 use App\Models\BankReconciliation;
@@ -111,6 +112,7 @@ class email
                 ->where('ActivationFlag', -1)
                 ->where('empLoginActive', 1)
                 ->where('empActive', 1)->first();
+
             if(isset($employee)){
                 if (!empty($employee)) {
                     $data['empID'] = $employee->empID;
@@ -539,9 +541,17 @@ class email
                             $data['docCode'] = $segment->serviceLineCode;
                         }
                         break;
+                    case 133:
+                        $companyDepartmentEmployee = DepartmentBudgetPlanning::where('id', $data['docSystemCode'])->first();
+                        if (!empty($companyDepartmentEmployee)) {
+                            $data['docApprovedYN'] = true;
+                            $data['docCode'] = $companyDepartmentEmployee->planningCode;
+                        }
+                        break;                        
                     default:
                         return ['success' => false, 'message' => trans('email.document_id_not_found')];
                 }
+
 
 
                 $data['isEmailSend'] = 0;
@@ -564,14 +574,12 @@ class email
                 }
 
                 $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
-
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
                     ->where('companyPolicyCategoryID', 37)
                     ->where('isYesNO', 1)
                     ->exists();
-
 
                 if ($hasPolicy) {
                         $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
@@ -625,6 +633,7 @@ class email
             ->where('companyPolicyCategoryID', 37)
             ->where('isYesNO', 1)
             ->exists();
+
         if ($hasPolicy) {
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
             $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
