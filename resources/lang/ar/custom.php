@@ -9231,14 +9231,14 @@ return
     'asset_code' => 'رمز الأصل',
     'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة',
     'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت',
-    
+
     // Additional translations for ProcumentOrderAPIController
     'invoice_payment' => 'دفع الفاتورة',
     'expense_account_configuration_incorrect' => 'إعداد حساب المصروفات غير صحيح. يرجى تفعيل includePLforGRVYN للمادة(ات) :items',
     'finance_category_not_found' => 'فئة الإرتباط المالي للمواد :itemCode غير موجودة',
     'finance_category_accounts_not_updated' => 'حسابات فئة الإرتباط المالي غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة الإرتباط المالي للمادة :item',
     'finance_category_accounts_not_updated_multiple' => 'حسابات فئة الإرتباط المالي غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة الإرتباط المالي للمواد (ات) :items',
-    
+
     // Additional translations for ExportPODetailExcel
     'unable_to_export_excel' => 'غير قادر على تصدير ملف إكسل',
     'hash' => '#',
@@ -9289,7 +9289,7 @@ return
     'vat_sub_category' => 'فئة فرعية لضريبة القيمة المضافة',
     'addon_details' => 'تفاصيل الإضافات',
     'purchase_order_detailed_excel_generated' => 'تم إنشاء ملف إكسل مفصل لأمر الشراء',
-    
+
     // Document names for export
     'purchase_order' => 'أمر الشراء',
     'purchase_direct_order' => 'أمر شراء مباشر',
@@ -9382,7 +9382,7 @@ return
     'image_not_found' => 'الصورة غير موجودة',
     'net_profit_or_loss_(as_per_profit/loss_account)' => 'صافي الربح أو الخسارة (حسب حساب الأرباح والخسائر)',
     'supplier_statement_' => 'كشف_المورد_',
-    
+
     // Budget Consumption Service Translations
     'budget_exceeded_project' => 'تم تجاوز الميزانية للمشروع : ',
     'budget_exceeded_gl_account' => 'تم تجاوز الميزانية لحساب دفتر الأستاذ : ',
@@ -9400,7 +9400,7 @@ return
     'budget_check_not_set_document' => 'لم يتم تعيين فحص الميزانية لهذا المستند',
     'budget_consumption_not_set_document' => 'لم يتم تعيين استهلاك الميزانية لهذا المستند',
     'warehouse_required' => 'حقل المستودع مطلوب',
-    
+
     // Payment Terms Translations
     'payment_terms' => 'شروط الدفع',
     'delivery_terms' => 'شروط التسليم',
@@ -9418,7 +9418,7 @@ return
     'termination' => 'الإنهاء',
     'insurance' => 'التأمين',
     'indemnity' => 'التعويض',
-    
+
     // Procurement Order Service translations
     'item_qty_not_updated' => 'لم يتم تحديث كمية المادة لصف إكسل: :row',
     'quantity_numeric_required' => 'يجب أن تكون الكمية قيمة رقمية لصف إكسل: :row',
@@ -9436,7 +9436,7 @@ return
     'item_code_not_match' => 'رمز المادة لا يتطابق مع النظام لصف إكسل: :row',
     'item_already_allocated' => 'تم تخصيص المادة بالفعل لمركز التكلفة المحدد',
     'add_multiple_items_end' => 'انتهاء إضافة عناصر متعددة',
-    
+
     // Purchase Order Status Controller translations
     'something_went_wrong_contact_admin' => 'حدث خطأ ما. يرجى الاتصال بمدير النظام',
     'unable_to_edit_status' => 'لا يمكنك تعديل هذا الحالة',
@@ -9447,19 +9447,19 @@ return
     'grv_not_received' => 'لم يتم الاستلام',
     'grv_partially_received' => 'تم الاستلام جزئياً',
     'validation_valid' => 'صحيح',
-    
+
     // PO Payment Terms Controller translations
     'at_least_one_item_required' => 'يجب إضافة مادة واحدة على الأقل لإنشاء شروط الدفع',
     'payment_in' => 'دفع داخلي',
     'advance_payment' => 'دفعة مقدمة',
-    
+
     // Email body translations
     'email_status_label' => 'الحالة :',
     'email_comment_label' => 'التعليق :',
-    
+
     // Excel sheet translations
     'excel_sheet_name' => 'ورقة',
-    
+
     // Excel column headers
     'excel_company_id' => 'معرف المؤسسة',
     'excel_order_details' => 'تفاصيل الطلب',
@@ -9468,12 +9468,12 @@ return
     'excel_logistics_details' => 'تفاصيل اللوجستيات',
     'excel_category' => 'الفئة',
     'excel_addon_details' => 'تفاصيل الإضافات',
-    
+
     // Excel file names
     'excel_po_details_export' => 'تصدير_تفاصيل_أوامر_الشراء',
     'excel_pr_details_export' => 'تصدير_تفاصيل_طلبات_الشراء',
     'excel_po_detail_export' => 'تصدير_تفاصيل_أوامر_الشراء',
-    
+
     // Shift Details Controller translations
     'inventory_availability' => 'توفر المخزون',
 
@@ -9511,16 +9511,16 @@ return
     'dep_amount_local' => 'قيمة الإهلاك المحلية',
     'dep_amount_rpt' => 'قيمة الإهلاك (العملة الأجنبية)',
     'asset_depreciation' => 'إهلاك_الأصول',
-    
+
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
-    
+
     // Export error messages
     'unable_to_export_excel' => 'غير قادر على تصدير ملف إكسل',
     // Excel export file names
     'pr_detail_export' => 'تصدير_تفاصيل_طلب_الشراء',
-    
+
     // Excel column headers
     'excel_company_id' => 'معرف المؤسسة',
     'excel_order_details' => 'تفاصيل الطلب',
@@ -9529,11 +9529,11 @@ return
     'excel_logistics_details' => 'تفاصيل اللوجستيات',
     'excel_category' => 'الفئة',
     'excel_addon_details' => 'تفاصيل الإضافات',
-    
+
     // Notification translations
     'purchase_order_detailed_excel_generated' => 'تم إنشاء ملف إكسل مفصل لأمر الشراء',
     'excel_generation_completed' => 'تم إنشاء ملف الإكسل بنجاح',
-    
+
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
@@ -9549,7 +9549,7 @@ return
 
     // Match document master
     'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
-   
+
     'advance_payment_amount_more_than_document' => 'مبلغ الدفعة المقدمة أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
     'no_active_finance_year_found' => 'لم يتم العثور على سنة مالية نشطة',
     'matching_type_found' => 'تم العثور على نوع مطابقة',
@@ -9650,4 +9650,10 @@ return
     'organization_bears_wht' => 'المؤسسة تدفع WHT',
     'supplier_has_pending_documents' => 'لا يمكن تعديل المورد كونه لديه مستندات معلقة',
     'use_of_supplier_checking_done' => 'تم التحقق من المورد بنجاح',
+    'start_date_is_required_for_time_based_access' => 'تاريخ البدء مطلوب للوصول القائم على الوقت.',
+    'end_date_is_required_for_time_based_access' => 'تاريخ الانتهاء مطلوب للوصول القائم على الوقت.',
+    'start_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ البدء أكبر من أو يساوي التاريخ الحالي.',
+    'end_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي التاريخ الحالي.',
+    'end_date_must_be_greater_than_or_equal_to_start_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي تاريخ البدء.',
+    'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'لا يمكن إنشاء التفويض. تاريخ انتهاء التفويض أقدم من تاريخ انتهاء وصول المستخدم.',
   ];
