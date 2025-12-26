@@ -842,6 +842,11 @@ WHERE
             return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
+        // Filter to keep only checked rows for better performance
+        $input['detailTable'] = array_values(array_filter($input['detailTable'], function($detail) {
+            return isset($detail['isChecked']) && $detail['isChecked'] === true;
+        }));
+
         foreach ($input['detailTable'] as $key => $detail) {
             if (isset($detail['noQty']) && isset($detail['userQty'])) {
                 $input['detailTable'][$key]['noQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
