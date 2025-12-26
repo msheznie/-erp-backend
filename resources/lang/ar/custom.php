@@ -9650,6 +9650,8 @@ return
     'organization_bears_wht' => 'المؤسسة تدفع WHT',
     'supplier_has_pending_documents' => 'لا يمكن تعديل المورد كونه لديه مستندات معلقة',
     'use_of_supplier_checking_done' => 'تم التحقق من المورد بنجاح',
+    'wht_stup_is_not_assigned' => 'إعداد ضريبة الاستقطاع (WHT) غير مكتمل: يرجى تعيين حسابات الأستاذ العام لكلٍ من المورّد والمصروف قبل تأكيد الفاتورة.',
+    'wht_type_not_found' => 'نوع ضريبة الاستقطاع (WHT) غير موجود',
     'start_date_is_required_for_time_based_access' => 'تاريخ البدء مطلوب للوصول القائم على الوقت.',
     'end_date_is_required_for_time_based_access' => 'تاريخ الانتهاء مطلوب للوصول القائم على الوقت.',
     'start_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ البدء أكبر من أو يساوي التاريخ الحالي.',

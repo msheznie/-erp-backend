@@ -677,10 +677,10 @@
                         <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.net_total') }}</td>
                         @if($masterdata->rcmActivated)
                             <td class="text-right"
-                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
+                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0), $transDecimal)}}</td>
                         @else
                             <td class="text-right"
-                                style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) - $retentionVatPortion), $transDecimal)}}</td>
+                                style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) - $retentionVatPortion - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0)), $transDecimal)}}</td>
                         @endif
                     </tr>
                     @if ($masterdata->documentType != 4)

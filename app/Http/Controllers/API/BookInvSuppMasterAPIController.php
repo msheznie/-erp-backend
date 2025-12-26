@@ -348,7 +348,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         },'supplier' => function($query){
-            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType,mol_applicable,mol_rate');
+            $query->with('tax')->selectRaw('CONCAT(primarySupplierCode," | ",supplierName) as supplierName,supplierCodeSystem,vatPercentage,retentionPercentage,whtApplicableYN,whtType,mol_applicable,mol_rate,paymentMethod');
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
@@ -827,7 +827,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $taxSetup = Tax::where('taxMasterAutoID',$bookInvSuppMaster->whtType)->first();
             if($bookInvSuppMaster->whtApplicable && $bookInvSuppMaster->documentType != 4  && $taxSetup)
             {
-                if($taxSetup->authorityAutoID <= 0 ||  $taxSetup->authorityAutoID == null){
+                if($taxSetup->authorityAutoID <= 0 ||  $taxSetup->authorityAutoID == null || $taxSetup->inputVatGLAccountAutoID <= 0 || $taxSetup->inputVatGLAccountAutoID == null){
                     return $this->sendError(trans('custom.tax_authority_not_assigned_wht'), 500);
                 }
             }
@@ -2525,6 +2525,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                         ->get();
         $whtTypes = Tax::where('companySystemID',$companyId)->where('taxCategory',3)->where('isActive',1)->get();
 
+        $paymentMethodOptions = array(
+            array('id' => 1, 'description' => trans('custom.deduct_from_invoice') ,'isDefault' => true),
+            array('id' => 2, 'description' => trans('custom.organization_bears_wht') ,'isDefault' => false)
+        );
+
         $contractEnablePolicy = Helper::checkPolicy($companyId, 93);
 
         $output = array('yesNoSelection' => $yesNoSelection,
@@ -2549,7 +2554,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'projects' => $projects,
             'employeeAllocatePolicy' => ($employeeAllocate && $employeeAllocate->isYesNO == 1) ? true : false,
             'whtTypes' => $whtTypes,
-            'contractEnablePolicy' => $contractEnablePolicy
+            'contractEnablePolicy' => $contractEnablePolicy,
+            'paymentMethodOptions' => $paymentMethodOptions
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));

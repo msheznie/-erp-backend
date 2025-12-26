@@ -133,6 +133,7 @@ class SupplierInvoiceGlService
         $poInvoiceDirectLocalExtCharge = 0;
         $poInvoiceDirectRptExtCharge = 0;
         $poInvoiceDirectTransExtCharge = 0;
+        $whtPaymentMethod = isset($masterData->whtPaymentMethod) ? $masterData->whtPaymentMethod : 0;
 
         $directVATDetails = TaxService::processDirectSupplierInvoiceVAT($masterModel["autoID"], $masterModel["documentSystemID"]);
         $rcmActivated = TaxService::isGRVRCMActivation($masterModel["autoID"]);
@@ -332,9 +333,9 @@ class SupplierInvoiceGlService
 
                         
                     }
-                    $data['documentTransAmount'] = $data['documentTransAmount'] - $whtAmountCon;
-                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - $whtAmountConLocal;
-                    $data['documentRptAmount'] = $data['documentRptAmount'] - $whtAmountConRpt;
+                    $data['documentTransAmount'] = $data['documentTransAmount'] - ($whtPaymentMethod == 1 ? $whtAmountCon : 0);
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - ($whtPaymentMethod == 1 ? $whtAmountConLocal : 0);
+                    $data['documentRptAmount'] = $data['documentRptAmount'] - ($whtPaymentMethod == 1 ? $whtAmountConRpt : 0);
 
                 }
             }
@@ -467,6 +468,7 @@ class SupplierInvoiceGlService
                     $whtAuthority = null;
                     if($taxSetup)
                     {
+                        $whtExpensGL = $taxSetup->inputVatGLAccountAutoID;
                         $whtAuthority = $taxSetup->authorityAutoID;
                         $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->with('liablity_account')->first();
                         $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
@@ -484,6 +486,20 @@ class SupplierInvoiceGlService
                         
                     }
                     array_push($finalData, $data);
+
+
+                    if ($whtPaymentMethod == 2) {
+
+                        $data['chartOfAccountSystemID'] = $whtExpensGL;
+                        $data['glCode'] = ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']);
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                        $data['documentTransAmount'] = $whtTrans * -1;
+                        $data['documentLocalAmount'] = $whtLocal * -1;
+                        $data['documentRptAmount'] = $whtRpt * -1;
+                        array_push($finalData, $data);
+                    }
                 }
             }
             
