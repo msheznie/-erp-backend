@@ -9777,4 +9777,10 @@ return
     'organization_bears_wht' => 'Organization Bears WHT',
     'supplier_has_pending_documents' => 'Supplier cannot be amended as the supplier selected has pending documents',
     'use_of_supplier_checking_done' => 'Use of supplier checking is done',
+    'start_date_is_required_for_time_based_access' => 'Start date is required for time-based access.',
+    'end_date_is_required_for_time_based_access' => 'End date is required for time-based access.',
+    'start_date_must_be_greater_than_or_equal_to_current_date' => 'Start date must be greater than or equal to current date.',
+    'end_date_must_be_greater_than_or_equal_to_current_date' => 'End date must be greater than or equal to current date.',
+    'end_date_must_be_greater_than_or_equal_to_start_date' => 'End date must be greater than or equal to start date.',
+    'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'Delegation cannot be created. The delegation end date is earlier than the user\'s access end date.',
   ];
