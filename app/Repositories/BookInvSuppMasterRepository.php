@@ -184,6 +184,9 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.postedDate',
                 'erp_bookinvsuppmaster.supplierInvoiceDate',
                 'erp_bookinvsuppmaster.isBulkItemJobRun',
+                'erp_bookinvsuppmaster.whtApplicable',
+                'erp_bookinvsuppmaster.whtPaymentMethod',
+                'erp_bookinvsuppmaster.whtAmount',
                 DB::raw('COALESCE(
                     CASE 
                         WHEN erp_bookinvsuppmaster.documentType IN (1, 4) THEN (

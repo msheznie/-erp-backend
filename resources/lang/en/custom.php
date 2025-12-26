@@ -9777,6 +9777,8 @@ return
     'organization_bears_wht' => 'Organization Bears WHT',
     'supplier_has_pending_documents' => 'Supplier cannot be amended as the supplier selected has pending documents',
     'use_of_supplier_checking_done' => 'Use of supplier checking is done',
+    'wht_stup_is_not_assigned' => 'WHT setup is incomplete: Please assign both Supplier and Expense GL accounts before confirming the invoice.',
+    'wht_type_not_found' => 'WHT type not found',
     'start_date_is_required_for_time_based_access' => 'Start date is required for time-based access.',
     'end_date_is_required_for_time_based_access' => 'End date is required for time-based access.',
     'start_date_must_be_greater_than_or_equal_to_current_date' => 'Start date must be greater than or equal to current date.',
