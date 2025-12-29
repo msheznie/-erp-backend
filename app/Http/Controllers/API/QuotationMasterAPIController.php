@@ -1628,7 +1628,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
-            ->where('selectedForSalesOrder', 0)
+            // ->where('selectedForSalesOrder', 0)
             ->where('isInDOorCI', '!=',2)
             ->where('isInDOorCI', '!=',1)
             ->where('closedYN',0)

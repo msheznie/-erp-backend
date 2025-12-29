@@ -852,8 +852,8 @@ WHERE
                 $input['detailTable'][$key]['noQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
                 $input['detailTable'][$key]['userQty'] = is_string($detail['userQty']) ? (float)$detail['userQty'] : $detail['userQty'];
                 $input['detailTable'][$key]['unitQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
-                $input['detailTable'][$key]['userQtyInput'] = is_string($detail['userQtyInput']) ? (float)$detail['userQtyInput'] : $detail['userQtyInput'];
-                $input['detailTable'][$key]['userRequestedQty'] = is_string($detail['userRequestedQty']) ? (float)$detail['userRequestedQty'] : $detail['userRequestedQty'];
+                $input['detailTable'][$key]['userQtyInput'] = isset($detail['userQtyInput']) ? (is_string($detail['userQtyInput']) ? (float)$detail['userQtyInput'] : $detail['userQtyInput']) : 0;
+                $input['detailTable'][$key]['userRequestedQty'] = isset($detail['userRequestedQty']) ? (is_string($detail['userRequestedQty']) ? (float)$detail['userRequestedQty'] : $detail['userRequestedQty']) : 0;
             }
         }
 
