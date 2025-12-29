@@ -749,7 +749,8 @@ FROM
 	) AS dodetails ON quotationdetails.quotationDetailsID = dodetails.quotationDetailsID 
 WHERE
 	quotationdetails.quotationMasterID = ' . $id . ' 
-	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1');
+	AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 1 AND erp_quotationmaster.isInSO != 1
+	AND (IFNULL(quotationdetails.totalSoBalanceQty, quotationdetails.requestedQty) - IFNULL(dodetails.invTakenQty, 0)) > 0');
 
         return $this->sendResponse($detail, trans('custom.quotation_details_retrieved_successfully'));
     }
