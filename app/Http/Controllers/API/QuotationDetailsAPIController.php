@@ -858,7 +858,8 @@ WHERE
             }
         }
 
-        foreach ($input['detailTable'] as $newValidation) {
+        
+        foreach ($input['detailTable'] as $key => $newValidation) {
             // Convert noQty to numeric for proper comparison
             $noQtyValue = isset($newValidation['noQty']) ? (float)$newValidation['noQty'] : 0;
             if (($newValidation['isChecked'] && ($newValidation['noQty'] == "" || $noQtyValue == 0)) || ($newValidation['isChecked'] == '' && $noQtyValue > 0)) {
@@ -895,12 +896,10 @@ WHERE
 
             // Update noQty = noQty * userQty when salesType = 2
             if (isset($input['salesType']) && $input['salesType'] == 2) {
-                foreach ($input['detailTable'] as $key => $detail) {
-                    if (isset($detail['noQty']) && isset($detail['userQty']) && $detail['userQty'] > 0) {
-                        $input['detailTable'][$key]['unitQty'] = $detail['noQty'];
-                        $input['detailTable'][$key]['requestedQty'] = $detail['totalSoBalanceQty'];
-                        $input['detailTable'][$key]['noQty'] = $detail['noQty'] * $detail['userQty'];
-                    }
+                if (isset($newValidation['noQty']) && isset($newValidation['userQty']) && $newValidation['userQty'] > 0) {
+                    $input['detailTable'][$key]['unitQty'] = $newValidation['noQty'];
+                    $input['detailTable'][$key]['requestedQty'] = $newValidation['totalSoBalanceQty'];
+                    $input['detailTable'][$key]['noQty'] = $newValidation['noQty'] * $newValidation['userQty'];
                 }
                 $remaingQty = $newValidation['totalSoBalanceQty'] - $newValidation['soTakenQty'];
                 $validQty = $newValidation['noQty'] * $newValidation['userQty'];
@@ -930,7 +929,9 @@ WHERE
             }
 
         }
+
         $itemExistArray = array();
+       
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -964,6 +965,8 @@ WHERE
             }
         }
 
+       
+
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
@@ -973,7 +976,6 @@ WHERE
 
         DB::beginTransaction();
         try {
-
             foreach ($input['detailTable'] as $new) {
 
                 $qoMaster = QuotationMaster::find($new['quotationMasterID']);
