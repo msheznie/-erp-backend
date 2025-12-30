@@ -5,10 +5,9 @@ namespace App\Repositories;
 use App\Models\BudgetMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequest;
-use App\Models\TenderPurchaseRequest;
-use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
+use App\Services\ProcurementLifecycleService;
 
 /**
  * Class PurchaseRequestRepository
@@ -22,6 +21,13 @@ use App\helper\StatusService;
 class PurchaseRequestRepository extends BaseRepository
 {
     protected $data = [];
+    protected $procurementLifecycleService;
+
+    public function __construct()
+    {
+        parent::__construct(app());
+        $this->procurementLifecycleService = new ProcurementLifecycleService();
+    }
     /**
      * @var array
      */
@@ -403,193 +409,10 @@ class PurchaseRequestRepository extends BaseRepository
         }
     }
 
-    public function getProcurementLifecycleReportData($companyId){
-        $tenderPRs = TenderPurchaseRequest::getProcurementLifecycleReportData($companyId);
-
-        $prTypeLabels = [
-            1 => 'Single Source',
-            2 => 'Closed Source',
-            3 => 'Open Source',
-            4 => 'Negotiated',
-        ];
-
-        return  $tenderPRs
-            ->filter(function ($tenderPR) {
-                return $tenderPR->purchase_request !== null;
-            })
-            ->map(function ($tenderPR) use ($prTypeLabels) {
-                $pr = $tenderPR->purchase_request;
-                $tender = $tenderPR->tender;
-                $currencyCode = $pr->currency_by->CurrencyCode;
-                $decimalPlace = $pr->currency_by->DecimalPlaces ?? 2;
-
-                $prValueNumeric = $pr->details->sum('totalCost');
-                $prValue = $currencyCode . ' ' . number_format($prValueNumeric, (int) $decimalPlace);
-
-                $prApprovalLevel = $pr->all_approvals
-                    ->map(function ($approval) {
-                        $name = optional($approval->employee)->empName;
-                        $date = $approval->approvedDate
-                            ? Carbon::parse($approval->approvedDate)->format('d/m/Y, h:i A')
-                            : null;
-
-                        return $name ? [
-                            'level' => $approval->rollLevelOrder,
-                            'name' => $name,
-                            'date' => $date,
-                            'formatted' => 'Level ' . $approval->rollLevelOrder . ': ' . trim($name . ($date ? ", $date" : ''))
-                        ] : null;
-                    })
-                    ->filter()
-                    ->values()
-                    ->toArray();
-
-                $poDetails = $pr->po_details->groupBy('purchaseRequestID');
-                $poData = [];
-
-                foreach ($poDetails as $poDetailGroup) {
-                    $uniquePOs = $poDetailGroup->pluck('order')->filter()->unique('purchaseOrderID');
-
-                    foreach ($uniquePOs as $poOrder) {
-                        if ($poOrder) {
-                            $poCode = $poOrder->purchaseOrderCode ?? '';
-                            $poApprovals = [];
-                            if ($poOrder->all_approvals && $poOrder->all_approvals->isNotEmpty()) {
-                                $poApprovals = $poOrder->all_approvals
-                                    ->map(function ($approval) {
-                                        $name = optional($approval->employee)->empName;
-                                        $date = $approval->approvedDtender_mastersate
-                                            ? Carbon::parse($approval->approvedDate)->format('d/m/Y, h:i A')
-                                            : null;
-
-                                        return $name ? [
-                                            'level' => $approval->rollLevelOrder,
-                                            'name' => $name,
-                                            'date' => $date,
-                                            'formatted' => 'Level ' . $approval->rollLevelOrder . ': ' . trim($name . ($date ? ", $date" : ''))
-                                        ] : null;
-                                    })
-                                    ->filter()
-                                    ->values()
-                                    ->toArray();
-                            }
-
-                            $poData[] = [
-                                'poCode' => $poCode,
-                                'poApprovals' => $poApprovals
-                            ];
-                        }
-                    }
-                }
-
-                $tenderCode = '';
-                $tenderApprovals = [];
-                $bidSubmissionDate = '';
-                $technicalEvaluationDate = '';
-                $commercialEvaluationDate = '';
-                $publishedDate = '';
-
-                if ($tender) {
-                    $tenderCode = $tender->tender_code ?? '';
-                    $bidSubmissionDate = $tender->bid_submission_opening_date
-                        ? Carbon::parse($tender->bid_submission_opening_date)->format('d/m/Y, h:i A')
-                        : '';
-                    $technicalEvaluationDate = $tender->technical_bid_opening_date
-                        ? Carbon::parse($tender->technical_bid_opening_date)->format('d/m/Y, h:i A')
-                        : '';
-                    $commercialEvaluationDate = $tender->commerical_bid_opening_date
-                        ? Carbon::parse($tender->commerical_bid_opening_date)->format('d/m/Y, h:i A')
-                        : '';
-                    $publishedDate = $tender->published_at
-                        ? Carbon::parse($tender->published_at)->format('d/m/Y, h:i A')
-                        : '';
-
-                    if ($tender->all_approvals && $tender->all_approvals->isNotEmpty()) {
-                        $tenderApprovals = $tender->all_approvals
-                            ->map(function ($approval) {
-                                $name = optional($approval->employee)->empName;
-                                $date = $approval->approvedDate
-                                    ? Carbon::parse($approval->approvedDate)->format('d/m/Y, h:i A')
-                                    : null;
-
-                                return $name ? [
-                                    'level' => $approval->rollLevelOrder,
-                                    'name' => $name,
-                                    'date' => $date,
-                                    'formatted' => 'Level ' . $approval->rollLevelOrder . ': ' . trim($name . ($date ? ", $date" : ''))
-                                ] : null;
-                            })
-                            ->filter()
-                            ->values()
-                            ->toArray();
-                    }
-                }
-
-                $contractCode = '';
-                $contractVariation = 'no';
-                $contractVariationTypes = [];
-                $commencementDate = '';
-                $agreementSignedDate = '';
-                $contractEndDate = '';
-
-                if ($tender && $tender->contract) {
-                    $contract = $tender->contract;
-                    $contractCode = $contract->contractCode ?? '';
-
-                    $commencementDate = $contract->startDate
-                        ? Carbon::parse($contract->startDate)->format('d/m/Y')
-                        : '';
-                    $agreementSignedDate = $contract->agreementSignDate
-                        ? Carbon::parse($contract->agreementSignDate)->format('d/m/Y')
-                        : '';
-                    $contractEndDate = $contract->endDate
-                        ? Carbon::parse($contract->endDate)->format('d/m/Y')
-                        : '';
-
-                    $contractStatusLabels = [
-                        1 => 'Amendment',
-                        2 => 'Addended',
-                        3 => 'Renewal',
-                        4 => 'Extension',
-                        5 => 'Revised',
-                        6 => 'Termination',
-                    ];
-
-                    if ($contract->contract_status && $contract->contract_status->isNotEmpty()) {
-                        $contractVariation = 'yes';
-                        $contractVariationTypes = $contract->contract_status
-                            ->map(function ($status) use ($contractStatusLabels) {
-                                return $contractStatusLabels[$status->status] ?? '';
-                            })
-                            ->filter()
-                            ->values()
-                            ->toArray();
-                    }
-                }
-
-                return [
-                    'prCode'                   => $pr->purchaseRequestCode,
-                    'prValue'                  => $prValue,
-                    'prType'                   => $prTypeLabels[$pr->prType] ?? '-',
-                    'prApprovalLevel'          => $prApprovalLevel,
-                    'poData'                   => $poData,
-                    'tenderCode'               => $tenderCode,
-                    'tenderApprovals'          => $tenderApprovals,
-                    'bidSubmissionDate'        => $bidSubmissionDate,
-                    'technicalEvaluationDate'  => $technicalEvaluationDate,
-                    'commercialEvaluationDate' => $commercialEvaluationDate,
-                    'publishedDate'            => $publishedDate,
-                    'contractCode'             => $contractCode,
-                    'contractVariation'        => $contractVariation,
-                    'contractVariationTypes'   => $contractVariationTypes,
-                    'commencementDate'         => $commencementDate,
-                    'agreementSignedDate'      => $agreementSignedDate,
-                    'contractEndDate'          => $contractEndDate,
-                ];
-            })
-            ->values();
+    public function getProcurementLifecycleReportData($companyId, $filters = [])
+    {
+        return $this->procurementLifecycleService->getReportData($companyId, $filters);
     }
-
     public function formatProcurementLifecycleDataForExport($result)
     {
         return collect($result)->map(function ($item) {

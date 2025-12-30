@@ -14,6 +14,7 @@ namespace App\Models;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Awobaz\Compoships\Compoships;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class PurchaseRequest
@@ -508,5 +509,167 @@ class PurchaseRequest extends Model
     public function all_approvals()
     {
         return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['purchaseRequestID', 'documentSystemID']);
+    }
+
+    /**
+     * Get linked PO IDs for a company
+     */
+    public static function getLinkedPOIds($companyId)
+    {
+        return DB::table('erp_purchaseorderdetails')
+            ->join('erp_purchaserequest', 'erp_purchaseorderdetails.purchaseRequestID', '=', 'erp_purchaserequest.purchaseRequestID')
+            ->where('erp_purchaserequest.companySystemID', $companyId)
+            ->pluck('erp_purchaseorderdetails.purchaseOrderMasterID')
+            ->toArray();
+    }
+
+    /**
+     * Get PRs with POs created in date range
+     */
+    public static function getPRsWithPOCreatedInDateRange($companyId, $dateFrom = null, $dateTo = null)
+    {
+        $query = self::where('erp_purchaserequest.companySystemID', $companyId)
+            ->where('erp_purchaserequest.PRConfirmedYN', 1)
+            ->where('erp_purchaserequest.cancelledYN', 0)
+            ->join('erp_purchaseorderdetails', 'erp_purchaserequest.purchaseRequestID', '=', 'erp_purchaseorderdetails.purchaseRequestID')
+            ->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')
+            ->whereNotNull('erp_purchaseordermaster.createdDateTime');
+        
+        if ($dateFrom) {
+            $query->where('erp_purchaseordermaster.createdDateTime', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('erp_purchaseordermaster.createdDateTime', '<=', $dateTo);
+        }
+        
+        return $query->select('erp_purchaserequest.purchaseRequestID')
+            ->distinct()
+            ->pluck('purchaseRequestID')
+            ->toArray();
+    }
+
+    /**
+     * Get confirmed PRs for report
+     */
+    public static function getConfirmedPRsForReport($companyId, $dateFrom = null, $dateTo = null)
+    {
+        $query = self::where('companySystemID', $companyId)
+            ->where('PRConfirmedYN', 1)
+            ->where('cancelledYN', 0);
+        
+        if ($dateFrom) {
+            $query->where('createdDateTime', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('createdDateTime', '<=', $dateTo);
+        }
+        
+        return $query->select('purchaseRequestID', 'purchaseRequestCode', 'prType', 'currency', 'createdDateTime')
+            ->orderBy('createdDateTime', 'desc');
+    }
+
+    /**
+     * Load PR relationships for report
+     */
+    public static function loadPRRelationshipsForReport(array $prIds, int $companyId): array
+    {
+        if (empty($prIds)) {
+            return [];
+        }
+
+        $prInfo = DB::table('erp_purchaserequest as pr')
+            ->leftJoin('currencymaster as cm', 'pr.currency', '=', 'cm.currencyID')
+            ->leftJoin('erp_purchaserequestdetails as prd', 'pr.purchaseRequestID', '=', 'prd.purchaseRequestID')
+            ->whereIn('pr.purchaseRequestID', $prIds)
+            ->select(
+                'pr.purchaseRequestID',
+                'cm.CurrencyCode',
+                'cm.DecimalPlaces',
+                DB::raw('COALESCE(SUM(prd.totalCost), 0) as total')
+            )
+            ->groupBy('pr.purchaseRequestID', 'cm.CurrencyCode', 'cm.DecimalPlaces')
+            ->get()
+            ->keyBy('purchaseRequestID');
+
+        $prDocumentIds = DB::table('erp_purchaserequest')
+            ->whereIn('purchaseRequestID', $prIds)
+            ->pluck('documentSystemID', 'purchaseRequestID');
+
+        $approvals = collect();
+
+        if ($prDocumentIds->isNotEmpty()) {
+            $approvals = DB::table('erp_documentapproved as da')
+                ->leftJoin('employees as e', 'da.employeeSystemID', '=', 'e.employeeSystemID')
+                ->whereIn('da.documentSystemCode', $prIds)
+                ->where('da.approvedYN', -1)
+                ->where('da.companySystemID', $companyId)
+                ->select(
+                    'da.documentSystemCode as purchaseRequestID',
+                    'da.rollLevelOrder',
+                    'e.empName',
+                    'da.approvedDate',
+                    'da.documentSystemID'
+                )
+                ->get()
+                ->filter(function ($a) use ($prDocumentIds) {
+                    return isset($prDocumentIds[$a->purchaseRequestID]) &&
+                        $prDocumentIds[$a->purchaseRequestID] == $a->documentSystemID;
+                })
+                ->groupBy('purchaseRequestID');
+        }
+
+        $tenderPRs = DB::table('srm_tender_purchase_request')
+            ->whereIn('purchase_request_id', $prIds)
+            ->pluck('tender_id', 'purchase_request_id');
+
+        $tenderData = [];
+        if ($tenderPRs->isNotEmpty()) {
+            $tenderData = TenderMaster::loadTenderRelationshipsForReport(
+                $tenderPRs->values()->unique()->toArray(),
+                $companyId
+            );
+        }
+
+        $poDetails = DB::table('erp_purchaseorderdetails')
+            ->whereIn('purchaseRequestID', $prIds)
+            ->select('purchaseRequestID', 'purchaseOrderMasterID')
+            ->distinct()
+            ->get()
+            ->groupBy('purchaseRequestID');
+
+        $poData = [];
+        $poIds = $poDetails->flatten()->pluck('purchaseOrderMasterID')->unique()->toArray();
+        if (!empty($poIds)) {
+            $poData = ProcumentOrder::loadPORelationshipsForReport($poIds, $companyId);
+        }
+
+        return collect($prIds)->mapWithKeys(function ($prId) use (
+            $prInfo,
+            $approvals,
+            $tenderPRs,
+            $tenderData,
+            $poDetails,
+            $poData
+        ) {
+            $info = $prInfo->get($prId);
+            $prPOIds = $poDetails->get($prId, collect())
+                ->pluck('purchaseOrderMasterID')
+                ->toArray();
+
+            $tenderId = $tenderPRs[$prId] ?? null;
+
+            return [
+                $prId => [
+                    'currencyCode' => $info->CurrencyCode ?? '',
+                    'decimalPlace' => $info->DecimalPlaces ?? 2,
+                    'total'        => $info->total ?? 0,
+                    'approvals'    => $approvals->get($prId, collect()),
+                    'tenderId'     => $tenderId,
+                    'tenderData'   => $tenderId ? ($tenderData[$tenderId] ?? []) : [],
+                    'poIds'        => $prPOIds,
+                    'poData'       => array_intersect_key($poData, array_flip($prPOIds)),
+                ]
+            ];
+        })->toArray();
     }
 }

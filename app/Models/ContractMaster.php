@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\DB;
 
 class ContractMaster extends Model
 {
@@ -173,6 +174,55 @@ class ContractMaster extends Model
     {
         return $this->hasMany(ContractStatusHistory::class, 'contract_id','id');
     }
+    public static function getStandaloneContractsForReport($companyId, $linkedContractIds, $dateFrom = null, $dateTo = null)
+    {
+        return self::query()
+            ->where('companySystemID', $companyId)
+            ->when(!empty($linkedContractIds), function ($q) use ($linkedContractIds) {
+                return $q->whereNotIn('id', $linkedContractIds);
+            })
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                return $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                return $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->select([
+                'id',
+                'contractCode',
+                'startDate',
+                'endDate',
+                'agreementSignDate',
+                'created_at'
+            ])
+            ->orderByDesc('created_at');
+    }
+    public static function loadContractRelationshipsForReport(array $contractIds): array
+    {
+        if (empty($contractIds)) {
+            return [];
+        }
 
+        $contracts = DB::table('cm_contract_master')
+            ->whereIn('id', $contractIds)
+            ->select('id', 'contractCode', 'startDate', 'endDate', 'agreementSignDate')
+            ->get()
+            ->keyBy('id');
 
+        $statuses = DB::table('cm_contract_status_history')
+            ->whereIn('contract_id', $contractIds)
+            ->whereIn('status', [1, 2, 3, 4, 5, 6])
+            ->select('contract_id', 'status')
+            ->get()
+            ->groupBy('contract_id');
+
+        return $contracts->mapWithKeys(function ($contract, $contractId) use ($statuses) {
+            return [
+                $contractId => [
+                    'contract' => $contract,
+                    'statuses' => $statuses->get($contractId, collect()),
+                ]
+            ];
+        })->toArray();
+    }
 }

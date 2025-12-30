@@ -3692,7 +3692,15 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         try {
             $companyId = $request->get('companyId');
-            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId);
+            
+            // Extract filter parameters
+            $filters = [
+                'documentType' => $request->get('documentType'),
+                'dateFrom' => $request->get('dateFrom'),
+                'dateTo' => $request->get('dateTo'),
+            ];
+            
+            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId, $filters);
 
             return \DataTables::of($result)
                     ->addIndexColumn()
@@ -3712,7 +3720,14 @@ class PurchaseRequestAPIController extends AppBaseController
             $companyId = $request->input('companyId');
             $type = $request->get('type', 'xlsx');
             
-            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId);
+            // Extract filter parameters
+            $filters = [
+                'documentType' => $request->get('documentType'),
+                'dateFrom' => $request->get('dateFrom'),
+                'dateTo' => $request->get('dateTo'),
+            ];
+            
+            $result = $this->purchaseRequestRepository->getProcurementLifecycleReportData($companyId, $filters);
             $data = $this->purchaseRequestRepository->formatProcurementLifecycleDataForExport($result);
 
             $exportPath = $this->generateExcelExport($data, $type, $companyId);

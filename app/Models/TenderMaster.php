@@ -6,6 +6,7 @@ use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 use Awobaz\Compoships\Compoships;
+use Illuminate\Support\Facades\DB;
 /**
  * @SWG\Definition(
  *      definition="TenderMaster",
@@ -813,5 +814,136 @@ class TenderMaster extends Model
         return $this->hasMany(SrmTenderMasterEditLog::class, 'id', 'id')
             ->whereNotNull('version_id')
             ->orderBy('amd_id', 'desc');
+    }
+
+    /**
+     * Get linked contract IDs for a company
+     *
+     * @param int $companyId
+     * @return array
+     */
+    public static function getLinkedContractIds($companyId)
+    {
+        return self::where('company_id', $companyId)
+            ->whereNotNull('contract_id')
+            ->pluck('contract_id')
+            ->toArray();
+    }
+
+    /**
+     * Get standalone tenders for report
+     *
+     * @param int $companyId
+     * @param array $linkedTenderIds
+     * @param string|null $dateFrom
+     * @param string|null $dateTo
+     * @param string|null $documentType
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function getStandaloneTendersForReport($companyId, $linkedTenderIds, $dateFrom = null, $dateTo = null, $documentType = null)
+    {
+        $query = self::where('company_id', $companyId);
+        
+        if (!empty($linkedTenderIds)) {
+            $query->whereNotIn('id', $linkedTenderIds);
+        }
+        
+        // Filter by document type (Tender vs RFX)
+        // RFX has document_system_id = 113, Tender has document_system_id = 108
+        if ($documentType === 'RFX') {
+            $query->where('document_system_id', 113);
+        } elseif ($documentType === 'Tender') {
+            $query->where('document_system_id', 108);
+        }
+        
+        // Apply date filter if provided
+        if ($dateFrom) {
+            $query->where('created_at', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('created_at', '<=', $dateTo);
+        }
+        
+        return $query->select('id', 'tender_code', 'document_system_id', 'published_at', 
+                'bid_submission_opening_date', 'technical_bid_opening_date', 
+                'commerical_bid_opening_date', 'contract_id', 'created_at')
+            ->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Load Tender relationships for report
+     *
+     * @param array $tenderIds
+     * @param int $companyId
+     * @return array
+     */
+    public static function loadTenderRelationshipsForReport($tenderIds, $companyId)
+    {
+        if (empty($tenderIds)) {
+            return [];
+        }
+
+        $data = [];
+
+        // Load tender basic info
+        $tenders = DB::table('srm_tender_master')
+            ->whereIn('id', $tenderIds)
+            ->select('id', 'tender_code', 'published_at', 'bid_submission_opening_date', 
+                'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id')
+            ->get()
+            ->keyBy('id');
+
+        // Load approvals
+        $approvals = DB::table('erp_documentapproved as da')
+            ->join('srm_tender_master as tm', function($join) {
+                $join->on('da.documentSystemCode', '=', 'tm.id')
+                     ->on('da.documentSystemID', '=', 'tm.document_system_id');
+            })
+            ->leftJoin('employees as e', 'da.employeeSystemID', '=', 'e.employeeSystemID')
+            ->whereIn('tm.id', $tenderIds)
+            ->where('da.approvedYN', -1)
+            ->where('da.companySystemID', $companyId)
+            ->select('tm.id', 'da.rollLevelOrder', 'e.empName', 'da.approvedDate')
+            ->get()
+            ->groupBy('id');
+
+        // Load contracts
+        $contractIds = $tenders->pluck('contract_id')->filter()->unique()->toArray();
+        $contractData = [];
+        if (!empty($contractIds)) {
+            $contractData = ContractMaster::loadContractRelationshipsForReport($contractIds);
+        }
+
+        // Load PO from tender
+        $tenderPOs = DB::table('srm_tender_po')
+            ->whereIn('tender_id', $tenderIds)
+            ->where('status', 1)
+            ->pluck('po_id', 'tender_id')
+            ->toArray();
+
+        $poIds = array_values($tenderPOs);
+        $poData = [];
+        if (!empty($poIds)) {
+            $poData = ProcumentOrder::loadPORelationshipsForReport($poIds, $companyId);
+        }
+
+        foreach ($tenderIds as $tenderId) {
+            $tender = $tenders->get($tenderId);
+            if (!$tender) continue;
+
+            $tenderApprovals = $approvals->get($tenderId) ?? collect();
+            $contractId = $tender->contract_id;
+            $poId = $tenderPOs[$tenderId] ?? null;
+
+            $data[$tenderId] = [
+                'tender' => $tender,
+                'approvals' => $tenderApprovals,
+                'contractData' => $contractId ? ($contractData[$contractId] ?? []) : [],
+                'poId' => $poId,
+                'poData' => $poId ? ($poData[$poId] ?? []) : []
+            ];
+        }
+
+        return $data;
     }
 }
