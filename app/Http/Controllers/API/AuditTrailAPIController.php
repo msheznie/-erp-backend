@@ -27,6 +27,7 @@ use App\Jobs\AuditLog\MigrateAuditLogsJob;
 use DataTables;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
+use App\Traits\AuditLogsTrait;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Log;
 
 class AuditTrailAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
     /** @var  AuditTrailRepository */
     private $auditTrailRepository;
     private $lokiService;
@@ -1134,6 +1136,60 @@ class AuditTrailAPIController extends AppBaseController
                 'message' => "Dispatched " . count($dispatchedJobs) . " migration job(s), one for each table. Check the logs at storage/logs/audit_migration.log for progress and results."
             ], 'Migration jobs dispatched successfully');
 
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Create an audit log entry
+     * This endpoint allows Portal_BackEnd to create audit logs through Gears_BackEnd
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function createAuditLog(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            // Validate required fields
+            $requiredFields = ['dataBase', 'transactionID', 'tenant_uuid', 'table', 'narration', 'crudType'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field])) {
+                    return $this->sendError("Missing required field: {$field}", 400);
+                }
+            }
+
+            // Extract parameters
+            $dataBase = $input['dataBase'];
+            $transactionID = $input['transactionID'];
+            $tenant_uuid = $input['tenant_uuid'];
+            $table = $input['table'];
+            $narration = $input['narration'];
+            $crudType = $input['crudType'];
+            $newValue = $input['newValue'] ?? [];
+            $previosValue = $input['previosValue'] ?? [];
+            $parentID = $input['parentID'] ?? null;
+            $parentTable = $input['parentTable'] ?? null;
+            $empID = $input['empID'] ?? null;
+
+            // Use AuditLogsTrait to create the audit log
+            $this->auditLog(
+                $dataBase,
+                $transactionID,
+                $tenant_uuid,
+                $table,
+                $narration,
+                $crudType,
+                $newValue,
+                $previosValue,
+                $parentID,
+                $parentTable,
+                $empID
+            );
+
+            return $this->sendResponse(['success' => true], 'Audit log created successfully');
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
         }

@@ -16,6 +16,7 @@ use App\Http\Requests\API\UpdateUserGroupAPIRequest;
 use App\Models\EmployeeNavigation;
 use App\Models\UserGroup;
 use App\Repositories\UserGroupRepository;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -28,6 +29,8 @@ use Response;
  */
 class UserGroupAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     /** @var  UserGroupRepository */
     private $userGroupRepository;
 
@@ -66,11 +69,26 @@ class UserGroupAPIController extends AppBaseController
         $input = $request->all();
         $userGroups = "";
 
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid'])) {
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db'])) {
+            unset($input['db']);
+        }
+
+        $previousValue = [];
+        $crudType = "C";
+        $transactionID = 0;
        
     
         if (isset($request->userGroupID))
         {
             $id = $request->userGroupID;
+            $crudType = "U";
              $userGroups = UserGroup::where("userGroupID", $id)->first();
 
             if (empty($userGroups)) {
@@ -99,8 +117,9 @@ class UserGroupAPIController extends AppBaseController
                 }
     
             }
-            
 
+            $previousValue = $userGroups->toArray();
+            $transactionID = $userGroups->userGroupID;
         
 
             unset($input['company']);
@@ -132,8 +151,13 @@ class UserGroupAPIController extends AppBaseController
             }
         
             $userGroups = $this->userGroupRepository->create($input);
-        
+            $transactionID = $userGroups->userGroupID;
         }
+
+        $narrationVariables = $userGroups->description;
+        $newValue = $userGroups->toArray();
+        $this->auditLog($db, $transactionID, $uuid, "user_group", $narrationVariables, $crudType, $newValue, $previousValue);
+
         return $this->sendResponse($userGroups, trans('custom.user_group_saved_successfully'));
     }
 
@@ -170,6 +194,17 @@ class UserGroupAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid'])) {
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db'])) {
+            unset($input['db']);
+        }
+
         /** @var UserGroup $userGroup */
         $userGroup = $this->userGroupRepository->findWithoutFail($id);
 
@@ -177,7 +212,12 @@ class UserGroupAPIController extends AppBaseController
             return $this->sendError(trans('custom.user_group_not_found'));
         }
 
+        $previousValue = $userGroup->toArray();
         $userGroup = $this->userGroupRepository->update($input, $id);
+        $newValue = $userGroup->toArray();
+
+        $narrationVariables = $userGroup->description;
+        $this->auditLog($db, $userGroup->userGroupID, $uuid, "user_group", $narrationVariables, "U", $newValue, $previousValue);
 
         return $this->sendResponse($userGroup->toArray(), trans('custom.usergroup_updated_successfully'));
     }
@@ -192,6 +232,10 @@ class UserGroupAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        $input = request()->all();
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
         /** @var UserGroup $userGroup */
         $userGroup = $this->userGroupRepository->findWithoutFail($id);
 
@@ -204,9 +248,13 @@ class UserGroupAPIController extends AppBaseController
             return $this->sendError(trans('custom.user_already_assigned', ['attribute' => count($countUsers)]));
         }
 
+        $previousValue = $userGroup->toArray();
         $userGroup->navigationusergroup()->delete();
         $userGroup->usergroupemployee()->delete();
         $userGroup->update(['isActive' => 0, 'isDeleted' => 1, 'defaultYN' => 0]);
+
+        $narrationVariables = $userGroup->description;
+        $this->auditLog($db, $userGroup->userGroupID, $uuid, "user_group", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.user_group_deleted_successfully'));
     }

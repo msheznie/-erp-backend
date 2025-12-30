@@ -254,6 +254,24 @@ class AuditLogCommonService
                     return 'audit.variable_has_updated';
                 }
                 break;
+
+            case 'user_group':
+                if ($crudType === 'C') {
+                    return 'audit.user_group_has_been_created';
+                } elseif ($crudType === 'U') {
+                    return 'audit.user_group_has_updated';
+                } elseif ($crudType === 'D') {
+                    return 'audit.user_group_has_been_deleted';
+                }
+                break;
+
+            case 'employee_navigation_assign':
+                if ($crudType === 'C') {
+                    return 'audit.employee_has_been_assigned_to_user_group';
+                } elseif ($crudType === 'D') {
+                    return 'audit.employee_has_been_unassigned_from_user_group';
+                }
+                break;
         }
         
         return '';
@@ -488,6 +506,22 @@ class AuditLogCommonService
                     'primaryKey' => 'id',
                     'docCodeColumn' => null, // Junction/configuration table, no document code
                     'companySystemIdColumn' => null // Junction/configuration table, no direct company column
+                ];
+
+            case 'user_group':
+                return [
+                    'tableName' => 'srp_erp_usergroups',
+                    'primaryKey' => 'userGroupID',
+                    'docCodeColumn' => 'description',
+                    'companySystemIdColumn' => 'companyID'
+                ];
+
+            case 'employee_navigation_assign':
+                return [
+                    'tableName' => 'srp_erp_employeenavigation',
+                    'primaryKey' => 'id',
+                    'docCodeColumn' => null, // No document code available
+                    'companySystemIdColumn' => 'companyID'
                 ];
                 
             default:

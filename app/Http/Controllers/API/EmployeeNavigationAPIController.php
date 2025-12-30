@@ -15,8 +15,11 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateEmployeeNavigationAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeNavigationAPIRequest;
 use App\Models\Company;
+use App\Models\Employee;
 use App\Models\EmployeeNavigation;
+use App\Models\UserGroup;
 use App\Repositories\EmployeeNavigationRepository;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -32,6 +35,8 @@ use App\Models\EmployeeNavigationAccess;
  */
 class EmployeeNavigationAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     /** @var  EmployeeNavigationRepository */
     private $employeeNavigationRepository;
 
@@ -69,6 +74,17 @@ class EmployeeNavigationAPIController extends AppBaseController
     {
         $input = $request->all();
         $employees = collect($input["employeeSystemID"])->pluck("employeeSystemID")->toArray();
+
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid'])) {
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db'])) {
+            unset($input['db']);
+        }
 
         // Validate access type and dates
         $accessType = isset($input["accessType"]) ? $input["accessType"] : 'permanent';
@@ -114,6 +130,9 @@ class EmployeeNavigationAPIController extends AppBaseController
         if($validate && $validate->usergroup){
             return $this->sendError(trans('custom.selected_employee_already_exists_in_the').$validate->usergroup->description.' user group');
         }else{
+            $userGroup = UserGroup::find($input["userGroupID"]);
+            $userGroupName = $userGroup ? $userGroup->description : '';
+
             if($employees){
                 foreach ($employees as $val){
                     $inputArr = ["companyID" => $input["companyID"],"userGroupID" => $input["userGroupID"], "employeeSystemID" => $val];
@@ -133,6 +152,13 @@ class EmployeeNavigationAPIController extends AppBaseController
                         $accessData["endDate"] = $endDate->format('Y-m-d');
                     }
                     EmployeeNavigationAccess::create($accessData);
+
+                    // Audit log for employee assignment
+                    $employee = Employee::find($val);
+                    $employeeName = $employee ? $employee->empName : '';
+                    $narrationVariables = $employeeName . ' - ' . $userGroupName;
+                    $newValue = $employeeNavigations->toArray();
+                    $this->auditLog($db, $employeeNavigations->id, $uuid, "employee_navigation_assign", $narrationVariables, "C", $newValue, []);
                 }
             }
         }
@@ -195,14 +221,31 @@ class EmployeeNavigationAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        $input = request()->all();
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
         /** @var EmployeeNavigation $employeeNavigation */
         $employeeNavigation = $this->employeeNavigationRepository->findWithoutFail($id);
 
         if (empty($employeeNavigation)) {
             return $this->sendError(trans('custom.employee_navigation_not_found'));
         }
+
+        $previousValue = $employeeNavigation->toArray();
+
+        // Get employee and user group names for audit log
+        $employee = $employeeNavigation->employee;
+        $userGroup = $employeeNavigation->usergroup;
+        $employeeName = $employee ? $employee->empName : '';
+        $userGroupName = $userGroup ? $userGroup->description : '';
+        $narrationVariables = $employeeName . ' - ' . $userGroupName;
+
         EmployeeNavigationAccess::markAsInactive($employeeNavigation);
         $employeeNavigation->delete();
+
+        // Audit log for employee unassignment
+        $this->auditLog($db, $id, $uuid, "employee_navigation_assign", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.employee_navigation_deleted_successfully'));
     }
