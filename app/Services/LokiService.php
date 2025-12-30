@@ -236,4 +236,108 @@ class LokiService
         }
 
     }
+
+    /**
+     * Query Victoria Logs using LogsQL query API
+     * 
+     * @param string $query LogsQL query string
+     * @return array
+     */
+    public function queryLogsQL($query)
+    {
+        try {
+            $client = new Client();
+            
+            // Use VICTORIA_LOG_QUERY_URL if set, otherwise extract from VICTORIA_LOG_URL or use default
+            $queryUrl = env("VICTORIA_LOG_QUERY_URL");
+            
+            if (!$queryUrl) {
+                $victoriaLogUrl = env("VICTORIA_LOG_URL");
+                
+                if ($victoriaLogUrl) {
+                    // Extract base URL from VICTORIA_LOG_URL (remove /insert/loki/api/v1/push path)
+                    $baseUrl = preg_replace('#/insert/.*$#', '', $victoriaLogUrl);
+                    $baseUrl = rtrim($baseUrl, '/');
+                } else {
+                    // Default to the working URL from tests
+                    $baseUrl = "https://php-auditlogs-rnd.gears-int.com";
+                }
+                
+                // Ensure HTTPS
+                if (strpos($baseUrl, 'http://') === 0) {
+                    $baseUrl = str_replace('http://', 'https://', $baseUrl);
+                }
+                
+                // If using loki-cp-dev, switch to php-auditlogs-rnd (loki-cp-dev doesn't support LogsQL)
+                if (strpos($baseUrl, 'loki-cp-dev.gears-int.com') !== false) {
+                    $baseUrl = "https://php-auditlogs-rnd.gears-int.com";
+                }
+                
+                $queryUrl = $baseUrl . '/select/logsql/query';
+            }
+            
+            $username = env('VICTORIA_LOG_USERNAME', 'vauth');
+            $password = env('VICTORIA_LOG_PASSWORD', 'wMDyerXqWG-rmYdIpFrKVG_d286MQwqsdfgh76ozCnU6MQ8');
+            
+            \Log::info('Victoria Logs LogsQL request URL: ' . $queryUrl);
+            \Log::info('Victoria Logs LogsQL query: ' . $query);
+            \Log::info('Victoria Logs LogsQL curl command: curl -sS -u "' . $username . ':' . $password . '" -X POST "' . $queryUrl . '" -d "query=' . urlencode($query) . '" -H "Content-Type: application/x-www-form-urlencoded"');
+            
+            $response = $client->post($queryUrl, [
+                'auth' => [$username, $password],
+                'form_params' => [
+                    'query' => $query
+                ],
+                'headers' => [
+                    'Content-Type' => 'application/x-www-form-urlencoded',
+                ],
+            ]);
+
+            $responseBody = $response->getBody()->getContents();
+            
+            \Log::info('Victoria Logs LogsQL raw response length: ' . strlen($responseBody));
+            \Log::info('Victoria Logs LogsQL response sample: ' . substr($responseBody, 0, 500));
+
+            // LogsQL returns data as newline-delimited JSON (NDJSON)
+            // Each line is a separate JSON object
+            $logEntries = [];
+            
+            if (!empty($responseBody)) {
+                // Split by newlines and parse each line as JSON
+                $lines = explode("\n", trim($responseBody));
+                
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if (empty($line)) {
+                        continue;
+                    }
+                    
+                    $entry = json_decode($line, true);
+                    if ($entry !== null && is_array($entry)) {
+                        $logEntries[] = $entry;
+                    }
+                }
+            }
+
+            \Log::info('Victoria Logs LogsQL parsed entries count: ' . count($logEntries));
+
+            return $logEntries;
+
+        } catch (RequestException $e) {
+            \Log::error('Victoria Logs LogsQL connection error: ' . $e->getMessage());
+            
+            if ($e->hasResponse()) {
+                $statusCode = $e->getResponse()->getStatusCode();
+                $errorBody = $e->getResponse()->getBody()->getContents();
+                \Log::error('Victoria Logs error response: ' . $errorBody);
+                return response()->json(['error' => "HTTP $statusCode: $errorBody"], $statusCode);
+            } else {
+                return response()->json(['error' => 'Request failed: ' . $e->getMessage()], 500);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Victoria Logs LogsQL service error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return [];
+        }
+    }
 }

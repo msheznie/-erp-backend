@@ -300,84 +300,217 @@ class AuditTrailAPIController extends AppBaseController
 
         $input = $request->all();
         try {
-            $env = env("LOKI_ENV");
-
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
+            $env = env("VICTORIALOGS_ENV", env("APP_ENV", "production"));
             $locale = app()->getLocale() ?: 'en';
             $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
 
-            if(isset($input['isFromTracking']) && $input['isFromTracking']){
-                
-                $requestFromDate = $request->input('fromDate');
-                $requestToDate = $request->input('toDate');
-                
-                $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-                $toDate = Carbon::now();
-                $diff = $toDate->diffInDays($fromDate) + 1;
+            // Calculate time range
+            $fromDate = Carbon::parse(env("LOKI_START_DATE", Carbon::now()->subDays(30)->toDateString()));
+            $toDate = Carbon::now();
+            
+            // Get date range from request (applies to both tracking and regular cases)
+            $requestFromDate = $request->input('fromDate');
+            $requestToDate = $request->input('toDate');
+            
+            if (!empty($requestFromDate)) {
+                // Parse date string in format "Y-m-d H:i:s" as UTC to avoid timezone conversion issues
+                // Create Carbon instance directly in UTC timezone without conversion
+                try {
+                    // Parse the date components
+                    $parts = date_parse($requestFromDate);
+                    if ($parts && !$parts['error_count']) {
+                        $fromDate = Carbon::create(
+                            $parts['year'],
+                            $parts['month'],
+                            $parts['day'],
+                            $parts['hour'],
+                            $parts['minute'],
+                            $parts['second'],
+                            'UTC'
+                        );
+                    } else {
+                        // Fallback to parse with UTC timezone
+                        $fromDate = Carbon::parse($requestFromDate, 'UTC');
+                    }
+                } catch (\Exception $e) {
+                    // Fallback: parse and assume UTC (don't convert from server timezone)
+                    $fromDate = Carbon::parse($requestFromDate, 'UTC');
+                }
+            }
+            if (!empty($requestToDate)) {
+                // Parse date string in format "Y-m-d H:i:s" as UTC to avoid timezone conversion issues
+                // Create Carbon instance directly in UTC timezone without conversion
+                try {
+                    // Parse the date components
+                    $parts = date_parse($requestToDate);
+                    if ($parts && !$parts['error_count']) {
+                        $toDate = Carbon::create(
+                            $parts['year'],
+                            $parts['month'],
+                            $parts['day'],
+                            $parts['hour'],
+                            $parts['minute'],
+                            $parts['second'],
+                            'UTC'
+                        );
+                    } else {
+                        // Fallback to parse with UTC timezone
+                        $toDate = Carbon::parse($requestToDate, 'UTC');
+                    }
+                } catch (\Exception $e) {
+                    // Fallback: parse and assume UTC (don't convert from server timezone)
+                    $toDate = Carbon::parse($requestToDate, 'UTC');
+                }
+            }
+            
+            // Format dates for LogsQL (ISO 8601 format with Z suffix)
+            $fromDateStr = $fromDate->format('Y-m-d\TH:i:s\Z');
+            $toDateStr = $toDate->format('Y-m-d\TH:i:s\Z');
+            
+            \Log::info('Audit Logs Date Range:', [
+                'env' => $env,
+                'tenant_uuid' => $uuid,
+                'locale' => $locale,
+                'requestFromDate' => $requestFromDate,
+                'requestToDate' => $requestToDate,
+                'fromDateStr' => $fromDateStr,
+                'toDateStr' => $toDateStr
+            ]);
 
-                // Build line filter for crudType
-                $crudTypeFilter = '';
+            if(isset($input['isFromTracking']) && $input['isFromTracking']){
+
+                // Build LogsQL query for tracking
+                // Don't include locale in stream filter - filter from unpacked JSON instead
+                $streamFilter = '{tenant="'.$uuid.'", app="erp", env="'.$env.'", channel="audit"}';
+                $query = '_time:['.$fromDateStr.', '.$toDateStr.'] '.$streamFilter.' | unpack_json';
+                
+                // Add locale filter first
+                $filters = ['locale:="'.$locale.'"'];
                 if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
                     $eventMap = [
                         '1' => 'C',
                         '2' => 'U',
                         '3' => 'D',
                     ];
-                    
                     $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
-                    $crudTypeFilter = ' |= `\"crudType\":\"'.$crudType.'\"`';
+                    $filters[] = 'crudType:="'.$crudType.'"';
                 }
 
-                // Build line filter for employeeId
-                $employeeIdFilter = '';
                 if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
-                    $employeeIdFilter = ' |= `\"employeeId\":\"'.$input['employeeId'].'\"`';
+                    $filters[] = 'employeeId:="'.$input['employeeId'].'"';
                 }
 
-                // Build line filter for companyId
-                $companyIdFilter = '';
                 if(isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
-                    $companySystemId = $input['companyId'];
-                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
-                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
-                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
+                    $filters[] = 'company_system_id:="'.$input['companyId'].'"';
                 }
 
-                // Build line filter for search
-                $searchFilter = '';
+                // Combine filters with 'and' - add pipe before filters
+                if (!empty($filters)) {
+                    $query .= ' | ' . implode(' and ', $filters);
+                }
+
+                // Search filter (uses pipe for regex/substring search)
                 $searchValue = $request->input('search.value');
                 if (!empty($searchValue)) {
-                    $escapedSearch = preg_quote($searchValue, '/');
-                    $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
+                    $query .= ' |~ "'.addslashes($searchValue).'"';
                 }
+
+                // Select fields and sort
+                $query .= ' | fields _time, transaction_id, table, user_name, role, employeeId, tenant_uuid, crudType, narration, session_id, date_time, module, parent_id, parent_table, data, locale, company_system_id, doc_code, log_uuid';
+                $query .= ' | sort by (_time) desc';
                 
-                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$crudTypeFilter.$employeeIdFilter.$companyIdFilter.$searchFilter.' | json ['.(int)$diff.'d])';
-                $params = 'query?query='.$params;
-                $data = $this->lokiService->getAuditLogs($params);
+                // Apply pagination limit if provided
+                $limit = isset($input['length']) && $input['length'] > 0 ? (int)$input['length'] : 10000;
+                $query .= ' | limit '.$limit;
+
+                $data = $this->lokiService->queryLogsQL($query);
                 $data2 = [];
             } else {
+                // Main case: filter by transaction_id and table (or parent_id and parent_table)
                 $id = $input['id'];
                 $module = $input['module'];
                 $table = $this->lokiService->getAuditTables($module);
                 
-                // Build line filters for transaction_id and table
-                $transactionIdFilter = ' |= `\"transaction_id\":\"'.$id.'\"`';
-                $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
+                \Log::info('Audit Logs Query Parameters:', [
+                    'id' => $id,
+                    'module' => $module,
+                    'table' => $table,
+                    'env' => $env,
+                    'tenant_uuid' => $uuid,
+                    'locale' => $locale,
+                    'fromDate' => $fromDateStr,
+                    'toDate' => $toDateStr,
+                    'streamFilter' => '{tenant="'.$uuid.'", app="erp", env="'.$env.'", channel="audit"}'
+                ]);
                 
-                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$transactionIdFilter.$tableFilter.' | json ['.$diff.'d])';
-                $params = 'query?query='.$params;
-                $data = $this->lokiService->getAuditLogs($params);
-
-                // Build line filters for parent_id and parent_table
-                $parentIdFilter = ' |= `\"parent_id\":\"'.$id.'\"`';
-                $parentTableFilter = ' |= `\"parent_table\":\"'.$table.'\"`';
+                // Don't include locale in stream filter - old logs don't have it in stream, only in unpacked JSON
+                // Filter by locale from unpacked JSON data instead (works for both old and new logs)
+                $streamFilter = '{tenant="'.$uuid.'", app="erp", env="'.$env.'", channel="audit"}';
                 
-                $params2 = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$parentIdFilter.$parentTableFilter.' | json ['.$diff.'d])';
-                $params2 = 'query?query='.$params2;
-                $data2 = $this->lokiService->getAuditLogs($params2);
+                // When dates are provided, use a wide _time range (90 days) to get all logs
+                // Then filter by date_time field in PHP since _time reflects storage time, not event time
+                // If no dates provided, use default range
+                $timeRange = !empty($requestFromDate) && !empty($requestToDate) 
+                    ? '_time:90d'  // Wide range when filtering by date_time
+                    : '_time:['.$fromDateStr.', '.$toDateStr.']';
+                
+                // First, get total count for both queries using stats
+                // Note: Count queries don't filter by date_time, we'll filter in PHP
+                $countQuery1 = $timeRange.' '.$streamFilter.' | unpack_json';
+                $countQuery1 .= ' | transaction_id:="'.$id.'" and table:="'.$table.'" and locale:="'.$locale.'"';
+                $countQuery1 .= ' | stats count() as total';
+                
+                $countQuery2 = $timeRange.' '.$streamFilter.' | unpack_json';
+                $countQuery2 .= ' | parent_id:="'.$id.'" and parent_table:="'.$table.'" and locale:="'.$locale.'"';
+                $countQuery2 .= ' | stats count() as total';
+                
+                $count1Result = $this->lokiService->queryLogsQL($countQuery1);
+                $count2Result = $this->lokiService->queryLogsQL($countQuery2);
+                
+                $totalCount1 = 0;
+                $totalCount2 = 0;
+                
+                if (is_array($count1Result) && !empty($count1Result) && isset($count1Result[0]['total'])) {
+                    $totalCount1 = (int) $count1Result[0]['total'];
+                } elseif (is_array($count1Result) && !empty($count1Result) && isset($count1Result[0]['count(*)'])) {
+                    $totalCount1 = (int) $count1Result[0]['count(*)'];
+                }
+                
+                if (is_array($count2Result) && !empty($count2Result) && isset($count2Result[0]['total'])) {
+                    $totalCount2 = (int) $count2Result[0]['total'];
+                } elseif (is_array($count2Result) && !empty($count2Result) && isset($count2Result[0]['count(*)'])) {
+                    $totalCount2 = (int) $count2Result[0]['count(*)'];
+                }
+                
+                // Note: When dates are provided, totalRecords is approximate (based on _time range)
+                // Actual count will be calculated after filtering by date_time in PHP
+                $totalRecords = $totalCount1 + $totalCount2;
+                
+                \Log::info('Audit Logs Total Count (before date_time filter) - Query 1: ' . $totalCount1 . ', Query 2: ' . $totalCount2 . ', Total: ' . $totalRecords);
+                
+                // Query 1: Filter by transaction_id and table - get all data (no limit for server-side pagination)
+                // Use wide time range when dates are provided, then filter by date_time in PHP
+                $query1 = $timeRange.' '.$streamFilter.' | unpack_json';
+                $query1 .= ' | transaction_id:="'.$id.'" and table:="'.$table.'" and locale:="'.$locale.'"';
+                $query1 .= ' | fields _time, transaction_id, table, user_name, role, employeeId, tenant_uuid, crudType, narration, session_id, date_time, module, parent_id, parent_table, data, locale, company_system_id, doc_code, log_uuid';
+                $query1 .= ' | sort by (_time) desc';
+                // Get a large enough limit to cover all records (or use a reasonable max)
+                $query1 .= ' | limit 50000';
+                
+                \Log::info('Audit Logs Query 1: ' . $query1);
+                
+                $data = $this->lokiService->queryLogsQL($query1);
 
+                // Query 2: Filter by parent_id and parent_table - get all data
+                $query2 = $timeRange.' '.$streamFilter.' | unpack_json';
+                $query2 .= ' | parent_id:="'.$id.'" and parent_table:="'.$table.'" and locale:="'.$locale.'"';
+                $query2 .= ' | fields _time, transaction_id, table, user_name, role, employeeId, tenant_uuid, crudType, narration, session_id, date_time, module, parent_id, parent_table, data, locale, company_system_id, doc_code, log_uuid';
+                $query2 .= ' | sort by (_time) desc';
+                $query2 .= ' | limit 50000';
+                
+                \Log::info('Audit Logs Query 2: ' . $query2);
+                
+                $data2 = $this->lokiService->queryLogsQL($query2);
             }
 
             // Check if $data is an error response
@@ -390,42 +523,95 @@ class AuditTrailAPIController extends AppBaseController
                 return $data2;
             }
 
+            // Combine results
             $formatedData = [];
-
-            foreach ($data as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
-
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
-
-                    $formatedData[] = $lineData;
+            
+            // Process data from query 1
+            if (is_array($data)) {
+                foreach ($data as $entry) {
+                    // Use _time as date_time if date_time is not available
+                    if (!isset($entry['date_time']) && isset($entry['_time'])) {
+                        $entry['date_time'] = $entry['_time'];
+                    }
+                    // Parse data field if it's a JSON string
+                    if (isset($entry['data']) && is_string($entry['data'])) {
+                        $entry['data'] = json_decode($entry['data'], true) ?: [];
+                    } elseif (!isset($entry['data'])) {
+                        $entry['data'] = [];
+                    }
+                    $formatedData[] = $entry;
                 }
             }
 
-            foreach ($data2 as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
-
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
-
-                    $formatedData[] = $lineData;
+            // Process data from query 2
+            if (is_array($data2)) {
+                foreach ($data2 as $entry) {
+                    // Use _time as date_time if date_time is not available
+                    if (!isset($entry['date_time']) && isset($entry['_time'])) {
+                        $entry['date_time'] = $entry['_time'];
+                    }
+                    // Parse data field if it's a JSON string
+                    if (isset($entry['data']) && is_string($entry['data'])) {
+                        $entry['data'] = json_decode($entry['data'], true) ?: [];
+                    } elseif (!isset($entry['data'])) {
+                        $entry['data'] = [];
+                    }
+                    $formatedData[] = $entry;
                 }
             }
 
+            // Filter by date_time if dates were provided (since _time reflects storage time, not event time)
+            if (!empty($requestFromDate) && !empty($requestToDate)) {
+                $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate, $toDate) {
+                    if (!isset($item['date_time'])) {
+                        return false;
+                    }
+                    try {
+                        // Parse date_time (format: Y-m-d H:i:s)
+                        $itemDate = Carbon::createFromFormat('Y-m-d H:i:s', $item['date_time'], 'UTC');
+                        // Check if item date is within the requested range
+                        return $itemDate->gte($fromDate) && $itemDate->lte($toDate);
+                    } catch (\Exception $e) {
+                        // If parsing fails, try Carbon::parse as fallback
+                        try {
+                            $itemDate = Carbon::parse($item['date_time'], 'UTC');
+                            return $itemDate->gte($fromDate) && $itemDate->lte($toDate);
+                        } catch (\Exception $e2) {
+                            return false;
+                        }
+                    }
+                })->values()->all();
+                
+                // Update totalRecords to reflect the actual filtered count
+                $totalRecords = count($formatedData);
+                \Log::info('Audit Logs Filtered Count (after date_time filter): ' . $totalRecords);
+            }
 
             if(isset($input['isFromTracking']) && $input['isFromTracking']){
-                        // Sort by date_time
+                // Sort by date_time
                 $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
 
                 $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
-                    return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
+                    $itemDate = isset($item['date_time']) ? Carbon::parse($item['date_time']) : null;
+                    if (!$itemDate) {
+                        return false;
+                    }
+                    return $itemDate->gte($fromDate) && $itemDate->lte($toDate);
                 })->values()->all();
             } else {
-                $formatedData = collect($formatedData)->sortByDesc('date_time');
+                $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
             }
 
-            //make the formatedData unique by log_uuid
+            // Make the formatedData unique by log_uuid
             $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
+            
+            // Log the counts for debugging
+            $query1Count = is_array($data) ? count($data) : 0;
+            $query2Count = is_array($data2) ? count($data2) : 0;
+            $dataCountAfterDedup = count($formatedData);
+            $calculatedTotal = isset($totalRecords) ? $totalRecords : $dataCountAfterDedup;
+            
+            \Log::info('Audit Logs DataTables counts - Query1: ' . $query1Count . ', Query2: ' . $query2Count . ', Combined before dedup: ' . ($query1Count + $query2Count) . ', After dedup: ' . $dataCountAfterDedup . ', Calculated total from count queries: ' . (isset($totalRecords) ? $totalRecords : 'N/A'));
             
             // Get current locale for arrow conversion
             $locale = app()->getLocale() ?: 'en';
@@ -446,6 +632,10 @@ class AuditTrailAPIController extends AppBaseController
                 return $formatedData;
             }
 
+            // DataTables will automatically calculate counts from the collection
+            // But we need to ensure we have all the data (up to 50000 limit)
+            // The counts will be calculated from $formatedData after deduplication
+            
             if(isset($input['isFromTracking']) && $input['isFromTracking']){
                 return DataTables::of($formatedData)
                     ->filter(function ($query) use ($request) {
@@ -453,7 +643,6 @@ class AuditTrailAPIController extends AppBaseController
                     ->addIndexColumn()
                     ->make(true);
             } else {
-
                 return DataTables::of($formatedData)
                     ->addIndexColumn()
                     ->make(true);

@@ -92,6 +92,7 @@ class AuditLogJob implements ShouldQueue
         $db = $this->db;
         CommonJobService::db_switch($db);
 
+        Log::useFiles(storage_path() . '/logs/victoria-log-success.log');
 
         $auditData = [
             'transactionID' => $this->transactionID,
@@ -195,8 +196,6 @@ class AuditLogJob implements ShouldQueue
                 $this->parentTable,
                 'companySystemIdColumn'
             );
-
-            Log::useFiles(storage_path() . '/logs/audit.log');
             
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
@@ -229,7 +228,8 @@ class AuditLogJob implements ShouldQueue
                     'log_uuid' => bin2hex(random_bytes(16)),
                 ];
                 
-                Log::info('data:', $logData);
+                // Send data to Victoria Log (Loki)
+                SendToVictoriaLogJob::dispatch($logData);
             }
         }
     }
