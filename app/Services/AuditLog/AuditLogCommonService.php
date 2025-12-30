@@ -255,7 +255,7 @@ class AuditLogCommonService
                 }
                 break;
 
-            case 'user_group':
+            case 'srp_erp_usergroups':
                 if ($crudType === 'C') {
                     return 'audit.user_group_has_been_created';
                 } elseif ($crudType === 'U') {
@@ -265,7 +265,7 @@ class AuditLogCommonService
                 }
                 break;
 
-            case 'employee_navigation_assign':
+            case 'srp_erp_employeenavigation':
                 if ($crudType === 'C') {
                     return 'audit.employee_has_been_assigned_to_user_group';
                 } elseif ($crudType === 'D') {
@@ -508,7 +508,7 @@ class AuditLogCommonService
                     'companySystemIdColumn' => null // Junction/configuration table, no direct company column
                 ];
 
-            case 'user_group':
+            case 'srp_erp_usergroups':
                 return [
                     'tableName' => 'srp_erp_usergroups',
                     'primaryKey' => 'userGroupID',
@@ -516,7 +516,7 @@ class AuditLogCommonService
                     'companySystemIdColumn' => 'companyID'
                 ];
 
-            case 'employee_navigation_assign':
+            case 'srp_erp_employeenavigation':
                 return [
                     'tableName' => 'srp_erp_employeenavigation',
                     'primaryKey' => 'id',
