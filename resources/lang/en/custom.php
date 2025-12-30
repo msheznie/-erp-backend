@@ -9819,4 +9819,5 @@ return
     'end_date_must_be_greater_than_or_equal_to_current_date' => 'End date must be greater than or equal to current date.',
     'end_date_must_be_greater_than_or_equal_to_start_date' => 'End date must be greater than or equal to start date.',
     'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'Delegation cannot be created. The delegation end date is earlier than the user\'s access end date.',
+    'user_qty' => 'User Qty'
   ];

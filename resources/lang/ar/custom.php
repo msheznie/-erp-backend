@@ -9712,4 +9712,5 @@ return
     'end_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي التاريخ الحالي.',
     'end_date_must_be_greater_than_or_equal_to_start_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي تاريخ البدء.',
     'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'لا يمكن إنشاء التفويض. تاريخ انتهاء التفويض أقدم من تاريخ انتهاء وصول المستخدم.',
+    'user_qty' => 'كمية المستخدم'
   ];
