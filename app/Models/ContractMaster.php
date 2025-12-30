@@ -225,4 +225,67 @@ class ContractMaster extends Model
             ];
         })->toArray();
     }
+    
+    public function contractOwners()
+    {
+        return $this->belongsTo(ContractUsers::class, 'contractOwner', 'id');
+    }
+
+    public function confirmedBy()
+    {
+        return $this->belongsTo(Employee::class, 'confirm_by', 'employeeSystemID');
+    }
+
+    public function tenderMaster()
+    {
+        return $this->belongsTo(TenderMaster::class, 'tender_id', 'id');
+    }
+    public function counterParties()
+    {
+        return $this->belongsTo(ContractCounterPartyMaster::class, 'counterParty', 'cmCounterParty_id');
+    }
+
+    public static function getContractMasterById($uuid)
+    {
+        return self::select('id', 'uuid', 'contractCode', 'title', 'description', 'contractType',
+            'counterParty', 'counterPartyName', 'referenceCode', 'contractOwner', 'contractAmount', 'startDate',
+            'endDate', 'agreementSignDate', 'contractTermPeriod', 'contractRenewalDate', 'companySystemID',
+            'contractExtensionDate', 'contractTerminateDate', 'contractRevisionDate', 'primaryCounterParty',
+            'primaryEmail', 'primaryPhoneNumber', 'secondaryCounterParty', 'secondaryEmail', 'secondaryPhoneNumber',
+            'tender_id', 'effective_date', 'confirmed_yn', 'confirmed_date', 'confirm_by'
+        )
+            ->with([
+                'contractTypes' => function ($q)
+                {
+                    $q->select('contract_typeId', 'cm_type_name');
+                }, 'contractOwners' => function ($q)
+                {
+                    $q->select('id', 'contractUserCode', 'contractUserName');
+                }, 'counterParties' => function ($q)
+                {
+                    $q->select('cmCounterParty_id', 'cmCounterParty_name');
+                }, 'contractUsers' => function ($q)
+                {
+                    $q->select('id', 'contractUserCode', 'contractUserName');
+                }, 'tenderMaster' => function ($q)
+                {
+                    $q->select('id', 'title');
+                }, 'confirmedBy' => function ($q1)
+                {
+                    $q1->select('employeeSystemID', 'empName');
+                }
+            ])
+            ->where('uuid', $uuid)
+            ->first();
+    }
+
+    public static function getConfirmationData($uuid)
+    {
+        return self::select('confirmed_yn', 'confirmed_date', 'confirm_by')
+            ->with(['confirmedBy' => function ($q1)
+            {
+                $q1->select('employeeSystemID', 'empName');
+            }])
+            ->where('uuid', $uuid)->first();
+    }
 }
