@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.97.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.1...v10.97.2) (2025-12-30)
+
+
+### Miscellaneous Chores
+
+* release 10.97.2 ([#9497](https://github.com/pbsgears/Gears_BackEnd/issues/9497)) ([8a94628](https://github.com/pbsgears/Gears_BackEnd/commit/8a9462848bdbcf3a19f9acbcabd2a6f17e41cae5))
+
 ## [10.97.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.0...v10.97.1) (2025-12-24)
 
 
