@@ -901,7 +901,7 @@
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                     <span class="font-weight-bold">
                         @if ($masterdata->detail)
-                            {{number_format((($subTotal + $VATTotal + $directTotTra) - $retentionVatPortion), $transDecimal)}}
+                            {{number_format((($subTotal + $VATTotal + $directTotTra) - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0) - $retentionVatPortion), $transDecimal)}}
                         @endif
                     </span>
                     </td>
