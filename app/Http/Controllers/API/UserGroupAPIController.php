@@ -156,7 +156,7 @@ class UserGroupAPIController extends AppBaseController
 
         $narrationVariables = $userGroups->description;
         $newValue = $userGroups->toArray();
-        $this->auditLog($db, $transactionID, $uuid, "user_group", $narrationVariables, $crudType, $newValue, $previousValue);
+        $this->auditLog($db, $transactionID, $uuid, "srp_erp_usergroups", $narrationVariables, $crudType, $newValue, $previousValue);
 
         return $this->sendResponse($userGroups, trans('custom.user_group_saved_successfully'));
     }
@@ -217,7 +217,7 @@ class UserGroupAPIController extends AppBaseController
         $newValue = $userGroup->toArray();
 
         $narrationVariables = $userGroup->description;
-        $this->auditLog($db, $userGroup->userGroupID, $uuid, "user_group", $narrationVariables, "U", $newValue, $previousValue);
+        $this->auditLog($db, $userGroup->userGroupID, $uuid, "srp_erp_usergroups", $narrationVariables, "U", $newValue, $previousValue);
 
         return $this->sendResponse($userGroup->toArray(), trans('custom.usergroup_updated_successfully'));
     }
@@ -254,7 +254,7 @@ class UserGroupAPIController extends AppBaseController
         $userGroup->update(['isActive' => 0, 'isDeleted' => 1, 'defaultYN' => 0]);
 
         $narrationVariables = $userGroup->description;
-        $this->auditLog($db, $userGroup->userGroupID, $uuid, "user_group", $narrationVariables, "D", [], $previousValue);
+        $this->auditLog($db, $userGroup->userGroupID, $uuid, "srp_erp_usergroups", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.user_group_deleted_successfully'));
     }

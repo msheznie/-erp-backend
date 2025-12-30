@@ -169,10 +169,10 @@ class AuditLogJob implements ShouldQueue
             case 'department_budget_planning_details_template_data':
                 $data = DepartmentBudgetPlanningDetailsTemplateDataAuditService::process($auditData);
                 break;
-            case 'user_group':
+            case 'srp_erp_usergroups':
                 $data = UserGroupAuditService::process($auditData);
                 break;
-            case 'employee_navigation_assign':
+            case 'srp_erp_employeenavigation':
                 $data = EmployeeNavigationAssignAuditService::process($auditData);
                 break;
             default:

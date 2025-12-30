@@ -158,7 +158,7 @@ class EmployeeNavigationAPIController extends AppBaseController
                     $employeeName = $employee ? $employee->empName : '';
                     $narrationVariables = $employeeName . ' - ' . $userGroupName;
                     $newValue = $employeeNavigations->toArray();
-                    $this->auditLog($db, $employeeNavigations->id, $uuid, "employee_navigation_assign", $narrationVariables, "C", $newValue, []);
+                    $this->auditLog($db, $employeeNavigations->id, $uuid, "srp_erp_employeenavigation", $narrationVariables, "C", $newValue, []);
                 }
             }
         }
@@ -245,7 +245,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         $employeeNavigation->delete();
 
         // Audit log for employee unassignment
-        $this->auditLog($db, $id, $uuid, "employee_navigation_assign", $narrationVariables, "D", [], $previousValue);
+        $this->auditLog($db, $id, $uuid, "srp_erp_employeenavigation", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.employee_navigation_deleted_successfully'));
     }
