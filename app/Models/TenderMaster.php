@@ -332,7 +332,9 @@ class TenderMaster extends Model
         'negotiation_doc_verify_status',
         'show_technical_criteria',
         'isDelegation',
-        'uuid'
+        'uuid',
+        'is_clone',
+        'clone_master_id'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -416,7 +418,9 @@ class TenderMaster extends Model
         'negotiation_is_awarded' => 'integer',
         'negotiation_doc_verify_comment' => 'string',
         'negotiation_doc_verify_status'  => 'integer',
-        'uuid'  => 'string'
+        'uuid'  => 'string',
+        'is_clone' => 'integer',
+        'clone_master_id' => 'integer'
     ];
 
     /**
@@ -945,5 +949,14 @@ class TenderMaster extends Model
         }
 
         return $data;
+    }
+
+    public static function getLastSerialNumber($companySystemID, $documentSystemID)
+    {
+        return TenderMaster::select('serial_number')
+            ->where('company_id', $companySystemID)
+            ->where('document_system_id', $documentSystemID)
+            ->orderBy('id', 'desc')
+            ->first();
     }
 }

@@ -104,6 +104,7 @@ Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid')
 Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread')->name("Close thread");
 Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender')->name("Reopen tender");
 Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish')->name("Tender master publish");
+Route::post('cloneTender', 'TenderMasterAPIController@cloneTender')->name("Clone tender");
 
 Route::post('getSourcingManagementSupplierList', 'TenderMasterAPIController@getSupplierList')->name("Get supplier list");
 Route::post('saveSupplierAssigned', 'TenderMasterAPIController@saveSupplierAssigned')->name("Save supplier assigned");

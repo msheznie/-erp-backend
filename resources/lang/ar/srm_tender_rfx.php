@@ -304,5 +304,7 @@ return [
     'tender_reopened_success' => 'تمت إعادة فتح المناقصة بنجاح',
     'technical_eval_percentage_total' => 'يجب أن يكون مجموع النسبة المئوية لمعايير التقييم الفني مساوياً لـ 100',
     'cannot_amend_document' => 'لا يمكنك تعديل هذا المستند',
-    'tender_amended_successfully' => 'تم تعديل المناقصة بنجاح'
+    'tender_amended_successfully' => 'تم تعديل المناقصة بنجاح',
+    'successfully_cloned' => 'تم النسخ بنجاح',
+    'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => 'تم طلب :doc للتعديل/الإضافة، يرجى الموافقة على الطلب لتمكين النسخ'
 ];
