@@ -1163,10 +1163,17 @@ class AuditTrailAPIController extends AppBaseController
         try {
             $input = $request->all();
 
+            // Log incoming request for debugging
+            \Log::info('createAuditLog called', [
+                'input' => $input,
+                'headers' => $request->headers->all()
+            ]);
+
             // Validate required fields
             $requiredFields = ['dataBase', 'transactionID', 'tenant_uuid', 'table', 'narration', 'crudType'];
             foreach ($requiredFields as $field) {
                 if (!isset($input[$field])) {
+                    \Log::error('createAuditLog missing required field', ['field' => $field, 'input' => $input]);
                     return $this->sendError("Missing required field: {$field}", 400);
                 }
             }
@@ -1184,6 +1191,14 @@ class AuditTrailAPIController extends AppBaseController
             $parentTable = $input['parentTable'] ?? null;
             $empID = $input['empID'] ?? null;
 
+            \Log::info('createAuditLog dispatching job', [
+                'dataBase' => $dataBase,
+                'transactionID' => $transactionID,
+                'table' => $table,
+                'crudType' => $crudType,
+                'tenantUUID' => $tenant_uuid
+            ]);
+
             // Use AuditLogsTrait to create the audit log
             $this->auditLog(
                 $dataBase,
@@ -1199,8 +1214,13 @@ class AuditTrailAPIController extends AppBaseController
                 $empID
             );
 
+            \Log::info('createAuditLog job dispatched successfully');
             return $this->sendResponse(['success' => true], 'Audit log created successfully');
         } catch (\Exception $exception) {
+            \Log::error('createAuditLog exception', [
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString()
+            ]);
             return $this->sendError($exception->getMessage());
         }
     }
