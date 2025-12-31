@@ -87,7 +87,7 @@ class RemoveExpiredUserGroupAccess extends Command
                     $employeeNavigationId = $access->employeeNavigationID;
                     // Add audit log for system removal
                     $narrationVariables = $employeeName . ' - ' . $userGroupName . ' (System Remove - End Date Reached)';
-                    self::auditLog($tenantDb, $employeeNavigationId, $uuid, "employee_navigation_assign", $narrationVariables, "D", [], $previousValue);
+                    self::auditLog($tenantDb, $employeeNavigationId, $uuid, "srp_erp_employeenavigation", $narrationVariables, "D", [], $previousValue);
                 }
                 // Mark as inactive instead of deleting to keep records for history
                 EmployeeNavigationAccess::whereIn('id', $expiredIds)->update(['isActive' => 0]);

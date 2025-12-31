@@ -363,7 +363,17 @@ class AuditTrailAPIController extends AppBaseController
                 $id = $input['id'];
                 $module = $input['module'];
                 $table = $this->lokiService->getAuditTables($module);
-                
+
+                // If id is 0, only filter by table (show all logs for this module)
+                // Otherwise, filter by both transaction_id and table
+                if ($id == 0 || $id == '0' || $id === '0') {
+                    // Only filter by table when id is 0
+                    $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
+                    $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$tableFilter.' | json ['.$diff.'d])';
+                    $params = 'query?query='.$params;
+                    $data = $this->lokiService->getAuditLogs($params);
+                    $data2 = []; // No parent logs when showing all logs
+                } else {
                 // Build line filters for transaction_id and table
                 $transactionIdFilter = ' |= `\"transaction_id\":\"'.$id.'\"`';
                 $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
@@ -379,7 +389,7 @@ class AuditTrailAPIController extends AppBaseController
                 $params2 = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$parentIdFilter.$parentTableFilter.' | json ['.$diff.'d])';
                 $params2 = 'query?query='.$params2;
                 $data2 = $this->lokiService->getAuditLogs($params2);
-
+                }
             }
 
             // Check if $data is an error response
