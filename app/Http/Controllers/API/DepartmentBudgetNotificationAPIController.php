@@ -6,8 +6,10 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetNotification;
 use App\Models\BudgetNotificationDetail;
 use App\Models\BudgetNotificationRecipient;
+use App\Services\BudgetNotificationService;
 use Illuminate\Http\Request;
 use Response;
+use Auth;
 
 /**
  * Class DepartmentBudgetNotificationAPIController
@@ -554,6 +556,9 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
     public function updateNotificationDetail($id, Request $request)
     {
         $input = $request->all();
+
+        $budgetPlanningNotificationService = new BudgetNotificationService();
+        $budgetPlanningNotificationService->sendNotification(8,'extension-request-submitted',1,Auth::user()->employee_id);
 
         /** @var BudgetNotificationDetail $detail */
         $detail = BudgetNotificationDetail::find($id);

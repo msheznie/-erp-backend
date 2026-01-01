@@ -12,6 +12,7 @@ use App\Models\BudgetTemplateColumn;
 use App\Models\BudgetTemplatePreColumn;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\CompanyDepartmentSegment;
+use App\Models\EmployeesDepartment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\ChartOfAccount;
@@ -403,6 +404,18 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
             $selectedGlSections = [];
             $workflowMethod = null;
+            $isFinanceApprovalUser = false;
+            
+            $checkUserHasApprovalAccess = EmployeesDepartment::where('companySystemID', $request->input('companySystemID'))
+            ->where('employeeSystemID', $employeeID)
+            ->where('documentSystemID', 133)
+            ->where('departmentSystemID', 5)
+            ->where('isActive', 1)
+            ->where('removedYN', 0);
+
+            if($checkUserHasApprovalAccess->exists()) {
+                $isFinanceApprovalUser = true;
+            }
             
             if ($budgetPlanning) {
                 if ($budgetPlanning->workflow) {
@@ -418,20 +431,26 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
             
-            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased) {
+            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
                 $isEnable = true;
                 
-                if ($budgetPlanning  && !empty($selectedGlSections)) {
-                    if ($workflowMethod == 1 && !$isGLBased) {
-                        $isEnable = in_array($item->id, $selectedGlSections);
-                    } else {
-                        $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+
+                if($isFinanceApprovalUser)
+                {
+                    $isEnable = true;
+                }else {
+                    if ($budgetPlanning  && !empty($selectedGlSections)) {
+                        if ($workflowMethod == 1 && !$isGLBased) {
+                            $isEnable = in_array($item->id, $selectedGlSections);
+                        } else {
+                            $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+                        }
+                    }
+                    if($budgetPlanning->workStatus == 3){
+                        $isEnable = false;
                     }
                 }
-                
-                if($budgetPlanning->workStatus == 3 ){
-                    $isEnable = false;
-                }
+
                 $item->isEnable = $isEnable;
                 return $item;
             });
@@ -595,6 +614,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
+
             if(empty($userPermission) || !$userPermission['success'])
             {
                 return $this->sendError('User permissison not exists');
@@ -616,6 +636,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     return  $this->sendError("User doesn't have permission to edit data");
                 }
 
+            }
+
+            if((isset($userPermission['data']['financeApprovalUser']) && $userPermission['data']['financeApprovalUser']['status']) || (isset($userPermission['data']['financeUser']) && $userPermission['data']['financeUser']['status']))
+            {
+                return  $this->sendError("User doesn't have permission to save data");
             }
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
@@ -994,6 +1019,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             }
 
+            if((isset($userPermission['data']['financeApprovalUser']) && $userPermission['data']['financeApprovalUser']['status']) || (isset($userPermission['data']['financeUser']) && $userPermission['data']['financeUser']['status']))
+            {
+                return  $this->sendError("User doesn't have permission to delete data");
+            }
 
 
             $entry->delete();

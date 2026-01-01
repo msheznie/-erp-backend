@@ -45,6 +45,11 @@ Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBu
 Route::post('validateBudgetPlanning', 'CompanyBudgetPlanningAPIController@validateBudgetPlanning')->name('Validate budget planning');
 Route::post('checkBudgetPlanningInProgress', 'CompanyBudgetPlanningAPIController@checkBudgetPlanningInProgress')->name('Check budget planning in progress');
 Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController@updateStatus')->name('Update budget planning status');
+
+// Budget Planning Approval Routes
+Route::post('getBudgetPlanningApprovalByUser', 'BudgetPlanningApprovalAPIController@getBudgetPlanningApprovalByUser')->name('Get budget planning approval by user');
+Route::post('getBudgetPlanningApprovedByUser', 'BudgetPlanningApprovalAPIController@getBudgetPlanningApprovedByUser')->name('Get budget planning approved by user');
+Route::post('requestBudgetPlanningReopen', 'CompanyBudgetPlanningAPIController@requestBudgetPlanningReopen')->name('Request budget planning reopen');
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
