@@ -20,7 +20,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ContractAdditionalDocuments;
-use App\Models\ContractBoqItems;
+use App\Models\ContractBOQItems;
 use App\Models\ContractDeliverables;
 use App\Models\ContractDocument;
 use App\Models\ContractMaster;
@@ -1330,22 +1330,35 @@ class SRMService
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $warehouseId = $request->input('extra.warehouseId');
         $appointDate = $request->input('extra.appointDate');
+        $invoiceCreated = $request->input('extra.invoiceCreated');
         $search = $request->input('search.value');
 
-        $query = DB::table('appointment')
-            ->select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
+        $query = Appointment::
+            select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
                 'appointment.created_at as appointmentCreatedDate',
                 'suppliermaster.supplierName as appointmentCreatedBy', 'suppliermaster.supplierName',
                 'warehousemaster.wareHouseDescription', 'appointment.primary_code', 'slot_details.start_date',
                 'slot_details.end_date', 'appointment.confirmed_yn', 'appointment.approved_yn', 'appointment.cancelYN',
-                'appointment.document_system_id', 'appointment.company_id')
+                'appointment.document_system_id', 'appointment.company_id', 'appointment.id', 'appointment.slot_detail_id')
             ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
             ->where('appointment.supplier_id', $supplierID)
             ->join('suppliermaster', 'appointment.created_by', 'suppliermaster.supplierCodeSystem')
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
-            ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode');
+            ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
+        ->with([
+                'grv' => function ($query) {
+                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+                },
+                'invoice' => function ($query) {
+                    $query->select('deliveryAppoinmentID');
+                },
+            'slot_detail' => function ($query) {
+                $query->select('id','slot_master_id', 'company_id');
+            }
+            ])
+        ;
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -1367,7 +1380,18 @@ class SRMService
             $query->whereDate('start_date', Carbon::parse($appointDate)->format('Y-m-d'));
         }
 
+        if (!is_null($invoiceCreated)) {
+            if ((int) $invoiceCreated === 1) {
+                $query->whereHas('invoice');
+            } else if ((int) $invoiceCreated === 0) {
+                $query->whereDoesntHave('invoice');
+            }
+        }
+
         $data = DataTables::of($query)
+            ->addColumn('attachmentPolicyEnabled', function ($row) {
+                return Helper::checkPolicy($row->company_id, 104);
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
