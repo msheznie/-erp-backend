@@ -6760,7 +6760,7 @@ class Helper
                     }
                     DB::commit();
 
-                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
+                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? trans('custom.referred_back') : trans('custom.rejected');
                     return ['success' => true, 'message' => trans('custom.document_successfully') . ' ' . $rejectedMsg];
 
                 } else {
