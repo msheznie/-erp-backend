@@ -9728,5 +9728,7 @@ return
     'invalid_web_address' => 'تنسيق عنوان الويب غير صحيح.',
     'vat_percentage_decimal_precision' => 'لا يمكن أن يحتوي نسبة ضريبة القيمة المضافة على أكثر من منزلتين عشريتين.',
     'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.',
-    'deleted_successfully' => ':attribute تم حذفه بنجاح'
-  ];
+    'deleted_successfully' => ':attribute تم حذفه بنجاح',
+    'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام'
+];

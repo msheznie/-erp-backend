@@ -225,7 +225,7 @@ class Helper
     public static function checkDomai()
     {
 
-        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $redirectUrl =  "https://pl.uat-gears-int.com/#/approval/erp"; //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
             if (isset($_SERVER['HTTP_HOST'])) {
@@ -3201,6 +3201,17 @@ class Helper
                     $docInforArr["modelName"] = 'SegmentMaster';
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     break;
+                case 133:
+                    $docInforArr["documentCodeColumnName"] = 'planningCode';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_at';
+                    $docInforArr["tableName"] = 'company_budget_plannings';
+                    $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
@@ -3212,6 +3223,7 @@ class Helper
             } else {
                 $masterRec = $namespacedModel::find($params["autoID"]);
             }
+
 
             if ($masterRec) {
                 if (in_array($params["document"], [20, 71])) {
@@ -4624,6 +4636,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
+            case 133:
+                $docInforArr["tableName"] = 'company_budget_plannings';
+                $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_system_id';
+                $docInforArr["approvedDate"] = 'approved_at';
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                $docInforArr["approveValue"] = 1;
+                break;
             default:
                 return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
@@ -4720,6 +4744,7 @@ class Helper
                     }
                 }
 
+
                 if($input["documentSystemID"] == 41){
 
 
@@ -4807,6 +4832,14 @@ class Helper
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                     }
                                 }
+                            }
+                        }
+
+                        
+
+                        if($input["documentSystemID"] == 133){
+                            if($input['workflowID'] != $approvalLevel->workflow) {
+                                return ['success' => false, 'message' => trans('custom.you_are_not_authorized_to_approve_this_document')];
                             }
                         }
 
@@ -4981,6 +5014,7 @@ class Helper
                                     }
                                 }
                             }
+
 
                             if($input["documentSystemID"] == 119){
                                 $resRrvShedule = CreateRecurringVoucherSetupSchedules::dispatch($input['documentSystemCode'],$dataBase);

@@ -27,7 +27,12 @@ class CompanyBudgetPlanningRepository extends BaseRepository
         'yearID',
         'typeID',
         'submissionDate',
-        'workflowID'
+        'workflowID',
+        'confirmed_yn',
+        'confirmed_by',
+        'confirmed_by_emp_id',
+        'confirmed_by_emp_system_id',
+        'confirmed_at'
     ];
 
     /**

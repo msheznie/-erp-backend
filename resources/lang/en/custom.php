@@ -635,6 +635,11 @@ return
     'budget_addition_reffered_back_saved_successfully' => 'Budget Addition Reffered Back saved successfully',
     'budget_addition_reffered_backs_retrieved_successfu' => 'Budget Addition Reffered Backs retrieved successfully',
     'budget_addition_reopened_successfully' => 'Budget Addition reopened successfully',
+    'budget_planning_reopened_successfully' => 'Budget Planning reopened successfully',
+    'cannot_reopen_budget_planning_not_confirmed' => 'You cannot reopen this Budget Planning, it is not confirmed',
+    'cannot_reopen_budget_planning_fully_approved' => 'You cannot reopen this Budget Planning, it is already fully approved',
+    'cannot_reopen_budget_planning_already_approved' => 'You cannot reopen this Budget Planning, it is already approved',
+    'budget_planning_not_found' => 'Budget Planning not found',
     'budget_addition_updated_successfully' => 'Budget Addition updated successfully',
     'budget_addition_audit_detailed_retrieved' => 'Budget Addition audit detailed retrieved',
     'budget_adjustments' => 'Budget Adjustments',
@@ -9835,5 +9840,7 @@ return
     'invalid_web_address' => 'Invalid web address format.',
     'vat_percentage_decimal_precision' => 'VAT Percentage cannot have more than 2 decimal places.',
     'customer_vat_percentage_range' => 'VAT Percentage must be between 0 and 100.',
-    'deleted_successfully' => ':attribute deleted successfully'
-  ];
+    'deleted_successfully' => ':attribute deleted successfully',
+    'you_are_not_authorized_to_approve_this_document' => 'You are not authorized to approve this document',
+    'not_all_departments_confirmed' => 'Not all departments have been confirmed'
+];
