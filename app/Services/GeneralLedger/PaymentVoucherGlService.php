@@ -657,13 +657,13 @@ class PaymentVoucherGlService
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $tax->transAmount) * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $tax->transAmount + $bankChargeDetailsSum->dpAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $tax->localAmount) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $tax->localAmount + $bankChargeDetailsSum->localAmount) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $tax->rptAmount) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $tax->rptAmount + $bankChargeDetailsSum->comRptAmount) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -847,6 +847,8 @@ class PaymentVoucherGlService
                                     array_push($finalData, $data);
                                 }
                             }
+
+
                         }
                         if($masterData->rcmActivated == 1){
                             $masterLocal = $masterData->payAmountCompLocal;
@@ -859,13 +861,13 @@ class PaymentVoucherGlService
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                             $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $exemptVatTotal->vatAmount) * -1;
+                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $exemptVatTotal->vatAmount + $bankChargeDetailsSum->dpAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $exemptVatTotal->VATAmountLocal) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $exemptVatTotal->VATAmountLocal + $bankChargeDetailsSum->localAmount) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $exemptVatTotal->VATAmountRpt) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $exemptVatTotal->VATAmountRpt + $bankChargeDetailsSum->comRptAmount) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -1082,8 +1084,6 @@ class PaymentVoucherGlService
                             }
 
                         }
-
-
                     }
                     else{
                         $masterLocal = $masterData->payAmountCompLocal;
@@ -1096,13 +1096,13 @@ class PaymentVoucherGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
+                        $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
+                        $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $bankChargeDetailsSum->localAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue($dpTotal->transAmount/$masterData->companyRptCurrencyER) * -1:\Helper::roundValue($masterRpt) * -1;
+                        $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue(($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount) /$masterData->companyRptCurrencyER) * -1:\Helper::roundValue($masterRpt + $bankChargeDetailsSum->comRptAmount) * -1;
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
 
@@ -1186,6 +1186,26 @@ class PaymentVoucherGlService
  
                             }
                         }
+                    }
+
+                    foreach ($bankChargeDetails as $bankChargeDetail) {
+                        $data['serviceLineSystemID'] = $bankChargeDetail->serviceLineSystemID;
+                        $data['serviceLineCode'] = $bankChargeDetail->serviceLineCode;
+                        $data['chartOfAccountSystemID'] = $bankChargeDetail->chartOfAccountSystemID;
+                        $data['glCode'] = $bankChargeDetail->glCode;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                        $data['documentTransAmount'] = \Helper::roundValue($bankChargeDetail->dpAmount);
+                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                        $data['documentLocalAmount'] = $bankChargeDetail->localAmount;
+                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                        $data['documentRptAmount'] = $bankChargeDetail->comRptAmount;
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
                     }
                 }
                 else{

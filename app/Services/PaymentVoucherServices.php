@@ -885,15 +885,30 @@ class PaymentVoucherServices
             }
 
             // checking minus value
-            if ($input['invoiceType'] == 2) {
+            if ($input['invoiceType'] == 2 || $input['invoiceType'] == 3) {
 
                 $checkBankChargeTotal = PaymentVoucherBankChargeDetails::where('payMasterAutoID', $input['PayMasterAutoId'])->sum('dpAmount');
 
                 $checkInvoiceDetailTotal = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->sum('supplierPaymentAmount');
 
+                $directPaymentQuery = DirectPaymentDetails::where('directPaymentAutoID', $input['PayMasterAutoId']);
+                $directPaymentTotal = $directPaymentQuery->sum('DPAmount');
+                $directPaymentVatTotal = $directPaymentQuery->sum('vatAmount');
+
+                $totalDirectPayment = $directPaymentTotal + ($paySupplierInvoiceMaster->rcmActivated ? 0 : $directPaymentVatTotal) + $checkBankChargeTotal;
+
+                
                 $netMinustot = $checkBankChargeTotal + $checkInvoiceDetailTotal;
 
-                if ($netMinustot < 0) {
+                if ($netMinustot < 0 && $input['invoiceType'] == 2) {
+                    return [
+                        'status' => false,
+                        'message' => 'Net amount cannot be negative value',
+                        'code' => 500
+                    ];
+                }
+
+                if ($totalDirectPayment < 0 && $input['invoiceType'] == 3) {
                     return [
                         'status' => false,
                         'message' => 'Net amount cannot be negative value',
