@@ -209,6 +209,15 @@ class SupplierMasterBulkUploadService
                 'message' => self::getTranslatedMessage('custom.telephone_is_mandatory', 'Telephone is mandatory'),
                 'value' => ''
             ];
+        } else {
+            $telephoneResult = self::validateAlphanumeric($row['telephone'], 'Telephone', true);
+            if (!$telephoneResult['valid']) {
+                $errors[] = [
+                    'field' => 'Telephone',
+                    'message' => $telephoneResult['message'],
+                    'value' => $row['telephone']
+                ];
+            }
         }
         
         $emailResult = self::validateEmail($row['email'] ?? null);
@@ -226,6 +235,15 @@ class SupplierMasterBulkUploadService
                 'message' => self::getTranslatedMessage('custom.registration_number_is_mandatory', 'Registration Number is mandatory'),
                 'value' => ''
             ];
+        } else {
+            $regNumberResult = self::validateAlphanumeric($row['registration_number'], 'Registration Number', false);
+            if (!$regNumberResult['valid']) {
+                $errors[] = [
+                    'field' => 'Registration Number',
+                    'message' => $regNumberResult['message'],
+                    'value' => $row['registration_number']
+                ];
+            }
         }
         
         $regExpiryResult = self::validateDate($row['registration_expiry'] ?? null, 'Registration Expiry', 'DD-MM-YYYY');
@@ -880,6 +898,38 @@ class SupplierMasterBulkUploadService
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.please_enter_valid_email_address', 'Please enter valid email address')
             ];
+        }
+        
+        return ['valid' => true];
+    }
+
+    private static function validateAlphanumeric($value, $fieldName, $allowPhoneChars = false): array
+    {
+        if (empty($value) || is_null($value)) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.field_is_mandatory', "{$fieldName} is mandatory", ['field' => $fieldName])
+            ];
+        }
+        
+        $value = trim((string)$value);
+        
+        if ($allowPhoneChars) {
+            $pattern = '/^[a-zA-Z0-9\s\-\(\)\+\/]+$/';
+            if (!preg_match($pattern, $value)) {
+                return [
+                    'valid' => false,
+                    'message' => self::getTranslatedMessage('custom.field_should_contain_only_text_and_numbers', "{$fieldName} should contain only text and numbers", ['field' => $fieldName])
+                ];
+            }
+        } else {
+            $pattern = '/^[a-zA-Z0-9]+$/';
+            if (!preg_match($pattern, $value)) {
+                return [
+                    'valid' => false,
+                    'message' => self::getTranslatedMessage('custom.field_should_contain_only_text_and_numbers', "{$fieldName} should contain only text and numbers", ['field' => $fieldName])
+                ];
+            }
         }
         
         return ['valid' => true];
