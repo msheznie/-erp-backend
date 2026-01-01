@@ -9819,5 +9819,20 @@ return
     'end_date_must_be_greater_than_or_equal_to_current_date' => 'End date must be greater than or equal to current date.',
     'end_date_must_be_greater_than_or_equal_to_start_date' => 'End date must be greater than or equal to start date.',
     'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'Delegation cannot be created. The delegation end date is earlier than the user\'s access end date.',
-    'user_qty' => 'User Qty'
+    'user_qty' => 'User Qty',
+    'secondary_code_is_mandatory' => 'Secondary Code is mandatory',
+    'customer_name_is_mandatory' => 'Customer Name is mandatory',
+    'receivable_account_and_unbilled_account_cannot_be_same' => 'Receivable Account and Unbilled Account cannot be the same',
+    'customer_category_not_matching_with_system' => 'The customer Category not matching with system',
+    'credit_period_cannot_exceed_maximum_digits' => 'Credit Period cannot exceed the maximum allowed number of digits.',
+    'secondary_code_duplicate_in_upload' => 'Secondary Code is duplicated within the upload file.',
+    'customer_name_max_length_exceeded' => 'Customer Name cannot exceed :max characters.',
+    'duplicate_row_detected' => 'Duplicate row detected in the upload file.',
+    'maximum_record_limit_exceeded' => 'Maximum record limit exceeded. Please upload a maximum of :max records at a time.',
+    'vat_number_requires_vat_eligible' => 'VAT Number requires VAT Eligible to be "Yes".',
+    'credit_limit_overflow' => 'Credit Limit exceeds the maximum allowed value.',
+    'credit_limit_cannot_exceed_maximum_digits' => 'Credit Limit cannot exceed the maximum allowed number of digits.',
+    'invalid_web_address' => 'Invalid web address format.',
+    'vat_percentage_decimal_precision' => 'VAT Percentage cannot have more than 2 decimal places.',
+    'customer_vat_percentage_range' => 'VAT Percentage must be between 0 and 100.'
   ];

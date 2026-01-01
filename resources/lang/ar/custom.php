@@ -9712,5 +9712,20 @@ return
     'end_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي التاريخ الحالي.',
     'end_date_must_be_greater_than_or_equal_to_start_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي تاريخ البدء.',
     'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'لا يمكن إنشاء التفويض. تاريخ انتهاء التفويض أقدم من تاريخ انتهاء وصول المستخدم.',
-    'user_qty' => 'كمية المستخدم'
+    'user_qty' => 'كمية المستخدم',
+    'secondary_code_is_mandatory' => 'الرمز الثانوي إلزامي',
+    'customer_name_is_mandatory' => 'اسم العميل إلزامي',
+    'receivable_account_and_unbilled_account_cannot_be_same' => 'لا يمكن أن يكون حساب القبضات وحساب الفواتير غير المفوترة متماثلين',
+    'customer_category_not_matching_with_system' => 'فئة العميل لا تتطابق مع النظام',
+    'credit_period_cannot_exceed_maximum_digits' => 'لا يمكن أن يتجاوز فترة الائتمان الحد الأقصى المسموح به من الأرقام.',
+    'secondary_code_duplicate_in_upload' => 'الرمز الثانوي مكرر داخل ملف الرفع.',
+    'customer_name_max_length_exceeded' => 'لا يمكن أن يتجاوز اسم العميل :max حرفًا.',
+    'duplicate_row_detected' => 'تم اكتشاف صف مكرر في ملف الرفع.',
+    'maximum_record_limit_exceeded' => 'تم تجاوز الحد الأقصى لعدد السجلات. يرجى رفع حد أقصى :max سجل في المرة الواحدة.',
+    'vat_number_requires_vat_eligible' => 'يتطلب رقم ضريبة القيمة المضافة أن تكون ضريبة القيمة المضافة المؤهلة "نعم".',
+    'credit_limit_overflow' => 'يتجاوز حد الائتمان القيمة القصوى المسموح بها.',
+    'credit_limit_cannot_exceed_maximum_digits' => 'لا يمكن أن يتجاوز حد الائتمان الحد الأقصى المسموح به من الأرقام.',
+    'invalid_web_address' => 'تنسيق عنوان الويب غير صحيح.',
+    'vat_percentage_decimal_precision' => 'لا يمكن أن يحتوي نسبة ضريبة القيمة المضافة على أكثر من منزلتين عشريتين.',
+    'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.'
   ];
