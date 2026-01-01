@@ -212,7 +212,7 @@ class SupplierInvoiceGlService
                 $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
             } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
-                $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
+                $directItemCurrencyConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $masterData->item_details[0]->netAmountTotal);
                 $data['documentTransAmount'] = \Helper::roundValue($masterData->item_details[0]->netAmountTotal + $masterData->item_details[0]->totalVATAmount + $poInvoiceDirectTransExtCharge) * -1;
                 $data['documentLocalAmount'] = \Helper::roundValue($directItemCurrencyConversion['localAmount'] + $masterData->item_details[0]->totalVATAmountLocal + $poInvoiceDirectLocalExtCharge) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($directItemCurrencyConversion['reportingAmount'] + $masterData->item_details[0]->totalVATAmountRpt + $poInvoiceDirectRptExtCharge) * -1;
@@ -350,11 +350,18 @@ class SupplierInvoiceGlService
                         $rptER = ExchangeSetupConfig::calculateReportingER($data['documentTransAmount'], $data['documentRptAmount']);
                         $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                     } else {
-                        $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                        $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
-                        
-                        $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                        $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                        if ($masterData->documentType == 1) {
+                            $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterData->autoID, $molAmount);
+                            $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                            $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                        }
+                        else {
+                            $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                            $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
+                            
+                            $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                            $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                        }
                     }
                     
                     $data['documentTransAmount'] = $data['documentTransAmount'] + $molAmount;
@@ -403,11 +410,18 @@ class SupplierInvoiceGlService
                                 $rptER = ExchangeSetupConfig::calculateReportingER($lastEntry['documentTransAmount'], $lastEntry['documentRptAmount']);
                                 $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                             } else {
-                                $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                                $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
-                                
-                                $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                                $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                                if ($masterData->documentType == 1) {
+                                    $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterData->autoID, $molAmount);
+                                    $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                                    $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                                }
+                                else {
+                                    $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                                    $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
+                                    
+                                    $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                                    $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                                }
                             }
                             
                             $data['documentLocalAmount'] = \Helper::roundValue($molAmountLocalConversion) * -1;

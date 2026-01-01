@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
 use App\helper\Helper;
+use App\Models\SupplierInvoiceDirectItem;
 use Illuminate\Http\Request;
 /**
  * Class BookInvSuppMasterRepository
@@ -279,7 +280,7 @@ class BookInvSuppMasterRepository extends BaseRepository
     }
 
     /**
-     * Apply master document exchange rates to detail items for document types 1 and 4
+     * Apply master document exchange rates to detail items for document types 1, 3 and 4
      * 
      * @param int $id Master document ID (bookingSuppMasInvAutoID)
      * @return bool Success status
@@ -296,28 +297,43 @@ class BookInvSuppMasterRepository extends BaseRepository
             $localCurrencyER = $masterDocument->localCurrencyER ?? 1;
             $companyReportingER = $masterDocument->companyReportingER ?? 1;
 
-            $details = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
+            if($masterDocument->documentType == 3) {
+                $details = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)->get();
 
-            // Update each detail item with master exchange rates and recalculate amounts
-            foreach ($details as $item) {
-                $localAmount = Helper::roundValue($item->DIAmount / $localCurrencyER);
-                $VATAmountLocal = Helper::roundValue($item->VATAmount / $localCurrencyER);
-                $netAmountLocal = Helper::roundValue($item->netAmount / $localCurrencyER);
+                foreach ($details as $item) {
+                    $costPerUnit = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->costPerUnitSupTransCur);
+                    $vatAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->VATAmount);
 
-                $comRptAmount = Helper::roundValue($item->DIAmount / $companyReportingER);
-                $VATAmountRpt = Helper::roundValue($item->VATAmount / $companyReportingER);
-                $netAmountRpt = Helper::roundValue($item->netAmount / $companyReportingER);
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'companyReportingER' => $companyReportingER,
+                        'costPerUnitLocalCur' => $costPerUnit['localAmount'],
+                        'costPerUnitComRptCur' => $costPerUnit['reportingAmount'],
+                        'VATAmountLocal' => $vatAmount['localAmount'],
+                        'VATAmountRpt' => $vatAmount['reportingAmount']
+                    ]);
+                }
+            }
+            else if($masterDocument->documentType == 1 || $masterDocument->documentType == 4) {
+                $details = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
 
-                $item->update([
-                    'localCurrencyER' => $localCurrencyER,
-                    'comRptCurrencyER' => $companyReportingER,
-                    'localAmount' => $localAmount,
-                    'comRptAmount' => $comRptAmount,
-                    'VATAmountLocal' => $VATAmountLocal,
-                    'VATAmountRpt' => $VATAmountRpt,
-                    'netAmountLocal' => $netAmountLocal,
-                    'netAmountRpt' => $netAmountRpt
-                ]);
+                // Update each detail item with master exchange rates and recalculate amounts
+                foreach ($details as $item) {
+                    $diaAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->DIAmount);
+                    $vatAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->VATAmount);
+                    $netAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->netAmount);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'comRptCurrencyER' => $companyReportingER,
+                        'localAmount' => $diaAmount['localAmount'],
+                        'comRptAmount' => $diaAmount['reportingAmount'],
+                        'VATAmountLocal' => $vatAmount['localAmount'],
+                        'VATAmountRpt' => $vatAmount['reportingAmount'],
+                        'netAmountLocal' => $netAmount['localAmount'],
+                        'netAmountRpt' => $netAmount['reportingAmount']
+                    ]);
+                }
             }
 
             return true;

@@ -512,7 +512,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
-        if(!$checkErChange && ($bookInvSuppMaster->documentType == 1 || $bookInvSuppMaster->documentType == 4)) {
+        if(!$checkErChange && in_array($bookInvSuppMaster->documentType, [1, 4, 3])) {
             $this->bookInvSuppMasterRepository->applyMasterExchangeRatesToDetails($id);
         }
 
@@ -624,7 +624,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
             $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
 
-        } else if ($input['documentType'] == 3) {
+        } 
+        else if ($input['documentType'] == 3) {
             $grvAmountTransaction = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
                 ->sum('netAmount');
             $grvAmountLocal = SupplierInvoiceDirectItem::selectRaw('SUM(VATAmount * noQty) as VATAmount')->where('bookingSuppMasInvAutoID', $id)
@@ -632,8 +633,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             $totatlDirectItemTrans = $grvAmountTransaction + (isset($grvAmountLocal->VATAmount) ? $grvAmountLocal->VATAmount : 0);
 
-            $currencyConversionDire = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totatlDirectItemTrans);
-
+            $currencyConversionDire = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $totatlDirectItemTrans);
           
             $bookingAmountTrans = $totatlDirectItemTrans + $directAmountTrans + $detailTaxSumTrans;
             $bookingAmountLocal = $currencyConversionDire['localAmount'] + $directAmountLocal + $detailTaxSumLocal;
@@ -643,7 +643,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $input['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
             $input['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
 
-        } else {
+        } 
+        else {
 
             $bookingAmountTrans = $directAmountTrans + $detailTaxSumTrans;
             $bookingAmountLocal = $directAmountLocal + $detailTaxSumLocal;
@@ -707,7 +708,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         if ($bookInvSuppMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
                 
-            if ($checkErChange && ($bookInvSuppMaster->documentType == 1 || $bookInvSuppMaster->documentType == 4)) {
+            if ($checkErChange && in_array($bookInvSuppMaster->documentType, [1, 4, 3])) {
                 // Get company currency information
                 $company = Company::find($input['companySystemID']);
                 $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
@@ -1023,7 +1024,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                 }
 
-            } else if ($input['documentType'] == 3) {
+            } 
+            else if ($input['documentType'] == 3) {
 
                 $checkGRVItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)
                     ->count();
@@ -1071,17 +1073,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             // $calculateItemTax = (($itemDiscont['VATPercentage'] / 100) * $calculateItemDiscount) + $calculateItemDiscount;
                             $vatLineAmount = $itemDiscont['VATAmount']; //($calculateItemTax - $calculateItemDiscount);
 
-                            $currencyConversion = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+                            $currencyConversion = \Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $calculateItemDiscount);
 
-                            $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
+                            $currencyConversionForLineAmount = \Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $vatLineAmount);
 
-                            $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+                            $currencyConversionLineDefault = \Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $calculateItemDiscount);
 
 
                             SupplierInvoiceDirectItem::where('id', $itemDiscont['id'])
                                 ->update([
                                     'costPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
-                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['defaultAmount']),
                                     'costPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
                                     'costPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
                                     'VATPercentage' => $itemDiscont['VATPercentage'],
@@ -1091,7 +1093,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                                 ]);
                         }
                     }
-                } else {
+                } 
+                else {
                     if (!empty($dirItemDetails)) {
                         foreach ($dirItemDetails as $itemDiscont) {
 
@@ -1100,21 +1103,16 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                             $calculateItemDiscount = $itemDiscont['unitCost'] - $itemDiscont['discountAmount'];
 
-                            $currencyConversion = \Helper::currencyConversion(
-                                $itemDiscont['companySystemID'],
-                                $input['supplierTransactionCurrencyID'],
-                                $input['supplierTransactionCurrencyID'],
-                                $calculateItemDiscount
-                            );
+                            $currencyConversion = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $calculateItemDiscount);
 
-                            $currencyConversionLineDefault = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $calculateItemDiscount);
+                            $currencyConversionLineDefault = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $calculateItemDiscount);
 
                             $vatLineAmount = 0;
                             $vatAmountLocal = 0;
                             $vatAmountRpt = 0;
                             if (isset($input['rcmActivated']) && $input['rcmActivated']) {
                                 $vatLineAmount = $itemDiscont['VATAmount'];
-                                $currencyConversionForLineAmount = \Helper::currencyConversion($itemDiscont['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatLineAmount);
+                                $currencyConversionForLineAmount = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $vatLineAmount);
                                 $vatLineAmount =  \Helper::roundValue($vatLineAmount);
                                 $vatAmountLocal = \Helper::roundValue($currencyConversionForLineAmount['localAmount']);
                                 $vatAmountRpt = \Helper::roundValue($currencyConversionForLineAmount['reportingAmount']);
@@ -1124,7 +1122,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                             SupplierInvoiceDirectItem::where('id', $itemDiscont['id'])
                                 ->update([
                                     'costPerUnitLocalCur' => \Helper::roundValue($currencyConversion['localAmount']),
-                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['documentAmount']),
+                                    'costPerUnitSupDefaultCur' => \Helper::roundValue($currencyConversionLineDefault['defaultAmount']),
                                     'costPerUnitSupTransCur' => \Helper::roundValue($calculateItemDiscount),
                                     'costPerUnitComRptCur' => \Helper::roundValue($currencyConversion['reportingAmount']),
                                     'VATAmount' => $vatLineAmount,
@@ -1275,13 +1273,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->DIAmount);
+                if (!in_array($input['documentType'], [1, 3, 4])) {
+                    $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->DIAmountCurrency, $updateItem->DIAmountCurrency, $updateItem->DIAmount);
 
-                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
-                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+                        $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+                        $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+                        $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                        $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+                    }
                 }
 
                 $updateItem->save();
@@ -1525,11 +1525,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $bookInvSuppMaster = $bookInvSuppMaster->refresh();
                 $bookingAmountTrans = $bookInvSuppMaster->bookingAmountTrans - $molAmount;
                 
-                $molAmountLocalConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['localCurrencyID'], $molAmount);
-                $bookingAmountLocal = $bookInvSuppMaster->bookingAmountLocal - ($molAmountLocalConversion['localAmount'] ?? 0);
-                
-                $molAmountRptConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['companyReportingCurrencyID'], $molAmount);
-                $bookingAmountRpt = $bookInvSuppMaster->bookingAmountRpt - ($molAmountRptConversion['reportingAmount'] ?? 0);
+                if ($input['documentType'] == 1) {
+                    $molAmountConversion = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $molAmount);
+
+                    $bookingAmountLocal = $bookInvSuppMaster->bookingAmountLocal - ($molAmountConversion['localAmount'] ?? 0);
+                    $bookingAmountRpt = $bookInvSuppMaster->bookingAmountRpt - ($molAmountConversion['reportingAmount'] ?? 0);
+                }
+                else {
+                    $molAmountLocalConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['localCurrencyID'], $molAmount);
+                    $bookingAmountLocal = $bookInvSuppMaster->bookingAmountLocal - ($molAmountLocalConversion['localAmount'] ?? 0);
+                    
+                    $molAmountRptConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['companyReportingCurrencyID'], $molAmount);
+                    $bookingAmountRpt = $bookInvSuppMaster->bookingAmountRpt - ($molAmountRptConversion['reportingAmount'] ?? 0);
+                }
                 
                 $bookInvSuppMaster->update([
                     'bookingAmountTrans' => \Helper::roundValue($bookingAmountTrans),
@@ -1539,7 +1547,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $bookInvSuppMaster = $bookInvSuppMaster->refresh();
             }
         }
-
 
         return $this->sendReponseWithDetails($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_updated_successfully'),1,$confirm['data'] ?? null);
     }
@@ -2331,26 +2338,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $reportingER = \Helper::currencyConversion($companyId, $masterInvoice->supplierTransactionCurrencyID, $reportingCurrency, 0, null, true);
             $reportingERValue = $reportingER['trasToRptER'] ?? 1;
 
-            // Recalculate local currency amounts
-            $masterVATAmountLocal = \Helper::roundValue($masterInvoice->VATAmount / $localERValue);
-            $masterNetAmountLocal = \Helper::roundValue($masterInvoice->netAmount / $localERValue);
-            $bookingAmountLocal = \Helper::roundValue($masterInvoice->bookingAmountTrans / $localERValue);
-
-            // Recalculate reporting currency amounts
-            $masterVATAmountRpt = \Helper::roundValue($masterInvoice->VATAmount / $reportingERValue);
-            $masterNetAmountRpt = \Helper::roundValue($masterInvoice->netAmount / $reportingERValue);
-            $bookingAmountRpt = \Helper::roundValue($masterInvoice->bookingAmountTrans / $reportingERValue);
+            $masterVATAmount = Helper::convertAmountToLocalRpt($masterInvoice->documentSystemID, $id, $masterInvoice->VATAmount);
+            $masterNetAmount = Helper::convertAmountToLocalRpt($masterInvoice->documentSystemID, $id, $masterInvoice->netAmount);
+            $bookingAmount = Helper::convertAmountToLocalRpt($masterInvoice->documentSystemID, $id, $masterInvoice->bookingAmountTrans);
 
             // Update master invoice with new exchange rates and recalculated amounts
             $masterInvoiceArray = array(
                 'localCurrencyER' => $localERValue,
                 'companyReportingER' => $reportingERValue,
-                'VATAmountLocal' => $masterVATAmountLocal,
-                'netAmountLocal' => $masterNetAmountLocal,
-                'bookingAmountLocal' => $bookingAmountLocal,
-                'VATAmountRpt' => $masterVATAmountRpt,
-                'netAmountRpt' => $masterNetAmountRpt,
-                'bookingAmountRpt' => $bookingAmountRpt
+                'VATAmountLocal' => $masterVATAmount['localAmount'],
+                'netAmountLocal' => $masterNetAmount['localAmount'],
+                'bookingAmountLocal' => $bookingAmount['localAmount'],
+                'VATAmountRpt' => $masterVATAmount['reportingAmount'],
+                'netAmountRpt' => $masterNetAmount['reportingAmount'],
+                'bookingAmountRpt' => $bookingAmount['reportingAmount']
             );
             
             $masterInvoice->update($masterInvoiceArray);
