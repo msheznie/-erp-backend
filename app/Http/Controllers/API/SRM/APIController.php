@@ -357,8 +357,8 @@ class APIController extends Controller
             ]);
 
             if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
-                if ($response->data) {
-                    foreach ($response->data  as $key1 => $data1) {
+                if ($response->data && $response->data->supplier_details) {
+                    foreach ($response->data->supplier_details  as $key1 => $data1) {
                         foreach ($data1->groups as $val2) {
                             foreach ($val2->controls as $val3) {
                                 foreach ($val3->field->values as $key1 => $val4) {
