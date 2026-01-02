@@ -33,6 +33,7 @@ use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
+use App\Models\SupplierGroup;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
@@ -2218,8 +2219,12 @@ class TenderMasterAPIController extends AppBaseController
     public function getSupplierCategoryList(Request $request)
     {
         try {
-            return SupplierCategoryMaster::orderBy('categoryName', 'asc')
-                ->get();
+            return [
+                'supplierCategoryMaster' => SupplierCategoryMaster::orderBy('categoryName', 'asc')
+                    ->get(),
+                'supplierGroup' => SupplierGroup::onlyNotDeletedAndActive()
+            ];
+
         } catch (\Exception $ex) {
             return [];
         }

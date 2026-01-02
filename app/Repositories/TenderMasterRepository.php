@@ -2375,12 +2375,22 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierList(Request $request){
         $input = $request->all();
         $selectedCategoryIds = array();
+        $selectedSubCategoryIds = array();
+        $selectedSupplierGroupId = array();
         $selectedCompanyId = $input['companyId'];
         $tenderMasterId = $input['tenderMasterId'];
-        $selectedCategories = $input['selectedCategories'];
+        $selectedCategories = $input['selectedCategories'] ?? [];
+        $selectedSubCategories = $input['selectedSubCategories'] ?? [];
+        $selectedSupplierGroups = $input['selectedSupplierGroups'] ?? [];
 
         foreach ($selectedCategories as $selectedCategory) {
             $selectedCategoryIds[] = $selectedCategory['id'];
+        }
+        foreach ($selectedSubCategories as $selectedSubCategory) {
+            $selectedSubCategoryIds[] = $selectedSubCategory['id'];
+        }
+        foreach ($selectedSupplierGroups as $selectedSupplierGroup) {
+            $selectedSupplierGroupId[] = $selectedSupplierGroup['id'];
         }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -2391,12 +2401,25 @@ class TenderMasterRepository extends BaseRepository
 
         $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
         $qry = SupplierAssigned::getTenderAssignedSupplierQry(
-            $selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $requestData['enableRequestChange'], $requestData['versionID']
+            $selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $requestData['enableRequestChange'],
+            $requestData['versionID'], $selectedSubCategoryIds, $selectedSupplierGroupId
         );
 
-        if(sizeof($selectedCategoryIds) != 0) {
+        if(!empty($selectedCategoryIds)) {
             $qry = $qry->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
                 $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+            });
+        }
+
+        if(!empty($selectedSubCategoryIds)) {
+            $qry = $qry->whereHas('subBusinessCategoryAssigned', function ($query) use ($selectedSubCategoryIds) {
+                $query->whereIn('supSubCategoryID', $selectedSubCategoryIds);
+            });
+        }
+
+        if(!empty($selectedSupplierGroupId)) {
+            $qry = $qry->whereHas('master', function ($query) use ($selectedSupplierGroupId) {
+                $query->whereIn('supplier_group_id', $selectedSupplierGroupId);
             });
         }
 
