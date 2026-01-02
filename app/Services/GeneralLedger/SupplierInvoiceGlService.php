@@ -343,7 +343,7 @@ class SupplierInvoiceGlService
             if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2)) {
                 $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
                 if ($molAmount > 0) {
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $localER = ExchangeSetupConfig::calculateLocalER($data['documentTransAmount'], $data['documentLocalAmount']);
                         $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
                         
@@ -402,7 +402,7 @@ class SupplierInvoiceGlService
                         if ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) {
                             $data['documentTransAmount'] = \Helper::roundValue($molAmount) * -1;
                             
-                            if ($masterData->documentType == 0) {
+                            if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                                 $lastEntry = end($finalData);
                                 $localER = ExchangeSetupConfig::calculateLocalER($lastEntry['documentTransAmount'], $lastEntry['documentLocalAmount']);
                                 $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;

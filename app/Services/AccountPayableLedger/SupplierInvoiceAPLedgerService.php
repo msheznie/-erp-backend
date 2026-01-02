@@ -336,7 +336,7 @@ class SupplierInvoiceAPLedgerService
             }
 
             if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) && $molAmount > 0) {
-                if ($masterData->documentType == 0) {
+                if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                     $localER = ExchangeSetupConfig::calculateLocalER($data['supplierInvoiceAmount'], $data['localAmount']);
                     $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
                     
@@ -378,7 +378,7 @@ class SupplierInvoiceAPLedgerService
                     $molData['supplierInvoiceAmount'] = \Helper::roundValue($molAmount);
                     $molData['supplierDefaultAmount'] = \Helper::roundValue($molAmount);
 
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $lastEntry = end($finalData);
                         $localER = ExchangeSetupConfig::calculateLocalER($lastEntry['supplierInvoiceAmount'], $lastEntry['localAmount']);
                         $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
