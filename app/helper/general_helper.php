@@ -7491,6 +7491,7 @@ class Helper
             'reportingAmount' => self::roundValue($reportingAmount),
             'localAmount' => self::roundValue($localAmount),
             'defaultAmount' => self::roundValue($defaultAmount),
+            'documentAmount' => self::roundValue($defaultAmount)
         );
 
         return $array;
