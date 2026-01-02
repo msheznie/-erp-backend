@@ -350,18 +350,9 @@ class SupplierInvoiceGlService
                         $rptER = ExchangeSetupConfig::calculateReportingER($data['documentTransAmount'], $data['documentRptAmount']);
                         $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                     } else {
-                        if ($masterData->documentType == 1) {
-                            $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterData->autoID, $molAmount);
-                            $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
-                            $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
-                        }
-                        else {
-                            $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                            $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
-                            
-                            $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                            $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
-                        }
+                        $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                        $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                        $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
                     }
                     
                     $data['documentTransAmount'] = $data['documentTransAmount'] + $molAmount;
@@ -410,18 +401,9 @@ class SupplierInvoiceGlService
                                 $rptER = ExchangeSetupConfig::calculateReportingER($lastEntry['documentTransAmount'], $lastEntry['documentRptAmount']);
                                 $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                             } else {
-                                if ($masterData->documentType == 1) {
-                                    $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterData->autoID, $molAmount);
-                                    $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
-                                    $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
-                                }
-                                else {
-                                    $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                                    $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
-                                    
-                                    $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                                    $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
-                                }
+                                $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                                $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                                $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
                             }
                             
                             $data['documentLocalAmount'] = \Helper::roundValue($molAmountLocalConversion) * -1;
