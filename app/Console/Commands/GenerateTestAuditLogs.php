@@ -39,7 +39,7 @@ class GenerateTestAuditLogs extends Command
         $this->info("Generating {$count} test audit logs for transaction_id: {$transactionId}, table: {$table}");
         
         // Sample data for variety
-        $locales = ['en', 'ar', 'fr', 'es'];
+        $locale = 'en'; // Only English locale
         $crudTypes = ['C', 'U', 'D'];
         $userNames = [
             'Administrator Guteck',
@@ -57,26 +57,15 @@ class GenerateTestAuditLogs extends Command
         $docCodes = ['INV002530', 'INV002531', 'INV002532', 'INV002533', 'INV002534'];
         $companySystemIds = ['1', '2', '3'];
         
-        // Sample narration templates
+        // Sample narration templates (English only)
         $narrationTemplates = [
-            'en' => [
-                'has been created',
-                'has been updated',
-                'has been deleted',
-                'has been modified',
-                'status changed',
-                'details updated',
-                'information changed'
-            ],
-            'ar' => [
-                'تم الإنشاء',
-                'تم التحديث',
-                'تم الحذف',
-                'تم التعديل',
-                'تم تغيير الحالة',
-                'تم تحديث التفاصيل',
-                'تم تغيير المعلومات'
-            ]
+            'has been created',
+            'has been updated',
+            'has been deleted',
+            'has been modified',
+            'status changed',
+            'details updated',
+            'information changed'
         ];
         
         // Sample data changes
@@ -98,7 +87,6 @@ class GenerateTestAuditLogs extends Command
         
         for ($i = 0; $i < $count; $i++) {
             // Randomize data for variety
-            $locale = $locales[array_rand($locales)];
             $crudType = $crudTypes[array_rand($crudTypes)];
             $userName = $userNames[array_rand($userNames)];
             $employeeId = $employeeIds[array_rand($employeeIds)];
@@ -107,14 +95,8 @@ class GenerateTestAuditLogs extends Command
             $docCode = $docCodes[array_rand($docCodes)];
             $companySystemId = $companySystemIds[array_rand($companySystemIds)];
             
-            // Generate narration based on locale and CRUD type
-            $narration = $docCode . ' ';
-            if (isset($narrationTemplates[$locale])) {
-                $templates = $narrationTemplates[$locale];
-                $narration .= $templates[array_rand($templates)];
-            } else {
-                $narration .= $narrationTemplates['en'][array_rand($narrationTemplates['en'])];
-            }
+            // Generate narration (English only)
+            $narration = $docCode . ' ' . $narrationTemplates[array_rand($narrationTemplates)];
             
             // Generate data changes (only for Update operations)
             $data = $crudType === 'U' ? $dataChanges[array_rand($dataChanges)] : '[]';
