@@ -964,9 +964,9 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
         Route::get('loginwithToken', 'UserAPIController@loginwithToken');
 
-        if (env('APP_ENV') == 'local') {
+        // if (env('APP_ENV') == 'local') {
             Route::post('login', 'AuthAPIController@auth')->middleware(MobileAccessVerify::class);
-        }
+        // }
 
         Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
         

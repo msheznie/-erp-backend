@@ -304,4 +304,15 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function rejectBudgetPlanning(Request $request)
+    {
+
+        $reject = \Helper::rejectDocument($request);
+            if (!$reject["success"]) {
+                return $this->sendError($reject["message"]);
+            } else {
+                return $this->sendResponse(array(), $reject["message"]);
+            }
+    }
 }

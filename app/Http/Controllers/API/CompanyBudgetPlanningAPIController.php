@@ -265,7 +265,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
-        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.company_budget_planning_retrieved_successfully'));
+        // Ensure rejected_yn is returned as 0 or 1 instead of boolean
+        $data = $companyBudgetPlanning->toArray();
+        if (isset($data['rejected_yn'])) {
+            $data['rejected_yn'] = $data['rejected_yn'] ? 1 : 0;
+        }
+
+        return $this->sendResponse($data, trans('custom.company_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -1532,6 +1538,172 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError(trans('custom.error_occurred'), 500);
+        }
+    }
+
+    /**
+     * Pre-check for returning budget planning back to amend
+     * 
+     * @param Request $request
+     * @return Response
+     */
+    public function returnBudgetPlanningPreCheck(Request $request)
+    {
+        $input = $request->all();
+        
+        // Validate input
+        $validator = Validator::make($input, [
+            'companyBudgetPlanningID' => 'required|integer'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendAPIError(trans('custom.validation_error'), 422, $validator->errors()->toArray());
+        }
+
+        try {
+            $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($input['companyBudgetPlanningID']);
+            
+            if (!$companyBudgetPlanning) {
+                return $this->sendError(trans('custom.budget_planning_not_found'), 404);
+            }
+
+            // Check if budget planning is confirmed
+            if ($companyBudgetPlanning->confirmed_yn != 1) {
+                return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this'), 400);
+            }
+
+            // Check if budget planning is approved
+            if ($companyBudgetPlanning->approved_yn == -1) {
+                return $this->sendError(trans('custom.cannot_return_back_to_amend_budget_planning_fully_approved'), 400);
+            }
+
+            // Check if any department budget plannings have related documents that prevent return
+            $errors = [];
+            if ($companyBudgetPlanning->departmentBudgetPlannings) {
+                foreach ($companyBudgetPlanning->departmentBudgetPlannings as $deptBudget) {
+                    // Add any validation checks here if needed
+                    // For example, check if there are any related documents
+                }
+            }
+
+            if (!empty($errors)) {
+                return $this->sendAPIError(trans('custom.cannot_return_back_to_amend'), 400, ['data' => $errors]);
+            }
+
+            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_can_be_returned_to_amend'));
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_occurred') . ': ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Return budget planning back to amend
+     * 
+     * @param Request $request
+     * @return Response
+     */
+    public function returnBudgetPlanningToAmend(Request $request)
+    {
+        $input = $request->all();
+        
+        // Validate input
+        $validator = Validator::make($input, [
+            'companyBudgetPlanningID' => 'required|integer',
+            'ammendComments' => 'required|string|min:10'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendAPIError(trans('custom.validation_error'), 422, $validator->errors()->toArray());
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($input['companyBudgetPlanningID']);
+            
+            if (!$companyBudgetPlanning) {
+                return $this->sendError(trans('custom.budget_planning_not_found'), 404);
+            }
+
+            // Check if budget planning is confirmed
+            if ($companyBudgetPlanning->confirmed_yn != 1) {
+                return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this'), 400);
+            }
+
+            // Check if budget planning is approved
+            if ($companyBudgetPlanning->approved_yn == -1) {
+                return $this->sendError(trans('custom.cannot_return_back_to_amend_budget_planning_fully_approved'), 400);
+            }
+
+            $employee = \Helper::getEmployeeInfo();
+
+            // Store confirmed_by_emp_system_id before clearing it for email notification
+            $confirmedByEmpSystemID = $companyBudgetPlanning->confirmed_by_emp_system_id;
+
+            // Update the budget planning to return it back to amend
+            $companyBudgetPlanning->confirmed_yn = 0;
+            $companyBudgetPlanning->confirmed_by_emp_id = null;
+            $companyBudgetPlanning->confirmed_by_emp_system_id = null;
+            $companyBudgetPlanning->confirmed_at = null;
+            $companyBudgetPlanning->confirmed_by_name = null;
+            $companyBudgetPlanning->approved_yn = 0;
+            $companyBudgetPlanning->approved_by_emp_id = null;
+            $companyBudgetPlanning->approved_by_emp_system_id = null;
+            $companyBudgetPlanning->approved_at = null;
+            $companyBudgetPlanning->approved_by_name = null;
+            $companyBudgetPlanning->rejected_yn = 0;
+            $companyBudgetPlanning->timesReferred = 0;
+
+            $companyBudgetPlanning->save();
+
+            // Delete document approvals
+            DocumentApproved::where('documentSystemID', 133)
+                ->where('documentSystemCode', $companyBudgetPlanning->id)
+                ->delete();
+
+            // // Create audit trail
+            // \App\Models\AuditTrial::createAuditTrial(
+            //     133, // document_system_id for budget planning
+            //     $companyBudgetPlanning->id,
+            //     $input['ammendComments'],
+            //     'returned back to amend'
+            // );
+
+            // Send email notifications if needed
+            $emails = [];
+            if ($confirmedByEmpSystemID) {
+                $document = \App\Models\DocumentMaster::where('documentSystemID', 133)->first();
+                $docNameBody = $document ? $document->documentDescription : 'Budget Planning';
+                $docNameBody .= ' <b>' . $companyBudgetPlanning->planningCode . '</b>';
+                $docNameSubject = ($document ? $document->documentDescription : 'Budget Planning') . ' ' . $companyBudgetPlanning->planningCode;
+                
+                $body = '<p>' . $docNameBody . ' ' . trans('email.has_been_returned_back_to_amend_by', ['empName' => $employee->empName]) . ' ' . trans('email.due_to_below_reason') . '.</p><p>' . trans('email.comment') . ' : ' . $input['ammendComments'] . '</p>';
+                $subject = $docNameSubject . ' ' . trans('email.has_been_returned_back_to_amend');
+
+                $emails[] = [
+                    'empSystemID' => $confirmedByEmpSystemID,
+                    'companySystemID' => $companyBudgetPlanning->companySystemID,
+                    'docSystemID' => 133,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $companyBudgetPlanning->id
+                ];
+            }
+
+            if (!empty($emails)) {
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    DB::rollBack();
+                    return $this->sendError($sendEmail["message"], 500);
+                }
+            }
+
+            DB::commit();
+
+            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_returned_back_to_amend_successfully'));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->sendError(trans('custom.error_occurred') . ': ' . $e->getMessage(), 500);
         }
     }
 }
