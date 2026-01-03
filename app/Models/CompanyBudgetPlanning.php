@@ -133,7 +133,9 @@ class CompanyBudgetPlanning extends Model
         'approved_by_emp_id',
         'approved_by_name',
         'approved_by_emp_system_id',
-        'approved_at'
+        'approved_at',
+        'rejected_yn',
+        'timesReferred'
     ];
 
     /**
@@ -167,7 +169,9 @@ class CompanyBudgetPlanning extends Model
         'approved_by_emp_id' => 'integer',
         'approved_by_name' => 'string',
         'approved_by_emp_system_id' => 'integer',
-        'approved_at' => 'date'
+        'approved_at' => 'date',
+        'rejected_yn' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

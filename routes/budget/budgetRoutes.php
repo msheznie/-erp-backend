@@ -50,6 +50,8 @@ Route::post('updateBudgetPlanningStatus', 'DepartmentBudgetPlanningAPIController
 Route::post('getBudgetPlanningApprovalByUser', 'BudgetPlanningApprovalAPIController@getBudgetPlanningApprovalByUser')->name('Get budget planning approval by user');
 Route::post('getBudgetPlanningApprovedByUser', 'BudgetPlanningApprovalAPIController@getBudgetPlanningApprovedByUser')->name('Get budget planning approved by user');
 Route::post('requestBudgetPlanningReopen', 'CompanyBudgetPlanningAPIController@requestBudgetPlanningReopen')->name('Request budget planning reopen');
+Route::get('returnBudgetPlanningPreCheck', 'CompanyBudgetPlanningAPIController@returnBudgetPlanningPreCheck')->name('Return budget planning precheck');
+Route::post('returnBudgetPlanningToAmend', 'CompanyBudgetPlanningAPIController@returnBudgetPlanningToAmend')->name('Return budget planning to amend');
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
@@ -166,3 +168,6 @@ Route::put('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPICon
 Route::delete('budgetNotificationDetails/{id}', 'DepartmentBudgetNotificationAPIController@destroyNotificationDetail')->name('Delete notification detail');
 Route::get('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@getRecipients')->name('Get notification recipients');
 Route::post('budgetNotificationRecipients', 'DepartmentBudgetNotificationAPIController@storeRecipient')->name('Create notification recipient');
+
+
+Route::post('rejectBudgetPlanning', 'BudgetPlanningApprovalAPIController@rejectBudgetPlanning')->name('Reject budget planning');

@@ -6455,6 +6455,13 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
+                case 133:
+                    $docInforArr["tableName"] = 'company_budget_plannings';
+                    $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_set')];
             }
@@ -6671,6 +6678,11 @@ class Helper
                                 );
                             }
 
+                            if($input["documentSystemID"] == 133)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['rejected_yn' => -1,'rejected_date' => now()]);
+
+                            }
                             if($input["documentSystemID"] == 117)
                             {
                                 $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
