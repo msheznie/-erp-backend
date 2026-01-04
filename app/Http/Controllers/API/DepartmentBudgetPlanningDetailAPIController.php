@@ -492,6 +492,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
             
+            
             $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
                 $isEnable = true;
                 
@@ -507,7 +508,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                             $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
                         }
                     }
-                    if($budgetPlanning->workStatus == 3){
+                    if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
                         $isEnable = false;
                     }
                 }
