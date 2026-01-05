@@ -2708,9 +2708,13 @@ class TenderMasterRepository extends BaseRepository
         if ($cloneCount > 0) {
             $count = $cloneCount + 1;
             $tenderTitle = 'Clone ' . $count . ' - ' . $tenderMaster->title;
+            $description = 'Clone ' . $count . ' - ' . $tenderMaster->description;
+            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
         } else {
             $cloneCount = 1;
             $tenderTitle = 'Clone - ' . $tenderMaster->title;
+            $description = 'Clone - ' . $tenderMaster->description;
+            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
         }
 
         $newTender = $tenderMaster->replicate([
@@ -2726,7 +2730,7 @@ class TenderMasterRepository extends BaseRepository
 
         $newTender->uuid = Helper::generateSRMUuid(16);
         $newTender->title = $tenderTitle;
-        $newTender->description = $tenderTitle;
+        $newTender->description = $tenderDescription;
         $newTender->tender_code = $tenderCode;
         $newTender->serial_number = $lastSerialNumber;
         $newTender->is_clone = 0;
