@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.98.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.2...v10.98.0) (2026-01-05)
+
+
+### Features
+
+* **OBP:** Portal  OBP Sync | Sync New Portal User to OBP [GHR-9618] ([#9434](https://github.com/pbsgears/Gears_BackEnd/issues/9434)) ([a75e509](https://github.com/pbsgears/Gears_BackEnd/commit/a75e5092e7033316fb637411907eaf58b9c40687))
+
 ## [10.97.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.1...v10.97.2) (2025-12-30)
 
 
