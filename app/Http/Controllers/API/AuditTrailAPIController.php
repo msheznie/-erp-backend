@@ -364,12 +364,24 @@ class AuditTrailAPIController extends AppBaseController
                 $module = $input['module'];
                 $table = $this->lokiService->getAuditTables($module);
 
+                // Check if request is from Portal (Portal requests have 'From-Portal' header set to 1)
+                $isFromPortal = $request->hasHeader('From-Portal') && $request->header('From-Portal') == 1;
+                $companyIdFilter = '';
+
+                // Only apply company filtering for Gears_FrontEnd requests (NOT from Portal)
+                if (!$isFromPortal && isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
+                    $companySystemId = $input['companyId'];
+                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
+                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
+                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
+                }
+
                 // If id is 0, only filter by table (show all logs for this module)
                 // Otherwise, filter by both transaction_id and table
                 if ($id == 0 || $id == '0' || $id === '0') {
-                    // Only filter by table when id is 0
+                    // Only filter by table when id is 0, but still filter by company (if not from Portal)
                     $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
-                    $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$tableFilter.' | json ['.$diff.'d])';
+                    $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$tableFilter.$companyIdFilter.' | json ['.$diff.'d])';
                     $params = 'query?query='.$params;
                     $data = $this->lokiService->getAuditLogs($params);
                     $data2 = []; // No parent logs when showing all logs
