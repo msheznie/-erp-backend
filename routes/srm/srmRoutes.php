@@ -47,6 +47,7 @@ Route::post('updatePriceBidDetail', 'TenderBidFormatMasterAPIController@updatePr
 Route::post('updateBidFormat', 'TenderBidFormatMasterAPIController@updateBidFormat')->name("Update bid format");
 Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail')->name("Delete price bid detail");
 Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster')->name("Delete price bid master");
+Route::post('uploadPriceBidFormatDetails', 'TenderBidFormatMasterAPIController@uploadPriceBidFormatDetails')->name("upload Price Bid Format Details");
 
 Route::post('getBitFormatItems', 'TenderBidFormatMasterAPIController@getBitFormatItems')->name("Get bid format items");
 

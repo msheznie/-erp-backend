@@ -85,5 +85,10 @@ class TenderFieldType extends Model
         
     ];
 
+    public static function getFieldTypeId($fieldLabel)
+    {
+        return self::where('label',$fieldLabel)->first();
+    }
+
     
 }

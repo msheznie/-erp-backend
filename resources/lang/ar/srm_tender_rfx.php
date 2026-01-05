@@ -306,5 +306,8 @@ return [
     'cannot_amend_document' => 'لا يمكنك تعديل هذا المستند',
     'tender_amended_successfully' => 'تم تعديل المناقصة بنجاح',
     'successfully_cloned' => 'تم النسخ بنجاح',
-    'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => 'تم طلب :doc للتعديل/الإضافة، يرجى الموافقة على الطلب لتمكين النسخ'
+    'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => 'تم طلب :doc للتعديل/الإضافة، يرجى الموافقة على الطلب لتمكين النسخ',
+    'price_bid_format_master_id_required' => 'مطلوب معرّف النموذج الرئيسي لتسعير العرض',
+    'company_id_required' => 'معرّف الشركة مطلوب',
+
 ];
