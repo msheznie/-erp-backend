@@ -1182,7 +1182,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $disk = 's3SRM';
+        $disk = 's3';
         $filePath = 'Master_Template/SRM/Price_Bid_Format_Template.xlsx';
         $fileName = 'Price_Bid_Format_Template.xlsx';
 
