@@ -325,17 +325,25 @@ class SupplierMasterBulkUploadService
                 'message' => $creditPeriodResult['message'],
                 'value' => $row['credit_period'] ?? ''
             ];
-        }
-        
-        if (!empty($row['currency'])) {
-            $currencyResult = self::validateCurrency($row['currency']);
-            if (!$currencyResult['valid']) {
+        } else {
+            $creditPeriodStr = trim((string)($row['credit_period'] ?? ''));
+            $creditPeriodDigits = preg_replace('/[^0-9]/', '', $creditPeriodStr);
+            if (strlen($creditPeriodDigits) > 10) {
                 $errors[] = [
-                    'field' => 'Currency',
-                    'message' => $currencyResult['message'],
-                    'value' => $row['currency']
+                    'field' => 'Credit Period',
+                    'message' => self::getTranslatedMessage('custom.credit_period_cannot_exceed_max_digits', 'Credit Period cannot exceed the maximum allowed number of digits.'),
+                    'value' => $row['credit_period'] ?? ''
                 ];
             }
+        }
+        
+        $currencyResult = self::validateCurrency($row['currency'] ?? null);
+        if (!$currencyResult['valid']) {
+            $errors[] = [
+                'field' => 'Currency',
+                'message' => $currencyResult['message'],
+                'value' => $row['currency'] ?? ''
+            ];
         }
         
         $whtApplicable = $row['wht_applicable'] ?? 'No';
@@ -354,7 +362,7 @@ class SupplierMasterBulkUploadService
             }
         }
         
-        $molApplicable = $row['mol_applicable'] ?? 'No';
+        $molApplicable = $row['mol_contribution_applicable'] ?? 'No';
         $molResult = self::validateMOLFields(
             $molApplicable,
             $row['mol_rate'] ?? null,
@@ -467,12 +475,8 @@ class SupplierMasterBulkUploadService
         $supplierData['creditLimit'] = $row['credit_limit'];
         $supplierData['creditPeriod'] = $row['credit_period'];
         
-        if (!empty($row['currency'])) {
-            $currency = CurrencyMaster::where('CurrencyCode', $row['currency'])->first();
-            $supplierData['currency'] = $currency->currencyID;
-        } else {
-            $supplierData['currency'] = 0;
-        }
+        $currency = CurrencyMaster::where('CurrencyCode', $row['currency'])->first();
+        $supplierData['currency'] = $currency->currencyID;
         
         $supplierData['supplierImportanceID'] = null;
         if (!empty($row['importance'])) {
@@ -515,16 +519,14 @@ class SupplierMasterBulkUploadService
             $supplierData['whtType'] = null;
         } else {
             if (!empty($row['wht_type'])) {
-                $tax = Tax::where('taxMasterAutoID', $row['wht_type'])
-                    ->orWhere('taxShortCode', $row['wht_type'])
-                    ->first();
+                $tax = Tax::where('taxDescription', $row['wht_type'])->first();
                 if ($tax) {
                     $supplierData['whtType'] = $tax->taxMasterAutoID;
                 }
             }
         }
         
-        $molApplicable = $row['mol_applicable'] ?? 'No';
+        $molApplicable = $row['mol_contribution_applicable'] ?? 'No';
         if (empty($molApplicable) || is_null($molApplicable) || trim((string)$molApplicable) === '') {
             $molApplicable = 'No';
         } else {
@@ -536,7 +538,7 @@ class SupplierMasterBulkUploadService
                 $molApplicable = 'No';
             }
         }
-        $supplierData['mol_applicable'] = ($molApplicable == 'Yes') ? 1 : 0;
+        $supplierData['mol_contribution_applicable'] = ($molApplicable == 'Yes') ? 1 : 0;
         if (!empty($row['mol_rate'])) {
             $supplierData['mol_rate'] = $row['mol_rate'];
         }
@@ -611,30 +613,28 @@ class SupplierMasterBulkUploadService
             $supplierMaster->primarySupplierCode = 'S0' . strval($supplierMaster->supplierCodeSystem);
             $supplierMaster->save();
             
-            if (isset($supplierData['currency']) && $supplierData['currency'] > 0) {
-                $empId = $employee->empID;
-                $empName = $employee->empName;
-                
-                $supplierCurrency = new SupplierCurrency();
-                $supplierCurrency->supplierCodeSystem = $supplierMaster->supplierCodeSystem;
-                $supplierCurrency->currencyID = $supplierData['currency'];
-                $supplierCurrency->isAssigned = -1;
-                $supplierCurrency->isDefault = -1;
-                $supplierCurrency->save();
-                
-                $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
-                
-                foreach ($companyDefaultBankMemos as $value) {
-                    $temBankMemo = new BankMemoSupplier();
-                    $temBankMemo->memoHeader = $value['bankMemoHeader'];
-                    $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
-                    $temBankMemo->memoDetail = '';
-                    $temBankMemo->supplierCodeSystem = $supplierMaster->supplierCodeSystem;
-                    $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
-                    $temBankMemo->updatedByUserID = $empId;
-                    $temBankMemo->updatedByUserName = $empName;
-                    $temBankMemo->save();
-                }
+            $empId = $employee->empID;
+            $empName = $employee->empName;
+            
+            $supplierCurrency = new SupplierCurrency();
+            $supplierCurrency->supplierCodeSystem = $supplierMaster->supplierCodeSystem;
+            $supplierCurrency->currencyID = $supplierData['currency'];
+            $supplierCurrency->isAssigned = -1;
+            $supplierCurrency->isDefault = -1;
+            $supplierCurrency->save();
+            
+            $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
+            
+            foreach ($companyDefaultBankMemos as $value) {
+                $temBankMemo = new BankMemoSupplier();
+                $temBankMemo->memoHeader = $value['bankMemoHeader'];
+                $temBankMemo->bankMemoTypeID = $value['bankMemoTypeID'];
+                $temBankMemo->memoDetail = '';
+                $temBankMemo->supplierCodeSystem = $supplierMaster->supplierCodeSystem;
+                $temBankMemo->supplierCurrencyID = $supplierCurrency->supplierCurrencyID;
+                $temBankMemo->updatedByUserID = $empId;
+                $temBankMemo->updatedByUserName = $empName;
+                $temBankMemo->save();
             }
             
             $assignResult = SupplierAssignService::assignSupplier($supplierMaster->supplierCodeSystem, $companySystemID);
@@ -801,6 +801,13 @@ class SupplierMasterBulkUploadService
 
     private static function validateCurrency($currencyCode): array
     {
+        if (empty($currencyCode) || is_null($currencyCode)) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.currency_is_mandatory', 'Currency is mandatory')
+            ];
+        }
+        
         $currency = CurrencyMaster::where('CurrencyCode', $currencyCode)->first();
         if (!$currency) {
             return [
@@ -1022,9 +1029,7 @@ class SupplierMasterBulkUploadService
                     'value' => ''
                 ];
             } else {
-                $tax = Tax::where('taxMasterAutoID', $whtType)
-                    ->orWhere('taxShortCode', $whtType)
-                    ->first();
+                $tax = Tax::where('taxDescription', $whtType)->first();
                 if (!$tax) {
                     $errors[] = [
                         'field' => 'WHT Type',
@@ -1040,6 +1045,15 @@ class SupplierMasterBulkUploadService
                     'message' => self::getTranslatedMessage('custom.wht_payment_method_is_mandatory', 'WHT payment method is mandatory'),
                     'value' => ''
                 ];
+            } else {
+                $whtPaymentMethodStr = trim((string)$whtPaymentMethod);
+                if ($whtPaymentMethodStr !== '1' && $whtPaymentMethodStr !== '2') {
+                    $errors[] = [
+                        'field' => 'WHT Payment Method',
+                        'message' => self::getTranslatedMessage('custom.wht_payment_method_invalid', 'WHT Payment Method should be either 1 (Deduct from Invoice (Supplier)) or 2 (Organization Bears WHT)'),
+                        'value' => $whtPaymentMethod
+                    ];
+                }
             }
         }
         
@@ -1078,12 +1092,50 @@ class SupplierMasterBulkUploadService
         $molApplicable = ucfirst($molApplicableLower);
         
         if ($molApplicable == 'Yes') {
+            if (!empty($molRate) && !is_null($molRate)) {
+                $molRateStr = trim((string)$molRate);
+                if (!is_numeric($molRateStr)) {
+                    $errors[] = [
+                        'field' => 'MOL Rate',
+                        'message' => self::getTranslatedMessage('custom.mol_rate_should_be_numeric', 'MOL Rate should be numeric'),
+                        'value' => $molRate
+                    ];
+                } else {
+                    $molRateFloat = (float)$molRateStr;
+                    if ($molRateFloat != (int)$molRateFloat) {
+                        $errors[] = [
+                            'field' => 'MOL Rate',
+                            'message' => self::getTranslatedMessage('custom.mol_rate_should_be_integer', 'MOL Rate should be an integer'),
+                            'value' => $molRate
+                        ];
+                    } else {
+                        $molRateInt = (int)$molRateFloat;
+                        if ($molRateInt < 0 || $molRateInt > 100) {
+                            $errors[] = [
+                                'field' => 'MOL Rate',
+                                'message' => self::getTranslatedMessage('custom.mol_rate_should_be_between_0_and_100', 'MOL Rate should be between 0 and 100'),
+                                'value' => $molRate
+                            ];
+                        }
+                    }
+                }
+            }
+            
             if (empty($molPaymentMode) || is_null($molPaymentMode)) {
                 $errors[] = [
                     'field' => 'MOL Payment Mode',
-                    'message' => self::getTranslatedMessage('custom.mol_payment_method_is_mandatory', 'MOL payment method is mandatory'),
+                    'message' => self::getTranslatedMessage('custom.mol_payment_method_is_mandatory', 'MOL payment Mode is mandatory'),
                     'value' => ''
                 ];
+            } else {
+                $molPaymentModeStr = trim((string)$molPaymentMode);
+                if ($molPaymentModeStr !== '1') {
+                    $errors[] = [
+                        'field' => 'MOL Payment Mode',
+                        'message' => self::getTranslatedMessage('custom.mol_payment_mode_invalid', 'MOL Payment Mode should be 1 (Deduct from invoice)'),
+                        'value' => $molPaymentMode
+                    ];
+                }
             }
         }
         
