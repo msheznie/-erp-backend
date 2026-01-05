@@ -378,24 +378,22 @@ class SupplierMasterBulkUploadService
             }
         }
         
-        if (!empty($row['omanization']) && is_numeric($row['omanization'])) {
-            if ($row['omanization'] > 100) {
-                $errors[] = [
-                    'field' => 'Omanization %',
-                    'message' => self::getTranslatedMessage('custom.omanization_percentage_cannot_be_greater_than_100', 'Omanization percentage cannot be greater than 100'),
-                    'value' => $row['omanization']
-                ];
-            }
+        $omanizationResult = self::validatePercentage($row['omanization'] ?? null, 'Omanization %');
+        if (!$omanizationResult['valid']) {
+            $errors[] = [
+                'field' => 'Omanization %',
+                'message' => $omanizationResult['message'],
+                'value' => $row['omanization'] ?? ''
+            ];
         }
         
-        if (!empty($row['vat_percentage'])) {
-            if (!is_numeric($row['vat_percentage'])) {
-                $errors[] = [
-                    'field' => 'VAT Percentage',
-                    'message' => self::getTranslatedMessage('custom.vat_percentage_should_numbers_only', 'VAT Percentage should be numbers only'),
-                    'value' => $row['vat_percentage']
-                ];
-            }
+        $vatPercentageResult = self::validatePercentage($row['vat_percentage'] ?? null, 'VAT Percentage');
+        if (!$vatPercentageResult['valid']) {
+            $errors[] = [
+                'field' => 'VAT Percentage',
+                'message' => $vatPercentageResult['message'],
+                'value' => $row['vat_percentage'] ?? ''
+            ];
         }
         
         if (!empty($row['vat_eligible'])) {
@@ -408,6 +406,26 @@ class SupplierMasterBulkUploadService
                     'value' => $vatEligible
                 ];
             }
+        }
+        
+        if (!empty($row['vat_number']) && !is_null($row['vat_number'])) {
+            $vatNumberResult = self::validateAlphanumeric($row['vat_number'], 'VAT Number', true);
+            if (!$vatNumberResult['valid']) {
+                $errors[] = [
+                    'field' => 'VAT Number',
+                    'message' => $vatNumberResult['message'],
+                    'value' => $row['vat_number']
+                ];
+            }
+        }
+        
+        $retentionResult = self::validatePercentage($row['retention'] ?? null, 'Retention %');
+        if (!$retentionResult['valid']) {
+            $errors[] = [
+                'field' => 'Retention %',
+                'message' => $retentionResult['message'],
+                'value' => $row['retention'] ?? ''
+            ];
         }
         
         return [
@@ -517,12 +535,16 @@ class SupplierMasterBulkUploadService
         $supplierData['whtApplicableYN'] = ($whtApplicable == 'Yes') ? 1 : 0;
         if ($supplierData['whtApplicableYN'] == 0) {
             $supplierData['whtType'] = null;
+            $supplierData['paymentMethod'] = 0;
         } else {
             if (!empty($row['wht_type'])) {
                 $tax = Tax::where('taxDescription', $row['wht_type'])->first();
                 if ($tax) {
                     $supplierData['whtType'] = $tax->taxMasterAutoID;
                 }
+            }
+            if (!empty($row['wht_payment_method'])) {
+                $supplierData['paymentMethod'] = $row['wht_payment_method'];
             }
         }
         
@@ -538,7 +560,7 @@ class SupplierMasterBulkUploadService
                 $molApplicable = 'No';
             }
         }
-        $supplierData['mol_contribution_applicable'] = ($molApplicable == 'Yes') ? 1 : 0;
+        $supplierData['mol_applicable'] = ($molApplicable == 'Yes') ? 1 : 0;
         if (!empty($row['mol_rate'])) {
             $supplierData['mol_rate'] = $row['mol_rate'];
         }
@@ -548,6 +570,10 @@ class SupplierMasterBulkUploadService
         
         if (!empty($row['omanization'])) {
             $supplierData['omanization'] = $row['omanization'];
+        }
+        
+        if (!empty($row['retention'])) {
+            $supplierData['retentionPercentage'] = $row['retention'];
         }
         
         $supplierData['vatEligible'] = 0;
@@ -968,6 +994,39 @@ class SupplierMasterBulkUploadService
         return ['valid' => true];
     }
 
+    private static function validatePercentage($value, $fieldName): array
+    {
+        if (empty($value) || is_null($value)) {
+            return ['valid' => true];
+        }
+        
+        $valueStr = trim((string)$value);
+        if (!is_numeric($valueStr)) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.percentage_should_be_numeric', "{$fieldName} should be numeric", ['field' => $fieldName])
+            ];
+        }
+        
+        $valueFloat = (float)$valueStr;
+        if ($valueFloat != (int)$valueFloat) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.percentage_should_be_integer', "{$fieldName} should be an integer", ['field' => $fieldName])
+            ];
+        }
+        
+        $valueInt = (int)$valueFloat;
+        if ($valueInt < 0 || $valueInt > 100) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.percentage_should_be_between_0_and_100', "{$fieldName} should be between 0 and 100", ['field' => $fieldName])
+            ];
+        }
+        
+        return ['valid' => true];
+    }
+
     private static function validateDate($dateValue, $fieldName, $format = 'DD-MM-YYYY'): array
     {
         if (empty($dateValue) || is_null($dateValue)) {
@@ -1092,33 +1151,13 @@ class SupplierMasterBulkUploadService
         $molApplicable = ucfirst($molApplicableLower);
         
         if ($molApplicable == 'Yes') {
-            if (!empty($molRate) && !is_null($molRate)) {
-                $molRateStr = trim((string)$molRate);
-                if (!is_numeric($molRateStr)) {
-                    $errors[] = [
-                        'field' => 'MOL Rate',
-                        'message' => self::getTranslatedMessage('custom.mol_rate_should_be_numeric', 'MOL Rate should be numeric'),
-                        'value' => $molRate
-                    ];
-                } else {
-                    $molRateFloat = (float)$molRateStr;
-                    if ($molRateFloat != (int)$molRateFloat) {
-                        $errors[] = [
-                            'field' => 'MOL Rate',
-                            'message' => self::getTranslatedMessage('custom.mol_rate_should_be_integer', 'MOL Rate should be an integer'),
-                            'value' => $molRate
-                        ];
-                    } else {
-                        $molRateInt = (int)$molRateFloat;
-                        if ($molRateInt < 0 || $molRateInt > 100) {
-                            $errors[] = [
-                                'field' => 'MOL Rate',
-                                'message' => self::getTranslatedMessage('custom.mol_rate_should_be_between_0_and_100', 'MOL Rate should be between 0 and 100'),
-                                'value' => $molRate
-                            ];
-                        }
-                    }
-                }
+            $molRateResult = self::validatePercentage($molRate ?? null, 'MOL Rate');
+            if (!$molRateResult['valid']) {
+                $errors[] = [
+                    'field' => 'MOL Rate',
+                    'message' => $molRateResult['message'],
+                    'value' => $molRate ?? ''
+                ];
             }
             
             if (empty($molPaymentMode) || is_null($molPaymentMode)) {
