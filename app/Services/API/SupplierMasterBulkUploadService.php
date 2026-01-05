@@ -70,8 +70,34 @@ class SupplierMasterBulkUploadService
                 'success' => false
             ];
         }
-        
+
+        $maxRecords = 500;
         $totalCount = count($excelData);
+        $dataRowCount = 0;
+        foreach ($excelData as $row) {
+            $normalizedRow = self::normalizeRowKeys($row);
+            $rowHasData = false;
+            foreach ($normalizedRow as $value) {
+                if ($value !== null && $value !== '' && trim((string)$value) !== '') {
+                    $rowHasData = true;
+                    break;
+                }
+            }
+            if ($rowHasData) {
+                $dataRowCount++;
+            }
+        }
+        
+        if ($dataRowCount > $maxRecords) {
+            return [
+                'successCount' => 0,
+                'totalCount' => $dataRowCount,
+                'message' => self::getTranslatedMessage('custom.maximum_record_limit_exceeded', "Maximum record limit exceeded. Please upload a maximum of {$maxRecords} records at a time.", ['max' => $maxRecords]),
+                'errors' => [],
+                'success' => false
+            ];
+        }
+        
         $allRowsEmpty = true;
 
         foreach ($excelData as $index => $row) {
