@@ -9727,5 +9727,6 @@ return
     'credit_limit_cannot_exceed_maximum_digits' => 'لا يمكن أن يتجاوز حد الائتمان الحد الأقصى المسموح به من الأرقام.',
     'invalid_web_address' => 'تنسيق عنوان الويب غير صحيح.',
     'vat_percentage_decimal_precision' => 'لا يمكن أن يحتوي نسبة ضريبة القيمة المضافة على أكثر من منزلتين عشريتين.',
-    'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.'
+    'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.',
+    'deleted_successfully' => ':attribute تم حذفه بنجاح'
   ];

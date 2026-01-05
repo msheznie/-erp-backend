@@ -9834,5 +9834,6 @@ return
     'credit_limit_cannot_exceed_maximum_digits' => 'Credit Limit cannot exceed the maximum allowed number of digits.',
     'invalid_web_address' => 'Invalid web address format.',
     'vat_percentage_decimal_precision' => 'VAT Percentage cannot have more than 2 decimal places.',
-    'customer_vat_percentage_range' => 'VAT Percentage must be between 0 and 100.'
+    'customer_vat_percentage_range' => 'VAT Percentage must be between 0 and 100.',
+    'deleted_successfully' => ':attribute deleted successfully'
   ];

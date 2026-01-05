@@ -462,7 +462,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
 
         $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0, 'deleted_at'=>date("Y-m-d H:i:s"), 'isDeleted'=>1,'deletedBy'=>$employee->empName]);
 
-        return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
+        return $this->sendResponse($id, trans('custom.deleted_successfully', ['attribute' => trans('custom.company_finance_years')]));
     }
 
     public function getFinancialYearsByCompany(Request $request)
