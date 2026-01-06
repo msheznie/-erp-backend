@@ -133,6 +133,7 @@ Route::group([],function (){
     Route::post('updatePVBankChargeDetails', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherBankChargeDetails')->name('Update payment voucher bank charge details');
     Route::get('getAvailableChequeNumbers', 'PaySupplierInvoiceMasterAPIController@getAvailableChequeNumbers')->name('Get available cheque numbers');
     Route::get('getBankAccountDetails', 'DirectPaymentDetailsAPIController@getBankAccountDetails')->name('Get available cheque numbers');
+    Route::get('getBankCharges', 'PaySupplierInvoiceDetailAPIController@getBankCharges')->name('Get bank charges details');
 
     Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
     Route::resource('pdc_logs', 'PdcLogAPIController');

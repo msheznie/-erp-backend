@@ -9741,4 +9741,6 @@ return
     'credit_period_cannot_be_decimal' => 'لا يمكن أن تكون فترة الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
     'credit_limit_minimum_value' => 'الحد الأدنى لقيمة حد الائتمان هو 1.',
     'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
+    'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
+    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا'
   ];

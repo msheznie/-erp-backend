@@ -903,7 +903,7 @@ class PaymentVoucherServices
                 if ($netMinustot < 0 && $input['invoiceType'] == 2) {
                     return [
                         'status' => false,
-                        'message' => 'Net amount cannot be negative value',
+                        'message' => trans('custom.net_amount_cannot_be_negative_value'),
                         'code' => 500
                     ];
                 }
@@ -911,7 +911,7 @@ class PaymentVoucherServices
                 if ($totalDirectPayment < 0 && $input['invoiceType'] == 3) {
                     return [
                         'status' => false,
-                        'message' => 'Net amount cannot be negative value',
+                        'message' => trans('custom.net_amount_cannot_be_negative_value'),
                         'code' => 500
                     ];
                 }
@@ -929,7 +929,7 @@ class PaymentVoucherServices
                 if ($checkQuantity > 0) {
                     return [
                         'status' => false,
-                        'message' => 'Amount should be have value',
+                        'message' => trans('custom.bank_charges_and_other_amounts_should_have_a_value'),
                         'code' => 500
                     ];
                 }
@@ -1011,12 +1011,14 @@ class PaymentVoucherServices
 
 
                 $totalAmountForPDC = 0;
+                $bankChargeDetailsSum = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $id)->first();
+
                 if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
                     $totalAmountForPDCData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
                         ->selectRaw('SUM(supplierPaymentAmount + retentionVatAmount) as total')
                         ->first();
 
-                    $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
+                    $totalAmountForPDC = ($totalAmountForPDCData ? $totalAmountForPDCData->total : 0) + ( $bankChargeDetailsSum ? $bankChargeDetailsSum->dpAmount : 0);
 
                 } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
                     $totalAmountForPDC = AdvancePaymentDetails::where('PayMasterAutoId', $id)
@@ -1027,9 +1029,9 @@ class PaymentVoucherServices
                         ->selectRaw('SUM(DPAmount + vatAmount) as total')
                         ->first();
 
-                    $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
+                    $totalAmountForPDC = ($totalAmountForPDCData ? $totalAmountForPDCData->total : 0) + ( $bankChargeDetailsSum ? $bankChargeDetailsSum->dpAmount : 0);
                 }
-
+                
                 $pdcLog = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
                     ->where('documentmasterAutoID', $id)
                     ->get();
@@ -2057,15 +2059,17 @@ class PaymentVoucherServices
 
         if ($paySupplierInvoiceMaster->invoiceType == 3) {
             $totalAmount = DirectPaymentDetails::selectRaw("SUM(DPAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount")->where('directPaymentAutoID', $id)->first();
-
+            $bankChargeTotal = PaymentVoucherBankChargeDetails::selectRaw("SUM(dpAmount) as dpAmount, SUM(localAmount) as localAmount,SUM(comRptAmount) as comRptAmount")->WHERE('payMasterAutoID', $id)->first();
+            $bankChargeAmount = $bankChargeTotal && isset($bankChargeTotal->dpAmount) ? $bankChargeTotal->dpAmount : 0;
+            $supplierPaymentAmount = ($totalAmount ? $totalAmount->paymentAmount : 0) + $bankChargeAmount;
             if (!empty($totalAmount->paymentAmount)) {
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->paymentAmount);
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                 $input['payAmountBank'] = $bankAmount["defaultAmount"];
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->paymentAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->paymentAmount);
+                $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
                 $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
                 $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->paymentAmount);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
             } else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;

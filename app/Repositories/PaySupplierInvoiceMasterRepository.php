@@ -404,9 +404,9 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.supplier_currency')] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
-                $data[$x][trans('custom.supplier_amount')] = number_format(($val->suppAmountDocTotal + $val->bank_charge_amount), $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
+                $data[$x][trans('custom.supplier_amount')] = number_format(($val->suppAmountDocTotal), $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x][trans('custom.bank_currency')] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
-                $data[$x][trans('custom.bank_amount')] = number_format(($val->payAmountBank + $val->bank_charge_amount), $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
+                $data[$x][trans('custom.bank_amount')] =  number_format(($val->payAmountBank), $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
                 
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format(($val->payAmountCompLocal + $val->bank_charge_local_amount),  $val->localcurrency->DecimalPlaces, ".", "") : '';
