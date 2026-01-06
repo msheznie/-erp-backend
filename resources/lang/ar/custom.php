@@ -9630,11 +9630,10 @@ return
     'shift_data_required' => 'بيانات الوردية مطلوبة',
     'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'خطأ في سحب حضور الوردية غير المؤكد',
     'no_dates_found_for_shift_schedule_pulling' => 'لم يتم العثور على تواريخ للمتابعة في سحب حضور الوردية غير المؤكد',
+  
     'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
     'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
-
-    // Procurement Lifecycle Report
     'pr_value' => 'قيمة طلب الشراء',
     'pr_approvals' => 'موافقات طلب الشراء',
     'po_approvals' => 'موافقات أمر الشراء',
@@ -9742,5 +9741,6 @@ return
     'credit_limit_minimum_value' => 'الحد الأدنى لقيمة حد الائتمان هو 1.',
     'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
     'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
-    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا'
+    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا',
+    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.'
   ];
