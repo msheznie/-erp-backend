@@ -812,7 +812,13 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isYesNO', 1)
             ->exists();
 
+        $salesTypes = [
+                ['value' => 1, 'label' => __('custom.ar_goods_and_services')],
+                // ['value' => 2, 'label' => __('custom.ar_subscription')],
+            ];
+
         $output = array(
+            'salesTypes' => $salesTypes,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -1530,6 +1536,9 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->when($invoice->salesType == 4, function($query) {
+                $query->where('salesType', 1);
+            })
             ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
@@ -1586,6 +1595,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
@@ -1601,6 +1611,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 

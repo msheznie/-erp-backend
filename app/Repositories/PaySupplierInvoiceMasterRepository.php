@@ -200,7 +200,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
-    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID,$createdBy) {
+    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID,$createdBy,$customerID) {
 
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -211,7 +211,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque','localcurrency','rptcurrency'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['customer', 'supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque','localcurrency','rptcurrency'])->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -228,13 +228,18 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('payeeTypeID', $input)) {
             $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
             if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVsupplierID', "!=", NULL);
+                $paymentVoucher->where('BPVsupplierID', "!=", NULL)->where('BPVsupplierID', '!=', 0);
             }
             if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL);
+                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL)->where('directPaymentPayeeEmpID', '!=', 0);
             }
             if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
                 $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
+            }
+            if (($payeeTypeID == 4) && !is_null($payeeTypeID)) {
+                $paymentVoucher->where('BPVcustomerID', "!=", NULL)->where(function($query) {
+                    $query->whereNull('directPaymentPayeeEmpID')->orWhere('directPaymentPayeeEmpID', 0);
+                });
             }
         }
 
@@ -273,6 +278,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && count($supplierID) > 0) {
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && count($customerID) > 0) {
+                $paymentVoucher->whereIn('BPVcustomerID', $customerID);
             }
         }
 
@@ -366,6 +377,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                     $data[$x][trans('custom.payee_type')] = trans('custom.other');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
+                }
+                else if($val->BPVcustomerID > 0){
+                    $data[$x][trans('custom.payee_type')] = trans('custom.customer');
+                    $data[$x][trans('custom.sup_emp_other')] = $val->customer? $val->customer->CustomerName : '';
+                    $data[$x][trans('custom.payee_type')] = trans('custom.customer');
+                    $data[$x][trans('custom.sup_emp_other')] = $val->customer? $val->customer->CustomerName : '';
                 }
                 else{
                     $data[$x][trans('custom.payee_type')] = "";

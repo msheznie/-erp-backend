@@ -489,7 +489,8 @@ class DeliveryOrderRefferedback extends Model
         'VATAmountLocal',
         'VATAmountRpt',
         'timestamp',
-         'isDelegation'
+         'isDelegation',
+         'salesType'
     ];
 
     /**
@@ -572,7 +573,8 @@ class DeliveryOrderRefferedback extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'selectedForCustomerInvoice' => 'integer',
-        'timestamp' => 'datetime'
+        'timestamp' => 'datetime',
+        'salesType' => 'integer'
     ];
 
     /**

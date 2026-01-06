@@ -12,16 +12,20 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Services\BudgetNotificationService;
 use Response;
 use App\helper\Helper;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningDetail;
+use App\Models\DepBudgetTemplateGl;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\Employee;
 use App\Services\ChartOfAccountService;
 use App\Models\RevisionAttachment;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-
+use Auth;
+use App\Models\BudgetNotification;
 /**
  * Class RevisionAPIController
  * @package App\Http\Controllers\API
@@ -353,8 +357,10 @@ class RevisionAPIController extends AppBaseController
         $input = $request->all();
 
         // Format the date properly
-        $submittedDateCarbon = null;
         $newSubmissionDateCarbon = null;
+        
+
+        $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
         
         if (isset($input['submittedDate'])) {
             try {
@@ -375,9 +381,10 @@ class RevisionAPIController extends AppBaseController
         }
 
         // Validate that newSubmissionDate is greater than or equal to submittedDate
-        if ($submittedDateCarbon && $newSubmissionDateCarbon) {
-            if ($newSubmissionDateCarbon->lt($submittedDateCarbon)) {
-                return $this->sendError('New Submission Date must be greater than or equal to original submission date');
+        if ($budgetPlanning && $newSubmissionDateCarbon) {
+            $currentDate = Carbon::now()->startOfDay();
+            if ($newSubmissionDateCarbon->lt($currentDate)) {
+                return $this->sendError('New Submission Date must be greater than or equal to current date');
             }
         }
 
@@ -391,6 +398,7 @@ class RevisionAPIController extends AppBaseController
             'attachments' => 'nullable|array'
         ]);
 
+
         if ($validator->fails()) {
             return $this->sendAPIError('Validation Error.', 422, $validator->errors()->toArray());
         }
@@ -399,6 +407,8 @@ class RevisionAPIController extends AppBaseController
             // Check if budget planning exists
             $budgetPlanning = DepartmentBudgetPlanning::with('revisions')->find($input['budgetPlanningId']);
             
+
+
             if (!$budgetPlanning) {
                 return $this->sendError('Budget Planning not found');
             }
@@ -407,10 +417,16 @@ class RevisionAPIController extends AppBaseController
                 return $this->sendError('Budget Planning already has a revision');
             }
 
-            if(!empty($input['selectedGlSections'])){
-                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+
+            if(strcmp($input['reopenEditableSection'], 'full_section') == 0){
+                $chartOfAccounts = $this->chartOfAccountService->getChartOfAccountsByBudgetPlanning($input['budgetPlanningId']);
+                $input['selectedGlSections'] = collect($chartOfAccounts)->pluck('chartOfAccountSystemID')->toArray();
             }
 
+            if(!empty($input['selectedGlSections']) && strcmp($input['reopenEditableSection'], 'gl_section') == 0){
+                $input['selectedGlSections'] = collect($input['selectedGlSections'])->pluck('id')->toArray();
+            }
+            
             // Convert dates to Y-m-d format for database storage
             $submittedDateForDb = Carbon::createFromFormat('d-m-Y', $input['submittedDate'])->format('Y-m-d');
             $newSubmissionDateForDb = isset($input['newSubmissionDate']) 
@@ -433,6 +449,7 @@ class RevisionAPIController extends AppBaseController
                 'created_at' => Carbon::now()
             ];
 
+
             // Add newSubmissionDate if provided
             if ($newSubmissionDateForDb) {
                 $revisionData['newSubmissionDate'] = $newSubmissionDateForDb;
@@ -442,12 +459,17 @@ class RevisionAPIController extends AppBaseController
             $revision = $this->revisionRepository->create($revisionData);
 
             // Update budget planning status to "Sent Back for Revision"
-            $budgetPlanning->update(['financeTeamStatus' => 3]);
+            $budgetPlanning->update(['financeTeamStatus' => 3, 'workStatus' => 1]);
 
             // Handle attachments if provided
             if (isset($input['attachments']) && is_array($input['attachments']) && !empty($input['attachments'])) {
-                $this->storeRevisionAttachments($revision->id, $input['attachments']);
+                $this->storeRevisionAttachments($revision->id, $input['attachments'], $input['companySystemID']);
             }
+
+
+            // send revision email
+            $budgetPlanningNotificationService = new BudgetNotificationService();
+            $budgetPlanningNotificationService->sendNotification($budgetPlanning->id,'finance-rejects-for-revision',$budgetPlanning->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
 
             // Log the action
             // $this->logAuditTrail('Revision', 'Created', $revision->id, 'Revision created for budget planning ID: ' . $input['budgetPlanningId']);
@@ -584,24 +606,33 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
         
-        if (!isset($input['filePath']) || !isset($input['fileName'])) {
+        if (!isset($input['id'])) {
             return $this->sendError('File path and file name are required');
+        }   
+
+        $attachment = RevisionAttachment::find($input['id']);
+        if (empty($attachment)) {
+            return $this->sendError('Attachment not found');
         }
 
-        $filePath = urldecode($input['filePath']);
-        $fileName = urldecode($input['fileName']);
+        $filePath = urldecode($attachment->filePath);
+        $fileName = urldecode($attachment->fileName);
+
+        $companySystemID = $input['companySystemID'] ?? 1;
+
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
         try {
             // Check if file exists
-            if (!Storage::disk('local')->exists($filePath)) {
+            if (!Storage::disk($disk)->exists($filePath)) {
                 return $this->sendError('File not found at path: ' . $filePath, 404);
             }
 
             // Get file contents
-            $fileContents = Storage::disk('local')->get($filePath);
+            $fileContents = Storage::disk($disk)->get($filePath);
             
             // Get file MIME type
-            $mimeType = Storage::disk('local')->mimeType($filePath);
+            $mimeType = Storage::disk($disk)->mimeType($filePath);
             
             // Return file download response
             return response($fileContents, 200)
@@ -624,23 +655,32 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
         
-        if (!isset($input['filePath'])) {
+        if (!isset($input['id'])) {
             return $this->sendError('File path is required');
         }
 
-        $filePath = urldecode($input['filePath']);
+        $attachment = RevisionAttachment::find($input['id']);
+        if (empty($attachment)) {
+            return $this->sendError('Attachment not found');
+        }
+
+        $filePath = urldecode($attachment->filePath);
+
+        $companySystemID = $input['companySystemID'] ?? 1;
+
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
         try {
             // Check if file exists
-            if (!Storage::disk('local')->exists($filePath)) {
+            if (!Storage::disk($disk)->exists($filePath)) {
                 return $this->sendError('File not found at path: ' . $filePath, 404);
             }
 
             // Get file contents
-            $fileContents = Storage::disk('local')->get($filePath);
+            $fileContents = Storage::disk($disk)->get($filePath);
             
             // Get file MIME type
-            $mimeType = Storage::disk('local')->mimeType($filePath);
+            $mimeType = Storage::disk($disk)->mimeType($filePath);
             
             // Return file view response
             return response($fileContents, 200)
@@ -743,8 +783,6 @@ class RevisionAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        
-
         $validator = \Validator::make($input, [
             'revisionId' => 'required|integer'
         ]);
@@ -765,13 +803,82 @@ class RevisionAPIController extends AppBaseController
             $selectedGlSections = json_decode($revision->selectedGlSections, true);
 
             if (empty($selectedGlSections) || !is_array($selectedGlSections)) {
-                return $this->sendResponse(['data' => []], 'No GL codes assigned to this revision');
+                // Return empty DataTables response
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
             }
 
-            // Use the service to get chart of accounts based on workflow method
-            $chartOfAccountSystemIDs = $this->chartOfAccountService->getChartOfAccountsByRevisionGlSections($selectedGlSections, $revision->budgetPlanningId);
+            // Get budget planning to determine workflow method
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($revision->budgetPlanningId);
+            
+            if (!$budgetPlanning) {
+                return \DataTables::of(collect([]))
+                    ->addIndexColumn()
+                    ->make(true);
+            }
 
-            return $this->sendResponse(['data' => $chartOfAccountSystemIDs], 'Revision GL codes retrieved successfully');
+            $isMethod1 = $budgetPlanning->workflow && $budgetPlanning->workflow->method == 1;
+
+            if ($isMethod1) {
+                // Method 1: Include segment information with optimized joins
+                $query = DepartmentBudgetPlanningDetail::query()
+                    ->whereIn('department_budget_planning_details.id', $selectedGlSections)
+                    ->join('dep_budget_template_gl', 'department_budget_planning_details.budget_template_gl_id', '=', 'dep_budget_template_gl.depBudgetTemplateGlID')
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->leftJoin('company_departments_segments', 'department_budget_planning_details.department_segment_id', '=', 'company_departments_segments.departmentSegmentSystemID')
+                    ->leftJoin('serviceline', 'company_departments_segments.serviceLineSystemID', '=', 'serviceline.serviceLineSystemID')
+                    ->select(
+                        'department_budget_planning_details.id as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription',
+                        DB::raw('COALESCE(serviceline.ServiceLineDes, "N/A") as segmentDescription')
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->segmentDescription . ' - ' . $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            } else {
+                // Method 2: Standard chart of accounts with optimized joins
+                $query = DepBudgetTemplateGl::query()
+                    ->whereIn('dep_budget_template_gl.depBudgetTemplateGlID', $selectedGlSections)
+                    ->join('chartofaccounts', 'dep_budget_template_gl.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                    ->select(
+                        'dep_budget_template_gl.depBudgetTemplateGlID as chartOfAccountSystemID',
+                        'chartofaccounts.AccountCode',
+                        'chartofaccounts.AccountDescription'
+                    );
+
+                return \DataTables::of($query)
+                    ->addIndexColumn()
+                    ->addColumn('gl_code_description', function($row) {
+                        return $row->AccountCode . ' - ' . $row->AccountDescription;
+                    })
+                    ->filterColumn('gl_code_description', function($query, $keyword) {
+                        $query->where(function($q) use ($keyword) {
+                            $q->whereRaw("CONCAT(chartofaccounts.AccountCode, ' - ', chartofaccounts.AccountDescription) LIKE ?", ["%{$keyword}%"]);
+                        });
+                    })
+                    ->orderColumn('gl_code_description', function($query, $order) {
+                        $query->orderBy('chartofaccounts.AccountCode', $order)
+                              ->orderBy('chartofaccounts.AccountDescription', $order);
+                    })
+                    ->rawColumns(['gl_code_description'])
+                    ->make(true);
+            }
 
         } catch (\Exception $e) {
             return $this->sendError('Error retrieving revision GL codes: ' . $e->getMessage());
@@ -809,14 +916,14 @@ class RevisionAPIController extends AppBaseController
      * @return void
      * @throws \Exception
      */
-    private function storeRevisionAttachments($revisionId, $attachments)
+    private function storeRevisionAttachments($revisionId, $attachments, $companySystemID)
     {
         foreach ($attachments as $attachment) {
             // Validate attachment data
             $this->validateRevisionAttachment($attachment);
             
             // Process and store the attachment
-            $this->processRevisionAttachment($revisionId, $attachment);
+            $this->processRevisionAttachment($revisionId, $attachment, $companySystemID);
         }
     }
 
@@ -879,10 +986,12 @@ class RevisionAPIController extends AppBaseController
      * @param array $attachment
      * @throws \Exception
      */
-    private function processRevisionAttachment($revisionId, $attachment)
+    private function processRevisionAttachment($revisionId, $attachment, $companySystemID)
     {
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
+
         try {
-            return DB::transaction(function () use ($revisionId, $attachment) {
+            return DB::transaction(function () use ($revisionId, $attachment, $disk) {
                 $extension = pathinfo($attachment['fileName'], PATHINFO_EXTENSION);
                 if (empty($extension) && isset($attachment['fileType'])) {
                     $extension = str_replace(['image/', 'application/', 'text/'], '', $attachment['fileType']);
@@ -916,12 +1025,12 @@ class RevisionAPIController extends AppBaseController
 
                 // Ensure directory exists
                 $directory = 'REVISIONS/' . $revisionId;
-                if (!Storage::disk('local')->exists($directory)) {
-                    Storage::disk('local')->makeDirectory($directory);
+                if (!Storage::disk($disk)->exists($directory)) {
+                    Storage::disk($disk)->makeDirectory($directory);
                 }
 
                 // Store file to storage
-                Storage::disk('local')->put($filePath, $decodedFile);
+                Storage::disk($disk)->put($filePath, $decodedFile);
 
                 // Update attachment record with file path
                 $attachmentRecord->update([

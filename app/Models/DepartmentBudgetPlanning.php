@@ -139,6 +139,7 @@ class DepartmentBudgetPlanning extends Model
         'confirmed_yn',
         'confirmed_by',
         'confirmed_at',
+        'submitted_at',
     ];
 
     /**
@@ -163,6 +164,7 @@ class DepartmentBudgetPlanning extends Model
         'confirmed_yn' => 'integer',
         'confirmed_by' => 'integer',
         'confirmed_date' => 'date',
+        'submitted_at' => 'date',
     ];
 
     /**

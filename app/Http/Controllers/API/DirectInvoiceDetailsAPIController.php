@@ -174,7 +174,14 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         if($BookInvSuppMaster->employeeID > 0){
             $employeeSegment = SrpEmployeeDetails::where('EIdNo',$BookInvSuppMaster->employeeID)->first();
             if($employeeSegment && $employeeSegment->segmentID > 0){
-                $segment = SegmentMaster::where('serviceLineSystemID',$employeeSegment->segmentID)->where('isActive',1)->first();
+                $segment = SegmentMaster::where('serviceLineSystemID',$employeeSegment->segmentID)
+                    ->where('isActive',1)
+                    ->whereHas('assignedSegments', function ($query) use ($BookInvSuppMaster) {
+                        $query->where('companySystemID', $BookInvSuppMaster->companySystemID)
+                            ->where('isActive', 1)
+                            ->where('isAssigned', 1);
+                    })
+                    ->first();
                 if($segment){
                     $input['serviceLineSystemID'] = $segment->serviceLineSystemID;
                     $input['serviceLineCode'] = $segment->ServiceLineCode;

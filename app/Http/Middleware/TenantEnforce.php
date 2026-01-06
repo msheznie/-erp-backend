@@ -103,7 +103,8 @@ class TenantEnforce
             'api/v1/generateBankReconciliation',
             'api/v1/updateBudgetPlanningStatus',
             'api/v1/departmentBudgetTemplates/assign-gl',
-            'api/v1/postNotPostedSchedule'
+            'api/v1/postNotPostedSchedule',
+            'api/v1/generateAssetDepBulkPDF',
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

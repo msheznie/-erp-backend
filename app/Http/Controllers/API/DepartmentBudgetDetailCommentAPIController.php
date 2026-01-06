@@ -15,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 class DepartmentBudgetDetailCommentAPIController extends AppBaseController
 {
     /**
+     * Unique marker string for deleted comments (system-generated, users cannot type this)
+     * Format: __SYSTEM_DELETED__[hash] - ensures uniqueness and prevents user input conflicts
+     */
+    const DELETED_COMMENT_MARKER = '__SYSTEM_DELETED__a8f5f167f44f4964e6c998dee827110c';
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -162,10 +167,12 @@ class DepartmentBudgetDetailCommentAPIController extends AppBaseController
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $request)
     {
         try {
-            $comment = BudgetDetailComment::find($id);
+            DB::beginTransaction();
+            
+            $comment = BudgetDetailComment::find($request->commentId);
 
             if (!$comment) {
                 return $this->sendError('Department budget detail comment not found');
@@ -176,16 +183,43 @@ class DepartmentBudgetDetailCommentAPIController extends AppBaseController
                 return $this->sendError('You can only delete your own comments');
             }
 
-            // If this is a parent comment, delete all its replies first
+            // If this is a parent comment, mark it as "Deleted" instead of deleting it
             if (is_null($comment->parentId)) {
-                BudgetDetailComment::where('parentId', $comment->id)->delete();
+                // Check if parent has any replies
+                $replyCount = BudgetDetailComment::where('parentId', $comment->id)->count();
+                
+                if ($replyCount > 0) {
+                    // Parent has replies - mark as deleted using unique system marker but keep it in database
+                    $comment->update([
+                        'comment' => self::DELETED_COMMENT_MARKER
+                    ]);
+                } else {
+                    // Parent has no replies - delete it from database
+                    $comment->delete();
+                }
+            } else {
+                // This is a reply - delete it normally
+                $parentId = $comment->parentId;
+                $comment->delete();
+                
+                // After deleting reply, check if parent has any remaining replies
+                $remainingReplies = BudgetDetailComment::where('parentId', $parentId)->count();
+                
+                // If parent has no replies and parent content is marked as deleted, delete the parent
+                if ($remainingReplies == 0) {
+                    $parent = BudgetDetailComment::find($parentId);
+                    if ($parent && $parent->comment === self::DELETED_COMMENT_MARKER) {
+                        $parent->delete();
+                    }
+                }
             }
 
-            $comment->delete();
+            DB::commit();
 
             return $this->sendResponse([], 'Department budget detail comment deleted successfully');
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->sendError('Error deleting department budget detail comment: ' . $e->getMessage());
         }
     }

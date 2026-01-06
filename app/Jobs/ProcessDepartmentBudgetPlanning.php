@@ -6,6 +6,7 @@ use App\helper\CommonJobService;
 use App\Models\CompanyBudgetPlanning;
 use App\Models\CompanyDepartment;
 use App\Models\DepartmentBudgetPlanning;
+use App\Services\BudgetNotificationService;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -82,6 +83,9 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                     ];
 
                     $budgetPlanning = DepartmentBudgetPlanning::create($data);
+
+                    $budgetNotificationService = new BudgetNotificationService();
+                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID);
 
                     $narrationVariables = $budgetPlanning->planningCode;
                     $this->auditLog(

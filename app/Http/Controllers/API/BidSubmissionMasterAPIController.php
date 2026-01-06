@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
 use App\Models\BidMainWork;
@@ -853,6 +854,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $documentType = $documentTypeInfo->document_type;
         $documentSystemID = $documentType==0?108:113;
+        $lang = $request->get('lang', 'en');
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
@@ -899,11 +901,47 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
-        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation);
+        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation, 'lang' => $lang);
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 20,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
         $html = view('print.bid_summary_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in BidSummaryExportReport: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+
+     /*   $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);*/
 
     }
 
@@ -987,6 +1025,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request->get('tenderMasterId');
         $bidSubmission = array_map('intval', explode(',', $request->get('bidSubmission')));
         $itemList = array_map('intval', explode(',', $request->get('itemList')));
+        $lang = $request->get('lang', 'en');
 
         $bidMasterId = [];
         if(isset($bidSubmission)){
@@ -1063,6 +1102,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
         $time = strtotime("now");
         $fileName = 'supplier_item_summary' . $time . '.pdf';
+
         $order = array(
             'tender_code' => $tenderDetails[0]['tender_code'],
             'tender_description' => $tenderDetails[0]['description'],
@@ -1071,13 +1111,49 @@ class BidSubmissionMasterAPIController extends AppBaseController
             'srm_bid_submission_master' => $queryResult[0]['tender_master']['srm_bid_submission_master'],
             'item_list' => $data,
             'totalItemsCount' => $itemsArrayCount,
-            'documentType'=> $tenderDetails[0]['document_type']
+            'documentType'=> $tenderDetails[0]['document_type'],
+            'lang' => $lang
         );
 
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 20,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
         $html = view('print.bid_supplier_item_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in printSupplierInvoice: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+       /* $html = view('print.bid_supplier_item_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);*/
     }
 
     public function getSupplierItemList(Request $request)
@@ -1256,19 +1332,57 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function SupplierScheduleWiseExportReport(Request $request)
     {
         $data = $this->getScheduleWiseData($request);
-
+        $lang = $request->get('lang', 'en');
         $order = array(
             'data' => $data,
+            'lang' => $lang
         );
 
         $time = strtotime("now");
         $fileName = 'schedule_wise_report' . $time . '.pdf';
+
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 20,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
         $html = view('print.schedule_wise_report', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in SupplierScheduleWiseExportReport: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+
+       /* $html = view('print.schedule_wise_report', $order);
 
         $pdf = \App::make('dompdf.wrapper');
 
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);*/
     }
 
     public function getScheduleWiseData(Request $request) {

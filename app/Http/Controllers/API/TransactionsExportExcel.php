@@ -199,6 +199,10 @@ class TransactionsExportExcel extends AppBaseController
                 $supplierID = (array)$supplierID;
                 $supplierID = collect($supplierID)->pluck('id');
 
+                $customerID = $request['customerID'];
+                $customerID = (array)$customerID;
+                $customerID = collect($customerID)->pluck('id');
+
                 $projectID = $request['projectID'];
                 $projectID = (array)$projectID;
                 $projectID = collect($projectID)->pluck('id');
@@ -207,7 +211,7 @@ class TransactionsExportExcel extends AppBaseController
                 $createdBy = (array)$createdBy;
                 $createdBy = collect($createdBy)->pluck('id');
 
-                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy);
+                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID,$createdBy,$customerID);
                 $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry,$request);
                 break;
 

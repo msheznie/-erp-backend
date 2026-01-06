@@ -2,8 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Models\CurrencyMaster;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
+use App\Models\SupplierCurrency;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -57,31 +59,39 @@ class DeliveryAppointmentInvoice implements ShouldQueue
 
             $mytime =  new Carbon();
             $appoinment = Appointment::find($this->data['id']);
-    
+
+            $grvAutoID = $this->data['grvAutoID'];
+            $supplierTransactionCurrencyID = $this->data['supplierTransactionCurrencyID'];
+
             $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->data['companySystemID'])
-            ->whereDate('bigginingDate', '<=', $mytime)
-            ->whereDate('endingDate', '>=', $mytime)
-            ->first();
-    
-    
-            if (!empty($fromCompanyFinanceYear)) {
-    
-                
-                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
-                ->where('departmentSystemID', 1)
-                ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
-                ->whereDate('dateFrom', '<=', $mytime)
-                ->whereDate('dateTo', '>=', $mytime)
+                ->whereDate('bigginingDate', '<=', $mytime)
+                ->whereDate('endingDate', '>=', $mytime)
                 ->first();
-    
-    
+
+            if (!empty($fromCompanyFinanceYear)) {
+                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
+                    ->where('departmentSystemID', 1)
+                    ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                    ->whereDate('dateFrom', '<=', $mytime)
+                    ->whereDate('dateTo', '>=', $mytime)
+                    ->first();
+
+
                 if(!empty($fromCompanyFinancePeriod)){
-    
-         
-                    $supplierCurrencies = DB::table('suppliercurrency')
-                    ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                    ->where('supplierCodeSystem', '=', $appoinment->supplier_id)->first();
-    
+                    if ($supplierTransactionCurrencyID) {
+                        $currency = CurrencyMaster::find($supplierTransactionCurrencyID);
+                        if ($currency) {
+                            $supplierCurrencies = (object)[
+                                'currencyID' => $currency->currencyID,
+                                'ExchangeRate' => $currency->ExchangeRate ?? 1
+                            ];
+                        } else {
+                            $supplierCurrencies = SupplierCurrency::getSupplierCurrency($appoinment->supplier_id);
+                        }
+                    } else {
+                        $supplierCurrencies = SupplierCurrency::getSupplierCurrency($appoinment->supplier_id);
+                    }
+
                     $detail['companySystemID'] = $this->data['companySystemID'];
                     $detail['bookingDate'] = $mytime;
                     $detail['supplierInvoiceDate'] = $mytime;
@@ -91,63 +101,68 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $detail['documentType'] = 0;
                     $detail['projectID'] = null;
                     $detail['secondaryRefNo'] = '';
-                    $detail['supplierInvoiceNo'] = $appoinment->primary_code;
+                    $grvPrimaryCode = isset($this->data['grvPrimaryCode']) ? $this->data['grvPrimaryCode'] : null;
+                    $totalGrvCount = \App\Models\GRVMaster::where('deliveryAppoinmentID', $this->data['id'])->count();
+                    
+                    if ($totalGrvCount > 1 && $grvPrimaryCode) {
+                        $detail['supplierInvoiceNo'] = $appoinment->primary_code . ' - ' . $grvPrimaryCode;
+                    } else {
+                        $detail['supplierInvoiceNo'] = $appoinment->primary_code;
+                    }
                     $detail['comments'] = 'Created from SRM Delivery Appointment '.$appoinment->primary_code;
                     $detail['supplierID'] = $appoinment->supplier_id;
                     $detail['supplierTransactionCurrencyID'] = $supplierCurrencies->currencyID;
-                    $detail['preCheck'] = true; 
-                    $detail['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom; 
-                    $detail['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo; 
+                    $detail['preCheck'] = true;
+                    $detail['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom;
+                    $detail['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo;
                     $detail['retentionPercentage'] = 0;
                     $detail['createdPcID'] = gethostname();
                     $detail['createdUserID'] =  \Helper::getEmployeeID();
                     $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                     $detail['documentSystemID'] =  11;
                     $detail['documentID'] = "SI";
-    
+
                     $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
-    
+
                     $company = Company::find($this->data['companySystemID']);
                     if ($company) {
-                    $detail['companyID'] = $company->CompanyID;
-                    $detail['vatRegisteredYN'] = $company->vatRegisteredYN;
-                    $detail['localCurrencyID'] = $company->localCurrencyID;
-                    $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
-                    $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                    $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                        $detail['companyID'] = $company->CompanyID;
+                        $detail['vatRegisteredYN'] = $company->vatRegisteredYN;
+                        $detail['localCurrencyID'] = $company->localCurrencyID;
+                        $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
+                        $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                        $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     }
-    
+
                     $lastSerial = BookInvSuppMaster::where('companySystemID', $this->data['companySystemID'])
-                    ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                    ->orderBy('serialNo', 'desc')
-                    ->first();
-        
+                        ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
+
                     $lastSerialNumber = 1;
                     if ($lastSerial) {
                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                     }
-                    
+
                     $detail['serialNo'] = $lastSerialNumber;
                     $detail['supplierTransactionCurrencyER'] = 1;
                     $detail['FYBiggin'] = $fromCompanyFinanceYear->bigginingDate;
                     $detail['FYEnd'] = $fromCompanyFinanceYear->endingDate;
-    
+
                     $startYear = $fromCompanyFinanceYear['bigginingDate'];
                     $finYearExp = explode('-', $startYear);
                     $finYear = $finYearExp[0];
-    
+
                     $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                     $detail['bookingInvCode'] = $bookingInvCode;
                     $detail['isLocalSupplier'] = \Helper::isLocalSupplier($appoinment->supplier_id, $this->data['companySystemID']);
-    
-    
+
                     $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
-                    'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
-                    ->where('supplierCodeSytem', $appoinment->supplier_id)
-                    ->where('companySystemID', $this->data['companySystemID'])
-                    ->first();
-    
-    
+                        'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
+                        ->where('supplierCodeSytem', $appoinment->supplier_id)
+                        ->where('companySystemID', $this->data['companySystemID'])
+                        ->first();
+
                     if ($supplierAssignedDetail) {
                         $detail['supplierVATEligible'] = $supplierAssignedDetail->vatEligible;
                         $detail['supplierGLCodeSystemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
@@ -157,7 +172,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                         $detail['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
                     }
                     $detail['deliveryAppoinmentID'] = $this->data['id'];
-                    
+
                     $invoice = $bookInvSuppMasterRepository->create($detail);
 
                     $invoice_id = $invoice->bookingSuppMasInvAutoID;
@@ -166,81 +181,85 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                         $this->addAttachmentList($invoice_id, $this->data['companySystemID'], $this->data['attachmentsList']);
                     }
 
-                    $grv_Details = GRVMaster::where('deliveryAppoinmentID',$this->data['id'])->select('grvAutoID')->first();
+                    $grv_Details = GRVMaster::where('deliveryAppoinmentID', $this->data['id'])
+                        ->when($grvAutoID, function ($query) use ($grvAutoID) {
+                            $query->where('grvAutoID', $grvAutoID);
+                        })
+                        ->select('grvAutoID')
+                        ->first();
 
-                    $details = UnbilledGrvGroupBy::where('grvAutoID',$grv_Details->grvAutoID)->select('purchaseOrderID','companySystemID')->get();
+                    $details = UnbilledGrvGroupBy::where('grvAutoID', $grv_Details->grvAutoID)
+                        ->select('purchaseOrderID', 'companySystemID')
+                        ->get();
 
                     foreach($details as $purchase_id)
                     {
-                       
-                       $informations =  $this->getUnbilledGRVDetailsForSI($purchase_id->companySystemID, $purchase_id->purchaseOrderID, $grv_Details->grvAutoID,$invoice_id);
-                      
-                       $pullAmount = 0;
-                       foreach ($informations as $new) {
-                           
-                           $groupMaster = UnbilledGrvGroupBy::find($new->unbilledgrvAutoID);
+                        $informations =  $this->getUnbilledGRVDetailsForSI($purchase_id->companySystemID, $purchase_id->purchaseOrderID, $grv_Details->grvAutoID, $invoice_id);
 
-                               $totalPendingAmount = 0;
-                               // balance Amount
-                               $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new->unbilledgrvAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
-           
-                               if ($balanceAmount) {
-                                   $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
-                               } else {
-                                   $totalPendingAmount = $groupMaster->totTransactionAmount;
-                               }
-           
-                  
-                               $prDetail_arr['bookingSuppMasInvAutoID'] = $invoice_id;
-                               $prDetail_arr['unbilledgrvAutoID'] = $new->unbilledgrvAutoID;
-                               $prDetail_arr['companySystemID'] = $groupMaster->companySystemID;
-                               $prDetail_arr['companyID'] = $groupMaster->companyID;
-                               $prDetail_arr['supplierID'] = $groupMaster->supplierID;
-                               $prDetail_arr['purchaseOrderID'] = $groupMaster->purchaseOrderID;
-                               $prDetail_arr['grvAutoID'] = $groupMaster->grvAutoID;
-                               $prDetail_arr['grvType'] = $groupMaster->grvType;
-                               $prDetail_arr['supplierTransactionCurrencyID'] = $groupMaster->supplierTransactionCurrencyID;
-                               $prDetail_arr['supplierTransactionCurrencyER'] = $groupMaster->supplierTransactionCurrencyER;
-                               $prDetail_arr['companyReportingCurrencyID'] = $groupMaster->companyReportingCurrencyID;
-                               $prDetail_arr['companyReportingER'] = $groupMaster->companyReportingER;
-                               $prDetail_arr['localCurrencyID'] = $groupMaster->localCurrencyID;
-                               $prDetail_arr['localCurrencyER'] = $groupMaster->localCurrencyER;
-                               $prDetail_arr['supplierInvoOrderedAmount'] = $totalPendingAmount;
-                               $prDetail_arr['transSupplierInvoAmount'] = $groupMaster->totTransactionAmount;
-                               $prDetail_arr['localSupplierInvoAmount'] = $groupMaster->totLocalAmount;
-                               $prDetail_arr['rptSupplierInvoAmount'] = $groupMaster->totRptAmount;
-   
-                 
-                               $item = $bookInvSuppDetRepo->create($prDetail_arr);
+                        $pullAmount = 0;
+                        foreach ($informations as $new) {
 
-                               $updatePRMaster = UnbilledGrvGroupBy::find($new->unbilledgrvAutoID)
-                                   ->update([
-                                       'selectedForBooking' => -1
-                                   ]);
-           
-           
-                               $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $invoice_id, $groupMaster);
-           
-                               if (!$resDetail['status']) {
-                               }
-           
-                               $pullAmount = $resDetail['data'];
-                               
-                               if ($pullAmount > 0) {
-                                   $supplierInvoiceDetail = $item->toArray();
-           
-                                   $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;      
-                                   
-                                   $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
-           
-                                   if (!$resultUpdateDetail['status']) {
-                                  
-                                   } 
-                               }
-                           
-                       }
-                       
-              
+                            $groupMaster = UnbilledGrvGroupBy::find($new->unbilledgrvAutoID);
+
+                            $totalPendingAmount = 0;
+                            // balance Amount
+                            $balanceAmount = collect(\DB::select('SELECT erp_bookinvsuppdet.unbilledgrvAutoID, Sum(erp_bookinvsuppdet.totTransactionAmount) AS SumOftotTransactionAmount FROM erp_bookinvsuppdet WHERE unbilledgrvAutoID = ' . $new->unbilledgrvAutoID . ' GROUP BY erp_bookinvsuppdet.unbilledgrvAutoID;'))->first();
+
+                            if ($balanceAmount) {
+                                $totalPendingAmount = ($groupMaster->totTransactionAmount - $balanceAmount->SumOftotTransactionAmount);
+                            } else {
+                                $totalPendingAmount = $groupMaster->totTransactionAmount;
+                            }
+
+
+                            $prDetail_arr['bookingSuppMasInvAutoID'] = $invoice_id;
+                            $prDetail_arr['unbilledgrvAutoID'] = $new->unbilledgrvAutoID;
+                            $prDetail_arr['companySystemID'] = $groupMaster->companySystemID;
+                            $prDetail_arr['companyID'] = $groupMaster->companyID;
+                            $prDetail_arr['supplierID'] = $groupMaster->supplierID;
+                            $prDetail_arr['purchaseOrderID'] = $groupMaster->purchaseOrderID;
+                            $prDetail_arr['grvAutoID'] = $groupMaster->grvAutoID;
+                            $prDetail_arr['grvType'] = $groupMaster->grvType;
+                            $prDetail_arr['supplierTransactionCurrencyID'] = $groupMaster->supplierTransactionCurrencyID;
+                            $prDetail_arr['supplierTransactionCurrencyER'] = $groupMaster->supplierTransactionCurrencyER;
+                            $prDetail_arr['companyReportingCurrencyID'] = $groupMaster->companyReportingCurrencyID;
+                            $prDetail_arr['companyReportingER'] = $groupMaster->companyReportingER;
+                            $prDetail_arr['localCurrencyID'] = $groupMaster->localCurrencyID;
+                            $prDetail_arr['localCurrencyER'] = $groupMaster->localCurrencyER;
+                            $prDetail_arr['supplierInvoOrderedAmount'] = $totalPendingAmount;
+                            $prDetail_arr['transSupplierInvoAmount'] = $groupMaster->totTransactionAmount;
+                            $prDetail_arr['localSupplierInvoAmount'] = $groupMaster->totLocalAmount;
+                            $prDetail_arr['rptSupplierInvoAmount'] = $groupMaster->totRptAmount;
+
+
+                            $item = $bookInvSuppDetRepo->create($prDetail_arr);
+
+                            $updatePRMaster = UnbilledGrvGroupBy::find($new->unbilledgrvAutoID)
+                                ->update([
+                                    'selectedForBooking' => -1
+                                ]);
+
+
+                            $resDetail = $this->storeSupplierInvoiceGrvDetails($new, $item->bookingSupInvoiceDetAutoID, $invoice_id, $groupMaster);
+
+                            if (!$resDetail['status']) {
+                            }
+
+                            $pullAmount = $resDetail['data'];
+
+                            if ($pullAmount > 0) {
+                                $supplierInvoiceDetail = $item->toArray();
+
+                                $supplierInvoiceDetail['supplierInvoAmount'] = $pullAmount;
+
+                                $resultUpdateDetail = $this->updateDetail($supplierInvoiceDetail, $supplierInvoiceDetail['bookingSupInvoiceDetAutoID']);
+
+                                if (!$resultUpdateDetail['status']) {
+
+                                }
+                            }
+
+                        }
                     }
                     DB::commit();
                 }
@@ -248,7 +267,6 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                 {
                     Log::error('From Company Finance period not found, date : ');
                 }
-    
             }
             else{
                 Log::error('From Company Finance Year not found, date : ');

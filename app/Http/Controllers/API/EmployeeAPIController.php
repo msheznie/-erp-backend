@@ -54,6 +54,8 @@ use App\Models\ExpenseClaimMaster;
 use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\HrPayrollDetails;
+use App\Models\HrPayrollMaster;
 
 /**
  * Class EmployeeController
@@ -242,9 +244,16 @@ class EmployeeAPIController extends AppBaseController
                      ->where('erp_paysupplierinvoicemaster.approved', -1)
                      ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
             })
+            ->leftJoin('erp_debitnote', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_debitnote.empID')
+                     ->where('erp_debitnote.type', 2)
+                     ->where('erp_debitnote.approved', -1)
+                     ->whereIn('erp_debitnote.companySystemID', $childCompanies);
+            })
             ->where(function ($query) {
                 $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
-                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                      ->orWhereNotNull('erp_debitnote.empID');
             })
             ->groupBy('employees.employeeSystemID');
 
@@ -780,28 +789,62 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
             foreach ($expenseClaim as $claim) {
                 if($claim->addedForPayment == 0){
 
-                    $documentDetails[] = [
-                        'documentCode' => $claim->expenseClaimCode,
-                        'documentType' => 'Expense Claim',
-                    ];
-                    
                     if ($claim->confirmedYN == 0 && $claim->approvedYN == 0) {
+                        $documentDetails[] = [
+                            'documentCode' => $claim->expenseClaimCode,
+                            'documentType' => 'Expense Claim',
+                        ];
                         $documentDetails[count($documentDetails) - 1]['isDraft'] = 1;
                     }
     
                     if($claim->confirmedYN == 1 && $claim->approvedYN == 0){
+                        $documentDetails[] = [
+                            'documentCode' => $claim->expenseClaimCode,
+                            'documentType' => 'Expense Claim',
+                        ];
                         $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
                         $documentDetails[count($documentDetails) - 1]['isApproved'] = 0;
                     }
 
                     if($claim->confirmedYN == 1 && $claim->approvedYN == 1){
-                        $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
-                        $documentDetails[count($documentDetails) - 1]['isApproved'] = 1;
-                        $documentDetails[count($documentDetails) - 1]['isNotPaid'] = 1;
+                        if($claim->addedToSalary == 1){
+                            $payrollDetails = HrPayrollDetails::where('detailTBID', $claim->expenseClaimMasterAutoID)
+                                                                ->where('fromTB', 'EC')
+                                                                ->first();
+                            
+                            if($payrollDetails){
+                                $payrollMaster = HrPayrollMaster::where('payrollMasterID', $payrollDetails->payrollMasterID)
+                                                                ->first();
+                                
+                                if($payrollMaster){
+                                    if($payrollMaster->approvedYN == 0){
+                                        $documentDetails[] = [
+                                            'documentCode' => $claim->expenseClaimCode,
+                                            'documentType' => 'Expense Claim',
+                                        ];
+                                        $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
+                                        $documentDetails[count($documentDetails) - 1]['isApproved'] = 1;
+                                        $documentDetails[count($documentDetails) - 1]['isPartiallyPaid'] = 1;
+                                    }
+                                }
+                            }
+                        } else {
+                            $documentDetails[] = [
+                                'documentCode' => $claim->expenseClaimCode,
+                                'documentType' => 'Expense Claim',
+                            ];
+                            $documentDetails[count($documentDetails) - 1]['isConfirmed'] = 1;
+                            $documentDetails[count($documentDetails) - 1]['isApproved'] = 1;
+                            $documentDetails[count($documentDetails) - 1]['isNotPaid'] = 1;
+                        }
 
                     }
     
                     if ($claim->confirmedYN == 2) {
+                        $documentDetails[] = [
+                            'documentCode' => $claim->expenseClaimCode,
+                            'documentType' => 'Expense Claim',
+                        ];
                         $documentDetails[count($documentDetails) - 1]['isRefferedBack'] = 1;
                     }
                 }

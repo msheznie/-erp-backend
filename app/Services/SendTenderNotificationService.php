@@ -12,8 +12,6 @@ class SendTenderNotificationService
 {
     public static function tenderNotificationScenarioBased()
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('tender-bid'));
-
         $now = Carbon::now();
         $notificationScenarios = NotificationCompanyScenario::getCompanyScenario();
         foreach ($notificationScenarios as $scenario) {

@@ -505,4 +505,8 @@ class PurchaseRequest extends Model
             ->where('companySystemID', $companyId)
             ->get();
     }
+    public function all_approvals()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['purchaseRequestID', 'documentSystemID']);
+    }
 }

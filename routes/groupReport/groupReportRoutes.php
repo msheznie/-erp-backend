@@ -31,6 +31,13 @@ Route::group([],function (){
     Route::post('exportReport', 'ReportAPIController@exportReport')->name("Export report");
 });
 
+//ICV Report
+Route::group([],function (){
+    Route::get('getICVSuppliersAndItems', 'SupplierMasterAPIController@getICVSuppliersAndItems')->name("Get icv suppliers and items");
+    Route::post('validateReport', 'ReportAPIController@validateReport')->name("Validate icv report");
+    Route::post('generateReport', 'ReportAPIController@generateReport')->name("Generate icv report");
+});
+
 //Order Status Report
 Route::group([],function (){
     Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions')->name("Report order status filter options");

@@ -197,5 +197,6 @@ class DepartmentBudgetPlanningDetail extends Model
         return self::with('departmentBudgetPlanning.masterBudgetPlannings.company')
             ->find($budgetPlaningDetID);
     }
+
 }
 
