@@ -472,7 +472,7 @@ class CustomerMasterBulkUploadService
         $customerData['customerAddress2'] = !empty($row['address_2']) ? trim((string)$row['address_2']) : null;
         $customerData['customerCity'] = !empty($row['city']) ? trim((string)$row['city']) : null;
         $customerData['customerLogo'] = !empty($row['logo']) ? trim((string)$row['logo']) : null;
-        $customerData['webAddress'] = !empty($row['web_address']) ? trim((string)$row['web_address']) : null;
+        $customerData['CustWebsite'] = !empty($row['web_address']) ? trim((string)$row['web_address']) : null;
 
         // Case-insensitive country lookup
         $country = CountryMaster::whereRaw('LOWER(countryName) = ?', [strtolower(trim($row['country']))])->first();
