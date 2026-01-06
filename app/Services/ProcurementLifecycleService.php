@@ -159,24 +159,50 @@ class ProcurementLifecycleService
      */
     private function processPRs($companyId, &$results, $dateFrom = null, $dateTo = null, $documentType = null)
     {
+        PurchaseRequest::getStandalonePRsForReport($companyId, $dateFrom, $dateTo)
+            ->chunk(100, function ($prs) use ($companyId, &$results) {
+                $this->processPRChunk($prs, $companyId, $results);
+            });
+
+        $linkedPRIds = DB::table('srm_tender_purchase_request')
+            ->where('company_id', $companyId)
+            ->pluck('purchase_request_id')
+            ->toArray();
+
+        if (empty($linkedPRIds)) {
+            return;
+        }
+
         PurchaseRequest::getConfirmedPRsForReport($companyId, $dateFrom, $dateTo)
+            ->whereIn('purchaseRequestID', $linkedPRIds)
             ->chunk(100, function ($prs) use ($companyId, &$results, $documentType) {
-                $prIds = $prs->pluck('purchaseRequestID')->toArray();
+                $prIds  = $prs->pluck('purchaseRequestID')->toArray();
                 $prData = PurchaseRequest::loadPRRelationshipsForReport($prIds, $companyId);
-                
+
                 foreach ($prs as $pr) {
                     $prKey = $pr->purchaseRequestID;
-                    $row = $this->formatPRRow($pr, $prData[$prKey] ?? []);
+                    $row   = $this->formatPRRow($pr, $prData[$prKey] ?? []);
 
-                    if ($documentType && $documentType !== 'PR') {
-                        if ($this->shouldIncludePRForDocumentType($prData[$prKey] ?? [], $documentType)) {
-                            $results->push($row);
-                        }
-                    } else {
+                    if (
+                        !$documentType ||
+                        $documentType === 'PR' ||
+                        $this->shouldIncludePRForDocumentType($prData[$prKey] ?? [], $documentType)
+                    ) {
                         $results->push($row);
                     }
                 }
             });
+    }
+    private function processPRChunk($prs, $companyId, &$results)
+    {
+        $prIds  = $prs->pluck('purchaseRequestID')->toArray();
+        $prData = PurchaseRequest::loadPRRelationshipsForReport($prIds, $companyId);
+
+        foreach ($prs as $pr) {
+            $prKey = $pr->purchaseRequestID;
+            $row   = $this->formatPRRow($pr, $prData[$prKey] ?? []);
+            $results->push($row);
+        }
     }
 
     /**

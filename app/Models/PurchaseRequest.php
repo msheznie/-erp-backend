@@ -569,6 +569,43 @@ class PurchaseRequest extends Model
     }
 
     /**
+     * Get standalone PRs (PRs not linked to any tender in srm_tender_purchase_request)
+     */
+    public static function getStandalonePRsForReport(
+        int $companyId,
+        ?string $dateFrom = null,
+        ?string $dateTo = null
+    ) {
+        return self::query()
+            ->where('companySystemID', $companyId)
+            ->where('PRConfirmedYN', 1)
+            ->where('cancelledYN', 0)
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                $q->where('createdDateTime', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                $q->where('createdDateTime', '<=', $dateTo);
+            })
+            ->whereNotExists(function ($sub) use ($companyId) {
+                $sub->selectRaw(1)
+                    ->from('srm_tender_purchase_request as tpr')
+                    ->whereColumn(
+                        'tpr.purchase_request_id',
+                        'erp_purchaserequest.purchaseRequestID'
+                    )
+                    ->where('tpr.company_id', $companyId);
+            })
+            ->select([
+                'purchaseRequestID',
+                'purchaseRequestCode',
+                'prType',
+                'currency',
+                'createdDateTime',
+            ])
+            ->orderByDesc('createdDateTime');
+    }
+
+    /**
      * Load PR relationships for report
      */
     public static function loadPRRelationshipsForReport(array $prIds, int $companyId): array
