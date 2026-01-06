@@ -9730,5 +9730,7 @@ return
     'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.',
     'deleted_successfully' => ':attribute تم حذفه بنجاح',
     'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
-    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام'
-];
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
+    'only' => 'فقط',
+    'total' => 'المجموع',
+  ];
