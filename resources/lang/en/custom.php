@@ -9845,5 +9845,13 @@ return
     'customer_vat_percentage_range' => 'VAT Percentage must be between 0 and 100.',
     'deleted_successfully' => ':attribute deleted successfully',
     'you_are_not_authorized_to_approve_this_document' => 'You are not authorized to approve this document',
-    'not_all_departments_confirmed' => 'Not all departments have been confirmed'
-];
+    'not_all_departments_confirmed' => 'Not all departments have been confirmed',
+    'excel_file_has_no_headers' => 'Excel file has no headers.',
+    'excel_headers_mismatch' => 'Excel file headers missing or do not match the expected format.',
+    'invalid_headers' => 'Invalid headers:',
+    'expected_headers' => 'Expected headers:',
+    'credit_period_minimum_value' => 'Credit Period minimum value is 1.',
+    'credit_period_cannot_be_decimal' => 'Credit Period cannot be a decimal value. Only whole numbers are allowed.',
+    'credit_limit_minimum_value' => 'Credit Limit minimum value is 1.',
+    'credit_limit_cannot_be_decimal' => 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.',
+  ];

@@ -9733,4 +9733,12 @@ return
     'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
     'only' => 'فقط',
     'total' => 'المجموع',
+    'excel_file_has_no_headers' => 'ملف Excel لا يحتوي على رؤوس أعمدة.',
+    'excel_headers_mismatch' => 'رؤوس أعمدة ملف Excel مفقودة أو لا تطابق التنسيق المتوقع.',
+    'invalid_headers' => 'رؤوس الأعمدة غير الصحيحة:',
+    'expected_headers' => 'رؤوس الأعمدة المتوقعة:',
+    'credit_period_minimum_value' => 'الحد الأدنى لقيمة فترة الائتمان هو 1.',
+    'credit_period_cannot_be_decimal' => 'لا يمكن أن تكون فترة الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
+    'credit_limit_minimum_value' => 'الحد الأدنى لقيمة حد الائتمان هو 1.',
+    'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
   ];

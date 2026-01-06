@@ -17,6 +17,32 @@ use Illuminate\Support\Facades\Log;
 
 class CustomerMasterBulkUploadService
 {
+    private static function getExpectedHeaders(): array
+    {
+        return [
+            'secondary_code',
+            'customer_name',
+            'report_title',
+            'address_1',
+            'address_2',
+            'city',
+            'logo',
+            'web_address',
+            'country',
+            'receivables_account',
+            'unbilled_account',
+            'advance_account',
+            'credit_limit_omr',
+            'credit_limit',
+            'credit_period',
+            'category',
+            'registration_no',
+            'vat_eligible',
+            'vat_number',
+            'vat_percentage',
+            'currency'
+        ];
+    }
     private static function getTranslatedMessage($key, $fallback, $replace = []): string
     {
         $translated = trans($key, $replace);
@@ -64,8 +90,20 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Maximum record limit check (e.g., 1000 records)
-        $maxRecords = 1000;
+        // Validate Excel headers before processing
+        $headerValidation = self::validateExcelHeaders($excelData);
+        if (!$headerValidation['isValid']) {
+            return [
+                'successCount' => 0,
+                'totalCount' => 0,
+                'message' => $headerValidation['message'],
+                'errors' => [],
+                'success' => false
+            ];
+        }
+
+        // Maximum record limit check
+        $maxRecords = 500;
         $totalCount = count($excelData);
         if ($totalCount > $maxRecords) {
             return [
@@ -480,7 +518,7 @@ class CustomerMasterBulkUploadService
             }
         }
 
-        $customerData['customerRegistrationNo'] = !empty($row['registration_no']) ? trim((string)$row['registration_no']) : null;
+        $customerData['customer_registration_no'] = !empty($row['registration_no']) ? trim((string)$row['registration_no']) : null;
 
         $customerData['vatEligible'] = 0;
         if (!empty($row['vat_eligible'])) {
@@ -511,6 +549,17 @@ class CustomerMasterBulkUploadService
         $document = DocumentMaster::where('documentID', 'CUSTM')->first();
         $customerData['documentSystemID'] = $document->documentSystemID;
         $customerData['documentID'] = $document->documentID;
+
+        // Set customer to fully approved state (similar to SupplierMasterBulkUploadService)
+        $customerData['approvedYN'] = 1;
+        $customerData['confirmedYN'] = 1;
+        $customerData['approvedEmpSystemID'] = $employee->employeeSystemID;
+        $customerData['approvedEmpID'] = $employee->empID;
+        $customerData['approvedDate'] = Carbon::now();
+        $customerData['confirmedEmpSystemID'] = $employee->employeeSystemID;
+        $customerData['confirmedEmpID'] = $employee->empID;
+        $customerData['confirmedEmpName'] = $employee->empName;
+        $customerData['confirmedDate'] = Carbon::now();
 
         return $customerData;
     }
@@ -760,7 +809,7 @@ class CustomerMasterBulkUploadService
 
     private static function validateCreditPeriod($value): array
     {
-        if (empty($value) || is_null($value)) {
+        if (is_null($value)) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.field_is_mandatory', 'Credit Period is mandatory', ['field' => 'Credit Period'])
@@ -774,7 +823,6 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Allow zero value for Credit Period
         if ($value < 0) {
             return [
                 'valid' => false,
@@ -782,11 +830,25 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Check maximum number of digits (10 digits max)
-        $valueString = (string)$value;
-        $valueString = preg_replace('/\.0+$/', '', $valueString); // Remove trailing .0
-        $valueString = preg_replace('/\./', '', $valueString); // Remove decimal point for digit count
+        // Don't allow zero value
+        if ($value == 0) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.credit_period_minimum_value', 'Credit Period minimum value is 1.')
+            ];
+        }
 
+        // Don't allow decimal values
+        if (is_float($value) && fmod($value, 1) != 0) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.credit_period_cannot_be_decimal', 'Credit Period cannot be a decimal value. Only whole numbers are allowed.')
+            ];
+        }
+
+        // Check maximum number of digits (10 digits max)
+        $valueInt = (int)$value;
+        $valueString = (string)$valueInt;
         if (strlen($valueString) > 10) {
             return [
                 'valid' => false,
@@ -799,7 +861,7 @@ class CustomerMasterBulkUploadService
 
     private static function validateCreditLimit($value): array
     {
-        if (empty($value) || is_null($value)) {
+        if (is_null($value)) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.field_is_mandatory', 'Credit Limit (OMR) is mandatory', ['field' => 'Credit Limit (OMR)'])
@@ -820,24 +882,35 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Check for overflow - maximum value (e.g., PHP_INT_MAX or a reasonable limit like 999999999999.99)
-        $maxCreditLimit = 999999999999.99;
-        if ($value > $maxCreditLimit) {
+        // Don't allow zero value
+        if ($value == 0) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.credit_limit_minimum_value', 'Credit Limit minimum value is 1.')
+            ];
+        }
+
+        // Don't allow decimal values
+        if (is_float($value) && fmod($value, 1) != 0) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.credit_limit_cannot_be_decimal', 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.')
+            ];
+        }
+
+        // Check for overflow - maximum value (e.g., PHP_INT_MAX or a reasonable limit like 999999999999)
+        $maxCreditLimit = 999999999;
+        $valueInt = (int)$value;
+        if ($valueInt > $maxCreditLimit) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_overflow', 'Credit Limit exceeds the maximum allowed value.')
             ];
         }
 
-        // Check maximum number of digits (18 digits max including decimals)
-        $valueString = (string)$value;
-        $valueString = preg_replace('/\.0+$/', '', $valueString); // Remove trailing .0
-        $parts = explode('.', $valueString);
-        $integerPart = $parts[0];
-        $decimalPart = isset($parts[1]) ? $parts[1] : '';
-
-        // Total digits should not exceed 18
-        if (strlen($integerPart) + strlen($decimalPart) > 18) {
+        // Check maximum number of digits (18 digits max)
+        $valueString = (string)$valueInt;
+        if (strlen($valueString) > 18) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_cannot_exceed_maximum_digits', 'Credit Limit cannot exceed the maximum allowed number of digits.')
@@ -855,15 +928,29 @@ class CustomerMasterBulkUploadService
 
         $url = trim((string)$url);
 
-        // Only check for www. prefix, not http/https
-        if (!preg_match('/^www\./i', $url)) {
-            // If it doesn't start with www., validate as domain format
-            if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/i', $url)) {
+        // Check if it's a valid URL with http:// or https://
+        if (preg_match('/^https?:\/\//i', $url)) {
+            // Validate full URL format
+            if (filter_var($url, FILTER_VALIDATE_URL) === false) {
                 return [
                     'valid' => false,
-                    'message' => self::getTranslatedMessage('custom.invalid_web_address', 'Invalid web address format. Must start with www. or be a valid domain.')
+                    'message' => self::getTranslatedMessage('custom.invalid_web_address', 'Invalid web address format.')
                 ];
             }
+            return ['valid' => true];
+        }
+
+        // Check for www. prefix
+        if (preg_match('/^www\./i', $url)) {
+            return ['valid' => true];
+        }
+
+        // Validate as domain format (without protocol)
+        if (!preg_match('/^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?)*$/i', $url)) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.invalid_web_address', 'Invalid web address format.')
+            ];
         }
 
         return ['valid' => true];
@@ -898,5 +985,134 @@ class CustomerMasterBulkUploadService
         }
 
         return ['valid' => true];
+    }
+
+    /**
+     * Validate Excel file headers against expected headers
+     *
+     * @param array $excelData
+     * @return array ['isValid' => bool, 'message' => string]
+     */
+    private static function validateExcelHeaders($excelData): array
+    {
+        $expectedHeaders = self::getExpectedHeaders();
+
+        // If no expected headers defined, skip validation
+        if (empty($expectedHeaders)) {
+            return ['isValid' => true, 'message' => ''];
+        }
+
+        // Get first row to extract headers
+        $firstRow = reset($excelData);
+        if (empty($firstRow) || !is_array($firstRow)) {
+            return [
+                'isValid' => false,
+                'message' => self::getTranslatedMessage('custom.excel_file_has_no_headers', 'Excel file has no headers.')
+            ];
+        }
+
+        // Extract headers from first row
+        $uploadedHeaders = [];
+        $firstRowKeys = array_keys($firstRow);
+
+        $isNumericKeys = false;
+        if (!empty($firstRowKeys)) {
+            $allNumeric = true;
+            foreach ($firstRowKeys as $index => $key) {
+                if ((string)$key !== (string)$index) {
+                    $allNumeric = false;
+                    break;
+                }
+            }
+            $isNumericKeys = $allNumeric;
+        }
+
+        if ($isNumericKeys) {
+            foreach ($firstRow as $value) {
+                if ($value !== null && $value !== '') {
+                    // Normalize header: trim, remove asterisks (mandatory markers), convert to lowercase
+                    $normalizedHeader = trim((string)$value);
+                    $normalizedHeader = preg_replace('/\*+$/', '', $normalizedHeader);
+                    $normalizedHeader = trim($normalizedHeader);
+                    $uploadedHeaders[] = strtolower($normalizedHeader);
+                }
+            }
+        } else {
+            foreach ($firstRow as $key => $value) {
+                // Normalize header: trim, remove asterisks (mandatory markers), convert to lowercase
+                $normalizedKey = trim((string)$key);
+                $normalizedKey = preg_replace('/\*+$/', '', $normalizedKey);
+                $normalizedKey = trim($normalizedKey);
+                $uploadedHeaders[] = strtolower($normalizedKey);
+            }
+        }
+
+        // Normalize expected headers to lowercase
+        $expectedHeadersNormalized = array_map(function($header) {
+            return strtolower(trim($header));
+        }, $expectedHeaders);
+
+        // Check for missing headers
+        $missingHeaders = [];
+        foreach ($expectedHeadersNormalized as $expectedHeader) {
+            // Skip credit_limit_omr if credit_limit exists (they're alternatives)
+            if ($expectedHeader === 'credit_limit_omr') {
+                if (!in_array('credit_limit_omr', $uploadedHeaders) && !in_array('credit_limit', $uploadedHeaders)) {
+                    $missingHeaders[] = $expectedHeaders[array_search($expectedHeader, $expectedHeadersNormalized)];
+                }
+            } else {
+                if (!in_array($expectedHeader, $uploadedHeaders)) {
+                    $missingHeaders[] = $expectedHeaders[array_search($expectedHeader, $expectedHeadersNormalized)];
+                }
+            }
+        }
+
+        // Check for extra headers (optional - you can remove this if you want to allow extra columns)
+        $extraHeaders = [];
+        foreach ($uploadedHeaders as $index => $uploadedHeader) {
+            if (!in_array($uploadedHeader, $expectedHeadersNormalized)) {
+                // Find original header name (before normalization)
+                $originalHeader = '';
+                if ($isNumericKeys) {
+                    // If numeric keys, get original value from first row
+                    $rowValues = array_values($firstRow);
+                    if (isset($rowValues[$index])) {
+                        $originalHeader = $rowValues[$index];
+                    }
+                } else {
+                    // If string keys, get original key from first row
+                    foreach ($firstRow as $key => $value) {
+                        $normalizedKey = trim((string)$key);
+                        $normalizedKey = preg_replace('/\*+$/', '', $normalizedKey);
+                        $normalizedKey = trim($normalizedKey);
+                        if (strtolower($normalizedKey) === $uploadedHeader) {
+                            $originalHeader = $key;
+                            break;
+                        }
+                    }
+                }
+                if ($originalHeader) {
+                    $extraHeaders[] = $originalHeader;
+                }
+            }
+        }
+
+        // Build error message if validation fails
+        if (!empty($missingHeaders) || !empty($extraHeaders)) {
+            $errorMessage = self::getTranslatedMessage('custom.excel_headers_mismatch', 'Excel file headers missing or do not match the expected format.');
+            if (!empty($extraHeaders)) {
+                $errorMessage .= ' ' . self::getTranslatedMessage('custom.invalid_headers', 'Invalid headers:') . ' ' . implode(', ', $extraHeaders) . '.';
+            }
+            if (!empty($missingHeaders)) {
+                $errorMessage .= ' ' . self::getTranslatedMessage('custom.expected_headers', 'Expected headers:') . ' ' . implode(', ', $missingHeaders) . '.';
+            }
+
+            return [
+                'isValid' => false,
+                'message' => $errorMessage
+            ];
+        }
+
+        return ['isValid' => true, 'message' => ''];
     }
 }
