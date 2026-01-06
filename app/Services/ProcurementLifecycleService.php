@@ -292,10 +292,10 @@ class ProcurementLifecycleService
         $tender = $tenderData['tender'] ?? null;
         $tenderCode = $tender ? ($tender->tender_code ?? '-') : '-';
         $tenderApprovals = $this->processApprovalsFromRaw($tenderData['approvals'] ?? collect());
-        $bidSubmissionDate = $this->formatDateTime($tender->bid_submission_opening_date);
-        $technicalEvaluationDate = $this->formatDateTime($tender->technical_bid_opening_date);
-        $commercialEvaluationDate = $this->formatDateTime($tender->commerical_bid_opening_date);
-        $publishedDate = $this->formatDateTime($tender->published_at);
+        $bidSubmissionDate = $tender ? $this->formatDateTime($tender->bid_submission_opening_date ?? null) : '-';
+        $technicalEvaluationDate = $tender ? $this->formatDateTime($tender->technical_bid_opening_date ?? null) : '-';
+        $commercialEvaluationDate = $tender ? $this->formatDateTime($tender->commerical_bid_opening_date ?? null) : '-';
+        $publishedDate = $tender ? $this->formatDateTime($tender->published_at ?? null) : '-';
 
         if (isset($tenderData['poId']) && $tenderData['poId'] && !empty($tenderData['poData'])) {
             $tenderPO = $tenderData['poData'];
@@ -349,12 +349,12 @@ class ProcurementLifecycleService
     private function formatTenderRow($tender, $tenderData)
     {
         $tenderInfo = $tenderData['tender'] ?? $tender;
-        $tenderCode = $tenderInfo->tender_code ?? '-';
+        $tenderCode = $tenderInfo ? ($tenderInfo->tender_code ?? '-') : '-';
         $tenderApprovals = $this->processApprovalsFromRaw($tenderData['approvals'] ?? collect());
-        $bidSubmissionDate = $this->formatDateTime($tenderInfo->bid_submission_opening_date);
-        $technicalEvaluationDate = $this->formatDateTime($tenderInfo->technical_bid_opening_date);
-        $commercialEvaluationDate = $this->formatDateTime($tenderInfo->commerical_bid_opening_date);
-        $publishedDate = $this->formatDateTime($tenderInfo->published_at);
+        $bidSubmissionDate = $tenderInfo ? $this->formatDateTime($tenderInfo->bid_submission_opening_date ?? null) : '-';
+        $technicalEvaluationDate = $tenderInfo ? $this->formatDateTime($tenderInfo->technical_bid_opening_date ?? null) : '-';
+        $commercialEvaluationDate = $tenderInfo ? $this->formatDateTime($tenderInfo->commerical_bid_opening_date ?? null) : '-';
+        $publishedDate = $tenderInfo ? $this->formatDateTime($tenderInfo->published_at ?? null) : '-';
 
         // Get PO from Tender if exists
         $poData = [];
