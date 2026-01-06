@@ -529,8 +529,8 @@ class PurchaseRequest extends Model
     public static function getPRsWithPOCreatedInDateRange($companyId, $dateFrom = null, $dateTo = null)
     {
         $query = self::where('erp_purchaserequest.companySystemID', $companyId)
-            ->where('erp_purchaserequest.PRConfirmedYN', 1)
-            ->where('erp_purchaserequest.cancelledYN', 0)
+            ->where('erp_purchaserequest.approved', -1)
+            ->where('erp_purchaserequest.refferedBackYN', 0)
             ->join('erp_purchaseorderdetails', 'erp_purchaserequest.purchaseRequestID', '=', 'erp_purchaseorderdetails.purchaseRequestID')
             ->join('erp_purchaseordermaster', 'erp_purchaseorderdetails.purchaseOrderMasterID', '=', 'erp_purchaseordermaster.purchaseOrderID')
             ->whereNotNull('erp_purchaseordermaster.createdDateTime');
@@ -549,26 +549,6 @@ class PurchaseRequest extends Model
     }
 
     /**
-     * Get confirmed PRs for report
-     */
-    public static function getConfirmedPRsForReport($companyId, $dateFrom = null, $dateTo = null)
-    {
-        $query = self::where('companySystemID', $companyId)
-            ->where('PRConfirmedYN', 1)
-            ->where('cancelledYN', 0);
-        
-        if ($dateFrom) {
-            $query->where('createdDateTime', '>=', $dateFrom);
-        }
-        if ($dateTo) {
-            $query->where('createdDateTime', '<=', $dateTo);
-        }
-        
-        return $query->select('purchaseRequestID', 'purchaseRequestCode', 'prType', 'currency', 'createdDateTime')
-            ->orderBy('createdDateTime', 'desc');
-    }
-
-    /**
      * Get standalone PRs (PRs not linked to any tender in srm_tender_purchase_request)
      */
     public static function getStandalonePRsForReport(
@@ -578,8 +558,9 @@ class PurchaseRequest extends Model
     ) {
         return self::query()
             ->where('companySystemID', $companyId)
-            ->where('PRConfirmedYN', 1)
+            ->where('approved', -1)
             ->where('cancelledYN', 0)
+            ->where('refferedBackYN', 0)
             ->when($dateFrom, function ($q) use ($dateFrom) {
                 $q->where('createdDateTime', '>=', $dateFrom);
             })

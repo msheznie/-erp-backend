@@ -846,30 +846,29 @@ class TenderMaster extends Model
      */
     public static function getStandaloneTendersForReport($companyId, $linkedTenderIds, $dateFrom = null, $dateTo = null, $documentType = null)
     {
-        $query = self::where('company_id', $companyId);
-        
+        $query = self::where('company_id', $companyId)
+            ->where('approved', -1)
+            ->where('refferedBackYN', 0);;
+
         if (!empty($linkedTenderIds)) {
             $query->whereNotIn('id', $linkedTenderIds);
         }
-        
-        // Filter by document type (Tender vs RFX)
-        // RFX has document_system_id = 113, Tender has document_system_id = 108
+
         if ($documentType === 'RFX') {
             $query->where('document_system_id', 113);
         } elseif ($documentType === 'Tender') {
             $query->where('document_system_id', 108);
         }
-        
-        // Apply date filter if provided
+
         if ($dateFrom) {
             $query->where('created_at', '>=', $dateFrom);
         }
         if ($dateTo) {
             $query->where('created_at', '<=', $dateTo);
         }
-        
-        return $query->select('id', 'tender_code', 'document_system_id', 'published_at', 
-                'bid_submission_opening_date', 'technical_bid_opening_date', 
+
+        return $query->select('id', 'tender_code', 'document_system_id', 'published_at',
+                'bid_submission_opening_date', 'technical_bid_opening_date',
                 'commerical_bid_opening_date', 'contract_id', 'created_at')
             ->orderBy('created_at', 'desc');
     }

@@ -178,6 +178,8 @@ class ContractMaster extends Model
     {
         return self::query()
             ->where('companySystemID', $companyId)
+            ->where('approved_yn', 1)
+            ->where('refferedBackYN', 0)
             ->when(!empty($linkedContractIds), function ($q) use ($linkedContractIds) {
                 return $q->whereNotIn('id', $linkedContractIds);
             })

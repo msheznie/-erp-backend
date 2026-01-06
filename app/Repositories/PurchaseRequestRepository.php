@@ -430,7 +430,7 @@ class PurchaseRequestRepository extends BaseRepository
                 trans('custom.po_number') => $this->formatPOCodes($item['poData'] ?? []),
                 trans('custom.po_approvals') => $this->formatPOApprovals($item['poData'] ?? []),
                 trans('custom.contract_code') => $item['contractCode'] ?? '',
-                trans('custom.contract_variation') => $item['contractVariation'] ?? 'no',
+                trans('custom.contract_variation') => $item['contractVariation'] ?? 'No',
                 trans('custom.contract_variation_types') => $this->formatContractVariationTypes($item['contractVariationTypes'] ?? []),
                 trans('custom.commencement_date') => $item['commencementDate'] ?? '',
                 trans('custom.agreement_signed_date') => $item['agreementSignedDate'] ?? '',

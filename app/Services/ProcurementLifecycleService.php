@@ -54,8 +54,7 @@ class ProcurementLifecycleService
             $this->processPRsWithPODateFilter($companyId, $results, $dateFrom, $dateTo);
         }
         
-        // Process PRs with optimized queries
-        if ($processFlags['processPR']) {
+        if ($processFlags['processPR'] || $processFlags['processTender'] || $processFlags['processRFX']) {
             $this->processPRs($companyId, $results, $dateFrom, $dateTo, $documentType);
         }
 
@@ -159,50 +158,52 @@ class ProcurementLifecycleService
      */
     private function processPRs($companyId, &$results, $dateFrom = null, $dateTo = null, $documentType = null)
     {
+        $processPRCollection = function ($prs) use ($companyId, &$results) {
+            if ($prs->isEmpty()) {
+                return;
+            }
+
+            $prIds  = $prs->pluck('purchaseRequestID')->toArray();
+            $prData = PurchaseRequest::loadPRRelationshipsForReport($prIds, $companyId);
+
+            foreach ($prs as $pr) {
+                $results->push(
+                    $this->formatPRRow($pr, $prData[$pr->purchaseRequestID] ?? [])
+                );
+            }
+        };
+
         PurchaseRequest::getStandalonePRsForReport($companyId, $dateFrom, $dateTo)
-            ->chunk(100, function ($prs) use ($companyId, &$results) {
-                $this->processPRChunk($prs, $companyId, $results);
+            ->chunk(100, function ($prs) use ($processPRCollection) {
+                $processPRCollection($prs);
             });
 
-        $linkedPRIds = DB::table('srm_tender_purchase_request')
-            ->where('company_id', $companyId)
-            ->pluck('purchase_request_id')
-            ->toArray();
+        $linkedPRs = DB::table('srm_tender_purchase_request as tpr')
+            ->join('erp_purchaserequest as pr', function ($join) use ($companyId) {
+                $join->on('tpr.purchase_request_id', '=', 'pr.purchaseRequestID')
+                    ->where('pr.companySystemID', $companyId)
+                    ->where('pr.approved', -1)
+                    ->where('pr.cancelledYN', 0)
+                    ->where('pr.refferedBackYN', 0);
+            })
+            ->where('tpr.company_id', $companyId)
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                $q->where('pr.createdDateTime', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                $q->where('pr.createdDateTime', '<=', $dateTo);
+            })
+            ->select(
+                'pr.purchaseRequestID',
+                'pr.purchaseRequestCode',
+                'pr.prType',
+                'pr.currency',
+                'pr.createdDateTime'
+            )
+            ->distinct()
+            ->get();
 
-        if (empty($linkedPRIds)) {
-            return;
-        }
-
-        PurchaseRequest::getConfirmedPRsForReport($companyId, $dateFrom, $dateTo)
-            ->whereIn('purchaseRequestID', $linkedPRIds)
-            ->chunk(100, function ($prs) use ($companyId, &$results, $documentType) {
-                $prIds  = $prs->pluck('purchaseRequestID')->toArray();
-                $prData = PurchaseRequest::loadPRRelationshipsForReport($prIds, $companyId);
-
-                foreach ($prs as $pr) {
-                    $prKey = $pr->purchaseRequestID;
-                    $row   = $this->formatPRRow($pr, $prData[$prKey] ?? []);
-
-                    if (
-                        !$documentType ||
-                        $documentType === 'PR' ||
-                        $this->shouldIncludePRForDocumentType($prData[$prKey] ?? [], $documentType)
-                    ) {
-                        $results->push($row);
-                    }
-                }
-            });
-    }
-    private function processPRChunk($prs, $companyId, &$results)
-    {
-        $prIds  = $prs->pluck('purchaseRequestID')->toArray();
-        $prData = PurchaseRequest::loadPRRelationshipsForReport($prIds, $companyId);
-
-        foreach ($prs as $pr) {
-            $prKey = $pr->purchaseRequestID;
-            $row   = $this->formatPRRow($pr, $prData[$prKey] ?? []);
-            $results->push($row);
-        }
+        $processPRCollection($linkedPRs);
     }
 
     /**
@@ -218,14 +219,7 @@ class ProcurementLifecycleService
                 foreach ($tenders as $tender) {
                     $tenderKey = $tender->id;
                     $row = $this->formatTenderRow($tender, $tenderData[$tenderKey] ?? []);
-
-                    if ($documentType && $documentType !== 'Tender' && $documentType !== 'RFX') {
-                        if ($this->shouldIncludeTenderForDocumentType($tenderData[$tenderKey] ?? [], $documentType)) {
-                            $results->push($row);
-                        }
-                    } else {
-                        $results->push($row);
-                    }
+                    $results->push($row);
                 }
             });
     }
@@ -334,7 +328,7 @@ class ProcurementLifecycleService
         $contractData = $tenderData['contractData'] ?? [];
         $contract = $contractData['contract'] ?? null;
         $contractCode = $contract ? ($contract->contractCode ?? '-') : '-';
-        $contractVariation = 'no';
+        $contractVariation = 'No';
         $contractVariationTypes = [];
         $commencementDate = '-';
         $agreementSignedDate = '-';
@@ -396,7 +390,7 @@ class ProcurementLifecycleService
         $contractData = $tenderData['contractData'] ?? [];
         $contract = $contractData['contract'] ?? null;
         $contractCode = $contract ? ($contract->contractCode ?? '-') : '-';
-        $contractVariation = 'no';
+        $contractVariation = 'No';
         $contractVariationTypes = [];
         $commencementDate = '-';
         $agreementSignedDate = '-';
@@ -455,7 +449,7 @@ class ProcurementLifecycleService
             'commercialEvaluationDate' => '-',
             'publishedDate' => '-',
             'contractCode' => '-',
-            'contractVariation' => 'no',
+            'contractVariation' => 'No',
             'contractVariationTypes' => [],
             'commencementDate' => '-',
             'agreementSignedDate' => '-',
@@ -564,7 +558,7 @@ class ProcurementLifecycleService
         $statuses = $contractData['statuses'] ?? collect();
 
         if ($statuses->isEmpty()) {
-            return ['no', []];
+            return ['No', []];
         }
 
         $types = $statuses->pluck('status')
@@ -575,7 +569,8 @@ class ProcurementLifecycleService
             ->values()
             ->toArray();
 
-        return ['yes', $types];
+        return ['Yes', $types];
     }
 }
+
 
