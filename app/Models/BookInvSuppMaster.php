@@ -382,7 +382,8 @@ class BookInvSuppMaster extends Model
         'mol_calcualtion_type',
         'mol_amount',
         'isDelegation',
-        'isBulkItemJobRun'
+        'isBulkItemJobRun',
+        'whtPaymentMethod'
     ];
 
     /**
@@ -461,7 +462,8 @@ class BookInvSuppMaster extends Model
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
-        'VATPercentage' => 'float'
+        'VATPercentage' => 'float',
+        'whtPaymentMethod' => 'integer'
     ];
 
     /**

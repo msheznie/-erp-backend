@@ -60,19 +60,29 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
     private function sendDeadlineNotifications()
     {
         $today = Carbon::today();
-        $twoDaysFromNow = $today->copy()->addDays(2);
 
-        // Find budget plannings with submission date less than 48 hours away
-        // Since submissionDate is a date field, we check if it's today or tomorrow
-        // submissionDate should be today (within 24 hours) or tomorrow (within 48 hours)
+        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->get();
+
+        if ($budgetNotificationDetails->isEmpty()) {
+            $targetDate = $today->copy()->addDays(2)->startOfDay();
+        }else {
+            $reminderTime = $budgetNotificationDetails->reminderTime;
+            // Convert hours to days (reminderTime is in hours)
+            // Since submissionDate is date-only, we need to round up to get the target date
+            $reminderTimeInDays = ceil($reminderTime / 24);
+            $targetDate = $today->copy()->addDays($reminderTimeInDays)->startOfDay();
+        }
+
+        // Find budget plannings with submission date within the reminder time
+        // Since submissionDate is a date field (YYYY-mm-dd), we compare dates only
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.hod.employee',
             'masterBudgetPlannings.company',
             'financeYear'
         ])
-        ->where(function($query) use ($today, $twoDaysFromNow) {
-            $query->where('submissionDate','>', $today)
-                  ->where('submissionDate', '<=', $twoDaysFromNow);
+        ->where(function($query) use ($today, $targetDate) {
+            $query->where('submissionDate','>', $today->toDateString())
+                  ->where('submissionDate', '<=', $targetDate->toDateString());
         })
         ->where('workStatus', '!=', 3) // Only for non-submitted
         ->get();
@@ -128,4 +138,3 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         }
     }
 }
-

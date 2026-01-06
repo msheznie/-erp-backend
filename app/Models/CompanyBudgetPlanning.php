@@ -125,8 +125,17 @@ class CompanyBudgetPlanning extends Model
         'departmentStatus',
         'financeStatus',
         'confirmed_yn',
-        'confirmed_by',
-        'confirmed_at'
+        'confirmed_by_emp_id',
+        'confirmed_by_name',
+        'confirmed_by_emp_system_id',
+        'confirmed_at',
+        'approved_yn',
+        'approved_by_emp_id',
+        'approved_by_name',
+        'approved_by_emp_system_id',
+        'approved_at',
+        'rejected_yn',
+        'timesReferred'
     ];
 
     /**
@@ -152,8 +161,17 @@ class CompanyBudgetPlanning extends Model
         'departmentStatus' => 'integer',
         'financeStatus' => 'integer',
         'confirmed_yn' => 'integer',
-        'confirmed_by' => 'integer',
-        'confirmed_date' => 'date'
+        'confirmed_by_emp_id' => 'integer',
+        'confirmed_by_name' => 'string',
+        'confirmed_by_emp_system_id' => 'integer',
+        'confirmed_at' => 'date',
+        'approved_yn' => 'integer',
+        'approved_by_emp_id' => 'integer',
+        'approved_by_name' => 'string',
+        'approved_by_emp_system_id' => 'integer',
+        'approved_at' => 'date',
+        'rejected_yn' => 'integer',
+        'timesReferred' => 'integer'
     ];
 
     /**

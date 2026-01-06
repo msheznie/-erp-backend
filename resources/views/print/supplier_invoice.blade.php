@@ -677,10 +677,10 @@
                         <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.net_total') }}</td>
                         @if($masterdata->rcmActivated)
                             <td class="text-right"
-                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet, $transDecimal)}}</td>
+                                style="background-color: rgb(215,215,215)">{{number_format($directTotNet - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0), $transDecimal)}}</td>
                         @else
                             <td class="text-right"
-                                style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) - $retentionVatPortion), $transDecimal)}}</td>
+                                style="background-color: rgb(215,215,215)">{{number_format((($directTotNet + $directTotVAT) - $retentionVatPortion - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0)), $transDecimal)}}</td>
                         @endif
                     </tr>
                     @if ($masterdata->documentType != 4)
@@ -901,7 +901,7 @@
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                     <span class="font-weight-bold">
                         @if ($masterdata->detail)
-                            {{number_format((($subTotal + $VATTotal + $directTotTra) - $retentionVatPortion), $transDecimal)}}
+                            {{number_format((($subTotal + $VATTotal + $directTotTra) - ($masterdata->whtApplicable && $masterdata->whtPaymentMethod != 2 ? $masterdata->whtAmount : 0) - $retentionVatPortion), $transDecimal)}}
                         @endif
                     </span>
                     </td>

@@ -48,6 +48,7 @@ class BudgetDeadlineNotification extends Command
             return;
         }
 
+        
         foreach ($tenants as $tenant) {
             $tenant_database = $tenant->database;
             BudgetDeadlineNotificationJob::dispatch($tenant_database);
@@ -56,4 +57,3 @@ class BudgetDeadlineNotification extends Command
         $this->info('Budget deadline notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }
-

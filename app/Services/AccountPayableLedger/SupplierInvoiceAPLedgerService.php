@@ -119,7 +119,7 @@ class SupplierInvoiceAPLedgerService
 
                 $transAmount = (isset($masterData->item_details[0]->transAmount) ? $masterData->item_details[0]->transAmount : 0) + (isset($masterData->item_details[0]->transVATAmount) ? $masterData->item_details[0]->transVATAmount : 0);
 
-                $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $transAmount);
+                $directItemCurrencyConversion = \Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $transAmount);
 
                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                 $data['supplierTransER'] = \Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
@@ -284,7 +284,13 @@ class SupplierInvoiceAPLedgerService
                 if ($masterData->documentType != 4) {
                     if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
 
-                        $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                        if (in_array($masterData->documentType, [1, 3])) {
+                            $currencyWht = \Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $masterData->whtAmount);
+                        } 
+                        else {
+                            $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                        }
+
                         $whtAmountConTran = $masterData->whtAmount;
                         $whtAmountConInvoicet = $masterData->whtAmount;
                         $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
@@ -329,19 +335,26 @@ class SupplierInvoiceAPLedgerService
                 }
             }
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0) {
-                if ($masterData->documentType == 0) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) && $molAmount > 0) {
+                if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                     $localER = ExchangeSetupConfig::calculateLocalER($data['supplierInvoiceAmount'], $data['localAmount']);
                     $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
                     
                     $rptER = ExchangeSetupConfig::calculateReportingER($data['supplierInvoiceAmount'], $data['comRptAmount']);
                     $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                 } else {
-                    $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                    $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
-                    
-                    $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                    $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                    if ($masterData->documentType == 1) {
+                        $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                        $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                        $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                    }
+                    else {
+                        $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                        $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
+                        
+                        $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                        $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
+                    }
                 }
                 
                 $data['supplierInvoiceAmount'] -= $molAmount;
@@ -352,7 +365,7 @@ class SupplierInvoiceAPLedgerService
 
             array_push($finalData, $data);
 
-            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1) && $molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) && $molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
                 $molContribution = MolContribution::find($masterData->mol_setup_id);
                 $molAuthority = $molContribution ? $molContribution->authority_id : null;
                 if ($molAuthority) {
@@ -365,7 +378,7 @@ class SupplierInvoiceAPLedgerService
                     $molData['supplierInvoiceAmount'] = \Helper::roundValue($molAmount);
                     $molData['supplierDefaultAmount'] = \Helper::roundValue($molAmount);
 
-                    if ($masterData->documentType == 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $lastEntry = end($finalData);
                         $localER = ExchangeSetupConfig::calculateLocalER($lastEntry['supplierInvoiceAmount'], $lastEntry['localAmount']);
                         $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
@@ -373,11 +386,18 @@ class SupplierInvoiceAPLedgerService
                         $rptER = ExchangeSetupConfig::calculateReportingER($lastEntry['supplierInvoiceAmount'], $lastEntry['comRptAmount']);
                         $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
                     } else {
-                        $molLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
-                        $molAmountLocalConversion = $molLocalConversion['localAmount'] ?? 0;
+                        if ($masterData->documentType == 1) {
+                            $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                            $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                            $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                        }
+                        else {
+                            $molLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                            $molAmountLocalConversion = $molLocalConversion['localAmount'] ?? 0;
                         
-                        $molRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
-                        $molAmountRptConversion = $molRptConversion['reportingAmount'] ?? 0;
+                            $molRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                            $molAmountRptConversion = $molRptConversion['reportingAmount'] ?? 0;
+                        }
                     }
                     
                     $molData['localAmount'] = \Helper::roundValue($molAmountLocalConversion);

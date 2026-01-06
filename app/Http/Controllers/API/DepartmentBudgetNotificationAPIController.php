@@ -6,8 +6,10 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetNotification;
 use App\Models\BudgetNotificationDetail;
 use App\Models\BudgetNotificationRecipient;
+use App\Services\BudgetNotificationService;
 use Illuminate\Http\Request;
 use Response;
+use Auth;
 
 /**
  * Class DepartmentBudgetNotificationAPIController
@@ -413,7 +415,7 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
                 $now = now();
                 $kickOffNotifications = BudgetNotification::all();
                 foreach($kickOffNotifications as $kickOffNotification){ 
-                    if($kickOffNotification->slug == 'task-delegation' || $kickOffNotification->slug == 'deadline-warning'){
+                    if($kickOffNotification->slug == 'deadline-warning'){
                         $reminderTime = 48;
                     }else{
                         $reminderTime = 0;
@@ -445,31 +447,82 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
             $recipientsMap[$recipient->id] = $recipient->title;
         }
 
-        return \DataTables::eloquent($query)
-            ->addIndexColumn()
-            ->addColumn('event', function ($row) {
-                return $row->notification ? $row->notification->title : '-';
-            })
-            ->addColumn('purpose', function ($row) {
-                return $row->notification ? $row->notification->purpose : '-';
-            })
-            ->addColumn('recipients', function ($row) use ($recipientsMap) {
-                $recipientTitles = [];
-                if ($row->notification && $row->notification->recipient) {
-                    $recipientIds = is_array($row->notification->recipient) 
-                        ? $row->notification->recipient 
-                        : json_decode($row->notification->recipient, true);
-                    if (is_array($recipientIds)) {
-                        foreach ($recipientIds as $recipientId) {
-                            if (isset($recipientsMap[$recipientId])) {
-                                $recipientTitles[] = $recipientsMap[$recipientId];
-                            }
+        // Get the data
+        $notificationDetails = $query->get();
+
+        // Transform the data to include additional columns
+        $transformedData = $notificationDetails->map(function ($row, $index) use ($recipientsMap) {
+            $recipientTitles = [];
+            if ($row->notification && $row->notification->recipient) {
+                $recipientIds = is_array($row->notification->recipient) 
+                    ? $row->notification->recipient 
+                    : json_decode($row->notification->recipient, true);
+                if (is_array($recipientIds)) {
+                    foreach ($recipientIds as $recipientId) {
+                        if (isset($recipientsMap[$recipientId])) {
+                            $recipientTitles[] = $recipientsMap[$recipientId];
                         }
                     }
                 }
-                return !empty($recipientTitles) ? implode(' & ', $recipientTitles) : '-';
-            })
-            ->make(true);
+            }
+
+            $groupId = $this->notificationGroupIds($row->notification_id);
+
+            return [
+                'id' => $row->id,
+                'notification_id' => $row->notification_id,
+                'companySystemID' => $row->companySystemID,
+                'reminderTime' => $row->reminderTime,
+                'isActive' => $row->isActive,
+                'created_at' => $row->created_at,
+                'updated_at' => $row->updated_at,
+                'group_id' => $groupId,
+                'group_title_key' => $this->getGroupTitleKey($groupId),
+                'event' => $row->notification ? $row->notification->title : '-',
+                'purpose' => $row->notification ? $row->notification->purpose : '-',
+                'recipients' => !empty($recipientTitles) ? implode(' & ', $recipientTitles) : '-'
+            ];
+        });
+
+        // Group by group_id and add group title
+        $groupedData = $transformedData->groupBy('group_id')->map(function ($items, $groupId) {
+            return [
+                'group_id' => (int)$groupId,
+                'group_title_key' => $this->getGroupTitleKey((int)$groupId),
+                'items' => $items->values()->toArray()
+            ];
+        })->values();
+
+        return $this->sendResponse($groupedData->toArray(), 'Budget notification details retrieved successfully');
+    }
+
+
+    private function notificationGroupIds($notificationId)
+    {
+        if(in_array($notificationId, [1, 2,3,4,5,6])){
+            return 1;
+        }
+        elseif(in_array($notificationId, [7, 8, 9])){
+            return 2;
+        }
+        elseif(in_array($notificationId, [10,11,12,13])){
+            return 3;
+        }
+        elseif(in_array($notificationId, [14,15,16])){
+            return 4;
+        }
+        return null;
+    }
+
+    private function getGroupTitleKey($groupId)
+    {
+        $groupTitles = [
+            1 => 'initiation_and_delegation',
+            2 => 'internal_review_and_submission',
+            3 => 'finance_review_and_revision_cycle',
+            4 => 'deadline_extension_request_and_approval'
+        ];
+        return $groupTitles[$groupId] ?? 'unknown_group';
     }
 
     /**
@@ -504,6 +557,9 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $budgetPlanningNotificationService = new BudgetNotificationService();
+        $budgetPlanningNotificationService->sendNotification(8,'extension-request-submitted',1,Auth::user()->employee_id);
+
         /** @var BudgetNotificationDetail $detail */
         $detail = BudgetNotificationDetail::find($id);
 
@@ -524,6 +580,24 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
 
         $detail->fill($input);
         $detail->save();
+
+        // Sync reminderTime between notification_id 4 and 12
+        // If reminderTime is updated for notification_id 4, also update notification_id 12
+        // If reminderTime is updated for notification_id 12, also update notification_id 4
+        if (isset($input['reminderTime']) && in_array($detail->notification_id, [4, 12])) {
+            // Determine the sync partner: if updating 4, sync to 12; if updating 12, sync to 4
+            $syncNotificationId = $detail->notification_id == 4 ? 12 : 4;
+            
+            // Find the corresponding notification detail with the same companySystemID
+            $syncDetail = BudgetNotificationDetail::where('notification_id', $syncNotificationId)
+                ->where('companySystemID', $detail->companySystemID)
+                ->first();
+            
+            if ($syncDetail) {
+                $syncDetail->reminderTime = $input['reminderTime'];
+                $syncDetail->save();
+            }
+        }
 
         return $this->sendResponse($detail->toArray(), 'Notification Detail updated successfully');
     }
@@ -548,4 +622,3 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
         return $this->sendResponse($id, 'Notification Detail deleted successfully');
     }
 }
-

@@ -1009,13 +1009,13 @@ class ChartOfAccountAPIController extends AppBaseController
             {
                 $templateDetails = CashFlowTemplateDetail::where('cashFlowTemplateID', $input['templateMasterID'])->where('logicType',3)->where('id','!=',$input['id'])->pluck('id');
                 $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->whereIn('templateDetailID',$templateDetails)->pluck('glAutoID')->toArray();       
-                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+                // $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
 
             }
             else
             {
                 $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
-                $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
+                // $items = $items->whereNotIn('chartOfAccountSystemID', array_filter($tempDetail));
             }
 
         } else { 

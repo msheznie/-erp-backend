@@ -27,6 +27,7 @@ use App\Jobs\AuditLog\MigrateAuditLogsJob;
 use DataTables;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
+use App\Traits\AuditLogsTrait;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -34,6 +35,7 @@ use Illuminate\Support\Facades\Log;
 
 class AuditTrailAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
     /** @var  AuditTrailRepository */
     private $auditTrailRepository;
     private $lokiService;
@@ -361,7 +363,29 @@ class AuditTrailAPIController extends AppBaseController
                 $id = $input['id'];
                 $module = $input['module'];
                 $table = $this->lokiService->getAuditTables($module);
-                
+
+                // Check if request is from Portal (Portal requests have 'From-Portal' header set to 1)
+                $isFromPortal = $request->hasHeader('From-Portal') && $request->header('From-Portal') == 1;
+                $companyIdFilter = '';
+
+                // Only apply company filtering for Gears_FrontEnd requests (NOT from Portal)
+                if (!$isFromPortal && isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
+                    $companySystemId = $input['companyId'];
+                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
+                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
+                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
+                }
+
+                // If id is 0, only filter by table (show all logs for this module)
+                // Otherwise, filter by both transaction_id and table
+                if ($id == 0 || $id == '0' || $id === '0') {
+                    // Only filter by table when id is 0, but still filter by company (if not from Portal)
+                    $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
+                    $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$tableFilter.$companyIdFilter.' | json ['.$diff.'d])';
+                    $params = 'query?query='.$params;
+                    $data = $this->lokiService->getAuditLogs($params);
+                    $data2 = []; // No parent logs when showing all logs
+                } else {
                 // Build line filters for transaction_id and table
                 $transactionIdFilter = ' |= `\"transaction_id\":\"'.$id.'\"`';
                 $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
@@ -377,7 +401,7 @@ class AuditTrailAPIController extends AppBaseController
                 $params2 = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$parentIdFilter.$parentTableFilter.' | json ['.$diff.'d])';
                 $params2 = 'query?query='.$params2;
                 $data2 = $this->lokiService->getAuditLogs($params2);
-
+                }
             }
 
             // Check if $data is an error response
@@ -1135,6 +1159,80 @@ class AuditTrailAPIController extends AppBaseController
             ], 'Migration jobs dispatched successfully');
 
         } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    /**
+     * Create an audit log entry
+     * This endpoint allows Portal_BackEnd to create audit logs through Gears_BackEnd
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function createAuditLog(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            // Log incoming request for debugging
+            \Log::info('createAuditLog called', [
+                'input' => $input,
+                'headers' => $request->headers->all()
+            ]);
+
+            // Validate required fields
+            $requiredFields = ['dataBase', 'transactionID', 'tenant_uuid', 'table', 'narration', 'crudType'];
+            foreach ($requiredFields as $field) {
+                if (!isset($input[$field])) {
+                    \Log::error('createAuditLog missing required field', ['field' => $field, 'input' => $input]);
+                    return $this->sendError("Missing required field: {$field}", 400);
+                }
+            }
+
+            // Extract parameters
+            $dataBase = $input['dataBase'];
+            $transactionID = $input['transactionID'];
+            $tenant_uuid = $input['tenant_uuid'];
+            $table = $input['table'];
+            $narration = $input['narration'];
+            $crudType = $input['crudType'];
+            $newValue = $input['newValue'] ?? [];
+            $previosValue = $input['previosValue'] ?? [];
+            $parentID = $input['parentID'] ?? null;
+            $parentTable = $input['parentTable'] ?? null;
+            $empID = $input['empID'] ?? null;
+
+            \Log::info('createAuditLog dispatching job', [
+                'dataBase' => $dataBase,
+                'transactionID' => $transactionID,
+                'table' => $table,
+                'crudType' => $crudType,
+                'tenantUUID' => $tenant_uuid
+            ]);
+
+            // Use AuditLogsTrait to create the audit log
+            $this->auditLog(
+                $dataBase,
+                $transactionID,
+                $tenant_uuid,
+                $table,
+                $narration,
+                $crudType,
+                $newValue,
+                $previosValue,
+                $parentID,
+                $parentTable,
+                $empID
+            );
+
+            \Log::info('createAuditLog job dispatched successfully');
+            return $this->sendResponse(['success' => true], 'Audit log created successfully');
+        } catch (\Exception $exception) {
+            \Log::error('createAuditLog exception', [
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString()
+            ]);
             return $this->sendError($exception->getMessage());
         }
     }

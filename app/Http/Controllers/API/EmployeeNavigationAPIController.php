@@ -15,8 +15,11 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateEmployeeNavigationAPIRequest;
 use App\Http\Requests\API\UpdateEmployeeNavigationAPIRequest;
 use App\Models\Company;
+use App\Models\Employee;
 use App\Models\EmployeeNavigation;
+use App\Models\UserGroup;
 use App\Repositories\EmployeeNavigationRepository;
+use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -24,6 +27,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use App\Models\EmployeeNavigationAccess;
 
 /**
  * Class EmployeeNavigationController
@@ -31,6 +35,8 @@ use App\Repositories\UserRepository;
  */
 class EmployeeNavigationAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     /** @var  EmployeeNavigationRepository */
     private $employeeNavigationRepository;
 
@@ -69,15 +75,90 @@ class EmployeeNavigationAPIController extends AppBaseController
         $input = $request->all();
         $employees = collect($input["employeeSystemID"])->pluck("employeeSystemID")->toArray();
 
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
+        if(isset($input['tenant_uuid'])) {
+            unset($input['tenant_uuid']);
+        }
+
+        if(isset($input['db'])) {
+            unset($input['db']);
+        }
+
+        // Validate access type and dates
+        $accessType = isset($input["accessType"]) ? $input["accessType"] : 'permanent';
+
+        if ($accessType === 'time_based') {
+            // Validate that start date and end date are provided (mandatory for time-based access)
+            if (!isset($input["startDate"]) || empty($input["startDate"])) {
+                return $this->sendError(trans('custom.start_date_is_required_for_time_based_access'));
+            }
+            if (!isset($input["endDate"]) || empty($input["endDate"])) {
+                return $this->sendError(trans('custom.end_date_is_required_for_time_based_access'));
+            }
+
+            try {
+                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $input["startDate"])->startOfDay();
+                $endDate = \Carbon\Carbon::createFromFormat('Y-m-d', $input["endDate"])->startOfDay();
+            } catch (\Exception $e) {
+                // If format is different, try parse but force date-only
+                $startDate = \Carbon\Carbon::parse($input["startDate"])->startOfDay();
+                $endDate = \Carbon\Carbon::parse($input["endDate"])->startOfDay();
+            }
+
+            $today = \Carbon\Carbon::today()->startOfDay();
+
+            // Validate start date >= current date
+            if ($startDate->lt($today)) {
+                return $this->sendError(trans('custom.start_date_must_be_greater_than_or_equal_to_current_date'));
+            }
+
+            // Validate end date >= current date
+            if ($endDate->lt($today)) {
+                return $this->sendError(trans('custom.end_date_must_be_greater_than_or_equal_to_current_date'));
+            }
+
+            // Validate end date >= start date
+            if ($endDate->lt($startDate)) {
+                return $this->sendError(trans('custom.end_date_must_be_greater_than_or_equal_to_start_date'));
+            }
+        }
+
         $validate = EmployeeNavigation::with(['usergroup'])->where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->first();
 
         if($validate && $validate->usergroup){
             return $this->sendError(trans('custom.selected_employee_already_exists_in_the').$validate->usergroup->description.' user group');
         }else{
+            $userGroup = UserGroup::find($input["userGroupID"]);
+            $userGroupName = $userGroup ? $userGroup->description : '';
+
             if($employees){
                 foreach ($employees as $val){
                     $inputArr = ["companyID" => $input["companyID"],"userGroupID" => $input["userGroupID"], "employeeSystemID" => $val];
                     $employeeNavigations = $this->employeeNavigationRepository->create($inputArr);
+                    $accessData = [
+                        'employeeNavigationID' => $employeeNavigations->id,
+                        'userGroupID' => $input["userGroupID"],
+                        'employeeSystemID' => $val,
+                        'companyID' => $input["companyID"],
+                        'isDelegation' => isset($input["isDelegation"]) ? $input["isDelegation"] : 0,
+                        'accessType' => $accessType,
+                        'isActive' => 1
+                    ];
+                    if ($accessType === 'time_based') {
+                        // Format as date-only (Y-m-d) to avoid timezone issues
+                        $accessData["startDate"] = $startDate->format('Y-m-d');
+                        $accessData["endDate"] = $endDate->format('Y-m-d');
+                    }
+                    EmployeeNavigationAccess::create($accessData);
+
+                    // Audit log for employee assignment
+                    $employee = Employee::find($val);
+                    $employeeName = $employee ? $employee->empName : '';
+                    $narrationVariables = $employeeName . ' - ' . $userGroupName;
+                    $newValue = $employeeNavigations->toArray();
+                    $this->auditLog($db, $employeeNavigations->id, $uuid, "srp_erp_employeenavigation", $narrationVariables, "C", $newValue, []);
                 }
             }
         }
@@ -140,6 +221,10 @@ class EmployeeNavigationAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        $input = request()->all();
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+
         /** @var EmployeeNavigation $employeeNavigation */
         $employeeNavigation = $this->employeeNavigationRepository->findWithoutFail($id);
 
@@ -147,7 +232,20 @@ class EmployeeNavigationAPIController extends AppBaseController
             return $this->sendError(trans('custom.employee_navigation_not_found'));
         }
 
+        $previousValue = $employeeNavigation->toArray();
+
+        // Get employee and user group names for audit log
+        $employee = $employeeNavigation->employee;
+        $userGroup = $employeeNavigation->usergroup;
+        $employeeName = $employee ? $employee->empName : '';
+        $userGroupName = $userGroup ? $userGroup->description : '';
+        $narrationVariables = $employeeName . ' - ' . $userGroupName;
+
+        EmployeeNavigationAccess::markAsInactive($employeeNavigation);
         $employeeNavigation->delete();
+
+        // Audit log for employee unassignment
+        $this->auditLog($db, $id, $uuid, "srp_erp_employeenavigation", $narrationVariables, "D", [], $previousValue);
 
         return $this->sendResponse($id, trans('custom.employee_navigation_deleted_successfully'));
     }
@@ -237,6 +335,82 @@ class EmployeeNavigationAPIController extends AppBaseController
 
         $groupCompany = $groupCompany->get();
         return $this->sendResponse($groupCompany, trans('custom.employee_navigation_deleted_successfully'));
+    }
+
+    /**
+     * Get employees by user group ID for datatable
+     * POST /getEmployeesByUserGroupDatatable
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getEmployeesByUserGroupDatatable(Request $request)
+    {
+        $input = $request->all();
+        $userGroupID = isset($input['userGroupID']) ? $input['userGroupID'] : null;
+
+        if (!$userGroupID) {
+            return \DataTables::of(collect([]))->make(true);
+        }
+
+        $accessRecords = EmployeeNavigationAccess::withTrashed()
+        ->with(['employeeNavigation', 'company', 'employee', 'userGroup' => function($q){
+            $q->where('delegation_id', 0);
+        }])
+            ->whereHas('userGroup', function($q){
+                $q->where('delegation_id', 0);
+            })
+            ->where('userGroupID', $userGroupID);
+
+        $today = \Carbon\Carbon::today();
+
+        return \DataTables::eloquent($accessRecords)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->addColumn('empName', function($access) {
+                return $access->employee ? $access->employee->empName : '-';
+            })
+            ->addColumn('empID', function($access) {
+                return $access->employee ? $access->employee->empID : '-';
+            })
+            ->addColumn('companyName', function($access) {
+                return $access->company ? $access->company->CompanyName : '-';
+            })
+            ->addColumn('accessType', function($access) {
+                return $access->accessType;
+            })
+            ->addColumn('startDate', function($access) {
+                if ($access->accessType === 'time_based' && $access->startDate) {
+                    return \Carbon\Carbon::parse($access->startDate)->format('Y-m-d');
+                }
+                return '-';
+            })
+            ->addColumn('endDate', function($access) {
+                if ($access->accessType === 'time_based' && $access->endDate) {
+                    return \Carbon\Carbon::parse($access->endDate)->format('Y-m-d');
+                }
+                return '-';
+            })
+            ->addColumn('status', function($access) use ($today) {
+                if (!$access->isActive) {
+                    return 'inactive';
+                }
+
+                if ($access->accessType === 'permanent') {
+                    return 'active';
+                } else if ($access->accessType === 'time_based' && $access->endDate) {
+                    $endDate = \Carbon\Carbon::parse($access->endDate);
+                    return $endDate->lt($today) ? 'inactive' : 'active';
+                }
+                return 'active';
+            })
+            ->make(true);
     }
 
 }

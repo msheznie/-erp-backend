@@ -18,6 +18,7 @@ use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
 use App\Jobs\AssetBulkApproval\AssetCostingBulk;
 use App\Models\ApprovalLevel;
+use App\Models\DocumentMaster;
 use App\Models\DocumentApproved;
 use App\Models\GRVMaster;
 use App\Models\SupplierRegistrationLink;
@@ -3571,10 +3572,16 @@ WHERE
             $output = [];
         }
 
+		$documentMasters = DocumentMaster::whereIn('documentSystemID', $documentType)
+			->get()
+			->keyBy('documentSystemID');
 
         return \DataTables::of($output)
             ->editColumn('internalNotes', function($row) {
                 return isset($row->internalNotes) ? $row->internalNotes : '-';
+            })
+			->editColumn('documentDescription', function($row) use ($documentMasters) {
+				return $documentMasters[$row->documentSystemID]->documentDescription ?? $row->documentDescription;
             })
             ->rawColumns(['internalNotes', 'Actions'])
             ->addColumn('Actions', 'Actions', "Actions")
