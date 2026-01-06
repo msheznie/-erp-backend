@@ -208,6 +208,8 @@ Route::group([], function() {
 Route::group([], function() {
     Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions')->name('Report po to payment filter options');
     Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment')->name('Report po to payment');
+    Route::post('procurementLifecycleReport', 'PurchaseRequestAPIController@procurementLifecycleReport')->name('Procurement Lifecycle Report');
+    Route::post('exportProcurementLifecycleReport', 'PurchaseRequestAPIController@exportProcurementLifecycleReport')->name('Export Procurement Lifecycle Report');
     Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport')->name('Export po to payment report');
 });
 

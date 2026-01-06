@@ -26,9 +26,32 @@
         }
 
         body {
-            font-size: 12px;
+            font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
+        }
+
+        .text-left {
+            text-align: right !important;
+        }
+
+        .text-right {
+            text-align: left !important;
+        }
+
+        table {
+            direction: rtl;
+        }
+
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
 
         h3 {
             font-size: 24.5px;
@@ -180,7 +203,7 @@
                     <br>
                     <table style="border: none">
                         <tr>
-                            <td width="100px" style="border: none">
+                            <td style="border: none">
                                 <span style="font-size: 18px;font-weight: 400">Minutes of Bid Opening Report</span>
                             </td>
                         </tr>
@@ -194,7 +217,7 @@
     <table style="width:100%; font-size: 12px;">
         <tbody>
         <tr>
-            <td style="width: 10%"><strong>Tender Code:</strong></td>
+            <td style="width: 15%"><strong>Tender Code:</strong></td>
             <td>{{ $tenderMaster->tender_code }}</td>
             <td style="width: 15%"><strong>Envelope:</strong></td>
             <td>{{ $tenderMaster->envelop_type ? $tenderMaster->envelop_type->name : ' - ' }}</td>

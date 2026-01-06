@@ -36,7 +36,10 @@ class SupplierRegistrationController extends Controller
         $companyID = $request->companyId;
         $empID = Helper::getEmployeeSystemID();
 
-        $suppliersDetail = SupplierRegistrationLink::select('*');
+        $suppliersDetail = SupplierRegistrationLink::select('*')
+        ->with(['supplier' => function ($q)  {
+            $q->select('supplierCodeSystem','supplierName','primarySupplierCode');
+        }]);
 
         $search = $request->input('search.value');
 

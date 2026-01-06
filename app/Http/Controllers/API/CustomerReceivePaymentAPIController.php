@@ -634,13 +634,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $netAmount = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
                 ->sum('net_amount');
 
-            $netAmountLocal = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->localCurrencyER;
-
-            $netAmountReport = $netAmount * CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)->first()->companyReportingER;
+            $netAmountConversion = Helper::convertAmountToLocalRpt($input['documentSystemID'], $id, $netAmount);
 
             $masterHeaderSumTrans = $checkPreDirectSumTrans + $netAmount;
-            $masterHeaderSumLocal = $checkPreDirectSumLocal + $netAmountLocal;
-            $masterHeaderSumReport = $checkPreDirectSumReport + $netAmountReport;
+            $masterHeaderSumLocal = $checkPreDirectSumLocal + $netAmountConversion['localAmount'];
+            $masterHeaderSumReport = $checkPreDirectSumReport + $netAmountConversion['reportingAmount'];
 
             $masterHeaderSumTrans = abs($masterHeaderSumTrans);
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);

@@ -376,6 +376,11 @@ class BookInvSuppMaster extends Model
         'whtPercentage',
         'whtEdited',
         'isWHTApplicableVat',
+        'mol_applicable',
+        'mol_setup_id',
+        'mol_rate',
+        'mol_calcualtion_type',
+        'mol_amount',
         'isDelegation',
         'isBulkItemJobRun'
     ];
@@ -445,6 +450,11 @@ class BookInvSuppMaster extends Model
         'custInvoiceDirectAutoID' => 'integer',
         'rcmActivated' => 'integer',
         'isBulkItemJobRun' => 'integer',
+        'mol_applicable' => 'integer',
+        'mol_setup_id' => 'integer',
+        'mol_rate' => 'float',
+        'mol_calcualtion_type' => 'integer',
+        'mol_amount' => 'float',
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',

@@ -90,12 +90,14 @@ class VerifyCsrfTokenForApi
             $baseExpiry = env('CSRF_TOKEN_EXPIRY_TIME', 5);
             $timeExpiry = $hasFiles ? env('CSRF_TOKEN_EXPIRY_TIME_FOR_FILE_UPLOAD', 10) : $baseExpiry;
             
-            if (!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) {
-                \Log::error('Invalid CSRF token');
-                \Log::error('timestamp: ' . $timestamp);
-                \Log::error('timeExpiry: ' . $timeExpiry);
-                \Log::error('time: ' . time());
-                \Log::error('abs(time() - (int)($timestamp)): ' . abs(time() - (int)($timestamp)));
+            if ((!$timestamp || abs(time() - (int)($timestamp)) > $timeExpiry) && env('CSRF_TIME_CHECK_ENABLED', false)) {
+                if(env('LOG_ENABLE')) {
+                    \Log::error('Invalid CSRF token');
+                    \Log::error('timestamp: ' . $timestamp);
+                    \Log::error('timeExpiry: ' . $timeExpiry);
+                    \Log::error('time: ' . time());
+                    \Log::error('abs(time() - (int)($timestamp)): ' . abs(time() - (int)($timestamp)));
+                }
                 return $this->sendError();
             }
             
@@ -220,6 +222,7 @@ class VerifyCsrfTokenForApi
             'api/v1/company_budget_plannings',
             'api/v1/department_budget_plannings',
             'api/v1/getDepartmentBudgetPlanningDetails',
+            'api/v1/exportBudgetPlanningDetails',
             'api/v1/getBudgetDelegateFormData',
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration/{budgetTemplateId}',
@@ -274,7 +277,10 @@ class VerifyCsrfTokenForApi
             'api/v1/workflow_configurations/{workflow_configuration}',
             'api/v1/download-revision-attachment',
             'api/v1/view-revision-attachment',
-            
+            'api/v1/getAllDepartmentEmployees',
+            'api/v1/department-budget-detail-comments/delete',
+            'api/v1/printAssetDepreciation',
+            'api/v1/getDocumentTracingData'
         ];
     }
 }

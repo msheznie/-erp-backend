@@ -342,6 +342,23 @@
                             </span>
                         </td>
                     </tr>
+                    <tr>
+                        <td width="70px">
+                            <span style="font-weight: bold;">{{ __('custom.sales_type') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight: bold;">:</span>
+                        </td>
+                        <td>
+                            <span>
+                                @if($entity->salesType == 1)
+                                    {{ __('custom.ar_goods_and_services') }}
+                                @elseif($entity->salesType == 2)
+                                    {{ __('custom.ar_subscription') }}
+                                @endif
+                            </span>
+                        </td>
+                    </tr>
                 </table>
             </td>
         </tr>

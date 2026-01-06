@@ -13,6 +13,7 @@ use App\Models\Company;
 use App\Models\CompanyBudgetPlanning;
 use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
+use App\Models\CompanyDepartmentSegment;
 use App\Models\CompanyFinanceYear;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningsDelegateAccess;
@@ -23,6 +24,7 @@ use App\Models\Revision;
 use App\Models\WorkflowConfiguration;
 use App\Repositories\CompanyBudgetPlanningRepository;
 use App\Services\BudgetPermissionService;
+use App\Services\BudgetNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -48,10 +50,14 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     /** @var  BudgetPermissionService */
     private $budgetPermissionService;
 
-    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo, BudgetPermissionService $budgetPermissionService)
+    /** @var  BudgetNotificationService */
+    private $budgetNotificationService;
+
+    public function __construct(CompanyBudgetPlanningRepository $companyBudgetPlanningRepo, BudgetPermissionService $budgetPermissionService, BudgetNotificationService $budgetNotificationService)
     {
         $this->companyBudgetPlanningRepository = $companyBudgetPlanningRepo;
         $this->budgetPermissionService = $budgetPermissionService;
+        $this->budgetNotificationService = $budgetNotificationService;
     }
 
     /**
@@ -197,6 +203,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $data['documentID'] = 'BDP';
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->create($data);
+
+
 
         $uuid = $request->get('tenant_uuid', 'local');
 
@@ -1012,6 +1020,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.primary_company_is_required'));
         }
 
+
+        if(Carbon::parse($data['dateOfSubmission'])->lessThan(now())) {
+            return $this->sendError('The date of submission should be greater than the current date',404,['duplicate_budget_planning']);
+        }
         
         $duplicateBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyID)
             ->where('status', 1)
@@ -1027,6 +1039,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         $activeDepartments = CompanyDepartment::where('companySystemID', $companyID)
+            ->whereNotNull('parentDepartmentID')
             ->where('isActive', 1)
             ->get();
 
@@ -1038,8 +1051,35 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         $departmentsWithoutHOD = [];
         $departmentsWithoutBudgetTemplate = [];
+        $departmentsWithoutSegments = [];
+        $finalDepartments = CompanyDepartment::where('companySystemID', $companyID)->where('isActive', 1)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
 
-        foreach ($activeDepartments as $department) {
+
+        $workflow = WorkflowConfiguration::find($data['workflow']);
+
+        if($workflow->method == 1) {
+
+           foreach($finalDepartments as $department) {
+                $segments = CompanyDepartmentSegment::where('departmentSystemID', $department->departmentSystemID)
+                    ->where('isActive', 1)
+                    ->get();
+
+                if ($segments->isEmpty()) {
+                    $departmentsWithoutSegments[] = $department->departmentCode;
+                }
+                
+            }
+
+
+            if (!empty($departmentsWithoutSegments)) {
+                $errorMessage = 'The segments are not assigned for the following department(s)';
+    
+                $errorMessage .= "<br>" . implode("<br>", $departmentsWithoutSegments);
+                return $this->sendError($errorMessage, 404,  ['hod_error']);
+            }
+        }
+
+        foreach ($finalDepartments as $department) {
             // Check if this is a child department (has parentDepartmentID)
             $isChildDepartment = !empty($department->parentDepartmentID);
             
@@ -1056,7 +1096,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
 
-        foreach ($allDepartments as $department) {
+        foreach ($finalDepartments as $department) {
             $budgetTemplate = DepartmentBudgetTemplate::where('departmentSystemID', $department->departmentSystemID)
                 ->where('isActive', 1)
                 ->first();
@@ -1150,9 +1190,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                                              $q->where('employeeSystemID',$input['empID']);
                                         })->update(['work_status' => $input['workStatus']]);
 
+            $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess','masterBudgetPlannings')->find($input['budgetPlanningID']);
 
 
-            $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess')->find($input['budgetPlanningID']);
+            if($input['workStatus'] == 3)
+            {
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+            }
 
             return $this->sendResponse([
                 'record' => $result,
