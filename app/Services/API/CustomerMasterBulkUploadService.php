@@ -882,35 +882,48 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Don't allow zero value
-        if ($value == 0) {
+        // Minimum value is 1, no decimals allowed below 1
+        if ($value < 1) {
             return [
                 'valid' => false,
-                'message' => self::getTranslatedMessage('custom.credit_limit_minimum_value', 'Credit Limit minimum value is 1.')
+                'message' => self::getTranslatedMessage('custom.credit_limit_minimum_value', 'Credit Limit must be at least 1. Decimal values below 1 are not allowed.', ['field' => 'Credit Limit (OMR)'])
             ];
         }
 
-        // Don't allow decimal values
-        if (is_float($value) && fmod($value, 1) != 0) {
-            return [
-                'valid' => false,
-                'message' => self::getTranslatedMessage('custom.credit_limit_cannot_be_decimal', 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.')
-            ];
+        // If value >= 1, allow decimals but check decimal precision (max 2 decimal places)
+        if (is_float($value) || (is_string($value) && strpos((string)$value, '.') !== false)) {
+            $decimalPlaces = 0;
+            if (strpos((string)$value, '.') !== false) {
+                $parts = explode('.', (string)$value);
+                $decimalPlaces = isset($parts[1]) ? strlen($parts[1]) : 0;
+            }
+
+            if ($decimalPlaces > 2) {
+                return [
+                    'valid' => false,
+                    'message' => self::getTranslatedMessage('custom.credit_limit_decimal_precision', 'Credit Limit cannot have more than 2 decimal places.')
+                ];
+            }
         }
 
-        // Check for overflow - maximum value (e.g., PHP_INT_MAX or a reasonable limit like 999999999999)
-        $maxCreditLimit = 999999999;
-        $valueInt = (int)$value;
-        if ($valueInt > $maxCreditLimit) {
+        // Check for overflow - maximum value
+        $maxCreditLimit = 999999999.99;
+        if ($value > $maxCreditLimit) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_overflow', 'Credit Limit exceeds the maximum allowed value.')
             ];
         }
 
-        // Check maximum number of digits (18 digits max)
-        $valueString = (string)$valueInt;
-        if (strlen($valueString) > 18) {
+        // Check maximum number of digits
+        $valueString = (string)$value;
+        $valueString = preg_replace('/\.0+$/', '', $valueString); // Remove trailing .0
+        $parts = explode('.', $valueString);
+        $integerPart = $parts[0];
+        $decimalPart = isset($parts[1]) ? $parts[1] : '';
+
+        // Total digits should not exceed 18
+        if (strlen($integerPart) + strlen($decimalPart) > 18) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_cannot_exceed_maximum_digits', 'Credit Limit cannot exceed the maximum allowed number of digits.')
