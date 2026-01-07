@@ -59,9 +59,9 @@
             text-align: left;
         }
 
-        #line_comments {
+        #BPVNarration {
             font-size: 12pt;
-            width: 4cm;
+            width: 6cm;
             line-height: 1.3;
             word-wrap: break-word;
         }
@@ -70,7 +70,7 @@
             font-size: 12pt;
             width: 4cm;
             text-align: right;
-            margin-left: auto; /* push to right */
+            margin-left: auto;
         }
 
         #total_words {
@@ -126,8 +126,7 @@
 
 <body onload="window.print();window.close()">
 @php
-    $firstDetail = optional($entity->details)->first();
-    $supplier = optional($firstDetail)->supplier;
+    $supplier = optional($entity->details->first())->supplier;
 
     $supplierName = optional($supplier)->supplierName ?? $entity->nameOnCheque ?? '';
     $supplierCode = optional($supplier)->supplierCode ?? 'S03';
@@ -136,8 +135,10 @@
     $pvNumber = $entity->BPVcode;
     $chequeDate = \App\helper\Helper::dateFormat($entity->BPVchequeDate);
 
-    $totalAmount = number_format($entity->payAmountBank, $entity->decimalPlaces);
+    $totalAmount = number_format($entity->totalAmount ?? 0, $entity->decimalPlaces ?? 2);
     $amountWords = $entity->amount_word;
+
+    $BPVNarration = str_replace(["\r\n", "\r", "\n"], ' ', $entity->BPVNarration ?? '');
 @endphp
 
 <!-- Header -->
@@ -145,22 +146,13 @@
 <div id="pv_date">{{ $pvDate }}</div>
 <div id="pv_number">{{ $pvNumber }}</div>
 
-<!-- Supplier row + line comments + amount (flex container) -->
-@if(!empty($entity->details))
-    @foreach ($entity->details as $index => $item)
-        @php
-            $amount = number_format($item->netAmount ?? 0, $entity->decimalPlaces ?? 2);
-            $comment = $item->instruction ?? $item->comments ?? '';
-            $comment = str_replace(["\r\n", "\r", "\n"], ' ', $comment);
-        @endphp
-        <div id="supplier_row_container" style="top: {{ 5.334 + $index * 0.6 }}cm;">
-            <div id="supplier_code">{{ $supplierCode }}</div>
-            <div id="supplier_name_2">{{ $supplierName }}</div>
-            <div id="line_comments">{{ $comment }}</div>
-            <div class="line-item-amount">{{ $amount }}</div>
-        </div>
-    @endforeach
-@endif
+<!-- Single Supplier row with BPVNarration and total amount -->
+<div id="supplier_row_container">
+    <div id="supplier_code">{{ $supplierCode }}</div>
+    <div id="supplier_name_2">{{ $supplierName }}</div>
+    <div id="BPVNarration">{{ $BPVNarration }}</div>
+    <div class="line-item-amount">{{ $totalAmount }}</div>
+</div>
 
 <!-- Totals -->
 <div id="total_words">{{ $amountWords }}&nbsp;{{ trans('custom.only') }}</div>

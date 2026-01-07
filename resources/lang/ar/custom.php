@@ -9634,6 +9634,10 @@ return
     'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
     'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
+    'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
+
+    // Procurement Lifecycle Report
     'pr_value' => 'قيمة طلب الشراء',
     'pr_approvals' => 'موافقات طلب الشراء',
     'po_approvals' => 'موافقات أمر الشراء',
@@ -9738,7 +9742,8 @@ return
     'expected_headers' => 'رؤوس الأعمدة المتوقعة:',
     'credit_period_minimum_value' => 'الحد الأدنى لقيمة فترة الائتمان هو 1.',
     'credit_period_cannot_be_decimal' => 'لا يمكن أن تكون فترة الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
-    'credit_limit_minimum_value' => 'الحد الأدنى لقيمة حد الائتمان هو 1.',
+    'credit_limit_minimum_value' => 'يجب أن يكون حد الائتمان على الأقل 1. القيم العشرية أقل من 1 غير مسموح بها.',
+    'credit_limit_decimal_precision' => 'لا يمكن أن يحتوي حد الائتمان على أكثر من منزلتين عشريتين.',
     'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
     'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
     'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا',
