@@ -37,6 +37,7 @@ class CustomerMasterBulkUploadService
             'credit_period',
             'category',
             'registration_no',
+            'registration_expiry_date',
             'vat_eligible',
             'vat_number',
             'vat_percentage',
@@ -359,6 +360,18 @@ class CustomerMasterBulkUploadService
             }
         }
 
+        // Validate Registration Expiry Date: mandatory only if Registration Number is provided
+        if (!empty($row['registration_no']) && trim((string)$row['registration_no']) !== '') {
+            $regExpiryResult = self::validateDate($row['registration_expiry_date'] ?? null, 'Registration Expiry Date', 'DD/MM/YYYY');
+            if (!$regExpiryResult['valid']) {
+                $errors[] = [
+                    'field' => 'Registration Expiry Date',
+                    'message' => $regExpiryResult['message'],
+                    'value' => $row['registration_expiry_date'] ?? ''
+                ];
+            }
+        }
+
         if (!empty($row['vat_eligible'])) {
             $vatEligible = trim((string)$row['vat_eligible']);
             $vatEligibleLower = strtolower($vatEligible);
@@ -519,6 +532,20 @@ class CustomerMasterBulkUploadService
         }
 
         $customerData['customer_registration_no'] = !empty($row['registration_no']) ? trim((string)$row['registration_no']) : null;
+
+        // Handle Registration Expiry Date (day-first)
+        if (!empty($row['registration_expiry_date'])) {
+            $expiryRaw = $row['registration_expiry_date'];
+            $date = null;
+
+            $date = self::parseDateDayMonthYear($expiryRaw);
+
+            $customerData['customer_registration_expiry_date'] = $date
+                ? $date->format('Y-m-d') . ' 00:00:00'
+                : null;
+        } else {
+            $customerData['customer_registration_expiry_date'] = null;
+        }
 
         $customerData['vatEligible'] = 0;
         if (!empty($row['vat_eligible'])) {
@@ -967,6 +994,86 @@ class CustomerMasterBulkUploadService
         }
 
         return ['valid' => true];
+    }
+
+    private static function validateDate($dateValue, $fieldName, $format = 'DD/MM/YYYY'): array
+    {
+        if (empty($dateValue) || is_null($dateValue) || trim((string)$dateValue) === '') {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.field_is_mandatory', "{$fieldName} is mandatory", ['field' => $fieldName])
+            ];
+        }
+
+        try {
+            if ($format == 'DD/MM/YYYY') {
+                $date = self::parseDateDayMonthYear($dateValue);
+                if (!$date) {
+                    throw new \Exception('Date format mismatch');
+                }
+            } else {
+                $date = Carbon::parse($dateValue);
+            }
+        } catch (\Exception $e) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.date_format_not_matching', "{$fieldName} date format not matching (Format {$format})", ['field' => $fieldName, 'format' => $format])
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Parse a date string in day-first order (supports d/m/Y and j/n/Y) and return Carbon or null.
+     */
+    private static function parseDateDayMonthYear($value): ?Carbon
+    {
+        if ($value instanceof Carbon || $value instanceof \DateTime) {
+            $dt = $value instanceof Carbon ? $value : Carbon::instance($value);
+
+            // Swap day/month to enforce day-first when coming in as a date object
+            $year = (int)$dt->format('Y');
+            $month = (int)$dt->format('m');
+            $day = (int)$dt->format('d');
+
+            // If swap results in a valid date, use it; otherwise keep original
+            if (checkdate($day, $month, $year)) {
+                return Carbon::createFromDate($year, $day, $month);
+            }
+
+            return $dt;
+        }
+
+        $dateString = trim((string)$value);
+        if ($dateString === '') {
+            return null;
+        }
+
+        // Expect day/month/year (single or double digits for day/month)
+        $date = null;
+        try {
+            $date = Carbon::createFromFormat('d/m/Y', $dateString);
+            // Re-verify to ensure Carbon did not auto-correct an invalid date
+            if ($date->format('d/m/Y') !== $dateString) {
+                $date = null;
+            }
+        } catch (\Exception $e) {
+            $date = null;
+        }
+
+        if (!$date) {
+            try {
+                $date = Carbon::createFromFormat('j/n/Y', $dateString);
+                if ($date->format('j/n/Y') !== $dateString) {
+                    $date = null;
+                }
+            } catch (\Exception $e) {
+                $date = null;
+            }
+        }
+
+        return $date;
     }
 
     private static function validateCategory($categoryDescription, $input): array
