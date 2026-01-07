@@ -48,7 +48,6 @@ class BudgetDeadlineNotification extends Command
             return;
         }
 
-        
         foreach ($tenants as $tenant) {
             $tenant_database = $tenant->database;
             BudgetDeadlineNotificationJob::dispatch($tenant_database);

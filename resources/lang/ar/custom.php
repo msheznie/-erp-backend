@@ -9633,6 +9633,8 @@ return
     'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
     'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
+    'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
 
     // Procurement Lifecycle Report
     'pr_value' => 'قيمة طلب الشراء',

@@ -9747,7 +9747,9 @@ return
     'failed_to_process_attendance_for_date' => 'Failed to process attendance for date :date with employees [:employees]',
     'no_temp_data_found' => 'No temp data found',
     'data_pulled_successfully' => 'Data pulled successfully',
-
+    'you_are_not_authorized_to_approve_this_document' => 'You are not authorized to approve this document',
+    'not_all_departments_confirmed' => 'Not all departments have been confirmed',
+    
     // Procurement Lifecycle Report
     'pr_value' => 'PR Value',
     'pr_approvals' => 'PR Approvals',
