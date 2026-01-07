@@ -299,7 +299,7 @@ class AuditTrailAPIController extends AppBaseController
     }
 
     public function auditLogs(Request $request){
-
+        ini_set('max_execution_time', 2160000);
         $input = $request->all();
         try {
             $env = env("LOKI_ENV");
