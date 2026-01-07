@@ -180,7 +180,7 @@ class Appointment extends Model
 
     public function grv()
     {
-        return $this->hasOne('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
+        return $this->hasMany('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
     }
 
     public function invoice()
@@ -210,4 +210,10 @@ class Appointment extends Model
             ->count();
     }
 
+    public static function getAppointmentData($id){
+        return self::with([
+            'detail.po_master:purchaseOrderID,supplierTransactionCurrencyID,serviceLineSystemID',
+            'detail.getPoDetails:purchaseOrderDetailsID,noQty,itemPrimaryCode,companySystemID'
+        ])->find($id);
+    }
 }

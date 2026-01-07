@@ -87,7 +87,8 @@ class DeliveryOrderRefferedbackRepository extends BaseRepository
         'modifiedDateTime',
         'modifiedUserName',
         'selectedForCustomerInvoice',
-        'timestamp'
+        'timestamp',
+        'salesType'
     ];
 
     /**

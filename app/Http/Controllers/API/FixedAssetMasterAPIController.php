@@ -23,6 +23,7 @@ use App\Jobs\AssetCostingUpload\AssetCostingUpload;
 use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\AssetFinanceCategory;
 use App\Models\AssetType;
+use App\Models\AssetWarranty;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -63,6 +64,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Pagination\LengthAwarePaginator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -1348,7 +1350,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
         $financeCat = AssetFinanceCategory::find($fixedAssetMaster->AUDITCATOGARY);
-        $output = ['isAuditEnabled' => $financeCat->enableEditing,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
+        $isAuditEnabled = $financeCat ? $financeCat->enableEditing : 0;
+        $output = ['isAuditEnabled' => $isAuditEnabled,'fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
 
         return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
@@ -2730,6 +2733,359 @@ class FixedAssetMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+
+    /**
+     * Get asset details by asset codes
+     * 
+     * @param Request $request
+     * @return Response
+     */
+    public function getAssetDetails(Request $request) {
+        $input = $request->all();
+
+        // Check if both parameters are provided
+        if (isset($input['asset_codes']) && isset($input['audit_categories'])) {
+            return $this->sendError('You can only provide either asset_codes or audit_categories, not both', 422);
+        }
+
+        // Check if neither parameter is provided
+        if (!isset($input['asset_codes']) && !isset($input['audit_categories'])) {
+            return $this->sendError('Either asset_codes or audit_categories is required', 422);
+        }
+
+        $validator = \Validator::make($input, [
+            'asset_codes' => 'sometimes|required_without:audit_categories|array|min:1',
+            'audit_categories' => 'sometimes|required_without:asset_codes|array|min:1',
+            'page' => 'sometimes|integer|min:1',
+            'per_page' => 'sometimes|integer|min:1|max:5',
+        ], [
+            'asset_codes.required_without' => 'asset_codes is required when audit_categories is not provided',
+            'asset_codes.array' => 'asset_codes must be an array',
+            'asset_codes.min' => 'At least one asset code is required',
+            'audit_categories.required_without' => 'audit_categories is required when asset_codes is not provided',
+            'audit_categories.array' => 'audit_categories must be an array',
+            'audit_categories.min' => 'At least one audit category is required',
+            'page.integer' => 'page must be an integer',
+            'page.min' => 'page must be at least 1',
+            'per_page.integer' => 'per_page must be an integer',
+            'per_page.min' => 'per_page must be at least 1',
+            'per_page.max' => 'per_page cannot exceed 5',
+        ]);
+
+        if ($validator->fails()) {
+            $errorMessage = $validator->errors()->first();
+            return $this->sendError($errorMessage, 422);
+        }
+
+        $companySystemID = $input['company_id'];
+        $searchByAssetCodes = isset($input['asset_codes']);
+        $searchByAuditCategory = isset($input['audit_categories']);
+
+        $assetCodes = [];
+        $auditCategories = [];
+
+        // Validate asset codes if provided
+        if ($searchByAssetCodes) {
+            $assetCodes = $input['asset_codes'];
+            
+            // Validate each asset code
+            foreach ($assetCodes as $assetCode) {
+                $asset = FixedAssetMaster::where('faCode', $assetCode)
+                    ->ofCompany([$companySystemID])
+                    ->first();
+
+                if (!$asset) {
+                    return $this->sendError("The asset code '{$assetCode}' not matching with system", 422);
+                }
+
+                if ($asset->approved != -1) {
+                    $approvalStatus = $this->getApprovalStatus($asset);
+                    return $this->sendError("The selected asset '{$assetCode}' is not fully approved (" . $approvalStatus . ")", 422);
+                }
+
+                if ($asset->DIPOSED == -1) {
+                    return $this->sendError("The selected asset '{$assetCode}' has been disposed", 422);
+                }
+            }
+        }
+
+        // Validate audit categories if provided
+        if ($searchByAuditCategory) {
+            $auditCategories = $input['audit_categories'];
+            
+            // Validate each audit category
+            foreach ($auditCategories as $auditCategory) {
+                
+                // Check if any assets exist with this audit category for the company
+                $auditCategoryExists = FixedAssetMaster::ofCompany([$companySystemID])
+                    ->whereHas('finance_category', function($query) use ($auditCategory) {
+                        $query->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                    })
+                    ->exists();
+
+                if (!$auditCategoryExists) {
+                    return $this->sendError("The audit category '{$auditCategory}' not matching with system", 422);
+                }
+            }
+        }
+
+        try {
+            $today = \Carbon\Carbon::now();
+
+            $company = Company::select('companySystemID', 'localCurrencyID', 'reportingCurrency')
+                ->with([
+                    'localcurrency' => function($query) {
+                        $query->select('currencyID', 'DecimalPlaces');
+                    },
+                    'reportingcurrency' => function($query) {
+                        $query->select('currencyID', 'DecimalPlaces');
+                    }
+                ])
+                ->find($companySystemID);
+
+            // Get pagination parameters
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 5);
+
+
+            $query->orderBy('faID', 'asc');
+
+            $assets = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Prepare the result data
+            $result = [];
+
+            foreach ($assets as $asset) {
+
+                $assetData = [
+                    'assetCode' => $asset->faCode ?? null,
+                    'department' => $asset->departmentMaster ? $asset->departmentMaster->DepartmentID : null,
+                    'segment' => $asset->department ? $asset->department->ServiceLineCode : null,
+                    'serialNmber' => $asset->faUnitSerialNo ?? null,
+                    'description' => $asset->assetDescription ?? null,
+                    'manufacture' => $asset->MANUFACTURE ?? null,
+                    'dateAcquired' => $this->formatDates($asset, 'dateAQ'),
+                    'comments' => $asset->COMMENTS ?? null,
+                    'location' => $asset->location ? $asset->location->locationName : null,
+                    'lastPhysicalVerifiedDate' => $this->formatDates($asset, 'lastVerifiedDate'),
+                    'assetBarcode' => $asset->faBarcode ?? null,
+                    'assetType' => $asset->asset_type ? $asset->asset_type->typeDes : null,
+                    'depStartDate' => $this->formatDates($asset, 'dateDEP'),
+                    'lifeTimeInYears' => $asset->depMonth ?? null,
+                    'depPercentage' => $asset->DEPpercentage ? round($asset->DEPpercentage, 7) : null,
+                    'unitPriceLocal' => $this->formatValues($asset, 'COSTUNIT', $company->localcurrency->DecimalPlaces, 'local'),
+                    'unitPriceRPT' => $this->formatValues($asset, 'costUnitRpt', $company->reportingcurrency->DecimalPlaces, 'rpt'),
+                    'accumulatedDepreciationAmountLocal' => ($asset->depperiod_by && count($asset->depperiod_by) > 0) ? $this->formatValues($asset->depperiod_by->first(), 'totalDepAmountLocal', $company->localcurrency->DecimalPlaces, 'local') : 0,
+                    'accumulatedDepreciationAmountRPT' => ($asset->depperiod_by && count($asset->depperiod_by) > 0) ? $this->formatValues($asset->depperiod_by->first(), 'totalDepAmountRpt', $company->reportingcurrency->DecimalPlaces, 'rpt') : 0,
+                    'accumulatedDepreciationDate' => $this->formatDates($asset, 'accumulated_depreciation_date'),
+                    'residualValueLocal' => $this->formatValues($asset, 'salvage_value', $company->localcurrency->DecimalPlaces, 'local'),
+                    'residualValueRPT' => $this->formatValues($asset, 'salvage_value_rpt', $company->reportingcurrency->DecimalPlaces, 'rpt'),
+                    'documentDate' => $this->formatDates($asset, 'documentDate'),
+                ];
+
+                $operationGrouping = [
+                    'mainCategory' => $asset->category_by ? $asset->category_by->catDescription : null,
+                    'subCategory' => $asset->sub_category_by ? $asset->sub_category_by->catDescription : null,
+                    'subCategory2' => $asset->sub_category_by2 ? $asset->sub_category_by2->catDescription : null,
+                    'subCategory3' => $asset->sub_category_by3 ? $asset->sub_category_by3->catDescription : null,
+                ];
+
+                $assetData['operationGrouping'] = $operationGrouping;
+
+                $financeGrouping = [
+                    'auditCategory' => $asset->finance_category ? $asset->finance_category->financeCatDescription : null,
+                    'costAccount' => $asset->COSTGLCODEdes ?? null,
+                    'accDepGLCode' => $asset->ACCDEPGLCODEdes ?? null,
+                    'depGLCode' => $asset->DEPGLCODEdes ?? null,
+                    'disPoGLCode' => $asset->DISPOGLCODEdes ?? null,
+                    'postToGL' => $asset->postToGLYN == 1 ? 'Yes' : 'No',
+                    'postToGLAccount' => $asset->posttogl_by ? $asset->posttogl_by->AccountDescription : null
+                ];
+
+                $assetData['financeGrouping'] = $financeGrouping;
+
+                $groupAssetData = [];
+                foreach ($asset->group_all_to as $groupAsset) {
+                    $groupAssetData[] = [
+                        'originDocID' => $groupAsset->docOriginDocumentID ?? null,
+                        'assetCode' => $groupAsset->faCode ?? null,
+                        'assetDescription' => $groupAsset->assetDescription ?? null,
+                        'costDate' => $this->formatDates($groupAsset, 'documentDate'),
+                        'localAmount' => $this->formatValues($groupAsset, 'COSTUNIT', $company->localcurrency->DecimalPlaces, 'local'),
+                        'rptAmount' => $this->formatValues($groupAsset, 'costUnitRpt', $company->reportingcurrency->DecimalPlaces, 'rpt')
+                    ];
+                }
+
+                $assetData['groupAsset'] = $groupAssetData;
+
+                $insuranceData = [];
+                foreach ($asset->insurance_detail as $insurance) {
+                    $insuranceData[] = [
+                        'insuredYN' => $insurance->insuredYN == 1 ? 'Yes' : 'No',
+                        'policy' => $insurance->policy_by ? $insurance->policy_by->policyDescription : null,
+                        'policyNumber' => $insurance->policyNumber ?? null,
+                        'dateOfInsurance' => $this->formatDates($insurance, 'dateOfInsurance'),
+                        'dateOfExpiry' => $this->formatDates($insurance, 'dateOfExpiry'),
+                        'insuredValue' => $this->formatValues($insurance, 'insuredValue', $company->localcurrency->DecimalPlaces, 'local'),
+                        'insurerName' => $insurance->insurerName ?? null,
+                        'location' => $insurance->location_by ? $insurance->location_by->locationName : null,
+                        'buildingNumber' => $insurance->buildingNumber ?? null,
+                        'openClosedArea' => $insurance->openClosedArea ?? null,
+                        'containerNumber' => $insurance->containerNumber ?? null,
+                        'movingStatus' => $insurance->movingItem == 1 ? 'Yes' : 'No'
+                    ];
+                }
+
+                $assetData['insurance'] = $insuranceData;
+
+                $warrantyData = [];
+                foreach ($asset->warranty_detail as $warranty) {
+                    $warrantyData[] = [
+                        'warrantyProvider' => $warranty->warranty_provider ?? null,
+                        'startDate' => $this->formatDates($warranty, 'start_date'),
+                        'endDate' => $this->formatDates($warranty, 'end_date'),
+                        'warrantyCoverage' => $warranty->warranty_coverage ?? null
+                    ];
+                }
+
+                $assetData['warranty'] = $warrantyData;
+
+                $erpAttributes = ErpAttributes::withTrashed()
+                    ->with(['fieldOptions', 'attributeValues' => function($query) use ($asset) {
+                        $query->where('document_master_id', $asset->faID)
+                            ->orWhere('document_master_id', null);
+                    }])
+                    ->where('document_id', "ASSETCOST")
+                    ->where(function ($query) use ($asset) {
+                        $query->where(function ($q) use ($asset) {
+                            $q->where('document_master_id', $asset->faID)
+                                ->where('is_active', 1)
+                                ->whereNull('deleted_at');
+                        })
+                        ->orWhere(function ($q) use ($asset) {
+                            $q->whereNull('document_master_id')
+                                ->where(function ($subQ) use ($asset) {
+                                    $subQ->where(function ($condition1Q) use ($asset) {
+                                        if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
+                                            $condition1Q->where('is_active', 1)
+                                                ->whereNull('deleted_at');
+                                        } else {
+                                            $condition1Q->whereRaw('1 = 1');
+                                        }
+                                    })
+                                    ->where(function ($condition2Q) use ($asset) {
+                                        if ($asset->approved == -1) {
+                                            $condition2Q->where(function ($approvedQ) use ($asset) {
+                                                $approvedQ->where(function ($activeQ) use ($asset) {
+                                                    $activeQ->where('is_active', 1)
+                                                        ->orWhere(function ($inactiveQ) use ($asset) {
+                                                            $inactiveQ->where('is_active', 0)
+                                                                ->where(function ($dateQ) use ($asset) {
+                                                                    $dateQ->whereNull('inactivated_at')
+                                                                        ->orWhere('inactivated_at', '>', $asset->approvedDate);
+                                                                });
+                                                        });
+                                                })
+                                                ->where(function ($deletedQ) use ($asset) {
+                                                    $deletedQ->whereNull('deleted_at')
+                                                        ->orWhere('deleted_at', '>', $asset->approvedDate);
+                                                });
+                                            });
+                                        } else {
+                                            $condition2Q->whereRaw('1 = 1');
+                                        }
+                                    });
+                                });
+                        });
+                    })
+                    ->get();
+
+                $erpAttributesData = [];
+                foreach ($erpAttributes as $erpAttribute) {
+                    $attributeData = [
+                        'description' => $erpAttribute->description ?? null,
+                        'mandatory' => $erpAttribute->is_mendatory ? 'Yes' : 'No',
+                        'field' => null
+                    ];
+
+                    foreach ($erpAttribute->attributeValues as $attributeValue) {
+                        $value = $attributeValue->value;
+                        
+                        if ($erpAttribute->field_type_id == 3) {
+                            $dropdownOption = $erpAttribute->fieldOptions->firstWhere('id', $value);
+                            if ($dropdownOption) {
+                                $value = $dropdownOption->description;
+                            }
+                        }
+
+                        $attributeData['field'] = $value;
+                    }
+
+                    $erpAttributesData[] = $attributeData;
+                }
+
+                $assetData['attributes'] = $erpAttributesData;
+
+                $result[] = $assetData;
+            }
+
+            // Transform the paginated collection with our result data
+            $transformedItems = collect($result);
+            
+            // Create a new paginator with transformed data, preserving pagination metadata
+            $paginatedResult = new LengthAwarePaginator(
+                $transformedItems,
+                $assets->total(),
+                $assets->perPage(),
+                $assets->currentPage(),
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            return $this->sendResponse($paginatedResult->toArray(), 'Asset details retrieved successfully');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    public function formatDates($dataset, $dateField) {
+        return $dataset->$dateField ? Carbon::parse($dataset->$dateField)->format('d-m-Y') : null;
+    }
+
+    public function formatValues($dataset, $valueField, $decimalPlaces = null, $type = 'local') {
+        if(isset($dataset->$valueField) && is_numeric($dataset->$valueField)) {
+            if(isset($decimalPlaces)) {
+                return round($dataset->$valueField, $decimalPlaces);
+            }
+
+            return round($dataset->$valueField, $type == 'local' ? 3 : 2);
+        }
+
+        return null;
+    }
+
+    private function getApprovalStatus($asset) {
+        if ($asset->approved == 0) {
+            $pendingApprovals = DocumentApproved::where('documentSystemCode', $asset->faID)
+                ->where('documentSystemID', 22)
+                ->where('approvedYN', 0)
+                ->where('rejectedYN', 0)
+                ->orderBy('approvalLevelID', 'asc')
+                ->first();
+            
+            if ($pendingApprovals) {
+                return 'Pending Approval at Level ' . $pendingApprovals->rollLevelOrder;
+            }
+            
+            return 'Not Approved';
+        } else {
+            return 'Rejected';
+        }
     }
 
 }

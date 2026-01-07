@@ -31,6 +31,7 @@
     Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::get('printAssetDepreciation', 'FixedAssetDepreciationMasterAPIController@printAssetDepreciation');
             Route::get('printEvaluationTemplate', 'SupplierEvaluationTemplateAPIController@printEvaluationTemplate');
             Route::get('supplierEvaluationPrintPDF', 'SupplierEvaluationController@printSupplierEvaluation');
             Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');

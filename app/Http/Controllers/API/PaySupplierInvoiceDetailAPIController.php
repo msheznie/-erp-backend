@@ -1984,4 +1984,13 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
     }
 
+    function getBankCharges(Request $request)
+    {
+        $input = $request->all();
+
+        $bankChargeAndOthers = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$input['payMasterAutoId'])->get();
+
+        return $this->sendResponse($bankChargeAndOthers, trans('custom.payment_details_saved_successfully'));
+    }
+
 }

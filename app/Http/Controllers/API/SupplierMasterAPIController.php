@@ -53,6 +53,8 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierSubCategoryAssign;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\YesNoSelection;
+use App\Models\ItemAssigned;
+use App\Models\PurchaseOrderDetails;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
 use App\Models\SupplierMasterRefferedBack;
@@ -87,6 +89,7 @@ use App\Repositories\SupplierBlockRepository;
 use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
+use App\helper\CheckPendingDoc;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -755,6 +758,12 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
         }
 
+        if(isset($input['mol_applicable']) && ($input['mol_applicable'] == 1 || $input['mol_applicable'] === true || $input['mol_applicable'] === 'yes')){
+            if(!isset($input['mol_payment_mode']) || (isset($input['mol_payment_mode']) && $input['mol_payment_mode'] == null)){
+                return $this->sendError(trans('custom.mol_payment_mode_is_required'));
+            }
+        }
+
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
@@ -896,6 +905,12 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($input['omanization']) && ($input['omanization'] > 100))
         {
             return $this->sendError(trans('custom.omanization_percentage_cannot_be_greater_than_100'));
+        }
+
+        if(isset($input['mol_applicable']) && ($input['mol_applicable'] == 1 || $input['mol_applicable'] === true || $input['mol_applicable'] === 'yes')){
+            if(!isset($input['mol_payment_mode']) || (isset($input['mol_payment_mode']) && $input['mol_payment_mode'] == null)){
+                return $this->sendError(trans('custom.mol_payment_mode_is_required'));
+            }
         }
 
         if(isset($input['whtApplicableYN']) && $input['whtApplicableYN'] == 0){
@@ -1084,7 +1099,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $newValue['isLCCYN'] = isset($input['isLCCYN'])?$input['isLCCYN']:-1;
                 $newValue['isSMEYN'] = isset($input['isSMEYN'])?$input['isSMEYN']:-1;
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN','omanization']), $id);
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN','omanization','paymentMethod']), $id);
                 SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity','supplierCountryID','isCriticalYN']));
                 // user activity log table
                 if($supplierMaster){
@@ -1447,6 +1462,56 @@ class SupplierMasterAPIController extends AppBaseController
             'segment' => $segment
         );
         return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
+    }
+
+    /**
+     * Get ICV Suppliers and Items
+     * GET /getICVSuppliersAndItems
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getICVSuppliersAndItems(Request $request)
+    {
+        $companyId = $request->selectedCompanyId;
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $companyID = \Helper::getGroupCompany($companyId);
+        } else {
+            $companyID = [$companyId];
+        }
+
+        $company = Company::find($companyId);
+        $companyName = $company ? $company->CompanyName : '';
+        $currencyName = '';
+        $companyCountry = $company ? $company->companyCountry : null;
+        
+        if ($company && $company->localCurrencyID) {
+            $currency = CurrencyMaster::find($company->localCurrencyID);
+            $currencyName = $currency ? $currency->CurrencyCode : '';
+        }
+  
+        $supplierMaster = SupplierAssigned::whereHas('master', function ($query) use ($companyID, $companyCountry) {
+            $query->whereIN('companySystemID', $companyID)->where('isBlocked', 0)->where('approvedYN', 1);
+            if ($companyCountry) {
+                $query->where('supplierCountryID', $companyCountry);
+            }
+        })
+        ->groupBy('supplierCodeSytem')
+        ->get();
+
+        $items = ItemAssigned::whereIN('companySystemID', $companyID)
+            ->where('isActive', 1)
+            ->groupBy('itemCodeSystem')
+            ->get();
+
+        $output = array(
+            'suppliers' => $supplierMaster,
+            'items' => $items,
+            'companyName' => $companyName,
+            'currencyName' => $currencyName
+        );
+        return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
 
@@ -2474,6 +2539,17 @@ class SupplierMasterAPIController extends AppBaseController
         } else {
             $successMessages[] = trans('custom.use_of_advance_account_checking_payment');
             $amendable['advanceAmendable'] = true;
+        }
+        $amendable['whtPaymentMethodAmendable'] = true;
+        $documentIds = [3,11,4];
+        foreach($documentIds as $documentId) {
+            $output = CheckPendingDoc::process($documentId,$input['supplierID'],$supplierMaster->primaryCompanySystemID);
+            if($output['value'] == false) {
+                $errorMessages[] = trans('custom.supplier_has_pending_documents');
+                $amendable['whtPaymentMethodAmendable'] = false;
+                break;
+            }
+            
         }
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");

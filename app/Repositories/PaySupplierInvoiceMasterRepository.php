@@ -18,6 +18,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 /**
  * Class PaySupplierInvoiceMasterRepository
  * @package App\Repositories
@@ -200,7 +201,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
-    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID,$createdBy) {
+    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID,$createdBy,$customerID) {
 
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -211,7 +212,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $subCompanies = [$selectedCompanyId];
         }
 
-        $paymentVoucher = PaySupplierInvoiceMaster::with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque','localcurrency','rptcurrency'])->whereIN('companySystemID', $subCompanies);
+        $paymentVoucher = PaySupplierInvoiceMaster::with(['customer', 'supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project','pdc_cheque','localcurrency','rptcurrency'])
+                        ->select('erp_paysupplierinvoicemaster.*')
+                        ->addSelect(DB::raw('CAST((SELECT COALESCE(SUM(dpAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_amount'))
+                        ->addSelect(DB::raw('CAST((SELECT COALESCE(SUM(localAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_local_amount'))
+                        ->addSelect(DB::raw('CAST((SELECT COALESCE(SUM(comRptAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_comRpt_amount'))
+                        ->whereIN('companySystemID', $subCompanies);
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
@@ -228,13 +234,18 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('payeeTypeID', $input)) {
             $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
             if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVsupplierID', "!=", NULL);
+                $paymentVoucher->where('BPVsupplierID', "!=", NULL)->where('BPVsupplierID', '!=', 0);
             }
             if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL);
+                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL)->where('directPaymentPayeeEmpID', '!=', 0);
             }
             if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
                 $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
+            }
+            if (($payeeTypeID == 4) && !is_null($payeeTypeID)) {
+                $paymentVoucher->where('BPVcustomerID', "!=", NULL)->where(function($query) {
+                    $query->whereNull('directPaymentPayeeEmpID')->orWhere('directPaymentPayeeEmpID', 0);
+                });
             }
         }
 
@@ -273,6 +284,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && count($supplierID) > 0) {
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
+            }
+        }
+
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && count($customerID) > 0) {
+                $paymentVoucher->whereIn('BPVcustomerID', $customerID);
             }
         }
 
@@ -367,6 +384,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                     $data[$x][trans('custom.payee_type')] = trans('custom.other');
                     $data[$x][trans('custom.sup_emp_other')] = $val->directPaymentPayee? $val->directPaymentPayee : '';
                 }
+                else if($val->BPVcustomerID > 0){
+                    $data[$x][trans('custom.payee_type')] = trans('custom.customer');
+                    $data[$x][trans('custom.sup_emp_other')] = $val->customer? $val->customer->CustomerName : '';
+                    $data[$x][trans('custom.payee_type')] = trans('custom.customer');
+                    $data[$x][trans('custom.sup_emp_other')] = $val->customer? $val->customer->CustomerName : '';
+                }
                 else{
                     $data[$x][trans('custom.payee_type')] = "";
                     $data[$x][trans('custom.sup_emp_other')] = "";
@@ -381,18 +404,18 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.supplier_currency')] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
-                $data[$x][trans('custom.supplier_amount')] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
+                $data[$x][trans('custom.supplier_amount')] = number_format(($val->suppAmountDocTotal), $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x][trans('custom.bank_currency')] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
-                $data[$x][trans('custom.bank_amount')] = number_format($val->payAmountBank, $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
+                $data[$x][trans('custom.bank_amount')] =  number_format(($val->payAmountBank), $val->bankcurrency? $val->bankcurrency->DecimalPlaces : 2, ".", "");
                 
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
-                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format(($val->payAmountCompLocal + $val->bank_charge_local_amount),  $val->localcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
-                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format(($val->payAmountCompRpt + $val->bank_charge_comRpt_amount),  $val->rptcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
-                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->payAmountCompLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format(($val->payAmountCompLocal + $val->bank_charge_local_amount),  $val->localcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.reporting_currency')] = $val->companyRptCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
-                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format($val->payAmountCompRpt,  $val->rptcurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.reporting_amount')] = $val->rptcurrency? number_format(($val->payAmountCompRpt + $val->bank_charge_comRpt_amount),  $val->rptcurrency->DecimalPlaces, ".", "") : '';
                 
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);

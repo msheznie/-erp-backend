@@ -392,7 +392,25 @@
                             @endif
                         </td>
                     </tr>
-                   
+                    @if(isset($masterdata->salesType) && $masterdata->salesType > 0)
+                        <tr>
+                            <td width="50px">
+                                <span style="font-weight: bold;">{{ __('custom.sales_type') }}</span>
+                            </td>
+                            <td width="10px">
+                                <span style="font-weight: bold;">:</span>
+                            </td>
+                            <td>
+                                @if(isset($masterdata->salesType) && $masterdata->salesType == 1)
+                                    {{ __('custom.ar_goods_and_services') }}
+                                @elseif(isset($masterdata->salesType) && $masterdata->salesType == 2)
+                                    {{ __('custom.ar_subscription') }}
+                                @else
+                                    {{ __('custom.unknown') }}
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                 </table>
             </td>
         </tr>
@@ -404,9 +422,14 @@
                 <th>#</th>
                 <th>{{ __('custom.item_code') }}</th>
                 <th>{{ __('custom.item_description') }}</th>
+                @if(isset($masterdata->salesType) && $masterdata->salesType == 1)
                 <th>{{ __('custom.part_number') }}</th>
+                @endif
                 <th>{{ __('custom.uom') }}</th>
                 <th>{{ __('custom.quantity') }}</th>
+                @if(isset($masterdata->salesType) && $masterdata->salesType == 2)
+                <th>{{ __('custom.user_qty') }}</th>
+                @endif
                 <th>{{ __('custom.unit_rate') }}</th>
                 <th>{{ __('custom.discount') }}</th>
                 @if($masterdata->isVatEligible)
@@ -423,9 +446,14 @@
                     <td>{{$item->itemDescription}}
                          <div style="font-size: 10px !important;">{{$item->comment}}</div>
                     </td>
+                    @if(isset($masterdata->salesType) && $masterdata->salesType == 1)
                     <td>{{$item->itemReferenceNo}}</td>
+                    @endif
                     <td>{{$item->unitOfMeasure}}</td>
                     <td class="text-right">{{$item->requestedQty}}</td>
+                    @if(isset($masterdata->salesType) && $masterdata->salesType == 2)
+                    <td class="text-right">{{$item->userQty}}</td>
+                    @endif
                     <td class="text-right">{{number_format($item->unittransactionAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                     <td class="text-right">{{number_format($item->discountAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                     @if($masterdata->isVatEligible)

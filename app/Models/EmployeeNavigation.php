@@ -80,7 +80,10 @@ class EmployeeNavigation extends Model
         return $this->belongsTo('App\Models\Employee','employeeSystemID','employeeSystemID');
     }
 
-
+    public function access()
+    {
+        return $this->hasOne('App\Models\EmployeeNavigationAccess', 'employeeNavigationID', 'id');
+    }
 
     
 }

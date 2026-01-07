@@ -1,6 +1,137 @@
 # Changelog
 
 
+## [10.98.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.2...v10.98.0) (2026-01-05)
+
+
+### Features
+
+* **OBP:** Portal  OBP Sync | Sync New Portal User to OBP [GHR-9618] ([#9434](https://github.com/pbsgears/Gears_BackEnd/issues/9434)) ([a75e509](https://github.com/pbsgears/Gears_BackEnd/commit/a75e5092e7033316fb637411907eaf58b9c40687))
+
+## [10.97.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.1...v10.97.2) (2025-12-30)
+
+
+### Miscellaneous Chores
+
+* release 10.97.2 ([#9497](https://github.com/pbsgears/Gears_BackEnd/issues/9497)) ([8a94628](https://github.com/pbsgears/Gears_BackEnd/commit/8a9462848bdbcf3a19f9acbcabd2a6f17e41cae5))
+
+## [10.97.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.0...v10.97.1) (2025-12-24)
+
+
+### Miscellaneous Chores
+
+* release 10.97.0 ([0713cc5](https://github.com/pbsgears/Gears_BackEnd/commit/0713cc5f3b2166bfa112c0871f9ef4336123b333))
+
+## [10.97.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.96.0...v10.97.0) (2025-12-23)
+
+
+### Features
+
+* **accounts payable:** Added MOL contribution in Supplier Invoice [GCCP-15462] ([#9350](https://github.com/pbsgears/Gears_BackEnd/issues/9350)) ([abb9a07](https://github.com/pbsgears/Gears_BackEnd/commit/abb9a0737aa2947f7175aff00a6e98fcf778ba15))
+* **accounts payable:** Controlled segment dropdown auto fetch in supinvoice [GCP-15938] ([#9329](https://github.com/pbsgears/Gears_BackEnd/issues/9329)) ([c0bfaf1](https://github.com/pbsgears/Gears_BackEnd/commit/c0bfaf147a82def14d1062c82c4189b08dc05471))
+* **accounts payable:** Customer selection option in Payment Voucher [GCP-15857] ([#9327](https://github.com/pbsgears/Gears_BackEnd/issues/9327)) ([85b9934](https://github.com/pbsgears/Gears_BackEnd/commit/85b99348f8688ce5ad3f45da442dc9ab479b184c))
+* **accounts payable:** Fixed exchange rate issue in debit note [GCP-16997] ([#9293](https://github.com/pbsgears/Gears_BackEnd/issues/9293)) ([f14abb2](https://github.com/pbsgears/Gears_BackEnd/commit/f14abb25de2984ec65dc36ec92ce30b1df8a0b8e))
+* **accounts payable:** MOL Supplier PO invoice [GCP-16785] ([#9352](https://github.com/pbsgears/Gears_BackEnd/issues/9352)) ([73fa570](https://github.com/pbsgears/Gears_BackEnd/commit/73fa570f09cd17cf53f84cf1533caf4d66ef72c3))
+* **accounts receivable:** Add new sales type to CI [GCP-11866] ([#9334](https://github.com/pbsgears/Gears_BackEnd/issues/9334)) ([4f0fb07](https://github.com/pbsgears/Gears_BackEnd/commit/4f0fb07fa540e36bd11449a748b9b40bb6c73c32))
+* **asset management:** Asset costing API [GCP-17065] ([#9344](https://github.com/pbsgears/Gears_BackEnd/issues/9344)) ([8b7ec24](https://github.com/pbsgears/Gears_BackEnd/commit/8b7ec2404fb3faab240ff2c2c6575566ec21ffdb))
+* **asset management:** Changes for print page [GCP-15855] ([#9339](https://github.com/pbsgears/Gears_BackEnd/issues/9339)) ([3c6559a](https://github.com/pbsgears/Gears_BackEnd/commit/3c6559ae72c088d83fb7ce412ddbcc2b28757adf))
+* **asset management:** Changes of asset depreciation print [GCP-15855] ([#9324](https://github.com/pbsgears/Gears_BackEnd/issues/9324)) ([45f91b4](https://github.com/pbsgears/Gears_BackEnd/commit/45f91b4412808401f9c12c9fd1677d9628c9c3a4))
+* **asset management:** Changes of asset depreciation print [GCP-15855] ([#9325](https://github.com/pbsgears/Gears_BackEnd/issues/9325)) ([95a617f](https://github.com/pbsgears/Gears_BackEnd/commit/95a617f73d594db645e15cfe45430ba8ce5d3747))
+* **asset management:** Developed print for asset depreciation [GCP-15855] ([#9323](https://github.com/pbsgears/Gears_BackEnd/issues/9323)) ([f9c6f24](https://github.com/pbsgears/Gears_BackEnd/commit/f9c6f243b8a2c0df35b119403ed8562985c2ff39))
+* **budget planning:** budget planning notification scenario added [GCP-11461] ([#9292](https://github.com/pbsgears/Gears_BackEnd/issues/9292)) ([7a37b3c](https://github.com/pbsgears/Gears_BackEnd/commit/7a37b3c04658f90b6041f6aac29a9771ab581b04))
+* **budget planning:** budget planning notification scenario added [GCP-11461] ([#9292](https://github.com/pbsgears/Gears_BackEnd/issues/9292)) ([9421aeb](https://github.com/pbsgears/Gears_BackEnd/commit/9421aeb959e34cb070e236d8111b4a8a1e42c1ce))
+* **budget planning:** notification added and review tab added [GCP-16965] ([#9333](https://github.com/pbsgears/Gears_BackEnd/issues/9333)) ([c628ee1](https://github.com/pbsgears/Gears_BackEnd/commit/c628ee19caf1f91e6123a5c269c6f370292b778d))
+* **budget:** Budget Financial period selection option [GCP-15824] ([#9299](https://github.com/pbsgears/Gears_BackEnd/issues/9299)) ([7aeb2cf](https://github.com/pbsgears/Gears_BackEnd/commit/7aeb2cf31a9ffac22ba41d62180808128d7bad7f))
+* **common:** check payroll for expense claim [GCP-11958] ([#9343](https://github.com/pbsgears/Gears_BackEnd/issues/9343)) ([65a5553](https://github.com/pbsgears/Gears_BackEnd/commit/65a5553e8ed0b2d2dc33f37ccb1d7805211a3b55))
+* **common:** Purchase request approval changes [GCP-16612] ([#9312](https://github.com/pbsgears/Gears_BackEnd/issues/9312)) ([0e73a48](https://github.com/pbsgears/Gears_BackEnd/commit/0e73a488feb520f5f48e08aa8b306fa949b0a7e1))
+* **configuration:** Approval level changes [GCP-16227] ([#9289](https://github.com/pbsgears/Gears_BackEnd/issues/9289)) ([a09c31f](https://github.com/pbsgears/Gears_BackEnd/commit/a09c31f7fcd7792f7b4988c9842f337821d7b24e))
+* **general ledger:** Added amount field to po accrual jv [GCP-15856] ([#9332](https://github.com/pbsgears/Gears_BackEnd/issues/9332)) ([a3225cb](https://github.com/pbsgears/Gears_BackEnd/commit/a3225cb471e8da71178c1c9b04b68213b82e6527))
+* **general ledger:** Employee Ledger validation [GCP-17091] ([#9335](https://github.com/pbsgears/Gears_BackEnd/issues/9335)) ([e489372](https://github.com/pbsgears/Gears_BackEnd/commit/e489372aa36066991a6b0fa080e6a94539932f33))
+* **group report:** Employee performance report export changes [GCP-15550] ([#9371](https://github.com/pbsgears/Gears_BackEnd/issues/9371)) ([a8b30b5](https://github.com/pbsgears/Gears_BackEnd/commit/a8b30b50de01e5229d292508816ffec983eee3a6))
+* **procurement:** ICV report [GCP-15032] ([#9291](https://github.com/pbsgears/Gears_BackEnd/issues/9291)) ([a01a74f](https://github.com/pbsgears/Gears_BackEnd/commit/a01a74f6de1347bf4e799771951a92bd9633df4a))
+* **profile:** MR issue with item [GCP-15790] ([#9286](https://github.com/pbsgears/Gears_BackEnd/issues/9286)) ([966781a](https://github.com/pbsgears/Gears_BackEnd/commit/966781ab57eb7f205d464a2fa272c0fe47901e06))
+* **sales & marketing:** Add sales type column in quotation [GCP-13424] ([#9283](https://github.com/pbsgears/Gears_BackEnd/issues/9283)) ([436cace](https://github.com/pbsgears/Gears_BackEnd/commit/436cacec2c6ff36023a52c90ffcbdf159bd47ee6))
+* **sales & marketing:** Add sales type column in sales order [GCP-11837] ([#9285](https://github.com/pbsgears/Gears_BackEnd/issues/9285)) ([977c03d](https://github.com/pbsgears/Gears_BackEnd/commit/977c03dc2b677ba6c7dcd2b51453f3408fdd3936))
+* **sales & marketing:** add sales type to delivery order [GCP-11864] ([#9311](https://github.com/pbsgears/Gears_BackEnd/issues/9311)) ([5de05ec](https://github.com/pbsgears/Gears_BackEnd/commit/5de05eca9fd45cde8bc85b06a3602a09812fae00))
+* **sales & marketing:** add sales type to quotation based sales order [GCP-16783] ([#9300](https://github.com/pbsgears/Gears_BackEnd/issues/9300)) ([1175d5e](https://github.com/pbsgears/Gears_BackEnd/commit/1175d5ed7f58adea4693ea5eb88f9e3eff3faa99))
+* **system admin:** Added MOL configurations [GCP-15461] ([#9290](https://github.com/pbsgears/Gears_BackEnd/issues/9290)) ([84db459](https://github.com/pbsgears/Gears_BackEnd/commit/84db4598b182b81efb3c4379ed9c2afe20941c41))
+
+
+### Bug Fixes
+
+* **accounts payable:** customer master api issues [GCP-15222] ([#9346](https://github.com/pbsgears/Gears_BackEnd/issues/9346)) ([286085c](https://github.com/pbsgears/Gears_BackEnd/commit/286085c6e5726c9e30ce5c51702db1eacf60a5e7))
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([#9364](https://github.com/pbsgears/Gears_BackEnd/issues/9364)) ([5ce27e4](https://github.com/pbsgears/Gears_BackEnd/commit/5ce27e48da774f7ac3c0d700a9d630d080276a59))
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([#9367](https://github.com/pbsgears/Gears_BackEnd/issues/9367)) ([e5b6c04](https://github.com/pbsgears/Gears_BackEnd/commit/e5b6c0426b2968514097da0f6cacff85488c730d))
+* **accounts receivable:** Fixed export excel issue in credit note [GCP-13406] ([#9359](https://github.com/pbsgears/Gears_BackEnd/issues/9359)) ([fac58bf](https://github.com/pbsgears/Gears_BackEnd/commit/fac58bf22a5fb0146191421a819212b189b08dd7))
+* **accounts receivable:** Receipt voucher header level value changes [GCP-18179] ([#9379](https://github.com/pbsgears/Gears_BackEnd/issues/9379)) ([ec02783](https://github.com/pbsgears/Gears_BackEnd/commit/ec0278302106d39eecd8463a94768d9181afbc4a))
+* **accounts receivable:** Return back to amend Wrong department Finance period [GCP-12000] ([#9310](https://github.com/pbsgears/Gears_BackEnd/issues/9310)) ([0ad5752](https://github.com/pbsgears/Gears_BackEnd/commit/0ad57528079df3ff4e9a1bd5c88426ed3bd65965))
+* **approval-setup:** Undefined segment when create approveal level [GCP-15217] ([#9345](https://github.com/pbsgears/Gears_BackEnd/issues/9345)) ([54548c7](https://github.com/pbsgears/Gears_BackEnd/commit/54548c703acfda2af0749a6a6ddcf5030361ce6a))
+* **asset management:** customer master api issues [GCP-13407] ([#9347](https://github.com/pbsgears/Gears_BackEnd/issues/9347)) ([7969340](https://github.com/pbsgears/Gears_BackEnd/commit/796934001cf1440b542eaa425d9e2a6978d18e6b))
+* **common:** Reverted newly added fonts to old once in pdf [GCP-18307] ([51eda82](https://github.com/pbsgears/Gears_BackEnd/commit/51eda82affb1fac8bd0c1b7cb52947e818a80a09))
+* **general ledger:** Fixed sentry issue on allocation master [GCP-15223] ([#9340](https://github.com/pbsgears/Gears_BackEnd/issues/9340)) ([3eb4f74](https://github.com/pbsgears/Gears_BackEnd/commit/3eb4f741317446a0453bab060e4ba1caade95207))
+* **procurement:** Fixed export excel issue in po to payment report [GCP-15875] ([#9338](https://github.com/pbsgears/Gears_BackEnd/issues/9338)) ([a64c23d](https://github.com/pbsgears/Gears_BackEnd/commit/a64c23d206fcbaa2796cc2d718346812526af249))
+
+## [10.96.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.95.0...v10.96.0) (2025-12-19)
+
+
+### Features
+
+* **Delivery Appointment:** Show PO when creating Delivery Appointment [GSUP-4526] ([#9372](https://github.com/pbsgears/Gears_BackEnd/issues/9372)) ([3c69944](https://github.com/pbsgears/Gears_BackEnd/commit/3c69944405fccab011ca85e9761c53d456db6688))
+* **Purchase Order:** Show PO delivery location in Supplier Portal PO View [GSUP-4517] ([#9375](https://github.com/pbsgears/Gears_BackEnd/issues/9375)) ([ac45644](https://github.com/pbsgears/Gears_BackEnd/commit/ac456448dd04c328f3ac22efc03387c191949077))
+* **srm:** GRV Creation Based on Delivery Appointment validation [GSUP-4596] ([#9392](https://github.com/pbsgears/Gears_BackEnd/issues/9392)) ([54c4300](https://github.com/pbsgears/Gears_BackEnd/commit/54c4300c4544a24d1ba94af48fdb27650f0d62b2))
+* **srm:** GRV creation based on Delivery Appointment Validation Enhancement [GSUP-4567] ([#9362](https://github.com/pbsgears/Gears_BackEnd/issues/9362)) ([fd3dcf9](https://github.com/pbsgears/Gears_BackEnd/commit/fd3dcf9ba1e8f65bac6d9a29067826a170bcd5c7))
+* **srm:** PO Acknowledgement function [GSUP-4351] ([#9353](https://github.com/pbsgears/Gears_BackEnd/issues/9353)) ([2ecd8c7](https://github.com/pbsgears/Gears_BackEnd/commit/2ecd8c7415e2786a03e4c2d62ca86cbb418fbf6b))
+* **srm:** Procurement lifecycle report [GSUP-3376] ([#9385](https://github.com/pbsgears/Gears_BackEnd/issues/9385)) ([45c6328](https://github.com/pbsgears/Gears_BackEnd/commit/45c63281ea3ae91de10f04df7542c328668b190d))
+* **srm:** tender notification senario changes [GSUP-2213] ([#9386](https://github.com/pbsgears/Gears_BackEnd/issues/9386)) ([a072ab4](https://github.com/pbsgears/Gears_BackEnd/commit/a072ab4ce73d51de8797eedeb9c0dbb088073a70))
+* **Supplier KYC:** Supplier Management | Supplier KYC enhancement [GSUP-4527] ([#9370](https://github.com/pbsgears/Gears_BackEnd/issues/9370)) ([4c6b593](https://github.com/pbsgears/Gears_BackEnd/commit/4c6b59309fc71892883c0c3570a7272a76c75522))
+* **Tender:** Change the Invite supplier option for Tender, show the option in the Tender View page [GSUP-2248] ([#9395](https://github.com/pbsgears/Gears_BackEnd/issues/9395)) ([d050e2f](https://github.com/pbsgears/Gears_BackEnd/commit/d050e2f6d9e84030b9aa31717de1701216f2373c))
+
+## [10.95.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.1...v10.95.0) (2025-12-14)
+
+
+### Features
+
+* **administration:** HRMS| Restriction on Company Policy - Leave computation [GHR-9042] ([#9308](https://github.com/pbsgears/Gears_BackEnd/issues/9308)) ([9044abb](https://github.com/pbsgears/Gears_BackEnd/commit/9044abb783d9019faa3e272329a47799b3d9dfad))
+* **Api:** Secure Vulnerable ERP API Endpoint related to HRMS [GHR-8884] ([#9303](https://github.com/pbsgears/Gears_BackEnd/issues/9303)) ([b84db2a](https://github.com/pbsgears/Gears_BackEnd/commit/b84db2a916b70df851abce6ad75f9572dc23b1e5))
+* **Attendance:** Preserve Leave Status Even When Employee Clocks In/Out [GHR-9259] ([#9357](https://github.com/pbsgears/Gears_BackEnd/issues/9357)) ([c217523](https://github.com/pbsgears/Gears_BackEnd/commit/c21752312ec52951231990e99f53d3577142fd2f))
+
+## [10.94.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.94.0...v10.94.1) (2025-12-08)
+
+
+### Bug Fixes
+
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+* **accounts receivable:** Fix Auto-Confirmation/Approval Issue for Receipt Voucher Created via API [GCP-18150] ([6ec4e02](https://github.com/pbsgears/Gears_BackEnd/commit/6ec4e02ce3c68e7573a822dac2d09e9c6b9ab480))
+
+## [10.94.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.2...v10.94.0) (2025-12-04)
+
+
+### Features
+
+* **srm:** Add “Enable KYC” Option in User Management for Bid Tender Suppliers [GSUP-4437] ([#9273](https://github.com/pbsgears/Gears_BackEnd/issues/9273)) ([6271655](https://github.com/pbsgears/Gears_BackEnd/commit/627165589b11ed382f3f43a25132d93a6fef4625))
+* **srm:** Supplier Portal Tender/RFX bids submission closing time countdown [GSUP-4472] ([#9276](https://github.com/pbsgears/Gears_BackEnd/issues/9276)) ([d078208](https://github.com/pbsgears/Gears_BackEnd/commit/d078208cc489a0cc7a454e98c734b01391570430))
+
+## [10.93.2](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.1...v10.93.2) (2025-12-03)
+
+
+### Bug Fixes
+
+* **srm:** ERP user cannot confirm a tender even if there is already an active approval level [GSUP-4561] ([635e547](https://github.com/pbsgears/Gears_BackEnd/commit/635e547c4fc4cb57795943f32b309441718d967d))
+
+## [10.93.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.93.0...v10.93.1) (2025-11-27)
+
+
+### Bug Fixes
+
+* **procurement:** Fixed po print issue [GCP-17781] ([#9306](https://github.com/pbsgears/Gears_BackEnd/issues/9306)) ([2ef21b9](https://github.com/pbsgears/Gears_BackEnd/commit/2ef21b9f06551b2db387822f422c0a45d62b27c8))
+
+## [10.93.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.92.0...v10.93.0) (2025-11-26)
+
+
+### Features
+
+* **OSOS 3.0:** Update Employee and User Profile Synchronization Service to Handle Base64 Profile Image [GHR-8821] ([#9240](https://github.com/pbsgears/Gears_BackEnd/issues/9240)) ([34e58c1](https://github.com/pbsgears/Gears_BackEnd/commit/34e58c1f75e1a03849b284cfb8a7d468c8ca3a22))
+
 ## [10.92.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.91.2...v10.92.0) (2025-11-25)
 
 

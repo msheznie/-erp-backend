@@ -200,7 +200,7 @@ class Helper
             $companiesByGroup = (array)$company;
         }
 
-        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT_WS(" - ",case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end,serviceline.ServiceLineDes) as ServiceLineDes')
             ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
             ->leftJoin('service_line_assigned', 'serviceline.serviceLineSystemID', '=', 'service_line_assigned.serviceLineSystemID')
             ->where('serviceline.approved_yn', 1)
@@ -3306,6 +3306,7 @@ class Helper
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
                                 $isValueWise = $policy->isAmountApproval;
+                                $isPRTypeWise = $policy->isPRTypeApproval;
                                 $isAttachment = $policy->isAttachmentYN;
 
                                 $fromCiUpload = false;
@@ -3365,7 +3366,7 @@ class Helper
                                 }
 
                                 $tenderTypeId = $params["tenderTypeId"];
-                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId);
+                                $tenderApprovalLevel = Models\ApprovalLevel::isExistsTenderType($tenderTypeId, $params["company"], $reference_document_id);
                                 $approvalLevel->where(function ($query) use ($tenderTypeId, $tenderApprovalLevel) {
                                     $tenderApprovalLevel
                                         ? $query->where('tenderTypeId', $tenderTypeId)
@@ -3390,6 +3391,18 @@ class Helper
                                 }
                             }
 
+                            if ($isPRTypeWise && ($reference_document_id == 1)) {
+                                if (array_key_exists('prType', $params)) {
+                                    if ($params["prType"]) {
+                                        $approvalLevel->where('prType', $params["prType"]);
+                                        $approvalLevel->where('prTypeWise', 1);
+                                    } else {
+                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                    }
+                                } else {
+                                    return ['success' => false, 'message' => trans('custom.pr_type_parameter_missing')];
+                                }
+                            }
 
                             $output = $approvalLevel->first();
 
@@ -3424,6 +3437,19 @@ class Helper
                                             }
                                         } else {
                                             return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                        }
+                                    }
+
+                                    if ($isPRTypeWise && ($reference_document_id == 1)) {
+                                        if (array_key_exists('prType', $params)) {
+                                            if ($params["prType"]) {
+                                                $approvalLevel->where('prType', $params["prType"]);
+                                                $approvalLevel->where('prTypeWise', 1);
+                                            } else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.pr_type_parameter_missing')];
                                         }
                                     }
 
@@ -6780,7 +6806,7 @@ class Helper
                     }
                     DB::commit();
 
-                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
+                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? trans('custom.referred_back') : trans('custom.rejected');
                     return ['success' => true, 'message' => trans('custom.document_successfully') . ' ' . $rejectedMsg];
 
                 } else {
@@ -7477,6 +7503,7 @@ class Helper
             'reportingAmount' => self::roundValue($reportingAmount),
             'localAmount' => self::roundValue($localAmount),
             'defaultAmount' => self::roundValue($defaultAmount),
+            'documentAmount' => self::roundValue($defaultAmount)
         );
 
         return $array;
@@ -10386,17 +10413,18 @@ class Helper
         }
 
         // Get base config from config file
-        $baseConfig = config('mpdf', []);
+//        $baseConfig = config('mpdf', []);
 
         // Set default font based on language
-        if ($lang === 'ar') {
-            $baseConfig['default_font'] = 'notosansarabic';
-        } else {
-            $baseConfig['default_font'] = 'poppins';
-        }
+//        if ($lang === 'ar') {
+//            $baseConfig['default_font'] = 'notosansarabic';
+//        } else {
+//            $baseConfig['default_font'] = 'poppins';
+//        }
 
         // Merge with additional config (additional config takes precedence)
-        return array_merge($baseConfig, $additionalConfig);
+//        return array_merge($baseConfig, $additionalConfig);
+        return $additionalConfig;
     }
 
     public static function getExcelFontFamily($lang = null)

@@ -948,7 +948,15 @@ class CustomerInvoiceAPIService extends AppBaseController
             if(isset($qo_master->detail)) {
                 foreach ($qo_master->detail as $item) {
                     $item_details_count = CustomerInvoiceItemDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemCodeSystem', $item->itemAutoID)->sum('qtyIssued');
-                    $qo_master_count = QuotationDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemAutoID', $item->itemAutoID)->sum('requestedQty');
+                    if($qo_master->salesType == 2){
+                        $qo_master_count = QuotationDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])
+                            ->where('itemAutoID', $item->itemAutoID)
+                            ->select(DB::raw('COALESCE(SUM(requestedQty * userQty),0) as totalQty'))
+                            ->first();
+                        $qo_master_count = $qo_master_count ? $qo_master_count->totalQty : 0;
+                    } else {
+                        $qo_master_count = QuotationDetails::where('quotationMasterID', $detail[0]['quotationMasterID'])->where('itemAutoID', $item->itemAutoID)->sum('requestedQty');
+                    }   
 
                     if ($qo_master) {
                         if ($qo_master_count == $item_details_count) {
@@ -3310,7 +3318,7 @@ class CustomerInvoiceAPIService extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-            if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
+            if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5 || $invoice->isPerforma == 4) {
                 if($invoice->salesType == 3 && isset($value->userQty) && $value->userQty != null){
                     $totalVATAmount += $value->qtyIssued * $value->VATAmount * $value->userQty;
                 }else{

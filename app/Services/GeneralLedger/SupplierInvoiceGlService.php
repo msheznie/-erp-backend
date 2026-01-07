@@ -82,6 +82,7 @@ use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
 use App\Models\Tax;
 use App\Models\SupplierMaster;
+use App\Models\MolContribution;
 
 
 class SupplierInvoiceGlService
@@ -132,6 +133,7 @@ class SupplierInvoiceGlService
         $poInvoiceDirectLocalExtCharge = 0;
         $poInvoiceDirectRptExtCharge = 0;
         $poInvoiceDirectTransExtCharge = 0;
+        $whtPaymentMethod = isset($masterData->whtPaymentMethod) ? $masterData->whtPaymentMethod : 0;
 
         $directVATDetails = TaxService::processDirectSupplierInvoiceVAT($masterModel["autoID"], $masterModel["documentSystemID"]);
         $rcmActivated = TaxService::isGRVRCMActivation($masterModel["autoID"]);
@@ -210,7 +212,7 @@ class SupplierInvoiceGlService
                 $data['documentLocalAmount'] = \Helper::roundValue($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt) * -1;
             } else if ($masterData->documentType == 3) { // check if it is supplier item invoice
-                $directItemCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->item_details[0]->netAmountTotal);
+                $directItemCurrencyConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $masterData->item_details[0]->netAmountTotal);
                 $data['documentTransAmount'] = \Helper::roundValue($masterData->item_details[0]->netAmountTotal + $masterData->item_details[0]->totalVATAmount + $poInvoiceDirectTransExtCharge) * -1;
                 $data['documentLocalAmount'] = \Helper::roundValue($directItemCurrencyConversion['localAmount'] + $masterData->item_details[0]->totalVATAmountLocal + $poInvoiceDirectLocalExtCharge) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($directItemCurrencyConversion['reportingAmount'] + $masterData->item_details[0]->totalVATAmountRpt + $poInvoiceDirectRptExtCharge) * -1;
@@ -331,10 +333,31 @@ class SupplierInvoiceGlService
 
                         
                     }
-                    $data['documentTransAmount'] = $data['documentTransAmount'] - $whtAmountCon;
-                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - $whtAmountConLocal;
-                    $data['documentRptAmount'] = $data['documentRptAmount'] - $whtAmountConRpt;
+                    $data['documentTransAmount'] = $data['documentTransAmount'] - ($whtPaymentMethod == 1 ? $whtAmountCon : 0);
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] - ($whtPaymentMethod == 1 ? $whtAmountConLocal : 0);
+                    $data['documentRptAmount'] = $data['documentRptAmount'] - ($whtPaymentMethod == 1 ? $whtAmountConRpt : 0);
 
+                }
+            }
+
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2)) {
+                $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
+                if ($molAmount > 0) {
+                    if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+                        $localER = ExchangeSetupConfig::calculateLocalER($data['documentTransAmount'], $data['documentLocalAmount']);
+                        $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
+                        
+                        $rptER = ExchangeSetupConfig::calculateReportingER($data['documentTransAmount'], $data['documentRptAmount']);
+                        $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
+                    } else {
+                        $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                        $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                        $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                    }
+                    
+                    $data['documentTransAmount'] = $data['documentTransAmount'] + $molAmount;
+                    $data['documentLocalAmount'] = $data['documentLocalAmount'] + $molAmountLocalConversion;
+                    $data['documentRptAmount'] = $data['documentRptAmount'] + $molAmountRptConversion;
                 }
             }
 
@@ -349,8 +372,51 @@ class SupplierInvoiceGlService
             $data['timestamp'] = \Helper::currentDateTime();
             array_push($finalData, $data);
 
+            if (isset($masterData->mol_applicable) && $masterData->mol_applicable == 1 && ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2)) {
+                if ($masterData->documentType != 4) {
+                    $molAmount = isset($masterData->mol_amount) ? $masterData->mol_amount : 0;
+                    if ($molAmount > 0 && isset($masterData->mol_setup_id) && $masterData->mol_setup_id > 0) {
+                        $molContribution = MolContribution::find($masterData->mol_setup_id);
+                        $molAuthority = null;
+                        if ($molContribution && $molContribution->authority_id) {
+                            $molAuthority = $molContribution->authority_id;
+                            $supplier = SupplierMaster::where('supplierCodeSystem', $molAuthority)->with('liablity_account')->first();
+                            if ($supplier) {
+                                $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
+                            }
+                        }
+
+                        $data['chartOfAccountSystemID'] = $molAuthority != null && isset($supplier) ? $supplier->liablity_account->chartOfAccountSystemID : null;
+                        $data['glCode'] = $molAuthority != null && isset($supplier) ? $supplier->liablity_account->AccountCode : null;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        if ($masterData->documentType == 0 || $masterData->documentType == 1 || $masterData->documentType == 2) {
+                            $data['documentTransAmount'] = \Helper::roundValue($molAmount) * -1;
+                            
+                            if ($masterData->documentType == 0 || $masterData->documentType == 2) {
+                                $lastEntry = end($finalData);
+                                $localER = ExchangeSetupConfig::calculateLocalER($lastEntry['documentTransAmount'], $lastEntry['documentLocalAmount']);
+                                $molAmountLocalConversion = ($localER != 0) ? $molAmount / $localER : 0;
+                                
+                                $rptER = ExchangeSetupConfig::calculateReportingER($lastEntry['documentTransAmount'], $lastEntry['documentRptAmount']);
+                                $molAmountRptConversion = ($rptER != 0) ? $molAmount / $rptER : 0;
+                            } else {
+                                $molAmountConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $molAmount);
+                                $molAmountLocalConversion = $molAmountConversion['localAmount'] ?? 0;
+                                $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
+                            }
+                            
+                            $data['documentLocalAmount'] = \Helper::roundValue($molAmountLocalConversion) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($molAmountRptConversion) * -1;
+                        }
+                        array_push($finalData, $data);
+                    }
+                }
+            }
+
             if ($retentionPercentage > 0) {
                 if ($masterData->documentType != 4) {
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "retention-control-account");
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -398,6 +464,7 @@ class SupplierInvoiceGlService
                     $whtAuthority = null;
                     if($taxSetup)
                     {
+                        $whtExpensGL = $taxSetup->inputVatGLAccountAutoID;
                         $whtAuthority = $taxSetup->authorityAutoID;
                         $supplier = SupplierMaster::where('supplierCodeSystem',$whtAuthority)->with('liablity_account')->first();
                         $data['supplierCodeSystem'] = $supplier->supplierCodeSystem;
@@ -415,6 +482,20 @@ class SupplierInvoiceGlService
                         
                     }
                     array_push($finalData, $data);
+
+
+                    if ($whtPaymentMethod == 2) {
+
+                        $data['chartOfAccountSystemID'] = $whtExpensGL;
+                        $data['glCode'] = ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']);
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                        $data['documentTransAmount'] = $whtTrans * -1;
+                        $data['documentLocalAmount'] = $whtLocal * -1;
+                        $data['documentRptAmount'] = $whtRpt * -1;
+                        array_push($finalData, $data);
+                    }
                 }
             }
             

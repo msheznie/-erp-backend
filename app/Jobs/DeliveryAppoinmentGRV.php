@@ -62,47 +62,59 @@ class DeliveryAppoinmentGRV implements ShouldQueue
             $mytime = new Carbon();
 
             $appoinment = Appointment::find($this->data['documentSystemCode']);
+
+            $selected_currency = $this->data['currencyId'];
             $selected_segment = $this->data['segment'];
-    
+            $appointmentDetailIds = $this->data['appointmentDetailIds'];
+
             $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->data['companySystemID'])
-            ->whereDate('bigginingDate', '<=', $mytime)
-            ->whereDate('endingDate', '>=', $mytime)
-            ->first();
-    
-    
-            if (!empty($fromCompanyFinanceYear)) {
-    
-                
-                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
-                ->where('departmentSystemID', 10)
-                ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
-                ->whereDate('dateFrom', '<=', $mytime)
-                ->whereDate('dateTo', '>=', $mytime)
+                ->whereDate('bigginingDate', '<=', $mytime)
+                ->whereDate('endingDate', '>=', $mytime)
                 ->first();
-    
-    
+
+
+            if (!empty($fromCompanyFinanceYear)) {
+
+
+                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
+                    ->where('departmentSystemID', 10)
+                    ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                    ->whereDate('dateFrom', '<=', $mytime)
+                    ->whereDate('dateTo', '>=', $mytime)
+                    ->first();
+
+
                 if(!empty($fromCompanyFinancePeriod)){
-    
-                    $supplierCurrencies = DB::table('suppliercurrency')
-                    ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                    ->where('supplierCodeSystem', '=', $appoinment->supplier_id)->first();
-    
-                   $serviceLine = SegmentMaster::where('serviceLineSystemID',$this->data['segment'])->first();
- 
+                    if ($selected_currency) {
+                        $currency = CurrencyMaster::find($selected_currency);
+                        if ($currency) {
+                            $supplierCurrencies = (object)[
+                                'currencyID' => $currency->currencyID,
+                                'ExchangeRate' => $currency->ExchangeRate ?? 1
+                            ];
+                        } else {
+                            $supplierCurrencies = SupplierCurrency::getSupplierCurrency($appoinment->supplier_id);
+                        }
+                    } else {
+                        $supplierCurrencies = SupplierCurrency::getSupplierCurrency($appoinment->supplier_id);
+                    }
+
+                    $serviceLine = SegmentMaster::where('serviceLineSystemID', $selected_segment)->first();
+
                     $detail['companySystemID'] = $this->data['companySystemID'];
                     $detail['stampDate'] = $mytime;
                     $detail['grvDate'] = $mytime;
                     $detail['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
                     $detail['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
                     $detail['grvTypeID'] = 2;
-                    $detail['serviceLineSystemID'] = $this->data['segment'];
+                    $detail['serviceLineSystemID'] = $selected_segment;
                     $detail['grvDoRefNo'] = $appoinment->primary_code;
                     $detail['grvNarration'] = 'Created from SRM Delivery Appointment '.$appoinment->primary_code;
                     $detail['grvLocation'] = $this->data['location'];
                     $detail['supplierID'] = $appoinment->supplier_id;
                     $detail['supplierTransactionCurrencyID'] = $supplierCurrencies->currencyID;
                     $detail['FYBiggin'] = $fromCompanyFinancePeriod->dateFrom;
-                    $detail['FYEnd'] = $fromCompanyFinancePeriod->dateTo;              
+                    $detail['FYEnd'] = $fromCompanyFinancePeriod->dateTo;
                     $detail['createdPcID'] = gethostname();
                     $detail['createdUserID'] =  \Helper::getEmployeeID();
                     $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
@@ -110,21 +122,21 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $detail['documentID'] = "GRV";
                     $detail["grvType"] = 'POG';
                     $detail["serviceLineCode"] = $serviceLine->ServiceLineCode;
-    
+
                     $company = Company::find($this->data['companySystemID']);
                     if ($company) {
-                    $detail['companyID'] = $company->CompanyID;
-                    $detail['localCurrencyID'] = $company->localCurrencyID;
-                    $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
+                        $detail['companyID'] = $company->CompanyID;
+                        $detail['localCurrencyID'] = $company->localCurrencyID;
+                        $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
                     }
-                    
+
                     $detail['vatRegisteredYN'] = 1;
                     $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
-    
+
                     $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $detail['supplierTransactionER'] = 1;
-    
+
                     $supplier = SupplierMaster::where('supplierCodeSystem', $appoinment->supplier_id)->first();
                     if ($supplier) {
                         $detail['supplierPrimaryCode'] = $supplier->primarySupplierCode;
@@ -134,19 +146,19 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['supplierFax'] = $supplier->fax;
                         $detail['supplierEmail'] = $supplier->supEmail;
                     }
-    
+
                     $lastSerial = GRVMaster::where('companySystemID', $this->data['companySystemID'])
-                    ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                    ->orderBy('grvSerialNo', 'desc')
-                    ->lockForUpdate()
-                    ->first();
-        
+                        ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                        ->orderBy('grvSerialNo', 'desc')
+                        ->lockForUpdate()
+                        ->first();
+
                     $lastSerialNumber = 1;
                     if ($lastSerial) {
                         $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
                     }
                     $detail['grvSerialNo'] = $lastSerialNumber;
-    
+
                     if ($fromCompanyFinancePeriod) {
                         $grvStartYear = $fromCompanyFinanceYear->bigginingDate;
                         $grvFinYearExp = explode('-', $grvStartYear);
@@ -157,26 +169,26 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $document_id = "GRV";
                     $grvCode = ($company->CompanyID . '\\' . $grvFinYear . '\\' . $document_id . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                     $detail['grvPrimaryCode'] = $grvCode;
-    
+
                     $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $appoinment->supplier_id)
-                    ->where('isDefault', -1)
-                    ->first();
-        
+                        ->where('isDefault', -1)
+                        ->first();
+
                     if ($supplierCurrency) {
-            
+
                         $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-            
+
                         $detail['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
-            
+
                         if ($erCurrency) {
                             $detail['supplierDefaultER'] = $erCurrency->ExchangeRate;
                         }
                     }
-    
+
                     $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $appoinment->supplier_id)
-                    ->where('companySystemID', $this->data['companySystemID'])
-                    ->first();
-        
+                        ->where('companySystemID', $this->data['companySystemID'])
+                        ->first();
+
                     if ($supplierAssignedDetail) {
                         $detail['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
                         $detail['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
@@ -184,29 +196,33 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
                     }
                     $detail['deliveryAppoinmentID'] = $this->data['documentSystemCode'];
-                    
+
                     $grvMaster = $grvMasterRepo->create($detail);
-    
+
                     $grvAutoID =  $grvMaster->grvAutoID;
                     $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
-                    ->first();
-                   
-                   
-                    $appoinment_details = AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
-                        $q->where('serviceLineSystemID',$selected_segment);
-                    })->where('appointment_id',$appoinment->id)->with(['item'])->get();
-    
+                        ->first();
+                    if ($appointmentDetailIds) {
+                        $appoinment_details = AppointmentDetails::whereIn('id', $appointmentDetailIds)
+                            ->where('appointment_id', $appoinment->id)
+                            ->with(['item', 'po_master'])->get();
+                    } else {
+                        $appoinment_details = AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+                            $q->where('serviceLineSystemID', $selected_segment);
+                        })->where('appointment_id', $appoinment->id)->with(['item'])->get();
+                    }
+
                     $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
-                    ->where('companySystemID', $GRVMaster->companySystemID)
-                    ->where('isYesNO', 1)
-                    ->exists();
+                        ->where('companySystemID', $GRVMaster->companySystemID)
+                        ->where('isYesNO', 1)
+                        ->exists();
 
                     foreach($appoinment_details as $val)
                     {
-    
+
                         $po_details =  PurchaseOrderDetails::find($val->po_detail_id);
                         $POMaster = ProcumentOrder::find($val->po_master_id);
-                       
+
                         $totalAddedQty = $val->qty + $po_details->receivedQty;
                         if ($po_details->noQty == $totalAddedQty) {
                             $goodsRecievedYN = 2;
@@ -215,7 +231,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             $goodsRecievedYN = 1;
                             $GRVSelectedYN = 0;
                         }
-                       
+
                         $detail['grvAutoID'] = $grvAutoID;
                         $detail['companySystemID'] = $GRVMaster->companySystemID;
                         $detail['companyID'] = $GRVMaster->companyID;
@@ -225,7 +241,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['itemCode'] = $val->item_id;
                         $detail['itemPrimaryCode'] = $val->item->primaryCode;
                         $detail['itemDescription'] = $val->item->itemDescription;
-                        
+
                         $financeCategorySub = FinanceItemCategorySub::find($val->item->financeCategorySub);
                         if(isset($financeCategorySub))
                         {
@@ -243,7 +259,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             $financeGLcodebBSSystemID = null;
                             $includePLForGRVYN = 0;
                         }
-            
+
                         $detail['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
                         $detail['financeGLcodebBS'] = $financeGLcodebBS;
                         $detail['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
@@ -255,20 +271,20 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['unitOfMeasure'] = $val->item->unit;
                         $detail['noQty'] = $val->qty;
                         $detail['wasteQty'] = 0;
-            
+
                         $detail['trackingType'] = (isset($val->trackingType)) ? $val->trackingType : null;
-               
+
                         $warehouseItem = array();
                         if($warehouseBinLocationPolicy && $val->item->financeCategoryMaster){
                             $warehouseItemTemp = WarehouseItems::where('warehouseSystemCode',$GRVMaster->grvLocation)
-                                                                 ->where('companySystemID' , $GRVMaster->companySystemID)
-                                                                 ->where('itemSystemCode',$val->item_id)
-                                                                 ->first();
+                                ->where('companySystemID' , $GRVMaster->companySystemID)
+                                ->where('itemSystemCode',$val->item_id)
+                                ->first();
                             if(!empty($warehouseItemTemp)){
                                 $warehouseItem = $warehouseItemTemp;
                             }
                         }
-            
+
                         $detail['prvRecievedQty'] = $po_details->receivedQty;
                         $detail['poQty'] = $po_details->noQty;
                         $totalNetcost = $po_details->GRVcostPerUnitSupTransCur * $val->qty;
@@ -304,31 +320,31 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['exempt_vat_portion'] = $po_details->exempt_vat_portion;
                         $detail['logisticsAvailable'] = $POMaster->logisticsAvailable;
                         $detail['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
-            
+
                         $detail['createdPcID'] = gethostname();
                         $detail['createdUserID'] = \Helper::getEmployeeID();
                         $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            
+
                         $mp = isset($po_details->markupPercentage)?$po_details->markupPercentage:0;
                         $markupArray = $this->setMarkupPercentage($po_details->GRVcostPerUnitSupTransCur,$GRVMaster,$mp);
-            
+
                         $detail['markupPercentage'] = $markupArray['markupPercentage'];
                         $detail['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
                         $detail['markupLocalAmount'] = $markupArray['markupLocalAmount'];
                         $detail['markupReportingAmount'] = $markupArray['markupReportingAmount'];
-    
+
                         $item = $gRVDetailsRepo->create($detail);
-    
+
                         $update = PurchaseOrderDetails::where('purchaseOrderDetailsID', $val->po_detail_id)
                             ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $totalAddedQty]);
-    
-    
+
+
                         $this->checkPrnAndUpdateAsReturnedUsed($val->po_detail_id, $val->qty, $item->grvDetailsID);
-                        
+
                         $purchaseOrderDetailTotalAmount = PurchaseOrderDetails::select(DB::raw('SUM(noQty) as detailQty,SUM(receivedQty) as receivedQty'))
-                        ->where('purchaseOrderMasterID', $val->po_master_id)
-                        ->first();
-    
+                            ->where('purchaseOrderMasterID', $val->po_master_id)
+                            ->first();
+
                         if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
                             $updatePO = ProcumentOrder::find($val->po_master_id)
                                 ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
@@ -336,24 +352,27 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             $updatePO = ProcumentOrder::find($val->po_master_id)
                                 ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
                         }
-            
+
                     }
-    
+
                     $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
-                    ->update(['pullType' => 1]);
+                        ->update(['pullType' => 1]);
+
+                    $existingGrv = Appointment::where('id', $this->data['documentSystemCode'])->value('grv');
+                    $grvCodes = $existingGrv ? $existingGrv . ',' . $GRVMaster->grvPrimaryCode : $GRVMaster->grvPrimaryCode;
 
                     $updateGrvMaster = Appointment::where('id', $this->data['documentSystemCode'])
-                    ->update(['grv_create_yn' => 1,'grv' => $GRVMaster->grvPrimaryCode]);
+                        ->update(['grv_create_yn' => 1, 'grv' => $grvCodes]);
 
                     DB::commit();
-    
+
                 }
                 else
                 {
                     Log::error('From Company Finance period not found, date : ');
-                    
+
                 }
-    
+
             }
             else{
                 Log::error('From Company Finance Year not found, date3 : ');

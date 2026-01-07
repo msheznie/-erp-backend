@@ -729,7 +729,8 @@ class PaySupplierInvoiceMasterReferback extends Model
         'modifiedPc',
         'createdDateTime',
         'timestamp',
-         'isDelegation'
+         'isDelegation',
+         'BPVcustomerID'
     ];
 
     /**
@@ -840,7 +841,8 @@ class PaySupplierInvoiceMasterReferback extends Model
         'createdPcID' => 'string',
         'modifiedUserSystemID' => 'integer',
         'modifiedUser' => 'string',
-        'modifiedPc' => 'string'
+        'modifiedPc' => 'string',
+        'BPVcustomerID' => 'integer'
     ];
 
     /**
@@ -860,6 +862,11 @@ class PaySupplierInvoiceMasterReferback extends Model
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo('App\Models\CustomerMaster', 'BPVcustomerID', 'customerCodeSystem');
     }
 
     public function bankaccount()

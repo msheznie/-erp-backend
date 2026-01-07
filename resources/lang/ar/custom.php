@@ -4,6 +4,9 @@ return
     [
     'default' => 'افتراضي',
     'so_qty_cannot_be_greater_than_balance' => 'لا يمكن أن تكون كمية طلب المبيعات أكبر من كمية الرصيد',
+    'total_qty_exceeds_remaining_quotation_qty' => 'الكمية الإجمالية (كمية الوحدة × كمية المستخدم) تتجاوز كمية عرض السعر المتبقية. يرجى تقليل القيم والمحاولة مرة أخرى.',
+    'cannot_exceed_quotation_user_qty' => 'لا يمكن تجاوز كمية المستخدم لعرض السعر. المسموح: :value',
+    'cannot_exceed_quotation_unit_qty' => 'لا يمكن تجاوز كمية الوحدة لعرض السعر. المسموح: :value',
     'selected_item_already_added' => 'المادة المحدد مضاف بالفعل. يرجى التحقق مرة أخرى',
     'no_items_selected_to_add' => 'لم يتم اختيار أي عناصر للإضافة',
     'item_not_configured_for_sales' => 'هذه المادة غير مُكوّنة للمبيعات.',
@@ -1198,6 +1201,8 @@ return
     'counters' => 'المناضد',
     'country_masters' => 'السجلات الرئيسية للدول',
     'country_masters_retrieved_successfully' => 'تم استرداد السجلات الرئيسية للدول بنجاح',
+    'contract_name' => 'اسم العقد',
+    'contract_reference_number' => 'رقم مرجع العقد',
     'cr_number' => 'رقم السجل التجاري',
     'created_at' => 'تاريخ الإنشاء',
     'created_by' => 'أنشئ بواسطة',
@@ -1563,6 +1568,7 @@ return
     'description_already_exists' => 'الوصف موجود بالفعل',
     'description_already_exists_1' => 'الوصف موجود بالفعل',
     'description_already_exists_for_this_company_with_a' => 'الوصف موجود بالفعل لهذه الشركة بمعاملة أو نوع مختلف.',
+    'contribution_description_already_exists' => 'وصف المساهمة موجود بالفعل',
     'description_already_exists_for_this_company_with_a_1' => 'الوصف موجود بالفعل لهذه الشركة بنوع أو معاملة مختلفة.',
     'description_is_required' => 'الوصف مطلوب',
     'description_removed_successfully' => 'تمت إزالة الوصف بنجاح',
@@ -2767,6 +2773,7 @@ return
     'item_client_reference_number_masters_retrieved_suc' => 'تم استرداد السجلات الرئيسية لأرقام مراجع عملاء العناصر بنجاح',
     'item_code' => 'رمز المادة',
     'item_data_not_found' => 'بيانات المادة غير موجودة',
+    'item_name' => 'اسم المادة',
     'item_deleted_successfully' => 'تم حذف المادة بنجاح',
     'item_deleted_successfully_1' => 'تم حذف المادة بنجاح',
     'item_deleted_successfully_2' => 'تم حذف المادة بنجاح',
@@ -3458,6 +3465,7 @@ return
     'vatin' => "الرقم الضريبي",
     'name_of_customer' => "اسم العميل",
     'taxable_rate' => "النسبة الخاضعة للضريبة",
+    'received_quantity' => 'الكمية المستلمة',
 
     // segment master
     'segment_not_found' => 'لم يتم العثور على المقطع',
@@ -4302,6 +4310,8 @@ return
     'quotation_version_details_saved_successfully' => 'تم حفظ تفاصيل إصدار عرض السعر بنجاح',
     'false' => 'خطأ',
     'so_quantity_field_is_required' => 'حقل كمية أمر البيع مطلوب',
+    'unit_qty_field_is_required' => 'حقل كمية الوحدة مطلوب',
+    'user_qty_field_is_required' => 'حقل كمية المستخدم مطلوب',
     'quotationdetailsrefferedback_updated_successfully' => 'تم تحديث إرجاع تفاصيل عرض السعر بنجاح',
     'quotationmasterrefferedback_updated_successfully' => 'تم تحديث إرجاع السجل الرئيسي لعرض السعر بنجاح',
     'quotationmasterversion_updated_successfully' => 'تم تحديث إصدار السجل الرئيسي لعرض السعر بنجاح',
@@ -5098,6 +5108,7 @@ return
     'lcc' => 'إل سي سي',
     'sme' => 'بي آر في',
     'icv_category' => 'فئة آي سي في',
+    'icv_report' => 'تقرير آي سي في',
     'icv_sub_category' => 'الفئة الفرعية لآي سي في',
     'expected_delivery_date' => 'تاريخ التسليم المتوقع',
     'manually_closed' => 'مغلق يدوياً',
@@ -6561,7 +6572,7 @@ return
     'bank_amount' => 'مبلغ البنك',
     'payment_code' => 'رمز الدفع',
     'payment_type' => 'نوع الدفع',
-    'sup_emp_other' => 'المورد / الموظف / أخرى',
+    'sup_emp_other' => 'المورد / الموظف / العميل / أخرى',
     'expense_claim_date' => 'تاريخ المطالبة بالمصروفات',
     'cancelled_by' => 'ألغاه',
     'cancelled_at' => 'أُلغي في',
@@ -6588,6 +6599,8 @@ return
     'ar_goods' => 'المواد',
     'ar_service' => 'الخدمات',
     'ar_subscription' => 'الاشتراك',
+    'ar_goods_and_services' => 'المواد والخدمات',
+    'sales_type' => 'نوع المبيعات',
     'type_not_allowed' => 'هذا النوع من الملفات غير مسموح برفعه.',
     'maximum_allowed_file_size' => 'تم تجاوز الحد الأقصى المسموح به لحجم الملف. يرجى رفع ملف أصغر من :sizeLimit',
     'unable_to_upload_the_attachment' => 'يتعذر رفع المرفق',
@@ -7412,6 +7425,7 @@ return
     'approved_user' => 'المستخدم المعتمد',
     'supplier_name_customer_name' => 'اسم المورد/اسم العميل',
     'supplier_code_customer_code' => 'رمز المورد/رمز العميل',
+    'vendor_classification' => 'تصنيف المورد',
     'document_year' => 'سنة المستند',
     'gl_dump_report' => 'تقرير تفريغ دفتر الأستاذ',
     'general_ledger_pdf_report' => 'تم إرسال تقرير دفتر الأستاذ العام بصيغة PDF إلى قائمة الانتظار',
@@ -7457,6 +7471,7 @@ return
     'supplier_vat_percentage' => 'نسبة ضريبة القيمة المضافة المورد',
     'logistics_available' => 'الخدمات اللوجستية متاحة',
     'supplier_vat_eligible' => 'خاضع لضريبة القيمة المضافة المورد',
+    'made_from' => 'مصنوع من',
     'made_locally' => 'مصنع محلياً',
     'supplier_code_system' => 'رمز المورد النظام',
     'booking_date' => 'تاريخ الحجز',
@@ -9003,6 +9018,7 @@ return
     'fixed_assets_cannot_add_to_quotations' => 'لا يمكن إضافة الأصول الثابتة إلى العروض',
     'item_not_found_or_no_category_type' => 'المادة غير موجود أو ليس له نوع فئة',
     'only_sales_items_can_add_to_quotations' => 'يمكن إضافة عناصر المبيعات فقط إلى العروض',
+    'only_service_items_can_add_to_quotations_for_sales_type_subscription' => 'يمكن إضافة عناصر الخدمة فقط إلى العروض لنوع المبيعات الاشتراك',
     'quotation_success' => 'نجح',
     'sales_document_not_found' => 'مستند المبيعات :type غير موجود',
     'sales_order_should_have_payment_term' => 'يجب أن يكون لطلب البيع على الأقل شرط دفع واحد',
@@ -9053,6 +9069,10 @@ return
     'please_select_liability_account' => 'يرجى تحديد حساب المسؤولية.',
     'please_select_unbilled_account' => 'يرجى تحديد الحساب غير المفوتر.',
     'please_select_advance_account' => 'يرجى تحديد حساب السلفة.',
+    'mol_payment_mode_is_required' => 'وضع دفع MOL مطلوب عندما يكون MOL قابل للتطبيق نعم.',
+    'mol_authority_not_assigned' => 'سلطة MOL غير معينة',
+    'mol_setup_cannot_be_deactivated' => 'لا يمكن تعطيل إعداد MOL هذا لأن هناك معاملات في انتظار الموافقة.',
+    'mol_setup_duplicate_combination' => 'يوجد بالفعل إعداد MOL بنفس نوع المساهمة ونوع حساب MOL',
     'lcc_field_is_required' => 'حقل مورد محلي مطلوب.',
     'sme_field_is_required' => 'حقل مؤسسة صغيرة ومتوسطة مطلوب.',
     'blocked_comment_is_required' => 'تعليق الحظر مطلوب.',
@@ -9211,14 +9231,14 @@ return
     'asset_code' => 'رمز الأصل',
     'are_you_sure_you_want_to_proceed' => 'هل أنت متأكد من أنك تريد المتابعة',
     'quotation_so_report' => 'كوتيشن _ إس أو _ ريبورت',
-    
+
     // Additional translations for ProcumentOrderAPIController
     'invoice_payment' => 'دفع الفاتورة',
     'expense_account_configuration_incorrect' => 'إعداد حساب المصروفات غير صحيح. يرجى تفعيل includePLforGRVYN للمادة(ات) :items',
     'finance_category_not_found' => 'فئة الإرتباط المالي للمواد :itemCode غير موجودة',
     'finance_category_accounts_not_updated' => 'حسابات فئة الإرتباط المالي غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة الإرتباط المالي للمادة :item',
     'finance_category_accounts_not_updated_multiple' => 'حسابات فئة الإرتباط المالي غير محدثة بشكل صحيح. يرجى التحقق من إعدادات فئة الإرتباط المالي للمواد (ات) :items',
-    
+
     // Additional translations for ExportPODetailExcel
     'unable_to_export_excel' => 'غير قادر على تصدير ملف إكسل',
     'hash' => '#',
@@ -9269,7 +9289,7 @@ return
     'vat_sub_category' => 'فئة فرعية لضريبة القيمة المضافة',
     'addon_details' => 'تفاصيل الإضافات',
     'purchase_order_detailed_excel_generated' => 'تم إنشاء ملف إكسل مفصل لأمر الشراء',
-    
+
     // Document names for export
     'purchase_order' => 'أمر الشراء',
     'purchase_direct_order' => 'أمر شراء مباشر',
@@ -9362,7 +9382,7 @@ return
     'image_not_found' => 'الصورة غير موجودة',
     'net_profit_or_loss_(as_per_profit/loss_account)' => 'صافي الربح أو الخسارة (حسب حساب الأرباح والخسائر)',
     'supplier_statement_' => 'كشف_المورد_',
-    
+
     // Budget Consumption Service Translations
     'budget_exceeded_project' => 'تم تجاوز الميزانية للمشروع : ',
     'budget_exceeded_gl_account' => 'تم تجاوز الميزانية لحساب دفتر الأستاذ : ',
@@ -9380,7 +9400,7 @@ return
     'budget_check_not_set_document' => 'لم يتم تعيين فحص الميزانية لهذا المستند',
     'budget_consumption_not_set_document' => 'لم يتم تعيين استهلاك الميزانية لهذا المستند',
     'warehouse_required' => 'حقل المستودع مطلوب',
-    
+
     // Payment Terms Translations
     'payment_terms' => 'شروط الدفع',
     'delivery_terms' => 'شروط التسليم',
@@ -9398,7 +9418,7 @@ return
     'termination' => 'الإنهاء',
     'insurance' => 'التأمين',
     'indemnity' => 'التعويض',
-    
+
     // Procurement Order Service translations
     'item_qty_not_updated' => 'لم يتم تحديث كمية المادة لصف إكسل: :row',
     'quantity_numeric_required' => 'يجب أن تكون الكمية قيمة رقمية لصف إكسل: :row',
@@ -9416,7 +9436,7 @@ return
     'item_code_not_match' => 'رمز المادة لا يتطابق مع النظام لصف إكسل: :row',
     'item_already_allocated' => 'تم تخصيص المادة بالفعل لمركز التكلفة المحدد',
     'add_multiple_items_end' => 'انتهاء إضافة عناصر متعددة',
-    
+
     // Purchase Order Status Controller translations
     'something_went_wrong_contact_admin' => 'حدث خطأ ما. يرجى الاتصال بمدير النظام',
     'unable_to_edit_status' => 'لا يمكنك تعديل هذا الحالة',
@@ -9427,19 +9447,19 @@ return
     'grv_not_received' => 'لم يتم الاستلام',
     'grv_partially_received' => 'تم الاستلام جزئياً',
     'validation_valid' => 'صحيح',
-    
+
     // PO Payment Terms Controller translations
     'at_least_one_item_required' => 'يجب إضافة مادة واحدة على الأقل لإنشاء شروط الدفع',
     'payment_in' => 'دفع داخلي',
     'advance_payment' => 'دفعة مقدمة',
-    
+
     // Email body translations
     'email_status_label' => 'الحالة :',
     'email_comment_label' => 'التعليق :',
-    
+
     // Excel sheet translations
     'excel_sheet_name' => 'ورقة',
-    
+
     // Excel column headers
     'excel_company_id' => 'معرف المؤسسة',
     'excel_order_details' => 'تفاصيل الطلب',
@@ -9448,12 +9468,12 @@ return
     'excel_logistics_details' => 'تفاصيل اللوجستيات',
     'excel_category' => 'الفئة',
     'excel_addon_details' => 'تفاصيل الإضافات',
-    
+
     // Excel file names
     'excel_po_details_export' => 'تصدير_تفاصيل_أوامر_الشراء',
     'excel_pr_details_export' => 'تصدير_تفاصيل_طلبات_الشراء',
     'excel_po_detail_export' => 'تصدير_تفاصيل_أوامر_الشراء',
-    
+
     // Shift Details Controller translations
     'inventory_availability' => 'توفر المخزون',
 
@@ -9491,16 +9511,16 @@ return
     'dep_amount_local' => 'قيمة الإهلاك المحلية',
     'dep_amount_rpt' => 'قيمة الإهلاك (العملة الأجنبية)',
     'asset_depreciation' => 'إهلاك_الأصول',
-    
+
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
-    
+
     // Export error messages
     'unable_to_export_excel' => 'غير قادر على تصدير ملف إكسل',
     // Excel export file names
     'pr_detail_export' => 'تصدير_تفاصيل_طلب_الشراء',
-    
+
     // Excel column headers
     'excel_company_id' => 'معرف المؤسسة',
     'excel_order_details' => 'تفاصيل الطلب',
@@ -9509,11 +9529,11 @@ return
     'excel_logistics_details' => 'تفاصيل اللوجستيات',
     'excel_category' => 'الفئة',
     'excel_addon_details' => 'تفاصيل الإضافات',
-    
+
     // Notification translations
     'purchase_order_detailed_excel_generated' => 'تم إنشاء ملف إكسل مفصل لأمر الشراء',
     'excel_generation_completed' => 'تم إنشاء ملف الإكسل بنجاح',
-    
+
     // Status translations
     'deactivated' => 'معطل',
     'activated' => 'مفعل',
@@ -9529,7 +9549,7 @@ return
 
     // Match document master
     'debit_note_amount_more_than_document' => 'مبلغ إشعار الخصم أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
-   
+
     'advance_payment_amount_more_than_document' => 'مبلغ الدفعة المقدمة أكبر من قيمة المستند، يرجى التحقق مرة أخرى',
     'no_active_finance_year_found' => 'لم يتم العثور على سنة مالية نشطة',
     'matching_type_found' => 'تم العثور على نوع مطابقة',
@@ -9588,6 +9608,7 @@ return
     'invalid_rrv_setup_schedule_id' => 'معرف الجدول المتكرر غير صالح',
     'recurring_voucher_setup_schedule_not_found' => 'الجدول المتكرر غير موجود',
     'document_not_approved' => 'المستند غير موافق عليه',
+    'pr_type_is_not_selected' => 'نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.',
     'file_type_required' => 'نوع الملف مطلوب.',
     'file_type_string'   => 'يجب أن يكون نوع الملف نصًا.',
     'file_size_required' => 'حجم الملف مطلوب.',
@@ -9613,5 +9634,115 @@ return
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
     'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
     'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
-    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام'
-];
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
+
+    // Procurement Lifecycle Report
+    'pr_value' => 'قيمة طلب الشراء',
+    'pr_approvals' => 'موافقات طلب الشراء',
+    'po_approvals' => 'موافقات أمر الشراء',
+    'tender_code' => 'رمز المناقصة/طلب العروض',
+    'tender_approvals' => 'موافقات المناقصة/طلب العروض',
+    'bid_submission_date' => 'تاريخ تقديم العطاءات',
+    'technical_evaluation_date' => 'تاريخ التقييم الفني',
+    'commercial_evaluation_date' => 'تاريخ التقييم التجاري',
+    'published_date' => 'تاريخ النشر',
+    'contract_code' => 'رمز العقد',
+    'contract_variation' => 'تعديل العقد',
+    'contract_variation_types' => 'أنواع تعديل العقد',
+    'commencement_date' => 'تاريخ البدء',
+    'agreement_signed_date' => 'تاريخ توقيع الاتفاقية',
+    'contract_end_date' => 'تاريخ انتهاء العقد',
+    'procurement_lifecycle_report' => 'تقرير دورة حياة المشتريات',
+
+    'pr_po_grv' => 'طلب / أمر / استلام',
+    'direct_grv' => 'إيصال استلام مباشر',
+    'supplier_invoice' => 'فاتورة المورد',
+    'sme' => 'صغيرة ومتوسطة',
+    'llc' => 'ذ.م.م',
+    'asset_depreciation_print' => 'إهلاك الأصل',
+    'financial_period' => 'الفترة المالية',
+    'dep_type' => 'نوع الإهلاك',
+    'monthly_dep' => 'الإهلاك الشهري',
+    'asset_depreciation_pdf_report_has_been_sent_to_queue' => 'تم إرسال تقرير استهلاك الأصول الثابتة (PDF) إلى قائمة الانتظار',
+    'asset_depreciation_report_pdf_generated' => 'تم إنشاء ملف PDF لتقرير إهلاك الأصول.',
+    'mol_contribution' => 'مساهمة المول',
+    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.',
+    'llc' => 'ذ.م.م',
+    'deduct_from_invoice' => 'طريقة الدفع (المورد)',
+    'organization_bears_wht' => 'المؤسسة تدفع WHT',
+    'supplier_has_pending_documents' => 'لا يمكن تعديل المورد كونه لديه مستندات معلقة',
+    'use_of_supplier_checking_done' => 'تم التحقق من المورد بنجاح',
+    'no_valid_records_found_in_excel' => 'لم يتم العثور على سجلات صالحة في ملف Excel. يرجى التأكد من أن الملف يحتوي على صفوف بيانات.',
+    'supplier_name_is_mandatory' => 'اسم المورد إلزامي',
+    'address_is_mandatory' => 'العنوان إلزامي',
+    'telephone_is_mandatory' => 'الهاتف إلزامي',
+    'registration_number_is_mandatory' => 'رقم التسجيل إلزامي',
+    'vat_percentage_should_numbers_only' => 'يجب أن تكون نسبة ضريبة القيمة المضافة أرقامًا فقط',
+    'company_is_mandatory' => 'الشركة إلزامية',
+    'supplier_group_is_mandatory' => 'مجموعة المورد إلزامية',
+    'supplier_group_not_matching_with_system' => 'مجموعة المورد لا تتطابق مع النظام',
+    'supplier_category_is_mandatory' => 'فئة المورد إلزامية',
+    'supplier_category_not_matching_with_system' => 'فئة المورد لا تتطابق مع النظام',
+    'country_is_mandatory' => 'البلد إلزامي',
+    'country_not_matching_with_system' => 'البلد لا يتطابق مع النظام',
+    'currency_not_matching_with_system' => 'العملة لا تتطابق مع النظام',
+    'gl_code_is_mandatory' => 'رمز GL إلزامي (:area)',
+    'gl_code_not_matching_with_system' => 'رمز GL المحدد لا يتطابق مع النظام (:area)',
+    'gl_code_not_active' => 'رمز GL المحدد غير نشط (:area)',
+    'gl_code_not_approved' => 'رمز GL المحدد غير معتمد (:area)',
+    'gl_code_not_control_account' => 'رمز GL المحدد ليس حساب تحكم (:area)',
+    'gl_type_not_matching' => 'نوع GL المحدد لا يتطابق (:area)',
+    'email_is_mandatory' => 'البريد الإلكتروني إلزامي',
+    'please_enter_valid_email_address' => 'يرجى إدخال عنوان بريد إلكتروني صالح',
+    'field_is_mandatory' => ':field إلزامي',
+    'field_should_be_numeric' => ':field يجب أن يكون رقميًا',
+    'field_should_be_positive' => 'القيم :field يجب أن تكون رقمًا موجبًا',
+    'date_format_not_matching' => 'تنسيق تاريخ :field لا يتطابق (التنسيق :format)',
+    'wht_applicable_value_not_matching_with_system' => 'قيمة WHT Applicable لا تتطابق مع النظام',
+    'wht_type_method_is_mandatory' => 'نوع WHT إلزامي',
+    'wht_type_not_matching_with_system' => 'نوع WHT لا يتطابق مع النظام',
+    'wht_payment_method_is_mandatory' => 'طريقة دفع WHT إلزامية',
+    'mol_payment_method_is_mandatory' => 'طريقة دفع MOL إلزامية',
+    'mol_applicable_value_not_matching_with_system' => 'قيمة MOL Applicable لا تتطابق مع النظام',
+    'mol_payment_method_not_matching_with_system' => 'طريقة دفع MOL لا تتطابق مع النظام',
+    'vat_eligible_value_not_matching_with_system' => 'قيم VAT Eligible لا تتطابق مع النظام',
+    'wht_stup_is_not_assigned' => 'إعداد ضريبة الاستقطاع (WHT) غير مكتمل: يرجى تعيين حسابات الأستاذ العام لكلٍ من المورّد والمصروف قبل تأكيد الفاتورة.',
+    'wht_type_not_found' => 'نوع ضريبة الاستقطاع (WHT) غير موجود',
+    'start_date_is_required_for_time_based_access' => 'تاريخ البدء مطلوب للوصول القائم على الوقت.',
+    'end_date_is_required_for_time_based_access' => 'تاريخ الانتهاء مطلوب للوصول القائم على الوقت.',
+    'start_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ البدء أكبر من أو يساوي التاريخ الحالي.',
+    'end_date_must_be_greater_than_or_equal_to_current_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي التاريخ الحالي.',
+    'end_date_must_be_greater_than_or_equal_to_start_date' => 'يجب أن يكون تاريخ الانتهاء أكبر من أو يساوي تاريخ البدء.',
+    'delegation_cannot_be_created_delegation_end_date_earlier_than_access_end_date' => 'لا يمكن إنشاء التفويض. تاريخ انتهاء التفويض أقدم من تاريخ انتهاء وصول المستخدم.',
+    'user_qty' => 'كمية المستخدم',
+    'secondary_code_is_mandatory' => 'الرمز الثانوي إلزامي',
+    'customer_name_is_mandatory' => 'اسم العميل إلزامي',
+    'receivable_account_and_unbilled_account_cannot_be_same' => 'لا يمكن أن يكون حساب القبضات وحساب الفواتير غير المفوترة متماثلين',
+    'customer_category_not_matching_with_system' => 'فئة العميل لا تتطابق مع النظام',
+    'credit_period_cannot_exceed_maximum_digits' => 'لا يمكن أن يتجاوز فترة الائتمان الحد الأقصى المسموح به من الأرقام.',
+    'secondary_code_duplicate_in_upload' => 'الرمز الثانوي مكرر داخل ملف الرفع.',
+    'customer_name_max_length_exceeded' => 'لا يمكن أن يتجاوز اسم العميل :max حرفًا.',
+    'duplicate_row_detected' => 'تم اكتشاف صف مكرر في ملف الرفع.',
+    'maximum_record_limit_exceeded' => 'تم تجاوز الحد الأقصى لعدد السجلات. يرجى رفع حد أقصى :max سجل في المرة الواحدة.',
+    'vat_number_requires_vat_eligible' => 'يتطلب رقم ضريبة القيمة المضافة أن تكون ضريبة القيمة المضافة المؤهلة "نعم".',
+    'credit_limit_overflow' => 'يتجاوز حد الائتمان القيمة القصوى المسموح بها.',
+    'credit_limit_cannot_exceed_maximum_digits' => 'لا يمكن أن يتجاوز حد الائتمان الحد الأقصى المسموح به من الأرقام.',
+    'invalid_web_address' => 'تنسيق عنوان الويب غير صحيح.',
+    'vat_percentage_decimal_precision' => 'لا يمكن أن يحتوي نسبة ضريبة القيمة المضافة على أكثر من منزلتين عشريتين.',
+    'customer_vat_percentage_range' => 'يجب أن تكون نسبة ضريبة القيمة المضافة بين 0 و 100.',
+    'deleted_successfully' => ':attribute تم حذفه بنجاح',
+    'you_are_not_authorized_to_approve_this_document' => 'أنت غير مصرح للموافقة على هذا المستند',
+    'not_all_departments_confirmed' => 'لم يتم التأكد من جميع الأقسام',
+    'only' => 'فقط',
+    'total' => 'المجموع',
+    'excel_file_has_no_headers' => 'ملف Excel لا يحتوي على رؤوس أعمدة.',
+    'excel_headers_mismatch' => 'رؤوس أعمدة ملف Excel مفقودة أو لا تطابق التنسيق المتوقع.',
+    'invalid_headers' => 'رؤوس الأعمدة غير الصحيحة:',
+    'expected_headers' => 'رؤوس الأعمدة المتوقعة:',
+    'credit_period_minimum_value' => 'الحد الأدنى لقيمة فترة الائتمان هو 1.',
+    'credit_period_cannot_be_decimal' => 'لا يمكن أن تكون فترة الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
+    'credit_limit_minimum_value' => 'الحد الأدنى لقيمة حد الائتمان هو 1.',
+    'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
+    'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
+    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا'
+  ];

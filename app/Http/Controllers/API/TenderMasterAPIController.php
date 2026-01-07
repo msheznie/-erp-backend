@@ -389,7 +389,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderMasterList(Request $request)
     {
         $input = $request->all();
-
+        $documentSystemId = isset($input['rfx']) && $input['rfx'] ? 113 : 108;
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -400,11 +400,25 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input){
+        $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency','approvedRejectStatus'=>function($q) use ($companyId, $input, $documentSystemId){
             $q->select('documentSystemCode','status')
                 ->where('companySystemID', $companyId)
-                ->where('documentSystemID', isset($input['rfx']) && $input['rfx'] ? 113 : 108);
-        }])->where('company_id', $companyId);
+                ->where('documentSystemID', $documentSystemId);
+        }, 'latestTenderEditLog' => function ($q) use ($documentSystemId) {
+            $q->select('id','version_id')
+            ->whereHas('documentModifyRequest', function ($q1) use ($documentSystemId) {
+                $q1->where('requested_document_master_id', $documentSystemId);
+            })
+                ->with(['documentModifyRequest' => function ($q1) use ($documentSystemId) {
+                    $q1->select('requested_document_master_id','documentSystemCode')
+                    ->where('requested_document_master_id', $documentSystemId);
+                }])
+                ->orderBy('amd_id', 'desc')
+                ->limit(1);
+        }, 'tenderSupplierAssignee' => function ($q) use ($companyId) {
+            $q->where('mail_sent',0)
+            ->where('company_id', $companyId);
+        } ])->where('company_id', $companyId);
 
         $filters = $this->getFilterData($input);
 
@@ -4803,6 +4817,7 @@ class TenderMasterAPIController extends AppBaseController
         $employeeID = $request->get('userID');
         $companyId = $request->get('companySystemID');
         $isNegotiation = $request->get('isNegotiation');
+        $lang = $request->get('lang', 'en');
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
@@ -4849,11 +4864,48 @@ class TenderMasterAPIController extends AppBaseController
         $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids,
             'isNegotiation' => $isNegotiation,
             'tenderBidsSupplierList' => $tenderBidsSupplierList,
-            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails);
-        $html = view('print.minutes_of_bid_opening_print', $order);
+            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails,
+            'lang' => $lang);
+        /*$html = view('print.minutes_of_bid_opening_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);*/
+
+        $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'setAutoTopMargin' => 'stretch',
+            'setAutoBottomMargin' => 'stretch',
+            'autoMarginPadding' => -10,
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 10,  // Increased to accommodate footer content
+            'margin_header' => 9,
+            'margin_footer' => 9
+        ], $lang);
+
+        if ($isRTL) {
+            $mpdfConfig['direction'] = 'rtl'; // Set RTL direction for mPDF
+        }
+
+        $html = view('print.minutes_of_bid_opening_print', $order);
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+
+        try {
+            $mpdf->WriteHTML($html);
+            return $mpdf->Output($fileName, 'I');
+        } catch (\Exception $e) {
+            \Log::error('mPDF Error in getTenderBidOpeningReport: ' . $e->getMessage());
+            return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+
+
 
     }
 
