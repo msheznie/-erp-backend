@@ -2,6 +2,7 @@
 
 namespace App\Services\API;
 
+use App\helper\CustomerAssignService;
 use App\helper\Helper;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -623,6 +624,16 @@ class CustomerMasterBulkUploadService
                 $customerCurrency->isAssigned = -1;
                 $customerCurrency->isDefault = -1;
                 $customerCurrency->save();
+            }
+
+            // Auto assign customer to company - related to approval process
+            $assignResult = CustomerAssignService::assignCustomer($customerMaster->customerCodeSystem, $companySystemID);
+            if (!$assignResult['status']) {
+                DB::rollBack();
+                return [
+                    'status' => false,
+                    'message' => trans('custom.error_assign_customer', 'Error occurred while assigning customer to company')
+                ];
             }
 
             DB::commit();
