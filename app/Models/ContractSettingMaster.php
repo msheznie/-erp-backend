@@ -63,4 +63,16 @@ class ContractSettingMaster extends Model
         ])->where('contractId', $contractMasterId)
             ->get();
     }
+
+    public static function getActiveContractSectionDetails($contractId){
+
+        return ContractSettingMaster::where('contractId', $contractId)
+            ->where('isActive', 1)
+            ->with('contractTypeSection:ct_sectionId,cmSection_id')
+            ->get()
+            ->pluck('contractTypeSection.cmSection_id')
+            ->filter()
+            ->values()
+            ->toArray();
+    }
 }

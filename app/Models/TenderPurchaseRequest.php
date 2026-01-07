@@ -98,4 +98,17 @@ class TenderPurchaseRequest extends Model
             ->orderBy('id', 'desc')
             ->get();
     }
+
+    /**
+     * Get linked tender IDs for a company
+     *
+     * @param int $companyId
+     * @return array
+     */
+    public static function getLinkedTenderIds($companyId)
+    {
+        return self::where('company_id', $companyId)
+            ->pluck('tender_id')
+            ->toArray();
+    }
 }

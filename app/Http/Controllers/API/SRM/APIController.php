@@ -114,6 +114,7 @@ define('GET_ITEM_DETAIL', 'GET_ITEM_DETAIL');
 define('GET_SUB_CATEGORIES_BY_MAIN_CATEGORY', 'GET_SUB_CATEGORIES_BY_MAIN_CATEGORY');
 define('UPDATE_IS_BID_TENDER_STATUS', 'UPDATE_IS_BID_TENDER_STATUS');
 define('ACKNOWLEDGE_PO', 'ACKNOWLEDGE_PO');
+define('GET_CONTRACT_MASTER_DETAILS', 'GET_CONTRACT_MASTER_DETAILS');
 
 
 class APIController extends Controller
@@ -323,6 +324,8 @@ class APIController extends Controller
                 return $this->SRMService->updateIsBidTenderStatus($request);
             case ACKNOWLEDGE_PO :
                 return $this->SRMService->acknowledgePo($request);
+            case GET_CONTRACT_MASTER_DETAILS :
+                return $this->SRMService->getContractMasterById($request);
             default:
                 return [
                     'success'   => false,
@@ -354,8 +357,8 @@ class APIController extends Controller
             ]);
 
             if ($request->input('request') == 'GET_SUPPLIER_DETAILS') {
-                if ($response->data) {
-                    foreach ($response->data  as $key1 => $data1) {
+                if ($response->data && $response->data->supplier_details) {
+                    foreach ($response->data->supplier_details  as $key1 => $data1) {
                         foreach ($data1->groups as $val2) {
                             foreach ($val2->controls as $val3) {
                                 foreach ($val3->field->values as $key1 => $val4) {
