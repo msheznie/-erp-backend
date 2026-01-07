@@ -660,10 +660,10 @@ class PaymentVoucherGlService
                             $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $tax->transAmount + $bankChargeDetailsSum->dpAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $tax->localAmount + $bankChargeDetailsSum->localAmount) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $tax->localAmount) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $tax->rptAmount + $bankChargeDetailsSum->comRptAmount) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $tax->rptAmount) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -864,10 +864,10 @@ class PaymentVoucherGlService
                             $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $exemptVatTotal->vatAmount + $bankChargeDetailsSum->dpAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $exemptVatTotal->VATAmountLocal + $bankChargeDetailsSum->localAmount) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $exemptVatTotal->VATAmountLocal) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $exemptVatTotal->VATAmountRpt + $bankChargeDetailsSum->comRptAmount) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $exemptVatTotal->VATAmountRpt) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -1345,7 +1345,7 @@ class PaymentVoucherGlService
                 if($masterData->expenseClaimOrPettyCash == 1)
                 {
                     $masterRpt1 =  \Helper::roundValue($dpTotal->transAmount/$masterData->companyRptCurrencyER);
-                    $diffRptAmount = \Helper::roundValue($convertedRpt) - \Helper::roundValue($masterRpt1);
+                    $diffRptAmount = \Helper::roundValue($convertedRpt + $bankChargeDetailsSum->comRptAmount) - \Helper::roundValue($masterRpt1);
                     $tolerance = 1e-6; 
                         if (abs($diffRptAmount) < $tolerance) {
                             $diffRptAmount = 0;
@@ -1353,21 +1353,21 @@ class PaymentVoucherGlService
                 }
                 else
                 {
-                    $diffRptAmount = $convertedRpt - $masterRpt;
+                    $diffRptAmount = $convertedRpt + $bankChargeDetailsSum->comRptAmount - $masterRpt;
                 }
                
 
                 if($exemptVatTotal && isset($expenseCOA) && $expenseCOA->recordType == 2) {
-                    $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
-                    $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
+                    $diffTrans = ($convertedTrans + $bankChargeDetailsSum->dpAmount) - ($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount) - $exemptVatTotal->vatAmount;
+                    $diffLocal = ($convertedLocalAmount + $bankChargeDetailsSum->localAmount) - $masterLocal - $exemptVatTotal->VATAmountLocal;
                     $diffRpt = $diffRptAmount - $exemptVatTotal->VATAmountRpt;
                 }
                 else{
-                    $diffTrans = $convertedTrans - $dpTotal->transAmount;
-                    $diffLocal = $convertedLocalAmount - $masterLocal;
+                    $diffTrans = ($convertedTrans + $bankChargeDetailsSum->dpAmount) - ($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount);
+                    $diffLocal = ($convertedLocalAmount + $bankChargeDetailsSum->localAmount) - $masterLocal;
                     $diffRpt = $diffRptAmount;
                 }
-
+               
                 if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
                     $company = Company::find($masterData->companySystemID);
