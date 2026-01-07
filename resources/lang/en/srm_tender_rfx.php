@@ -306,5 +306,9 @@ return [
     'tender_reopened_success' => 'Tender reopened successfully',
     'technical_eval_percentage_total' => 'Total of the Technical Evaluation Criteria percentage should be equal to 100',
     'cannot_amend_document' => 'You cannot amend this document',
-    'tender_amended_successfully' => 'Tender amended successfully'
+    'tender_amended_successfully' => 'Tender amended successfully',
+    'successfully_cloned' => 'Successfully Cloned',
+    'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => ':doc is requested for Edit/Amend, kindly approve the request to enable clone',
+    'price_bid_format_master_id_required' => 'Price bid format master id is required',
+    'company_id_required' => 'Company id is required'
 ];

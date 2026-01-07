@@ -19,7 +19,25 @@ use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
+use App\Models\ContractAdditionalDocuments;
+use App\Models\ContractBOQItems;
+use App\Models\ContractDeliverables;
+use App\Models\ContractDocument;
 use App\Models\ContractMaster;
+use App\Models\ContractMilestone;
+use App\Models\ContractMilestonePaymentSchedules;
+use App\Models\ContractMilestonePenaltyDetail;
+use App\Models\ContractMilestonePenaltyMaster;
+use App\Models\ContractMilestoneRetention;
+use App\Models\ContractOverallPenalty;
+use App\Models\ContractOverallRetention;
+use App\Models\ContractPaymentTerms;
+use App\Models\ContractPeriodicBillings;
+use App\Models\ContractSettingDetail;
+use App\Models\ContractSettingMaster;
+use App\Models\ContractStatusHistory;
+use App\Models\ContractTimeMaterialConsumption;
+use App\Models\ContractUserAssign;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
@@ -1312,22 +1330,35 @@ class SRMService
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $warehouseId = $request->input('extra.warehouseId');
         $appointDate = $request->input('extra.appointDate');
+        $invoiceCreated = $request->input('extra.invoiceCreated');
         $search = $request->input('search.value');
 
-        $query = DB::table('appointment')
-            ->select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
+        $query = Appointment::
+            select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
                 'appointment.created_at as appointmentCreatedDate',
                 'suppliermaster.supplierName as appointmentCreatedBy', 'suppliermaster.supplierName',
                 'warehousemaster.wareHouseDescription', 'appointment.primary_code', 'slot_details.start_date',
                 'slot_details.end_date', 'appointment.confirmed_yn', 'appointment.approved_yn', 'appointment.cancelYN',
-                'appointment.document_system_id', 'appointment.company_id')
+                'appointment.document_system_id', 'appointment.company_id', 'appointment.id', 'appointment.slot_detail_id')
             ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
             ->where('appointment.supplier_id', $supplierID)
             ->join('suppliermaster', 'appointment.created_by', 'suppliermaster.supplierCodeSystem')
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
-            ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode');
+            ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
+        ->with([
+                'grv' => function ($query) {
+                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+                },
+                'invoice' => function ($query) {
+                    $query->select('deliveryAppoinmentID');
+                },
+            'slot_detail' => function ($query) {
+                $query->select('id','slot_master_id', 'company_id');
+            }
+            ])
+        ;
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -1349,7 +1380,18 @@ class SRMService
             $query->whereDate('start_date', Carbon::parse($appointDate)->format('Y-m-d'));
         }
 
+        if (!is_null($invoiceCreated)) {
+            if ((int) $invoiceCreated === 1) {
+                $query->whereHas('invoice');
+            } else if ((int) $invoiceCreated === 0) {
+                $query->whereDoesntHave('invoice');
+            }
+        }
+
         $data = DataTables::of($query)
+            ->addColumn('attachmentPolicyEnabled', function ($row) {
+                return Helper::checkPolicy($row->company_id, 104);
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -6964,6 +7006,7 @@ class SRMService
                 'approve' => $item->approved_yn,
                 'confirm' => $item->confirmed_yn,
                 'status' => $item->status,
+                'uuid' => $item->uuid
             ];
         });
 
@@ -7261,4 +7304,275 @@ class SRMService
             [$poCreator->employeeSystemID]
         );
     }
-}   
+
+    public function getContractMasterById(Request $request){
+        $uuid = $request->input('extra.uuid');
+        $contractMaster = ContractMaster::getContractMasterById($uuid);
+
+        if(empty($contractMaster))
+        {
+            return ['error' => $this->generateResponse(false, 'Contract Master not found')];
+        }
+
+        $selectedCompanyID = $contractMaster->companySystemID;
+        $currencyId = Company::getLocalCurrencyID($selectedCompanyID);
+        $decimalPlaces = CurrencyMaster::getDecimalPlaces($currencyId);
+        $currencyCode = CurrencyMaster::getCurrencyCode($currencyId);
+        $assignedUsers = ContractUserAssign::getAssignedUsers($selectedCompanyID, $uuid)->get();
+        $boqItems = ContractBOQItems::getBoqItems($selectedCompanyID, $uuid, $contractMaster->id, 0);
+        $milestones = ContractMilestone::getContractMilestone($contractMaster['id'], $selectedCompanyID);
+        $deliverables = ContractDeliverables::getDeliverables($contractMaster['id'], $selectedCompanyID, 0);
+        $milestonePayment = ContractMilestonePaymentSchedules::milestonePaymentSchedules(
+            $selectedCompanyID, $contractMaster['id'])->get();
+        $timeAndMaterial = ContractTimeMaterialConsumption::getAllTimeMaterialConsumption($contractMaster['id']);
+        $periodicBilling = ContractPeriodicBillings::getContractPeriodicBilling($contractMaster['id']);
+        $activeMilestonePS = ContractSettingDetail::getActiveContractSettingDetail($contractMaster['id'], [1,2,3]);
+        $overallRetention = ContractOverallRetention::getContractOverall($contractMaster['id'],$selectedCompanyID);
+        $milestoneRetention = ContractMilestoneRetention::ContractMilestoneRetention(
+            $selectedCompanyID, $contractMaster['id'])->get();
+        $activeRetention = ContractSettingDetail::getActiveContractSettingDetail($contractMaster['id'], [4,5]);
+        $paymentTerms = ContractPaymentTerms::getContractPaymentTerms($contractMaster['id'], $selectedCompanyID);
+        $penaltyData = $this->getPenaltyData($contractMaster, $selectedCompanyID);
+        $contractDocuments = ContractDocument::contractDocuments($selectedCompanyID, $contractMaster['id']);
+        $contractAdditionalDocuments = ContractAdditionalDocuments::additionalDocumentList(
+            $selectedCompanyID, $contractMaster['id']);
+        $history = ContractStatusHistory::getContractStatusHistory($contractMaster['id']);
+        $activeSections = ContractSettingMaster::getActiveContractSectionDetails($contractMaster['id']);
+
+        $data = [
+            'contractMaster' => $contractMaster,
+            'currencyCode' => $currencyCode,
+            'decimalPlace' => $decimalPlaces,
+            'assignedUsers' => $assignedUsers,
+            'boqItems' => $boqItems,
+            'milestones' => $milestones,
+            'deliverables' => $deliverables,
+            'milestonePayment' => $milestonePayment,
+            'timeAndMaterial' => $timeAndMaterial,
+            'periodicBilling' => $periodicBilling,
+            'activeMilestonePS' => $activeMilestonePS['sectionDetailId'] ?? 0,
+            'overallRetention' => $overallRetention,
+            'milestoneRetention' => $milestoneRetention,
+            'activeRetention' => $activeRetention['sectionDetailId'] ?? 0,
+            'paymentTerms' => $paymentTerms,
+            'milestonePenaltyMaster' => $penaltyData['milestonePenaltyMaster'],
+            'milestonePenaltyDetail' => $penaltyData['milestonePenaltyDetail'],
+            'overallPenalty' => $penaltyData['overallPenalty'],
+            'activePenalty' => $penaltyData['activePenalty'],
+            'contractDocuments' => $contractDocuments,
+            'contractAdditionalDocuments' => $contractAdditionalDocuments,
+            'history' => $history,
+            'activeSections' => $activeSections
+        ];
+
+        return [
+            'success' => true,
+            'message' => 'Contract Master successfully get',
+            'data' => $data
+        ];
+    }
+
+    private function milestoneDuePenaltyAmountCalculation($penaltyMaster, $contractId, $companySystemID)
+    {
+
+        $duePenaltyAmounts = [];
+
+        $milestonePenaltyDetails = ContractMilestonePenaltyDetail::getRecordsWithMilestone(
+            $contractId, $companySystemID);
+
+        $today = Carbon::now();
+        $newPenaltyStartDate = (new \DateTime($today))->format('Y-m-d');
+
+        foreach ($milestonePenaltyDetails as $penaltyDetails)
+        {
+            $penaltyStartDate = Carbon::parse($penaltyDetails['penalty_start_date']);
+            $daysDifference = $penaltyStartDate->diffInDays($today);
+            $newPenaltyEndDate = (new \DateTime($penaltyStartDate))->format('Y-m-d');
+
+            $noOfInstallments = $this->calculateInstallments(
+                $daysDifference,
+                $penaltyDetails['penalty_frequency'],
+                $penaltyDetails['due_in']
+            );
+
+                $noOfInstallments = floor($noOfInstallments);
+                $calculatedAmount = $noOfInstallments * $penaltyDetails['penalty_amount'];
+                $status = $penaltyDetails['status'];
+
+            $duePenaltyAmount = $this->calculateDuePenaltyAmount(
+                $status,
+                $penaltyDetails['due_penalty_amount'],
+                $penaltyMaster['maximum_penalty_amount'],
+                $calculatedAmount,
+                $newPenaltyStartDate,
+                $newPenaltyEndDate
+            );
+
+            $duePenaltyAmounts[] = [
+                'id' => $penaltyDetails['id'],
+                'duePenaltyAmount' => $duePenaltyAmount
+            ];
+        }
+
+        return $duePenaltyAmounts;
+
+    }
+
+    private function overallDuePenaltyAmountCalculation($overallPenalty)
+    {
+        $penaltyStartDate = Carbon::parse($overallPenalty['actual_penalty_start_date']);
+        $today = Carbon::now();
+        $newPenaltyStartDate = (new \DateTime($today))->format('Y-m-d');
+        $newPenaltyEndDate = (new \DateTime($penaltyStartDate))->format('Y-m-d');
+        $daysDifference = $penaltyStartDate->diffInDays($today);
+
+        $noOfInstallments = $this->calculateInstallments(
+            $daysDifference,
+            $overallPenalty['penalty_circulation_frequency'],
+            $overallPenalty['due_in']
+        );
+
+        $noOfInstallments = floor($noOfInstallments);
+        $calculatedAmount = $noOfInstallments * $overallPenalty['actual_penalty_amount'];
+        $status = $overallPenalty['status'];
+
+        return $this->calculateDuePenaltyAmount(
+            $status,
+            $overallPenalty['due_penalty_amount'],
+            $overallPenalty['maximum_penalty_amount'],
+            $calculatedAmount,
+            $newPenaltyStartDate,
+            $newPenaltyEndDate
+        );
+    }
+
+    private function calculateInstallments($daysDifference, $frequency, $dueIn = null)
+    {
+        if ($frequency == 1) return $daysDifference / 14;
+        if ($frequency == 2) return $daysDifference / 7;
+        if ($frequency == 3) return $daysDifference / 30;
+        if ($frequency == 4) return $daysDifference / 365;
+        if ($frequency == 5) return $daysDifference / 90;
+        if ($frequency == 6) return $daysDifference / 180;
+        if ($frequency == 8) return $daysDifference / 1;
+        if ($frequency == 7) return $daysDifference / $dueIn;
+
+        return 0;
+    }
+
+    private function getPenaltyData($contractMaster, $selectedCompanyID)
+    {
+        $milestonePenaltyMaster = ContractMilestonePenaltyMaster::getMilestonePenaltyMaster(
+            $contractMaster['id'],
+            $selectedCompanyID
+        );
+
+        $activePenalty = ContractSettingDetail::getActiveContractSettingDetail(
+            $contractMaster['id'],
+            [6, 7]
+        );
+
+        $milestonePenaltyDetail = $this->getMilestonePenaltyDetail(
+            $milestonePenaltyMaster,
+            $contractMaster,
+            $selectedCompanyID
+        );
+
+        $overallPenalty = $this->getOverallPenalty(
+            $contractMaster,
+            $selectedCompanyID
+        );
+
+        return [
+            'milestonePenaltyMaster' => $milestonePenaltyMaster,
+            'milestonePenaltyDetail' => $milestonePenaltyDetail,
+            'overallPenalty' => $overallPenalty,
+            'activePenalty' => $activePenalty['sectionDetailId'] ?? 0
+        ];
+    }
+
+    private function getMilestonePenaltyDetail($milestonePenaltyMaster, $contractMaster, $selectedCompanyID)
+    {
+        if (!$milestonePenaltyMaster) {
+            return collect();
+        }
+
+        $milestonePenaltyMasterId = $milestonePenaltyMaster['id'];
+
+        $duePenaltyAmounts = $this->milestoneDuePenaltyAmountCalculation(
+            $milestonePenaltyMaster,
+            $contractMaster['id'],
+            $selectedCompanyID
+        );
+
+        $penaltyAmountDict = collect($duePenaltyAmounts)
+            ->pluck('duePenaltyAmount', 'id')
+            ->toArray();
+
+        return ContractMilestonePenaltyDetail::ContractMilestonePenaltyDetail(
+            $contractMaster['id'],
+            $selectedCompanyID,
+            $milestonePenaltyMasterId
+        )
+            ->get()
+            ->map(function ($row) use ($penaltyAmountDict) {
+                return array_merge(
+                    $row->toArray(),
+                    [
+                        'duePenaltyAmount' => $penaltyAmountDict[$row->id] ?? 0
+                    ]
+                );
+            });
+    }
+
+    private function getOverallPenalty($contractMaster, $selectedCompanyID)
+    {
+        $overallPenaltyData = ContractOverallPenalty::getOverallPenalty(
+            $contractMaster['id'],
+            $selectedCompanyID
+        );
+
+        if (!$overallPenaltyData) {
+            return [
+                'edit_data' => null,
+                'duePenaltyAmount' => 0
+            ];
+        }
+
+        return [
+            'edit_data' => $overallPenaltyData,
+            'duePenaltyAmount' => $this->overallDuePenaltyAmountCalculation($overallPenaltyData)
+        ];
+    }
+
+    private function calculateDuePenaltyAmount($status, $duePenaltyAmount, $maximumPenaltyAmount, $calculatedAmount,
+                                               $newPenaltyStartDate, $newPenaltyEndDate)
+    {
+        if($status == 1)
+        {
+            return (float) $duePenaltyAmount;
+        }
+
+        if ($newPenaltyStartDate < $newPenaltyEndDate)
+        {
+            return 0;
+        }
+
+        if($maximumPenaltyAmount == $calculatedAmount)
+        {
+            return (float) $calculatedAmount;
+        }
+        
+        if($maximumPenaltyAmount < $calculatedAmount)
+        {
+            return (float) $maximumPenaltyAmount;
+        }
+        
+        if($maximumPenaltyAmount > $calculatedAmount)
+        {
+            return (float) $calculatedAmount;
+        }
+
+        return 0;
+    }
+}

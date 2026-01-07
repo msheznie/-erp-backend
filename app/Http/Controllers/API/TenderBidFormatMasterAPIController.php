@@ -929,4 +929,19 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     }
 
 
+    public function uploadPriceBidFormatDetails(Request $request){
+        try
+        {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+            $data = $this->tenderBidFormatMasterRepository->uploadPriceBidFormatDetails($input, $excelUpload);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
 }

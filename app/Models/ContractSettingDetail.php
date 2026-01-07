@@ -47,4 +47,13 @@ class ContractSettingDetail extends Model
         'created_at' => 'nullable',
         'updated_at' => 'nullable'
     ];
+
+    public static function getActiveContractSettingDetail($contractID, $sectionDetailId)
+    {
+        return ContractSettingDetail::select('sectionDetailId')
+            ->where('contractId', $contractID)
+            ->whereIn('sectionDetailId', $sectionDetailId)
+            ->where('isActive', 1)
+            ->first();
+    }
 }
