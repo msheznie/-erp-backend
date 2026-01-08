@@ -1,6 +1,13 @@
 # Changelog
 
 
+## [10.99.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.0...v10.99.1) (2026-01-08)
+
+
+### Bug Fixes
+
+* fix the doc transaltion of all approval [GCP-19288]  ([17c5c78](https://github.com/pbsgears/Gears_BackEnd/commit/17c5c78d9898a1c0452a6180d0888b2c76d1b86e))
+
 ## [10.99.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.98.0...v10.99.0) (2026-01-08)
 
 
