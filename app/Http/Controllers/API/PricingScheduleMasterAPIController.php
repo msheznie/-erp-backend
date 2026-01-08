@@ -461,7 +461,21 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $editOrAmend = $versionID > 0;
 
         list($val1, $val2) = $this->pricingScheduleMasterRepository->getPricingScheduleDetails($schedule_id, $price_bid_format_id, $editOrAmend);
-        return array_merge($val1,$val2);
+
+        $data = array_merge($val1, $val2);
+
+        usort($data, function ($a, $b) {
+
+            if ($a->label === 'Final Total') return 1;
+            if ($b->label === 'Final Total') return -1;
+
+            preg_match('/\d+/', $a->label, $ma);
+            preg_match('/\d+/', $b->label, $mb);
+
+            return ($ma[0] ?? PHP_INT_MAX) <=> ($mb[0] ?? PHP_INT_MAX);
+        });
+
+        return $data;
     }
 
     public function addPriceBidDetails(Request $request)

@@ -9,6 +9,7 @@ use App\Http\Requests\API\CreateContractMasterAPIRequest;
 use App\Http\Requests\API\CreateTenderMasterAPIRequest;
 use App\Http\Requests\API\UpdateTenderMasterAPIRequest;
 use App\Http\Requests\API\ViewContractAPIRequest;
+use App\Http\Requests\CloneTenderAPIRequest;
 use App\Http\Requests\DeleteAttachmentAPIRequest;
 use App\Http\Requests\SRM\UpdateTenderCalendarDaysRequest;
 use App\Models\BankAccount;
@@ -32,6 +33,7 @@ use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
+use App\Models\SupplierGroup;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
@@ -2217,8 +2219,12 @@ class TenderMasterAPIController extends AppBaseController
     public function getSupplierCategoryList(Request $request)
     {
         try {
-            return SupplierCategoryMaster::orderBy('categoryName', 'asc')
-                ->get();
+            return [
+                'supplierCategoryMaster' => SupplierCategoryMaster::orderBy('categoryName', 'asc')
+                    ->get(),
+                'supplierGroup' => SupplierGroup::onlyNotDeletedAndActive()
+            ];
+
         } catch (\Exception $ex) {
             return [];
         }
@@ -5404,6 +5410,18 @@ class TenderMasterAPIController extends AppBaseController
         try
         {
             $data = $this->tenderMasterRepository->getTenderTypeData($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
+    public function cloneTender(CloneTenderAPIRequest $request){
+        try
+        {
+            $data = $this->tenderMasterRepository->cloneTender($request);
             return $data;
         }
         catch(\Exception $e)

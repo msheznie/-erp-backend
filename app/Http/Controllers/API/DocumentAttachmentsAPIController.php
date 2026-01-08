@@ -1177,6 +1177,21 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError(trans('custom.attachments_not_found'), 500);
         }
     }
+
+    public function downloadFileSRMTemplate(Request $request)
+    {
+
+        $input = $request->all();
+        $disk = 's3';
+        $filePath = 'Master_Template/SRM/Price_Bid_Format_Template.xlsx';
+        $fileName = 'Price_Bid_Format_Template.xlsx';
+
+        if (Storage::disk($disk)->exists($filePath)) {
+            return Storage::disk($disk)->download($filePath, $fileName);
+        } else {
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
+        }
+    }
     public function downloadFileTender(Request $request){
 
         $input = $request->all();
