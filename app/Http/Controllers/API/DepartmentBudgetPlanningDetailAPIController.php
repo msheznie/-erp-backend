@@ -1381,6 +1381,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $query->forDepartmentPlanning($departmentPlanningId);
 
+            // Handle department filtering for company-level exports
+            $isCompany = $request->input('isCompany', false);
+            $departments = $request->input('departments');
+            if (!empty($departments) && is_array($departments) && ($isCompany === true || $isCompany === 'true')) {
+                if (isset($departments[0]) && is_array($departments[0]) && isset($departments[0]['id'])) {
+                    $departmentIds = array_column($departments, 'id');
+                } else {
+                    $departmentIds = $departments;
+                }
+                if (!empty($departmentIds)) {
+                    $query->whereHas('departmentBudgetPlanning', function ($q) use ($departmentIds) {
+                        $q->whereIn('departmentID', $departmentIds);
+                    });
+                }
+            }
+
             // Apply search filter
             $search = $request->input('search');
             if ($search && is_string($search)) {
@@ -1471,16 +1487,74 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            $dataset = $query->orderBy('id', 'desc')->get();
+            // Check if GL based export is requested
+            $isGLBased = $request->input('isGLBased', false);
+            
+            // If GL based, we need to group by GL and aggregate amounts
+            if ($isGLBased) {
+                $allData = $query->orderBy('id', 'desc')->get();
+                
+                // Group by budget_template_gl_id and aggregate
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    $glId = $item->budget_template_gl_id;
+                    
+                    if (!isset($groupedData[$glId])) {
+                        // Use the first item as base
+                        $groupedItem = $item->replicate();
+                        
+                        // Reset amount fields to 0 for aggregation
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        
+                        // Remove segment for GL-based view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        
+                        // Ensure relationships are loaded
+                        if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
+                            $groupedItem->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                        }
+                        if (!$groupedItem->relationLoaded('responsiblePerson')) {
+                            $groupedItem->load('responsiblePerson');
+                        }
+                        
+                        $groupedData[$glId] = $groupedItem;
+                    }
+                    
+                    // Sum up all amount fields
+                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                $dataset = collect(array_values($groupedData));
+            } else {
+                $dataset = $query->orderBy('id', 'desc')->get();
+            }
 
             $data = array();
             $x = 0;
             foreach ($dataset as $val) {
                 $x++;
                 $data[$x]['#'] = $x;
-                $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
-                    ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
-                    : '';
+                
+                // Only include Segment column if not GL based
+                if (!$isGLBased) {
+                    $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
+                        ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
+                        : '';
+                }
+                
                 $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
                     ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
                     : '';
@@ -1497,6 +1571,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $data[$x]['Time for Submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
                 $data[$x]['Previous Year Budget'] = number_format($val->previous_year_budget ?? 0, 2);
                 $data[$x]['Current Year Budget'] = number_format($val->current_year_budget ?? 0, 2);
+                $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
                 $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
                 $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);

@@ -9747,7 +9747,9 @@ return
     'failed_to_process_attendance_for_date' => 'Failed to process attendance for date :date with employees [:employees]',
     'no_temp_data_found' => 'No temp data found',
     'data_pulled_successfully' => 'Data pulled successfully',
-
+    'you_are_not_authorized_to_approve_this_document' => 'You are not authorized to approve this document',
+    'not_all_departments_confirmed' => 'Not all departments have been confirmed',
+    
     // Procurement Lifecycle Report
     'pr_value' => 'PR Value',
     'pr_approvals' => 'PR Approvals',
@@ -9852,7 +9854,8 @@ return
     'expected_headers' => 'Expected headers:',
     'credit_period_minimum_value' => 'Credit Period minimum value is 1.',
     'credit_period_cannot_be_decimal' => 'Credit Period cannot be a decimal value. Only whole numbers are allowed.',
-    'credit_limit_minimum_value' => 'Credit Limit minimum value is 1.',
+    'credit_limit_minimum_value' => 'Credit Limit must be at least 1. Decimal values below 1 are not allowed.',
+    'credit_limit_decimal_precision' => 'Credit Limit cannot have more than 2 decimal places.',
     'credit_limit_cannot_be_decimal' => 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.',
     "bank_charges_and_other_amounts_should_have_a_value" => "Bank charges and other amounts should have a value",
     "net_amount_cannot_be_negative_value" => "Net amount cannot be negative value"

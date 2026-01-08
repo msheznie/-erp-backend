@@ -2,6 +2,7 @@
 
 namespace App\Services\API;
 
+use App\helper\CustomerAssignService;
 use App\helper\Helper;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
@@ -37,6 +38,7 @@ class CustomerMasterBulkUploadService
             'credit_period',
             'category',
             'registration_no',
+            'registration_expiry_date',
             'vat_eligible',
             'vat_number',
             'vat_percentage',
@@ -359,6 +361,18 @@ class CustomerMasterBulkUploadService
             }
         }
 
+        // Validate Registration Expiry Date: mandatory only if Registration Number is provided
+        if (!empty($row['registration_no']) && trim((string)$row['registration_no']) !== '') {
+            $regExpiryResult = self::validateDate($row['registration_expiry_date'] ?? null, 'Registration Expiry Date', 'DD/MM/YYYY');
+            if (!$regExpiryResult['valid']) {
+                $errors[] = [
+                    'field' => 'Registration Expiry Date',
+                    'message' => $regExpiryResult['message'],
+                    'value' => $row['registration_expiry_date'] ?? ''
+                ];
+            }
+        }
+
         if (!empty($row['vat_eligible'])) {
             $vatEligible = trim((string)$row['vat_eligible']);
             $vatEligibleLower = strtolower($vatEligible);
@@ -520,6 +534,20 @@ class CustomerMasterBulkUploadService
 
         $customerData['customer_registration_no'] = !empty($row['registration_no']) ? trim((string)$row['registration_no']) : null;
 
+        // Handle Registration Expiry Date (day-first)
+        if (!empty($row['registration_expiry_date'])) {
+            $expiryRaw = $row['registration_expiry_date'];
+            $date = null;
+
+            $date = self::parseDateDayMonthYear($expiryRaw);
+
+            $customerData['customer_registration_expiry_date'] = $date
+                ? $date->format('Y-m-d') . ' 00:00:00'
+                : null;
+        } else {
+            $customerData['customer_registration_expiry_date'] = null;
+        }
+
         $customerData['vatEligible'] = 0;
         if (!empty($row['vat_eligible'])) {
             $vatEligible = trim((string)$row['vat_eligible']);
@@ -596,6 +624,16 @@ class CustomerMasterBulkUploadService
                 $customerCurrency->isAssigned = -1;
                 $customerCurrency->isDefault = -1;
                 $customerCurrency->save();
+            }
+
+            // Auto assign customer to company - related to approval process
+            $assignResult = CustomerAssignService::assignCustomer($customerMaster->customerCodeSystem, $companySystemID);
+            if (!$assignResult['status']) {
+                DB::rollBack();
+                return [
+                    'status' => false,
+                    'message' => trans('custom.error_assign_customer', 'Error occurred while assigning customer to company')
+                ];
             }
 
             DB::commit();
@@ -882,35 +920,48 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        // Don't allow zero value
-        if ($value == 0) {
+        // Minimum value is 1, no decimals allowed below 1
+        if ($value < 1) {
             return [
                 'valid' => false,
-                'message' => self::getTranslatedMessage('custom.credit_limit_minimum_value', 'Credit Limit minimum value is 1.')
+                'message' => self::getTranslatedMessage('custom.credit_limit_minimum_value', 'Credit Limit must be at least 1. Decimal values below 1 are not allowed.', ['field' => 'Credit Limit (OMR)'])
             ];
         }
 
-        // Don't allow decimal values
-        if (is_float($value) && fmod($value, 1) != 0) {
-            return [
-                'valid' => false,
-                'message' => self::getTranslatedMessage('custom.credit_limit_cannot_be_decimal', 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.')
-            ];
+        // If value >= 1, allow decimals but check decimal precision (max 2 decimal places)
+        if (is_float($value) || (is_string($value) && strpos((string)$value, '.') !== false)) {
+            $decimalPlaces = 0;
+            if (strpos((string)$value, '.') !== false) {
+                $parts = explode('.', (string)$value);
+                $decimalPlaces = isset($parts[1]) ? strlen($parts[1]) : 0;
+            }
+
+            if ($decimalPlaces > 2) {
+                return [
+                    'valid' => false,
+                    'message' => self::getTranslatedMessage('custom.credit_limit_decimal_precision', 'Credit Limit cannot have more than 2 decimal places.')
+                ];
+            }
         }
 
-        // Check for overflow - maximum value (e.g., PHP_INT_MAX or a reasonable limit like 999999999999)
-        $maxCreditLimit = 999999999;
-        $valueInt = (int)$value;
-        if ($valueInt > $maxCreditLimit) {
+        // Check for overflow - maximum value
+        $maxCreditLimit = 999999999.99;
+        if ($value > $maxCreditLimit) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_overflow', 'Credit Limit exceeds the maximum allowed value.')
             ];
         }
 
-        // Check maximum number of digits (18 digits max)
-        $valueString = (string)$valueInt;
-        if (strlen($valueString) > 18) {
+        // Check maximum number of digits
+        $valueString = (string)$value;
+        $valueString = preg_replace('/\.0+$/', '', $valueString); // Remove trailing .0
+        $parts = explode('.', $valueString);
+        $integerPart = $parts[0];
+        $decimalPart = isset($parts[1]) ? $parts[1] : '';
+
+        // Total digits should not exceed 18
+        if (strlen($integerPart) + strlen($decimalPart) > 18) {
             return [
                 'valid' => false,
                 'message' => self::getTranslatedMessage('custom.credit_limit_cannot_exceed_maximum_digits', 'Credit Limit cannot exceed the maximum allowed number of digits.')
@@ -954,6 +1005,86 @@ class CustomerMasterBulkUploadService
         }
 
         return ['valid' => true];
+    }
+
+    private static function validateDate($dateValue, $fieldName, $format = 'DD/MM/YYYY'): array
+    {
+        if (empty($dateValue) || is_null($dateValue) || trim((string)$dateValue) === '') {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.field_is_mandatory', "{$fieldName} is mandatory", ['field' => $fieldName])
+            ];
+        }
+
+        try {
+            if ($format == 'DD/MM/YYYY') {
+                $date = self::parseDateDayMonthYear($dateValue);
+                if (!$date) {
+                    throw new \Exception('Date format mismatch');
+                }
+            } else {
+                $date = Carbon::parse($dateValue);
+            }
+        } catch (\Exception $e) {
+            return [
+                'valid' => false,
+                'message' => self::getTranslatedMessage('custom.date_format_not_matching', "{$fieldName} date format not matching (Format {$format})", ['field' => $fieldName, 'format' => $format])
+            ];
+        }
+
+        return ['valid' => true];
+    }
+
+    /**
+     * Parse a date string in day-first order (supports d/m/Y and j/n/Y) and return Carbon or null.
+     */
+    private static function parseDateDayMonthYear($value): ?Carbon
+    {
+        if ($value instanceof Carbon || $value instanceof \DateTime) {
+            $dt = $value instanceof Carbon ? $value : Carbon::instance($value);
+
+            // Swap day/month to enforce day-first when coming in as a date object
+            $year = (int)$dt->format('Y');
+            $month = (int)$dt->format('m');
+            $day = (int)$dt->format('d');
+
+            // If swap results in a valid date, use it; otherwise keep original
+            if (checkdate($day, $month, $year)) {
+                return Carbon::createFromDate($year, $day, $month);
+            }
+
+            return $dt;
+        }
+
+        $dateString = trim((string)$value);
+        if ($dateString === '') {
+            return null;
+        }
+
+        // Expect day/month/year (single or double digits for day/month)
+        $date = null;
+        try {
+            $date = Carbon::createFromFormat('d/m/Y', $dateString);
+            // Re-verify to ensure Carbon did not auto-correct an invalid date
+            if ($date->format('d/m/Y') !== $dateString) {
+                $date = null;
+            }
+        } catch (\Exception $e) {
+            $date = null;
+        }
+
+        if (!$date) {
+            try {
+                $date = Carbon::createFromFormat('j/n/Y', $dateString);
+                if ($date->format('j/n/Y') !== $dateString) {
+                    $date = null;
+                }
+            } catch (\Exception $e) {
+                $date = null;
+            }
+        }
+
+        return $date;
     }
 
     private static function validateCategory($categoryDescription, $input): array
