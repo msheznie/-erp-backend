@@ -309,5 +309,8 @@ return [
     'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => 'تم طلب :doc للتعديل/الإضافة، يرجى الموافقة على الطلب لتمكين النسخ',
     'price_bid_format_master_id_required' => 'مطلوب معرّف النموذج الرئيسي لتسعير العرض',
     'company_id_required' => 'معرّف الشركة مطلوب',
-
+    'invalid_file_name' => 'اسم الملف غير صالح',
+    'excel_missing_columns' => 'الأعمدة مفقودة',
+    'excel_file_empty_or_invalid' => 'ملف الإكسل فارغ أو غير صالح',
+    'both_fields_cannot_be_yes' => 'لا يمكن تعيين كلا الحقلين \'مفعل\' و \'قابل لتطبيق BOQ\' على نعم.',
 ];

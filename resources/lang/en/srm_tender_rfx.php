@@ -310,5 +310,9 @@ return [
     'successfully_cloned' => 'Successfully Cloned',
     'doc_is_requested_for_edit_or_amend_kindly_approve_the_request' => ':doc is requested for Edit/Amend, kindly approve the request to enable clone',
     'price_bid_format_master_id_required' => 'Price bid format master id is required',
-    'company_id_required' => 'Company id is required'
+    'company_id_required' => 'Company id is required',
+    'invalid_file_name' => 'Invalid file name',
+    'excel_missing_columns' => 'Columns are missing',
+    'excel_file_empty_or_invalid' => 'The Excel file is empty or invalid',
+    'both_fields_cannot_be_yes' => 'Both \'Is Enabled\' and \'Is BOQ Applicable\' fields cannot be set to Yes.',
 ];
