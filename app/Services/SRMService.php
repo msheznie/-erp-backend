@@ -594,7 +594,8 @@ class SRMService
                 $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
             },
             'invoice' => function ($query) {
-                $query->select('deliveryAppoinmentID');
+                $query->select('deliveryAppoinmentID')
+                    ->where('cancelYN', 0);
             }
         ])
             ->select('id', 'primary_code', 'created_by', 'created_at', 'confirmed_yn', 'approved_yn', 'refferedBackYN',
@@ -1352,8 +1353,8 @@ class SRMService
                     $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
                 },
                 'invoice' => function ($query) {
-                    $query->select('deliveryAppoinmentID');
-                },
+                    $query->select('deliveryAppoinmentID')
+                        ->where('cancelYN', 0);                },
             'slot_detail' => function ($query) {
                 $query->select('id','slot_master_id', 'company_id');
             }
