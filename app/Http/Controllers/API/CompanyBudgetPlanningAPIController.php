@@ -203,7 +203,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $data['serialNo'] = $lastSerialNumber;
         $data['documentSystemID'] = '133';
         $data['documentID'] = 'BDP';
-
+        $data['RollLevForApp_curr'] = 1;
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->create($data);
 
 
@@ -334,7 +334,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $input = $request->all();
 
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings.department')->findWithoutFail($id);
 
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
@@ -342,10 +342,31 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         if($input['confirmed_yn'] == 1) {
+
+            // check user have confirtmation permission
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+
+            if($userPermission['data']['financeUser']['status'] == false || $userPermission['data']['financeUser']['isActive'] == false || $userPermission['data']['financeUser']['access']['initiate_budget_planning'] == false) {
+                return $this->sendError("You don’t have access to proceed with the budget confirmation");
+            }
+
             // Validate department budget planning statuses before allowing confirmation
             $validationResult = $this->validateDepartmentBudgetPlanningStatuses($companyBudgetPlanning);
             
             if (!$validationResult['valid']) {
+                // If it's a warning type, include departments list in the response
+                if (isset($validationResult['type']) && $validationResult['type'] === 'warning') {
+                    $errorType = [
+                        'type' => 'warning',
+                        'departments' => isset($validationResult['departments']) ? $validationResult['departments'] : []
+                    ];
+                    return $this->sendError($validationResult['message'], 422, $errorType);
+                }
                 return $this->sendError($validationResult['message']);
             }
 
@@ -1438,9 +1459,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         });
 
         if ($notSubmittedToFinance->count() > 0) {
+            // Get department names for the list
+            $departmentNames = $notSubmittedToFinance->map(function ($dept) {
+                return $dept->department ? $dept->department->departmentCode : 'Unknown';
+            })->toArray();
+            
             return [
                 'valid' => false,
-                'message' => trans('custom.not_all_departments_submitted_to_finance')
+                'message' => trans('custom.not_all_departments_submitted_to_finance'),
+                'type' => 'warning',
+                'departments' => $departmentNames
             ];
         }
 
@@ -1450,9 +1478,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         });
 
         if ($notCompletedByFinance->count() > 0) {
+            // Get department names for the list
+            $departmentNames = $notCompletedByFinance->map(function ($dept) {
+                return $dept->department ? $dept->department->departmentCode : 'Unknown';
+            })->toArray();
+            
             return [
                 'valid' => false,
-                'message' => trans('custom.not_all_finance_status_completed')
+                'message' => trans('custom.not_all_finance_status_completed'),
+                'type' => 'warning',
+                'departments' => $departmentNames
             ];
         }
 
@@ -1464,9 +1499,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         });
 
         if ($notConfirmedDepartments->count() > 0) {
+            // Get department names for the list
+            $departmentNames = $notConfirmedDepartments->map(function ($dept) {
+                return $dept->department ? $dept->department->departmentCode : 'Unknown';
+            })->toArray();
+            
             return [
                 'valid' => false,
-                'message' => trans('custom.not_all_departments_confirmed')
+                'message' => trans('custom.not_all_departments_confirmed'),
+                'type' => 'warning',
+                'departments' => $departmentNames
             ];
         }
 

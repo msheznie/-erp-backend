@@ -135,7 +135,8 @@ class CompanyBudgetPlanning extends Model
         'approved_by_emp_system_id',
         'approved_at',
         'rejected_yn',
-        'timesReferred'
+        'timesReferred',
+        'RollLevForApp_curr'
     ];
 
     /**
@@ -171,7 +172,8 @@ class CompanyBudgetPlanning extends Model
         'approved_by_emp_system_id' => 'integer',
         'approved_at' => 'date',
         'rejected_yn' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'RollLevForApp_curr' => 'integer'
     ];
 
     /**
