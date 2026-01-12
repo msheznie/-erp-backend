@@ -41,15 +41,17 @@ class LeaveCarryForwardComputationService
     function execute()
     {
         
-        $leaveComputationBasedPolicy = SME::policy($this->companyId, 'LC', 'All');
-        $this->leaveComputationBasedOn =  empty($leaveComputationBasedPolicy) ? 1 : $leaveComputationBasedPolicy;
-        $this->getPeriodEndDatePolicyWise();
+        $this->leaveComputationBasedOn = SME::policy($this->companyId, 'LC', 'All');
+        if (empty($this->leaveComputationBasedOn)) {
+            $this->insertToLogTb('Leave computation policy is not set with any value', 'error');
+            return;
+        }
 
+        $this->getPeriodEndDatePolicyWise();
 
         if(!$this->periodStatus){
             return false;
         }
-
 
         $yearEndDate = Carbon::parse($this->periodData['endDate'])->format('Y-m-d');
 
@@ -61,11 +63,6 @@ class LeaveCarryForwardComputationService
         $this->insertToLogTb('Period data function triggered for ' . $this->companyCode . '');
         
         $this->getMonthWiseDate();
-
-        if (empty($this->monthDet)) {
-            $this->insertToLogTb('Leave computation policy is not set with any value', 'error');
-            return;
-        }
 
         if (empty($this->periodData['endDate'])) {
             $msg = 'Period End date not exists!';
