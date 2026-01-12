@@ -933,8 +933,12 @@ WHERE
                 $input['detailTable'][$key]['noQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
                 $input['detailTable'][$key]['userQty'] = is_string($detail['userQty']) ? (float)$detail['userQty'] : $detail['userQty'];
                 $input['detailTable'][$key]['unitQty'] = is_string($detail['noQty']) ? (float)$detail['noQty'] : $detail['noQty'];
-                $input['detailTable'][$key]['userQtyInput'] = is_string($detail['userQtyInput']) ? (float)$detail['userQtyInput'] : $detail['userQtyInput'];
-                $input['detailTable'][$key]['userRequestedQty'] = is_string($detail['userRequestedQty']) ? (float)$detail['userRequestedQty'] : $detail['userRequestedQty'];
+                if (isset($detail['userQtyInput'])) {
+                    $input['detailTable'][$key]['userQtyInput'] = is_string($detail['userQtyInput']) ? (float)$detail['userQtyInput'] : $detail['userQtyInput'];
+                }
+                if (isset($detail['userRequestedQty'])) {
+                    $input['detailTable'][$key]['userRequestedQty'] = is_string($detail['userRequestedQty']) ? (float)$detail['userRequestedQty'] : $detail['userRequestedQty'];
+                }
             }
         }
 
@@ -986,7 +990,7 @@ WHERE
                 }
             }
 
-            if(isset($newValidation['userRequestedQty'])){
+            if(isset($newValidation['userRequestedQty']) && isset($newValidation['userQtyInput'])){
                 if($newValidation['userRequestedQty'] < $newValidation['userQtyInput']){
                     return $this->sendError(str_replace(':value', $newValidation['userRequestedQty'], trans('custom.cannot_exceed_quotation_user_qty')));
                 }
