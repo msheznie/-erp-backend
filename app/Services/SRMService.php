@@ -591,7 +591,8 @@ class SRMService
                 $query->select('supplierCodeSystem', 'supplierName');
             },
             'grv' => function ($query) {
-                $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+                $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                ->withCount('UnbilledGrvGroupBy');
             },
             'invoice' => function ($query) {
                 $query->select('deliveryAppoinmentID')
@@ -1350,7 +1351,8 @@ class SRMService
             ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
         ->with([
                 'grv' => function ($query) {
-                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                        ->withCount('UnbilledGrvGroupBy');
                 },
                 'invoice' => function ($query) {
                     $query->select('deliveryAppoinmentID')
