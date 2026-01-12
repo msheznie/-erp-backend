@@ -1744,6 +1744,7 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $header = $request->header('Authorization');
         $customerMasters = $input['customer_masters'] ?? null;
+        $companyID = $input['company_id'] ?? null;
 
         if (empty($customerMasters) || !is_array($customerMasters)) {
             return $this->sendError("customer_masters array is required", 422);
@@ -1759,7 +1760,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerCodeSystemIds = [];
 
         foreach ($customerMasters as $customerMaster) {
-            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster);
+            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster, $companyID);
             
             if (!$datasetMaster['status']) {
                 $headerData['errors'] = $datasetMaster['data'] ?? [];
@@ -1803,7 +1804,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                             
                             $successDocuments[] = self::createSuccessResponseDataArray(
-                                $customerCodeSystem,
+                                $masterDataset['customerShortCode'],
                                 $initialIndex,
                                 $customerCode
                             );
@@ -1879,11 +1880,10 @@ class CustomerMasterAPIController extends AppBaseController
         ];
     }
 
-    public static function createSuccessResponseDataArray($customerCodeSystem,$masterIndex,$code): array {
+    public static function createSuccessResponseDataArray($secondaryCode,$masterIndex,$code): array {
         return [
-            "Customer master No" => $customerCodeSystem,
-            "Posting" => "Success",
-            "reference" => $code
+            'customer_code' => $code,
+            'secondary_code' => $secondaryCode,
         ];
     }
 
