@@ -476,7 +476,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             } else {
                 // Original logic for single department budget planning
-                $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                $budgetPlanning = DepartmentBudgetPlanning::with('workflow','masterBudgetPlannings')->find($departmentPlanningId);
                 if ($budgetPlanning) {
                     if ($budgetPlanning->workflow) {
                         $workflowMethod = $budgetPlanning->workflow->method;
@@ -496,7 +496,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
                 $isEnable = true;
                 
-
                 if($isFinanceApprovalUser)
                 {
                     $isEnable = true;
@@ -511,6 +510,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
                         $isEnable = false;
                     }
+                }
+
+                if($budgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $budgetPlanning->confirmed_yn == 1) {
+                   $isEnable = true;
                 }
 
                 $item->isEnable = $isEnable;
@@ -1372,6 +1375,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'responsiblePerson'
             ]);
 
+
             if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
                 $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)->pluck('departmentEmployeeSystemID')->toArray();
                 $query->whereHas('budgetDelegateAccessDetails', function ($q) use ($delegateIDs) {
@@ -1379,7 +1383,38 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            $query->forDepartmentPlanning($departmentPlanningId);
+            // Check if source is from approval - if so, get all department budget planning details for the company budget planning
+            $source = $request->input('source', '');
+            if ($source === 'approval' || $source === 'from_approval') {
+                // Get the company budget planning ID from the department planning
+                // DepartmentBudgetPlanning has a belongsTo relationship to CompanyBudgetPlanning via companyBudgetPlanningID
+                $departmentPlanning = DepartmentBudgetPlanning::find($departmentPlanningId);
+                
+                if ($departmentPlanning && $departmentPlanning->companyBudgetPlanningID) {
+                    $companyBudgetPlanningId = $departmentPlanning->companyBudgetPlanningID;
+                    
+                    // Get all department budget planning IDs for this company budget planning
+                    $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')
+                        ->find($companyBudgetPlanningId);
+                    
+                    if ($companyBudgetPlanning && $companyBudgetPlanning->departmentBudgetPlannings) {
+                        $allDepartmentPlanningIds = $companyBudgetPlanning->departmentBudgetPlannings->pluck('id')->toArray();
+                        
+                        // Query all department budget planning details for all departments in this company budget planning
+                        $query->whereHas('departmentBudgetPlanning', function ($q) use ($allDepartmentPlanningIds) {
+                            $q->whereIn('id', $allDepartmentPlanningIds);
+                        });
+                    } else {
+                        // Fallback to original query if company budget planning not found
+                        $query->forDepartmentPlanning($departmentPlanningId);
+                    }
+                } else {
+                    // Fallback to original query if department planning not found
+                    $query->forDepartmentPlanning($departmentPlanningId);
+                }
+            } else {
+                $query->forDepartmentPlanning($departmentPlanningId);
+            }
 
             // Handle department filtering for company-level exports
             $isCompany = $request->input('isCompany', false);
@@ -1536,7 +1571,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
                     $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
                 }
-                
                 $dataset = collect(array_values($groupedData));
             } else {
                 $dataset = $query->orderBy('id', 'desc')->get();

@@ -726,6 +726,8 @@ return
     'budget_planning_detail_template_entry_not_found' => 'إدخال قالب تفاصيل تخطيط الميزانية غير موجود',
     'budget_planning_id_and_status_are_required' => 'معرف تخطيط الميزانية والحالة مطلوبان',
     'budget_planning_id_is_required' => 'معرف تخطيط الميزانية مطلوب',
+    'only_finance_user_or_finance_approval_user_can_reopen_budget_planning' => 'يمكن فقط لمستخدم المالية أو مستخدم اعتماد المالية إعادة فتح تخطيط الميزانية',
+    'only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning' => 'يمكن فقط لمستخدم المالية أو مستخدم اعتماد المالية إرجاع تخطيط الميزانية للتعديل',
     'budget_planning_initiated_successfully' => 'تم بدء تخطيط الميزانية بنجاح',
     'budget_planning_is_already_in_progress' => 'تخطيط الميزانية قيد التقدم بالفعل',
     'budget_planning_is_already_in_progress_for_this_de' => 'تخطيط الميزانية قيد التقدم بالفعل لهذا القسم',

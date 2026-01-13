@@ -265,6 +265,7 @@ class VerifyCsrfTokenForApi
             'api/v1/department-budget-detail-comments/resolve',
             'api/v1/department-budget-detail-comments',
             'api/v1/company_budget_plannings/{company_budget_planning}',
+            'api/v1/company_budget_plannings/{id}',
             'api/v1/getRevisionsByCompanyBudget',
             'api/v1/getTimeExtensionRequestsByCompanyBudget',
             'api/v1/getDepartmentBudgetPlanningStatusesByCompany',
@@ -279,6 +280,10 @@ class VerifyCsrfTokenForApi
             'api/v1/department-budget-detail-comments/delete',
             'api/v1/printAssetDepreciation',
             'api/v1/getDocumentTracingData',
+            'api/v1/createAuditLog',
+            'api/v1/requestBudgetPlanningReopen',
+            'api/v1/returnBudgetPlanningPreCheck',
+            'api/v1/returnBudgetPlanningToAmend',
             'api/v1/createAuditLog'
         ];
 
