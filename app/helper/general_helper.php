@@ -3955,6 +3955,46 @@ class Helper
         //break this function for the requirment of GCP-515
         return ['success' => true, 'message' => '', 'type' => 5];
 
+        //check document exist
+        $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+
+        if (!$docApprove) {
+            return ['success' => false, 'message' => trans('custom.no_records_found_caps'), 'type' => 2];
+        }
+
+        $empInfo = self::getEmployeeInfo();
+
+
+        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
+                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->first();
+
+        if (empty($companyDocument)) {
+            return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
+        }
+
+        $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
+                                ->where('companySystemID', $docApprove->companySystemID)
+                                ->where('employeeSystemID', $empInfo->employeeSystemID)
+                                ->where('documentSystemID', $input["documentSystemID"])
+                                ->where('isActive', 1)
+                                ->where('removedYN', 0);
+
+        if ($companyDocument['isServiceLineApproval'] == -1) {
+            $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApprove->serviceLineSystemID);
+        }
+
+
+        $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+            $q->where('discharegedYN', 0);
+        })
+            ->groupBy('employeeSystemID')
+            ->exists();
+
+        if (!$checkUserHasApprovalAccess) {
+            return ['success' => false, 'message' => trans('custom.access_denied')];
+        }
+
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
