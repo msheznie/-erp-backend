@@ -313,4 +313,8 @@ return [
     'excel_missing_columns' => 'الأعمدة مفقودة',
     'excel_file_empty_or_invalid' => 'ملف الإكسل فارغ أو غير صالح',
     'both_fields_cannot_be_yes' => 'لا يمكن تعيين كلا الحقلين \'مفعل\' و \'قابل لتطبيق BOQ\' على نعم.',
+    'bid_opening_date' => 'تاريخ فتح العطاء',
+    'technical_bid_date' => 'تاريخ العطاء الفني',
+    'unable_to_update_technical_evaluation_date_passed' => 'لا يمكن تحديث التقييم الفني. :date قد مر بالفعل',
+    'unable_to_update_commercial_evaluation_date_passed' => 'لا يمكن تحديث التقييم المالي. :date قد مر بالفعل',
 ];
