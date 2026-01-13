@@ -164,7 +164,7 @@ class BankStatus implements ShouldQueue
             config(['filesystems.disks.sftp' => $configDetails]);
             $storage = \Storage::disk('sftp');
 
-            $storage->files('/');
+            $storage->files($config['upload_path']);
 
             return ['success' => true, 'message' => 'SFTP connection established.'];
         } catch (\Exception $e) {
