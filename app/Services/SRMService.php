@@ -385,6 +385,27 @@ class SRMService
             return self::amendPoAppointment($appointmentID, $slotCompanyId);
         }
 
+        if (!empty($data) && is_array($data)) {
+            $purchaseOrderIds = array_unique(array_column($data, 'purchaseOrderID'));
+            if (count($purchaseOrderIds) <= 1) {
+                return;
+            }
+
+            $purchaseOrders = ProcumentOrder::getPoForAppointment($purchaseOrderIds);
+            if ($purchaseOrders->isEmpty()) {
+                return;
+            }
+
+            $currencyCount = $purchaseOrders->pluck('supplierTransactionCurrencyID')->unique()->count();
+            if ($currencyCount > 1) {
+                return [
+                    'success' => false,
+                    'message' => 'Please select same currency PO within a delivery',
+                    'data' => []
+                ];
+            }
+        }
+
         DB::beginTransaction();
         try {
 
@@ -595,8 +616,7 @@ class SRMService
                 ->withCount('UnbilledGrvGroupBy');
             },
             'invoice' => function ($query) {
-                $query->select('deliveryAppoinmentID')
-                    ->where('cancelYN', 0);
+                $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
             }
         ])
             ->select('id', 'primary_code', 'created_by', 'created_at', 'confirmed_yn', 'approved_yn', 'refferedBackYN',
@@ -1349,19 +1369,18 @@ class SRMService
             ->join('suppliermaster', 'appointment.created_by', 'suppliermaster.supplierCodeSystem')
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
             ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
-        ->with([
-                'grv' => function ($query) {
-                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
-                        ->withCount('UnbilledGrvGroupBy');
-                },
-                'invoice' => function ($query) {
-                    $query->select('deliveryAppoinmentID')
-                        ->where('cancelYN', 0);                },
-            'slot_detail' => function ($query) {
-                $query->select('id','slot_master_id', 'company_id');
-            }
-            ])
-        ;
+            ->with([
+                    'grv' => function ($query) {
+                        $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                            ->withCount('UnbilledGrvGroupBy');
+                    },
+                    'invoice' => function ($query) {
+                        $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
+                    },
+                    'slot_detail' => function ($query) {
+                        $query->select('id','slot_master_id', 'company_id');
+                    }
+                ]);
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
