@@ -639,6 +639,8 @@ return
     'cannot_reopen_budget_planning_not_confirmed' => 'You cannot reopen this Budget Planning, it is not confirmed',
     'cannot_reopen_budget_planning_fully_approved' => 'You cannot reopen this Budget Planning, it is already fully approved',
     'cannot_reopen_budget_planning_already_approved' => 'You cannot reopen this Budget Planning, it is already approved',
+    'only_finance_user_or_finance_approval_user_can_reopen_budget_planning' => 'Only finance user or finance approval user can reopen the budget planning',
+    'only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning' => 'Only finance user or finance approval user can return back to amend the budget planning',
     'budget_planning_not_found' => 'Budget Planning not found',
     'budget_addition_updated_successfully' => 'Budget Addition updated successfully',
     'budget_addition_audit_detailed_retrieved' => 'Budget Addition audit detailed retrieved',

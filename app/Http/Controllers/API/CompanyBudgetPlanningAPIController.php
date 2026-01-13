@@ -1549,6 +1549,15 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             DB::beginTransaction();
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($input['companyBudgetPlanningID']);
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
+                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_reopen_budget_planning'));
+            }
             
             if (!$companyBudgetPlanning) {
                 return $this->sendError(trans('custom.budget_planning_not_found'), 404);
@@ -1662,6 +1671,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             'ammendComments' => 'required|string|min:10'
         ]);
 
+
         if ($validator->fails()) {
             return $this->sendAPIError(trans('custom.validation_error'), 422, $validator->errors()->toArray());
         }
@@ -1670,7 +1680,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             DB::beginTransaction();
 
             $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($input['companyBudgetPlanningID']);
-            
+                    $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $companyBudgetPlanning->companySystemID,
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
+
+
+            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
+                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning'));
+            }
+
             if (!$companyBudgetPlanning) {
                 return $this->sendError(trans('custom.budget_planning_not_found'), 404);
             }
