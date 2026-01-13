@@ -37,7 +37,7 @@ class POService
             'rcmActivated', 'poDiscountAmount', 'supplierVATEligible', 'VATAmount',
             'poTotalSupplierTransactionCurrency', 'deliveryTerms', 'panaltyTerms', 'supplierID', 'companySystemID',
             'localCurrencyID', 'companyReportingCurrencyID', 'supplierTransactionCurrencyID', 'documentSystemID',
-            'documentSystemID')
+            'documentSystemID', 'poLocation')
             ->where('purchaseOrderID', $purchaseOrderID)
             ->with([
             'detail' => function ($query) {
@@ -105,6 +105,9 @@ class POService
             'project' => function ($query)
             {
                 $query->select('id', 'description');
+            },
+            'location' => function ($q1) {
+                $q1->select('locationID','locationName');
             }
         ])->first();
 

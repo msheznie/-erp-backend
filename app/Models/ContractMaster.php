@@ -169,5 +169,10 @@ class ContractMaster extends Model
         return $this->belongsTo(ContractUsers::class, 'counterPartyName', 'id');
     }
 
+    public function contract_status()
+    {
+        return $this->hasMany(ContractStatusHistory::class, 'contract_id','id');
+    }
+
 
 }

@@ -119,5 +119,14 @@ return [
     'company_assign_variable_has_been_deleted' => 'تعيين الشركة {variable} تم حذفه',
     'attribute_dropdown_value_variable_has_been_created' => 'قيمة القائمة المنسدلة للسمة {variable} تم إنشاؤها',
     'attribute_dropdown_value_variable_has_been_deleted' => 'قيمة القائمة المنسدلة للسمة {variable} تم حذفها',
+
+    // User Group Audit Log Narrations
+    'user_group_has_been_created' => 'مجموعة المستخدمين {variable} تم إنشاؤها',
+    'user_group_has_updated' => 'مجموعة المستخدمين {variable} تم تحديثها',
+    'user_group_has_been_deleted' => 'مجموعة المستخدمين {variable} تم حذفها',
+
+    // Employee Navigation Assign Audit Log Narrations
+    'employee_has_been_assigned_to_user_group' => 'تم تعيين الموظف {variable} إلى مجموعة المستخدمين',
+    'employee_has_been_unassigned_from_user_group' => 'تم إلغاء تعيين الموظف {variable} من مجموعة المستخدمين',
 ];
 

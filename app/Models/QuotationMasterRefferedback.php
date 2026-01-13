@@ -511,7 +511,8 @@ class QuotationMasterRefferedback extends Model
         'selectedForSalesOrder',
         'isInSO',
         'timestamp',
-          'isDelegation'
+          'isDelegation',
+          'salesType'
     ];
 
     /**
@@ -599,7 +600,8 @@ class QuotationMasterRefferedback extends Model
         'selectedForDeliveryOrder' => 'integer',
         'isInDOorCI' => 'integer',
         'invoiceStatus' => 'integer',
-        'deliveryStatus' => 'integer'
+        'deliveryStatus' => 'integer',
+        'salesType' => 'integer'
     ];
 
     /**

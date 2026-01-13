@@ -90,6 +90,7 @@ Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getA
 Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');
 
 Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");
+Route::post('createAuditLog', 'AuditTrailAPIController@createAuditLog')->name("Create audit log");
 Route::post('userAuditLogs', 'AuditTrailAPIController@userAuditLogs')->name("Get user audit logs");
 Route::post('exportUserAuditLogs', 'AuditTrailAPIController@exportUserAuditLogs')->name("Export user audit logs");
 Route::post('navigationAccessLogs', 'AuditTrailAPIController@navigationAccessLogs')->name("Get navigation access logs");

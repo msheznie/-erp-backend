@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Eloquent as Model;
-
+use Awobaz\Compoships\Compoships;
 /**
  * @OA\Schema(
  *      schema="SrmTenderMasterEditLog",
@@ -833,7 +833,7 @@ use Eloquent as Model;
  */
 class SrmTenderMasterEditLog extends Model
 {
-
+    use Compoships;
     public $table = 'srm_tender_master_edit_log';
     
     const CREATED_AT = 'created_at';
@@ -1244,6 +1244,14 @@ class SrmTenderMasterEditLog extends Model
             ->whereNotNull('version_id')
             ->orderBy('amd_id', 'desc')
             ->first();
+    }
+
+    public function documentModifyRequest()
+    {
+        return $this->hasMany('App\Models\DocumentModifyRequest', 'documentSystemCode','id')
+            ->where('status','=',1)
+            ->where('approved', '!=',1)
+            ->where('confirmation_approved','!=', -1);
     }
     
 }

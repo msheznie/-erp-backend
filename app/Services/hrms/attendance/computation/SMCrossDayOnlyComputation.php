@@ -170,14 +170,18 @@ class SMCrossDayOnlyComputation{
 
     public function configCrossDayPresentAbsentType()
     {
+        if (!empty($this->data->leaveMasterID) && $this->data->leaveHalfDay != 1) {
+            $this->presentAbsentType = AbsentType::ON_LEAVE;
+            $this->isClockInOutSet = false;
+            return;
+        }
+
         if ($this->isClockInOutSet) {
             $this->presentAbsentType = AbsentType::ON_TIME;
             return;
         }
 
-        $this->presentAbsentType = (empty($this->data->leaveMasterID))
-            ? AbsentType::ABSENT
-            : AbsentType::ON_LEAVE;
+        $this->presentAbsentType = AbsentType::ABSENT;
 
         if ($this->data->leaveHalfDay == 1) {
             $this->presentAbsentType = AbsentType::HALF_DAY;

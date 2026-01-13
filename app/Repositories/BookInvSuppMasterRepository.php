@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
 use App\helper\Helper;
+use App\Models\SupplierInvoiceDirectItem;
 use Illuminate\Http\Request;
 /**
  * Class BookInvSuppMasterRepository
@@ -181,10 +182,32 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.confirmedYN',
                 'erp_bookinvsuppmaster.documentType',
                 'erp_bookinvsuppmaster.approved',
-                'erp_bookinvsuppmaster.supplierInvoiceNo',
                 'erp_bookinvsuppmaster.postedDate',
                 'erp_bookinvsuppmaster.supplierInvoiceDate',
-                'erp_bookinvsuppmaster.isBulkItemJobRun'
+                'erp_bookinvsuppmaster.isBulkItemJobRun',
+                'erp_bookinvsuppmaster.whtApplicable',
+                'erp_bookinvsuppmaster.whtPaymentMethod',
+                'erp_bookinvsuppmaster.whtAmount',
+                DB::raw('COALESCE(
+                    CASE 
+                        WHEN erp_bookinvsuppmaster.documentType IN (1, 4) THEN (
+                            SELECT COALESCE(SUM(VATAmount), 0)
+                            FROM erp_directinvoicedetails
+                            WHERE erp_directinvoicedetails.directInvoiceAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        WHEN erp_bookinvsuppmaster.documentType = 3 THEN (
+                            SELECT COALESCE(SUM(VATAmount * noQty), 0)
+                            FROM supplier_invoice_items
+                            WHERE supplier_invoice_items.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        WHEN erp_bookinvsuppmaster.documentType IN (0,2) THEN (
+                         SELECT COALESCE(SUM(erp_bookinvsupp_item_det.VATAmount), 0) 
+                                FROM erp_bookinvsupp_item_det
+                                WHERE erp_bookinvsupp_item_det.bookingSuppMasInvAutoID = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
+                        )
+                        ELSE 0
+                    END, 0
+                ) as vatAmount')
             ]);
 
 
@@ -234,6 +257,7 @@ class BookInvSuppMasterRepository extends BaseRepository
  
                 $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
+                $data[$x][trans('custom.vat')] = $val->vatAmount? number_format($val->vatAmount,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.local_amount')] = $val->localcurrency? number_format($val->bookingAmountLocal,  $val->localcurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.reporting_currency')] = $val->companyReportingCurrencyID? ($val->rptcurrency? $val->rptcurrency->CurrencyCode : '') : '';
@@ -256,7 +280,7 @@ class BookInvSuppMasterRepository extends BaseRepository
     }
 
     /**
-     * Apply master document exchange rates to detail items for document types 1 and 4
+     * Apply master document exchange rates to detail items for document types 1, 3 and 4
      * 
      * @param int $id Master document ID (bookingSuppMasInvAutoID)
      * @return bool Success status
@@ -273,28 +297,43 @@ class BookInvSuppMasterRepository extends BaseRepository
             $localCurrencyER = $masterDocument->localCurrencyER ?? 1;
             $companyReportingER = $masterDocument->companyReportingER ?? 1;
 
-            $details = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
+            if($masterDocument->documentType == 3) {
+                $details = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $id)->get();
 
-            // Update each detail item with master exchange rates and recalculate amounts
-            foreach ($details as $item) {
-                $localAmount = Helper::roundValue($item->DIAmount / $localCurrencyER);
-                $VATAmountLocal = Helper::roundValue($item->VATAmount / $localCurrencyER);
-                $netAmountLocal = Helper::roundValue($item->netAmount / $localCurrencyER);
+                foreach ($details as $item) {
+                    $costPerUnit = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->costPerUnitSupTransCur);
+                    $vatAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->VATAmount);
 
-                $comRptAmount = Helper::roundValue($item->DIAmount / $companyReportingER);
-                $VATAmountRpt = Helper::roundValue($item->VATAmount / $companyReportingER);
-                $netAmountRpt = Helper::roundValue($item->netAmount / $companyReportingER);
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'companyReportingER' => $companyReportingER,
+                        'costPerUnitLocalCur' => $costPerUnit['localAmount'],
+                        'costPerUnitComRptCur' => $costPerUnit['reportingAmount'],
+                        'VATAmountLocal' => $vatAmount['localAmount'],
+                        'VATAmountRpt' => $vatAmount['reportingAmount']
+                    ]);
+                }
+            }
+            else if($masterDocument->documentType == 1 || $masterDocument->documentType == 4) {
+                $details = DirectInvoiceDetails::where('directInvoiceAutoID', $id)->get();
 
-                $item->update([
-                    'localCurrencyER' => $localCurrencyER,
-                    'comRptCurrencyER' => $companyReportingER,
-                    'localAmount' => $localAmount,
-                    'comRptAmount' => $comRptAmount,
-                    'VATAmountLocal' => $VATAmountLocal,
-                    'VATAmountRpt' => $VATAmountRpt,
-                    'netAmountLocal' => $netAmountLocal,
-                    'netAmountRpt' => $netAmountRpt
-                ]);
+                // Update each detail item with master exchange rates and recalculate amounts
+                foreach ($details as $item) {
+                    $diaAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->DIAmount);
+                    $vatAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->VATAmount);
+                    $netAmount = Helper::convertAmountToLocalRpt($masterDocument->documentSystemID, $id, $item->netAmount);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'comRptCurrencyER' => $companyReportingER,
+                        'localAmount' => $diaAmount['localAmount'],
+                        'comRptAmount' => $diaAmount['reportingAmount'],
+                        'VATAmountLocal' => $vatAmount['localAmount'],
+                        'VATAmountRpt' => $vatAmount['reportingAmount'],
+                        'netAmountLocal' => $netAmount['localAmount'],
+                        'netAmountRpt' => $netAmount['reportingAmount']
+                    ]);
+                }
             }
 
             return true;

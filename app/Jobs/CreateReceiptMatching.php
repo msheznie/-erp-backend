@@ -141,7 +141,7 @@ class CreateReceiptMatching implements ShouldQueue
         $status = ($successCount === $total) ? 'completed' : (($successCount > 0) ? 'partial_success' : 'failed');
 
         $response = [
-            'externalReference ' => $externalReference,
+            'externalReference' => $externalReference,
             'status' => $status,
             'summary' => [
                 'total' => $total,

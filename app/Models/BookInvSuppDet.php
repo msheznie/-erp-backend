@@ -282,6 +282,16 @@ class BookInvSuppDet extends Model
         return $this->hasOne('App\Models\BookInvSuppMaster', 'bookingSuppMasInvAutoID', 'bookingSuppMasInvAutoID');
     }
 
+    public function supplier_invoice_item_details()
+    {
+        return $this->hasMany('App\Models\SupplierInvoiceItemDetail', 'bookingSupInvoiceDetAutoID', 'bookingSupInvoiceDetAutoID');
+    }
+
+    public function getSupplierInvoiceItemDetailsVATAmountSum()
+    {
+        return $this->supplier_invoice_item_details()->sum('VATAmount');
+    }
+
 
 
 

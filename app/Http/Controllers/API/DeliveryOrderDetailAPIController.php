@@ -888,6 +888,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.no_items_selected_to_add'));
         }
 
+        // Filter to keep only checked rows for better performance
+        $input['detailTable'] = array_values(array_filter($input['detailTable'], function($detail) {
+            return isset($detail['isChecked']) && $detail['isChecked'] === true;
+        }));
+
         $inputDetails = $input['detailTable'];
         $inputDetails = collect($inputDetails)->where('isChecked',1)->toArray();
         $financeCategories = collect($inputDetails)->pluck('itemCategory')->toArray();

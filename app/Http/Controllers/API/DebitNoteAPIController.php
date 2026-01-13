@@ -76,6 +76,7 @@ use App\helper\Helper;
 use App\Models\SupplierBlock;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use App\Models\CurrencyConversion;
 
 /**
  * Class DebitNoteController
@@ -458,7 +459,11 @@ class DebitNoteAPIController extends AppBaseController
         }, 'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
-            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,DecimalPlaces,currencyID');
+            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,DecimalPlaces,currencyID,CurrencyCode');
+        },'localcurrency'=> function($query){
+            $query->selectRaw('CurrencyCode,CurrencyName,currencyID');
+        },'rptcurrency'=> function($query){
+            $query->selectRaw('CurrencyCode,CurrencyName,currencyID');
         },'vrfDocument' => function($query) {
             $query->where('masterDocumentTypeID',15);
         }])->findWithoutFail($id);
@@ -467,7 +472,12 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
-        return $this->sendResponse($debitNote->toArray(), trans('custom.debit_note_retrieved_successfully'));
+        $debitNoteArray = $debitNote->toArray();
+        $debitNoteArray['transCurrencyCode'] = CurrencyMaster::where('currencyID', $debitNoteArray['supplierTransactionCurrencyID'])->first()->CurrencyCode ?? null;
+        $debitNoteArray['companyRptCurrencyCode'] = CurrencyMaster::where('currencyID', $debitNoteArray['companyReportingCurrencyID'])->first()->CurrencyCode ?? null;
+        $debitNoteArray['localCurrencyCode'] = CurrencyMaster::where('currencyID', $debitNoteArray['localCurrencyID'])->first()->CurrencyCode ?? null;
+
+        return $this->sendResponse($debitNoteArray, trans('custom.debit_note_retrieved_successfully'));
     }
 
     /**
@@ -520,7 +530,7 @@ class DebitNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee', 'rptcurrency', 'localcurrency']);
 
         $input = $this->convertArrayToValue($input);
 
@@ -541,6 +551,13 @@ class DebitNoteAPIController extends AppBaseController
         $type =  $input['type'];
         $supplier_id = $input['supplierID'];
         $supplierMaster = SupplierMaster::where('supplierCodeSystem',$supplier_id)->first();
+
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        if(!$checkErChange && $type == 1) {
+            $this->debitNoteRepository->applyMasterExchangeRatesToDetails($id);
+        }
+
+        $debitNote = $debitNote->refresh();
         
         if($type == 2)
         {   
@@ -698,10 +715,10 @@ class DebitNoteAPIController extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false) {
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-            }
+//            if($policy == false) {
+//                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+//                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+//            }
         }
 
         $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -732,6 +749,45 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            if ($checkErChange && $type == 1) {
+                // Get company currency information
+                $company = Company::find($input['companySystemID']);
+                $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+
+                $localERDocument = Helper::roundValue($debitNote->localCurrencyER) ?? 0;
+                $reportingERDocument = Helper::roundValue($debitNote->companyReportingER) ?? 0;
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $debitNote->supplierTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                if (!$conversion) {
+                    return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                }
+                $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $debitNote->supplierTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                if (!$conversion) {
+                    return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                }
+                $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                    $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                        "<p style='font-size: medium;'>" .
+                        trans('custom.previous_rates') . " " .
+                        trans('custom.local_er') . " " . number_format($localERDocument, 7) .
+                        " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                        "</p>" .
+                        "<p style='font-size: medium;'>" .
+                        trans('custom.current_rates') . " " .
+                        trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                        " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                        "</p>" .
+                        "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
+                    return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                }
+            }
 
             if($type == 1 && ($input['isSupplierBlocked']))
             {
@@ -828,13 +884,13 @@ class DebitNoteAPIController extends AppBaseController
                     ->first();
 
 
-                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
-
-                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
-                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                }
+//                if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+//
+//                    $input['localAmount'] = $companyCurrencyConversion['localAmount'];
+//                    $input['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+//                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+//                    $input['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+//                }
 
                 $updateItem->save();
 
@@ -862,13 +918,13 @@ class DebitNoteAPIController extends AppBaseController
 
 
 
-            if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
-
-                $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
-                $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-            }
+//            if (isset($policy->isYesNO) && $policy->isYesNO != 1) {
+//
+//                $input['debitAmountLocal'] = $companyCurrencyConversion['localAmount'];
+//                $input['debitAmountRpt'] = $companyCurrencyConversion['reportingAmount'];
+//                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+//                $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+//            }
 
             $vatAmount = DebitNoteDetails::where('debitNoteAutoID', $id)
                 ->sum('VATAmount');
@@ -933,18 +989,18 @@ class DebitNoteAPIController extends AppBaseController
                     ->where('isYesNO', 1)
                     ->first();
 
-                $taxDetail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
-                $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
-
-                if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
+//                $taxDetail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+//                $taxDetail['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+//                $taxDetail['localAmount'] = $VATCurrencyConversion['localAmount'];
+//                $taxDetail['rptAmount'] = $VATCurrencyConversion['reportingAmount'];
+//
+//                if (isset($policy->isYesNO) && $policy->isYesNO == 1) {
 
                     $taxDetail['localCurrencyER'] = $debitNote->localCurrencyER;
                     $taxDetail['rptCurrencyER'] = $debitNote->companyReportingER;
                     $taxDetail['localAmount'] = $debitNote->VATAmountLocal;
                     $taxDetail['rptAmount'] = $debitNote->VATAmountRpt;
-                }
+//                }
 
 
 
@@ -1045,6 +1101,13 @@ class DebitNoteAPIController extends AppBaseController
         $debitNote = $this->debitNoteRepository->findWithoutFail($id);
 
         $type =  $input['type'];
+
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        if(!$checkErChange && $type == 1) {
+            $this->debitNoteRepository->applyMasterExchangeRatesToDetails($id);
+        }
+
+        $debitNote = $debitNote->refresh();
 
         if (empty($debitNote)) {
             return $this->sendError(trans('custom.debit_note_not_found'));
@@ -1177,6 +1240,45 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if ($debitNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
+            if ($checkErChange && $type == 1) {
+                // Get company currency information
+                $company = Company::find($input['companySystemID']);
+                $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+
+                $localERDocument = Helper::roundValue($debitNote->localCurrencyER) ?? 0;
+                $reportingERDocument = Helper::roundValue($debitNote->companyReportingER) ?? 0;
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $debitNote->supplierTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                if (!$conversion) {
+                    return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                }
+                $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                $conversion = CurrencyConversion::where('masterCurrencyID', $debitNote->supplierTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                if (!$conversion) {
+                    return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                }
+                $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                    $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                        "<p style='font-size: medium;'>" .
+                        trans('custom.previous_rates') . " " .
+                        trans('custom.local_er') . " " . number_format($localERDocument, 7) .
+                        " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                        "</p>" .
+                        "<p style='font-size: medium;'>" .
+                        trans('custom.current_rates') . " " .
+                        trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                        " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                        "</p>" .
+                        "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
+                    return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                }
+            }
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -2654,5 +2756,60 @@ UNION ALL
         }
 
         return $debitNotes;
+    }
+
+    public function setDefaultExchangeRate($id, Request $request)
+    {
+        try {
+            $companyId = $request->companyId;
+
+            $debitNote = DebitNote::findOrFail($id);
+
+            if (!$debitNote) {
+                return $this->sendError(trans('custom.debit_note_not_found'), 404);
+            }
+
+            // Get local currency exchange rate
+            $localCurrency = Company::find($companyId)->localCurrencyID;
+            $localER = \Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localERValue = $localER['trasToLocER'] ?? 1;
+
+            // Get reporting currency exchange rate
+            $reportingCurrency = Company::find($companyId)->reportingCurrency;
+            $reportingER = \Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingERValue = $reportingER['trasToRptER'] ?? 1;
+
+            // Recalculate local currency amounts
+            $debitAmountLocal = \Helper::roundValue($debitNote->debitAmountTrans / $localERValue);
+            $VATAmountLocal = \Helper::roundValue($debitNote->VATAmount / $localERValue);
+            $netAmountLocal = \Helper::roundValue($debitNote->netAmount / $localERValue);
+
+            // Recalculate reporting currency amounts
+            $debitAmountRpt = \Helper::roundValue($debitNote->debitAmountTrans / $reportingERValue);
+            $VATAmountRpt = \Helper::roundValue($debitNote->VATAmount / $reportingERValue);
+            $netAmountRpt = \Helper::roundValue($debitNote->netAmount / $reportingERValue);
+
+            // Update debit note with new exchange rates and recalculated amounts
+            $debitNoteArray = array(
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue,
+                'debitAmountLocal' => $debitAmountLocal,
+                'debitAmountRpt' => $debitAmountRpt,
+                'VATAmountLocal' => $VATAmountLocal,
+                'VATAmountRpt' => $VATAmountRpt,
+                'netAmountLocal' => $netAmountLocal,
+                'netAmountRpt' => $netAmountRpt
+            );
+
+            $debitNote->update($debitNoteArray);
+
+            return $this->sendResponse([
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue
+            ], trans('custom.default_exchange_rate_updated_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
     }
 }

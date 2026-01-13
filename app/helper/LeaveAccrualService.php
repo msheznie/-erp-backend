@@ -118,6 +118,10 @@ class LeaveAccrualService
             ? $this->pending_sql_monthly($str, $leaveGroupID, $masterIdFilter)
             : $this->pending_sql_annual($str, $leaveGroupID, $masterIdFilter);
 
+        if (empty($sql)) {
+            return false;
+        }
+
         $emp_arr = DB::select($sql);
 
         if($getCount) {
@@ -176,6 +180,8 @@ class LeaveAccrualService
         if (empty($this->month_det)) {
             $logMessage = "Details not available - Company Id: {$this->company_id}, Date: {$this->date}";
             $this->insertToLogTb($logMessage, 'error', 'Leave Accrual Monthly', $this->company_id);
+
+            return "";
         }
         
         $year = Carbon::parse( $this->date )->format('Y');
@@ -209,6 +215,8 @@ class LeaveAccrualService
         if (empty($this->month_det)) {
             $logMessage = "Details not available - Company Id: {$this->company_id}, Date: {$this->date}";
             $this->insertToLogTb($logMessage, 'error', 'Leave Accrual Monthly', $this->company_id);
+
+            return;
         }
         
         $accrualTriggerBasedOnValues = [1 => 'First of Month', 2 => 'End of Month'];

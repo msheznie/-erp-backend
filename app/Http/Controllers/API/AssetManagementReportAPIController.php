@@ -172,9 +172,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     } else if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
                         $validator = \Validator::make($request->all(), [
                             'reportTypeID' => 'required',
-                            'fromMonth' => 'required',
-                            'toMonth' => 'required',
-                            'year' => 'required',
+                            'fromDate' => 'required',
+                            'toDate' => 'required',
                             'assetCategory' => 'required',
                             'currencyID' => 'required',
                             'typeID' => 'required'
@@ -452,11 +451,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
                     //ini_set('memory_limit', '4096M');
                     //return phpinfo();
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                    $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
-                    $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
+                    $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
+                    $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
 
                     $totalClosingDep = 0;
                     $NBVTotal = 0;
@@ -1013,7 +1012,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('year', 'fromMonth', 'toMonth', 'currencyID', 'typeID', 'excelType'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID', 'excelType'));
 
 
                     $output = $this->getAssetRegisterDetail2($request);
@@ -1028,32 +1027,61 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $dataArray = array();
 
-                    $year = $request->year;
+                    $year = Carbon::parse($request->fromDate)->format('Y');
                     $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
 
                     if(empty($dataArray)) {
                         $assetRegisterDetail2Header = new AssetRegisterDetail2();
-                        $headers = collect($assetRegisterDetail2Header->getHeader())->toArray();
-
-                        foreach ($headers as &$header) {
-                            if (in_array($header, [
-                                trans('custom.jan'),
-                                trans('custom.feb'),
-                                trans('custom.mar'),
-                                trans('custom.apr'),
-                                trans('custom.may'),
-                                trans('custom.jun'),
-                                trans('custom.jul'),
-                                trans('custom.aug'),
-                                trans('custom.sep'),
-                                trans('custom.oct'),
-                                trans('custom.nov'),
-                                trans('custom.dec')
-                            ])) {
-                                $header .= '-' . substr($year, -2);
+                        $allHeaders = collect($assetRegisterDetail2Header->getHeader())->toArray();
+                        
+                        $monthHeaders = [
+                            trans('custom.jan'),
+                            trans('custom.feb'),
+                            trans('custom.mar'),
+                            trans('custom.apr'),
+                            trans('custom.may'),
+                            trans('custom.jun'),
+                            trans('custom.jul'),
+                            trans('custom.aug'),
+                            trans('custom.sep'),
+                            trans('custom.oct'),
+                            trans('custom.nov'),
+                            trans('custom.dec')
+                        ];
+                        
+                        $monthStartIndex = -1;
+                        foreach ($allHeaders as $index => $header) {
+                            if (in_array($header, $monthHeaders)) {
+                                $monthStartIndex = $index;
+                                break;
                             }
                         }
+                        
+                        $headers = array_slice($allHeaders, 0, $monthStartIndex);
+                        
+                        $monthMap = [
+                            'Jan' => trans('custom.jan'),
+                            'Feb' => trans('custom.feb'),
+                            'Mar' => trans('custom.mar'),
+                            'Apr' => trans('custom.apr'),
+                            'May' => trans('custom.may'),
+                            'Jun' => trans('custom.jun'),
+                            'Jul' => trans('custom.jul'),
+                            'Aug' => trans('custom.aug'),
+                            'Sep' => trans('custom.sep'),
+                            'Oct' => trans('custom.oct'),
+                            'Nov' => trans('custom.nov'),
+                            'Dec' => trans('custom.dec')
+                        ];
+                        
+                        foreach ($output['period'] as $period) {
+                            $periodParts = explode('-', $period);
+                            if (isset($periodParts[0]) && isset($monthMap[$periodParts[0]])) {
+                                $headers[] = $period;
+                            }
+                        }
+                        
                         array_push($dataArray,$headers);
                     }
 
@@ -1104,17 +1132,35 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $financialData->setNbv(round($val->costClosing - ($val->openingDep - $val->disposedDep), $currencyDecimalPlace));
                             }
 
-                            for ($i = 0; $i < 12; $i++) {
+                            $rowData = [
+                                $financialData->glCode,
+                                $financialData->category,
+                                $financialData->faCode,
+                                $financialData->groupedFaCode,
+                                $financialData->postingDateOfFA,
+                                $financialData->depStartDate,
+                                $financialData->depPercentage,
+                                $financialData->serviceLine,
+                                $financialData->grvDate,
+                                $financialData->grvNumber,
+                                $financialData->supplierName,
+                                $financialData->openingCost,
+                                $financialData->additionCost,
+                                $financialData->disposalCost,
+                                $financialData->closingCost,
+                                $financialData->openingDep,
+                                $financialData->chargeDuringTheYear,
+                                $financialData->chargeOnDisposal,
+                                $financialData->closingDep,
+                                $financialData->nbv,
+                            ];
+                            
+                            for ($i = 0; $i < count($output['period']); $i++) {
                                 $propertyName = $output['period'][$i];
-                                $name = explode('-',$propertyName);
-                                $methodName = 'set' . ucfirst(strtolower($name[0]));
-
-                                if (method_exists($financialData, $methodName)) {
-                                    $financialData->$methodName(round($val->{$propertyName}, $currencyDecimalPlace));
-                                }
+                                $rowData[] = round($val->{$propertyName}, $currencyDecimalPlace);
                             }
 
-                            array_push($dataArray,collect($financialData)->toArray());
+                            array_push($dataArray, $rowData);
 
                         }
                     }
@@ -1134,14 +1180,17 @@ class AssetManagementReportAPIController extends AppBaseController
                     $fileName = trans('custom.asset_register_detail2_report');
                     $path = 'asset_register/report/excel/';
 
+                    $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
+                    $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
+
                     $exportToExcel = $service
                         ->setTitle($title)
                         ->setFileName($fileName)
                         ->setPath($path)
                         ->setCompanyCode($companyCode)
                         ->setCompanyName("")
-                        ->setFromDate("")
-                        ->setToDate("")
+                        ->setFromDate($fromDate)
+                        ->setToDate($toDate)
                         ->setType('xls')
                         ->setReportType(2)
                         ->setCurrency("")
@@ -4067,8 +4116,8 @@ WHERE
     function getAssetRegisterDetail2($request)
     {
         $typeID = $request->typeID;
-        $fromDate = Carbon::parse($request->year . '-' . $request->fromMonth)->startOfMonth()->format('Y-m-d');
-        $toDate = Carbon::parse($request->year . '-' . $request->toMonth)->endOfMonth()->format('Y-m-d');
+        $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
+        $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
 
         $currencyColumn = '';

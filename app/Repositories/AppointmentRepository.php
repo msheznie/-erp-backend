@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Appointment;
+use App\Models\PurchaseOrderDetails;
+use App\Models\GRVDetails;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -51,6 +53,71 @@ class AppointmentRepository extends BaseRepository
             return null;
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
+        }
+    }
+    public function validateAppointmentQuantities($appointmentId)
+    {
+        try {
+            $appointment = Appointment::getAppointmentData($appointmentId);
+
+            if (!$appointment) {
+                return [
+                    'success' => false,
+                    'message' => 'Appointment not found'
+                ];
+            }
+
+            $validationErrors = [];
+            foreach ($appointment->detail as $appointmentDetail) {
+                if (!$appointmentDetail->po_detail_id) {
+                    continue;
+                }
+
+                $poDetail = PurchaseOrderDetails::find($appointmentDetail->po_detail_id);
+                if (!$poDetail) {
+                    continue;
+                }
+
+                $receivedQtySum = GRVDetails::getDirectPOGrv($appointmentDetail->po_detail_id);
+
+                $receivedQty = $receivedQtySum->totalReceivedQty ?? 0;
+                $poQty = $poDetail->noQty ?? 0;
+                $appointmentQty = $appointmentDetail->qty ?? 0;
+                $availableQty = $poQty - $receivedQty;
+
+                if ($appointmentQty > $availableQty) {
+                    $itemCode = $poDetail->itemPrimaryCode ?? 'N/A';
+                    $validationErrors[] = trans('srm_supplier_management.item_appointment_quantity_exceeds_available_quantity', [
+                        'itemCode' => $itemCode,
+                        'appointmentQty' => $appointmentQty,
+                        'availableQty' => $availableQty,
+                        'poQty' => $poQty,
+                        'receivedQty' => $receivedQty
+                    ]);
+                }
+            }
+
+            if (!empty($validationErrors)) {
+                $errorMessage = trans('srm_supplier_management.grv_qty_can_not_exceed_validation');
+                $errorMessage .= "." . implode(",", $validationErrors);
+                return [
+                    'success' => false,
+                    'message' => $errorMessage
+                ];
+                
+            }
+
+            return [
+                'success' => true,
+                'message' => 'success'
+            ];
+
+        } catch (\Exception $e) {
+            
+            return [
+                'success' => false,
+                'message' => trans('srm_supplier_management.something_went_wrong') . ' ' . $e->getMessage()
+            ];
         }
     }
 }

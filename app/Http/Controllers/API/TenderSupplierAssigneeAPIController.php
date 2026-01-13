@@ -323,7 +323,16 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     public function sendSupplierInvitation(Request $request)
     {
         $input = $request->all();
-        $tenderId = $input['tenderId'];
+        $tenderId = $input['tenderId'] ?? null;
+
+        if (!$tenderId) {
+            $tenderUuid = $input['uuid'] ?? null;
+            if ($tenderUuid) {
+                $tender = TenderMaster::getTenderByUuid($tenderUuid);
+                $tenderId = $tender->id ?? null;
+            }
+        }
+
         $companyId = $input['companySystemId'];
         $rfx =  false;
         if(isset($input['rfx'])){

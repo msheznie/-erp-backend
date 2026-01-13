@@ -1,4 +1,4 @@
-<html>
+<html @if(isset($lang) && $lang === 'ar') dir="rtl" @endif>
 <head>
     <title>{{ __('custom.supplier_ranking_summary') }}</title>
     <style>
@@ -26,9 +26,32 @@
         }
 
         body {
-            font-size: 12px;
+            font-size: 11px;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         }
+        @if(isset($lang) && $lang === 'ar')
+        body {
+            direction: rtl;
+            text-align: right;
+            font-family: 'Noto Sans Arabic', sans-serif;
+        }
+
+        .text-left {
+            text-align: right !important;
+        }
+
+        .text-right {
+            text-align: left !important;
+        }
+
+        table {
+            direction: rtl;
+        }
+
+        .table th, .table td {
+            text-align: right;
+        }
+        @endif
 
         h3 {
             font-size: 24.5px;
@@ -178,7 +201,7 @@
                     <br>
                     <table style="border: none">
                         <tr>
-                            <td width="100px" style="border: none">
+                            <td style="border: none">
                                 <span style="font-size: 18px;font-weight: 400">Supplier Ranking Summary Report</span>
                             </td>
                         </tr>

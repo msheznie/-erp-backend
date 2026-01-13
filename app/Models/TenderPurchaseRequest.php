@@ -42,4 +42,60 @@ class TenderPurchaseRequest extends Model
             ->where('tender_id', $tenderMasterID)
             ->get();
     }
+    public static function getProcurementLifecycleReportData($companyId){
+        return self::with([
+            'purchase_request' => function ($q) use ($companyId) {
+                return $q->where('companySystemID', $companyId)
+                    ->where('PRConfirmedYN', 1)
+                    ->where('cancelledYN', 0)
+                    ->with([
+                        'currency_by:currencyID,CurrencyCode,DecimalPlaces',
+                        'details:purchaseRequestDetailsID,purchaseRequestID,totalCost',
+                        'all_approvals' => function ($q) {
+                            return $q->where('approvedYN', -1)
+                                ->with('employee:employeeSystemID,empName');
+                        },
+                        'po_details' => function ($q) {
+                            return $q->with([
+                                'order' => function ($q){
+                                    $q->with([
+                                        'all_approvals' => function ($q) {
+                                            return $q->where('approvedYN', -1)
+                                                ->with('employee:employeeSystemID,empName');
+                                        }
+                                    ]);
+                                }
+                            ]);
+                        }
+                    ]);
+            }, 'tender' => function ($q) {
+                $q->select('id', 'tender_code', 'document_system_id', 'published_at', 'bid_submission_opening_date',
+                    'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id')
+                    ->with([
+                        'all_approvals' => function ($q) {
+                            return $q->where('approvedYN', -1)
+                                ->with('employee:employeeSystemID,empName');
+                        },
+                        'contract' => function ($q) {
+                            $q->select('id', 'contractCode', 'startDate', 'endDate', 'agreementSignDate')
+                                ->with([
+                                    'contract_status' => function ($q) {
+                                        $q->select('id', 'contract_history_id', 'status', 'contract_id')
+                                            ->whereIn('status', [1, 2, 3, 4, 5, 6]);
+                                    }
+                                ]);
+                        }
+                    ]);
+            }
+        ])
+            ->whereHas('purchase_request', function ($q) use ($companyId) {
+                return $q->where('companySystemID', $companyId)
+                    ->where('PRConfirmedYN', 1)
+                    ->where('cancelledYN', 0);
+            }
+            )
+            ->where('company_id', $companyId)
+            ->orderBy('id', 'desc')
+            ->get();
+    }
 }

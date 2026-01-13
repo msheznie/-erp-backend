@@ -13,6 +13,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class SupplierCurrency
@@ -86,5 +87,9 @@ class SupplierCurrency extends Model
             ->where('currencyID',$currency)
             ->first();
     }
-    
+    public static function getSupplierCurrency($supplierID){
+        return DB::table('suppliercurrency')
+            ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+            ->where('supplierCodeSystem', '=', $supplierID)->first();
+    }
 }

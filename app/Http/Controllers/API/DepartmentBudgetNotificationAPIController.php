@@ -622,4 +622,3 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
         return $this->sendResponse($id, 'Notification Detail deleted successfully');
     }
 }
-

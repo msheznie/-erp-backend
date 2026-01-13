@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\HelpDesk;
 
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\OSOS_3_0\EmployeeWebHook;
+use App\Jobs\OSOS_3_0\UsersWebHook;
 use App\Jobs\UserWebHook;
 use App\Models\ThirdPartyIntegrationKeys;
 use App\Traits\OSOS_3_0\JobCommonFunctions;
@@ -59,12 +60,20 @@ class HelpDeskAPIController extends AppBaseController
         $valResp = $this->commonValidations($request);
         if(!$valResp['status']){
             $logData = ['message' => $valResp['message']];
-            $this->insertToLogTb($logData, 'error', 'Employee', $this->thirdParty['company_id']);
+            return $this->insertToLogTb($logData, 'error', 'Employee', $this->thirdParty['company_id']);
         }
 
         $postType = $request->postType;
         $ids = is_array($request->employeeSystemID)? $request->employeeSystemID : [$request->employeeSystemID];
         $db = $request->db ?? "";
+
+        if (!empty($request->userOnly)) {
+            foreach ($ids as $id) {
+                UsersWebHook::dispatch($db, $postType, $id, $this->thirdParty, $request->userOnly);
+            }
+
+            return $this->sendResponse([], 'OSOS 3.0 user triggered');
+        }
 
         foreach ($ids as $id) {
             EmployeeWebHook::dispatch($db, $postType, $id, $this->thirdParty);

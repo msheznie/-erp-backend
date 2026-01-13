@@ -312,6 +312,8 @@ Route::group([], function() {
 	Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign')->name("Get all tax vat sub category item assign");
 	Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem')->name("Assign tax vat sub category to item ");
 	Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory')->name("Remove assigned item from tax vat sub category");
+	Route::post('getContributionsDatatable', 'MolContributionAPIController@getContributionsDatatable')->name("Get contributions datatable");
+	Route::get('getMolContributionFormData', 'MolContributionAPIController@getMolContributionFormData')->name("Get mol contribution form data");
 
 	Route::resource('tax_authorities', 'TaxAuthorityAPIController');
 	Route::resource('taxes', 'TaxAPIController');
@@ -319,6 +321,8 @@ Route::group([], function() {
 	Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
 	Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
 	Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+
+	Route::resource('mol_contributions', 'MolContributionAPIController');
 });
 
 //Asset Finance Category

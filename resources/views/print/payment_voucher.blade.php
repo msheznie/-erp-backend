@@ -339,6 +339,9 @@
                                 @if($masterdata->supplier)
                                     {{$masterdata->supplier->primarySupplierCode}}
                                 @endif
+                                @if($masterdata->customer)
+                                    {{$masterdata->customer->CutomerCode}}
+                                @endif
                             </td>
                         </tr>
                     @endif
@@ -356,6 +359,9 @@
                         </td>
                         <td>
                             {{$masterdata->directPaymentPayee}}
+                            @if($masterdata->customer)
+                                {{$masterdata->customer->CustomerName}}
+                            @endif
                         </td>
                     </tr>
                     <tr>

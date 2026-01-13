@@ -400,7 +400,7 @@ class ReceiptMatchingAPIService extends AppBaseController
 
                     $companyFinancePeriod = CompanyFinancePeriod::select('companyFinancePeriodID')->where('companySystemID', '=', $input['companySystemID'])
                     ->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
-                    ->where('departmentSystemID', 1)
+                    ->where('departmentSystemID', 4)
                     ->where('isActive', -1)
                     ->where('isCurrent', -1)
                     ->first();

@@ -177,7 +177,12 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
             $input['noQty'] = isset($input['noQty']) ? $input['noQty'] : 0;
 
-            $currency = \Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
+            if (in_array($invoice->documentType, [1, 3, 4])) {
+                $currency = Helper::convertAmountToLocalRpt($invoice->documentSystemID, $bookingSuppMasInvAutoID, $input['unitCost']);
+            }
+            else {
+                $currency = \Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
+            }
     
             // checking the qty request is matching with sum total
             $detailArray['bookingSuppMasInvAutoID'] = $bookingSuppMasInvAutoID;
@@ -385,7 +390,12 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             }
 
             if ($discountedUnitPrice > 0) {
-                $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $discountedUnitPrice);
+                if (in_array($supplierInvoice->documentType, [1, 3, 4])) {
+                    $currencyConversion = \Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $discountedUnitPrice);
+                }
+                else {
+                    $currencyConversion = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $discountedUnitPrice);
+                }
 
                 $input['costPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
                 $input['costPerUnitSupTransCur'] = $discountedUnitPrice;
@@ -393,7 +403,12 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             }
 
             if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
-                $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $input['VATAmount']);
+                if (in_array($supplierInvoice->documentType, [1, 3, 4])) {
+                    $currencyConversionVAT = \Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $input['VATAmount']);
+                }
+                else {
+                    $currencyConversionVAT = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $input['VATAmount']);
+                }
                 $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
                 $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
                 $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
@@ -405,7 +420,12 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
             // adding supplier Default CurrencyID base currency conversion
             if ($discountedUnitPrice > 0) {
-                $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierDefaultCurrencyID, $discountedUnitPrice);
+                if (in_array($supplierInvoice->documentType, [1, 3, 4])) {
+                    $currencyConversionDefault = Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $discountedUnitPrice);
+                }
+                else {
+                    $currencyConversionDefault = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierDefaultCurrencyID, $discountedUnitPrice);
+                }
 
                 $input['costPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
             }

@@ -24,10 +24,11 @@ class UserService
     protected $pivotTableId;
     protected $masterUuId;
     protected $empId;
+    protected $userOnly;
 
     use JobCommonFunctions;
 
-    public function __construct($dataBase, $id, $empId, $postType, $thirdPartyData)
+    public function __construct($dataBase, $id, $empId, $postType, $thirdPartyData, $userOnly)
     {
 
         $this->dataBase = $dataBase;
@@ -40,6 +41,7 @@ class UserService
         $this->apiExternalUrl = $thirdPartyData['api_external_url'];
         $this->companyId = $thirdPartyData['company_id'];
         $this->thirdPartyData = $thirdPartyData;
+        $this->userOnly = $userOnly;
 
         $this->getOperation();
         $this->getPivotTableId(6);
@@ -84,16 +86,49 @@ class UserService
 
                 $je = json_decode($body, true);
 
-                if (!isset($je['id'])) {
-                    $logData = ['message' => 'Cannot Find Reference id from response', 'id' => $this->id];
+                if (!is_array($je)) {
+                    $logData = [
+                        'message' => 'Invalid or empty JSON response from API',
+                        'id' => $this->id
+                    ];
                     return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
                 }
 
-                $this->insertOrUpdateThirdPartyPivotTable($je['id']);
+                $userRefId = null;
+
+                if ($this->postType === 'POST') {
+                    if (empty($je['id'])) {
+                        $logData = [
+                            'message' => 'Cannot Find Reference id from response',
+                            'id' => $this->id
+                        ];
+                        return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
+                    }
+
+                    $userRefId = $je['id'];
+                }
+
+                else {
+                    if (empty($je['userConfig']['id'])) {
+                        $logData = [
+                            'message' => 'Cannot Find Reference id from response',
+                            'id' => $this->id
+                        ];
+                        return $this->insertToLogTb($logData, 'error', 'User', $this->companyId);
+                    }
+
+                    $userRefId = $je['userConfig']['id'];
+                }
+
+                $this->insertOrUpdateThirdPartyPivotTable($userRefId);
                 $logData = ['message' => "Api user {$this->operation} successfully processed", 'id' => $this->id];
                 $this->insertToLogTb($logData, 'info', 'User', $this->companyId);
-                return ['status' => true, 'message' => $logData['message'], 'code' => $statusCode];
 
+                return [
+                    'status' => true,
+                    'message' => $logData['message'],
+                    'code' => $statusCode
+                ];
             }
 
             if ($statusCode == 400) {
@@ -182,7 +217,8 @@ class UserService
                         WHEN g.genderID = 2 THEN 'Miss'
                     END as empTitle,
                     CONCAT(IFNULL(e.EDOB, '2000-01-01'), 'T18:30:00.000Z') as dateOfBirth,
-                    DATE_FORMAT(IFNULL(e.EDOB, '2000-01-01'), '%d/%m/%Y') as hiddenDateOfBirth")
+                    DATE_FORMAT(IFNULL(e.EDOB, '2000-01-01'), '%d/%m/%Y') as hiddenDateOfBirth,
+                    e.EmpImage as imageUrl")
             ->join('srp_employeesdetails as e', function ($join) {
                 $join->on('e.EIdNo', '=', 'u.employee_id');
             })
@@ -202,6 +238,8 @@ class UserService
         $companyId = $this->getOtherReferenceId($data->companyId, 5);
         $employeeId = $this->getOtherReferenceId($this->empId, 4);
 
+        $imageData = $this->getProfileImageData($data->imageUrl);
+
         $this->userData = [
             "activeCompany" => $companyId,
             "company" => [
@@ -216,6 +254,8 @@ class UserService
             "gender" => $data->gender,
             "dateOfBirth" => $data->dateOfBirth,
             "hiddenDateOfBirth" => $data->hiddenDateOfBirth,
+            "profileImage" => $imageData['profileImage'],
+            "profileImageExtension" => $imageData['profileImageExtension'],
             "isActive" => true,
             "language" => "en-US",
             "mobileNo" => $data->EcMobile,
@@ -226,7 +266,15 @@ class UserService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->userData['Id'] = $this->masterUuId;
+            if (empty($this->masterUuId)) {
+                $this->postType = "POST";
+            }else {
+                $this->userData['id'] = $this->masterUuId;
+            }
+        }
+
+        if (!empty($this->userOnly)) {
+            unset($this->userData['EmployeeId']);
         }
     }
 

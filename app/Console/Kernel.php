@@ -38,6 +38,7 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:codeConfigEdit')->hourly()->withoutOverlapping();
         $schedule->command('command:checkb2bstatus')->everyFifteenMinutes()->withoutOverlapping();
         $schedule->command('auth:detect-expired-tokens')->hourly()->withoutOverlapping();
+        $schedule->command('command:removeExpiredUserGroupAccess')->daily()->withoutOverlapping();
 
         $schedule->command('pull-attendance')
         ->timezone('Asia/Muscat')

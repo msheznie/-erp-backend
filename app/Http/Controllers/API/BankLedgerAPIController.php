@@ -1751,6 +1751,7 @@ class BankLedgerAPIController extends AppBaseController
 
     public function updatePrintAhliChequeItems(Request $request)
     {
+        
         $input = $request->all();
         $search = $request->input('search.value');
         $htmlName = '';
@@ -1937,7 +1938,9 @@ class BankLedgerAPIController extends AppBaseController
             try {
                 $time = strtotime("now");
                 $fileName = 'cheque_ahli' . $time . '.pdf';
-                $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+                $local = app()->getLocale();
+                
+                $f = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
                 $totalAmount = 0;
                 foreach ($bankLedger as $item) {
                     $temArray = array();
@@ -2037,7 +2040,7 @@ class BankLedgerAPIController extends AppBaseController
 
 
 
-
+                    
                     $entity->amount_word = ucfirst($f->format($intAmt));
                     $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
                     $entity->chequePrintedByEmpName = $employee->empName;
@@ -2291,7 +2294,9 @@ class BankLedgerAPIController extends AppBaseController
         }
         $time = strtotime("now");
         $fileName = 'cheque' . $time . '.pdf';
-        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $local = $request->get('lang');
+        $f = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
+        
 
         foreach ($bankLedger as $item) {
 

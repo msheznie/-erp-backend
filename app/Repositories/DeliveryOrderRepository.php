@@ -78,7 +78,8 @@ class DeliveryOrderRepository extends BaseRepository
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'salesType'
     ];
 
     /**
@@ -182,6 +183,15 @@ class DeliveryOrderRepository extends BaseRepository
                 $data[$x][trans('custom.reporting_amount')] = $val->companyReportingAmount? number_format($val->companyReportingAmount + $val->VATAmountRpt, $val->reporting_currency? $val->reporting_currency->DecimalPlaces : '', ".", "") : 0;
 
                 $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $salesTypeDescription = '';
+                if(isset($val->salesType) && $val->salesType > 0) {
+                    if($val->salesType == 1) {
+                        $salesTypeDescription = __('custom.ar_goods_and_services');
+                    } elseif($val->salesType == 2) {
+                        $salesTypeDescription = __('custom.ar_subscription');
+                    }
+                }
+                $data[$x][trans('custom.sales_type')] = $salesTypeDescription;
 
                 $x++;
             }

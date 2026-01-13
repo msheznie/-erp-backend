@@ -199,7 +199,7 @@ class CreditNoteRepository extends BaseRepository
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.created_by')] = $val->empName;
                 $data[$x][trans('custom.currency')] =$val->CurrencyCode? $val->CurrencyCode : '';
-                $data[$x][trans('custom.amount')] = number_format($val->creditAmountTrans, $val->DecimalPlaces? $val->DecimalPlaces : '', ".", "");
+                $data[$x][trans('custom.amount')] = number_format($val->creditAmountTrans, $val->DecimalPlaces ? (int)$val->DecimalPlaces : 0, ".", "");
                 $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

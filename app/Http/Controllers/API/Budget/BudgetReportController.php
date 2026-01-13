@@ -8,6 +8,8 @@ use App\Services\BudgetReportService;
 use App\Services\Excel\ExportReportToExcelService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
+use App\Models\CompanyFinanceYear;
 
 class BudgetReportController extends AppBaseController
 {
@@ -39,6 +41,7 @@ class BudgetReportController extends AppBaseController
             ->with('isGroup', $checkIsGroup->isGroup)
             ->with('currencyID', "")
             ->with('total', $output['total'])
+            ->with('date', $output['date'])
             ->with('decimalPlace', 2)
             ->with('currencyCode', "")
             ->addIndexColumn()
@@ -71,9 +74,19 @@ class BudgetReportController extends AppBaseController
                 $path = "";
                 $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
                 $company_name = $company->CompanyName;
-                $from_date = $request->fromDate;
-                $to_date = $request->fromDate;
-                $date = $request->fromDate.'-'.$request->toDate;
+
+
+                $companyFinanceYearID = $request->companyFinanceYearID;
+
+                $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
+
+                if (empty($companyFinanceYear)) {
+                    return $this->sendError(trans('custom.finance_year_not_found'));
+                }
+
+                $from_date = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+                $to_date = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+                $date = $from_date.'-'.$to_date;
 
 
                 $outputData = array('reportData' => $data['data'],

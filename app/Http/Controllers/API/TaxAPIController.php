@@ -531,6 +531,12 @@ class TaxAPIController extends AppBaseController
 
         $isDefaultState = Tax::where('taxCategory',3)->where('companySystemID', $selectedCompanyId)->exists();
 
+        $chartOfAccountPL = ChartOfAccount::where('isApproved', 1)->whereIn('controlAccountsSystemID', [1,2])
+        ->whereHas('chartofaccount_assigned', function($query) use ($companies){
+            $query->whereIn('companySystemID', $companies)
+                  ->where('isAssigned', -1);
+        })->get();
+        
         $output = array(
             'companies' => $companiesByGroup,
             'taxType' => $taxType,
@@ -538,7 +544,8 @@ class TaxAPIController extends AppBaseController
             'taxCategory' => $taxCategory,
             'suppliers' => $suppliers,
             'activeState' => $isActiveState ? 0 : 1,
-            'defaultState' => $isDefaultState ? 0 : 1
+            'defaultState' => $isDefaultState ? 0 : 1,
+            'chartOfAccountPL' => $chartOfAccountPL
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));

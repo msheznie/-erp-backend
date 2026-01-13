@@ -98,7 +98,8 @@ class QuotationMasterVersionRepository extends BaseRepository
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'salesType'
     ];
 
     /**

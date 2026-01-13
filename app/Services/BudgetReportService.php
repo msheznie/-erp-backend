@@ -15,6 +15,7 @@ use App\Models\ServiceLine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BudgetReportService
 {
@@ -23,11 +24,23 @@ class BudgetReportService
         ini_set('max_execution_time', 6000);
         ini_set('memory_limit', -1);
 
+        $companyFinanceYearID = $request->companyFinanceYearID;
+
+        $companyFinanceYear = CompanyFinanceYear::where("companyFinanceYearID", $companyFinanceYearID)->first();
+
+        if (empty($companyFinanceYear)) {
+            return ['data' => [], 'total' => [] , 'date' => []];
+        }
+
+        $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
+        $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
+
+        
+
         $serviceLineSystemIDs = collect($request->input('selectedServicelines'))->pluck('serviceLineSystemID')->toArray();
         $chartOfAccountIDs = collect($request->input('glCodes'))->pluck('chartOfAccountSystemID')->toArray();
-        $fromDate = new Carbon($request->input('fromDate'));
-        $toDate = new Carbon($request->input('toDate'));
-        $toDate = $toDate->setTime(23, 59, 59);
+        $fromDate = (new Carbon($bigginingDate))->setTime(0, 0, 0);
+        $toDate = (new Carbon($endingDate))->setTime(23, 59, 59);
         $currentFinanicalYear = CompanyFinanceYear::currentFinanceYear($request->input('companySystemID'));
         $currencyID = $request->currencyID[0];
         $previosYear = CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
@@ -196,8 +209,13 @@ class BudgetReportService
             'total' => $total, // Total of the reports if applicable
         ];
 
+        $date=[
+            'fromDate' => $fromDate,
+            'toDate' => $toDate
+        ];
 
-        return ['data' => $data, 'total' => $totals];
+
+        return ['data' => $data, 'total' => $totals, 'date' => $date];
 
     }
 

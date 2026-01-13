@@ -545,15 +545,28 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         // updating header amounts
-        $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
-                                                     COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
-                                                     COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
-                                                     COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
-                                                     COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
-                                                     COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
-                                                     COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
-                                                     ")
-                                         ->where('quotationMasterID', $id)->first();
+        if(isset($input['salesType']) && $input['salesType'] == 2){
+            $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                            COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                            COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                            COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                            COALESCE(SUM(VATAmount * requestedQty * userQty),0) as totalVATAmount,
+                            COALESCE(SUM(VATAmountLocal * requestedQty * userQty),0) as totalVATAmountLocal,
+                            COALESCE(SUM(VATAmountRpt * requestedQty * userQty),0) as totalVATAmountRpt
+                            ")
+                            ->where('quotationMasterID', $id)->first();
+        } else {
+            $totalAmount = QuotationDetails::selectRaw("COALESCE(SUM(transactionAmount),0) as totalTransactionAmount,
+                            COALESCE(SUM(companyLocalAmount),0) as totalLocalAmount, 
+                            COALESCE(SUM(companyReportingAmount),0) as totalReportingAmount, 
+                            COALESCE(SUM(customerAmount),0) as totalCustomerAmount,
+                            COALESCE(SUM(VATAmount * requestedQty),0) as totalVATAmount,
+                            COALESCE(SUM(VATAmountLocal * requestedQty),0) as totalVATAmountLocal,
+                            COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
+                            ")
+                            ->where('quotationMasterID', $id)->first();
+        }
+
         $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
         $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
         $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
@@ -812,7 +825,13 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('isYesNO', 1)
             ->exists();
 
+        $salesTypes = [
+                ['value' => 1, 'label' => __('custom.ar_goods_and_services')],
+                ['value' => 2, 'label' => __('custom.ar_subscription')],
+            ];
+
         $output = array(
+            'salesTypes' => $salesTypes,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -863,6 +882,16 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
         $fromSalesQuotation = isset($input['fromSalesQuotation'])?$input['fromSalesQuotation']:0;
+        if(isset($input['salesType']) && $input['salesType'] != null){
+            $salesType = $input['salesType'];
+            if($salesType == 2){
+                $categories = [2];
+            } else {
+                $categories = [1,2,4];
+            }
+        }else{
+            $categories = [1,2,4];
+        }
 
         $items = ItemAssigned::where('companySystemID', $companySystemID)
             ->where('isActive', 1)
@@ -879,7 +908,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         if($fromSalesQuotation == 1){
-            $items = $items->whereIn('financeCategoryMaster',[1,2,4]);
+            $items = $items->whereIn('financeCategoryMaster', $categories);
         }
         $items = $items
             ->take(20)
@@ -1530,6 +1559,12 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
+            ->when($invoice->salesType == 4, function($query) {
+                $query->where('salesType', 1);
+            })
+            ->when($invoice->salesType == 3, function($query) {
+                $query->where('salesType', 2);
+            })
             ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
             ->get();
@@ -1586,13 +1621,14 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
             ->where('selectedForDeliveryOrder', 0)
-            ->where('selectedForSalesOrder', 0)
+            // ->where('selectedForSalesOrder', 0)
             ->where('isInDOorCI', '!=',2)
             ->where('isInDOorCI', '!=',1)
             ->where('closedYN',0)
@@ -1601,6 +1637,7 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
+            ->where('salesType', $salesOrderData->salesType)
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1621,7 +1658,7 @@ class QuotationMasterAPIController extends AppBaseController
                             FROM
                                 erp_quotationdetails quotationdetails
                                 INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
-                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
+                                LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty * userQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
                             WHERE
                                 quotationdetails.quotationMasterID = ' . $id . ' 
                                 AND fullyOrdered != 2 AND erp_quotationmaster.isInDOorCI != 2 AND erp_quotationmaster.isInDOorCI != 1');
@@ -2088,6 +2125,15 @@ class QuotationMasterAPIController extends AppBaseController
                      // check if the item is available or not
                      $itemMasterData = ItemMaster::where('primaryCode', $finalRecords['item_code'])->first();
                      if($itemMasterData) {
+
+                        if(isset($input['salesType']) && $input['salesType'] != null){
+                            $salesType = $input['salesType'];
+                            if($salesType == 2){
+                                if($itemMasterData->financeCategoryMaster != 2){
+                                    return $this->sendError(trans('custom.only_service_items_can_add_to_quotations_for_sales_type_subscription'), 500);
+                                }
+                            }
+                        }
                          // get item category type
                          $itemCategoryType = (array) json_decode($itemMasterData->categoryType);
                          // check item category type is only purchase type

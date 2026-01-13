@@ -38,10 +38,9 @@ class SME
         return $policy[0]->policyvalue;
     }
     
-    public static function leaveBalanceBasedOn($companyID)
+    public static function leaveBalanceBasedOn($companyId)
     {
-        $leaveBalanceBasedOn = SME::policy($companyID, 'LC', 'All');
-        return empty($leaveBalanceBasedOn)? 1 : $leaveBalanceBasedOn;
+        return SME::policy($companyId, 'LC', 'All');
     }
 
     public static function accrualTriggerBasedOn($companyID)

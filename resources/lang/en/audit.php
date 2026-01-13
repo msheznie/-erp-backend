@@ -118,5 +118,14 @@ return [
     'company_assign_variable_has_been_deleted' => 'Company Assign {variable} has been deleted',
     'attribute_dropdown_value_variable_has_been_created' => 'Attribute dropdown value {variable} has been created',
     'attribute_dropdown_value_variable_has_been_deleted' => 'Attribute dropdown value {variable} has been deleted',
+
+    // User Group Audit Log Narrations
+    'user_group_has_been_created' => 'User group {variable} has been created',
+    'user_group_has_updated' => 'User group {variable} has been updated',
+    'user_group_has_been_deleted' => 'User group {variable} has been deleted',
+
+    // Employee Navigation Assign Audit Log Narrations
+    'employee_has_been_assigned_to_user_group' => 'Employee {variable} has been assigned to user group',
+    'employee_has_been_unassigned_from_user_group' => 'Employee {variable} has been unassigned from user group',
 ];
 

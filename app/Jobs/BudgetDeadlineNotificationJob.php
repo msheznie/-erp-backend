@@ -138,4 +138,3 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         }
     }
 }
-

@@ -68,5 +68,7 @@ return [
     "something_went_wrong_supplier_data_couldnt_be_fetched" => "Something went wrong!, Supplier data couldn't be fetched",
     "something_went_wrong_supplier_status_couldnt_be_updated" => "Something went wrong!, Supplier status couldn't be updated",
     'approval_failed_please_check_the_below_details' => 'Approval failed,please check the below details.',
-    'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'The item :code1 from  purchase order :code2 has planned quantity(:code3) is greater than balance quantity(:code4).'
+    'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'The item :code1 from  purchase order :code2 has planned quantity(:code3) is greater than balance quantity(:code4).',
+    'grv_qty_can_not_exceed_validation' => "GRV quantity can not exceed the PO quantity, Check PO and Received quantities",
+    'item_appointment_quantity_exceeds_available_quantity' => 'Item :itemCode: Appointment quantity (:appointmentQty) exceeds available quantity (:availableQty). PO quantity: :poQty, Already received: :receivedQty'
 ];

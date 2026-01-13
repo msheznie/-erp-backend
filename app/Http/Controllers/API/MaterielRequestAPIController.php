@@ -1627,9 +1627,10 @@ class MaterielRequestAPIController extends AppBaseController
 
 
                 if($search) {
-                    $itemMastersQuery
-                        ->orWhere('itemDescription', 'LIKE', "%{$search}%")
-                        ->orWhere('primaryCode', 'LIKE', "%{$search}%");
+                    $itemMastersQuery = $itemMastersQuery->where(function($query) use ($search) {
+                        $query->where('itemDescription', 'LIKE', "%{$search}%")
+                            ->orWhere('primaryCode', 'LIKE', "%{$search}%");
+                    });
                 }
                     $itemMasters = $itemMastersQuery->limit(100)->get();
 

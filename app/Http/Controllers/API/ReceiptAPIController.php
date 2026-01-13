@@ -4,10 +4,17 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\StoreReceiptApiRequest;
+use App\Models\DocumentApproved;
+use App\Models\CustomerReceivePayment;
 use App\Mapper\LaravelValidationToAPIJSON;
 use App\Services\API\ReceiptAPIService;
 use App\Traits\DocumentSystemMappingTrait;
 use Illuminate\Http\Request;
+use App\Services\UserTypeService;
+use Illuminate\Support\Facades\Log;
+use App\helper\CommonJobService;
+use App\Jobs\ProcessTenantReceiptVouchers;
+
 
 class ReceiptAPIController extends AppBaseController
 {
@@ -155,5 +162,35 @@ class ReceiptAPIController extends AppBaseController
             return $this->sendAPIError("Receipt voucher creation failed",500,$createReceiptVoucher['message']);
 
         }
+    }
+
+
+    public function confirmAPICreatedReceiptVouchers(Request $request)
+    {
+        $input = $request->all();
+
+        $header = $input['system'].' 0000000000';
+
+        try {
+            Log::useFiles(storage_path() . '/logs/receipt_voucher_api_confirmation_logs.log');
+
+            $tenants = CommonJobService::tenant_list();
+            if(count($tenants) == 0){
+                return  "tenant list is empty";
+            }
+
+            // Dispatch a job for each tenant
+            foreach ($tenants as $tenant){
+                $tenantDb = $tenant->database;
+                Log::info('Dispatching job for tenant: ' . $tenantDb);
+                ProcessTenantReceiptVouchers::dispatch($tenantDb, $header);
+            }
+
+            return $this->sendResponse([], trans('custom.general_ledger_updated_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendAPIError("Error confirming receipt vouchers",500,['error' => $e->getMessage()]);
+        }
+      
     }
 }

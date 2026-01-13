@@ -3564,7 +3564,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         }
         $time = strtotime("now");
         $fileName = 'procument_order' . $id . '_' . $time . '.pdf';
-        
+        $lang = app()->getLocale();
+
         // Configure mPDF for RTL support
         $mpdfConfig = Helper::getMpdfConfig([
             'tempDir' => public_path('tmp'), 
@@ -5328,7 +5329,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
-        if ($checkIsGroup->isGroup) {
+        if (isset($checkIsGroup->isGroup) && $checkIsGroup->isGroup) {
             $companyID = \Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
@@ -5980,7 +5981,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
-                $category = ($value->fcategor) ? $value->fcategory->categoryDescription : '';
+                $category = ($value->fcategory) ? $value->fcategory->categoryDescription : '';
                 $supplierCode = ($value->supplier) ? $value->supplier->primarySupplierCode : '';
                 $supplierName = ($value->supplier) ? $value->supplier->supplierName : '';
                 $poToPaymentReport = new PoToPaymentReport();
@@ -5999,6 +6000,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     foreach ($value->grvMasters as $grv) {
                         if ($grvMasterCount != 0) {
                             $x++;
+                            $poToPaymentReport = new PoToPaymentReport();
                             $poToPaymentReport->setCompanyID("");
                             $poToPaymentReport->setPoNumber("");
                             $poToPaymentReport->setCategory("");
@@ -6020,6 +6022,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             foreach ($grv['invoices'] as $invoice) {
                                 if ($invoicesCount != 0) {
                                     $x++;
+                                    $poToPaymentReport = new PoToPaymentReport();
                                     $poToPaymentReport->setCompanyID("");
                                     $poToPaymentReport->setPoNumber("");
                                     $poToPaymentReport->setCategory("");
@@ -6043,6 +6046,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     foreach ($invoice['payments'] as $payment) {
                                         if ($paymentsCount != 0) {
                                             $x++;
+                                            $poToPaymentReport = new PoToPaymentReport();
                                             $poToPaymentReport->setCompanyID("");
                                             $poToPaymentReport->setPoNumber("");
                                             $poToPaymentReport->setCategory("");
@@ -6088,6 +6092,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $poToPaymentReport->setPaymentPostedDate("");
                                         }
                                         $poToPaymentReport->setPaidAmount(CurrencyService::convertNumberFormatToNumber(number_format($payment['rptAmount'], 2)));
+                                        array_push($data, collect($poToPaymentReport)->toArray());
                                         $paymentsCount++;
                                     }
                                 } else {
@@ -6095,7 +6100,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $poToPaymentReport->setPaymentDate("");
                                     $poToPaymentReport->setPaymentPostedDate("");
                                     $poToPaymentReport->setPaidAmount("");
-
+                                    array_push($data, collect($poToPaymentReport)->toArray());
                                 }
                                 $invoicesCount++;
                             }
@@ -6107,6 +6112,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $poToPaymentReport->setPaymentDate("");
                             $poToPaymentReport->setPaymentPostedDate("");
                             $poToPaymentReport->setPaidAmount("");
+                            array_push($data, collect($poToPaymentReport)->toArray());
                         }
                         $grvMasterCount++;
                     }
@@ -6122,8 +6128,8 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $poToPaymentReport->setPaymentDate("");
                     $poToPaymentReport->setPaymentPostedDate("");
                     $poToPaymentReport->setPaidAmount("");
+                    array_push($data,collect($poToPaymentReport)->toArray());
                 }
-                array_push($data,collect($poToPaymentReport)->toArray());
                 $x++;
             }
         }

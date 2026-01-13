@@ -35,6 +35,8 @@ use App\Models\AccessTokens;
 use App\Models\Employee;
 use App\Models\ERPLanguageMaster;
 use Illuminate\Support\Str;
+use App\Services\AuditLog\UserGroupAuditService;
+use App\Services\AuditLog\EmployeeNavigationAssignAuditService;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -166,6 +168,12 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'department_budget_planning_details_template_data':
                 $data = DepartmentBudgetPlanningDetailsTemplateDataAuditService::process($auditData);
+                break;
+            case 'srp_erp_usergroups':
+                $data = UserGroupAuditService::process($auditData);
+                break;
+            case 'srp_erp_employeenavigation':
+                $data = EmployeeNavigationAssignAuditService::process($auditData);
                 break;
             default:
                 // code...

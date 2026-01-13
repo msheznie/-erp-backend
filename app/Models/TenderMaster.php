@@ -5,6 +5,7 @@ namespace App\Models;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
+use Awobaz\Compoships\Compoships;
 /**
  * @SWG\Definition(
  *      definition="TenderMaster",
@@ -207,6 +208,7 @@ use Carbon\Carbon;
 class TenderMaster extends Model
 {
     use SoftDeletes;
+    use Compoships;
     public $table = 'srm_tender_master';
 
     const CREATED_AT = 'created_at';
@@ -692,6 +694,13 @@ class TenderMaster extends Model
             ->first();
     }
 
+    public static function getTenderBidSubmissionDates($tenderId)
+    {
+        return TenderMaster::select('id','bid_submission_opening_date', 'bid_submission_closing_date')
+            ->where('id', $tenderId)
+            ->first();
+    }
+
     public static function getTenderByUuid($tenderUuid)
     {
         return self::where('uuid', $tenderUuid)
@@ -792,5 +801,17 @@ class TenderMaster extends Model
                 }
             ])
             ->get();
+    }
+
+    public function all_approvals()
+    {
+        return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['id', 'document_system_id']);
+    }
+
+    public function latestTenderEditLog()
+    {
+        return $this->hasMany(SrmTenderMasterEditLog::class, 'id', 'id')
+            ->whereNotNull('version_id')
+            ->orderBy('amd_id', 'desc');
     }
 }

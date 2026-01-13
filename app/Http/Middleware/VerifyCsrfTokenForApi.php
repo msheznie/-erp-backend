@@ -283,7 +283,9 @@ class VerifyCsrfTokenForApi
             'api/v1/createAuditLog',
             'api/v1/requestBudgetPlanningReopen',
             'api/v1/returnBudgetPlanningPreCheck',
-            'api/v1/returnBudgetPlanningToAmend'
+            'api/v1/returnBudgetPlanningToAmend',
+            'api/v1/createAuditLog'
         ];
+
     }
 }

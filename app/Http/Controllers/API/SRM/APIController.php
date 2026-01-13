@@ -112,6 +112,8 @@ define('GET_CONTRACT_LIST', 'GET_CONTRACT_LIST');
 define('GET_ITEM_MASTER', 'GET_ITEM_MASTER');
 define('GET_ITEM_DETAIL', 'GET_ITEM_DETAIL');
 define('GET_SUB_CATEGORIES_BY_MAIN_CATEGORY', 'GET_SUB_CATEGORIES_BY_MAIN_CATEGORY');
+define('UPDATE_IS_BID_TENDER_STATUS', 'UPDATE_IS_BID_TENDER_STATUS');
+define('ACKNOWLEDGE_PO', 'ACKNOWLEDGE_PO');
 
 
 class APIController extends Controller
@@ -317,6 +319,10 @@ class APIController extends Controller
                 return $this->SRMService->getItemDetail($request);
             case GET_SUB_CATEGORIES_BY_MAIN_CATEGORY :
                 return $this->SRMService->getSubcategoriesByMainCategory($request);
+            case UPDATE_IS_BID_TENDER_STATUS :
+                return $this->SRMService->updateIsBidTenderStatus($request);
+            case ACKNOWLEDGE_PO :
+                return $this->SRMService->acknowledgePo($request);
             default:
                 return [
                     'success'   => false,

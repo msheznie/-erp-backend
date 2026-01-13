@@ -511,7 +511,8 @@ class QuotationMasterVersion extends Model
         'selectedForSalesOrder',
         'isInSO',
         'timestamp',
-        'isBulkItemJobRun'
+        'isBulkItemJobRun',
+        'salesType'
     ];
 
     /**
@@ -600,7 +601,8 @@ class QuotationMasterVersion extends Model
         'isInDOorCI' => 'integer',
         'invoiceStatus' => 'integer',
         'deliveryStatus' => 'integer',
-        'isBulkItemJobRun' => 'integer'
+        'isBulkItemJobRun' => 'integer',
+        'salesType' => 'integer'
     ];
 
     /**

@@ -110,6 +110,12 @@ class LokiService
             case 'department_budget_planning_details_template_data':
                 $table = 'department_budget_planning_details_template_data';
                 break;
+            case 'user_group':
+                $table = 'srp_erp_usergroups';
+                break;
+            case 'employee_navigation_assign':
+                $table = 'srp_erp_employeenavigation';
+                break;
             default:
                 $table = null;
                 break;
@@ -142,6 +148,8 @@ class LokiService
             'erp_workflow_configurations',
             'department_budget_plannings',
             'department_budget_planning_details_template_data',
+            'srp_erp_usergroups',
+            'srp_erp_employeenavigation',
         ];
     }
 

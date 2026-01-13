@@ -229,6 +229,11 @@ class CompanyAPIController extends AppBaseController
 
         $whtTypes = Tax::where('companySystemID',$selectedCompanyId)->where('taxCategory',3)->where('isActive',1)->get();
 
+        $paymentMethodOptions = array(
+            array('id' => 1, 'description' => trans('custom.deduct_from_invoice') ,'isDefault' => true),
+            array('id' => 2, 'description' => trans('custom.organization_bears_wht') ,'isDefault' => false)
+        );
+
         $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
 
         $output = array('companies' => $companies->toArray(),
@@ -256,7 +261,8 @@ class CompanyAPIController extends AppBaseController
             'assetAndLiabilityAccountCOA' => $assetAndLiabilityAccountCOA,
             'businessCategories' => $businessCategories,
             'whtTypes' => $whtTypes,
-            'hasPublicLinkGeneratePolicy' => $hasPublicLinkGeneratePolicy
+            'hasPublicLinkGeneratePolicy' => $hasPublicLinkGeneratePolicy,
+            'paymentMethodOptions' => $paymentMethodOptions
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));

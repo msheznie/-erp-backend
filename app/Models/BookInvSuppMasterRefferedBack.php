@@ -391,7 +391,13 @@ class BookInvSuppMasterRefferedBack extends Model
         'whtAmount',
         'whtPercentage',
         'isWHTApplicableVat',
-         'isDelegation'
+        'mol_applicable',
+        'mol_setup_id',
+        'mol_rate',
+        'mol_calcualtion_type',
+        'mol_amount',
+        'isDelegation',
+        'whtPaymentMethod'
     ];
 
     /**
@@ -459,7 +465,13 @@ class BookInvSuppMasterRefferedBack extends Model
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
-        'VATPercentage' => 'float'
+        'VATPercentage' => 'float',
+        'mol_applicable' => 'integer',
+        'mol_setup_id' => 'integer',
+        'mol_rate' => 'float',
+        'mol_calcualtion_type' => 'integer',
+        'mol_amount' => 'float',
+        'whtPaymentMethod' => 'integer'
     ];
 
     /**

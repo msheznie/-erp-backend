@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\EmployeeNavigationAccess;
 use App\Models\HrDeligationDetails;
 use App\Models\SMEApprovalUser;
 use Illuminate\Bus\Queueable;
@@ -64,6 +65,13 @@ class DelegationActivation implements ShouldQueue
         if (!$userGroupIds->isEmpty())
         {
             $groupInfo->delete();
+            $employeeNavigationIds = EmployeeNavigation::whereIn('userGroupID', $userGroupIds)->pluck('id');
+
+            // Mark access as inactive EmployeeNavigation access to keep records for history
+            if ($employeeNavigationIds->isNotEmpty()) {
+                EmployeeNavigationAccess::whereIn('employeeNavigationID', $employeeNavigationIds)
+                    ->update(['isActive' => 0]);
+            }
             EmployeeNavigation::whereIn('userGroupID', $userGroupIds)->delete();
             UserGroupAssign::whereIn('userGroupID', $userGroupIds)->delete();
 

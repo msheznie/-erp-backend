@@ -171,7 +171,11 @@ class SupplierMaster extends Model
         'omanization',
         'whtApplicableYN',
         'whtType',
-        'isDelegation'
+        'mol_applicable',
+        'mol_rate',
+        'mol_payment_mode',
+        'isDelegation',
+        'paymentMethod'
     ];
 
     /**
@@ -255,7 +259,11 @@ class SupplierMaster extends Model
         'supplier_group_id'  => 'integer',
         'omanization' => 'float',
         'whtApplicableYN' => 'integer',
-        'whtType' => 'integer'
+        'whtType' => 'integer',
+        'mol_applicable' => 'integer',
+        'mol_rate' => 'float',
+        'mol_payment_mode' => 'integer',
+        'paymentMethod' => 'integer'
     ];
 
     /**

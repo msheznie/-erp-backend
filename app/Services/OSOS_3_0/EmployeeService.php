@@ -201,34 +201,18 @@ class EmployeeService
             return;
         }
 
-        $today = date('Y-m-d');
-        $join = $data->dateOfJoin;
-        $lastWorkingDate =$data->lastWorkingDate;
-        $toDate = ($data->isDischarged == 1) ? date('Y-m-d', strtotime($lastWorkingDate)) : $today;
-        if ($toDate >= $join) {
-            $toDate = new DateTime($toDate);
-            $join = new DateTime($join);
+        $this->calculateServicePeriod($data);
+        $imageData = $this->getProfileImageData($data->imageUrl);
 
-            $interval = $toDate->diff($join);
-            $y = ($interval->y) ? $interval->y . 'y' : '';
-            $m = ($interval->m) ? $interval->m . 'm' : '';
-            $d = ($interval->d) ? $interval->d . 'd' : '';
-
-            $periodDisplay = $y;
-            $periodDisplay .= ($periodDisplay != '' && $m != '') ? ' - ' . $m : $m;
-            $periodDisplay .= ($periodDisplay != '' && $d != '') ? ' - ' . $d : $d;
-
-            $data->servicePeriod = $periodDisplay;
-        }
-
-         $this->employeeData = [
+        $this->employeeData = [
              "Code" => $data->ECode,
              "Name" => $data->Ename2,
              "EmployeeStatus" => $data->empStatus,
              "DateOfJoined" => $data->dateOfJoin,
              "ServicePeriod" => $data->servicePeriod,
              "DateOfBirth" => $data->dateOfBirth,
-             "ImageUrl" => $data->imageUrl,
+             "profileImage" => $imageData['profileImage'],
+             "profileImageExtension" => $imageData['profileImageExtension'],
              "ContactEmail" => $data->EEmail,
              "ContactNumber" => $data->EcMobile,
              "IsDeleted" => false,
@@ -242,7 +226,11 @@ class EmployeeService
 
         if ($this->postType != "POST") {
             $this->getReferenceId();
-            $this->employeeData['Id'] = $this->masterUuId;
+            if (empty($this->masterUuId)) {
+                $this->postType = "POST";
+            }else {
+                $this->employeeData['Id'] = $this->masterUuId;
+            }
         }
     }
 
@@ -272,5 +260,38 @@ class EmployeeService
             ->where('system_id', $userId)
             ->where('third_party_sys_det_id', $this->detailId)
             ->value('reference_id');
+    }
+
+    function calculateServicePeriod($data)
+    {
+        if (empty($data->dateOfJoin)) {
+            $data->servicePeriod = null;
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $join = $data->dateOfJoin;
+        $lastWorkingDate = $data->lastWorkingDate;
+
+        $toDate = ($data->isDischarged == 1)
+            ? date('Y-m-d', strtotime($lastWorkingDate))
+            : $today;
+
+        if ($toDate >= $join) {
+            $toDate = new DateTime($toDate);
+            $join = new DateTime($join);
+
+            $interval = $toDate->diff($join);
+
+            $y = $interval->y ? $interval->y . 'y' : '';
+            $m = $interval->m ? $interval->m . 'm' : '';
+            $d = $interval->d ? $interval->d . 'd' : '';
+
+            $periodDisplay = $y;
+            $periodDisplay .= ($periodDisplay !== '' && $m !== '') ? ' - ' . $m : $m;
+            $periodDisplay .= ($periodDisplay !== '' && $d !== '') ? ' - ' . $d : $d;
+
+            $data->servicePeriod = $periodDisplay;
+        }
     }
 }

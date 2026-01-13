@@ -290,10 +290,11 @@ class CustomerMasterAPIService
                     $previousValue = $customerMaster->toArray();
                     $newValue = $input;
 
-                    $customerMaster = CustomerMaster::where('customerCodeSystem',$customerId)->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
+                    $updateResult = CustomerMaster::where('customerCodeSystem',$customerId)->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
                     CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
 
-                    if($customerMaster){
+                    if($updateResult){
+                        $customerMaster = CustomerMaster::where('customerCodeSystem',$customerId)->first();
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
                         $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
 
@@ -631,11 +632,10 @@ class CustomerMasterAPIService
 
     }
 
-    public static function validateMasterData($request) {
+    public static function validateMasterData($request, $companyId) {
 
         $errorData = [];
         $systemUser = UserTypeService::getSystemEmployee();
-        $companyId = $request['company_id'] ?? null;
         $receivableAccount = isset($request['receivable_account']) ? $request['receivable_account'] : null;
         $advanceAccount = isset($request['advance_account']) ? $request['advance_account'] : null;
         $customerCountry = isset($request['customer_country']) ? $request['customer_country'] : null;
@@ -852,21 +852,10 @@ class CustomerMasterAPIService
             }
         }
 
-        $addContactDetails = isset($request['add_contact_details']) ? $request['add_contact_details'] : null;
-        
-        if ($addContactDetails !== null && $addContactDetails !== '') {
-            if ($addContactDetails != 1 && $addContactDetails != 2) {
-                $errorData[] = [
-                    'field' => "add_contact_details",
-                    'message' => ["Invalid input,add_contact_details must be 1 (Yes) or 2 (No)"]
-                ];
-            }
-        }
-
         $contactDetails = isset($request['contact_details']) ? $request['contact_details'] : null;
         $validatedContactDetails = [];
 
-        if ($contactDetails !== null && is_array($contactDetails) && isset($request['add_contact_details']) && $request['add_contact_details'] == 1) {
+        if ($contactDetails !== null && is_array($contactDetails)) {
             foreach ($contactDetails as $index => $contact) {
                 $contactType = isset($contact['contact_type']) ? $contact['contact_type'] : null;
                 $personName = isset($contact['person_name']) ? $contact['person_name'] : null;
