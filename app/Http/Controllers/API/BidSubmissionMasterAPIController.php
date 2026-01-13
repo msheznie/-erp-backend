@@ -253,6 +253,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
         {
             $meth = $input['meth'];
             $tender_id = $input['tender_id'];
+            $isNegotation = $input['isNegotiation'] ?? 0;
+            $validation = TenderMasterRepository::checkBidSubmissionValidation(
+                $tender_id, $input['companySystemID'], $isNegotation, $meth, $bidSubmissionMaster
+            );
+            if(!$validation['success']){
+                return $this->sendError($validation['message']);
+            }
 
             if($meth == 1)
             {
@@ -1569,7 +1576,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function checkDateDisabled(Request $request)
     {
         try {
-            $result = TenderMasterRepository::getTenderDidOpeningDates($request['tenderMasterId'], $request['companySystemID']);
+            $result = TenderMasterRepository::getTenderDidOpeningDates($request['tenderMasterId'], $request['companySystemID'], $request['isNegotiation']);
 
             if (isset($result['error'])) {
                 return $this->sendError($result['error'], 404);
