@@ -69,5 +69,9 @@ return [
     'approval_failed_please_check_the_below_details' => 'فشل الاعتماد، يرجى التحقق من التفاصيل أدناه.',
     'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'الصنف :code1 من أمر الشراء :code2 لديه كمية مخططة (:code3) أكبر من الكمية المتبقية (:code4).',
     'grv_qty_can_not_exceed_validation' => 'لا يمكن أن تتجاوز كمية GRV كمية أمر الشراء، يرجى التحقق من كميات أمر الشراء والكميات المستلمة',
-    'item_appointment_quantity_exceeds_available_quantity' => 'الصنف :itemCode: كمية الموعد (:appointmentQty) تتجاوز الكمية المتاحة (:availableQty). كمية أمر الشراء: :poQty، تم الاستلام بالفعل: :receivedQty'
+    'item_appointment_quantity_exceeds_available_quantity' => 'الصنف :itemCode: كمية الموعد (:appointmentQty) تتجاوز الكمية المتاحة (:availableQty). كمية أمر الشراء: :poQty، تم الاستلام بالفعل: :receivedQty',
+    'company_finance_year_not_found' => 'السنة المالية للشركة غير موجودة',
+    'company_finance_period_not_found' => 'الفترة المالية للشركة غير موجودة',
+    'segment_required' => 'الشريحة مطلوبة',
+    'segment_not_found' => 'الشريحة غير موجودة',
 ];
