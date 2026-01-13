@@ -18,6 +18,8 @@ use App\Models\BidSubmissionMaster;
 use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinanceYear;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ContractAdditionalDocuments;
 use App\Models\ContractBOQItems;
@@ -5823,6 +5825,11 @@ class SRMService
             ];
         }
 
+        $validationResult = $this->validateInvoiceCreationRequirements($data['companySystemID']);
+        if (!$validationResult['success']) {
+            return $validationResult;
+        }
+
         $dispatchedJobs = [];
         foreach ($grvMasters as $grvMaster) {
             $grvData = $data;
@@ -5837,6 +5844,40 @@ class SRMService
             'success' => true,
             'message' => 'Invoice created successfully',
             'data' => $data
+        ];
+    }
+
+    private function validateInvoiceCreationRequirements($companySystemID)
+    {
+        $mytime = new Carbon();
+        $fromCompanyFinanceYear = CompanyFinanceYear::getFinanceYearByDate($companySystemID, $mytime);
+
+        if (empty($fromCompanyFinanceYear)) {
+            return [
+                'success' => false,
+                'message' => 'Financial year not found',
+                'data' => []
+            ];
+        }
+
+        $fromCompanyFinancePeriod = CompanyFinancePeriod::getFinancePeriodByDate(
+            $companySystemID,
+            1,
+            $fromCompanyFinanceYear->companyFinanceYearID,
+            $mytime
+        );
+
+        if (empty($fromCompanyFinancePeriod)) {
+            return [
+                'success' => false,
+                'message' => 'Financial period not found',
+                'data' => []
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'success'
         ];
     }
 
