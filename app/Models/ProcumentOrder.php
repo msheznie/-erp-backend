@@ -872,4 +872,12 @@ class ProcumentOrder extends Model
             ];
         })->toArray();
     }
+    public static function getPoForAppointment($poIds){
+        return self::select('purchaseOrderID', 'purchaseOrderCode', 'supplierTransactionCurrencyID')
+            ->whereIn('purchaseOrderID', $poIds)
+            ->with(['transactioncurrency' => function ($q) {
+                $q->select('currencyID', 'CurrencyCode');
+            }])
+            ->get();
+    }
 }
