@@ -387,22 +387,20 @@ class SRMService
 
         if (!empty($data) && is_array($data)) {
             $purchaseOrderIds = array_unique(array_column($data, 'purchaseOrderID'));
-            if (count($purchaseOrderIds) <= 1) {
-                return;
-            }
-
-            $purchaseOrders = ProcumentOrder::getPoForAppointment($purchaseOrderIds);
-            if ($purchaseOrders->isEmpty()) {
-                return;
-            }
-
-            $currencyCount = $purchaseOrders->pluck('supplierTransactionCurrencyID')->unique()->count();
-            if ($currencyCount > 1) {
-                return [
-                    'success' => false,
-                    'message' => 'Please select same currency PO within a delivery',
-                    'data' => []
-                ];
+            
+            if (count($purchaseOrderIds) > 1) {
+                $purchaseOrders = ProcumentOrder::getPoForAppointment($purchaseOrderIds);
+                
+                if (!$purchaseOrders->isEmpty()) {
+                    $currencyCount = $purchaseOrders->pluck('supplierTransactionCurrencyID')->unique()->count();
+                    if ($currencyCount > 1) {
+                        return [
+                            'success' => false,
+                            'message' => 'Please select same currency PO within a delivery',
+                            'data' => []
+                        ];
+                    }
+                }
             }
         }
 
