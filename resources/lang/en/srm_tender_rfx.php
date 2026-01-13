@@ -315,4 +315,8 @@ return [
     'excel_missing_columns' => 'Columns are missing',
     'excel_file_empty_or_invalid' => 'The Excel file is empty or invalid',
     'both_fields_cannot_be_yes' => 'Both \'Is Enabled\' and \'Is BOQ Applicable\' fields cannot be set to Yes.',
+    'bid_opening_date' => 'Bid opening date',
+    'technical_bid_date' => 'Technical bid date',
+    'unable_to_update_technical_evaluation_date_passed' => 'Unable to update the technical evaluation. :date is already passed',
+    'unable_to_update_commercial_evaluation_date_passed' => 'Unable to update the commercial evaluation. :date is already passed',
 ];
