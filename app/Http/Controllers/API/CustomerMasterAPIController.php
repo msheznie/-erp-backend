@@ -1842,7 +1842,7 @@ class CustomerMasterAPIController extends AppBaseController
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
-                return $this->sendError("Transaction failed: " . $e->getMessage(), 500);
+                return $this->sendError("Transaction failed: Database transaction failed", 500);
             }
         }
 
@@ -1867,7 +1867,6 @@ class CustomerMasterAPIController extends AppBaseController
         }
  
         return $this->sendResponse($returnData, trans('custom.customer_master_retrieved_successfully'));
-
     }
 
     public static function createErrorResponseDataArray($customerCodeSystem,$masterIndex, $headerData): array {
@@ -1876,7 +1875,7 @@ class CustomerMasterAPIController extends AppBaseController
                 'unique-key' => $customerCodeSystem,
                 'index' => $masterIndex + 1
             ],
-            'headerData' => [$headerData]
+            'errors' => $headerData['errors'] ?? []
         ];
     }
 
