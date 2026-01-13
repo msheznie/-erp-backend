@@ -28,6 +28,7 @@ use DataTables;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
+use App\Services\AuditLog\EmployeeAuditReportService;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -1219,6 +1220,148 @@ class AuditTrailAPIController extends AppBaseController
                 'trace' => $exception->getTraceAsString()
             ]);
             return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function auditReportFilters(Request $request)
+    {
+        
+        $navigationController = app(CompanyNavigationMenusAPIController::class);
+
+       
+        $response = $navigationController->getCompanyNavigation($request);
+
+        
+        $tree = json_decode(json_encode($response->original['data']), true);
+
+        
+        $flattenDescriptions = function ($nodes) use (&$flattenDescriptions) {
+            $result = [];
+            foreach ($nodes as $node) {
+                if (isset($node['description'])) {
+                    $result[] = $node['description'];
+                }
+                if (!empty($node['children'])) {
+                    $result = array_merge($result, $flattenDescriptions($node['children']));
+                }
+            }
+            return $result;
+        };
+
+        $descriptions = $flattenDescriptions($tree);
+
+        return $this->sendResponse($descriptions, 'Descriptions fetched successfully');
+    }
+
+    public function employeeActivityAuditReport(Request $request,EmployeeAuditReportService $reportService)
+    {
+
+        $screens = $request->screensAccessed ?? [];
+        $eventTypes = $request->eventTypes ?? [];
+        $employees = is_array($request->employees) ? $request->employees : [$request->employees];
+        $fromDate = $request->fromDate
+            ? Carbon::parse($request->fromDate)
+            : Carbon::parse(env('LOKI_START_DATE'));
+        $toDate = $request->toDate
+            ? Carbon::parse($request->toDate)
+            : Carbon::now();
+
+        $selectedColumns = $request->selectedColumns ?? [];
+
+        
+        $authLogs = $this->fetchUserAuditLogs($request);
+        $navLogs = $this->fetchNavigationAccessLogs($request);
+
+        $auditLogs = $this->auditLogs(
+            $request->merge(['isExport' => true, 'isFromTracking' => true])
+        );
+
+        if (is_object($auditLogs) && method_exists($auditLogs, 'getData')) {
+            $auditLogs = $auditLogs->getData(true)['data'] ?? [];
+        }
+
+        
+        $filtered = $reportService->generate(
+            $authLogs,
+            $navLogs,
+            $auditLogs,
+            [
+                'employees' => $employees,
+                'eventTypes' => $eventTypes,
+                'screens' => $screens,
+                'fromDate' => $fromDate,
+                'toDate' => $toDate,
+            ]
+        );
+
+        $companyName = collect($filtered)
+            ->pluck('company')
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
+        if (!empty($selectedColumns)) {
+            $filtered = $filtered->map(function ($row) use ($selectedColumns) {
+                return collect($row)->only($selectedColumns)->all();
+            });
+        }
+
+        $data = [
+            'data' => empty($filtered->values()->all()) ? [] : $filtered->values()->all(),
+            'companyName' => empty($companyName) ? [] : $companyName,
+            'input' => ['employees' => empty($employees) ? [] : $employees],
+        ];
+
+
+        return $this->sendResponse($data, 'Filtered data fetched successfully');
+    }
+
+    public function exportEmployeeActivityAuditReport(Request $request)
+    {
+        try {
+            $response = $this->employeeActivityAuditReport($request, app(EmployeeAuditReportService::class));
+
+            $responseData = $response->getData(true);
+
+            // Check if response is successful and has data
+            if (empty($responseData['success']) || empty($responseData['data']['data'])) {
+                return $this->sendError(trans('custom.no_employee_activity_logs_found'), 404);
+            }
+
+            $reportData = [
+                'data' => $responseData['data']['data'] ?? [],
+                'companyName' => $responseData['data']['companyName'] ?? [],
+                'fromDate' => $request->fromDate ?? null,
+                'toDate' => $request->toDate ?? null,
+                'selectedColumns' => $request->selectedColumns ?? [],
+            ];
+
+            $fileName = trans('custom.employee_activity_audit_report');
+            $fontFamily = \Helper::getExcelFontFamily(app()->getLocale());
+
+            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 10,
+                        ]
+                    ]);
+
+                    $sheet->loadView('export_report.employee_activity_audit_report', $reportData);
+
+                    if (app()->getLocale() === 'ar') {
+                        $sheet->setRightToLeft(true);
+                        $sheet->getStyle('A1:Z1000')
+                            ->getAlignment()
+                            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    }
+                });
+            })->download('xlsx');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
         }
     }
 }

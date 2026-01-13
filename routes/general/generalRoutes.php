@@ -96,6 +96,10 @@ Route::post('exportUserAuditLogs', 'AuditTrailAPIController@exportUserAuditLogs'
 Route::post('navigationAccessLogs', 'AuditTrailAPIController@navigationAccessLogs')->name("Get navigation access logs");
 Route::post('exportNavigationAccessLogs', 'AuditTrailAPIController@exportNavigationAccessLogs')->name("Export navigation access logs");
 Route::post('exportEventTrackingLogs', 'AuditTrailAPIController@exportEventTrackingLogs')->name("Export event tracking logs");
+Route::get('auditReportFilters', 'AuditTrailAPIController@auditReportFilters')->name("Get audit report filter options");
+Route::post('employee-activity-audit-report', 'AuditTrailAPIController@employeeActivityAuditReport')->name("Get employee activity audit report");
+Route::post('export-employee-activity-audit-report', 'AuditTrailAPIController@exportEmployeeActivityAuditReport')->name("Export employee activity audit report");
+
 
 Route::get('getSearchCustomers', 'CustomerMasterAPIController@getSearchCustomers')->name("Get Search Customers");
 Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");
