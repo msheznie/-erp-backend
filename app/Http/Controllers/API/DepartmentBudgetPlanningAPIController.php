@@ -391,6 +391,8 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                 $departmentBudgetPlanning->confirmed_yn = 0;
                 $departmentBudgetPlanning->confirmed_by = null;
                 $departmentBudgetPlanning->confirmed_at = null;
+                $departmentBudgetPlanning->workStatus = 2;
+                $departmentBudgetPlanning->financeTeamStatus = 1;
                 $departmentBudgetPlanning->save();
                 return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning reopened successfully');
             }
