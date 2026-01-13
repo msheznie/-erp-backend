@@ -748,7 +748,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess','masterBudgetPlannings'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -766,7 +766,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 //                            ->where('status',1)
                             ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['revisions','department.hod.employee','financeYear','delegateAccess','confirmedBy'])
+                        $data = DepartmentBudgetPlanning::with(['revisions','department.hod.employee','financeYear','delegateAccess','confirmedBy','masterBudgetPlannings'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
@@ -833,9 +833,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
 
+
         return \DataTables::of($data)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
+            ->addColumn('companyConfirmedStatus', function ($row) {
+                return $row->masterBudgetPlannings->confirmed_yn ?? 0;
+            })
+            ->addColumn('companyApprovedStatus', function ($row) {
+                return $row->masterBudgetPlannings->approved_yn ?? 0;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -1568,8 +1575,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $companyBudgetPlanning->confirmed_by_name = null;
     
 
+            $companyBudgetPlanning->save();
 
-            $delete = DocumentApproved::where('document_system_id', 133)->where('documentSystemCode', $companyBudgetPlanning->id)->delete();
+            $delete = DocumentApproved::where('documentSystemID', 133)->where('documentSystemCode', $companyBudgetPlanning->id)->delete();
 
             // TODO: Add email notification logic here if needed
             // Similar to ReopenDocument helper
