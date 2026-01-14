@@ -319,4 +319,5 @@ return [
     'technical_bid_date' => 'Technical bid date',
     'unable_to_update_technical_evaluation_date_passed' => 'Unable to update the technical evaluation. :date is already passed',
     'unable_to_update_commercial_evaluation_date_passed' => 'Unable to update the commercial evaluation. :date is already passed',
+    'commercial_bid_date' => 'Commercial bid date',
 ];
