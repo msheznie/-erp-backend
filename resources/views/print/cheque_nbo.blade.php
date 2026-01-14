@@ -17,24 +17,26 @@
             position: relative;
         }
 
+
+
         #supplier_name_1 {
             position: absolute;
-            left: 1.524cm;
-            top: 3.302cm;
+            left: 2.1cm;
+            top: 3.07cm;
             font-size: 12pt;
         }
 
         #pv_date {
             position: absolute;
-            left: 15.24cm;
-            top: 3.302cm;
+            left: 15.34cm;
+            top: 3.2cm;
             font-size: 12pt;
         }
 
         #pv_number {
             position: absolute;
-            left: 15.24cm;
-            top: 3.81cm;
+            left: 15.34cm;
+            top: 4cm;
             font-size: 12pt;
         }
 
@@ -51,6 +53,7 @@
             font-size: 12pt;
             width: 3cm;
             text-align: left;
+            margin-left: 1.8cm;
         }
 
         #supplier_name_2 {
@@ -71,6 +74,7 @@
             width: 4cm;
             text-align: right;
             margin-left: auto;
+            margin-right: 1cm;
         }
 
         #total_words {
@@ -83,7 +87,7 @@
 
         #total_amount {
             position: absolute;
-            left: 15.24cm;
+            left: 15cm;
             top: 14.478cm;
             font-size: 12pt;
             text-align: right;
@@ -92,38 +96,37 @@
 
         #payee_name {
             position: absolute;
-            left: 2.032cm;
-            top: 21.59cm;
+            left: 2.2cm;
+            top: 22cm;
             font-size: 12pt;
             width: 12cm;
         }
 
         #amount_words {
             position: absolute;
-            left: 1.778cm;
-            top: 22.606cm;
+            left: 2.2cm;
+            top: 23cm;
             font-size: 12pt;
             width: 12cm;
         }
 
         #cheque_date {
             position: absolute;
-            left: 15.494cm;
-            top: 20.574cm;
+            left: 16cm;
+            top: 21.11cm;
             font-size: 12pt;
         }
 
         #amount_numbers {
             position: absolute;
-            left: 16.002cm;
-            top: 22.606cm;
+            left: 14.7cm;
+            top: 23.2cm;
             font-size: 12pt;
             text-align: right;
             width: 4cm;
         }
     </style>
 </head>
-
 <body onload="window.print();window.close()">
 @php
     $supplier = optional($entity->details->first())->supplier;
@@ -141,6 +144,7 @@
     $BPVNarration = str_replace(["\r\n", "\r", "\n"], ' ', $entity->BPVNarration ?? '');
 @endphp
 
+
 <!-- Header -->
 <div id="supplier_name_1">{{ $supplierName }}</div>
 <div id="pv_date">{{ $pvDate }}</div>
@@ -156,7 +160,7 @@
 
 <!-- Totals -->
 <div id="total_words">{{ $amountWords }}&nbsp;{{ trans('custom.only') }}</div>
-<div id="total_amount">{{ trans('custom.total') }}&nbsp;{{ $totalAmount }}</div>
+<div id="total_amount">{{ $totalAmount }}</div>
 
 <!-- Cheque -->
 <div id="payee_name">{{ $supplierName }}</div>
@@ -166,3 +170,4 @@
 
 </body>
 </html>
+ 
