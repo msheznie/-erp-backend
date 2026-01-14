@@ -38,6 +38,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemCategorySub;
 use App\Models\FixedAssetCategory;
+use App\Models\FixedAssetCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMasterCategoryType;
@@ -159,6 +160,33 @@ class ItemMasterAPIController extends AppBaseController
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
+                }
+
+                if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3) {
+                    if (!isset($item['faFinanceCatID']) || is_null($item['faFinanceCatID']) || $item['faFinanceCatID'] == '') {
+                        return $this->sendError(trans('custom.finance_audit_category_is_required'));
+                    }
+                    $faFinanceCat = AssetFinanceCategory::find($item['faFinanceCatID']);
+                    if (empty($faFinanceCat)) {
+                        return $this->sendError(trans('custom.finance_audit_category_is_required'));
+                    }
+
+                    if (!isset($item['faCatID']) || is_null($item['faCatID']) || $item['faCatID'] == '') {
+                        return $this->sendError(trans('custom.main_category_is_required'));
+                    }
+                    $faCat = FixedAssetCategory::find($item['faCatID']);
+                    if (empty($faCat)) {
+                        return $this->sendError(trans('custom.main_category_is_required'));
+                    }
+
+                    if (!isset($item['faSubCatID']) || is_null($item['faSubCatID']) || $item['faSubCatID'] == '') {
+                        return $this->sendError(trans('custom.sub_category_is_required'));
+                    }
+                    $faSubCat = FixedAssetCategorySub::find($item['faSubCatID']);
+                    if (empty($faSubCat)) {
+                        return $this->sendError(trans('custom.sub_category_is_required'));
+                    }
+                    
                 }
 
                 $runningSerialOrder = $runningSerialOrder + 1;
