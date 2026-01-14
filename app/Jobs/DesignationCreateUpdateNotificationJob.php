@@ -50,10 +50,6 @@ class DesignationCreateUpdateNotificationJob implements ShouldQueue
     public function handle()
     {
         Log::useFiles( CommonJobService::get_specific_log_file('emp-designation-update-notification') );
-        Log::info("db name is: " . $this->dbName);
-        Log::info("company id is: " . $this->companyId);
-        Log::info("id is: " . $this->id);
-        Log::info("master details is: " . json_encode($this->masterDetails));
 
         if (empty($this->dbName)) {
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
@@ -61,7 +57,6 @@ class DesignationCreateUpdateNotificationJob implements ShouldQueue
         } else {
             
             CommonJobService::db_switch($this->dbName);
-            Log::info("db switched to: " . $this->dbName);
             $obj = new DesignationCreateUpdateNotificationService($this->companyId, $this->id, $this->masterDetails);
             $obj->execute();
         }

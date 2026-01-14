@@ -473,10 +473,6 @@ class HRJobInvokeAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $id = $input['id'];
         $masterDetails = $input['masterDetails'];
-        Log::info("db name isF: " . $dbName);
-        Log::info("company id isF: " . $companyId);
-        Log::info("id isF: " . $id);
-        Log::info("master details isF: " . json_encode($masterDetails));
         DesignationCreateUpdateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails);
 
         return $this->sendResponse([], 'Employee designation notification scenario added to queue');
