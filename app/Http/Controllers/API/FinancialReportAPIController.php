@@ -898,18 +898,25 @@ class FinancialReportAPIController extends AppBaseController
             $employeeDatas = Employee::leftJoin('erp_bookinvsuppmaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_bookinvsuppmaster.employeeID')
                      ->where('erp_bookinvsuppmaster.documentType', 4)
-                     ->where('erp_bookinvsuppmaster.approved', -1)
-                     ->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
+                     ->where('erp_bookinvsuppmaster.approved', -1);
+                     //->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
             })
             ->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
                      ->where('erp_paysupplierinvoicemaster.invoiceType', 7)
-                     ->where('erp_paysupplierinvoicemaster.approved', -1)
-                     ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+                     ->where('erp_paysupplierinvoicemaster.approved', -1);
+                     //->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+            })
+            ->leftJoin('erp_debitnote', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_debitnote.empID')
+                     ->where('erp_debitnote.type', 2)
+                     ->where('erp_debitnote.approved', -1);
+                     //->whereIn('erp_debitnote.companySystemID', $childCompanies);
             })
             ->where(function ($query) {
                 $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
-                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                      ->orWhereNotNull('erp_debitnote.empID');
             })
             ->groupBy('employees.employeeSystemID')->pluck('employees.employeeSystemID');
         }
