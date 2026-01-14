@@ -3143,7 +3143,7 @@ class TenderMasterRepository extends BaseRepository
             $isBeforeClosing = !$commercialClosing || $commercialClosing->gt($now);
             $isDateWindowValid = $isAfterOpening && $isBeforeClosing;
 
-            if ($bidSubmission->commercial_verify_status == 1 || $isDateWindowValid) {
+            if ($bidSubmission->commercial_verify_status == 1 || !$isDateWindowValid) {
                 return [
                     'success' => false,
                     'message' => trans(
