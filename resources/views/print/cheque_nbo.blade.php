@@ -129,10 +129,10 @@
 </head>
 <body onload="window.print();window.close()">
 @php
-    $supplier = optional($entity->details->first())->supplier;
+    $supplier = $entity->supplier ?? optional($entity->details->first())->supplier;
 
     $supplierName = optional($supplier)->supplierName ?? $entity->nameOnCheque ?? '';
-    $supplierCode = optional($supplier)->supplierCode ?? 'S03';
+    $supplierCode = optional($supplier)->primarySupplierCode ?? '';
 
     $pvDate = \App\helper\Helper::dateFormat($entity->BPVdate);
     $pvNumber = $entity->BPVcode;
