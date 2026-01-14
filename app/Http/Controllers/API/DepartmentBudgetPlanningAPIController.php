@@ -388,6 +388,16 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             if($input['confirmed_yn'] == 0) {
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->confirmed_yn == 1){
+                    return $this->sendError('Company Budget Planning is already confirmed, you cannot reopen department budget planning');
+                }
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->approved_yn == 1){
+                    return $this->sendError('Company Budget Planning is already approved, you cannot reopen department budget planning');
+                }
+
+
                 $departmentBudgetPlanning->confirmed_yn = 0;
                 $departmentBudgetPlanning->confirmed_by = null;
                 $departmentBudgetPlanning->confirmed_at = null;
