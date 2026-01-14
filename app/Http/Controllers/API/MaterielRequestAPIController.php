@@ -1578,10 +1578,10 @@ class MaterielRequestAPIController extends AppBaseController
                     });
                 }
 
+
+
                 return $materielRequests->get()
-                    ->filter(function ($mr) {
-                        return $mr->materialIssueStatusValue !== 'fully_issued';
-                    })
+                    ->where('materialIssueStatusValue' ,'!=', 'fully_issued')
                     ->values()
                     ->map(function ($mr) {
                         return [
