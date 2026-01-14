@@ -94,9 +94,6 @@ class RemoveExpiredUserGroupAccess extends Command
                 // Delete from srp_erp_employeenavigation
                 EmployeeNavigation::whereIn('id', $expiredEmpNavIds)->delete();
 
-                Log::info('Marked ' . count($expiredIds) . ' expired user group access records as inactive for tenant');
-            } else {
-                Log::info('No expired user group access records found for tenant');
             }
         }
     }

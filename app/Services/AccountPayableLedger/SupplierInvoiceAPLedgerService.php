@@ -52,6 +52,7 @@ class SupplierInvoiceAPLedgerService
         $taxLocal = 0;
         $taxRpt = 0;
         $taxTrans = 0;
+        $whtPaymentMethod = isset($masterData->whtPaymentMethod) ? $masterData->whtPaymentMethod : 0;
 
         $retentionPercentage = ($masterData->retentionPercentage > 0) ? $masterData->retentionPercentage : 0;
 
@@ -324,10 +325,10 @@ class SupplierInvoiceAPLedgerService
                             $whtLocal = ($whtAmountConLocal);
                             $whtRpt = ($whtAmountConRpt);
 
-                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] - $whtInvoiceAmount;
-                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] - $whtTrans;
-                            $data['localAmount'] = $data['localAmount'] - $whtLocal;
-                            $data['comRptAmount'] = $data['comRptAmount'] - $whtRpt;
+                            $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] -  ($whtPaymentMethod == 1 ? $whtInvoiceAmount : 0);
+                            $data['supplierDefaultAmount'] = $data['supplierDefaultAmount'] -  ($whtPaymentMethod == 1 ? $whtTrans : 0);
+                            $data['localAmount'] = $data['localAmount'] -  ($whtPaymentMethod == 1 ? $whtLocal : 0);
+                            $data['comRptAmount'] = $data['comRptAmount'] -  ($whtPaymentMethod == 1 ? $whtRpt : 0);
                         
 
                     }

@@ -1567,11 +1567,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $data[$x]['Responsible Person'] = $val->responsiblePerson 
                     ? $val->responsiblePerson->empName 
                     : '';
-                $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Request Amount'] = number_format($val->request_amount ?? 0, 2);
                 $data[$x]['Time for Submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
                 $data[$x]['Previous Year Budget'] = number_format($val->previous_year_budget ?? 0, 2);
                 $data[$x]['Current Year Budget'] = number_format($val->current_year_budget ?? 0, 2);
+                $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
                 $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
                 $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);

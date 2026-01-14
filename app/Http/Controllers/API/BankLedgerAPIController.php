@@ -2040,9 +2040,28 @@ class BankLedgerAPIController extends AppBaseController
 
 
 
-                    
-                    $entity->amount_word = ucfirst($f->format($intAmt));
-                    $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
+
+                    $intWords = ucfirst($f->format((int)$intAmt));
+                    $intWords = str_replace('-', ' ', $intWords);
+
+                    $decimalPlaces = (int) $entity->decimalPlaces;
+                    $floatNumber  = (int) $entity->floatAmt;
+
+                    $amountWords = $intWords;
+
+                    if ($floatNumber > 0 && $decimalPlaces > 0) {
+                        $floatWords = ucfirst($f->format($floatNumber));
+                        $floatWords = str_replace('-', ' ', $floatWords);
+
+                        $subUnit = 'Cents';
+                        if (isset($entity->bankcurrency->CurrencyCode) && $entity->bankcurrency->CurrencyCode === 'OMR') {
+                            $subUnit = 'Baiza';
+                        }
+
+                        $amountWords .= ' and ' . $floatWords . ' ' . $subUnit;
+                    }
+
+                    $entity->amount_word = $amountWords;
                     $entity->chequePrintedByEmpName = $employee->empName;
                     if($entity->supplier){
                         $entity->nameOnCheque = isset($entity->supplier->nameOnPaymentCheque)?$entity->supplier->nameOnPaymentCheque:'';

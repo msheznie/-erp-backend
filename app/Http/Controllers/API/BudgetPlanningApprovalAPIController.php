@@ -94,19 +94,11 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
                     ->where('employeesdepartments.removedYN', 0);
             })
             ->join('company_budget_plannings', function ($query) use ($companyId) {
-                // Join on documentSystemCode matching the budget planning ID
                 $query->on('erp_documentapproved.documentSystemCode', '=', DB::raw('CAST(company_budget_plannings.id AS CHAR)'))
-                    ->where('company_budget_plannings.companySystemID', $companyId);
-                
-                // Filter for confirmed but not approved records
-                // Note: Adjust field names based on actual schema (confirmed_yn vs confirmedYN, etc.)
-                $query->where(function($q) {
-                    $q->where('company_budget_plannings.confirmed_yn', 1);                });
-                
-                $query->where(function($q) {
-                    $q->where('company_budget_plannings.approved_yn', 0)
-                      ->orWhereNull('company_budget_plannings.approved_yn');
-                });
+                    ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                    ->where('company_budget_plannings.companySystemID', $companyId)
+                    ->where('company_budget_plannings.approved_yn', 0)
+                    ->where('company_budget_plannings.confirmed_yn', 1);
             })
             ->join('companyfinanceyear', 'company_budget_plannings.yearID', '=', 'companyfinanceyear.companyFinanceYearID')
             ->where('erp_documentapproved.approvedYN', 0)
@@ -215,11 +207,13 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
                 'erp_documentapproved.documentSystemCode',
                 'company_budget_plannings.id as companyBudgetPlanningID',
                 'companyfinanceyear.bigginingDate',
+                'erp_documentapproved.approvedYN as test',
                 'companyfinanceyear.endingDate'
             )
             ->join('company_budget_plannings', function ($query) use ($companyId) {
                 // Join on documentSystemCode matching the budget planning ID
                 $query->on('erp_documentapproved.documentSystemCode', '=', DB::raw('CAST(company_budget_plannings.id AS CHAR)'))
+                    // ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('company_budget_plannings.companySystemID', $companyId);
                 
                 // Filter for confirmed but not approved records
@@ -227,16 +221,13 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
                 $query->where(function($q) {
                     $q->where('company_budget_plannings.confirmed_yn', 1);                });
                 
-                $query->where(function($q) {
-                    $q->where('company_budget_plannings.approved_yn', 0)
-                      ->orWhereNull('company_budget_plannings.approved_yn');
-                });
             })
             ->join('companyfinanceyear', 'company_budget_plannings.yearID', '=', 'companyfinanceyear.companyFinanceYearID')
             ->where('erp_documentapproved.approvedYN', -1)
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 133)
             ->where('erp_documentapproved.companySystemID', $companyId);
+            
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
