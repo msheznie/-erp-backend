@@ -46,6 +46,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
 {
     /** @var  BidSubmissionMasterRepository */
     private $bidSubmissionMasterRepository;
+    
+    /** @var  TenderMasterRepository */
+    private $tenderMasterRepository;
 
     public function __construct(TenderMasterRepository $tenderMasterRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
     {
@@ -254,7 +257,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $meth = $input['meth'];
             $tender_id = $input['tender_id'];
             $isNegotation = $input['isNegotiation'] ?? 0;
-            $validation = TenderMasterRepository::checkBidSubmissionValidation(
+            $validation = $this->tenderMasterRepository->checkBidSubmissionValidation(
                 $tender_id, $input['companySystemID'], $isNegotation, $meth, $bidSubmissionMaster
             );
             if(!$validation['success']){
