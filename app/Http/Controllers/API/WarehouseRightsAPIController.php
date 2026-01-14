@@ -122,7 +122,8 @@ class WarehouseRightsAPIController extends AppBaseController
         $timestamp = date("Y-m-d h:i:s");
 
         $input = $request->all();
-        $company = $input['companyID'];
+        $input = $this->convertArrayToSelectedValue($input, array('companyID'));
+        $company = isset($input['companyID']) ? $input['companyID'] : null;
         $warehouseSelectedItems = isset($input['warehouseSelectedItems'])?$input['warehouseSelectedItems']:false;
         $employeeSystemID =  isset($input['employeeSystemID'])?$input['employeeSystemID']:false;
         $warehouse = array_pluck($warehouseSelectedItems, 'id');
