@@ -906,8 +906,7 @@ class DocumentApprovedAPIController extends AppBaseController
 				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-				AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
-				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+							AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 				AND (
 					(companydocumentattachment.isServiceLineApproval = -1 
 						AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
@@ -918,10 +917,15 @@ class DocumentApprovedAPIController extends AppBaseController
 				INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 				INNER JOIN erp_purchaserequest ON erp_purchaserequest.companySystemID = erp_documentapproved.companySystemID 
 				AND erp_purchaserequest.documentSystemID = erp_documentapproved.documentSystemID 
-				AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
-				AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
-				AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
-				LEFT JOIN (
+							AND erp_purchaserequest.purchaseRequestID = erp_documentapproved.documentSystemCode 
+				AND erp_purchaserequest.RollLevForApp_curr = erp_documentapproved.rollLevelOrder
+				AND (
+		(companydocumentattachment.isServiceLineApproval = -1 
+			AND erp_purchaserequest.serviceLineSystemID = erp_documentapproved.serviceLineSystemID)
+		OR companydocumentattachment.isServiceLineApproval IS NULL
+		OR companydocumentattachment.isServiceLineApproval != -1
+	) 
+	LEFT JOIN (
 					SELECT purchaseRequestID, SUM(IFNULL(totalCost, 0)) AS prq_tot 
 					FROM erp_purchaserequestdetails
 					GROUP BY purchaseRequestID
@@ -938,7 +942,8 @@ class DocumentApprovedAPIController extends AppBaseController
 				$filter
 				AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
 				AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-				) AS PendingRequestApprovals UNION ALL
+				GROUP BY erp_documentapproved.documentApprovedID
+	) AS PendingRequestApprovals UNION ALL
 			SELECT
 				* 
 			FROM
