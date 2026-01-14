@@ -3134,17 +3134,26 @@ class TenderMasterRepository extends BaseRepository
             ];
         }
 
-        if ($method == 2 && (
-                $bidSubmission->commercial_verify_status == 1 || !$dateAllowed
-            )) {
-            return [
-                'success' => false,
-                'message' => trans(
-                    'srm_tender_rfx.unable_to_update_commercial_evaluation_date_passed',
-                    ['date' => $messageFor]
-                )
-            ];
+        if ($method == 2) {
+            $now = Carbon::now();
+            $commercialOpening = $tender->commerical_bid_opening_date;
+            $commercialClosing = $tender->commerical_bid_closing_date;
+
+            $isAfterOpening = $commercialOpening && $now->gt($commercialOpening);
+            $isBeforeClosing = !$commercialClosing || $commercialClosing->gt($now);
+            $isDateWindowValid = $isAfterOpening && $isBeforeClosing;
+
+            if ($bidSubmission->commercial_verify_status == 1 || $isDateWindowValid) {
+                return [
+                    'success' => false,
+                    'message' => trans(
+                        'srm_tender_rfx.unable_to_update_commercial_evaluation_date_passed',
+                        ['date' => trans('srm_tender_rfx.commercial_bid_date')]
+                    )
+                ];
+            }
         }
+
 
         return [
             'success' => true,

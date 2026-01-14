@@ -693,7 +693,9 @@ class TenderMaster extends Model
     public static function getTenderDidOpeningDates($tenderId, $companyId)
     {
         return TenderMaster::select('id','stage', 'bid_opening_date',
-            'technical_bid_opening_date', 'bid_opening_end_date', 'technical_bid_closing_date','title','tender_code')
+            'technical_bid_opening_date', 'bid_opening_end_date', 'technical_bid_closing_date','title','tender_code',
+            'commerical_bid_opening_date', 'commerical_bid_closing_date'
+        )
             ->where('id', $tenderId)
             ->where('company_id', $companyId)
             ->first();
