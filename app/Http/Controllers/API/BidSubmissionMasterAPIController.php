@@ -256,13 +256,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
         {
             $meth = $input['meth'];
             $tender_id = $input['tender_id'];
-            $isNegotation = $input['isNegotiation'] ?? 0;
-            $validation = $this->tenderMasterRepository->checkBidSubmissionValidation(
-                $tender_id, $input['companySystemID'], $isNegotation, $meth, $bidSubmissionMaster
-            );
-            if(!$validation['success']){
-                return $this->sendError($validation['message']);
-            }
 
             if($meth == 1)
             {
