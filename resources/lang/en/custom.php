@@ -9869,5 +9869,17 @@ return
     'credit_limit_decimal_precision' => 'Credit Limit cannot have more than 2 decimal places.',
     'credit_limit_cannot_be_decimal' => 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.',
     "bank_charges_and_other_amounts_should_have_a_value" => "Bank charges and other amounts should have a value",
-    "net_amount_cannot_be_negative_value" => "Net amount cannot be negative value"
+    "net_amount_cannot_be_negative_value" => "Net amount cannot be negative value",
+    'work_status_open' => 'Open',
+    'work_status_not_started' => 'Not Started',
+    'work_status_revision_not_started' => 'Revision Not Started',
+    'work_status_in_progress' => 'In Progress',
+    'work_status_revision_in_progress' => 'Revision In Progress',
+    'work_status_submit_to_finance' => 'Submit to Finance',
+    'work_status_revision_submit_to_finance' => 'Revision Submit to Finance',
+    'finance_status_open' => 'Open',
+    'finance_status_under_review' => 'Under Review',
+    'finance_status_sent_back_for_revision' => 'Sent Back for Revision',
+    'finance_status_completed' => 'Completed',
+    'status_unknown' => 'Unknown'
   ];

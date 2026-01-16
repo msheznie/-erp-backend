@@ -9756,5 +9756,17 @@ return
     'credit_limit_decimal_precision' => 'لا يمكن أن يحتوي حد الائتمان على أكثر من منزلتين عشريتين.',
     'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
     'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
-    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا'
+    'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا',
+    'work_status_open' => 'مفتوح',
+    'work_status_not_started' => 'لم يبدأ',
+    'work_status_revision_not_started' => 'مراجعة لم تبدأ',
+    'work_status_in_progress' => 'قيد التنفيذ',
+    'work_status_revision_in_progress' => 'مراجعة قيد التنفيذ',
+    'work_status_submit_to_finance' => 'إرسال إلى المالية',
+    'work_status_revision_submit_to_finance' => 'مراجعة إرسال إلى المالية',
+    'finance_status_open' => 'مفتوح',
+    'finance_status_under_review' => 'قيد المراجعة',
+    'finance_status_sent_back_for_revision' => 'تم إرجاعه للمراجعة',
+    'finance_status_completed' => 'مكتمل',
+    'status_unknown' => 'غير معروف'
   ];

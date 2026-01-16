@@ -868,6 +868,97 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
     }
 
+    /**
+     * Get work status label based on workStatus and revisions
+     * 
+     * @param DepartmentBudgetPlanning $departmentBudgetPlanning
+     * @return string
+     */
+    private function getWorkStatusLabel($departmentBudgetPlanning)
+    {
+        $workStatus = $departmentBudgetPlanning->workStatus ?? null;
+        $hasRevisions = $departmentBudgetPlanning->revisions && $departmentBudgetPlanning->revisions->count() > 0;
+        
+        switch ($workStatus) {
+            case "1":
+                return $hasRevisions ? trans('custom.work_status_revision_not_started') : trans('custom.work_status_not_started');
+            case "2":
+                return $hasRevisions ? trans('custom.work_status_revision_in_progress') : trans('custom.work_status_in_progress');
+            case "3":
+                return $hasRevisions ? trans('custom.work_status_revision_submit_to_finance') : trans('custom.work_status_submit_to_finance');
+            default:
+                return trans('custom.status_unknown');
+        }
+    }
+
+    /**
+     * Get finance team status label based on financeTeamStatus
+     * 
+     * @param DepartmentBudgetPlanning $departmentBudgetPlanning
+     * @return string
+     */
+    private function getFinanceTeamStatusLabel($departmentBudgetPlanning)
+    {
+        $financeTeamStatus = $departmentBudgetPlanning->financeTeamStatus ?? null;
+        
+        switch ($financeTeamStatus) {
+            case 1:
+                return trans('custom.finance_status_open');
+            case 2:
+                return trans('custom.finance_status_under_review');
+            case 3:
+                return trans('custom.finance_status_sent_back_for_revision');
+            case 4:
+                return trans('custom.finance_status_completed');
+            default:
+                return trans('custom.status_unknown');
+        }
+    }
+
+    /**
+     * Get formatted status combining work status and finance status separated by comma
+     * 
+     * @param DepartmentBudgetPlanning|CompanyBudgetPlanning $budgetPlanning
+     * @return string
+     */
+    private function getFormattedStatus($budgetPlanning)
+    {
+        // Check if it's DepartmentBudgetPlanning (has workStatus and financeTeamStatus)
+        if ($budgetPlanning instanceof DepartmentBudgetPlanning || 
+            (isset($budgetPlanning->workStatus) || isset($budgetPlanning->financeTeamStatus))) {
+            $workStatus = $this->getWorkStatusLabel($budgetPlanning);
+            $financeStatus = $this->getFinanceTeamStatusLabel($budgetPlanning);
+            return $workStatus . ', ' . $financeStatus;
+        }
+        
+        // For CompanyBudgetPlanning, use status and financeStatus
+        $workStatus = ($budgetPlanning->status == 1) ? trans('custom.work_status_in_progress') : trans('custom.work_status_open');
+        $financeStatus = $this->getCompanyFinanceStatusLabel($budgetPlanning->financeStatus ?? null);
+        return $workStatus . ', ' . $financeStatus;
+    }
+
+    /**
+     * Get finance status label for CompanyBudgetPlanning
+     * 
+     * @param int|null $financeStatus
+     * @return string
+     */
+    private function getCompanyFinanceStatusLabel($financeStatus)
+    {
+        switch ($financeStatus) {
+            case 1:
+                return trans('custom.finance_status_open');
+            case 2:
+                return trans('custom.finance_status_under_review');
+            case 3:
+                return trans('custom.finance_status_sent_back_for_revision');
+            case 4:
+                return trans('custom.finance_status_completed');
+            default:
+                return trans('custom.status_unknown');
+        }
+    }
+
     public function exportBudgetPlanning(Request $request) {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('company','planningCode', 'budgetYear', 'budgetType', 'status'));
@@ -948,7 +1039,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
 
                 if ($isFinanceUser) {
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear','revisions'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
                 } else {
@@ -969,7 +1060,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                     $childDepartmentIds = array_unique($childDepartmentIds);
 
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear','revisions'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->whereHas('department', function($query) use ($childDepartmentIds) {
                             $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -1047,7 +1138,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data[$x]['Budget Year'] = $val->financeYear ? \Illuminate\Support\Carbon::parse($val->financeYear->bigginingDate)->format('d/m/Y') . "|" . \Illuminate\Support\Carbon::parse($val->financeYear->endingDate)->format('d/m/Y') : '';
             $data[$x]['Budget Type'] = $val->typeID ? $this->getbudgetType($val->typeID) : '';
             $data[$x]['Date of Submission'] = $val->submissionDate ? $val->submissionDate->format('d/m/Y') : '';
-            $data[$x]['Status'] = ($val->status == 1) ? 'In Progress' : 'Open';
+            $data[$x]['Status'] = $this->getFormattedStatus($val);
         }
 
         $companyMaster = Company::find(isset($request->companyId) ? $request->companyId : null);
