@@ -2817,6 +2817,10 @@ class TenderMasterRepository extends BaseRepository
                 ]);
 
                 $newEmployee->tender_id = $newTenderId;
+                $newEmployee->status = 0;
+                $newEmployee->commercial_eval_remarks = null;
+                $newEmployee->remarks = null;
+                $newEmployee->commercial_eval_status = 0;
                 $newEmployee->tender_award_commite_mem_status = 0;
                 $newEmployee->tender_award_commite_mem_comment = null;
 
