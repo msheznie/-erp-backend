@@ -8337,6 +8337,7 @@ return
     'department_is_required' => 'Department is required.',
     'segment_code_not_updated' => 'Cannot confirm. Segment code is not updated.',
     'contract_no_is_required' => 'Contract no is required.',
+    'refund_receipt_voucher_invoice_has_vat_credit_note_not' => 'The refund receipt voucher\'s related invoice has VAT, and the credit note not includes VAT.',
 
     // Receipt voucher validation messages
     'currency_exchange_rate_required' => 'Currency exchange rate to local and reporting currency must be greater than zero.',

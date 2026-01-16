@@ -93,6 +93,7 @@ Route::group([], function () {
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit')->name("Credit Note Audit");
     Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote')->name("Get Filtered Debit Note");
     Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus')->name("Credit Note Receipt Status");
+    Route::post('getCreditNoteReceiptVouchers', 'CreditNoteReceiptAPIController@getReceiptVouchersForRefundCreditNote')->name("Get Receipt Vouchers For Refund Credit Note");
 
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable')->name("Credit Note Master Data Table");
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails')->name("Add Credit Note Details");

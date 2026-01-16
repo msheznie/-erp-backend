@@ -8236,6 +8236,7 @@ return
     'department_is_required' => 'القسم مطلوب.',
     'segment_code_not_updated' => 'لا يمكن التأكيد. رمز مركز التكلفة غير محدث.',
     'contract_no_is_required' => 'رقم العقد مطلوب.',
+    'refund_receipt_voucher_invoice_has_vat_credit_note_not' => 'فاتورة سند الاستلام المسترد ذات الصلة تحتوي على ضريبة القيمة المضافة، ومذكرة الائتمان لا تتضمن ضريبة القيمة المضافة.',
 
     // Receipt voucher validation messages
     'currency_exchange_rate_required' => 'يجب أن يكون سعر صرف العملة إلى العملة المحلية والإبلاغ أكبر من الصفر.',
