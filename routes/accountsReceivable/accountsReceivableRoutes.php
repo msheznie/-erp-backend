@@ -77,6 +77,7 @@ Route::group([], function () {
     Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency')->name("Update Currency");
     Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate')->name("Customer Invoice Local Update");
     Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate')->name("Customer Invoice Reporting Update");
+    Route::put('customerInvoiceSetDefaultExchangeRate/{id}', 'CustomerInvoiceDirectAPIController@setDefaultExchangeRate')->name("Set default customer invoice exchange rate");
     Route::post('setCustomerInvoiceForActivePolicy', 'CustomerInvoiceDirectAPIController@setCustomerInvoiceForActivePolicy')->name("Get Policy Status");
 
 });

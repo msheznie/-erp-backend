@@ -6,9 +6,13 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\MatchDocumentMaster;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceItemDetails;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
+use App\helper\Helper;
 use Carbon\Carbon;
 
 /**
@@ -478,6 +482,70 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }
 
         return ['status' => true];
+    }
+
+    /**
+     * Apply master document exchange rates to all detail items
+     *
+     * @param int $id Master document ID (custInvoiceDirectAutoID)
+     * @return bool Success status
+     */
+    public function applyMasterExchangeRatesToDetails($id)
+    {
+        try {
+            $masterDocument = $this->find($id);
+
+            if (!$masterDocument) {
+                return false;
+            }
+
+            $localCurrencyER = $masterDocument->localCurrencyER ?? 1;
+            $companyReportingER = $masterDocument->companyReportingER ?? 1;
+
+            $isPerforma = $masterDocument->isPerforma;
+
+            // Apply to direct invoices (isPerforma == 0) and item sales invoices (isPerforma == 2)
+            if ($isPerforma == 0) {
+                // Direct invoices - use CustomerInvoiceDirectDetail
+                $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+
+                foreach ($details as $item) {
+                    $localAmount = Helper::roundValue($item->invoiceAmount / $localCurrencyER);
+                    $comRptAmount = Helper::roundValue($item->invoiceAmount / $companyReportingER);
+                    $VATAmountLocal = Helper::roundValue($item->VATAmount / $localCurrencyER);
+                    $VATAmountRpt = Helper::roundValue($item->VATAmount / $companyReportingER);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'comRptCurrencyER' => $companyReportingER,
+                        'localAmount' => $localAmount,
+                        'comRptAmount' => $comRptAmount,
+                        'VATAmountLocal' => $VATAmountLocal,
+                        'VATAmountRpt' => $VATAmountRpt
+                    ]);
+                }
+            } else if ($isPerforma == 2) {
+                // Item Sales Invoice - use CustomerInvoiceItemDetails
+                $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+
+                foreach ($details as $item) {
+                    $sellingCostAfterMarginLocal = Helper::roundValue($item->sellingCostAfterMargin / $localCurrencyER);
+                    $sellingCostAfterMarginRpt = Helper::roundValue($item->sellingCostAfterMargin / $companyReportingER);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'companyReportingER' => $companyReportingER,
+                        'sellingCostAfterMarginLocal' => $sellingCostAfterMarginLocal,
+                        'sellingCostAfterMarginRpt' => $sellingCostAfterMarginRpt,
+                    ]);
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error applying master exchange rates to details: ' . $e->getMessage());
+            return false;
+        }
     }
 
 }
