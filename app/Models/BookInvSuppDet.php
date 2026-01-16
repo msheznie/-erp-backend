@@ -289,6 +289,11 @@ class BookInvSuppDet extends Model
 
     public function getSupplierInvoiceItemDetailsVATAmountSum()
     {
+        $rcmActivated = $this->suppinvmaster()->value('rcmActivated');
+        if ($rcmActivated == 1) {
+            return 0;
+        }
+        
         return $this->supplier_invoice_item_details()->sum('VATAmount');
     }
 
