@@ -18,6 +18,8 @@ use App\Models\BidSubmissionMaster;
 use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinanceYear;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ContractAdditionalDocuments;
 use App\Models\ContractBOQItems;
@@ -385,6 +387,25 @@ class SRMService
             return self::amendPoAppointment($appointmentID, $slotCompanyId);
         }
 
+        if (!empty($data) && is_array($data)) {
+            $purchaseOrderIds = array_unique(array_column($data, 'purchaseOrderID'));
+            
+            if (count($purchaseOrderIds) > 1) {
+                $purchaseOrders = ProcumentOrder::getPoForAppointment($purchaseOrderIds);
+                
+                if (!$purchaseOrders->isEmpty()) {
+                    $currencyCount = $purchaseOrders->pluck('supplierTransactionCurrencyID')->unique()->count();
+                    if ($currencyCount > 1) {
+                        return [
+                            'success' => false,
+                            'message' => 'Please select same currency PO within a delivery',
+                            'data' => []
+                        ];
+                    }
+                }
+            }
+        }
+
         DB::beginTransaction();
         try {
 
@@ -591,10 +612,11 @@ class SRMService
                 $query->select('supplierCodeSystem', 'supplierName');
             },
             'grv' => function ($query) {
-                $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
+                $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                ->withCount('UnbilledGrvGroupBy');
             },
             'invoice' => function ($query) {
-                $query->select('deliveryAppoinmentID');
+                $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
             }
         ])
             ->select('id', 'primary_code', 'created_by', 'created_at', 'confirmed_yn', 'approved_yn', 'refferedBackYN',
@@ -1347,18 +1369,18 @@ class SRMService
             ->join('suppliermaster', 'appointment.created_by', 'suppliermaster.supplierCodeSystem')
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
             ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
-        ->with([
-                'grv' => function ($query) {
-                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN');
-                },
-                'invoice' => function ($query) {
-                    $query->select('deliveryAppoinmentID');
-                },
-            'slot_detail' => function ($query) {
-                $query->select('id','slot_master_id', 'company_id');
-            }
-            ])
-        ;
+            ->with([
+                    'grv' => function ($query) {
+                        $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                            ->withCount('UnbilledGrvGroupBy');
+                    },
+                    'invoice' => function ($query) {
+                        $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
+                    },
+                    'slot_detail' => function ($query) {
+                        $query->select('id','slot_master_id', 'company_id');
+                    }
+                ]);
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -5803,6 +5825,11 @@ class SRMService
             ];
         }
 
+        $validationResult = $this->validateInvoiceCreationRequirements($data['companySystemID']);
+        if (!$validationResult['success']) {
+            return $validationResult;
+        }
+
         $dispatchedJobs = [];
         foreach ($grvMasters as $grvMaster) {
             $grvData = $data;
@@ -5817,6 +5844,40 @@ class SRMService
             'success' => true,
             'message' => 'Invoice created successfully',
             'data' => $data
+        ];
+    }
+
+    private function validateInvoiceCreationRequirements($companySystemID)
+    {
+        $mytime = new Carbon();
+        $fromCompanyFinanceYear = CompanyFinanceYear::getFinanceYearByDate($companySystemID, $mytime);
+
+        if (empty($fromCompanyFinanceYear)) {
+            return [
+                'success' => false,
+                'message' => 'Financial year not found',
+                'data' => []
+            ];
+        }
+
+        $fromCompanyFinancePeriod = CompanyFinancePeriod::getFinancePeriodByDate(
+            $companySystemID,
+            1,
+            $fromCompanyFinanceYear->companyFinanceYearID,
+            $mytime
+        );
+
+        if (empty($fromCompanyFinancePeriod)) {
+            return [
+                'success' => false,
+                'message' => 'Financial period not found',
+                'data' => []
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'success'
         ];
     }
 

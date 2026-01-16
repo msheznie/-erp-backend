@@ -318,15 +318,19 @@ class TenderMasterRepository extends BaseRepository
         ];
     }
 
-    public static function getTenderDidOpeningDates($tenderId, $companyId)
+    public static function getTenderDidOpeningDates($tenderId, $companyId, $isNegotiation=0)
     {
         $current_date = Carbon::now();
         $tender = TenderMaster::getTenderDidOpeningDates($tenderId, $companyId);
 
         if (!$tender) {
             return [
-                'error' => 'Tender not found.',
+                'error' => trans('srm_tender_rfx.tender_not_found'),
             ];
+        }
+
+        if ($isNegotiation === 1) {
+            return true;
         }
 
         $opening_date_comp = $tender->stage === 1 ? $tender->bid_opening_date : $tender->technical_bid_opening_date;
@@ -2813,6 +2817,10 @@ class TenderMasterRepository extends BaseRepository
                 ]);
 
                 $newEmployee->tender_id = $newTenderId;
+                $newEmployee->status = 0;
+                $newEmployee->commercial_eval_remarks = null;
+                $newEmployee->remarks = null;
+                $newEmployee->commercial_eval_status = 0;
                 $newEmployee->tender_award_commite_mem_status = 0;
                 $newEmployee->tender_award_commite_mem_comment = null;
 
@@ -3101,4 +3109,59 @@ class TenderMasterRepository extends BaseRepository
         }
     }
 
+    public function checkBidSubmissionValidation($tenderID, $companyID, $isNegotiation, $method, $bidSubmission)
+    {
+        $dateAllowed = self::getTenderDidOpeningDates($tenderID, $companyID, $isNegotiation);
+
+        if (isset($dateAllowed['error'])) {
+            return [
+                'success' => false,
+                'message' => $dateAllowed['error']
+            ];
+        }
+
+        $tender = TenderMaster::getTenderDidOpeningDates($tenderID, $companyID);
+
+        $messageFor = ($tender->stage == 1)
+            ? trans('srm_tender_rfx.bid_opening_date')
+            : trans('srm_tender_rfx.technical_bid_date');
+
+        if ($method == 1 && (
+                $bidSubmission->technical_verify_status == 1 || !$dateAllowed
+            )) {
+            return [
+                'success' => false,
+                'message' => trans(
+                    'srm_tender_rfx.unable_to_update_technical_evaluation_date_passed',
+                    ['date' => $messageFor]
+                )
+            ];
+        }
+
+        if ($method == 2) {
+            $now = Carbon::now();
+            $commercialOpening = $tender->commerical_bid_opening_date;
+            $commercialClosing = $tender->commerical_bid_closing_date;
+
+            $isAfterOpening = $commercialOpening && $now->gt($commercialOpening);
+            $isBeforeClosing = !$commercialClosing || $commercialClosing->gt($now);
+            $isDateWindowValid = $isAfterOpening && $isBeforeClosing;
+
+            if ($bidSubmission->commercial_verify_status == 1 || ($tender->stage == 2 && !$isDateWindowValid)) {
+                return [
+                    'success' => false,
+                    'message' => trans(
+                        'srm_tender_rfx.unable_to_update_commercial_evaluation_date_passed',
+                        ['date' => trans('srm_tender_rfx.commercial_bid_date')]
+                    )
+                ];
+            }
+        }
+
+
+        return [
+            'success' => true,
+            'message' => 'Success'
+        ];
+    }
 }

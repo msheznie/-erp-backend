@@ -46,6 +46,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
 {
     /** @var  BidSubmissionMasterRepository */
     private $bidSubmissionMasterRepository;
+    
+    /** @var  TenderMasterRepository */
+    private $tenderMasterRepository;
 
     public function __construct(TenderMasterRepository $tenderMasterRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
     {
@@ -1569,7 +1572,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function checkDateDisabled(Request $request)
     {
         try {
-            $result = TenderMasterRepository::getTenderDidOpeningDates($request['tenderMasterId'], $request['companySystemID']);
+            $result = TenderMasterRepository::getTenderDidOpeningDates($request['tenderMasterId'], $request['companySystemID'], $request['isNegotiation']);
 
             if (isset($result['error'])) {
                 return $this->sendError($result['error'], 404);

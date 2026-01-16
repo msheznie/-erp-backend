@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use App\Models\CompanyFinanceYear;
-use Carbon\Carbon;
 use App\Models\ApprovalLevel;
 use App\Jobs\DeliveryAppoinmentGRV;
 use App\Models\AppointmentDetails;
@@ -580,6 +578,14 @@ class AppointmentAPIController extends AppBaseController
             $validationResult = $this->appointmentRepository->validateAppointmentQuantities($input['documentSystemCode']);
             if (!$validationResult['success']) {
                 return $this->sendError($validationResult['message']);
+            }
+
+            $grvValidationResult = $this->appointmentRepository->validateGrvCreationRequirements(
+                $input['companySystemID'],
+                $input['segment'] ?? null
+            );
+            if (!$grvValidationResult['success']) {
+                return $this->sendError($grvValidationResult['message']);
             }
 
             $currencyGroups = $appointment->detail
