@@ -5834,6 +5834,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         sum(noQty*landingCost_RptCur) as rptAmount,
                                         purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
+            ->whereHas('grv_master', function ($query) {
+                $query->where('grvCancelledYN', '!=', -1);
+            })
             ->with(['grv_master' => function ($query) {
                 $query->with(['currency_by']);
             }])
@@ -5974,6 +5977,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if(empty($data))
         {
             $poToPaymentReportHeader = new PoToPaymentReport();
+            array_push($data, collect($poToPaymentReportHeader->getGroupedHeader())->toArray());
             array_push($data, collect($poToPaymentReportHeader->getHeader())->toArray());
         }
 
@@ -5984,16 +5988,41 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $category = ($value->fcategory) ? $value->fcategory->categoryDescription : '';
                 $supplierCode = ($value->supplier) ? $value->supplier->primarySupplierCode : '';
                 $supplierName = ($value->supplier) ? $value->supplier->supplierName : '';
+                
+                $poStatus = '';
+                $grvStatus = '';
+                $manuallyClosedStatus = '';
+                
+                if ($value->grvRecieved == 0) {
+                    $grvStatus = trans('custom.not_received');
+                } elseif ($value->grvRecieved == 1) {
+                    $grvStatus = trans('custom.partial_received');
+                } elseif ($value->grvRecieved == 2) {
+                    $grvStatus = trans('custom.fully_received');
+                }
+                
+                if ($value->manuallyClosed == 1) {
+                    $manuallyClosedStatus = trans('custom.manually_closed');
+                }
+                
+                if (!empty($manuallyClosedStatus) && !empty($grvStatus)) {
+                    $poStatus = $manuallyClosedStatus . ', ' . $grvStatus;
+                } elseif (!empty($manuallyClosedStatus)) {
+                    $poStatus = $manuallyClosedStatus;
+                } elseif (!empty($grvStatus)) {
+                    $poStatus = $grvStatus;
+                }
+                
                 $poToPaymentReport = new PoToPaymentReport();
                 $poToPaymentReport->setCompanyID($value->companyID);
+                $poToPaymentReport->setSupplierCode($supplierCode);
+                $poToPaymentReport->setSupplierName($supplierName);
                 $poToPaymentReport->setPoNumber($value->purchaseOrderCode);
                 $poToPaymentReport->setCategory($category);
                 $poToPaymentReport->setPoApprovedDate($value->approvedDate);
                 $poToPaymentReport->setNarration($value->narration);
-                $poToPaymentReport->setSupplierCode($supplierCode);
-                $poToPaymentReport->setSupplierName($supplierName);
                 $poToPaymentReport->setPoAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->poTotalComRptCurrency, 2)));
-                $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
+                $poToPaymentReport->setPoStatus($poStatus);                
 
                 if (count($value->grvMasters) > 0) {
                     $grvMasterCount = 0;
@@ -6002,20 +6031,26 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $x++;
                             $poToPaymentReport = new PoToPaymentReport();
                             $poToPaymentReport->setCompanyID("");
+                            $poToPaymentReport->setSupplierCode("");
+                            $poToPaymentReport->setSupplierName("");
                             $poToPaymentReport->setPoNumber("");
                             $poToPaymentReport->setCategory("");
                             $poToPaymentReport->setPoApprovedDate("");
                             $poToPaymentReport->setNarration("");
-                            $poToPaymentReport->setSupplierCode("");
-                            $poToPaymentReport->setSupplierName("");
                             $poToPaymentReport->setPoAmount("");
-                            $poToPaymentReport->setLogisticAmount("");
+                            $poToPaymentReport->setPoStatus("");
                         }
 
                         ($grv['grv_master']) ? $poToPaymentReport->setGrvCode($grv['grv_master']['grvPrimaryCode']) : $poToPaymentReport->setGrvCode("");
                         ($grv['grv_master']) ? $poToPaymentReport->setGrvDate($grv['grv_master']['grvDate']) : $poToPaymentReport->setGrvDate("");
 
                         $poToPaymentReport->setGrvAmount(CurrencyService::convertNumberFormatToNumber(number_format($grv['rptAmount'], 2)));
+                        
+                        if ($grvMasterCount == 0) {
+                            $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
+                        } else {
+                            $poToPaymentReport->setLogisticAmount("");
+                        }
 
                         if (count($grv['invoices']) > 0) {
                             $invoicesCount = 0;
@@ -6024,17 +6059,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $x++;
                                     $poToPaymentReport = new PoToPaymentReport();
                                     $poToPaymentReport->setCompanyID("");
+                                    $poToPaymentReport->setSupplierCode("");
+                                    $poToPaymentReport->setSupplierName("");
                                     $poToPaymentReport->setPoNumber("");
                                     $poToPaymentReport->setCategory("");
                                     $poToPaymentReport->setPoApprovedDate("");
                                     $poToPaymentReport->setNarration("");
-                                    $poToPaymentReport->setSupplierCode("");
-                                    $poToPaymentReport->setSupplierName("");
                                     $poToPaymentReport->setPoAmount("");
-                                    $poToPaymentReport->setLogisticAmount("");
+                                    $poToPaymentReport->setPoStatus("");
                                     $poToPaymentReport->setGrvCode("");
                                     $poToPaymentReport->setGrvDate("");
                                     $poToPaymentReport->setGrvAmount("");
+                                    $poToPaymentReport->setLogisticAmount("");                              
                                 }
 
                                 ($invoice['suppinvmaster']) ? $poToPaymentReport->setInvoiceCode($invoice['suppinvmaster']['bookingInvCode']) : $poToPaymentReport->setInvoiceCode(null);
@@ -6048,17 +6084,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $x++;
                                             $poToPaymentReport = new PoToPaymentReport();
                                             $poToPaymentReport->setCompanyID("");
+                                            $poToPaymentReport->setSupplierCode("");
+                                            $poToPaymentReport->setSupplierName("");
                                             $poToPaymentReport->setPoNumber("");
                                             $poToPaymentReport->setCategory("");
                                             $poToPaymentReport->setPoApprovedDate("");
                                             $poToPaymentReport->setNarration("");
-                                            $poToPaymentReport->setSupplierCode("");
-                                            $poToPaymentReport->setSupplierName("");
                                             $poToPaymentReport->setPoAmount("");
-                                            $poToPaymentReport->setLogisticAmount("");
+                                            $poToPaymentReport->setPoStatus("");
                                             $poToPaymentReport->setGrvCode("");
                                             $poToPaymentReport->setGrvDate("");
                                             $poToPaymentReport->setGrvAmount("");
+                                            $poToPaymentReport->setLogisticAmount("");
                                             $poToPaymentReport->setInvoiceCode("");
                                             $poToPaymentReport->setInvoiceDate("");
                                             $poToPaymentReport->setInvoiceAmount("");
@@ -6121,6 +6158,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $poToPaymentReport->setGrvCode("");
                     $poToPaymentReport->setGrvDate("");
                     $poToPaymentReport->setGrvAmount("");
+                    $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
                     $poToPaymentReport->setInvoiceCode("");
                     $poToPaymentReport->setInvoiceDate("");
                     $poToPaymentReport->setInvoiceAmount("");

@@ -2761,7 +2761,7 @@ return
     'invoice_doc_code' => 'Invoice Document Code',
     'invoice_date' => 'Invoice Date',
     'invoice_detail' => 'Invoice detail',
-    'invoice_details' => 'Invoice detail',
+    'invoice_details' => 'Invoice details',
     'invoice_details_exist_you_cannot_change_the_curren' => 'Invoice details exist. You cannot change the currency.',
     'invoice_details_exist_you_cannot_change_the_custom' => 'Invoice details exist. You cannot change the customer.',
     'invoice_details_not_found' => 'Invoice details not found.',
@@ -9885,5 +9885,7 @@ return
     'finance_status_under_review' => 'Under Review',
     'finance_status_sent_back_for_revision' => 'Sent Back for Revision',
     'finance_status_completed' => 'Completed',
-    'status_unknown' => 'Unknown'
+    'status_unknown' => 'Unknown',
+    'supplier_details' => 'Supplier Details',
+    'po_details' => 'PO Details'
   ];

@@ -9772,5 +9772,7 @@ return
     'finance_status_under_review' => 'قيد المراجعة',
     'finance_status_sent_back_for_revision' => 'تم إرجاعه للمراجعة',
     'finance_status_completed' => 'مكتمل',
-    'status_unknown' => 'غير معروف'
+    'status_unknown' => 'غير معروف',
+    'supplier_details' => 'تفاصيل المورد',
+    'po_details' => 'تفاصيل أمر الشراء'
   ];

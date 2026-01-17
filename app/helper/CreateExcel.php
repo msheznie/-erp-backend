@@ -351,6 +351,40 @@ class CreateExcel
 
                     });
 
+                    // Format second header row if it exists (for reports with grouped headers)                    
+                    if (!empty($data) && count($data) >= 2) {
+                        $firstRow = $data[0];
+                        $secondRow = $data[1];
+                        $isSecondHeaderRow = false;
+                        if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
+                            $nonEmptyCount = 0;
+                            $hasTranslationKeys = false;
+                            foreach ($secondRow as $cell) {
+                                if (!empty($cell) && is_string($cell)) {
+                                    $nonEmptyCount++;
+                                    if (preg_match('/^(custom\.|supplier|po_|grv|invoice|payment|logistic|company|amount|date|code|status)/i', $cell)) {
+                                        $hasTranslationKeys = true;
+                                    }
+                                }
+                            }
+                            if ($nonEmptyCount >= 3 && ($hasTranslationKeys || $nonEmptyCount >= 5)) {
+                                $isSecondHeaderRow = true;
+                            }
+                        }
+                        
+                        if ($isSecondHeaderRow) {
+                            $sheet->row($i + 1, function($row) use ($fontFamily) {
+                                $row->setAlignment('left');
+                                $row->setFontColor('#000000');
+                                $row->setFont(array(
+                                    'family'     => $fontFamily,
+                                    'size'       => '12',
+                                    'bold'       =>  true
+                                ));
+                            });
+                        }
+                    }
+
                     if (app()->getLocale() == 'ar') {
                         // Set right-to-left for the entire sheet
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
