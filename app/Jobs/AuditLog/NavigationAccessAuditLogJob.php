@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Jobs\AuditLog\StoreAuditLogJob;
 
 class NavigationAccessAuditLogJob implements ShouldQueue
 {
@@ -68,14 +69,12 @@ class NavigationAccessAuditLogJob implements ShouldQueue
             return;
         }
 
-        // Get prepared audit data from service
         $auditDataArray = NavigationAuditLogService::prepareNavigationAccessData($fullNavigationData);
         
         if (empty($auditDataArray)) {
             return;
         }
 
-        // Write to audit log - centralized logging point
         $this->writeToAuditLog($auditDataArray);
     }
 
@@ -88,12 +87,10 @@ class NavigationAccessAuditLogJob implements ShouldQueue
     private function writeToAuditLog($eventDataArray)
     {
         try {
-            Log::useFiles(storage_path() . '/logs/audit.log');
-            
-            // Write logs for each language
             foreach ($eventDataArray as $eventData) {
                 $eventData['log_uuid'] = (string) bin2hex(random_bytes(16));
-                Log::info('data:', $eventData);
+                
+                StoreAuditLogJob::dispatch($eventData)->onQueue('audit-logs');
             }
         } catch (\Exception $e) {
             Log::error('Failed to write to audit log: ' . $e->getMessage());

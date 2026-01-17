@@ -116,7 +116,7 @@ class ThirdPartyApiLogger
                 0,
                 null,
                 $logId
-            );
+            )->onQueue('audit-logs');
         }
 
         return $response;

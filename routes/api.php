@@ -946,6 +946,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
                 require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
                 Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
+
+                Route::post('getThirdPartyApiLogDetail', 'AuditTrailAPIController@getThirdPartyApiLogDetail');
             });
             Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
             Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
@@ -1052,7 +1054,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('updateUsersLoginType', 'EmployeeAPIController@updateUsersLoginType');
-        Route::get('migrateAuditLogs', 'AuditTrailAPIController@migrateAuditLogs');
         Route::get('runCronJob/{cron}', function ($cron) {
             Artisan::call($cron);
             return 'CRON Job run successfully';
