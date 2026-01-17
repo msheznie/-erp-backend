@@ -9761,6 +9761,7 @@ return
     'credit_limit_cannot_be_decimal' => 'لا يمكن أن يكون حد الائتمان قيمة عشرية. الأرقام الصحيحة فقط مسموحة.',
     'bank_charges_and_other_amounts_should_have_a_value' => 'يجب أن يكون لديك قيمة للمصاريف البنكية والأخرى',
     'net_amount_cannot_be_negative_value' => 'لا يمكن أن يكون المبلغ الصافي سالبًا',
+    'organization_bears_wht_for_tax_deduct' => 'تتحمل المؤسسة ضريبة الخصم',
     'work_status_open' => 'مفتوح',
     'work_status_not_started' => 'لم يبدأ',
     'work_status_revision_not_started' => 'مراجعة لم تبدأ',
