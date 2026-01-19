@@ -47,7 +47,7 @@ class EmployeeTaskingNotificationService
         }
 
         $this->sendEmail();
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+        $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
             'Message' => 'execution successfully completed']);
     }
 
@@ -56,7 +56,7 @@ class EmployeeTaskingNotificationService
         $notificationCompanyScenario = $this->getScenarioEmployees();
         $this->isScenarioActive = (!empty($notificationCompanyScenario)) ? true : false;
         if (!$this->isScenarioActive) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+            $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
                 'Message' => 'Notification scenario Does not exist or does not active'], 'error');
         }
     }
@@ -66,7 +66,7 @@ class EmployeeTaskingNotificationService
         $getNotifyEmployees = $this->getScenarioEmployees(true);
         $this->notifyList = (!empty($getNotifyEmployees) ? $getNotifyEmployees['user'] : []);
         if (empty($this->notifyList)) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+            $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
                 'Message' => 'Notification scenario employees do not exists'], 'error');
         }
     }
@@ -98,7 +98,7 @@ class EmployeeTaskingNotificationService
 
     public function sendEmail()
     {
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+        $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
             'Message' => 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
@@ -162,11 +162,11 @@ class EmployeeTaskingNotificationService
                 if (!$sendEmail["success"]) {
                     $msg = "Employee tasking notification not sent for {$applicableCatDesc} {$name} ";
                     $logType = 'error';
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
                         'Message' => $msg], $logType);
                 } else {
                     $msg = "Employee tasking notification sent for {$applicableCatDesc} {$name} ";
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['employeeCode'],
+                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
                         'Message' => $msg]);
                 }
             }
