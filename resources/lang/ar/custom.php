@@ -79,6 +79,7 @@ return
     'category_parameter_missing' => 'معامل الفئة مفقود',
     'amount_parameter_missing' => 'معامل المبلغ مفقود',
     'please_set_approval_group' => 'يرجى تعيين مجموعة الإعتماد',
+    'reporting_manager_not_assigned_for_selected_employee' => 'المدير المباشر غير معين للموظف المحدد. يرجى تعيين المدير المباشر قبل تأكيد طلب الشراء',
     'document_already_confirmed' => 'المستند مؤكد بالفعل',
     'document_approval_data_generated' => 'تم إنشاء بيانات إعتماد المستند بالفعل.',
     'policy_not_found_general' => 'السياسة غير موجودة.',

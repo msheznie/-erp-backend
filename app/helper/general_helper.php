@@ -3486,7 +3486,17 @@ class Helper
                                     if ($output->approvalrole) {
                                         foreach ($output->approvalrole as $val) {
                                             if ($val->approvalGroupID) {
-                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
+                                                $approvalGroup = Models\ApprovalGroups::find($val->approvalGroupID);
+                                                if($approvalGroup && $approvalGroup->isReportingManager == 1){
+                                                    $reportingManagerResult = DocumentAutoApproveService::getReportingManagerDocumentApprovedData($empInfo, $val, $params, $sorceDocument, $docInforArr, $email_in);
+                                                    if($reportingManagerResult['success']){
+                                                        $documentApproved[] = $reportingManagerResult['data'];
+                                                    } else {
+                                                        return $reportingManagerResult;
+                                                    }
+                                                } else {
+                                                    $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
+                                                }
                                             } else {
                                                 return ['success' => false, 'message' => trans('custom.please_set_approval_group')];
                                             }
