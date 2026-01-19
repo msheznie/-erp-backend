@@ -112,6 +112,7 @@ class AuditRoutesTenantService
             'api/v1/userGroups/{userGroup}',
             'api/v1/employee_navigations',
             'api/v1/employee_navigations/{employee_navigation}',
+            'api/v1/getThirdPartyApiLogDetail'
         ];
 
         return $lokiTenantRoutes;
