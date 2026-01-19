@@ -1246,10 +1246,15 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where(function ($query) use ($empID) {
                 $query->where(function ($subQuery) {
-                    $subQuery->where('approvalgroups.isReportingManager', '!=', 1)
-                        ->whereNotNull('employeesdepartments.employeeSystemID');
+                    // For normal approval groups, filter by employeesdepartments (exclude reporting manager groups)
+                    $subQuery->whereNotNull('employeesdepartments.employeeSystemID')
+                        ->where(function($q) {
+                            $q->whereNull('approvalgroups.isReportingManager')
+                              ->orWhere('approvalgroups.isReportingManager', '!=', 1);
+                        });
                 })
                 ->orWhere(function ($subQuery) use ($empID) {
+                    // For reporting manager groups (isReportingManager = 1), check if current employee is the reporting manager
                     $subQuery->where('approvalgroups.isReportingManager', 1)
                         ->where('erp_documentapproved.docConfirmedByEmpSystemID', $empID);
                 });
