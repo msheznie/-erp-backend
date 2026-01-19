@@ -420,7 +420,7 @@ class ApprovalLevelAPIController extends AppBaseController
                 }
             }
         }
-        $approvalRole = ApprovalRole::with(['company' => function ($query) {
+        $approvalRole = ApprovalRole::with(['approval_group','company' => function ($query) {
             // $query->select('CompanyName');
         }, 'department' => function ($query) {
             //$query->select('DepartmentDescription');
