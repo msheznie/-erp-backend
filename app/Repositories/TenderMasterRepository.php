@@ -33,6 +33,7 @@ use App\Models\DocumentModifyRequest;
 use App\Models\EnvelopType;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaDetailsEditLog;
+use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\EvaluationType;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleDetailEditLog;
@@ -2666,7 +2667,8 @@ class TenderMasterRepository extends BaseRepository
                 $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
                 $this->clonePurchaseRequests($tenderMaster['id'], $newTender->id);
                 $this->clonePricingSchedules($tenderMaster['id'], $newTender->id);
-                $this->cloneEvaluationCriteria($tenderMaster['id'], $newTender->id);
+                $criteriaIdMap = $this->cloneEvaluationCriteria($tenderMaster['id'], $newTender->id);
+                $this->cloneEvaluationCriteriaScoreConfig($tenderMaster['id'], $criteriaIdMap);
                 $this->cloneAttachments($tenderMaster['id'], $newTender->id, $documentSystemID);
                 $this->cloneCalendarDates($tenderMaster['id'], $newTender->id);
                 if($tenderMaster['tender_type_id'] !== 1){
@@ -2708,18 +2710,17 @@ class TenderMasterRepository extends BaseRepository
             $documentMaster['documentID'] .
             str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-        $cloneCount = (int) $tenderMaster['is_clone'];
-        if ($cloneCount > 0) {
-            $count = $cloneCount + 1;
-            $tenderTitle = 'Clone ' . $count . ' - ' . $tenderMaster->title;
-            $description = 'Clone ' . $count . ' - ' . $tenderMaster->description;
-            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
-        } else {
-            $cloneCount = 1;
-            $tenderTitle = 'Clone - ' . $tenderMaster->title;
-            $description = 'Clone - ' . $tenderMaster->description;
-            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
-        }
+        $cloneCount = (int) ($tenderMaster->is_clone ?? 0);
+        $count = ($cloneCount > 0) ? $cloneCount + 1 : 1;
+        $prefix = ($count > 1)
+            ? 'Clone ' . $count . ' - '
+            : 'Clone - ';
+
+        $tenderTitle = $prefix . $tenderMaster->title;
+        $tenderDescription = isset($tenderMaster->description)
+            ? $prefix . $tenderMaster->description
+            : null;
+
 
         $newTender = $tenderMaster->replicate([
             'id',
@@ -3002,9 +3003,9 @@ class TenderMasterRepository extends BaseRepository
         $evaluationCriteriaDetails = EvaluationCriteriaDetails::getEvaluationCriteriaDetailForAmd(
             $oldTenderId
         );
+        $criteriaIdMap = [];
+        
         if (!empty($evaluationCriteriaDetails)) {
-
-            $levelOneIdMap = [];
 
             foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
 
@@ -3023,29 +3024,72 @@ class TenderMasterRepository extends BaseRepository
                 $newCriteria->parent_id = 0;
                 $newCriteria->save();
 
-                $levelOneIdMap[$evaluationCriteria->id] = $newCriteria->id;
+                $criteriaIdMap[$evaluationCriteria->id] = $newCriteria->id;
             }
 
-            foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
+            $maxLevel = $evaluationCriteriaDetails->max('level') ?? 1;
+            
+            for ($level = 2; $level <= $maxLevel; $level++) {
+                foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
+                    if ((int) $evaluationCriteria->level !== $level) {
+                        continue;
+                    }
 
-                if ((int) $evaluationCriteria->level === 1) {
-                    continue;
+                    $newCriteria = $evaluationCriteria->replicate([
+                        'id',
+                        'tender_id',
+                        'parent_id',
+                        'created_at',
+                    ]);
+
+                    $newCriteria->tender_id = $newTenderId;
+                    $newCriteria->parent_id = $criteriaIdMap[$evaluationCriteria->parent_id] ?? null;
+                    $newCriteria->evaluation_criteria_master_id = $evaluationCriteria->evaluation_criteria_master_id;
+                    $newCriteria->save();
+                    
+                    $criteriaIdMap[$evaluationCriteria->id] = $newCriteria->id;
                 }
+            }
+        }
+        
+        return $criteriaIdMap;
+    }
+    private function cloneEvaluationCriteriaScoreConfig($oldTenderId, $criteriaIdMap)
+    {
+        $evaluationCriteriaDetails =
+            EvaluationCriteriaDetails::getEvaluationCriteriaDetailForAmd($oldTenderId);
 
-                $newCriteria = $evaluationCriteria->replicate([
+        if ($evaluationCriteriaDetails->isEmpty()) {
+            return;
+        }
+
+        foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
+            if (!isset($criteriaIdMap[$evaluationCriteria->id])) {
+                continue;
+            }
+
+            $newCriteriaDetailId = $criteriaIdMap[$evaluationCriteria->id];
+            $scoreConfigs =
+                EvaluationCriteriaScoreConfig::getEvalScoreForAmend($evaluationCriteria->id);
+
+            if ($scoreConfigs->isEmpty()) {
+                continue;
+            }
+
+            foreach ($scoreConfigs as $scoreConfig) {
+
+                $newScoreConfig = $scoreConfig->replicate([
                     'id',
-                    'tender_id',
-                    'parent_id',
+                    'criteria_detail_id',
                     'created_at',
                 ]);
 
-                $newCriteria->tender_id = $newTenderId;
-                $newCriteria->parent_id = $levelOneIdMap[$evaluationCriteria->parent_id] ?? null;
-                $newCriteria->evaluation_criteria_master_id=$evaluationCriteria->evaluation_criteria_master_id;
-                $newCriteria->save();
+                $newScoreConfig->criteria_detail_id = $newCriteriaDetailId;
+                $newScoreConfig->save();
             }
         }
     }
+
     private function cloneAttachments($oldTenderId, $newTenderId, $documentSystemID)
     {
         $tenderAttachments = DocumentAttachments::getTenderAttachments($oldTenderId, $documentSystemID);
