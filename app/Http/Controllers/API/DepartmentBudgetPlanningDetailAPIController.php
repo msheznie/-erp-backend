@@ -459,20 +459,30 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Handle workflow and revision logic based on isCompany
             if ($isCompany === true || $isCompany === 'true') {
                 // Get CompanyBudgetPlanning for workflow/revision checks
-                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow','departmentBudgetPlannings')->find($departmentPlanningId);
                 if ($companyBudgetPlanning) {
                     if ($companyBudgetPlanning->workflow) {
                         $workflowMethod = $companyBudgetPlanning->workflow->method;
                     }
-                    // Check for revisions in any of the related department budget plannings
-                    $revision = \App\Models\Revision::whereIn('budgetPlanningId', $departmentPlanningIds)
-                        ->whereIn('revisionStatus', [1, 2])
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                    
-                    if ($revision && $revision->selectedGlSections) {
-                        $selectedGlSections = json_decode($revision->selectedGlSections, true);
+
+                    // Collect revisions from all department budget plannings
+                    $allSelectedGlSections = [];
+                    foreach($companyBudgetPlanning->departmentBudgetPlannings as $departmentBudgetPlanning) {
+                        $revision = \App\Models\Revision::where('budgetPlanningId', $departmentBudgetPlanning->id)
+                            ->whereIn('revisionStatus', [1, 2])
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                            
+                        if ($revision && $revision->selectedGlSections) {
+                            $deptSelectedGlSections = json_decode($revision->selectedGlSections, true);
+                            if (is_array($deptSelectedGlSections)) {
+                                // Merge selectedGlSections from all department budget plannings
+                                $allSelectedGlSections = array_merge($allSelectedGlSections, $deptSelectedGlSections);
+                            }
+                        }
                     }
+                    // Remove duplicates and reindex array
+                    $selectedGlSections = array_values(array_unique($allSelectedGlSections));
                 }
             } else {
                 // Original logic for single department budget planning
@@ -492,28 +502,48 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
             
-            
-            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
+            $data->transform(function ($item) use ($budgetPlanning, $companyBudgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser, $isCompany) {
                 $isEnable = true;
+                
+                // Get the related department budget planning for this item
+                $itemDepartmentBudgetPlanning = $item->departmentBudgetPlanning ?? $item->department_budget_planning ?? null;
                 
                 if($isFinanceApprovalUser)
                 {
                     $isEnable = true;
                 }else {
-                    if ($budgetPlanning  && !empty($selectedGlSections)) {
+                    // Check selectedGlSections for both company and department budget planning
+                    if (!empty($selectedGlSections)) {
                         if ($workflowMethod == 1 && !$isGLBased) {
                             $isEnable = in_array($item->id, $selectedGlSections);
                         } else {
                             $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
                         }
                     }
-                    if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
-                        $isEnable = false;
+                    
+                    // For department budget planning (single), check workStatus
+                    if (!$isCompany && $budgetPlanning) {
+                        if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
+                            $isEnable = false;
+                        }
+                        
+                        // Check confirmed status for department budget planning
+                        if($budgetPlanning->masterBudgetPlannings && ($budgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $budgetPlanning->confirmed_yn == 1)) {
+                           $isEnable = true;
+                        }
                     }
-                }
-
-                if($budgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $budgetPlanning->confirmed_yn == 1) {
-                   $isEnable = true;
+                    
+                    // For company budget planning, check workStatus of the item's related department budget planning
+                    if ($isCompany && $itemDepartmentBudgetPlanning) {
+                        if($itemDepartmentBudgetPlanning->workStatus == 3){
+                            $isEnable = false;
+                        }
+                        
+                        // Check confirmed status for the item's related department budget planning
+                        if($itemDepartmentBudgetPlanning->masterBudgetPlannings && ($itemDepartmentBudgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $itemDepartmentBudgetPlanning->confirmed_yn == 1)) {
+                           $isEnable = true;
+                        }
+                    }
                 }
 
                 $item->isEnable = $isEnable;
@@ -1608,7 +1638,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
                 $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
-                $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
+                // $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
             }
 
             $companyMaster = Company::find($request->input('companySystemID'));
