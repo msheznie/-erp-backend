@@ -1751,6 +1751,7 @@ class BankLedgerAPIController extends AppBaseController
 
     public function updatePrintAhliChequeItems(Request $request)
     {
+        
         $input = $request->all();
         $search = $request->input('search.value');
         $htmlName = '';
@@ -1937,7 +1938,9 @@ class BankLedgerAPIController extends AppBaseController
             try {
                 $time = strtotime("now");
                 $fileName = 'cheque_ahli' . $time . '.pdf';
-                $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+                $local = app()->getLocale();
+                
+                $f = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
                 $totalAmount = 0;
                 foreach ($bankLedger as $item) {
                     $temArray = array();
@@ -2038,8 +2041,27 @@ class BankLedgerAPIController extends AppBaseController
 
 
 
-                    $entity->amount_word = ucfirst($f->format($intAmt));
-                    $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
+                    $intWords = ucfirst($f->format((int)$intAmt));
+                    $intWords = str_replace('-', ' ', $intWords);
+
+                    $decimalPlaces = (int) $entity->decimalPlaces;
+                    $floatNumber  = (int) $entity->floatAmt;
+
+                    $amountWords = $intWords;
+
+                    if ($floatNumber > 0 && $decimalPlaces > 0) {
+                        $floatWords = ucfirst($f->format($floatNumber));
+                        $floatWords = str_replace('-', ' ', $floatWords);
+
+                        $subUnit = 'Cents';
+                        if (isset($entity->bankcurrency->CurrencyCode) && $entity->bankcurrency->CurrencyCode === 'OMR') {
+                            $subUnit = 'Baiza';
+                        }
+
+                        $amountWords .= ' and ' . $floatWords . ' ' . $subUnit;
+                    }
+
+                    $entity->amount_word = $amountWords;
                     $entity->chequePrintedByEmpName = $employee->empName;
                     if($entity->supplier){
                         $entity->nameOnCheque = isset($entity->supplier->nameOnPaymentCheque)?$entity->supplier->nameOnPaymentCheque:'';
@@ -2291,7 +2313,9 @@ class BankLedgerAPIController extends AppBaseController
         }
         $time = strtotime("now");
         $fileName = 'cheque' . $time . '.pdf';
-        $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+        $local = $request->get('lang');
+        $f = new \NumberFormatter($local, \NumberFormatter::SPELLOUT);
+        
 
         foreach ($bankLedger as $item) {
 

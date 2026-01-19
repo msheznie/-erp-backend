@@ -2076,6 +2076,9 @@ class SalesMarketingReportAPIController extends AppBaseController
             ->addColumn('deliveryOrder', function ($row) {
                 return $this->getSOtoReceiptChainViaDeliveryOrder($row);
             })
+            ->addColumn('soTotalComRptCurrency', function ($row) {
+                return $row->companyReportingAmount;
+            })
             ->make(true);
 
         return $data;
@@ -2276,7 +2279,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $data[$x][trans('custom.customer_code')] = '';
                     $data[$x][trans('custom.customer_name')] = '';
                 }
-                $data[$x][trans('custom.so_amount')] = number_format($value->transactionAmount, 2);
+                $data[$x][trans('custom.so_amount')] = number_format($value->companyReportingAmount, 2);
 
                 if (count($value->deliveryOrders) > 0) {
                     $grvMasterCount = 0;

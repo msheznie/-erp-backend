@@ -10,6 +10,7 @@ use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentUserBudgetControl;
 use App\Models\WorkflowConfigurationHodAction;
+use App\Models\EmployeesDepartment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -51,8 +52,30 @@ class BudgetPermissionService
                 'status' => false,
                 'access' => [],
                 'isActive' => true
+            ],
+            'financeApprovalUser' => [
+                'status' => false,
+                'access' => [],
+                'isActive' => true
             ]
         ];
+
+        $checkUserHasApprovalAccess = EmployeesDepartment::where('companySystemID', $companyId)
+        ->where('employeeSystemID', $employeeID)
+        ->where('documentSystemID', 133)
+        ->where('departmentSystemID', 5)
+        ->where('isActive', 1)
+        ->where('removedYN', 0);
+
+        if($checkUserHasApprovalAccess->exists()) {
+            $userPermissions['financeApprovalUser']['status'] = true;
+
+            return [
+                'success' => true,
+                'message' => 'User access retrieved successfully',
+                'data' => $userPermissions
+            ];
+        }
 
         $assignDepartments = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)
             ->where('isActive', 1)

@@ -12,6 +12,7 @@ use App\Models\BudgetTemplateColumn;
 use App\Models\BudgetTemplatePreColumn;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\CompanyDepartmentSegment;
+use App\Models\EmployeesDepartment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\ChartOfAccount;
@@ -199,6 +200,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
         try {
+            
+            // Check if isCompany parameter is true
+            $isCompany = $request->input('isCompany', false);
+            $departmentPlanningIds = [$departmentPlanningId]; // Default to single department planning
+            
+            // If isCompany is true, get all department budget planning IDs for this company budget planning
+            if ($isCompany === true || $isCompany === 'true') {
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($departmentPlanningId);
+                if ($companyBudgetPlanning && $companyBudgetPlanning->departmentBudgetPlannings) {
+                    $departmentPlanningIds = $companyBudgetPlanning->departmentBudgetPlannings->pluck('id')->toArray();
+                    // If no department budget plannings found, use empty array to return no results
+                    if (empty($departmentPlanningIds)) {
+                        $departmentPlanningIds = [-1]; // Use -1 to ensure no results
+                    }
+                }
+            }
 
             if($request->input('type') != 'company_budget_planning') {
                 $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
@@ -207,7 +224,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'budgetDelegateAccessDetails',
                 'budgetDelegateAccessDetailsUser',
                 'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
-                'responsiblePerson'
+                'responsiblePerson',
+                'departmentBudgetPlanning.department'
             ]);
 
             if($userPermission['success'] && $userPermission['data']['delegateUser']['status'])
@@ -218,7 +236,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             }
 
-            $query->forDepartmentPlanning($departmentPlanningId)
+            // Use whereIn for multiple department planning IDs when isCompany is true
+            $query->whereIn('department_planning_id', $departmentPlanningIds)
             ->select([
                 'id',
                 'department_planning_id',
@@ -338,6 +357,15 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
+            // Handle Department filtering (only when isCompany is true)
+            $departments = $request->input('departments');
+            if (!empty($departments) && is_array($departments) && ($isCompany === true || $isCompany === 'true')) {
+                // Filter by department IDs through the department_budget_plannings relationship
+                $query->whereHas('departmentBudgetPlanning', function ($q) use ($departments) {
+                    $q->whereIn('departmentID', $departments);
+                });
+            }
+
             // Check if GL-based grouping is requested
             $isGLBased = $request->input('isGLBased', false);
             
@@ -400,38 +428,91 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
 
             // Check financeTeamStatus and add isEnable field based on selectedGlSections
-            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+            $budgetPlanning = null;
+            $companyBudgetPlanning = null;
             $selectedGlSections = [];
             $workflowMethod = null;
+            $isFinanceApprovalUser = false;
             
-            if ($budgetPlanning) {
-                if ($budgetPlanning->workflow) {
-                    $workflowMethod = $budgetPlanning->workflow->method;
+            $checkUserHasApprovalAccess = EmployeesDepartment::where('companySystemID', $request->input('companySystemID'))
+            ->where('employeeSystemID', $employeeID)
+            ->where('documentSystemID', 133)
+            ->where('departmentSystemID', 5)
+            ->where('isActive', 1)
+            ->where('removedYN', 0);
+
+            if($checkUserHasApprovalAccess->exists()) {
+                $isFinanceApprovalUser = true;
+            }
+            
+            $checkUserHasApprovalAccess = EmployeesDepartment::where('companySystemID', $request->input('companySystemID'))
+            ->where('employeeSystemID', $employeeID)
+            ->where('documentSystemID', 133)
+            ->where('departmentSystemID', 5)
+            ->where('isActive', 1)
+            ->where('removedYN', 0);
+
+            if($checkUserHasApprovalAccess->exists()) {
+                $isFinanceApprovalUser = true;
+            }
+            
+            // Handle workflow and revision logic based on isCompany
+            if ($isCompany === true || $isCompany === 'true') {
+                // Get CompanyBudgetPlanning for workflow/revision checks
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($companyBudgetPlanning) {
+                    if ($companyBudgetPlanning->workflow) {
+                        $workflowMethod = $companyBudgetPlanning->workflow->method;
+                    }
+                    // Check for revisions in any of the related department budget plannings
+                    $revision = \App\Models\Revision::whereIn('budgetPlanningId', $departmentPlanningIds)
+                        ->whereIn('revisionStatus', [1, 2])
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($revision && $revision->selectedGlSections) {
+                        $selectedGlSections = json_decode($revision->selectedGlSections, true);
+                    }
                 }
-                $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
-                    ->whereIn('revisionStatus', [1, 2])
-                    ->orderBy('created_at', 'desc')
-                    ->first();
-                
-                if ($revision && $revision->selectedGlSections) {
-                    $selectedGlSections = json_decode($revision->selectedGlSections, true);
+            } else {
+                // Original logic for single department budget planning
+                $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($budgetPlanning) {
+                    if ($budgetPlanning->workflow) {
+                        $workflowMethod = $budgetPlanning->workflow->method;
+                    }
+                    $revision = \App\Models\Revision::where('budgetPlanningId', $budgetPlanning->id)
+                        ->whereIn('revisionStatus', [1, 2])
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                    
+                    if ($revision && $revision->selectedGlSections) {
+                        $selectedGlSections = json_decode($revision->selectedGlSections, true);
+                    }
                 }
             }
             
-            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased) {
+            
+            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
                 $isEnable = true;
                 
-                if ($budgetPlanning  && !empty($selectedGlSections)) {
-                    if ($workflowMethod == 1 && !$isGLBased) {
-                        $isEnable = in_array($item->id, $selectedGlSections);
-                    } else {
-                        $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+
+                if($isFinanceApprovalUser)
+                {
+                    $isEnable = true;
+                }else {
+                    if ($budgetPlanning  && !empty($selectedGlSections)) {
+                        if ($workflowMethod == 1 && !$isGLBased) {
+                            $isEnable = in_array($item->id, $selectedGlSections);
+                        } else {
+                            $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
+                        }
+                    }
+                    if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
+                        $isEnable = false;
                     }
                 }
-                
-                if($budgetPlanning->workStatus == 3 ){
-                    $isEnable = false;
-                }
+
                 $item->isEnable = $isEnable;
                 return $item;
             });
@@ -595,6 +676,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
+
             if(empty($userPermission) || !$userPermission['success'])
             {
                 return $this->sendError('User permissison not exists');
@@ -616,6 +698,11 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     return  $this->sendError("User doesn't have permission to edit data");
                 }
 
+            }
+
+            if((isset($userPermission['data']['financeApprovalUser']) && $userPermission['data']['financeApprovalUser']['status']) || (isset($userPermission['data']['financeUser']) && $userPermission['data']['financeUser']['status']))
+            {
+                return  $this->sendError("User doesn't have permission to save data");
             }
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
@@ -994,6 +1081,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             }
 
+            if((isset($userPermission['data']['financeApprovalUser']) && $userPermission['data']['financeApprovalUser']['status']) || (isset($userPermission['data']['financeUser']) && $userPermission['data']['financeUser']['status']))
+            {
+                return  $this->sendError("User doesn't have permission to delete data");
+            }
 
 
             $entry->delete();
@@ -1290,6 +1381,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $query->forDepartmentPlanning($departmentPlanningId);
 
+            // Handle department filtering for company-level exports
+            $isCompany = $request->input('isCompany', false);
+            $departments = $request->input('departments');
+            if (!empty($departments) && is_array($departments) && ($isCompany === true || $isCompany === 'true')) {
+                if (isset($departments[0]) && is_array($departments[0]) && isset($departments[0]['id'])) {
+                    $departmentIds = array_column($departments, 'id');
+                } else {
+                    $departmentIds = $departments;
+                }
+                if (!empty($departmentIds)) {
+                    $query->whereHas('departmentBudgetPlanning', function ($q) use ($departmentIds) {
+                        $q->whereIn('departmentID', $departmentIds);
+                    });
+                }
+            }
+
             // Apply search filter
             $search = $request->input('search');
             if ($search && is_string($search)) {
@@ -1380,16 +1487,74 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            $dataset = $query->orderBy('id', 'desc')->get();
+            // Check if GL based export is requested
+            $isGLBased = $request->input('isGLBased', false);
+            
+            // If GL based, we need to group by GL and aggregate amounts
+            if ($isGLBased) {
+                $allData = $query->orderBy('id', 'desc')->get();
+                
+                // Group by budget_template_gl_id and aggregate
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    $glId = $item->budget_template_gl_id;
+                    
+                    if (!isset($groupedData[$glId])) {
+                        // Use the first item as base
+                        $groupedItem = $item->replicate();
+                        
+                        // Reset amount fields to 0 for aggregation
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        
+                        // Remove segment for GL-based view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        
+                        // Ensure relationships are loaded
+                        if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
+                            $groupedItem->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                        }
+                        if (!$groupedItem->relationLoaded('responsiblePerson')) {
+                            $groupedItem->load('responsiblePerson');
+                        }
+                        
+                        $groupedData[$glId] = $groupedItem;
+                    }
+                    
+                    // Sum up all amount fields
+                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                $dataset = collect(array_values($groupedData));
+            } else {
+                $dataset = $query->orderBy('id', 'desc')->get();
+            }
 
             $data = array();
             $x = 0;
             foreach ($dataset as $val) {
                 $x++;
                 $data[$x]['#'] = $x;
-                $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
-                    ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
-                    : '';
+                
+                // Only include Segment column if not GL based
+                if (!$isGLBased) {
+                    $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
+                        ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
+                        : '';
+                }
+                
                 $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
                     ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
                     : '';
@@ -1406,6 +1571,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $data[$x]['Time for Submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
                 $data[$x]['Previous Year Budget'] = number_format($val->previous_year_budget ?? 0, 2);
                 $data[$x]['Current Year Budget'] = number_format($val->current_year_budget ?? 0, 2);
+                $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
                 $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
                 $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);

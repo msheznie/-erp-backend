@@ -54,7 +54,8 @@ class QuotationDetailsRepository extends BaseRepository
         'modifiedUserID',
         'modifiedDateTime',
         'modifiedUserName',
-        'timestamp'
+        'timestamp',
+        'userQty'
     ];
 
     /**

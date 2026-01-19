@@ -225,7 +225,7 @@ class Helper
     public static function checkDomai()
     {
 
-        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $redirectUrl =  "https://pl.uat-gears-int.com/#/approval/erp"; //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
             if (isset($_SERVER['HTTP_HOST'])) {
@@ -3201,6 +3201,17 @@ class Helper
                     $docInforArr["modelName"] = 'SegmentMaster';
                     $docInforArr["primarykey"] = 'serviceLineSystemID';
                     break;
+                case 133:
+                    $docInforArr["documentCodeColumnName"] = 'planningCode';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_at';
+                    $docInforArr["tableName"] = 'company_budget_plannings';
+                    $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
@@ -3212,6 +3223,7 @@ class Helper
             } else {
                 $masterRec = $namespacedModel::find($params["autoID"]);
             }
+
 
             if ($masterRec) {
                 if (in_array($params["document"], [20, 71])) {
@@ -3943,6 +3955,46 @@ class Helper
         //break this function for the requirment of GCP-515
         return ['success' => true, 'message' => '', 'type' => 5];
 
+        //check document exist
+        $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+
+        if (!$docApprove) {
+            return ['success' => false, 'message' => trans('custom.no_records_found_caps'), 'type' => 2];
+        }
+
+        $empInfo = self::getEmployeeInfo();
+
+
+        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
+                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->first();
+
+        if (empty($companyDocument)) {
+            return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
+        }
+
+        $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
+                                ->where('companySystemID', $docApprove->companySystemID)
+                                ->where('employeeSystemID', $empInfo->employeeSystemID)
+                                ->where('documentSystemID', $input["documentSystemID"])
+                                ->where('isActive', 1)
+                                ->where('removedYN', 0);
+
+        if ($companyDocument['isServiceLineApproval'] == -1) {
+            $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApprove->serviceLineSystemID);
+        }
+
+
+        $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->whereHas('employee', function ($q) {
+            $q->where('discharegedYN', 0);
+        })
+            ->groupBy('employeeSystemID')
+            ->exists();
+
+        if (!$checkUserHasApprovalAccess) {
+            return ['success' => false, 'message' => trans('custom.access_denied')];
+        }
+
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
@@ -4624,6 +4676,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
+            case 133:
+                $docInforArr["tableName"] = 'company_budget_plannings';
+                $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved_yn';
+                $docInforArr["approvedBy"] = 'approved_by_emp_id';
+                $docInforArr["approvedBySystemID"] = 'approved_by_emp_system_id';
+                $docInforArr["approvedDate"] = 'approved_at';
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                $docInforArr["approveValue"] = 1;
+                break;
             default:
                 return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
@@ -4720,6 +4784,7 @@ class Helper
                     }
                 }
 
+
                 if($input["documentSystemID"] == 41){
 
 
@@ -4807,6 +4872,14 @@ class Helper
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => 0]);
                                     }
                                 }
+                            }
+                        }
+
+                        
+
+                        if($input["documentSystemID"] == 133){
+                            if($input['workflowID'] != $approvalLevel->workflow) {
+                                return ['success' => false, 'message' => trans('custom.you_are_not_authorized_to_approve_this_document')];
                             }
                         }
 
@@ -4981,6 +5054,7 @@ class Helper
                                     }
                                 }
                             }
+
 
                             if($input["documentSystemID"] == 119){
                                 $resRrvShedule = CreateRecurringVoucherSetupSchedules::dispatch($input['documentSystemCode'],$dataBase);
@@ -6422,6 +6496,13 @@ class Helper
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = 'confirmed_by_emp_system_id';
                     break;
+                case 133:
+                    $docInforArr["tableName"] = 'company_budget_plannings';
+                    $docInforArr["modelName"] = 'CompanyBudgetPlanning';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_set')];
             }
@@ -6638,6 +6719,11 @@ class Helper
                                 );
                             }
 
+                            if($input["documentSystemID"] == 133)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['rejected_yn' => -1,'rejected_date' => now()]);
+
+                            }
                             if($input["documentSystemID"] == 117)
                             {
                                 $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
@@ -6761,7 +6847,7 @@ class Helper
                     }
                     DB::commit();
 
-                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? 'referred back' : 'rejected';
+                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? trans('custom.referred_back') : trans('custom.rejected');
                     return ['success' => true, 'message' => trans('custom.document_successfully') . ' ' . $rejectedMsg];
 
                 } else {
@@ -7458,6 +7544,7 @@ class Helper
             'reportingAmount' => self::roundValue($reportingAmount),
             'localAmount' => self::roundValue($localAmount),
             'defaultAmount' => self::roundValue($defaultAmount),
+            'documentAmount' => self::roundValue($defaultAmount)
         );
 
         return $array;

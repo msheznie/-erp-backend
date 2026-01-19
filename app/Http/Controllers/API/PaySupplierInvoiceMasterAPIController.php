@@ -3228,7 +3228,10 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 'erp_bankmemopayee.memoHeaderPayee',
                 'erp_bankmemopayee.memoDetailPayee',
                 'payment_type.description as paymentMode',
-                'erp_pdc_logs.chequeNo as pdcChequeNo'
+                'erp_pdc_logs.chequeNo as pdcChequeNo',
+                DB::raw('CAST((SELECT COALESCE(SUM(dpAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_amount'),
+                DB::raw('CAST((SELECT COALESCE(SUM(localAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_local_amount'),
+                DB::raw('CAST((SELECT COALESCE(SUM(comRptAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_comRpt_amount')
             )
             ->join('employeesdepartments', function ($query) use ($companyId, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')

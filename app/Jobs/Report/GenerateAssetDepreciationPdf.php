@@ -254,7 +254,6 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                 Log::error("ZIP file does not exist after creation: {$zipFullPath}");
             }
         }
-
         return true;
     }
 }
