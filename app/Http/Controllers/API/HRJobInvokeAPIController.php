@@ -485,7 +485,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $dbName = CommonJobService::get_tenant_db($tenantId);
         $companyId = $input['companyId'];
         $id = $input['id'];
-        $masterDetails = $input['masterDetails'];
+        $masterDetails = $input['masterDetails']; 
         EmployeeTaskingNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails);
         
         return $this->sendResponse([], 'Employee tasking notification scenario added to queue');

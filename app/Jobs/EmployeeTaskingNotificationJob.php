@@ -55,7 +55,6 @@ class EmployeeTaskingNotificationJob implements ShouldQueue
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         } else {
-            
             CommonJobService::db_switch($this->dbName);
             $obj = new EmployeeTaskingNotificationService($this->companyId, $this->id, $this->masterDetails);
             $obj->execute();
