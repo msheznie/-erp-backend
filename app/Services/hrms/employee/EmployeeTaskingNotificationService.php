@@ -47,7 +47,7 @@ class EmployeeTaskingNotificationService
         }
 
         $this->sendEmail();
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+        $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
             'Message' => 'execution successfully completed']);
     }
 
@@ -56,7 +56,7 @@ class EmployeeTaskingNotificationService
         $notificationCompanyScenario = $this->getScenarioEmployees();
         $this->isScenarioActive = (!empty($notificationCompanyScenario)) ? true : false;
         if (!$this->isScenarioActive) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+            $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
                 'Message' => 'Notification scenario Does not exist or does not active'], 'error');
         }
     }
@@ -66,7 +66,7 @@ class EmployeeTaskingNotificationService
         $getNotifyEmployees = $this->getScenarioEmployees(true);
         $this->notifyList = (!empty($getNotifyEmployees) ? $getNotifyEmployees['user'] : []);
         if (empty($this->notifyList)) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+            $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
                 'Message' => 'Notification scenario employees do not exists'], 'error');
         }
     }
@@ -98,7 +98,7 @@ class EmployeeTaskingNotificationService
 
     public function sendEmail()
     {
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+        $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
             'Message' => 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
@@ -132,7 +132,7 @@ class EmployeeTaskingNotificationService
                 $applicableCatDesc = 'Applicable Employee';
                 $mailTo = $this->masterDet['empEmail'];
                 $name = $this->masterDet['empName'];
-                $isEmailVerified = $this->checkIsEmailVerified($this->masterDet['empIdNo']);
+                $isEmailVerified = $this->checkIsEmailVerified($this->masterDet['empId']);
                 $empCode = $this->masterDet['empCode'];
 
             } else { // Employee
@@ -162,11 +162,11 @@ class EmployeeTaskingNotificationService
                 if (!$sendEmail["success"]) {
                     $msg = "Employee tasking notification not sent for {$applicableCatDesc} {$name} ";
                     $logType = 'error';
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
                         'Message' => $msg], $logType);
                 } else {
                     $msg = "Employee tasking notification sent for {$applicableCatDesc} {$name} ";
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empCode'],
+                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
                         'Message' => $msg]);
                 }
             }
@@ -188,7 +188,7 @@ class EmployeeTaskingNotificationService
         $manager = HrmsEmployeeManager::selectRaw('empID,managerID')
             ->where([
                 'active' => 1,
-                'empID' => $this->masterDet['empIdNo']
+                'empID' => $this->masterDet['empId']
             ])
             ->whereHas('info')
             ->with('info:EIdNo,Ename2,EEmail,ECode')
