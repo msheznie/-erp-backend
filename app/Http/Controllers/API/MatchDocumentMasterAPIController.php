@@ -1182,8 +1182,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
 
-                            $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->liabilityAccountSysemID;
-                            $data['glCode'] = $DebitNoteMasterExData->liabilityAccount;
+                            $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->type == 2 ? $DebitNoteMasterExData->empControlAccount : $DebitNoteMasterExData->liabilityAccountSysemID;
+                            $data['glCode'] = $DebitNoteMasterExData->type == 2 ? ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']) : $DebitNoteMasterExData->liabilityAccount;
                             $data['glAccountType'] = 'BS';
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;

@@ -13001,6 +13001,44 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
                         UNION ALL
                         SELECT
+                        erp_matchdocumentmaster.matchingDocdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        erp_generalledger.documentNarration AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        (CASE 
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID THEN ABS(erp_generalledger.documentLocalAmount)
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID THEN -ABS(erp_generalledger.documentLocalAmount)
+                            ELSE erp_generalledger.documentLocalAmount
+                        END) AS amountLocal,
+                        (CASE 
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID THEN ABS(erp_generalledger.documentRptAmount)
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID THEN -ABS(erp_generalledger.documentRptAmount)
+                            ELSE erp_generalledger.documentRptAmount
+                        END) AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        11 AS type
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                        LEFT JOIN erp_matchdocumentmaster ON erp_generalledger.matchDocumentMasterAutoID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+                    WHERE
+                        erp_generalledger.documentSystemID = 4 AND 
+                        erp_paysupplierinvoicemaster.invoiceType = 7 AND
+                        DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        6 IN (' . $typeIDs . ') AND
+                        erp_generalledger.companySystemID IN ('.$companyID.') AND
+                        erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
+                        erp_generalledger.matchDocumentMasterAutoID <> 0
+                        UNION ALL
+                        SELECT
                         erp_bookinvsuppmaster.bookingDate AS documentDate,
                         erp_bookinvsuppmaster.bookingInvCode AS documentCode,
                         erp_bookinvsuppmaster.comments AS description,
@@ -13096,6 +13134,35 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         7 IN (' . $typeIDs . ') AND
                         erp_debitnote.companySystemID IN ('.$companyID.') AND
                         erp_debitnote.approved = -1
+                        UNION ALL
+                        SELECT
+                        erp_matchdocumentmaster.matchingDocdate AS documentDate,
+                        erp_debitnote.debitNoteCode AS documentCode,
+                        erp_generalledger.documentNarration AS description,
+                        erp_debitnote.empID AS employeeID,
+                        erp_generalledger.documentLocalAmount * -1 AS amountLocal,
+                        erp_generalledger.documentRptAmount * -1 AS amountRpt,
+                        erp_debitnote.invoiceNumber AS referenceDoc,
+                        erp_debitnote.postedDate AS referenceDocDate,
+                        erp_debitnote.debitNoteAutoID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
+                        11 AS type
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN erp_debitnote ON erp_debitnote.debitNoteAutoID = erp_generalledger.documentSystemCode
+                        LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
+                        LEFT JOIN erp_matchdocumentmaster ON erp_generalledger.matchDocumentMasterAutoID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+                    WHERE
+                        erp_generalledger.documentSystemID = 15 AND 
+                        erp_debitnote.type = 2 AND
+                        DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_debitnote.approved = -1 AND
+                        erp_generalledger.companySystemID IN ('.$companyID.') AND
+                        erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
+                        erp_generalledger.matchDocumentMasterAutoID <> 0
+                        AND erp_generalledger.glAccountType = "BS"
                         UNION ALL
                         SELECT
                         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
