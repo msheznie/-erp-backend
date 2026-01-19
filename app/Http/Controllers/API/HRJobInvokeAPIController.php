@@ -43,6 +43,7 @@ use App\Models\Company;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\NotificationScenarios;
+use App\Jobs\DesignationCreateUpdateNotificationJob;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -461,5 +462,18 @@ class HRJobInvokeAPIController extends AppBaseController
         if(!isset($input['shiftData'])){
             throw new Exception(__('custom.shift_data_required'));
         }
+    }
+
+    function designationCreateUpdateNotification(Request $request)
+    {
+        $input = $request->all();
+        $tenantId = $input['tenantId'];
+        $dbName = CommonJobService::get_tenant_db($tenantId);
+        $companyId = $input['companyId'];
+        $id = $input['id'];
+        $masterDetails = $input['masterDetails'];
+        DesignationCreateUpdateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails);
+
+        return $this->sendResponse([], 'Employee designation notification scenario added to queue');
     }
 }
