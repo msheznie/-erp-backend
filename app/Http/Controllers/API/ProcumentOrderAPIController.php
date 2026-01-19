@@ -2477,12 +2477,62 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
     }
 
+    public function procumentOrderCancelPreCheck(Request $request)
+    {
+        $input = $request->all();
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : null;
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError(trans('custom.purchase_order_not_found'), 500);
+        }
+
+        if ($purchaseOrder->poCancelledYN == -1) {
+            return $this->sendError(trans('custom.purchase_order_already_cancelled'), 500);
+        }
+
+        // Check if GRV exists
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)->first();
+        if (!empty($detailExistGRV)) {
+            $fullyRetuned = false;
+            if ($purchaseOrder->grvRecieved == 2) {
+                $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID', $detailExistGRV->grvAutoID)->get();
+                foreach ($puchaseReturnDetails as $puchaseReturnDetail) {
+                    $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+                }
+                if (!$fullyRetuned) {
+                    return $this->sendError(trans('custom.cannot_cancel_grv_created'), 500);
+                }
+            } else if ($purchaseOrder->grvRecieved == 0) {
+                $fullyRetuned = true;
+            }
+            if (!$fullyRetuned) {
+                return $this->sendError(trans('custom.cannot_cancel_grv_created'), 500);
+            }
+        }
+
+        // Check if advance payment exists
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)->first();
+        if (!empty($detailExistAPD)) {
+            return $this->sendError(trans('custom.cannot_advance_payment_created') . ' cancel. ' . trans('custom.advance_payment_created_for_po'), 404, ['advancePaymentError' => true]);
+        }
+
+        return $this->sendResponse([], 'Purchase Order eligible for cancellation');
+    }
+
     public function procumentOrderCancel(Request $request)
     {
         $input = $request->all();
 
         $purchaseOrderID = $input['purchaseOrderID'];
         $employee = \Helper::getEmployeeInfo();
+
+        // Validate cancellation comment is mandatory
+        if (empty($input['cancelComments']) || trim($input['cancelComments']) === '') {
+            return $this->sendError(trans('custom.cancel_comment_is_required'));
+        }
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
@@ -2578,6 +2628,98 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         CancelDocument::sendEmail($input);
+
+        // Handle PR cancellation/release based on cancelMethod
+        $cancelMethod = isset($input['cancelMethod']) ? $input['cancelMethod'] : 0;
+
+        if ($cancelMethod == 1) {
+            // Cancel PO only and Open PR - Release PR linkage so it can be reused
+            // Clear purchaseRequestID from PurchaseOrderDetails for this PO
+            PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->whereNotNull('purchaseRequestID')
+                ->update(['purchaseRequestID' => null]);
+        } elseif ($cancelMethod == 2) {
+            // Cancel PO and PR - Cancel both PO and PR
+            // Get all unique PR IDs linked to this PO
+            $linkedPRIds = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->whereNotNull('purchaseRequestID')
+                ->distinct()
+                ->pluck('purchaseRequestID')
+                ->toArray();
+
+            if (!empty($linkedPRIds)) {
+                foreach ($linkedPRIds as $prId) {
+                    $purchaseRequest = PurchaseRequest::find($prId);
+                    if ($purchaseRequest && $purchaseRequest->cancelledYN != -1 && $purchaseRequest->manuallyClosed != 1) {
+                        // Cancel the PR following the same pattern as cancelPurchaseRequest
+                        $purchaseRequest->cancelledYN = -1;
+                        $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
+                        $purchaseRequest->cancelledByEmpID = $employee->empID;
+                        $purchaseRequest->cancelledByEmpName = $employee->empName;
+                        $purchaseRequest->cancelledComments = $input['cancelComments'] . ' (Cancelled along with PO)';
+                        $purchaseRequest->cancelledDate = now();
+                        $purchaseRequest->save();
+
+                        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID, $prId, $input['cancelComments'] . ' (Cancelled along with PO)', 'cancelled');
+
+                        // Send emails for PR cancellation (following same pattern as cancelPurchaseRequest)
+                        $prEmails = array();
+                        $prDocument = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+                        if ($prDocument) {
+                            $prCancelDocNameBody = $prDocument->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+                            $prCancelDocNameSubject = $prDocument->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+                            $prBody = '<p>' . $prCancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelComments'] . ' (Cancelled along with PO)</p>';
+                            $prSubject = $prCancelDocNameSubject . ' is cancelled';
+
+                            if ($purchaseRequest->PRConfirmedYN == 1) {
+                                $prEmails[] = array(
+                                    'empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                                    'companySystemID' => $purchaseRequest->companySystemID,
+                                    'docSystemID' => $purchaseRequest->documentSystemID,
+                                    'alertMessage' => $prSubject,
+                                    'emailAlertMessage' => $prBody,
+                                    'docSystemCode' => $purchaseRequest->purchaseRequestID
+                                );
+                            }
+
+                            $prDocumentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                ->where('approvedYN', -1)
+                                ->get();
+
+                            foreach ($prDocumentApproval as $da) {
+                                $prEmails[] = array(
+                                    'empSystemID' => $da->employeeSystemID,
+                                    'companySystemID' => $purchaseRequest->companySystemID,
+                                    'docSystemID' => $purchaseRequest->documentSystemID,
+                                    'alertMessage' => $prSubject,
+                                    'emailAlertMessage' => $prBody,
+                                    'docSystemCode' => $purchaseRequest->purchaseRequestID
+                                );
+                            }
+
+                            if (!empty($prEmails)) {
+                                $prSendEmail = \Email::sendEmail($prEmails);
+                                if (!$prSendEmail["success"]) {
+                                    // Log error but don't fail the transaction
+                                    Log::error('Failed to send PR cancellation emails for PR ID: ' . $prId . ' - ' . $prSendEmail["message"]);
+                                }
+                            }
+
+                            // Send CancelDocument email
+                            $prCancelInput = [
+                                'purchaseRequestID' => $prId,
+                                'cancelledComments' => $input['cancelComments'] . ' (Cancelled along with PO)'
+                            ];
+                            CancelDocument::sendEmail($prCancelInput);
+                        }
+                    }
+                }
+            }
+        }
 
         return $this->sendResponse($purchaseOrderID, trans('custom.order_canceled_successfully'));
     }
