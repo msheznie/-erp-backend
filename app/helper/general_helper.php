@@ -84,6 +84,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Services\ChartOfAccountValidationService;
 use App\Services\UserTypeService;
 use App\Services\DocumentAutoApproveService;
+use App\Services\DocumentReportingManagerService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -3488,7 +3489,7 @@ class Helper
                                             if ($val->approvalGroupID) {
                                                 $approvalGroup = Models\ApprovalGroups::find($val->approvalGroupID);
                                                 if($approvalGroup && $approvalGroup->isReportingManager == 1){
-                                                    $reportingManagerResult = DocumentAutoApproveService::getReportingManagerDocumentApprovedData($empInfo, $val, $params, $sorceDocument, $docInforArr, $email_in);
+                                                    $reportingManagerResult = DocumentReportingManagerService::getReportingManagerDocumentApprovedData($empInfo, $val, $params, $sorceDocument, $docInforArr, $email_in);
                                                     if($reportingManagerResult['success']){
                                                         $documentApproved[] = $reportingManagerResult['data'];
                                                     } else {
