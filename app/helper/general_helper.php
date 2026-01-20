@@ -4781,7 +4781,9 @@ class Helper
                         ->groupBy('employeeSystemID')
                         ->exists();
 
-                    if (!$checkUserHasApprovalAccess) {
+                    $approvalGroup = Models\ApprovalGroups::find($docApproved->approvalGroupID);
+
+                    if (!$checkUserHasApprovalAccess && ($approvalGroup && $approvalGroup->isReportingManager != 1)) {
                         if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
                             return ['success' => false, 'message' => trans('custom.no_access_approve_document')];
                         }
