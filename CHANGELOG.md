@@ -1,6 +1,18 @@
 # Changelog
 
 
+## [10.100.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.1...v10.100.0) (2026-01-19)
+
+
+### Bug Fixes
+
+* resource control for mobile api ([#9581](https://github.com/pbsgears/Gears_BackEnd/issues/9581)) ([#9634](https://github.com/pbsgears/Gears_BackEnd/issues/9634)) ([90cd461](https://github.com/pbsgears/Gears_BackEnd/commit/90cd46119e21feaa8bd1c322f4e15c2c22b9e91d))
+
+
+### Miscellaneous Chores
+
+* release 10.100.0 ([#9637](https://github.com/pbsgears/Gears_BackEnd/issues/9637)) ([e20c767](https://github.com/pbsgears/Gears_BackEnd/commit/e20c767b8048b7fec4a1583e74c340b2284818c8))
+
 ## [10.99.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.0...v10.99.1) (2026-01-08)
 
 
