@@ -567,12 +567,20 @@ class TenderFinalBidsAPIController extends AppBaseController
 
             TenderMaster::where('id',$tenderId)->update($update);
 
+            $tenderNegotiationId = null;
+            if ($isNegotiation == 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                if ($latestNegotiation) {
+                    $tenderNegotiationId = $latestNegotiation->id;
+                }
+            }
             TenderConfirmationService::saveConfirmationDetails(
                 $tenderId,
                 $tenderId,
                 TenderConfirmationDetail::MODULE_COMBINED_RANKING,
                 null,
-                $comment
+                $comment,
+                $tenderNegotiationId
             );
 
             DB::commit();
