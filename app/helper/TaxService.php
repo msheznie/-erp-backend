@@ -514,8 +514,6 @@ class TaxService
                 $unbilledGRVVATAddVatOnPO = $unbilledGRVVATAddVatOnPO->get();
             }
 
-        Log::info('poLogisticVATDistributionForGRV function count:' . count($unbilledGRVVATAddVatOnPO));
-
         foreach ($unbilledGRVVATAddVatOnPO as $advPayment) {
 
             $data = self::poLogisticForLineWise($advPayment);

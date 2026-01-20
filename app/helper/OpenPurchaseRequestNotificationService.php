@@ -26,7 +26,6 @@ class OpenPurchaseRequestNotificationService
 
         // Check if today is the last day of the month
         if (!$this->isLastDayOfMonth()) {
-            // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -42,7 +41,6 @@ class OpenPurchaseRequestNotificationService
         $companyScenarioConfig = NotificationService::getCompanyScenarioConfigurationForCompany(49, $this->companyID);
         
         if (empty($companyScenarioConfig)) {
-            Log::warning("No company scenario configuration found for Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -50,7 +48,6 @@ class OpenPurchaseRequestNotificationService
         $notificationUsers = NotificationUser::getUsers($companyScenarioConfig->id);
         
         if (count($notificationUsers) == 0) {
-            Log::warning("No notification users configured for Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -77,7 +74,6 @@ class OpenPurchaseRequestNotificationService
                 $empName = $employee->empFullName;
 
                 if (empty($empEmail)) {
-                    Log::warning("Email is missing for employee {$empName}");
                     continue;
                 }
 

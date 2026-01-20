@@ -144,9 +144,6 @@ class QuotationAddMultipleItemsService
         QuotationMaster::where('quotationMasterID', $quotation['quotationMasterID'])->update([
             'isBulkItemJobRun' => 0
         ]);
-
-        Log::info($data);
-        
     }
 
     
