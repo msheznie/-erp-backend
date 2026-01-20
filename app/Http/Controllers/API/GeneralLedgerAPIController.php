@@ -27,6 +27,7 @@ use App\Models\FixedAssetMaster;
 use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
+use App\Models\GRVDetails;
 use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnMaster;
@@ -688,8 +689,54 @@ class GeneralLedgerAPIController extends AppBaseController
 
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $outputData = (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID);
+
+        // This ensures Party Name shows the main supplier instead of logistics supplier for GL review
+        if ($request->documentSystemID == 3 && !empty($outputData)) {
+            $grvMaster = GRVMaster::where('grvAutoID', $request->autoID)
+                ->where('companySystemID', $request->companySystemID)
+                ->first();
+
+            if ($grvMaster && $grvMaster->supplierID) {
+                $grvDetails = GRVDetails::where('grvAutoID', $request->autoID)
+                    ->where('companySystemID', $request->companySystemID)
+                    ->get();
+
+                $grvDetailsChartOfAccountIds = [];
+                foreach ($grvDetails as $detail) {
+                    if ($detail->financeGLcodebBSSystemID && $detail->financeGLcodebBSSystemID > 0) {
+                        $grvDetailsChartOfAccountIds[] = $detail->financeGLcodebBSSystemID;
+                    }
+                    if ($detail->financeGLcodePLSystemID && $detail->financeGLcodePLSystemID > 0 && $detail->includePLForGRVYN == -1) {
+                        $grvDetailsChartOfAccountIds[] = $detail->financeGLcodePLSystemID;
+                    }
+                }
+
+                if (!empty($grvDetailsChartOfAccountIds)) {
+                    $mainSupplier = SupplierMaster::where('supplierCodeSystem', $grvMaster->supplierID)->first();
+
+                    if ($mainSupplier) {
+                        foreach ($outputData as &$glEntry) {
+                            // Only update supplier for GL entries that are linked to GRVDetails via ChartOfAccount
+                            $glChartOfAccountId = isset($glEntry['chartOfAccountSystemID']) ? $glEntry['chartOfAccountSystemID'] : null;
+
+                            if ($glChartOfAccountId && in_array($glChartOfAccountId, $grvDetailsChartOfAccountIds)) {
+                                $glEntry['supplierCodeSystem'] = $grvMaster->supplierID;
+                                $glEntry['supplier'] = [
+                                    'supplierCodeSystem' => $mainSupplier->supplierCodeSystem,
+                                    'supplierName' => $mainSupplier->supplierName,
+                                    'primarySupplierCode' => $mainSupplier->primarySupplierCode
+                                ];
+                            }
+                        }
+                        unset($glEntry);
+                    }
+                }
+            }
+        }
+
         $generalLedger = [
-                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID), 
+                'outputData' => $outputData,
                 'companyCurrency' => $companyCurrency,
                 'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
