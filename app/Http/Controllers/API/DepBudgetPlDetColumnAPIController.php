@@ -312,7 +312,7 @@ class DepBudgetPlDetColumnAPIController extends AppBaseController
             return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
-        $empColumns = DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $request->companySystemID)->get();
+        $empColumns = DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $request->companySystemID)->where('source', $request->source)->get();
         $allColumns = DepBudgetPlDetColumn::whereNotIn('id', [1,4,6])->get();
 
         $data = [

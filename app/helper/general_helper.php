@@ -226,7 +226,7 @@ class Helper
     public static function checkDomai()
     {
 
-        $redirectUrl =  "https://pl.uat-gears-int.com/#/approval/erp"; //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
             if (isset($_SERVER['HTTP_HOST'])) {
@@ -3332,6 +3332,15 @@ class Helper
 
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+
+                            
+                            if($params["document"] == 133){
+                                $approvalLevel->where('workflow', $masterRec->workflowID);
+                                if(!$approvalLevel->exists()){
+                                    return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                }
+                            }
+
 
                             if ($isSegmentWise) {
                                 if (array_key_exists('segment', $params)) {

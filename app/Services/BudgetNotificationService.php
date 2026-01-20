@@ -75,7 +75,6 @@ class BudgetNotificationService
 
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
-
            if (!$budgetNotifications) {
                return [
                    'success' => false,
@@ -187,7 +186,6 @@ class BudgetNotificationService
         $parsedUrl = parse_url($baseurl);
         $domain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
         $linkUrl = $domain . '/#/budget-planning/planning';
-        
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),

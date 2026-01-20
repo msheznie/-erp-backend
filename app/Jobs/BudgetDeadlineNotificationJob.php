@@ -59,9 +59,9 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
     {
         $today = Carbon::today();
 
-        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->get();
+        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->first();
 
-        if ($budgetNotificationDetails->isEmpty()) {
+        if (!$budgetNotificationDetails) {
             $targetDate = $today->copy()->addDays(2)->startOfDay();
         }else {
             $reminderTime = $budgetNotificationDetails->reminderTime;
@@ -88,7 +88,6 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         if ($departmentBudgetPlannings->isEmpty()) {
             return;
         }
-
 
         foreach ($departmentBudgetPlannings as $budgetPlanning) {
             try {
@@ -121,6 +120,8 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                     $scenario,
                     $companySystemID
                 );
+
+
             } catch (\Exception $e) {
                 Log::error('Error sending deadline notification for budget planning ID ' . $budgetPlanning->id . ': ' . $e->getMessage());
                 // Continue with next budget planning
