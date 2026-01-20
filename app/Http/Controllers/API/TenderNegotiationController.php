@@ -14,12 +14,14 @@ use App\Models\TenderMaster;
 use App\Models\TenderFinalBids;
 use App\Models\TenderNegotiationArea;
 use App\Models\TenderNegotiation;
+use App\Models\TenderConfirmationDetail;
 use App\Models\BidSubmissionMaster;
 use App\Models\Company;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Models\CurrencyMaster;
+use App\Services\TenderConfirmationService;
 use Carbon\Carbon;
 use Auth;
 use Illuminate\Support\Facades\DB;
@@ -161,6 +163,15 @@ class TenderNegotiationController extends AppBaseController
         $input['no_to_approve'] =  $noToApproval;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
 
+        if (isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
+            TenderConfirmationService::saveConfirmationDetails(
+                $tenderMasterId,
+                $id,
+                TenderConfirmationDetail::MODULE_NEGOTIATION,
+                $userId,
+                isset($input['comments']) ? $input['comments'] : null
+            );
+        }
 
         return $this->sendResponse([], trans('srm_ranking.tender_negotiation_updated'));
 
