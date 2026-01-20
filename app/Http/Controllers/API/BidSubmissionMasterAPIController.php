@@ -281,12 +281,20 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
 
                 if (isset($input['technical_verify_status']) && $input['technical_verify_status'] == 1) {
+                    $tenderNegotiationId = null;
+                    if (isset($input['isNegotiation']) && $input['isNegotiation'] == 1) {
+                        $tenderBidNegotiation = TenderBidNegotiation::getNegotiationIdByBidSubmissionMasterId($id);
+                        if ($tenderBidNegotiation) {
+                            $tenderNegotiationId = $tenderBidNegotiation->tender_negotiation_id;
+                        }
+                    }
                     TenderConfirmationService::saveConfirmationDetails(
                         $tender_id,
                         $id,
                         TenderConfirmationDetail::MODULE_TECHNICAL_EVAL,
                         null,
-                        isset($input['technical_eval_remarks']) ? $input['technical_eval_remarks'] : null
+                        $input['technical_eval_remarks'] ?? null,
+                        $tenderNegotiationId
                     );
                 }
 
@@ -310,11 +318,20 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
                 if (isset($input['commercial_verify_status']) && $input['commercial_verify_status'] == 1) {
+                    $tenderNegotiationId = null;
+                    if (isset($input['isNegotiation']) && $input['isNegotiation'] == 1) {
+                        $tenderBidNegotiation = TenderBidNegotiation::getNegotiationIdByBidSubmissionMasterId($id);
+                        if ($tenderBidNegotiation) {
+                            $tenderNegotiationId = $tenderBidNegotiation->tender_negotiation_id;
+                        }
+                    }
                     TenderConfirmationService::saveConfirmationDetails(
                         $tender_id,
                         $id,
                         TenderConfirmationDetail::MODULE_COMMERCIAL_REVIEW,
-                        null
+                        null,
+                        null,
+                        $tenderNegotiationId
                     );
                 }
                 $technicalCount = $this->getTechnicalCount($tender_id);

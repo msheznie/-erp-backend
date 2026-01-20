@@ -15,18 +15,30 @@ class TenderConfirmationService
      * @param int $module
      * @param int|null $employeeId Optional, if not provided uses current employee
      * @param string|null $comment Optional comment
+     * @param int|null $tenderNegotiationId Optional negotiation ID for negotiation-related confirmations (modules 2-6)
      * @return TenderConfirmationDetail
      */
-    public static function saveConfirmationDetails($tenderId, $referenceId = null, $module, $employeeId = null, $comment = null)
+    public static function saveConfirmationDetails($tenderId, $referenceId = null, $module, $employeeId = null, $comment = null, $tenderNegotiationId = null)
     {
         if ($employeeId === null) {
             $employeeId = \Helper::getEmployeeSystemID();
         }
 
+        $finalReferenceId = $referenceId;
+        if ($tenderNegotiationId !== null && in_array($module, [
+            TenderConfirmationDetail::MODULE_TECHNICAL_EVAL,
+            TenderConfirmationDetail::MODULE_COMMERCIAL_REVIEW,
+            TenderConfirmationDetail::MODULE_LINE_ITEM,
+            TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
+            TenderConfirmationDetail::MODULE_COMBINED_RANKING
+        ])) {
+            $finalReferenceId = $tenderNegotiationId;
+        }
+
         $confirmationDetail = TenderConfirmationDetail::updateOrCreate(
             [
                 'tender_id' => $tenderId,
-                'reference_id' => $referenceId,
+                'reference_id' => $finalReferenceId,
                 'module' => $module
             ],
             [
@@ -56,6 +68,6 @@ class TenderConfirmationService
             $query->where('reference_id', $referenceId);
         }
 
-        return $query->with('actionByEmployee')->first();
+        return $query->with('actionByEmployee')->orderBy('id', 'desc')->first();
     }
 }

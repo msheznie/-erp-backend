@@ -3796,11 +3796,20 @@ class TenderMasterAPIController extends AppBaseController
             }
 
             if ($status == 1) {
+                $tenderNegotiationId = null;
+                if ($isNegotiation == 1) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                    if ($latestNegotiation) {
+                        $tenderNegotiationId = $latestNegotiation->id;
+                    }
+                }
                 TenderConfirmationService::saveConfirmationDetails(
                     $tenderId,
                     $tenderId,
                     TenderConfirmationDetail::MODULE_LINE_ITEM,
-                    null
+                    null,
+                    null,
+                    $tenderNegotiationId
                 );
             }
 
@@ -3877,12 +3886,20 @@ class TenderMasterAPIController extends AppBaseController
                     TenderFinalBids::where('id', $record->id)->update(['combined_ranking' => $record->ranking]);
                 }
             }
+            $tenderNegotiationId = null;
+            if ($isNegotiation == 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                if ($latestNegotiation) {
+                    $tenderNegotiationId = $latestNegotiation->id;
+                }
+            }
             TenderConfirmationService::saveConfirmationDetails(
                 $tenderId,
                 $tenderId,
                 TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
                 null,
-                $comment
+                $comment,
+                $tenderNegotiationId
             );
 
             DB::commit();
@@ -4185,6 +4202,7 @@ class TenderMasterAPIController extends AppBaseController
                     'tender_id'    => 'required',
                     'module'       => 'required',
                     'reference_id' => 'nullable|integer',
+                    'isNegotiation' => 'nullable|integer',
                 ],
                 [
                     'tender_id.required'     => trans('srm_tender_rfx.tender_master_id_required'),
@@ -4200,10 +4218,33 @@ class TenderMasterAPIController extends AppBaseController
                 );
             }
 
+            $referenceId = $request->reference_id;
+            $isNegotiation = $request->isNegotiation ?? 0;
+            if ($isNegotiation == 1 && in_array($request->module, [
+                TenderConfirmationDetail::MODULE_TECHNICAL_EVAL,
+                TenderConfirmationDetail::MODULE_COMMERCIAL_REVIEW,
+                TenderConfirmationDetail::MODULE_LINE_ITEM,
+                TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
+                TenderConfirmationDetail::MODULE_COMBINED_RANKING
+            ])) {
+                if ($referenceId == $request->tender_id) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($request->tender_id);
+                    if ($latestNegotiation) {
+                        $referenceId = $latestNegotiation->id;
+                    }
+                } 
+                else if ($referenceId != null && $referenceId != $request->tender_id) {
+                    $tenderBidNegotiation = TenderBidNegotiation::getNegotiationIdByBidSubmissionMasterId($referenceId);
+                    if ($tenderBidNegotiation) {
+                        $referenceId = $tenderBidNegotiation->tender_negotiation_id;
+                    }
+                }
+            }
+
             $data = $this->tenderMasterRepository->getConfirmationDetails(
                 $request->tender_id,
                 $request->module,
-                $request->reference_id
+                $referenceId
             );
 
             if ($data) {
