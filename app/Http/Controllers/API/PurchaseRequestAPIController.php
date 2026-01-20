@@ -100,7 +100,7 @@ use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\DocumentCodeConfigurationService;
 use App\Jobs\ExportDetailedORList;
-
+use App\helper\SME;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -326,6 +326,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $prTypeApproval = CompanyDocumentAttachment::where('companySystemID', $companyId)->where('documentSystemID', 1)->first();
 
+        $user_data = SME::user_details();
+        $user_segment_id = $user_data ? $user_data->segmentID : null;
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -343,7 +345,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'conditions' => $conditions,
             'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0,
             'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false,
-            'isPRTypeApprovalOn' => isset($prTypeApproval) && $prTypeApproval->isPRTypeApproval == -1
+            'isPRTypeApprovalOn' => isset($prTypeApproval) && $prTypeApproval->isPRTypeApproval == -1,
+            'user_segment_id' => $user_segment_id
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
