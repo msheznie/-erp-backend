@@ -27,6 +27,7 @@ use App\Models\EmployeeLedger;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\MatchDocumentMaster;
+use App\Models\PayCreditNoteDetail;
 use App\Models\PaymentVoucherBankChargeDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
@@ -346,6 +347,7 @@ class PaymentVoucherServices
         }
 
         $input['payment_mode'] = $input['paymentMode'];
+        $input['refundType'] = $input['refundType'];
         unset($input['paymentMode'], $input['noOfCheques'], $input['totalAmount']);
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);
@@ -2071,6 +2073,27 @@ class PaymentVoucherServices
                 $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                 $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
             } else {
+                $input['payAmountBank'] = 0;
+                $input['payAmountSuppTrans'] = 0;
+                $input['payAmountSuppDef'] = 0;
+                $input['payAmountCompLocal'] = 0;
+                $input['payAmountCompRpt'] = 0;
+                $input['suppAmountDocTotal'] = 0;
+            }
+        }
+
+        if($paySupplierInvoiceMaster->invoiceType == 8) {
+            $totalAmount = PayCreditNoteDetail::selectRaw("SUM(creditNotePaymentAmount) as creditNotePaymentAmount")->where('PayMasterAutoId', $id)->first();
+            if ($totalAmount && $totalAmount->creditNotePaymentAmount > 0) {
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->creditNotePaymentAmount);
+                $input['payAmountBank'] = $bankAmount["defaultAmount"];
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+            }
+            else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
                 $input['payAmountSuppDef'] = 0;

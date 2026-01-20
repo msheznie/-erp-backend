@@ -92,6 +92,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\PayCreditNoteDetail;
 use App\Models\PaymentType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1602,7 +1603,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer','creditnotedetail.creditnote', 'bank_charge'=> function ($query) {
                 $query->with('segment');
             }, 'bankaccount'=> function($query){
                 $query->with('currency');
@@ -3101,7 +3102,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer', 'creditnotedetail.creditnote', 'bank_charge'=> function ($query) {
                 $query->with('segment');
             }, 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
@@ -3152,6 +3153,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
             ->sum('paymentAmount');
 
+        $creditNoteDetailSubTotal = PayCreditNoteDetail::where('PayMasterAutoId', $id)
+            ->sum('creditNotePaymentAmount');
+
         $bankChargeAndOthersTot = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->sum('dpAmount');
         
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -3169,6 +3173,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'directDetailTotTra' => $directDetailTotTra,
             'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra,
+            'creditNoteDetailSubTotal' => $creditNoteDetailSubTotal,
             'bankChargeAndOthersTot' => $bankChargeAndOthersTot,
             'bankChargeCount' => $bankChargeCount
         );

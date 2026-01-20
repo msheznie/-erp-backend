@@ -5335,6 +5335,7 @@ return
     'supplier_masters_retrieved_successfully' => 'تم استرداد السجلات الرئيسية للموردين بنجاح',
     'supplier_not_found' => 'المورد غير موجود',
     'supplier_payment' => 'دفع للمورد',
+    'refund' => 'استرداد',
     'supplier_phone' => 'هاتف المورد',
     'supplier_po_payment' => 'دفع أمر شراء المورد',
     'supplier_registration_details_already_exist' => 'تفاصيل تسجيل المورد موجودة بالفعل',
@@ -9776,5 +9777,11 @@ return
     'finance_status_completed' => 'مكتمل',
     'status_unknown' => 'غير معروف',
     'supplier_details' => 'تفاصيل المورد',
-    'po_details' => 'تفاصيل أمر الشراء'
-  ];
+    'po_details' => 'تفاصيل أمر الشراء',
+    'credit_note_payment_details_saved_successfully' => 'تم حفظ تفاصيل دفعة مذكرة الإئتمان بنجاح',
+    'error_saving_credit_note_payment_details' => 'خطأ في حفظ تفاصيل دفعة مذكرة الإئتمان',
+    'pay_credit_note_detail_not_found' => 'تفاصيل دفعة مذكرة الإئتمان غير موجودة',
+    'pay_credit_note_detail_deleted_successfully' => 'تم حذف تفاصيل دفعة مذكرة الإئتمان بنجاح',
+    'all_credit_note_payment_details_deleted_successfully' => 'تم حذف جميع تفاصيل دفعة مذكرة الإئتمان بنجاح',
+    'credit_note_amount' => 'مبلغ مذكرة الإئتمان'
+];

@@ -935,7 +935,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
                 Route::resource('credit_note_receipts', 'CreditNoteReceiptAPIController');
-
+                Route::resource('pay_credit_note_details', 'PayCreditNoteDetailAPIController');
 
                 Route::resource('workflow_configurations', 'WorkflowConfigurationAPIController');
                 Route::resource('workflow_configuration_hod_actions', 'WorkflowConfigurationHodActionAPIController')->parameters(['workflow_configuration_hod_actions' => 'id']);

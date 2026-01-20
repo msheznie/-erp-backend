@@ -5389,6 +5389,7 @@ return
     'supplier_masters_retrieved_successfully' => 'Supplier Masters retrieved successfully',
     'supplier_not_found' => 'Supplier not found',
     'supplier_payment' => 'Supplier Payment',
+    'refund' => 'Refund',
     'supplier_phone' => 'Supplier Phone',
     'supplier_po_payment' => 'Supplier PO payment',
     'supplier_registration_details_already_exist' => 'Supplier Registration Details Already Exist',
@@ -9889,5 +9890,11 @@ return
     'finance_status_completed' => 'Completed',
     'status_unknown' => 'Unknown',
     'supplier_details' => 'Supplier Details',
-    'po_details' => 'PO Details'
-  ];
+    'po_details' => 'PO Details',
+    'credit_note_payment_details_saved_successfully' => 'Credit Note Payment Details saved successfully',
+    'error_saving_credit_note_payment_details' => 'Error saving credit note payment details',
+    'pay_credit_note_detail_not_found' => 'Pay Credit Note Detail not found',
+    'pay_credit_note_detail_deleted_successfully' => 'Pay Credit Note Detail deleted successfully',
+    'all_credit_note_payment_details_deleted_successfully' => 'All credit note payment details deleted successfully',
+    'credit_note_amount' => 'Credit Note Amount'
+];
