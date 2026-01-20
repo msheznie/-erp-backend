@@ -151,9 +151,6 @@ class CreateReceiptMatching implements ShouldQueue
             'results' => $results
         ];
 
-        // Log the response
-        \Log::error($response);
-
         // Dispatch webhook job
         $webhookPayload = $response;
         InitiateWebhook::dispatch(

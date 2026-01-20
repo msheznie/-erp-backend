@@ -971,8 +971,6 @@ class SupplierInvoiceCreation implements ShouldQueue
                 ];
             }
 
-            Log::error($responseData);
-            
             // Dispatch webhook job
             $webhookPayload = ['data' => $responseData, 'externalReference' => $this->externalReference];
             InitiateWebhook::dispatch(
