@@ -82,6 +82,7 @@ use App\Models\TenderType;
 use App\Models\YesNoSelection;
 use App\Services\GeneralService;
 use App\Services\SRMService;
+use App\Services\TenderConfirmationService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
@@ -3206,6 +3207,31 @@ class TenderMasterRepository extends BaseRepository
         return [
             'success' => true,
             'message' => 'Success'
+        ];
+    }
+    public function getConfirmationDetails($tenderId, $module, $referenceId = null)
+    {
+        $confirmationDetail = TenderConfirmationService::getConfirmationDetails(
+            $tenderId,
+            $module,
+            $referenceId
+        );
+
+        if (!$confirmationDetail) {
+            return null;
+        }
+
+        return [
+            'id'            => $confirmationDetail->id,
+            'tender_id'     => $confirmationDetail->tender_id,
+            'reference_id'  => $confirmationDetail->reference_id,
+            'module'        => $confirmationDetail->module,
+            'action_by'     => $confirmationDetail->action_by,
+            'action_at'     => $confirmationDetail->action_at,
+            'comment'       => $confirmationDetail->comment,
+            'employee_name' => $confirmationDetail->actionByEmployee
+                ? $confirmationDetail->actionByEmployee->empFullName
+                : null
         ];
     }
 }
