@@ -70,13 +70,14 @@ class SegmentRightsAPIController extends AppBaseController
     {
 
         $id = Auth::id();
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('companyID'));
         $user = $this->userRepository->findWithoutFail($id);
 
         $userID=$user->employee_id;
         $pcID=gethostname();
         $timestamp = date("Y-m-d h:i:s");
 
-        $input = $request->all();
         $company = $input['companyID'];
         $segmentSelectedItems = isset($input['segmentSelectedItems'])?$input['segmentSelectedItems']:false;
         $employeeSystemID =  isset($input['employeeSystemID'])?$input['employeeSystemID']:false;
