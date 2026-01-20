@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 use App\Models\CustomerMaster;
 use App\Models\AccountsReceivableLedger;
 use App\Models\Company;
@@ -892,7 +893,7 @@ class CreateReceiptMatching implements ShouldQueue
                         ];
                         $updateReceiptMatching = ReceiptMatchingAPIService::updateReceiptMatching($inputData,true);
                         if (!$updateReceiptMatching['status']) {
-                            if (count($updateReceiptMatching['message']) > 0) {
+                            if (is_array($updateReceiptMatching['message']) && count($updateReceiptMatching['message']) > 0) {
                                     throw new \Exception(Arr::flatten($updateReceiptMatching['message'])[0] ?? trans('custom.failed_update_receipt_matching'));
                                 } else {
                                     throw new \Exception($updateReceiptMatching['message'] ?? trans('custom.failed_update_receipt_matching'));
