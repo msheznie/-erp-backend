@@ -1684,7 +1684,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             DB::commit();
 
-            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_reopened_successfully'));
+            return $this->sendResponse($companyBudgetPlanning, trans('custom.budget_planning_reopened_successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError(trans('custom.error_occurred'), 500);
@@ -1740,7 +1740,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendAPIError(trans('custom.cannot_return_back_to_amend'), 400, ['data' => $errors]);
             }
 
-            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_can_be_returned_to_amend'));
+            return $this->sendResponse($companyBudgetPlanning, trans('custom.budget_planning_can_be_returned_to_amend'));
         } catch (\Exception $e) {
             return $this->sendError(trans('custom.error_occurred') . ': ' . $e->getMessage(), 500);
         }
