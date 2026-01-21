@@ -1805,6 +1805,19 @@ class PaymentVoucherServices
 
             }
 
+            if ($paySupplierInvoiceMaster->invoiceType == 8) {
+                $payCreditNoteDetailExist = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->get();
+
+                if (count($payCreditNoteDetailExist) == 0) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
+                        'code' => 500,
+                        'type' => ['type' => 'confirm']
+                    ];
+                }
+            }
+
             $amountForApproval = 0;
             if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
                 $bankCharge = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->selectRaw('SUM(localAmount) as total')->first();
@@ -1822,12 +1835,14 @@ class PaymentVoucherServices
                 }
 
 
-            } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
+            } 
+            else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
 
                 $amountForApproval = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                     ->sum('localAmount');
 
-            } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
+            } 
+            else if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
                 $totalAmountForApprovalData = DirectPaymentDetails::where('directPaymentAutoID', $id)
                     ->selectRaw('SUM(localAmount + VATAmountLocal) as total')
@@ -1835,6 +1850,10 @@ class PaymentVoucherServices
 
                 $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
             }
+            else if ($paySupplierInvoiceMaster->invoiceType == 8) {
+                $amountForApproval = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->sum('creditNotePaymentAmount');
+            }
+
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
                 $object = new ChartOfAccountValidationService();

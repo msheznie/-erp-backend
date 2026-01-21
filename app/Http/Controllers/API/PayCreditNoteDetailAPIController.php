@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\CreditNote;
 use App\Models\PaySupplierInvoiceMaster;
 use App\helper\Helper;
+use App\Models\CreditNoteReceipt;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -335,8 +336,17 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             ->where('erp_paycreditnotedetails.PayMasterAutoId', $payMasterAutoId)
             ->where('erp_paycreditnotedetails.companySystemID', $companySystemID)
             ->get();
+
+        $creditNoteIds = $creditNotePaymentDetails->pluck('creditNoteAutoID')->toArray();
+
+        $creditNoteReceipts = CreditNoteReceipt::with(['customerReceivePayment.currency', 'creditNote'])->whereIn('creditNoteAutoID', $creditNoteIds)->where('companySystemID', $companySystemID)->get();
+
+        $data = [
+            'creditNotePaymentDetails' => $creditNotePaymentDetails->toArray(),
+            'creditNoteReceipts' => $creditNoteReceipts->toArray()
+        ];
             
-        return $this->sendResponse($creditNotePaymentDetails->toArray(), 'Credit Note Payment Details retrieved successfully');
+        return $this->sendResponse($data, 'Credit Note Payment Details retrieved successfully');
     }
 
     public function getCreditNoteForPV(Request $request)
@@ -394,6 +404,8 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             ->where('erp_creditnote.type', 3)
             ->where('erp_creditnote.matchInvoice', '!=', 2)
             ->where('erp_creditnote.companySystemID', $companySystemID)
+            ->where('erp_creditnote.customerID', $paymentVoucher->BPVcustomerID)
+            ->where('erp_creditnote.customerCurrencyID', $paymentVoucher->supplierTransCurrencyID)
             ->groupBy('erp_creditnote.creditNoteAutoID')
             ->havingRaw('(IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0) - IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0)) > 0')
             ->orderBy('erp_creditnote.creditNoteAutoID', 'desc')
