@@ -4221,8 +4221,6 @@ class TenderMasterAPIController extends AppBaseController
             $referenceId = $request->reference_id;
             $isNegotiation = $request->isNegotiation ?? 0;
             if ($isNegotiation == 1 && in_array($request->module, [
-                TenderConfirmationDetail::MODULE_TECHNICAL_EVAL,
-                TenderConfirmationDetail::MODULE_COMMERCIAL_REVIEW,
                 TenderConfirmationDetail::MODULE_LINE_ITEM,
                 TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
                 TenderConfirmationDetail::MODULE_COMBINED_RANKING
@@ -4231,12 +4229,6 @@ class TenderMasterAPIController extends AppBaseController
                     $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($request->tender_id);
                     if ($latestNegotiation) {
                         $referenceId = $latestNegotiation->id;
-                    }
-                } 
-                else if ($referenceId != null && $referenceId != $request->tender_id) {
-                    $tenderBidNegotiation = TenderBidNegotiation::getNegotiationIdByBidSubmissionMasterId($referenceId);
-                    if ($tenderBidNegotiation) {
-                        $referenceId = $tenderBidNegotiation->tender_negotiation_id;
                     }
                 }
             }
