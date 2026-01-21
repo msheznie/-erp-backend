@@ -903,10 +903,14 @@ class DocumentApprovedAPIController extends AppBaseController
 				erp_documentapproved
 				INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
 				AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
-				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+				INNER JOIN approvalgroups ON erp_documentapproved.approvalGroupID = approvalgroups.rightsGroupId
+				LEFT JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+				AND employeesdepartments.employeeSystemID = $employeeSystemID
+				AND employeesdepartments.isActive = 1
+				AND employeesdepartments.removedYN = 0
 				AND (
 					(companydocumentattachment.isServiceLineApproval = -1 AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID)
 					OR companydocumentattachment.isServiceLineApproval IS NULL
@@ -939,7 +943,10 @@ class DocumentApprovedAPIController extends AppBaseController
 				AND erp_documentapproved.approvalGroupID > 0 
 				$filter
 				AND erp_documentapproved.documentSystemID IN ( 1, 50, 51 ) 
-				AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+				AND (
+					(employeesdepartments.employeeSystemID IS NOT NULL AND (approvalgroups.isReportingManager IS NULL OR approvalgroups.isReportingManager != 1))
+					OR (approvalgroups.isReportingManager = 1 AND erp_documentapproved.docConfirmedByEmpSystemID = $employeeSystemID)
+				)
 				GROUP BY erp_documentapproved.documentApprovedID
 				) AS PendingRequestApprovals UNION ALL
 			SELECT
