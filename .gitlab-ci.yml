@@ -1,9 +1,4 @@
 include:
-  - project: 'php/cicd/devops/ci-template'
-    ref: 'main'   # or use a tag like 'v1' for stability
-    file: '/templates/pipeline.yml'
-
-# Optional per-repo overrides (only if needed)
-# variables:
-#   ENABLE_PHPCS: "false"
-#   PHPCS_STANDARD: "PSR12"
+  - project: 'php/cicd/devops/ci-template/templates'
+    ref: 'main'
+    file: 'pipeline.yml'
