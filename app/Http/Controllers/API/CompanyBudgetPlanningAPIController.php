@@ -365,7 +365,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                         'type' => 'warning',
                         'departments' => isset($validationResult['departments']) ? $validationResult['departments'] : []
                     ];
-                    return $this->sendError($validationResult['message'], 422, $errorType);
+                    return $this->sendAPIError($validationResult['message'], 422, $errorType);
                 }
                 return $this->sendError($validationResult['message']);
             }
