@@ -399,6 +399,82 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     }
 
     /**
+     * Update company budget planning via POST
+     *
+     * @param int $id
+     * @param UpdateCompanyBudgetPlanningAPIRequest $request
+     * @return Response
+     */
+    public function updateCompanyBudgetPlanning($id, UpdateCompanyBudgetPlanningAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var CompanyBudgetPlanning $companyBudgetPlanning */
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings.department')->findWithoutFail($id);
+
+        if (empty($companyBudgetPlanning)) {
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
+        }
+
+
+        if($input['confirmed_yn'] == 1) {
+
+            // check user have confirtmation permission
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+
+            if($userPermission['data']['financeUser']['status'] == false || $userPermission['data']['financeUser']['isActive'] == false || $userPermission['data']['financeUser']['access']['initiate_budget_planning'] == false) {
+                return $this->sendError("You don't have access to proceed with the budget confirmation");
+            }
+
+            // Validate department budget planning statuses before allowing confirmation
+            $validationResult = $this->validateDepartmentBudgetPlanningStatuses($companyBudgetPlanning);
+            
+            if (!$validationResult['valid']) {
+                // If it's a warning type, include departments list in the response
+                if (isset($validationResult['type']) && $validationResult['type'] === 'warning') {
+                    $errorType = [
+                        'type' => 'warning',
+                        'departments' => isset($validationResult['departments']) ? $validationResult['departments'] : []
+                    ];
+                    return $this->sendAPIError($validationResult['message'], 422, $errorType);
+                }
+                return $this->sendError($validationResult['message']);
+            }
+
+            
+            $params = array('autoID' => $companyBudgetPlanning->id,
+                'company' => $companyBudgetPlanning->companySystemID,
+                'document' => 133,
+                'segment' => null,
+                'category' => null,
+                'amount' => null
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            } 
+
+            $companyBudgetPlanning->departmentBudgetPlannings;
+            $input['confirmed_yn'] = 1;
+            $input['confirmed_by_name'] = Auth::user()->name;
+            $input['confirmed_by_emp_id'] = Auth::user()->id;
+            $input['confirmed_by_emp_system_id'] =  Auth::user()->employee_id;
+            $input['confirmed_at'] = Carbon::now();
+        }
+
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
+
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
+    }
+
+    /**
      * @param int $id
      * @return Response
      *

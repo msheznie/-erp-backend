@@ -52,6 +52,7 @@ Route::post('getBudgetPlanningApprovedByUser', 'BudgetPlanningApprovalAPIControl
 Route::post('requestBudgetPlanningReopen', 'CompanyBudgetPlanningAPIController@requestBudgetPlanningReopen')->name('Request budget planning reopen');
 Route::get('returnBudgetPlanningPreCheck', 'CompanyBudgetPlanningAPIController@returnBudgetPlanningPreCheck')->name('Return budget planning precheck');
 Route::post('returnBudgetPlanningToAmend', 'CompanyBudgetPlanningAPIController@returnBudgetPlanningToAmend')->name('Return budget planning to amend');
+Route::post('company_budget_plannings/{id}/update', 'CompanyBudgetPlanningAPIController@updateCompanyBudgetPlanning')->name('Update company budget planning via POST');
 Route::post('createTimeExtensionRequest', 'DepartmentBudgetPlanningAPIController@createTimeExtensionRequest')->name('Create time extension request');
 Route::post('getTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@getTimeExtensionRequests')->name('Get time extension requests');
 Route::post('cancelDepartmentTimeExtensionRequests', 'DepartmentBudgetPlanningAPIController@cancelDepartmentTimeExtensionRequests')->name('Cancel time extension requests');
