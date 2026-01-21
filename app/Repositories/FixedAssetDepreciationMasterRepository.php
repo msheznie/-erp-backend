@@ -86,6 +86,15 @@ class FixedAssetDepreciationMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetCositng = $assetCositng->where(function ($query) use ($search) {

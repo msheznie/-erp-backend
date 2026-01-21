@@ -996,6 +996,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
     public function getDocumentAmendFromGL(Request $request){
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
         $messages = [
             'companySystemID.required' => 'Company is required.',
             'documentSystemID.required' => 'Document is required.',
@@ -1030,7 +1031,14 @@ class GeneralLedgerAPIController extends AppBaseController
             ->where('documentSystemID',$input['documentSystemID'])
             ->where('documentYear',$input['yearID'])
             ->with(['confirm_by','final_approved_by']);
-
+        
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $glDocuments->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+        
         $search = $request->input('search.value');
 
         if ($search) {

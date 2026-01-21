@@ -77,6 +77,7 @@ class AssetVerificationAPIController extends AppBaseController
     public function index(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['confirmedYN', 'approved', 'createdBy']);
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -106,6 +107,18 @@ class AssetVerificationAPIController extends AppBaseController
                 $assetVerifications->where('approved', $input['approved']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $assetVerifications->whereIn('createdUserSystemID', $createdBy);
+                }
+            }
+        }
+
 
         $search = $request->input('search.value');
         if ($search) {

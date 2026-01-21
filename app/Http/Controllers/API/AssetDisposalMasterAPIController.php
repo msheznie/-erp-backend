@@ -679,7 +679,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function getAllDisposalByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'confirmedYN', 'approved'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'confirmedYN', 'approved','createdBy'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -721,6 +721,18 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 $assetCositng->whereYear('disposalDocumentDate', '=', $input['year']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $assetCositng->whereIn('createdUserSystemID', $createdBy);
+                }
+            }
+        }
+
 
         $search = $request->input('search.value');
 

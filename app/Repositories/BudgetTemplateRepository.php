@@ -64,6 +64,13 @@ class BudgetTemplateRepository extends BaseRepository
             $query->where('isActive', $input['isActive']);
         }
 
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $query->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
         // Apply search
         if ($search) {
             $query->where(function ($q) use ($search) {

@@ -433,6 +433,15 @@ class ItemAssignedAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $itemMasters->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         $search = $input['search']['value'];
         if ($search) {
             $itemMasters = $itemMasters->where(function ($query) use ($search) {

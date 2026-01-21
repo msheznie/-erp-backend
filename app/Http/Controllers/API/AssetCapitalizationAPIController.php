@@ -561,7 +561,7 @@ class AssetCapitalizationAPIController extends AppBaseController
     public function getAllCapitalizationByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'allocationTypeID'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'allocationTypeID','createdBy'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -615,6 +615,18 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $assetCapitalization->where('allocationTypeID', $input['allocationTypeID']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $assetCapitalization->whereIn('createdUserSystemID', $createdBy);
+                }
+            }
+        }
+
 
         $search = $request->input('search.value');
 

@@ -1612,6 +1612,15 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $procumentOrders->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         $procumentOrders = $procumentOrders->select(
             [
                 'erp_purchaseordermaster.purchaseOrderID',
@@ -2328,6 +2337,15 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
                 $procumentOrders->where('financeCategory', $input['financeCategory']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $procumentOrders->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
 

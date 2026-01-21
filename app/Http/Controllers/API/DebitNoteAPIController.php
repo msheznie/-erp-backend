@@ -2738,6 +2738,15 @@ UNION ALL
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $debitNotes->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);

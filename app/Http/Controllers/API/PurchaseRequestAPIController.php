@@ -3600,6 +3600,15 @@ class PurchaseRequestAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseRequests->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         if ($fromDate && $toDate) {
             $purchaseRequests = $purchaseRequests->whereDate('createdDateTime', '>=', $fromDate)->whereDate('createdDateTime', '<=', $toDate);;
         } elseif ($fromDate) {

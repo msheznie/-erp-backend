@@ -437,7 +437,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request;
-        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN','createdBy'));
 
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
@@ -480,6 +480,18 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $itemMasters->whereIn('createdUserSystemID', $createdBy);
+                }
+            }
+        }
+
 
         if ($search) {
             $itemMasters = $itemMasters->where(function ($query) use ($search) {

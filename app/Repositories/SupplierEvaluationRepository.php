@@ -62,6 +62,15 @@ class SupplierEvaluationRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $supplierEvaluation->whereIn('created_by', $createdBy);
+            }
+
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $supplierEvaluation = $supplierEvaluation->where(function ($query) use ($search) {
