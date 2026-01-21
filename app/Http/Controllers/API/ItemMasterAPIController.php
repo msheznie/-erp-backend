@@ -76,7 +76,6 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
 use App\Models\WarehouseItems;
-
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -2170,5 +2169,230 @@ class ItemMasterAPIController extends AppBaseController
 
 
 
+    }
+
+    
+    public function getWarehouseItemQuantity(Request $request) {
+        $input = $request->all();
+
+        $validationRules = [
+            'wareHouse_code' => 'nullable|string',
+            'item_code' => 'nullable|string',
+            'getAll' => 'nullable',
+            'companySystemID' => 'required|integer',
+            'pos_type' => 'nullable|integer',
+        ];
+
+        $validationMessages = [
+            'wareHouse_code.string' =>  trans('custom.wareHouse_code_must_be_a_string'),
+            'item_code.string' => trans('custom.item_code_must_be_a_string'),
+            'companySystemID.required' => trans('custom.companySystemID_is_required'),
+            'companySystemID.integer' => trans('custom.companySystemID_must_be_an_integer'),
+            'pos_type.integer' => trans('custom.pos_type_must_be_an_integer'),
+        ];
+
+        $validator = \Validator::make($input, $validationRules, $validationMessages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 422);
+        }
+
+        if ($input['getAll'] === null) {
+            
+            return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+        }
+
+        if (isset($input['getAll']) && $input['getAll'] !== null) {
+            if ($input['getAll'] === '') {
+                return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+            }
+            if (!is_bool($input['getAll']) && $input['getAll'] !== 'true' && $input['getAll'] !== 'false') {
+                return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+            }
+        }
+
+        $getAll = isset($input['getAll']) ? filter_var($input['getAll'], FILTER_VALIDATE_BOOLEAN) : false;
+        if ($getAll) {
+            $validationRules['page'] = 'required|integer|min:1';
+            $validationRules['per_page'] = 'required|integer|min:1';
+            $validationMessages['page.required'] = trans('custom.page_is_required_when_getAll_is_true');
+            $validationMessages['page.integer'] = trans('custom.page_must_be_an_integer');
+            $validationMessages['page.min'] = trans('custom.page_must_be_at_least_1');
+            $validationMessages['per_page.required'] = trans('custom.per_page_is_required_when_getAll_is_true');
+            $validationMessages['per_page.integer'] = trans('custom.per_page_must_be_an_integer');
+            $validationMessages['per_page.min'] = trans('custom.per_page_must_be_at_least_1');
+        }
+
+        $validator = \Validator::make($input, $validationRules, $validationMessages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 422);
+        }
+
+        $wareHouseCode = isset($input['wareHouse_code']) ? $input['wareHouse_code'] : null;
+        $itemCode = isset($input['item_code']) ? $input['item_code'] : null;
+        $companySystemID = $input['companySystemID'];
+        
+        $posType = null;
+        if (isset($input['pos_type']) && $input['pos_type'] !== null) {
+            $posTypeValue = (int)$input['pos_type'];
+            if (in_array($posTypeValue, [1, 2, 3])) {
+                $posType = $posTypeValue;
+            }
+        }
+
+        $companyMaster = Company::where('companySystemID', $companySystemID)->first();
+        if (!$companyMaster) {
+            return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
+        }
+
+        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($input['companySystemID']);
+        }
+        else {
+            $subCompanies = [$input['companySystemID']];
+        }
+
+        $itemSystemCode = null;
+        $wareHouseSystemCode = null;
+
+        if (!$getAll) {
+            if (!empty($itemCode)) {
+                $itemMaster = ItemAssigned::where('itemPrimaryCode', $itemCode)->with('item_master')->where('isActive', 1)->where('isAssigned', -1)->whereIn('companySystemID', $subCompanies)
+                    ->first();
+                if (!$itemMaster) {
+                    return $this->sendError(trans('custom.the_item_code_not_matching_with_system', ['itemCode' => $itemCode]), 422);
+                }
+
+                if (isset($itemMaster->item_master->itemApprovedYN) && $itemMaster->item_master->itemApprovedYN != 1) {
+                    return $this->sendError(trans('custom.the_selected_item_is_not_fully_approved', ['itemCode' => $itemCode]), 422);
+                }
+
+                $itemSystemCode = $itemMaster->itemCodeSystem;
+            }
+
+            if (!empty($wareHouseCode)) {
+                $wareHouse = WarehouseMaster::where('wareHouseCode', $wareHouseCode)->where('isActive', 1)->whereIn('companySystemID', $subCompanies)
+                    ->first();
+                if (!$wareHouse) {
+                    return $this->sendError(trans('custom.the_warehouse_code_not_matching_with_system', ['wareHouseCode' => $wareHouseCode]), 422);
+                }
+
+                $wareHouseSystemCode = $wareHouse->wareHouseSystemCode;
+            }
+        }
+
+        $whereConditions = ["erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")"];
+
+        if (!$getAll) {
+
+            if(empty($itemSystemCode) && empty($wareHouseSystemCode))
+            { 
+               return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
+            }    
+
+            if (!empty($itemSystemCode)) {
+                $whereConditions[] = "erp_itemledger.itemSystemCode = {$itemSystemCode}";
+            }
+
+            if (!empty($wareHouseSystemCode)) {
+                $whereConditions[] = "erp_itemledger.wareHouseSystemCode = {$wareHouseSystemCode}";
+            }
+        }
+
+        if ($posType !== null) {
+            $whereConditions[] = "itemmaster.pos_type = {$posType}";
+        }
+
+        $whereClause = join(" AND ", $whereConditions);
+
+        $selectFields = "companymaster.CompanyName,
+                                erp_itemledger.itemPrimaryCode,
+                                itemmaster.itemDescription,
+                                SUM(erp_itemledger.inOutQty) as Qty";
+        
+        if (!empty($wareHouseSystemCode)) {
+            $selectFields .= ",
+                                warehousemaster.wareHouseDescription as wareHouseDescription";
+        }
+        else {
+            $selectFields .= ",
+                                '' as wareHouseDescription";
+        }
+
+        $baseQuery = "SELECT * FROM (SELECT
+                                {$selectFields}
+                            FROM
+                            erp_itemledger
+                                LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+                                INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+                                INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+                                LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+                            WHERE
+                            {$whereClause} GROUP BY erp_itemledger.itemSystemCode HAVING SUM(erp_itemledger.inOutQty) >= 0) a ORDER BY a.itemPrimaryCode asc";
+
+        $page = 1;
+        $perPage = null;
+        $total = 0;
+
+        if ($getAll) {
+            $totalCountQuery = "SELECT COUNT(*) as total FROM (SELECT
+                                    erp_itemledger.itemSystemCode
+                                FROM
+                                erp_itemledger
+                                    LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
+                                    INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
+                                    INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
+                                    LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
+                                WHERE
+                                {$whereClause} GROUP BY erp_itemledger.itemSystemCode HAVING SUM(erp_itemledger.inOutQty) >= 0) a";
+
+            $totalCountResult = DB::select($totalCountQuery);
+            $total = $totalCountResult[0]->total ?? 0;
+
+            $page = (int)$input['page'];
+            $perPage = (int)$input['per_page'];
+            $offset = ($page - 1) * $perPage;
+
+            $query = $baseQuery . " LIMIT {$perPage} OFFSET {$offset}";
+        } else {
+            $query = $baseQuery;
+        }
+
+        $data = DB::select($query);
+
+        if ($getAll) {
+            $lastPage = (int)ceil($total / $perPage);
+            $path = $request->url();
+
+            $queryParams = $request->query();
+            unset($queryParams['page']);
+            $baseUrl = $request->url();
+            if (!empty($queryParams)) {
+                $baseUrl = $baseUrl . '?' . http_build_query($queryParams);
+            }
+            $separator = strpos($baseUrl, '?') !== false ? '&' : '?';
+
+            $response = [
+                'data' => $data,
+                'current_page' => $page,
+                'first_page_url' => $baseUrl . $separator . 'page=1',
+                'from' => $total > 0 ? $offset + 1 : null,
+                'last_page' => $lastPage,
+                'last_page_url' => $baseUrl . $separator . 'page=' . $lastPage,
+                'next_page_url' => $page < $lastPage ? $baseUrl . $separator . 'page=' . ($page + 1) : null,
+                'path' => $path,
+                'per_page' => $perPage,
+                'prev_page_url' => $page > 1 ? $baseUrl . $separator . 'page=' . ($page - 1) : null,
+                'to' => $total > 0 ? min($offset + $perPage, $total) : null,
+                'total' => $total,
+            ];
+
+            return $this->sendResponse($response, trans('custom.record_retrieved_successfully_1'));
+        }
+
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
     }
 }

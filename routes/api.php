@@ -62,6 +62,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
             Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
             Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
+            Route::post('warehouse-item-quantity', 'ItemMasterAPIController@getWarehouseItemQuantity');
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
