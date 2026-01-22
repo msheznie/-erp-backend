@@ -147,7 +147,7 @@ class EmployeeTaskingNotificationService
             }
 
             if ((!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) || ($isEmailVerified == 0)) {
-                $inValidEmails[] = $empCode;
+                $inValidEmails[] = $empCode . ' - ' . $mailTo;
             } else {
                 $mailBody = "Dear {$name},<br/><br/>";
                 $mailBody .= $this->emailBody();
@@ -179,7 +179,7 @@ class EmployeeTaskingNotificationService
             $this->insertToLogTb(
                 [
                     'message' => 'Employees who have invalid/unverified email address',
-                    'Employee Id' => $inValidEmails
+                    'Employee code' => $inValidEmails
                 ],
                 'data'
             );
