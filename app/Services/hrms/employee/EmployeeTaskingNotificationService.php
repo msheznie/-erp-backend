@@ -105,8 +105,6 @@ class EmployeeTaskingNotificationService
         $logType = 'info';
         $inValidEmails = [];
 
-        Log::info($this->masterDet);
-        
         foreach ($this->notifyList as $val) {
 
             $mailTo = '';
@@ -201,7 +199,7 @@ class EmployeeTaskingNotificationService
 
     public function checkIsEmailVerified($empId)
     {
-        return Employee::where('empID', $empId)
+        return Employee::where('employeeSystemID', $empId)
                 ->value('isEmailVerified');
     }
 
