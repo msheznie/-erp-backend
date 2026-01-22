@@ -388,7 +388,7 @@ class VictoriaLogsService
         }
         
         if ($companyId) {
-            $filters[] = 'company_system_id:="' . $companyId . '"';
+            $filters[] = '(company_system_id:="' . $companyId . '" or not company_system_id:* or company_system_id:="")';
         }
         
         if ($accessType !== null && $accessType !== '') {
@@ -523,7 +523,8 @@ class VictoriaLogsService
         }
         
         if ($companyId) {
-            $filters[] = 'companyID:="' . $companyId . '"';
+            // Filter for companyID = companyId OR null (missing field or empty string)
+            $filters[] = '(companyID:="' . $companyId . '" or not companyID:* or companyID:="")';
         }
         
         if ($accessType !== null && $accessType !== '') {
