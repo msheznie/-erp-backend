@@ -534,7 +534,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
                     $item->update([
                         'localCurrencyER' => $localCurrencyER,
-                        'companyReportingER' => $companyReportingER,
+                        'reportingCurrencyER' => $companyReportingER,
                         'sellingCostAfterMarginLocal' => $sellingCostAfterMarginLocal,
                         'sellingCostAfterMarginRpt' => $sellingCostAfterMarginRpt,
                     ]);

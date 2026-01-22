@@ -1192,7 +1192,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                     ->first();
                 $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                if($policy == false || $input['isPerforma'] != 0) {
+                $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+                if(($policy == false || $input['isPerforma'] != 0) && $checkErChange) {
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -1229,7 +1230,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false || $input['isPerforma'] != 0) {
+            $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+            if(($policy == false || $input['isPerforma'] != 0) && $checkErChange) {
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
             }
