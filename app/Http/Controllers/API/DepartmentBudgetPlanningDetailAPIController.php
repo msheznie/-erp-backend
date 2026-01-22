@@ -389,11 +389,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             }
             
             if ($selectedStatus == 2) {
-                // Department-wise grouping: Group by department and aggregate
+                // Department-wise grouping: Group by department only and aggregate
+                // All items for the same department are aggregated into one row
                 $allData = $query->get();
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $deptId = $item->departmentBudgetPlanning ? $item->departmentBudgetPlanning->departmentID : null;
+                    // Use department ID as key only
                     $key = $deptId ?? 'unknown';
                     
                     if (!isset($groupedData[$key])) {
@@ -432,8 +434,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $total = $groupedCollection->count();
                 $data = $groupedCollection->slice($offset, $pageSize)->values();
             } elseif ($selectedStatus == 3 && $workflowMethod == 1) {
-                // Segment-wise grouping: Group by segment and aggregate (only if workflow method is 1)
-                // Group by actual segment ID (serviceLineSystemID) to combine same segments from different departments
+                // Segment-wise grouping: Group by segment + category and aggregate (only if workflow method is 1)
+                // Group by actual segment ID (serviceLineSystemID) + category to combine same segments from different departments but show categories separately
                 $allData = $query->get();
                 $groupedData = [];
                 foreach ($allData as $item) {
@@ -443,8 +445,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $segmentId = $item->departmentSegment->segment->serviceLineSystemID ?? 
                                      $item->departmentSegment->segment->id ?? null;
                     }
-                    // Use segment ID as key, or fallback to department_segment_id if segment not loaded
-                    $key = $segmentId ?? ($item->department_segment_id ?? 'unknown');
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: segment + category
+                    $key = ($segmentId ?? ($item->department_segment_id ?? 'unknown')) . '_' . ($categoryId ?? 'unknown');
                     
                     if (!isset($groupedData[$key])) {
                         $groupedItem = $item->replicate();
@@ -465,6 +472,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                                 $groupedItem->departmentSegment->load('segment');
                             }
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         $groupedData[$key] = $groupedItem;
                     }
                     
@@ -481,16 +492,23 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $total = $groupedCollection->count();
                 $data = $groupedCollection->slice($offset, $pageSize)->values();
             } elseif ($isGLBased || $selectedStatus == 4) {
-                // Group by GL and aggregate amounts
+                // Group by GL + category and aggregate amounts
                 // Get all data for grouping (without pagination for grouping)
                 $allData = $query->get();
                 
-                // Group by budget_template_gl_id and aggregate
+                // Group by budget_template_gl_id + category and aggregate
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $glId = $item->budget_template_gl_id;
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: GL + category
+                    $key = ($glId ?? 'unknown') . '_' . ($categoryId ?? 'unknown');
                     
-                    if (!isset($groupedData[$glId])) {
+                    if (!isset($groupedData[$key])) {
                         // Use the first item as base and modify it
                         // Create a new model instance to preserve relationships and accessors
                         $groupedItem = $item->replicate();
@@ -516,18 +534,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         if (!$groupedItem->relationLoaded('responsiblePerson')) {
                             $groupedItem->load('responsiblePerson');
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         
-                        $groupedData[$glId] = $groupedItem;
+                        $groupedData[$key] = $groupedItem;
                     }
                     
                     // Sum up all amount fields
-                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
-                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
-                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
-                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
-                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
-                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
-                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
                 }
                 
                 // Convert to collection and apply pagination
@@ -535,14 +557,33 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $total = $groupedCollection->count();
                 $data = $groupedCollection->slice($offset, $pageSize)->values();
             } elseif ($selectedStatus == 5) {
-                // Category-wise grouping: Group by template category and aggregate
+                // Category-wise grouping: Group by template category only and aggregate
+                // Regardless of department or segment, group by category only
+                // Ensure category relationship is loaded for all items
                 $allData = $query->get();
+                // Load category relationship if not already loaded
+                foreach ($allData as $item) {
+                    if (!$item->relationLoaded('budgetTemplateGl')) {
+                        $item->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && !$item->budgetTemplateGl->relationLoaded('chartOfAccount')) {
+                        $item->budgetTemplateGl->load('chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && !$item->budgetTemplateGl->chartOfAccount->relationLoaded('templateCategoryDetails')) {
+                        $item->budgetTemplateGl->chartOfAccount->load('templateCategoryDetails');
+                    }
+                }
+                
                 $groupedData = [];
                 foreach ($allData as $item) {
-                    $categoryId = $item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
-                        ? $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id 
-                        : null;
-                    $key = $categoryId ?? 'unknown';
+                    // Get category ID and description for unique key
+                    $categoryId = null;
+                    $categoryDescription = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                        $categoryDescription = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description ?? null;
+                    }
+                    // Use category ID as primary key (description as fallback for uniqueness)
+                    // This ensures each unique category gets its own row
+                    $key = $categoryId ?? ($categoryDescription ?? 'unknown');
                     
                     if (!isset($groupedData[$key])) {
                         $groupedItem = $item->replicate();
@@ -1732,11 +1773,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             
             // If GL based, we need to group by GL and aggregate amounts
             if ($selectedStatus == 2) {
-                // Department-wise grouping: Group by department and aggregate
+                // Department-wise grouping: Group by department only and aggregate
+                // All items for the same department are aggregated into one row
                 $allData = $query->orderBy('id', 'desc')->get();
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $deptId = $item->departmentBudgetPlanning ? $item->departmentBudgetPlanning->departmentID : null;
+                    // Use department ID as key only
                     $key = $deptId ?? 'unknown';
                     
                     if (!isset($groupedData[$key])) {
@@ -1772,8 +1815,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
                 $dataset = collect(array_values($groupedData));
             } elseif ($selectedStatus == 3 && $workflowMethod == 1) {
-                // Segment-wise grouping: Group by segment and aggregate (only if workflow method is 1)
-                // Group by actual segment ID (serviceLineSystemID) to combine same segments from different departments
+                // Segment-wise grouping: Group by segment + category and aggregate (only if workflow method is 1)
+                // Group by actual segment ID (serviceLineSystemID) + category to combine same segments from different departments but show categories separately
                 $allData = $query->orderBy('id', 'desc')->get();
                 $groupedData = [];
                 foreach ($allData as $item) {
@@ -1783,8 +1826,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $segmentId = $item->departmentSegment->segment->serviceLineSystemID ?? 
                                      $item->departmentSegment->segment->id ?? null;
                     }
-                    // Use segment ID as key, or fallback to department_segment_id if segment not loaded
-                    $key = $segmentId ?? ($item->department_segment_id ?? 'unknown');
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: segment + category
+                    $key = ($segmentId ?? ($item->department_segment_id ?? 'unknown')) . '_' . ($categoryId ?? 'unknown');
                     
                     if (!isset($groupedData[$key])) {
                         $groupedItem = $item->replicate();
@@ -1805,6 +1853,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                                 $groupedItem->departmentSegment->load('segment');
                             }
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         $groupedData[$key] = $groupedItem;
                     }
                     
@@ -1820,12 +1872,19 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             } elseif ($isGLBased || $selectedStatus == 4) {
                 $allData = $query->orderBy('id', 'desc')->get();
                 
-                // Group by budget_template_gl_id and aggregate
+                // Group by budget_template_gl_id + category and aggregate
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $glId = $item->budget_template_gl_id;
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: GL + category
+                    $key = ($glId ?? 'unknown') . '_' . ($categoryId ?? 'unknown');
                     
-                    if (!isset($groupedData[$glId])) {
+                    if (!isset($groupedData[$key])) {
                         // Use the first item as base
                         $groupedItem = $item->replicate();
                         
@@ -1850,29 +1909,52 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         if (!$groupedItem->relationLoaded('responsiblePerson')) {
                             $groupedItem->load('responsiblePerson');
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         
-                        $groupedData[$glId] = $groupedItem;
+                        $groupedData[$key] = $groupedItem;
                     }
                     
                     // Sum up all amount fields
-                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
-                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
-                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
-                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
-                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
-                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
-                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
                 }
                 $dataset = collect(array_values($groupedData));
             } elseif ($selectedStatus == 5) {
-                // Category-wise grouping: Group by template category and aggregate
+                // Category-wise grouping: Group by template category only and aggregate
+                // Regardless of department or segment, group by category only
+                // Ensure category relationship is loaded for all items
                 $allData = $query->orderBy('id', 'desc')->get();
+                // Load category relationship if not already loaded
+                foreach ($allData as $item) {
+                    if (!$item->relationLoaded('budgetTemplateGl')) {
+                        $item->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && !$item->budgetTemplateGl->relationLoaded('chartOfAccount')) {
+                        $item->budgetTemplateGl->load('chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && !$item->budgetTemplateGl->chartOfAccount->relationLoaded('templateCategoryDetails')) {
+                        $item->budgetTemplateGl->chartOfAccount->load('templateCategoryDetails');
+                    }
+                }
+                
                 $groupedData = [];
                 foreach ($allData as $item) {
-                    $categoryId = $item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
-                        ? $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id 
-                        : null;
-                    $key = $categoryId ?? 'unknown';
+                    // Get category ID and description for unique key
+                    $categoryId = null;
+                    $categoryDescription = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                        $categoryDescription = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description ?? null;
+                    }
+                    // Use category ID as primary key (description as fallback for uniqueness)
+                    // This ensures each unique category gets its own row
+                    $key = $categoryId ?? ($categoryDescription ?? 'unknown');
                     
                     if (!isset($groupedData[$key])) {
                         $groupedItem = $item->replicate();
