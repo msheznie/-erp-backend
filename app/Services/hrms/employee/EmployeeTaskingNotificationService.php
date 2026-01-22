@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeTaskingNotificationService
 {
@@ -32,7 +33,7 @@ class EmployeeTaskingNotificationService
     {
 
         if (empty($this->masterDet)) {
-            $this->insertToLogTb(['Employee Code' => '', 'Message' => 'Master details not found'], 'error');
+            $this->insertToLogTb(['Employee Id' => '', 'Message' => 'Master details not found'], 'error');
             return false;
         }
 
@@ -47,7 +48,7 @@ class EmployeeTaskingNotificationService
         }
 
         $this->sendEmail();
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+        $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
             'Message' => 'execution successfully completed']);
     }
 
@@ -56,7 +57,7 @@ class EmployeeTaskingNotificationService
         $notificationCompanyScenario = $this->getScenarioEmployees();
         $this->isScenarioActive = (!empty($notificationCompanyScenario)) ? true : false;
         if (!$this->isScenarioActive) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+            $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
                 'Message' => 'Notification scenario Does not exist or does not active'], 'error');
         }
     }
@@ -66,7 +67,7 @@ class EmployeeTaskingNotificationService
         $getNotifyEmployees = $this->getScenarioEmployees(true);
         $this->notifyList = (!empty($getNotifyEmployees) ? $getNotifyEmployees['user'] : []);
         if (empty($this->notifyList)) {
-            $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+            $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
                 'Message' => 'Notification scenario employees do not exists'], 'error');
         }
     }
@@ -98,12 +99,14 @@ class EmployeeTaskingNotificationService
 
     public function sendEmail()
     {
-        $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+        $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
             'Message' => 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
         $inValidEmails = [];
 
+        Log::info($this->masterDet);
+        
         foreach ($this->notifyList as $val) {
 
             $mailTo = '';
@@ -143,7 +146,7 @@ class EmployeeTaskingNotificationService
                 $empCode = $val['employee']['empID'];
             }
 
-            if ((!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) || ($isEmailVerified == 0 || $isEmailVerified === null)) {
+            if ((!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) || ($isEmailVerified == 0)) {
                 $inValidEmails[] = $empCode;
             } else {
                 $mailBody = "Dear {$name},<br/><br/>";
@@ -162,11 +165,11 @@ class EmployeeTaskingNotificationService
                 if (!$sendEmail["success"]) {
                     $msg = "Employee tasking notification not sent for {$applicableCatDesc} {$name} ";
                     $logType = 'error';
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+                    $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
                         'Message' => $msg], $logType);
                 } else {
                     $msg = "Employee tasking notification sent for {$applicableCatDesc} {$name} ";
-                    $this->insertToLogTb(['Employee Code' => $this->masterDet['empId'],
+                    $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'],
                         'Message' => $msg]);
                 }
             }
@@ -176,7 +179,7 @@ class EmployeeTaskingNotificationService
             $this->insertToLogTb(
                 [
                     'message' => 'Employees who have invalid/unverified email address',
-                    'Employee Code' => $inValidEmails
+                    'Employee Id' => $inValidEmails
                 ],
                 'data'
             );
@@ -207,8 +210,8 @@ class EmployeeTaskingNotificationService
         $empName = $this->masterDet['empName'] ?? '';
         $assigneeName = $this->masterDet['assignedEmpName'] ?? '';
         $assigneeDepartment = $this->masterDet['DepartmentDes'] ?? '';
-        $startDate = $this->masterDet['from_date'] ?? '';
-        $endDate = $this->masterDet['to_date'] ?? '';
+        $startDate = $this->masterDet['fromDate'] ?? '';
+        $endDate = $this->masterDet['toDate'] ?? '';
         $assignee = $assigneeName . ' / ' . $assigneeDepartment;
         $period = $startDate . ' - ' . $endDate;
         
