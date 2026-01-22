@@ -321,5 +321,5 @@ return [
     'unable_to_update_commercial_evaluation_date_passed' => 'Unable to update the commercial evaluation. :date is already passed',
     'commercial_bid_date' => 'Commercial bid date',
     'reference_id_invalid' => 'Invalid reference',
-    'module_required' => 'Module is required',
+    'module_required' => 'Module is required'
 ];

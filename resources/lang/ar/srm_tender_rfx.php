@@ -319,5 +319,5 @@ return [
     'unable_to_update_commercial_evaluation_date_passed' => 'لا يمكن تحديث التقييم المالي. :date قد مر بالفعل',
     'commercial_bid_date' => 'تاريخ العطاء التجاري',
     'reference_id_invalid' => 'المرجع غير صالح',
-    'module_required'      => 'حقل الوحدة مطلوب',
+    'module_required'      => 'حقل الوحدة مطلوب'
 ];

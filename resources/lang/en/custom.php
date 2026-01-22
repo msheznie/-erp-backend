@@ -9858,5 +9858,6 @@ return
     'credit_limit_decimal_precision' => 'Credit Limit cannot have more than 2 decimal places.',
     'credit_limit_cannot_be_decimal' => 'Credit Limit cannot be a decimal value. Only whole numbers are allowed.',
     "bank_charges_and_other_amounts_should_have_a_value" => "Bank charges and other amounts should have a value",
-    "net_amount_cannot_be_negative_value" => "Net amount cannot be negative value"
+    "net_amount_cannot_be_negative_value" => "Net amount cannot be negative value",
+    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.'
   ];
