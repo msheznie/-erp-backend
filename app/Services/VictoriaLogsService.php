@@ -94,7 +94,7 @@ class VictoriaLogsService
         $tenantUuid = $params['tenant_uuid'] ?? '';
         $companyId = $params['companyId'] ?? null;
         
-        if (!empty($params['id']) && !empty($params['module'])) {
+        if (!empty($params['module'])) {
             return $this->getTransactionAuditLogs($params);
         }
         
@@ -339,7 +339,13 @@ class VictoriaLogsService
         
         $query .= '{' . implode(',', $labels) . '}';
         $query .= ' | unpack_json';
-        $query .= ' | filter (transaction_id:"' . $transactionId . '" and table:"' . $module . '") or (parent_table:"' . $module . '" and parent_id:"' . $transactionId . '")';
+        
+        if (empty($transactionId) || $transactionId === '0' || $transactionId === 0) {
+            $query .= ' | filter table:="' . addslashes($module) . '" or parent_table:="' . addslashes($module) . '"';
+        } else {
+            $query .= ' | filter (transaction_id:="' . addslashes($transactionId) . '" and table:="' . addslashes($module) . '") or (parent_table:="' . addslashes($module) . '" and parent_id:="' . addslashes($transactionId) . '")';
+        }
+        
         $query .= ' | sort by (_time) desc';
         $query .= ' | limit ' . $limit;
         
