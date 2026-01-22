@@ -136,7 +136,7 @@ class TenantEnforce
                         $request->request->add(['tenant_uuid' => $tenant->uuid]);
                     }
 
-                    if (in_array($request->route()->uri, ['api/v1/getThirdPartyApiLogDetail'])) {
+                    if (in_array($request->route()->uri, ['api/v1/getThirdPartyApiLogDetail', 'api/v1/auditLogsExternal', 'api/v1/createAuditLog'])) {
                         $subDomainArray = explode('-', $subDomain);
                         $partCount = count($subDomainArray);
                         if ($partCount > 1) {

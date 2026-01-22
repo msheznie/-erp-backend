@@ -231,6 +231,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getTemplateDetailFormData',
             'api/v1/budget_template_comments_by_detail/{budgetDetailId}',
             'api/v1/auditLogs',
+            'api/v1/auditLogsExternal',
             'api/v1/getBudgetTemplateColumns/{templateId}',
             'api/v1/getDelegateAccessRecords',
             'api/v1/generateTimeExtensionRequestCode',
