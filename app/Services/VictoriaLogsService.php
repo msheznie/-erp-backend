@@ -284,15 +284,15 @@ class VictoriaLogsService
         $filters = [];
         
         if ($externalReference) {
-            $filters[] = 'external_reference:"' . addslashes($externalReference) . '"';
+            $filters[] = 'external_reference:="' . addslashes($externalReference) . '"';
         }
         
         if ($logId) {
-            $filters[] = 'log_id:"' . addslashes($logId) . '"';
+            $filters[] = 'log_id:="' . addslashes($logId) . '"';
         }
         
         if ($isWebhook !== null && $isWebhook !== '') {
-            $filters[] = 'is_webhook:"' . addslashes($isWebhook) . '"';
+            $filters[] = 'is_webhook:="' . addslashes($isWebhook) . '"';
         }
         
         if (!empty($filters)) {
@@ -384,11 +384,11 @@ class VictoriaLogsService
         $filters = [];
         
         if ($employeeId) {
-            $filters[] = 'employeeId:"' . $employeeId . '"';
+            $filters[] = 'employeeId:="' . $employeeId . '"';
         }
         
         if ($companyId) {
-            $filters[] = 'company_system_id:"' . $companyId . '"';
+            $filters[] = 'company_system_id:="' . $companyId . '"';
         }
         
         if ($accessType !== null && $accessType !== '') {
@@ -402,7 +402,7 @@ class VictoriaLogsService
             
             $accessTypeValue = $accessTypeMap[$accessType] ?? "C";
             $accessTypeValue = addslashes($accessTypeValue);
-            $filters[] = 'crudType:"' . $accessTypeValue . '"';
+            $filters[] = 'crudType:="' . $accessTypeValue . '"';
         }
         
         if (!empty($filters)) {
@@ -453,7 +453,7 @@ class VictoriaLogsService
         $filters = [];
         
         if ($employeeId) {
-            $filters[] = 'employeeId:"' . $employeeId . '"';
+            $filters[] = 'employeeId:="' . $employeeId . '"';
         }
         
         if ($event !== null && $event !== '') {
@@ -468,7 +468,7 @@ class VictoriaLogsService
             
             $eventValue = $eventMap[$event] ?? $event;
             $eventValue = addslashes($eventValue);
-            $filters[] = 'event:"' . $eventValue . '"';
+            $filters[] = 'event:="' . $eventValue . '"';
         }
         
         if (!empty($filters)) {
@@ -519,11 +519,11 @@ class VictoriaLogsService
         $filters = [];
         
         if ($employeeId) {
-            $filters[] = 'employeeId:"' . $employeeId . '"';
+            $filters[] = 'employeeId:="' . $employeeId . '"';
         }
         
         if ($companyId) {
-            $filters[] = 'companyID:"' . $companyId . '"';
+            $filters[] = 'companyID:="' . $companyId . '"';
         }
         
         if ($accessType !== null && $accessType !== '') {
@@ -538,7 +538,7 @@ class VictoriaLogsService
             
             $accessTypeValue = $accessTypeMap[$accessType] ?? trans('audit.read');
             $accessTypeValue = addslashes($accessTypeValue);
-            $filters[] = 'accessType:"' . $accessTypeValue . '"';
+            $filters[] = 'accessType:="' . $accessTypeValue . '"';
         }
         
         if (!empty($filters)) {
