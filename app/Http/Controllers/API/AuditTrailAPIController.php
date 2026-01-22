@@ -23,6 +23,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Services\VictoriaLogsService;
+use App\Services\LokiService;
 use DataTables;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +41,13 @@ class AuditTrailAPIController extends AppBaseController
     /** @var  AuditTrailRepository */
     private $auditTrailRepository;
     private $victoriaLogsService;
+    private $lokiService;
 
-    public function __construct(AuditTrailRepository $auditTrailRepo, VictoriaLogsService $victoriaLogsService)
+    public function __construct(AuditTrailRepository $auditTrailRepo, VictoriaLogsService $victoriaLogsService, LokiService $lokiService)
     {
         $this->auditTrailRepository = $auditTrailRepo;
         $this->victoriaLogsService = $victoriaLogsService;
+        $this->lokiService = $lokiService;
     }
 
     /**
@@ -327,7 +330,7 @@ class AuditTrailAPIController extends AppBaseController
             
             if (!empty($input['id']) && !empty($input['module'])) {
                 $params['id'] = $input['id'];
-                $params['module'] = $input['module'];
+                $params['module'] = $this->lokiService->getAuditTables($input['module']);
                 $params['fromDate'] = $input['fromDate'] ?? null;
                 $params['toDate'] = $input['toDate'] ?? null;
             }
