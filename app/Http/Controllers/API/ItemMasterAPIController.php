@@ -2293,16 +2293,16 @@ class ItemMasterAPIController extends AppBaseController
 
 
         $selectFields = [
-            'companymaster.CompanyName',
-            'erp_itemledger.itemPrimaryCode',
-            'itemmaster.itemDescription',
-            DB::raw('SUM(erp_itemledger.inOutQty) as Qty'),
+            'companymaster.CompanyName as company_name',
+            'erp_itemledger.itemPrimaryCode as item_code',
+            'itemmaster.itemDescription as item_description',
+            DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
         ];
         
         if (!empty($wareHouseSystemCode)) {
-            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as wareHouseDescription');
+            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
         } else {
-            $selectFields[] = DB::raw("'' as wareHouseDescription");
+            $selectFields[] = DB::raw("'' as warehouse");
         }
 
         $baseQuery = ErpItemLedger::query()
