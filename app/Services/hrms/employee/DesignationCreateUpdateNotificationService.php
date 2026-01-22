@@ -172,7 +172,7 @@ class DesignationCreateUpdateNotificationService
     public function checkIsEmailVerified($empId)
     {
         return Employee::select('isEmailVerified')
-                ->where('empID', $empId)
+                ->where('employeeSystemID', $empId)
                 ->first();
     }
 
