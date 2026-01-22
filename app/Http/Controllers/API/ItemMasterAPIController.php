@@ -2179,15 +2179,15 @@ class ItemMasterAPIController extends AppBaseController
             'wareHouse_code' => 'nullable|string',
             'item_code' => 'nullable|string',
             'getAll' => 'nullable',
-            'companySystemID' => 'required|integer',
+            'company_id' => 'required|integer',
             'pos_type' => 'nullable|integer',
         ];
 
         $validationMessages = [
             'wareHouse_code.string' =>  trans('custom.wareHouse_code_must_be_a_string'),
             'item_code.string' => trans('custom.item_code_must_be_a_string'),
-            'companySystemID.required' => trans('custom.companySystemID_is_required'),
-            'companySystemID.integer' => trans('custom.companySystemID_must_be_an_integer'),
+            'company_id.required' => trans('custom.companySystemID_is_required'),
+            'company_id.integer' => trans('custom.companySystemID_must_be_an_integer'),
             'pos_type.integer' => trans('custom.pos_type_must_be_an_integer'),
         ];
 
@@ -2231,7 +2231,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $wareHouseCode = isset($input['wareHouse_code']) ? $input['wareHouse_code'] : null;
         $itemCode = isset($input['item_code']) ? $input['item_code'] : null;
-        $companySystemID = $input['companySystemID'];
+        $companySystemID = $input['company_id'];
         
         $posType = null;
         if (isset($input['pos_type']) && $input['pos_type'] !== null) {
@@ -2246,19 +2246,26 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+        $isGroup = \Helper::checkIsCompanyGroup($input['company_id']);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($input['companySystemID']);
+            $subCompanies = \Helper::getGroupCompany($input['company_id']);
         }
         else {
-            $subCompanies = [$input['companySystemID']];
+            $subCompanies = [$input['company_id']];
         }
 
         $itemSystemCode = null;
         $wareHouseSystemCode = null;
 
         if (!$getAll) {
+
+            if(empty($itemCode) && empty($wareHouseCode))
+            { 
+               return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
+            }   
+
+            
             if (!empty($itemCode)) {
                 $itemMaster = ItemAssigned::where('itemPrimaryCode', $itemCode)->with('item_master')->where('isActive', 1)->where('isAssigned', -1)->whereIn('companySystemID', $subCompanies)
                     ->first();
@@ -2284,84 +2291,85 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
-        $whereConditions = ["erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")"];
+
+        $selectFields = [
+            'companymaster.CompanyName',
+            'erp_itemledger.itemPrimaryCode',
+            'itemmaster.itemDescription',
+            DB::raw('SUM(erp_itemledger.inOutQty) as Qty'),
+        ];
+        
+        if (!empty($wareHouseSystemCode)) {
+            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as wareHouseDescription');
+        } else {
+            $selectFields[] = DB::raw("'' as wareHouseDescription");
+        }
+
+        $baseQuery = ErpItemLedger::query()
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
+            ->select($selectFields)
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
 
         if (!$getAll) {
-
-            if(empty($itemSystemCode) && empty($wareHouseSystemCode))
-            { 
-               return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
-            }    
-
             if (!empty($itemSystemCode)) {
-                $whereConditions[] = "erp_itemledger.itemSystemCode = {$itemSystemCode}";
+                $baseQuery->where('erp_itemledger.itemSystemCode', $itemSystemCode);
             }
 
             if (!empty($wareHouseSystemCode)) {
-                $whereConditions[] = "erp_itemledger.wareHouseSystemCode = {$wareHouseSystemCode}";
+                $baseQuery->where('erp_itemledger.wareHouseSystemCode', $wareHouseSystemCode);
             }
         }
 
         if ($posType !== null) {
-            $whereConditions[] = "itemmaster.pos_type = {$posType}";
+            $baseQuery->where('itemmaster.pos_type', $posType);
         }
-
-        $whereClause = join(" AND ", $whereConditions);
-
-        $selectFields = "companymaster.CompanyName,
-                                erp_itemledger.itemPrimaryCode,
-                                itemmaster.itemDescription,
-                                SUM(erp_itemledger.inOutQty) as Qty";
-        
-        if (!empty($wareHouseSystemCode)) {
-            $selectFields .= ",
-                                warehousemaster.wareHouseDescription as wareHouseDescription";
-        }
-        else {
-            $selectFields .= ",
-                                '' as wareHouseDescription";
-        }
-
-        $baseQuery = "SELECT * FROM (SELECT
-                                {$selectFields}
-                            FROM
-                            erp_itemledger
-                                LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
-                                INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
-                                INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
-                                LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
-                            WHERE
-                            {$whereClause} GROUP BY erp_itemledger.itemSystemCode HAVING SUM(erp_itemledger.inOutQty) >= 0) a ORDER BY a.itemPrimaryCode asc";
 
         $page = 1;
         $perPage = null;
         $total = 0;
 
         if ($getAll) {
-            $totalCountQuery = "SELECT COUNT(*) as total FROM (SELECT
-                                    erp_itemledger.itemSystemCode
-                                FROM
-                                erp_itemledger
-                                    LEFT JOIN units ON erp_itemledger.unitOfMeasure = units.UnitID
-                                    INNER JOIN companymaster ON erp_itemledger.companySystemID = companymaster.companySystemID
-                                    INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
-                                    LEFT JOIN warehousemaster ON erp_itemledger.wareHouseSystemCode = warehousemaster.wareHouseSystemCode
-                                WHERE
-                                {$whereClause} GROUP BY erp_itemledger.itemSystemCode HAVING SUM(erp_itemledger.inOutQty) >= 0) a";
+            $countQuery = ErpItemLedger::query()
+                ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+                ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
+                ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+                ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
+                ->select('erp_itemledger.itemSystemCode')
+                ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+                ->groupBy('erp_itemledger.itemSystemCode')
+                ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
 
-            $totalCountResult = DB::select($totalCountQuery);
-            $total = $totalCountResult[0]->total ?? 0;
+            if ($posType !== null) {
+                $countQuery->where('itemmaster.pos_type', $posType);
+            }
+
+            $total = DB::table(DB::raw("({$countQuery->toSql()}) as sub"))
+                ->mergeBindings($countQuery->getQuery())
+                ->count();
 
             $page = (int)$input['page'];
             $perPage = (int)$input['per_page'];
             $offset = ($page - 1) * $perPage;
 
-            $query = $baseQuery . " LIMIT {$perPage} OFFSET {$offset}";
+            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
+                ->offset($offset)
+                ->limit($perPage)
+                ->get()
+                ->toArray();
         } else {
-            $query = $baseQuery;
+            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
+                ->get()
+                ->toArray();
         }
 
-        $data = DB::select($query);
+        $data = array_map(function($item) {
+            return (array) $item;
+        }, $data);
 
         if ($getAll) {
             $lastPage = (int)ceil($total / $perPage);
