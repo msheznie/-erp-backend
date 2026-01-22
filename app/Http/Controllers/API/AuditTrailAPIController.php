@@ -362,6 +362,7 @@ class AuditTrailAPIController extends AppBaseController
             return \DataTables::of($formatedData)
                 ->filter(function() {
                 })
+                ->addIndexColumn()
                 ->make(true);
             
         } catch (\Exception $exception) {
@@ -409,6 +410,7 @@ class AuditTrailAPIController extends AppBaseController
             return \DataTables::of($formatedData)
                 ->filter(function() {
                 })
+                ->addIndexColumn()
                 ->make(true);
             
         } catch (\Exception $exception) {
@@ -726,6 +728,7 @@ class AuditTrailAPIController extends AppBaseController
                 'tenant_uuid' => $tenantUuid,
                 'locale' => $locale,
                 'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
                 'toDate' => $input['toDate'] ?? null,
                 'employeeId' => $input['employeeId'] ?? null,
                 'accessType' => $input['accessType'] ?? null,
@@ -749,6 +752,7 @@ class AuditTrailAPIController extends AppBaseController
             return \DataTables::of($formatedData)
                 ->filter(function() {
                 })
+                ->addIndexColumn()
                 ->make(true);
             
         } catch (\Exception $exception) {
@@ -777,6 +781,7 @@ class AuditTrailAPIController extends AppBaseController
                 'tenant_uuid' => $tenantUuid,
                 'locale' => $locale,
                 'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
                 'toDate' => $input['toDate'] ?? null,
                 'employeeId' => $input['employeeId'] ?? null,
                 'accessType' => $input['accessType'] ?? null,

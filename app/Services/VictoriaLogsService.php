@@ -144,6 +144,7 @@ class VictoriaLogsService
         $tenantUuid = $params['tenant_uuid'] ?? '';
         $fromDate = $params['fromDate'] ?? null;
         $toDate = $params['toDate'] ?? null;
+        $companyId = $params['companyId'] ?? null;
         $employeeId = $params['employeeId'] ?? null;
         $accessType = $params['accessType'] ?? null;
         $searchTerm = $params['search']['value'] ?? null;
@@ -151,7 +152,7 @@ class VictoriaLogsService
         
         $limit = $this->config['limit'] ?? 10000;
         
-        $logsQL = $this->buildActionTrackingQuery($tenantUuid, $fromDate, $toDate, $employeeId, $accessType, $locale, $limit);
+        $logsQL = $this->buildActionTrackingQuery($tenantUuid, $fromDate, $toDate, $employeeId, $accessType, $locale, $limit, $companyId);
         
         $logs = $this->queryLogsQL($logsQL);
         
@@ -210,10 +211,11 @@ class VictoriaLogsService
         $accessType = $params['accessType'] ?? null;
         $searchTerm = $params['search']['value'] ?? null;
         $locale = $params['locale'] ?? 'en';
+        $companyId = $params['companyId'] ?? null;
         
         $limit = $this->config['limit'] ?? 10000;
         
-        $logsQL = $this->buildNavigationAccessQuery($tenantUuid, $fromDate, $toDate, $employeeId, $accessType, $locale, $limit);
+        $logsQL = $this->buildNavigationAccessQuery($tenantUuid, $fromDate, $toDate, $employeeId, $accessType, $locale, $limit, $companyId);
         
         $logs = $this->queryLogsQL($logsQL);
         
@@ -337,7 +339,7 @@ class VictoriaLogsService
         
         $query .= '{' . implode(',', $labels) . '}';
         $query .= ' | unpack_json';
-        $query .= ' | filter transaction_id:"' . $transactionId . '" and table:"' . $module . '"';
+        $query .= ' | filter (transaction_id:"' . $transactionId . '" and table:"' . $module . '") or (parent_table:"' . $module . '" and parent_id:"' . $transactionId . '")';
         $query .= ' | sort by (_time) desc';
         $query .= ' | limit ' . $limit;
         
@@ -356,7 +358,7 @@ class VictoriaLogsService
      * @param int $limit
      * @return string
      */
-    protected function buildActionTrackingQuery(string $tenantUuid, ?string $fromDate, ?string $toDate, ?string $employeeId, ?int $accessType, string $locale = 'en', int $limit = 10000): string
+    protected function buildActionTrackingQuery(string $tenantUuid, ?string $fromDate, ?string $toDate, ?string $employeeId, ?int $accessType, string $locale = 'en', int $limit = 10000, ?int $companyId = null): string
     {
         $query = '';
         if ($fromDate && $toDate) {
@@ -383,6 +385,10 @@ class VictoriaLogsService
         
         if ($employeeId) {
             $filters[] = 'employeeId:"' . $employeeId . '"';
+        }
+        
+        if ($companyId) {
+            $filters[] = 'company_system_id:"' . $companyId . '"';
         }
         
         if ($accessType !== null && $accessType !== '') {
@@ -487,7 +493,7 @@ class VictoriaLogsService
      * @param int $limit
      * @return string
      */
-    protected function buildNavigationAccessQuery(string $tenantUuid, ?string $fromDate, ?string $toDate, ?string $employeeId, ?int $accessType, string $locale = 'en', int $limit = 10000): string
+    protected function buildNavigationAccessQuery(string $tenantUuid, ?string $fromDate, ?string $toDate, ?string $employeeId, ?int $accessType, string $locale = 'en', int $limit = 10000, ?int $companyId = null): string
     {
         $query = '';
         if ($fromDate && $toDate) {
@@ -514,6 +520,10 @@ class VictoriaLogsService
         
         if ($employeeId) {
             $filters[] = 'employeeId:"' . $employeeId . '"';
+        }
+        
+        if ($companyId) {
+            $filters[] = 'companyID:"' . $companyId . '"';
         }
         
         if ($accessType !== null && $accessType !== '') {
