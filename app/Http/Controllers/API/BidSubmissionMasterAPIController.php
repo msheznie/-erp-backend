@@ -14,6 +14,7 @@ use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBidNegotiation;
+use App\Models\TenderConfirmationDetail;
 use App\Models\TenderMaster;
 use App\Models\TenderNegotiationArea;
 use App\Repositories\BidSubmissionMasterRepository;
@@ -32,6 +33,7 @@ use App\Models\BidBoq;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
 use App\Services\SRMService;
+use App\Services\TenderConfirmationService;
 use LDAP\Result;
 use Illuminate\Http\JsonResponse;
 
@@ -278,10 +280,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
 
-
-
-
-
+                if (isset($input['technical_verify_status']) && $input['technical_verify_status'] == 1) {
+                    TenderConfirmationService::saveConfirmationDetails(
+                        $tender_id,
+                        $id,
+                        TenderConfirmationDetail::MODULE_TECHNICAL_EVAL,
+                        null,
+                        $input['technical_eval_remarks'] ?? null,
+                        null
+                    );
+                }
 
                 $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('doc_verifiy_status',1)->where('status',1)->count();
                 if($query == 0)
@@ -301,8 +309,17 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
                 $input['commercial_verify_at'] = Carbon::now();
 
-
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+                if (isset($input['commercial_verify_status']) && $input['commercial_verify_status'] == 1) {
+                    TenderConfirmationService::saveConfirmationDetails(
+                        $tender_id,
+                        $id,
+                        TenderConfirmationDetail::MODULE_COMMERCIAL_REVIEW,
+                        null,
+                        null,
+                        null
+                    );
+                }
                 $technicalCount = $this->getTechnicalCount($tender_id);
 
                 if($technicalCount->technical_count  != 0)
@@ -680,6 +697,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             $details = BidSubmissionMaster::where('id', $input['id'])->first();
             $tenderId = $details->tender_id;
+
+            if (isset($input['status']) || isset($input['value'])) {
+                TenderConfirmationService::saveConfirmationDetails(
+                    $tenderId,
+                    $input['id'],
+                    TenderConfirmationDetail::MODULE_GO_NO_GO,
+                    null,
+                    isset($input['value']) ? $input['value'] : null
+                );
+            }
 
             $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('go_no_go_criteria_status','=', null)->where('bidSubmittedYN',1)->where('doc_verifiy_status',1)->where('status',1)->count();
             if($query == 0)

@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.101.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.100.1...v10.101.0) (2026-01-21)
+
+
+### Features
+
+* **Tasking Request:** Portal | EA | Task assignment approval following job procedure setup [GHR-9581] ([#9569](https://github.com/pbsgears/Gears_BackEnd/issues/9569)) ([847cc21](https://github.com/pbsgears/Gears_BackEnd/commit/847cc21327270ff80c2679298859df6802bb61c3))
+
+## [10.100.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.100.0...v10.100.1) (2026-01-20)
+
+
+### Bug Fixes
+
+* **system admin:** Error While Assigning Employee to Warehouse [GCP-19165] ([#9643](https://github.com/pbsgears/Gears_BackEnd/issues/9643)) ([eff2ce3](https://github.com/pbsgears/Gears_BackEnd/commit/eff2ce3ff9eaa46321f588bbf30e000fed77cf27))
 
 ## [10.100.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.1...v10.100.0) (2026-01-19)
 
