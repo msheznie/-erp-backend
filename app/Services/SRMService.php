@@ -90,7 +90,7 @@ use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
-use InfyOm\Generator\Utils\ResponseUtil;
+use App\Utils\ResponseUtil;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
