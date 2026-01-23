@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DocumentCodeTransaction;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDocumentCodeTransactionAPIRequest extends APIRequest
+class CreateDocumentCodeTransactionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

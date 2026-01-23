@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SMEEmpContractType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSMEEmpContractTypeAPIRequest extends APIRequest
+class UpdateSMEEmpContractTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\EmployeeProfile;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateEmployeeProfileAPIRequest extends APIRequest
+class UpdateEmployeeProfileAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\InsurancePolicyType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateInsurancePolicyTypeAPIRequest extends APIRequest
+class CreateInsurancePolicyTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

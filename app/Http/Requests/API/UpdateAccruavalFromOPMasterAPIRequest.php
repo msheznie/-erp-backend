@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AccruavalFromOPMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateAccruavalFromOPMasterAPIRequest extends APIRequest
+class UpdateAccruavalFromOPMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

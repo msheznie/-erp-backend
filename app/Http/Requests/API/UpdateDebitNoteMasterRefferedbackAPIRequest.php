@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DebitNoteMasterRefferedback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDebitNoteMasterRefferedbackAPIRequest extends APIRequest
+class UpdateDebitNoteMasterRefferedbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

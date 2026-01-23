@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierBusinessCategoryAssign;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSupplierBusinessCategoryAssignAPIRequest extends APIRequest
+class CreateSupplierBusinessCategoryAssignAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ChequeTemplateBank;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateChequeTemplateBankAPIRequest extends APIRequest
+class UpdateChequeTemplateBankAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

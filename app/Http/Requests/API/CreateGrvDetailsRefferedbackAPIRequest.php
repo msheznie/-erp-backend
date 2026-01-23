@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\GrvDetailsRefferedback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateGrvDetailsRefferedbackAPIRequest extends APIRequest
+class CreateGrvDetailsRefferedbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

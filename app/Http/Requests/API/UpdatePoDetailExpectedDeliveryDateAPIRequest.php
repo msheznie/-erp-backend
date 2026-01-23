@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PoDetailExpectedDeliveryDate;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePoDetailExpectedDeliveryDateAPIRequest extends APIRequest
+class UpdatePoDetailExpectedDeliveryDateAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

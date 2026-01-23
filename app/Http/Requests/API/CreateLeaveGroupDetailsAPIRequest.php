@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\LeaveGroupDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateLeaveGroupDetailsAPIRequest extends APIRequest
+class CreateLeaveGroupDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

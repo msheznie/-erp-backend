@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BankReconciliationRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBankReconciliationRefferedBackAPIRequest extends APIRequest
+class UpdateBankReconciliationRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

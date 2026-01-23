@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerMasterCategoryAssigned;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCustomerMasterCategoryAssignedAPIRequest extends APIRequest
+class UpdateCustomerMasterCategoryAssignedAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

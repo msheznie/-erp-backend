@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PurchaseRequest;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePurchaseRequestAPIRequest extends APIRequest
+class CreatePurchaseRequestAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\RigMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateRigMasterAPIRequest extends APIRequest
+class UpdateRigMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

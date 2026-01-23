@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PerformaMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePerformaMasterAPIRequest extends APIRequest
+class UpdatePerformaMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

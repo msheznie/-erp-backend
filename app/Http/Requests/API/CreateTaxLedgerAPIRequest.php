@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TaxLedger;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateTaxLedgerAPIRequest extends APIRequest
+class CreateTaxLedgerAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

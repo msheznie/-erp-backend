@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PurchaseReturnMasterRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePurchaseReturnMasterRefferedBackAPIRequest extends APIRequest
+class UpdatePurchaseReturnMasterRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

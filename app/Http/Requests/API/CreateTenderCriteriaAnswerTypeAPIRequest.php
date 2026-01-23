@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderCriteriaAnswerType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateTenderCriteriaAnswerTypeAPIRequest extends APIRequest
+class CreateTenderCriteriaAnswerTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

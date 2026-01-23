@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ApprovalGroups;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateApprovalGroupsAPIRequest extends APIRequest
+class CreateApprovalGroupsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

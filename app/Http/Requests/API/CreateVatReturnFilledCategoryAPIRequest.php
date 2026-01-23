@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\VatReturnFilledCategory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateVatReturnFilledCategoryAPIRequest extends APIRequest
+class CreateVatReturnFilledCategoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

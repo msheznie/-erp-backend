@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SrpErpFormCategory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSrpErpFormCategoryAPIRequest extends APIRequest
+class CreateSrpErpFormCategoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

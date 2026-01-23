@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierCritical;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSupplierCriticalAPIRequest extends APIRequest
+class CreateSupplierCriticalAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

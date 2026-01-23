@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\MobileDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateMobileDetailAPIRequest extends APIRequest
+class UpdateMobileDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

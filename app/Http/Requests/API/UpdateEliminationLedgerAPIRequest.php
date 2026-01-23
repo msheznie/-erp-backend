@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\EliminationLedger;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateEliminationLedgerAPIRequest extends APIRequest
+class UpdateEliminationLedgerAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

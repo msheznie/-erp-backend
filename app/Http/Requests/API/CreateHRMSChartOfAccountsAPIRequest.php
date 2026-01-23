@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\HRMSChartOfAccounts;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateHRMSChartOfAccountsAPIRequest extends APIRequest
+class CreateHRMSChartOfAccountsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomUserReports;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomUserReportsAPIRequest extends APIRequest
+class CreateCustomUserReportsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

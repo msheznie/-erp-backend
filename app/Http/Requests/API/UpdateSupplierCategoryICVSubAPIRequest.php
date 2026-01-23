@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierCategoryICVSub;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSupplierCategoryICVSubAPIRequest extends APIRequest
+class UpdateSupplierCategoryICVSubAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

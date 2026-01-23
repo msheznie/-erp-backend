@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\InventoryReclassification;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateInventoryReclassificationAPIRequest extends APIRequest
+class UpdateInventoryReclassificationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

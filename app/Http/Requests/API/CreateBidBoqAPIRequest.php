@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BidBoq;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBidBoqAPIRequest extends APIRequest
+class CreateBidBoqAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

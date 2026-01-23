@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\suppliernature;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatesuppliernatureAPIRequest extends APIRequest
+class UpdatesuppliernatureAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

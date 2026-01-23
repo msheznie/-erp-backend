@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\MonthlyDeclarationsTypes;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateMonthlyDeclarationsTypesAPIRequest extends APIRequest
+class UpdateMonthlyDeclarationsTypesAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

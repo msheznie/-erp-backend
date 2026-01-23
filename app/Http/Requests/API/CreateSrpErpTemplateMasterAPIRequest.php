@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SrpErpTemplateMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSrpErpTemplateMasterAPIRequest extends APIRequest
+class CreateSrpErpTemplateMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

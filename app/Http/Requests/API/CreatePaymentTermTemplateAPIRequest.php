@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PaymentTermTemplate;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePaymentTermTemplateAPIRequest extends APIRequest
+class CreatePaymentTermTemplateAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

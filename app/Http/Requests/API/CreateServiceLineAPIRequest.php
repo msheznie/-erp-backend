@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ServiceLine;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateServiceLineAPIRequest extends APIRequest
+class CreateServiceLineAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

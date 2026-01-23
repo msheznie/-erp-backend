@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerCatalogDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomerCatalogDetailAPIRequest extends APIRequest
+class CreateCustomerCatalogDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

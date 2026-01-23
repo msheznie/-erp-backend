@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BankStatementMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBankStatementMasterAPIRequest extends APIRequest
+class CreateBankStatementMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

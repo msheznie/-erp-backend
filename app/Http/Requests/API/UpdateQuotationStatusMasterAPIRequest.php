@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\QuotationStatusMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateQuotationStatusMasterAPIRequest extends APIRequest
+class UpdateQuotationStatusMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

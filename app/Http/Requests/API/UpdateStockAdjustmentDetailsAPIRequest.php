@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\StockAdjustmentDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateStockAdjustmentDetailsAPIRequest extends APIRequest
+class UpdateStockAdjustmentDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

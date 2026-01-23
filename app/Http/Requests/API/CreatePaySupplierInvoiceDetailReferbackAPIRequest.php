@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PaySupplierInvoiceDetailReferback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePaySupplierInvoiceDetailReferbackAPIRequest extends APIRequest
+class CreatePaySupplierInvoiceDetailReferbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

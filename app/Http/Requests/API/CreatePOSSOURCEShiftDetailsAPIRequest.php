@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSSOURCEShiftDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSSOURCEShiftDetailsAPIRequest extends APIRequest
+class CreatePOSSOURCEShiftDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

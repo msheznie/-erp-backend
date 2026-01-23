@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Logistic;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateLogisticAPIRequest extends APIRequest
+class UpdateLogisticAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

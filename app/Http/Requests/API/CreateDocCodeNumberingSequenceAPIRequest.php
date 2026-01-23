@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DocCodeNumberingSequence;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDocCodeNumberingSequenceAPIRequest extends APIRequest
+class CreateDocCodeNumberingSequenceAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

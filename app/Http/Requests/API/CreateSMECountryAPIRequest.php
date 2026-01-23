@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SMECountry;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSMECountryAPIRequest extends APIRequest
+class CreateSMECountryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

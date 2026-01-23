@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BankReconciliation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBankReconciliationAPIRequest extends APIRequest
+class UpdateBankReconciliationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

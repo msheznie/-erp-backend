@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PaymentBankTransfer;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePaymentBankTransferAPIRequest extends APIRequest
+class UpdatePaymentBankTransferAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

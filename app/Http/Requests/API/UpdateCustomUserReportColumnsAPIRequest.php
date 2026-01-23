@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomUserReportColumns;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCustomUserReportColumnsAPIRequest extends APIRequest
+class UpdateCustomUserReportColumnsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

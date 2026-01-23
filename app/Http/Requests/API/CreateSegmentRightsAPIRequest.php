@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SegmentRights;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSegmentRightsAPIRequest extends APIRequest
+class CreateSegmentRightsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

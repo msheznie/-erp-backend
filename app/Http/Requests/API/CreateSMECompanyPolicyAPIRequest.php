@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SMECompanyPolicy;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSMECompanyPolicyAPIRequest extends APIRequest
+class CreateSMECompanyPolicyAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

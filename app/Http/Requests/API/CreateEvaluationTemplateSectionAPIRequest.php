@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\EvaluationTemplateSection;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateEvaluationTemplateSectionAPIRequest extends APIRequest
+class CreateEvaluationTemplateSectionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PricingScheduleDetailEditLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePricingScheduleDetailEditLogAPIRequest extends APIRequest
+class UpdatePricingScheduleDetailEditLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

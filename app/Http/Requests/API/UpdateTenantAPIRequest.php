@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Tenant;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTenantAPIRequest extends APIRequest
+class UpdateTenantAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSSOURCECustomerMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePOSSOURCECustomerMasterAPIRequest extends APIRequest
+class UpdatePOSSOURCECustomerMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

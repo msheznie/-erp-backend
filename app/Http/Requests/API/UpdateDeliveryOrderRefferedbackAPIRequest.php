@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DeliveryOrderRefferedback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDeliveryOrderRefferedbackAPIRequest extends APIRequest
+class UpdateDeliveryOrderRefferedbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

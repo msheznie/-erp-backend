@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CompanyDocumentAttachment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCompanyDocumentAttachmentAPIRequest extends APIRequest
+class CreateCompanyDocumentAttachmentAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

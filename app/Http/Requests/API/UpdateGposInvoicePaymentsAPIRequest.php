@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\GposInvoicePayments;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateGposInvoicePaymentsAPIRequest extends APIRequest
+class UpdateGposInvoicePaymentsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

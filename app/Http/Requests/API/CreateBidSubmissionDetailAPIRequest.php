@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BidSubmissionDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBidSubmissionDetailAPIRequest extends APIRequest
+class CreateBidSubmissionDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

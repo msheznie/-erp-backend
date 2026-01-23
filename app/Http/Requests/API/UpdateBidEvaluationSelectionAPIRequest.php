@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BidEvaluationSelection;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBidEvaluationSelectionAPIRequest extends APIRequest
+class UpdateBidEvaluationSelectionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

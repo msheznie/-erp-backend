@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\MaterielRequestDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateMaterielRequestDetailsAPIRequest extends APIRequest
+class CreateMaterielRequestDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

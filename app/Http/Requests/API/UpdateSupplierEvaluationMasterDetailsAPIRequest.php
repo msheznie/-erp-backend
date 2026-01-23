@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierEvaluationMasterDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSupplierEvaluationMasterDetailsAPIRequest extends APIRequest
+class UpdateSupplierEvaluationMasterDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

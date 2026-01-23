@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\GrvTypeLanguage;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateGrvTypeLanguageAPIRequest extends APIRequest
+class CreateGrvTypeLanguageAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BidMainWork;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBidMainWorkAPIRequest extends APIRequest
+class UpdateBidMainWorkAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

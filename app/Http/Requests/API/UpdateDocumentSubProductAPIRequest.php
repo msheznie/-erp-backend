@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DocumentSubProduct;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDocumentSubProductAPIRequest extends APIRequest
+class UpdateDocumentSubProductAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

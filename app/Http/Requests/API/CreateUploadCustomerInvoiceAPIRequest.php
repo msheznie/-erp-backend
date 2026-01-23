@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\UploadCustomerInvoice;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateUploadCustomerInvoiceAPIRequest extends APIRequest
+class CreateUploadCustomerInvoiceAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

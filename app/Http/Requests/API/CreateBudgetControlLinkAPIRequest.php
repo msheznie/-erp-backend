@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BudgetControlLink;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBudgetControlLinkAPIRequest extends APIRequest
+class CreateBudgetControlLinkAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

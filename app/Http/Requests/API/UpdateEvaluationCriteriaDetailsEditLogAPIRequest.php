@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\EvaluationCriteriaDetailsEditLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateEvaluationCriteriaDetailsEditLogAPIRequest extends APIRequest
+class UpdateEvaluationCriteriaDetailsEditLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

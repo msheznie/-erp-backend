@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CompanyPolicyMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCompanyPolicyMasterAPIRequest extends APIRequest
+class UpdateCompanyPolicyMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

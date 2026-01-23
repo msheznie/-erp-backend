@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AccountsType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateAccountsTypeAPIRequest extends APIRequest
+class CreateAccountsTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

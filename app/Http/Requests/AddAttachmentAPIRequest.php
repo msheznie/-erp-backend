@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class AddAttachmentAPIRequest extends APIRequest
+class AddAttachmentAPIRequest extends FormRequest
 {
     public function authorize()
     {

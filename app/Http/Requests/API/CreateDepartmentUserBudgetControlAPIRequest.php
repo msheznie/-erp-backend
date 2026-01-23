@@ -1,8 +1,8 @@
 <?php
 namespace App\Http\Requests\API;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDepartmentUserBudgetControlAPIRequest extends APIRequest
+class CreateDepartmentUserBudgetControlAPIRequest extends FormRequest
 {
     public function authorize()
     {

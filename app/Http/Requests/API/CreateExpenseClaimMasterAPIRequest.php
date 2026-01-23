@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ExpenseClaimMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateExpenseClaimMasterAPIRequest extends APIRequest
+class CreateExpenseClaimMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

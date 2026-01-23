@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\MolContribution;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateMolContributionAPIRequest extends APIRequest
+class UpdateMolContributionAPIRequest extends FormRequest
 {
     public function authorize()
     {

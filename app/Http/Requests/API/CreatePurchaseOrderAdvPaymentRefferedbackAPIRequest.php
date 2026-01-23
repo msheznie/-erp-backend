@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PurchaseOrderAdvPaymentRefferedback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePurchaseOrderAdvPaymentRefferedbackAPIRequest extends APIRequest
+class CreatePurchaseOrderAdvPaymentRefferedbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

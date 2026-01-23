@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderSiteVisitDates;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTenderSiteVisitDatesAPIRequest extends APIRequest
+class UpdateTenderSiteVisitDatesAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

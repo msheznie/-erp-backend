@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Alert;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateAlertAPIRequest extends APIRequest
+class CreateAlertAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

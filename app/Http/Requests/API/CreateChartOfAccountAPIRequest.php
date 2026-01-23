@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ChartOfAccount;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateChartOfAccountAPIRequest extends APIRequest
+class CreateChartOfAccountAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

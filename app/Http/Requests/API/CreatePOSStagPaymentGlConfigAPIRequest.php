@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSStagPaymentGlConfig;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSStagPaymentGlConfigAPIRequest extends APIRequest
+class CreatePOSStagPaymentGlConfigAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

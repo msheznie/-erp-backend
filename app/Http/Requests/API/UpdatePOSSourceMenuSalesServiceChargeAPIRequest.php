@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSSourceMenuSalesServiceCharge;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePOSSourceMenuSalesServiceChargeAPIRequest extends APIRequest
+class UpdatePOSSourceMenuSalesServiceChargeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PoCategory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePoCategoryAPIRequest extends APIRequest
+class UpdatePoCategoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

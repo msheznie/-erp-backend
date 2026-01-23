@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DeliveryOrderDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDeliveryOrderDetailAPIRequest extends APIRequest
+class CreateDeliveryOrderDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

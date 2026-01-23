@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderBudgetItemEditLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateTenderBudgetItemEditLogAPIRequest extends APIRequest
+class CreateTenderBudgetItemEditLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

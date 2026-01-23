@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Priority;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePriorityAPIRequest extends APIRequest
+class CreatePriorityAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

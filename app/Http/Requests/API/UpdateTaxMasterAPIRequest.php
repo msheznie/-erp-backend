@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TaxMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTaxMasterAPIRequest extends APIRequest
+class UpdateTaxMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

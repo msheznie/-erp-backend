@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ItemMasterRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateItemMasterRefferedBackAPIRequest extends APIRequest
+class CreateItemMasterRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ProcumentActivityEditLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateProcumentActivityEditLogAPIRequest extends APIRequest
+class CreateProcumentActivityEditLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

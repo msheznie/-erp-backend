@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ERPAssetTransferDetailsRefferedback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateERPAssetTransferDetailsRefferedbackAPIRequest extends APIRequest
+class CreateERPAssetTransferDetailsRefferedbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

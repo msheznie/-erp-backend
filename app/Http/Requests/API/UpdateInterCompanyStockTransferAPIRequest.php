@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\InterCompanyStockTransfer;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateInterCompanyStockTransferAPIRequest extends APIRequest
+class UpdateInterCompanyStockTransferAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

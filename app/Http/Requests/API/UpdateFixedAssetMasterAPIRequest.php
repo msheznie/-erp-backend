@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FixedAssetMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateFixedAssetMasterAPIRequest extends APIRequest
+class UpdateFixedAssetMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

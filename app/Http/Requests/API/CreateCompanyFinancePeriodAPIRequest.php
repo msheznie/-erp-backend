@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CompanyFinancePeriod;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCompanyFinancePeriodAPIRequest extends APIRequest
+class CreateCompanyFinancePeriodAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

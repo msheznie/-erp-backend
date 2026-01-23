@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DocumentRestrictionAssign;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDocumentRestrictionAssignAPIRequest extends APIRequest
+class UpdateDocumentRestrictionAssignAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

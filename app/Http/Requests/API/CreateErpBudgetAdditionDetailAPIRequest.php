@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ErpBudgetAdditionDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateErpBudgetAdditionDetailAPIRequest extends APIRequest
+class CreateErpBudgetAdditionDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

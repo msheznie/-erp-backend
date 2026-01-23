@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BankMemoSupplier;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBankMemoSupplierAPIRequest extends APIRequest
+class CreateBankMemoSupplierAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

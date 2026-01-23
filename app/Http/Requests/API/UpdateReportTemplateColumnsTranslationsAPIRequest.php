@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ReportTemplateColumnsTranslations;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateReportTemplateColumnsTranslationsAPIRequest extends APIRequest
+class UpdateReportTemplateColumnsTranslationsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

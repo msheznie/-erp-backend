@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerReceivePaymentDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCustomerReceivePaymentDetailAPIRequest extends APIRequest
+class UpdateCustomerReceivePaymentDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

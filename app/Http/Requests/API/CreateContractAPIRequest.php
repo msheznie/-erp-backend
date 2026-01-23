@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Contract;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateContractAPIRequest extends APIRequest
+class CreateContractAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerCurrency;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomerCurrencyAPIRequest extends APIRequest
+class CreateCustomerCurrencyAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

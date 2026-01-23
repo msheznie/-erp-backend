@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerReceivePaymentRefferedHistory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomerReceivePaymentRefferedHistoryAPIRequest extends APIRequest
+class CreateCustomerReceivePaymentRefferedHistoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

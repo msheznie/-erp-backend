@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PosStagMenuCategory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePosStagMenuCategoryAPIRequest extends APIRequest
+class CreatePosStagMenuCategoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
