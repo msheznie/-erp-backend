@@ -1526,11 +1526,14 @@ class SupplierMasterAPIController extends AppBaseController
             ->groupBy('itemCodeSystem')
             ->get();
 
+        $contractEnablePolicy = Helper::checkPolicy($companyId, 93);    
+
         $output = array(
             'suppliers' => $supplierMaster,
             'items' => $items,
             'companyName' => $companyName,
-            'currencyName' => $currencyName
+            'currencyName' => $currencyName,
+            'contractEnablePolicy' => $contractEnablePolicy
         );
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }

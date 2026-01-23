@@ -34,6 +34,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use Illuminate\Support\Facades\Log;
 class ReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -1484,7 +1485,10 @@ class ReportAPIController extends AppBaseController
         $items = (array)$input['items'];
         $items = collect($items)->pluck('itemCodeSystem');
 
-        $contractName = isset($input['contractName']) ? $input['contractName'] : '';
+        $contracts = isset($input['contracts']) && !empty($input['contracts']) ? (array)$input['contracts'] : [];
+        if (!empty($contracts)) {
+            $contracts = collect($contracts)->pluck('id')->toArray();
+        }
 
 
         $query1 = DB::table('erp_grvdetails as grvd')
@@ -1518,6 +1522,8 @@ class ReportAPIController extends AppBaseController
                 'grvd.VATAmount',
                 'grvd.VATPercentage',
                 'det2.supplierInvoAmount',
+                DB::raw('NULL as contractID'),
+                DB::raw('NULL as contractDescription'),
                 DB::raw('CASE 
                     WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
                     THEN det2.supplierInvoAmount
@@ -1585,6 +1591,8 @@ class ReportAPIController extends AppBaseController
                 'items.VATAmount',
                 'items.VATAmount',
                 'items.VATAmount',
+                DB::raw('NULL as contractID'),
+                DB::raw('NULL as contractDescription'),
                 DB::raw('CASE 
                     WHEN vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
                     THEN (items.noQty * items.unitCost + items.noQty * COALESCE(items.VATAmount, 0))
@@ -1645,6 +1653,8 @@ class ReportAPIController extends AppBaseController
                 'grvd.VATAmount',
                 'pod.VATPercentage',
                 'det2.supplierInvoAmount',
+                'pod.contractID',
+                'pod.contractDescription',
                 DB::raw('CASE 
                     WHEN det2.supplierInvoAmount IS NOT NULL AND vat_sub.expenseGL IS NULL AND vat_sub.subCatgeoryType = 3 AND vat_sub.isActive = 1 AND tax_master.companySystemID = master.companySystemID 
                     THEN det2.supplierInvoAmount
@@ -1679,13 +1689,23 @@ class ReportAPIController extends AppBaseController
             ->whereIn('master.supplierID', $suppliers)
             ->whereBetween(DB::raw("DATE(master.bookingDate)"), array($startDate, $endDate))
             ->whereIn('grvd.itemCode', $items);
-			
-      
-        $bindings = array_merge($query1->getBindings(), $query2->getBindings(), $query3->getBindings());
         
-        $unionSql = "({$query1->toSql()} UNION ALL {$query2->toSql()} UNION ALL {$query3->toSql()}) as icv_report";
+        if (!empty($contracts)) {
+            $query3->whereIn('pod.contractID', $contracts);
+            $bindings = $query3->getBindings();
+            $unionSql = "({$query3->toSql()}) as icv_report";
+        } else {
+            $bindings = array_merge($query1->getBindings(), $query2->getBindings(), $query3->getBindings());
+            $unionSql = "({$query1->toSql()} UNION ALL {$query2->toSql()} UNION ALL {$query3->toSql()}) as icv_report";
+        }
         
-        return DB::table(DB::raw($unionSql))->setBindings($bindings);
+        $result = DB::table(DB::raw($unionSql))->setBindings($bindings);
+        
+        if (!empty($contracts)) {
+            $result->whereIn('contractID', $contracts);
+        }
+        
+        return $result;
     }
 
 }
