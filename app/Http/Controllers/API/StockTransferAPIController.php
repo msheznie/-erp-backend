@@ -58,6 +58,7 @@ use App\helper\ItemTracking;
 use App\Models\ItemMaster;
 use App\Models\UnitConversion;
 use App\Models\Unit;
+use Illuminate\Support\Arr;
 /**
  * Class StockTransferController
  * @package App\Http\Controllers\API
@@ -450,7 +451,7 @@ class StockTransferAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by','location_to_by','location_from_by','company_from','company_to']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by','location_to_by','location_from_by','company_from','company_to']);
         $input = $this->convertArrayToValue($input);
         $wareHouseFromError = array('type' => 'locationFrom');
         $wareHouseToError   = array('type' => 'locationTo');

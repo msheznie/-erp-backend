@@ -13,6 +13,7 @@ use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class TaxVatMainCategoriesController
@@ -228,7 +229,7 @@ class TaxVatMainCategoriesAPIController extends AppBaseController
     public function update($id, UpdateTaxVatMainCategoriesAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['tax']);
+        $input = Arr::except($input,['tax']);
         /** @var TaxVatMainCategories $taxVatMainCategories */
         $taxVatMainCategories = $this->taxVatMainCategoriesRepository->findWithoutFail($id);
 

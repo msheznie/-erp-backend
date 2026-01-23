@@ -49,6 +49,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 use Response;
 
@@ -716,7 +717,7 @@ class ExpenseClaimAPIController extends AppBaseController
                 $data[$key] = $claim;
                 $data[$key]['total_amount']=$claim->details->sum('amount');
                 $data[$key]['currency']=$currency;
-                $data[$key] = array_except($data[$key] ,['details']);
+                $data[$key] = Arr::except($data[$key] ,['details']);
             }
             $paginate['data'] = $data;
         }

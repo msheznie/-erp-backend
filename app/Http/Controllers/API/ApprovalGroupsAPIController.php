@@ -25,6 +25,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ApprovalGroupsController
@@ -68,7 +69,7 @@ class ApprovalGroupsAPIController extends AppBaseController
     public function store(CreateApprovalGroupsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'document');
+        $input = Arr::except($input,'document');
         $input = $this->convertArrayToValue($input);
         $document = DocumentMaster::find($input["documentSystemID"]);
         $approvalGroups = "";

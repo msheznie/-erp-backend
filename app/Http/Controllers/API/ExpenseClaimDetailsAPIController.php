@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ExpenseClaimDetailsController
@@ -240,7 +241,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function update($id, UpdateExpenseClaimDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'chart_of_account', 'currency', 'category', 'local_currency']);
+        $input = Arr::except($input, ['segment', 'chart_of_account', 'currency', 'category', 'local_currency']);
         $input = $this->convertArrayToValue($input);
         $validator = \Validator::make($input, [
             'expenseClaimCategoriesAutoID' => 'required'

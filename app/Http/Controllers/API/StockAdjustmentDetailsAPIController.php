@@ -29,6 +29,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class StockAdjustmentDetailsController
@@ -376,7 +377,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockAdjustmentDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['uom', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($input, ['uom', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToValue($input);
         /** @var StockAdjustmentDetails $stockAdjustmentDetails */
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->findWithoutFail($id);

@@ -65,6 +65,7 @@ use App\helper\CreateExcel;
 use App\Jobs\DocumentAttachments\CustomerStatementJob;
 use App\Models\CustomerMasterCategoryAssigned;
 use App\Jobs\Report\AccountsReceivablePdfJob;
+use Illuminate\Support\Str;
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -3512,7 +3513,7 @@ WHERE
 
 
         $output = collect($output)->filter(function ($item) {
-            return !str_contains($item->DocumentNarration, 'Matching');
+            return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
         $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
@@ -4015,7 +4016,7 @@ WHERE
         $output = \DB::select($query);
 
         $output = collect($output)->filter(function ($item) {
-            return !str_contains($item->DocumentNarration, 'Matching');
+            return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
         $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
@@ -4497,7 +4498,7 @@ WHERE
 
 
         $output = collect($output)->filter(function ($item) {
-            return !str_contains($item->DocumentNarration, 'Matching');
+            return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
         $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);

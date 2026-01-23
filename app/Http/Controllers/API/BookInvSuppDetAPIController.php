@@ -42,6 +42,7 @@ use App\helper\TaxService;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 /**
  * Class BookInvSuppDetController
  * @package App\Http\Controllers\API
@@ -242,7 +243,7 @@ class BookInvSuppDetAPIController extends AppBaseController
      */
     public function update($id, UpdateBookInvSuppDetAPIRequest $request)
     {
-        $input = array_except($request->all(), ['grvmaster', 'pomaster']);
+        $input = Arr::except($request->all(), ['grvmaster', 'pomaster']);
         $input = $this->convertArrayToValue($input);
 
         $result = $this->updateDetail($input, $id);

@@ -26,6 +26,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use Illuminate\Support\Arr;
 /**
  * Class ItemAssignedController
  * @package App\Http\Controllers\API
@@ -73,7 +74,7 @@ class ItemAssignedAPIController extends AppBaseController
         $companies = $input['companySystemID'];
         unset($input['companySystemID']);
         unset($input['specification']);
-        $input = array_except($input,['finance_sub_category']);
+        $input = Arr::except($input,['finance_sub_category']);
         unset($input['company']);
         unset($input['final_approved_by']);
 
@@ -175,7 +176,7 @@ class ItemAssignedAPIController extends AppBaseController
      */
     public function update($id, UpdateItemAssignedAPIRequest $request)
     {
-        $input = array_except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToSelectedValue($input,['itemMovementCategory']);
 
         /** @var ItemAssigned $itemAssigned */

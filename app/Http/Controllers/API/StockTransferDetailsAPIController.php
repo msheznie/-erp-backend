@@ -41,6 +41,7 @@ use Response;
 use App\helper\ItemTracking;
 use App\Models\ItemMaster;
 use App\Models\UnitConversion;
+use Illuminate\Support\Arr;
 /**
  * Class StockTransferDetailsController
  * @package App\Http\Controllers\API
@@ -143,7 +144,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $input = array_except($request->all(), 'unit_by');
+        $input = Arr::except($request->all(), 'unit_by');
         $input = $this->convertArrayToValue($input);
 
         $companySystemID = $input['companySystemID'];
@@ -509,7 +510,7 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $input = array_except($request->all(), ['unit_by','item_by']);
+        $input = Arr::except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
 

@@ -76,6 +76,7 @@ use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
+use Illuminate\Support\Arr;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 use App\Models\ErpItemLedger;
@@ -424,7 +425,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $api_key = $request['api_key'];
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by','api_key']);
 
         $input = $this->convertArrayToValue($input);

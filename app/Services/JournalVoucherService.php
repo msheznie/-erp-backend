@@ -28,6 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class JournalVoucherService
 {
@@ -714,7 +715,7 @@ class JournalVoucherService
         }
 
 
-        JvDetail::where('jvDetailAutoID', $id)->update(array_except($input, ['isAutoCreateDocument']));
+        JvDetail::where('jvDetailAutoID', $id)->update(Arr::except($input, ['isAutoCreateDocument']));
         return [
             "status" => true,
             'message' =>  trans('custom.jv_detail_updated_successfully'),

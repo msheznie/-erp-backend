@@ -34,6 +34,7 @@ use Response;
 use Carbon\Carbon;
 use App\Models\SupplierGroup;
 use App\Models\SupplierMaster;
+use Illuminate\Support\Arr;
 
 /**
  * Class DashboardWidgetMasterController
@@ -247,7 +248,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
     public function update($id, UpdateDashboardWidgetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'department');
+        $input = Arr::except($input,'department');
         $input = $this->convertArrayToSelectedValue($input, array('departmentID'));
 //        $validator = \Validator::make($input, [
 //            'WidgetMasterName' => 'required',

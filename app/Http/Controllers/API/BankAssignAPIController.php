@@ -27,6 +27,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Arr;
 
 /**
  * Class BankAssignController
@@ -86,7 +87,7 @@ class BankAssignAPIController extends AppBaseController
             $input['isActive']   = 1;
             $input['isDefault']  = 0;
 
-            $data = array_except($input, ['isEdit', 'TimeStamp']);
+            $data = Arr::except($input, ['isEdit', 'TimeStamp']);
 
             $bankAssigns = $this->bankAssignRepository->create($data);
         }

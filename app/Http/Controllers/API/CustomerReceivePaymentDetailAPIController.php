@@ -40,6 +40,7 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\TaxVatCategories;
 use App\Models\CustomerInvoiceItemDetails;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerReceivePaymentDetailController
@@ -906,7 +907,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if (isset($input['ar_data'])) {
             unset($input['ar_data']);
         }
-        $input = array_except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType','exempt_vat_portion']);
+        $input = Arr::except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType','exempt_vat_portion']);
         $input = $this->convertArrayToValue($input);
 
 

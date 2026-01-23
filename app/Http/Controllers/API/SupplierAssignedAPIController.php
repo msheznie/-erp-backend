@@ -25,6 +25,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class SupplierAssignedController
@@ -81,7 +82,7 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['masterIsMarkupPercentage']);
         unset( $input['isEEOSSPolicy']);
 
-        $input = array_except($input, ['final_approved_by','company']);
+        $input = Arr::except($input, ['final_approved_by','company']);
 
         $input = $this->convertArrayToValue($input);
         foreach($companies as $companie)

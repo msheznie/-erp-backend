@@ -92,6 +92,7 @@ use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use Illuminate\Support\Arr;
 
 /**
  * Class GRVMasterController
@@ -362,7 +363,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by', 'supplier_by', 'currency_by']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by', 'supplier_by', 'currency_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */

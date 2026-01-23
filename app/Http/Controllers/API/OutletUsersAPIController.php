@@ -23,6 +23,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class OutletUsersController
@@ -276,7 +277,7 @@ class OutletUsersAPIController extends AppBaseController
     public function update($id, UpdateOutletUsersAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['employee']);
+        $input = Arr::except($input, ['employee']);
         $input = $this->convertArrayToValue($input);
         $messages = array(
             'wareHouseCode.required' => 'The Outlet field is required.',

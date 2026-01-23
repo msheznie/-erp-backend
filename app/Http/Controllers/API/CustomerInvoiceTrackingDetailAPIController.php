@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceTrackingDetailController
@@ -219,7 +220,7 @@ class CustomerInvoiceTrackingDetailAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceTrackingDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['approved_by','rejected_by']);
+        $input = Arr::except($input, ['approved_by','rejected_by']);
         if(isset($input['customerApprovedByDate'])){
             $input['customerApprovedByDate'] = Carbon::parse($input['customerApprovedByDate'])->format('Y-m-d H:i:s');
             $input['customerApprovedDate'] = $input['customerApprovedByDate'];

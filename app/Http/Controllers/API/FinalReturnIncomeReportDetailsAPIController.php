@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class FinalReturnIncomeReportDetailsController
@@ -230,7 +231,7 @@ class FinalReturnIncomeReportDetailsAPIController extends AppBaseController
     public function update($id, UpdateFinalReturnIncomeReportDetailsAPIRequest $request)
     {
         $input = $request->all();
-         $input = $this->convertArrayToValue(array_except($input, 'template_detail'));
+         $input = $this->convertArrayToValue(Arr::except($input, 'template_detail'));
 
         /** @var FinalReturnIncomeReportDetails $finalReturnIncomeReportDetails */
         $finalReturnIncomeReportDetails = $this->finalReturnIncomeReportDetailsRepository->findWithoutFail($id);

@@ -30,6 +30,7 @@ use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\BankAccount;
+use Illuminate\Support\Arr;
 /**
  * Class AdvancePaymentDetailsController
  * @package App\Http\Controllers\API
@@ -240,7 +241,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $updateKey =isset($input['updateKey']) ? $input['updateKey'] : '';
-            $input = array_except($input, ['purchaseorder_by', 'subCategoryArray', 'advancepaymentmaster']);
+            $input = Arr::except($input, ['purchaseorder_by', 'subCategoryArray', 'advancepaymentmaster']);
             $input = $this->convertArrayToValue($input);
 
             /** @var AdvancePaymentDetails $advancePaymentDetails */

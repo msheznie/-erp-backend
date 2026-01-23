@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
+use Illuminate\Support\Arr;
 
 
 
@@ -1183,7 +1184,7 @@ class CashFlowReportAPIController extends AppBaseController
 
     public function cashFlowConfirmation(Request $request){
         $input = $request->reportData;
-        $input = array_except($input, ['finance_year_by','template','confirmed_by']);
+        $input = Arr::except($input, ['finance_year_by','template','confirmed_by']);
         $input['confirmed_by'] = \Helper::getEmployeeSystemID();
         $input['confirmed_date'] = now();
         $cashFlowReport = $this->cashFlowReportRepository->update($input, $input['id']);

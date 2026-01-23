@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class SalesOrderAdvPaymentController
@@ -120,7 +121,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['timestamp']);
+        $input = Arr::except($input, ['timestamp']);
         $input = $this->convertArrayToValue($input);
         $input['soID'] = isset($input['soID']) ? $input['soID'] : 0;
         $user = Helper::getEmployeeInfo();

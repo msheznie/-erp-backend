@@ -36,6 +36,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class BudgetTransferFormDetailController
@@ -138,7 +139,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $input = $request->all();
         $budgetTransferToData = isset($input['budgetTransferToData']) ? $input['budgetTransferToData'] : [];
 
-        $input = $this->convertArrayToValue(array_except($input, 'budgetTransferToData'));
+        $input = $this->convertArrayToValue(Arr::except($input, 'budgetTransferToData'));
         $validator = \Validator::make($input, [
             'budgetTransferFormAutoID' => 'required',
             'fromServiceLineSystemID' => 'required|numeric|min:1',

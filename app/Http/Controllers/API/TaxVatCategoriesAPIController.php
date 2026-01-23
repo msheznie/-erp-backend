@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class TaxVatCategoriesController
@@ -346,7 +347,7 @@ class TaxVatCategoriesAPIController extends AppBaseController
     public function update($id, UpdateTaxVatCategoriesAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['main','tax','created_by', 'Actions', 'type', 'DT_Row_Index']);
+        $input = Arr::except($input,['main','tax','created_by', 'Actions', 'type', 'DT_Row_Index']);
         $input = $this->convertArrayToSelectedValue($input, array('applicableOn', 'mainCategory', 'subCatgeoryType', 'recordType', 'expenseGL'));
 
         $input['expenseGL'] = ($input['recordType'] == 1) ? $input['expenseGL'] : null;

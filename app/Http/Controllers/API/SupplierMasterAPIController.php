@@ -90,6 +90,7 @@ use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
 use App\helper\CheckPendingDoc;
+use Illuminate\Support\Arr;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -898,7 +899,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
-        $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
+        $input = $this->convertArrayToValue(Arr::except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
         $id = $input['supplierCodeSystem'];
 
@@ -965,7 +966,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
-        $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
+        $input = Arr::except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by','companySystemID']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
@@ -1617,7 +1618,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $supplierArray = $supplier->toArray();
-        $supplierArray = array_except($supplierArray,['isSUPDAmendAccess']);
+        $supplierArray = Arr::except($supplierArray,['isSUPDAmendAccess']);
         $storeHistory = SupplierMasterRefferedBack::insert($supplierArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -2587,7 +2588,7 @@ class SupplierMasterAPIController extends AppBaseController
         $id = $input['id'];
         $isDelete = $input['isDelete'];
         $isEdit = $input['isEdit'];
-        $input = array_except($input, ['isDelete', 'id','isEdit']);
+        $input = Arr::except($input, ['isDelete', 'id','isEdit']);
         $PO = [];
         $SI = [];
         $PV= [];

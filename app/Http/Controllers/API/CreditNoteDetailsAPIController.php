@@ -18,6 +18,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CreditNoteDetailsController
@@ -398,10 +399,10 @@ class CreditNoteDetailsAPIController extends AppBaseController
     public function updateCreditNote(Request $request)
     {
         $input = $request->all();
-        $input=array_except($input, array('segment', 'subCategoryArray', 'subCatgeoryType', 'exempt_vat_portion'));
+        $input=Arr::except($input, array('segment', 'subCategoryArray', 'subCatgeoryType', 'exempt_vat_portion'));
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
-        array_except($input, 'creditNoteDetailsID');
+        Arr::except($input, 'creditNoteDetailsID');
 
         $companyId = $input['companySystemID'] ?? null;
         $currencyId = $input['customerCurrencyID'] ?? null;

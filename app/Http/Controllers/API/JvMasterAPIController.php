@@ -70,6 +70,7 @@ use App\helper\Helper;
 use App\Models\ErpProjectMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use Illuminate\Support\Arr;
 
 /**
  * Class JvMasterController
@@ -330,7 +331,7 @@ class JvMasterAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
         $input = $this->convertArrayToValue($input);
 
@@ -1410,7 +1411,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         try {
             $input = $request->all();
             $excelUpload = $input['assetExcelUpload'];
-            $input = array_except($request->all(), 'assetExcelUpload');
+            $input = Arr::except($request->all(), 'assetExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

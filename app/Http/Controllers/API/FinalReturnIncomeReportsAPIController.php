@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class FinalReturnIncomeReportsController
@@ -471,7 +472,7 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
     public function confirmReturnIncomeReport(Request $request) {
         $input = $request->master;
        
-        $input = array_except($input, ['finance_year_by','template','confirmed_by']);
+        $input = Arr::except($input, ['finance_year_by','template','confirmed_by']);
 
         if($input['confirmedYN'] == 1) {
             $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();

@@ -15,6 +15,7 @@ use App\Models\SupplierEvaluationTemplateSectionTable;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class SupplierEvaluationTemplateController
@@ -276,7 +277,7 @@ class SupplierEvaluationTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = array_except($input, ['company']);
+        $input = Arr::except($input, ['company']);
         
         $input = $this->convertArrayToValue($input);
 

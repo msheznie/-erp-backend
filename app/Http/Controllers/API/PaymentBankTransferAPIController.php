@@ -43,6 +43,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Maatwebsite\Excel\Facades\Excel;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class PaymentBankTransferController
@@ -373,7 +374,7 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function update($id, UpdatePaymentBankTransferAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
             'confirmed_by', 'confirmedByEmpSystemID']);
 
         /** @var PaymentBankTransfer $paymentBankTransfer */

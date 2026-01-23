@@ -15,6 +15,7 @@ use App\Models\DirectReceiptDetail;
 use App\Models\SegmentMaster;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 class CustomerReceivePaymentService
 {
@@ -236,7 +237,7 @@ class CustomerReceivePaymentService
         if ($input['documentType'] == 14) {
             /* Direct Invoice*/
             if($input['payeeTypeID'] != 1){
-                $input = array_except($input, 'customerID');
+                $input = Arr::except($input, 'customerID');
             }
         }
         if(isset($input['employeeID'])){

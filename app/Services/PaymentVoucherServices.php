@@ -46,6 +46,7 @@ use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class PaymentVoucherServices
 {
@@ -2484,7 +2485,7 @@ class PaymentVoucherServices
     }
 
     public static function updateDirectPaymentDetails($id, $input): array {
-        $input = array_except($input, ['segment', 'chartofaccount','to_bank']);
+        $input = Arr::except($input, ['segment', 'chartofaccount','to_bank']);
         $serviceLineError = array('type' => 'serviceLine');
 
         $directPaymentDetails = DirectPaymentDetails::find($id);
@@ -2779,7 +2780,7 @@ class PaymentVoucherServices
             $input['exempt_vat_portion']
         );
 
-        DirectPaymentDetails::where('directPaymentDetailsID',$id)->update(array_except($input, ['isAutoCreateDocument']));
+        DirectPaymentDetails::where('directPaymentDetailsID',$id)->update(Arr::except($input, ['isAutoCreateDocument']));
 
         // update master table
         PaySupplier::updateMaster($input['directPaymentAutoID']);

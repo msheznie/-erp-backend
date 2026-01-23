@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SegmentMaster;
 use App\Jobs\PrBulkBulkItem;
+use Illuminate\Support\Arr;
 /**
  * Class PurchaseRequestDetailsController
  * @package App\Http\Controllers\API
@@ -112,7 +113,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      */
     public function store(CreatePurchaseRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'uom');
+        $input = Arr::except($request->all(), 'uom');
         $input = $this->convertArrayToValue($input);
 
 
@@ -893,7 +894,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdatePurchaseRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'uom');
+        $input = Arr::except($request->all(), 'uom');
         
         $input = $this->convertArrayToValue($input);
 
@@ -1179,7 +1180,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

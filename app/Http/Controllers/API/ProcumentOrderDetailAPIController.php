@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ProcumentOrderDetailController
@@ -91,7 +92,7 @@ class ProcumentOrderDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateProcumentOrderDetailAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit');
+        $input = Arr::except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
         /** @var ProcumentOrderDetail $procumentOrderDetail */

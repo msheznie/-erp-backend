@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Auth;
 use App\helper\Helper;
 use App\helper\CreateExcel;
 use App\Models\Company;
+use Illuminate\Support\Arr;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -90,7 +91,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
     public function store(CreatePoAdvancePaymentAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['timestamp']);
+        $input = Arr::except($input, ['timestamp']);
         $input = $this->convertArrayToValue($input);
 
         $id = Auth::id();

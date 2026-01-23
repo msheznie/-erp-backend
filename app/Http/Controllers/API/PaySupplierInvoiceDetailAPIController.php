@@ -47,6 +47,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\CurrencyMaster;
+use Illuminate\Support\Arr;
 
 
 /**
@@ -1931,7 +1932,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $id = $input['id'];
 
-        $input = array_except($input, ['id']);
+        $input = Arr::except($input, ['id']);
 
         $detail = PaymentVoucherBankChargeDetails::where('id', $id)->first();
 

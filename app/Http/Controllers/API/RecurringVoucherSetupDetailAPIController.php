@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class RecurringVoucherSetupDetailController
@@ -280,7 +281,7 @@ class RecurringVoucherSetupDetailAPIController extends AppBaseController
     public function update($id, UpdateRecurringVoucherSetupDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by', 'chartofaccount']);
+        $input = Arr::except($input, ['segment', 'currency_by', 'chartofaccount']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 

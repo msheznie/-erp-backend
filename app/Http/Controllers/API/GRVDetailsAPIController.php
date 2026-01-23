@@ -61,6 +61,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class GRVDetailsController
@@ -154,7 +155,7 @@ class GRVDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
-            $input = array_except($input, ['unit', 'po_master', 'prn_master', 'item_by']);
+            $input = Arr::except($input, ['unit', 'po_master', 'prn_master', 'item_by']);
             $input = $this->convertArrayToValue($input);
 
             //$empInfo = self::getEmployeeInfo();
@@ -1527,7 +1528,7 @@ class GRVDetailsAPIController extends AppBaseController
     public function updateGRVDetailsDirect(Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['unit', 'po_master', 'item_by', 'vat_sub_category']);
+        $input = Arr::except($input, ['unit', 'po_master', 'item_by', 'vat_sub_category']);
         $input = $this->convertArrayToValue($input);
 
         $id=$input['grvDetailsID'];

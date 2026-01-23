@@ -44,6 +44,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 class CreateCreditNote implements ShouldQueue
 {
@@ -150,7 +151,7 @@ class CreateCreditNote implements ShouldQueue
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
-                $masterDatasets[] = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                $masterDatasets[] = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
             }
             else {
                 if (empty($headerData['errors'])) {

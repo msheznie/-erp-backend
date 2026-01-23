@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class PurchaseOrderStatusController
@@ -278,7 +279,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     public function update($id, UpdatePurchaseOrderStatusAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['category']);
+        $input = Arr::except($input, ['category']);
         $input = $this->convertArrayToValue($input);
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */

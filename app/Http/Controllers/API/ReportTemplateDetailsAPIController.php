@@ -32,6 +32,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\DocumentCodeGenerate;
 use App\Models\ReportTemplateEquity;
+use Illuminate\Support\Arr;
 
 /**
  * Class ReportTemplateDetailsController
@@ -275,7 +276,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
+        $input = Arr::except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
         if (isset($input['itemType']) && ($input['itemType'] == 2 || $input['itemType'] == 1)) {

@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\DB;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Models\GRVMaster;
 use App\Models\AppointmentDetails;
+use Illuminate\Support\Arr;
 
 /**
  * Class PurchaseOrderDetailsController
@@ -291,7 +292,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $input = array_except($request->all(), 'unit');
+        $input = Arr::except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
         $itemCode = $input['itemCode'];
         $poType = $input['poTypeID'];
@@ -961,7 +962,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
     public function update($id, UpdatePurchaseOrderDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit', 'vat_sub_category');
+        $input = Arr::except($request->all(), 'unit', 'vat_sub_category');
 
         if (isset($input['vat_sub_category'])) {
             unset($input['vat_sub_category']);

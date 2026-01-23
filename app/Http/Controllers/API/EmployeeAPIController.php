@@ -56,6 +56,7 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\HrPayrollDetails;
 use App\Models\HrPayrollMaster;
+use Illuminate\Support\Arr;
 
 /**
  * Class EmployeeController
@@ -137,7 +138,7 @@ class EmployeeAPIController extends AppBaseController
     public function update($id, UpdateEmployeeAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['desi_master', 'manager', 'emp_company', 'hr_emp', 'manager_hrms']);
+        $input = Arr::except($input, ['desi_master', 'manager', 'emp_company', 'hr_emp', 'manager_hrms']);
         $input = $this->convertArrayToValue($input);
         /** @var Employee $employee */
         $employee = $this->employeeRepository->findWithoutFail($id);

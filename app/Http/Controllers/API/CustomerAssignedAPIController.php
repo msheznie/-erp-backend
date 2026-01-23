@@ -25,6 +25,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerAssignedController
@@ -77,7 +78,7 @@ class CustomerAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-        $input = array_except($input, ['final_approved_by','company', 'gl_account', 'unbilled_account']);
+        $input = Arr::except($input, ['final_approved_by','company', 'gl_account', 'unbilled_account']);
         $input = $this->convertArrayToValue($input);
 
         if( array_key_exists ('customerAssignedID' , $input )){
