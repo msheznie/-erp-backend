@@ -54,7 +54,7 @@ use App\Models\CurrencyMaster;
 use App\Models\DocumentMaster;
 use App\Models\GRVTypes;
 use App\Models\SupplierCurrency;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Carbon\Carbon;

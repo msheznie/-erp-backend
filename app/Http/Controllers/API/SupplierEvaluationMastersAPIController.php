@@ -10,7 +10,7 @@ use App\Repositories\SupplierEvaluationMastersRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\SupplierEvaluationTemplateSectionTableColumn;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

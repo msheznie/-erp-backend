@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Response;
 use Illuminate\Support\Facades\Auth;
-use InfyOm\Generator\Utils\ResponseUtil;
+use App\Utils\ResponseUtil;
 use Psr\Http\Message\ServerRequestInterface;
 use \Laravel\Passport\Http\Controllers\AccessTokenController as PassportAccessTokenController;
 use League\OAuth2\Server\Exception\OAuthServerException;

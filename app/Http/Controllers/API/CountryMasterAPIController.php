@@ -17,7 +17,7 @@ use App\Models\CountryMaster;
 use App\Repositories\CountryMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Models\SupplierMaster;
 use App\Models\SupplierCurrency;

@@ -48,7 +48,7 @@ use App\Models\BudgetTransferFormDetailRefferedBack;
 use App\Models\BudgetTransferFormRefferedBack;
 use App\Models\DocumentReferedHistory;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;

@@ -16,7 +16,7 @@ use App\Repositories\ErpBudgetAdditionDetailRepository;
 use App\Repositories\ErpBudgetAdditionRepository;
 use App\Repositories\BudjetdetailsRepository;
 use Illuminate\Http\Request;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

@@ -30,7 +30,7 @@ use App\Repositories\MonthlyAdditionsMasterRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\Calculation\Statistical\Distributions\F;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;

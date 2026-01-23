@@ -16,7 +16,7 @@ use App\Models\AssetRequest;
 use App\Models\DepartmentMaster;
 use App\Models\SMEPayAsset;
 use App\Models\FixedAssetMaster;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

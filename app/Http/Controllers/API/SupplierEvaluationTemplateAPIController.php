@@ -12,7 +12,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\EvaluationTemplateSection;
 use App\Models\SupplierEvaluationTemplateComment;
 use App\Models\SupplierEvaluationTemplateSectionTable;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;

@@ -28,7 +28,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;

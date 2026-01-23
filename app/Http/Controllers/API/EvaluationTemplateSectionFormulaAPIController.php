@@ -8,7 +8,7 @@ use App\Models\EvaluationTemplateSectionFormula;
 use App\Repositories\EvaluationTemplateSectionFormulaRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

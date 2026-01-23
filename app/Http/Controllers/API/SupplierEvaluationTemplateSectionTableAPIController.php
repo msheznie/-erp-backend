@@ -18,7 +18,7 @@ use App\Models\SupplierEvaluationTemplate;
 use App\Models\SupplierEvaluationTemplateSectionTableColumn;
 use App\Models\TemplateSectionTableRow;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

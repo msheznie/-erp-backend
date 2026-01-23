@@ -8,7 +8,7 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Routing\Controller as BaseController;
-use InfyOm\Generator\Utils\ResponseUtil;
+use App\Utils\ResponseUtil;
 use Response;
 
 

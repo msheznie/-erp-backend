@@ -43,7 +43,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\DebitNote;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\CurrencyMaster;

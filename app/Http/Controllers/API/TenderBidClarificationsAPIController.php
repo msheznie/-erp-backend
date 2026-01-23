@@ -20,7 +20,7 @@ use App\Models\Employee;
 use App\Models\TenderMaster;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
