@@ -41,8 +41,6 @@ class TriggerNotificationService extends Command
      */
     public function handle()
     {
-        Log::useFiles( NotificationService::log_file() );
-
         //$tenants = NotificationService::get_tenant_details();
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

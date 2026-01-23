@@ -46,7 +46,6 @@ class NotificationService
 
     public static function process($scenarioID){
         $log_file = self::log_file();
-        Log::useFiles($log_file);
 
         $com_assign_scenarios = NotificationService::getCompanyScenarioConfiguration($scenarioID);
         $emailContent = [];
@@ -141,7 +140,7 @@ class NotificationService
                         break;
 
                     default:
-                        Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
+                        Log::channel('notification_service')->error("Applicable category configuration not exist for scenario {$scenario_des}");
 
                         break;
                 }
@@ -182,7 +181,7 @@ class NotificationService
                             $emailContent = RolReachedNotification::getReOrderLevelReachedEmailContent($details, $notificationUserVal[$key]['empName']);
                             break;
                         default:
-                            Log::error("Email content configuration not done for scenario {$scenario_des}");
+                            Log::channel('notification_service')->error("Email content configuration not done for scenario {$scenario_des}");
                             break;
                     }
 
@@ -190,7 +189,7 @@ class NotificationService
                     $sendEmail = NotificationService::emailNotification($companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
 
                     if (!$sendEmail["success"]) {
-                        Log::error($sendEmail["message"]);
+                        Log::channel('notification_service')->error($sendEmail["message"]);
                     }
                 }
             }

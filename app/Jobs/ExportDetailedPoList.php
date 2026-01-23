@@ -48,13 +48,12 @@ class ExportDetailedPoList implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/po_detail_excel_export.log');
         CommonJobService::db_switch($db);
 
         try {
             (new ExportPODetailExcel($this->data, $this->userLang))->export();
         } catch (\Exception $e) {
-            Log::error('Export failed.', [
+            Log::channel('po_detail_excel_export')->error('Export failed.', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

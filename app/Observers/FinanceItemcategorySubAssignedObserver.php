@@ -15,7 +15,6 @@ class FinanceItemcategorySubAssignedObserver
 
     public function updated(FinanceItemcategorySubAssigned $financeItemcategorySubAssigned)
     {
-//        Log::useFiles(storage_path() . '/logs/audit.log');
 //        $updatedField = $financeItemcategorySubAssigned->getDirty();
 //        if(isset($updatedField['isAssigned'])) {
 //            $user = User::find(auth()->id());

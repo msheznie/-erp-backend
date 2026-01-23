@@ -56,7 +56,6 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
         $db = $this->dispatch_db;
         $dataEmail = $this->mailData;
 
-        Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
@@ -76,8 +75,8 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
 
         $sendEmail = \Email::sendEmailErp($dataEmail);
         if (!$sendEmail["success"]) {
-            Log::error('Error');
-            Log::error($sendEmail["message"]);
+            Log::channel('payment_released_to_supplier')->error('Error');
+            Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);
         }
     }
 }

@@ -54,9 +54,8 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/receipt_voucher_api_confirmation_logs.log');
         
-        Log::info('Processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
+        Log::channel('receipt_voucher_api_confirmation_logs')->info('Processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
         
         // Switch to tenant database
         CommonJobService::db_switch($this->tenantDb);
@@ -84,7 +83,7 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                 $confirmation = Helper::confirmDocument($params);
                 
                 if(!$confirmation['success']) {
-                    Log::error('Document confirmation failed ('.$receipt->custPaymentReceiveCode.') : ' . ($confirmation['message'] ?? 'Unknown error'));
+                    Log::channel('receipt_voucher_api_confirmation_logs')->error('Document confirmation failed ('.$receipt->custPaymentReceiveCode.') : ' . ($confirmation['message'] ?? 'Unknown error'));
                     continue;
                 }
                 
@@ -108,7 +107,7 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                     $approval = Helper::approveDocument($documentApproved);
                     
                     if(!$approval['success']) {
-                        Log::error('Document approval failed ('.$receipt->custPaymentReceiveCode.') : ' . ($approval['message'] ?? 'Unknown error'));
+                        Log::channel('receipt_voucher_api_confirmation_logs')->error('Document approval failed ('.$receipt->custPaymentReceiveCode.') : ' . ($approval['message'] ?? 'Unknown error'));
                         continue;
                     }
                 }
@@ -120,15 +119,15 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                     $this->header
                 );
                 
-                Log::info('Successfully processed receipt voucher: ' . $receipt->custPaymentReceiveCode);
+                Log::channel('receipt_voucher_api_confirmation_logs')->info('Successfully processed receipt voucher: ' . $receipt->custPaymentReceiveCode);
                 
             } catch (\Exception $e) {
-                Log::error('Error processing receipt voucher ('.$receipt->custPaymentReceiveCode.') : ' . $e->getMessage());
+                Log::channel('receipt_voucher_api_confirmation_logs')->error('Error processing receipt voucher ('.$receipt->custPaymentReceiveCode.') : ' . $e->getMessage());
                 continue;
             }
         }
         
-        Log::info('Completed processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
+        Log::channel('receipt_voucher_api_confirmation_logs')->info('Completed processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
     }
 }
 

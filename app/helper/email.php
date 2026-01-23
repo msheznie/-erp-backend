@@ -101,7 +101,6 @@ class email
             "<br>" . trans('email.footer_auto_generated') . "</font>";
         $empInfoSkip = array(106, 107);
         $count = 0;
-        Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
 
         $hasPolicy = false;
 

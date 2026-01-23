@@ -57,7 +57,6 @@ class SupplierStatementJob implements ShouldQueue
         $input = $this->inputData;
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
-        Log::useFiles(storage_path() . '/logs/supplier_statement_sent.log');
 
         CommonJobService::db_switch($db);
 
@@ -98,7 +97,7 @@ class SupplierStatementJob implements ShouldQueue
             $mpdf->WriteHTML($html);
             $mpdf->Output($filePath, 'F'); // Save to file
         } catch (\Exception $e) {
-            Log::error('mPDF Error in SupplierStatementJob: ' . $e->getMessage());
+            Log::channel('supplier_statement_sent')->error('mPDF Error in SupplierStatementJob: ' . $e->getMessage());
             return; // Exit the job if PDF generation fails
         }
 
@@ -135,8 +134,8 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                        Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                        Log::channel('supplier_statement_sent')->error('Error');
+                        Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
                     }
                 }
             }
@@ -163,8 +162,8 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                        Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                        Log::channel('supplier_statement_sent')->error('Error');
+                        Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
                     }
                 }
             }

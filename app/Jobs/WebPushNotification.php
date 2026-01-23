@@ -47,7 +47,6 @@ class WebPushNotification implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/web-push.log');
         $db = $this->dispatch_db;
         $data = $this->pushData;
         $userID = $this->userId;
@@ -68,8 +67,8 @@ class WebPushNotification implements ShouldQueue
             $response = $client->request('POST', $url, ['json' => $params]);
 
         }catch (ClientException $exception) {
-            Log::error("Error");
-            Log::error($exception->getResponse()->getBody(true));
+            Log::channel('web_push')->error("Error");
+            Log::channel('web_push')->error($exception->getResponse()->getBody(true));
         }
     }
 

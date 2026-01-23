@@ -76,7 +76,6 @@ class CreateJournalVoucher implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_journal_voucher.log');
         CommonJobService::db_switch($this->db);
 
         $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];

@@ -40,7 +40,6 @@ class ForgotToPunchInScheduler extends Command
      */
     public function handle()
     { 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );                    
 
 
         $tenants = CommonJobService::tenant_list();

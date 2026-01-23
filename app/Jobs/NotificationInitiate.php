@@ -42,7 +42,6 @@ class NotificationInitiate implements ShouldQueue
 
         NotificationService::db_switch( $this->dispatch_db );
 
-        Log::useFiles( NotificationService::log_file() );
         $active_scenarios = NotificationService::all_active_scenarios();
 
         if(count($active_scenarios) == 0){

@@ -31,7 +31,6 @@ class AttendanceDataPullingService{
     private $weekendColumn;
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;

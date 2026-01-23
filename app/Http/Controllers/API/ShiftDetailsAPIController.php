@@ -2250,7 +2250,6 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
 
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                    Log::useFiles(storage_path() . '/logs/approval_setup.log');
                     $documentApproval = array();
                     foreach ($documentApproveds as $documentApproved) {
 
@@ -2267,7 +2266,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
-                        Log::info('---- Doc Approval -----' . $documentApproveds);
+                        Log::channel('approval_setup')->info('---- Doc Approval -----' . $documentApproveds);
 
                     }
 

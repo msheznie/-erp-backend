@@ -50,7 +50,6 @@ class BankLedgerInsert implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/bank_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -447,7 +446,7 @@ class BankLedgerInsert implements ShouldQueue
                         }
                         break;
                     default:
-                        Log::warning('Document ID not found ' . date('H:i:s'));
+                        Log::channel('bank_ledger_jobs')->warning('Document ID not found ' . date('H:i:s'));
                 }
                 if ($finalData) {
                     //$bankLedgerInsert = BankLedger::insert($finalData);
@@ -459,7 +458,7 @@ class BankLedgerInsert implements ShouldQueue
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('bank_ledger_jobs')->error($this->failed($e));
             }
         }
     }

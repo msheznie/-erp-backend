@@ -47,7 +47,6 @@ class AttendanceDayEndPulling implements ShouldQueue
      */
     public function handle()
     {        
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockOut') );
 
         CommonJobService::db_switch( $this->dispatchDb );
 

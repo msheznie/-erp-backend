@@ -41,7 +41,6 @@ class BirthdayWishScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('birthday-wishes') );
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
         }

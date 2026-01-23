@@ -84,7 +84,6 @@ class RPOSSalesGlService
 {
 	public static function processEntry($masterModel)
 	{
-        Log::useFiles(storage_path() . '/logs/cash_rpos_jobs.log');
 
         $data = [];
         $taxLedgerData = [];

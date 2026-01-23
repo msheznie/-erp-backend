@@ -87,7 +87,6 @@ class CreatePaymentVoucher implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_payment_voucher.log');
 
         CommonJobService::db_switch($this->db);
 

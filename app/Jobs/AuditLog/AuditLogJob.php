@@ -205,7 +205,6 @@ class AuditLogJob implements ShouldQueue
                 'companySystemIdColumn'
             );
 
-            // Victoria Logs Migration: Send logs directly to VictoriaLogs instead of file
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
                     $narrationVariables,  

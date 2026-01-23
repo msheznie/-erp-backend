@@ -30,7 +30,6 @@ class AfterDocumentCreated
     {
         $document = $event->document;
 
-        Log::useFiles(storage_path() . '/logs/after_document_created.log');
         if (!empty($document)) {
             $documentArray = array(
                 'modelName' => '',
@@ -151,7 +150,7 @@ class AfterDocumentCreated
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    Log::info('Document ID Not Found' . date('H:i:s'));
+                    Log::channel('after_document_created')->info('Document ID Not Found' . date('H:i:s'));
             }
 
 
@@ -225,7 +224,7 @@ class AfterDocumentCreated
             }
 
         } else {
-            Log::info('Document Not Found' . date('H:i:s'));
+            Log::channel('after_document_created')->info('Document Not Found' . date('H:i:s'));
         }
     }
 

@@ -61,9 +61,8 @@ class StockCountDetailJob implements ShouldQueue
 
         CommonJobService::db_switch($db);
 
-        Log::useFiles(storage_path().'/logs/stock_count_job.log');
 
-        Log::info($db);
+        Log::channel('stock_count_job')->info($db);
 
         $companyId = $dataArray['companySystemID'];
         $skipItemIds = $dataArray['skipItemIds'];
@@ -79,7 +78,7 @@ class StockCountDetailJob implements ShouldQueue
         ->get();
 
         $count = count($finalItems);
-        Log::info('count '.$count);
+        Log::channel('stock_count_job')->info('count '.$count);
 
         if($count == 0)
         {

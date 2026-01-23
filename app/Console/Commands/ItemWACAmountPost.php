@@ -40,7 +40,6 @@ class ItemWACAmountPost extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('item-wac-amount') );
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

@@ -7915,7 +7915,6 @@ class Helper
 
     public static function generateCustomerReceiptVoucher($pvMaster)
     {
-        Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         if ($pvMaster->invoiceType == 3) {
             $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
             if (count($dpdetails) > 0) {

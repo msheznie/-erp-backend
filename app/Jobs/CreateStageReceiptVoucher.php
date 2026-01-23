@@ -56,7 +56,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
         DB::beginTransaction();
 
         try {
-            Log::useFiles(storage_path().'/logs/stage_create_receipt_voucher.log');
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
             $stagCustomerUpdateReceipts = StageCustomerReceivePayment::all();
@@ -277,7 +276,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
             StageCustomerReceivePayment::truncate();
             StageCustomerReceivePaymentDetail::truncate();
             StageDirectReceiptDetail::truncate();
-            Log::error($e->getMessage());
+            Log::channel('stage_create_receipt_voucher')->error($e->getMessage());
         }
     }
 }

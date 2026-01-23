@@ -50,10 +50,9 @@ class ReturnToWorkNotificationJob implements ShouldQueue
     public function handle()
     {
         
-        Log::useFiles( CommonJobService::get_specific_log_file('return-to-work') );
         
         if (empty($this->dbName)) {
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('return_to_work_service')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
            
         } else {            
 

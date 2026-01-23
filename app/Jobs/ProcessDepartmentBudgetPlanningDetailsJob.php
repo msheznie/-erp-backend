@@ -64,7 +64,6 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/department_budget_planning_details_process.log');
 
         DB::beginTransaction();
 
@@ -94,16 +93,16 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
             DB::commit();
 
-            Log::info('Department Budget Planning Details processed successfully', [
+            Log::channel('department_budget_planning_details_process')->info('Department Budget Planning Details processed successfully', [
                 'department_planning_id' => $this->departmentBudgetPlanningId,
                 'user_id' => $this->userId
             ]);
 
         } catch (\Exception $e) {
-            Log::warning($e->getMessage());
+            Log::channel('department_budget_planning_details_process')->warning($e->getMessage());
             DB::rollBack();
 
-            Log::error('Error processing Department Budget Planning Details', [
+            Log::channel('department_budget_planning_details_process')->error('Error processing Department Budget Planning Details', [
                 'department_planning_id' => $this->departmentBudgetPlanningId,
                 'error' => $e->getMessage(),
                 'user_id' => $this->userId

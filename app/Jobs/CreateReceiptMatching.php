@@ -74,7 +74,6 @@ class CreateReceiptMatching implements ShouldQueue
 
     public function handle()
     {
-        \Log::useFiles(storage_path() . '/logs/create_receipt_matching.log');
         CommonJobService::db_switch($this->db);
 
         $input = $this->input;

@@ -52,7 +52,6 @@ class CreateStageCustomerInvoice implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
 
@@ -297,7 +296,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 StageCustomerInvoice::truncate();
                 StageCustomerInvoiceItemDetails::truncate();
                 StageCustomerInvoiceDirectDetail::truncate();
-                Log::error($e->getMessage());
+                Log::channel('stage_create_customer_invoice')->error($e->getMessage());
             }
 
 

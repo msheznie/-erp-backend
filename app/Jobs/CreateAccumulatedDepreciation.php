@@ -50,7 +50,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
     public function handle()
     {
      
-        Log::useFiles(storage_path() . '/logs/accumulated_dep_job.log');
 
         try {
 
@@ -91,7 +90,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             
                             $companyFinanceYear = Helper::companyFinanceYearCheck($finance_data);
                             if (!$companyFinanceYear["success"]) {
-                                Log::error($companyFinanceYear["message"]);
+                                Log::channel('accumulated_dep_job')->error($companyFinanceYear["message"]);
                             } else {
                                 $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
                                 $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
@@ -104,7 +103,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
 
                             if (!$companyFinancePeriod["success"]) {
-                                Log::error('company finance period not found');
+                                Log::channel('accumulated_dep_job')->error('company finance period not found');
                             } else {
                                 $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                                 $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;

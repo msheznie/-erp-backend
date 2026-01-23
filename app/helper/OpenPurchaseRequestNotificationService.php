@@ -22,7 +22,6 @@ class OpenPurchaseRequestNotificationService
     public function proceed()
     {
         $log_file = NotificationService::log_file();
-        Log::useFiles($log_file);
 
         // Check if today is the last day of the month
         if (!$this->isLastDayOfMonth()) {
@@ -66,7 +65,7 @@ class OpenPurchaseRequestNotificationService
                     ->first();
 
                 if (empty($employee)) {
-                    Log::error("Employee not found or not valid for Open PR notification. Employee ID: {$notificationUser->empID}");
+                    Log::channel('notification_service')->error("Employee not found or not valid for Open PR notification. Employee ID: {$notificationUser->empID}");
                     continue;
                 }
 
@@ -88,7 +87,7 @@ class OpenPurchaseRequestNotificationService
                 );
 
                 if (!$sendEmail["success"]) {
-                    Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
+                    Log::channel('notification_service')->error("Failed to send Open PR notification email: " . $sendEmail["message"]);
                 } 
             }
         }

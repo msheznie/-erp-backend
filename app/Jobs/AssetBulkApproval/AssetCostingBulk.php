@@ -51,8 +51,7 @@ class AssetCostingBulk implements ShouldQueue
         $uploadData = $this->uploadData;
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path() . '/logs/approve_bulk_document.log');
-        Log::info('switching db '.$db);
+        Log::channel('approve_bulk_document')->info('switching db '.$db);
         $results = $uploadData['results'];
         $empID = $uploadData['empID'];
         $grvID = $uploadData['grvID'];
@@ -60,7 +59,7 @@ class AssetCostingBulk implements ShouldQueue
 
         if(count($results) == 0)
         {
-            Log::info('There are no documents to approve');
+            Log::channel('approve_bulk_document')->info('There are no documents to approve');
         }
 
         foreach($results as $result) {
@@ -87,7 +86,7 @@ class AssetCostingBulk implements ShouldQueue
                     'errorMessage' => $approve["message"],
                     'error' => null
                 ];
-                Log::info($errorData);
+                Log::channel('approve_bulk_document')->info($errorData);
                 JobErrorLog::insert($errorData);
             }
 

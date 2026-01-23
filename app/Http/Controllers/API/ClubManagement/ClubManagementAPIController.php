@@ -639,7 +639,6 @@ class ClubManagementAPIController extends AppBaseController
                 return $this->sendError(trans('custom.secondary_code_already_exists') ,500);
             }
 
-            Log::useFiles(storage_path().'/logs/laravel.log');
 
             $input['isAutoCreateDocument'] = true;
 

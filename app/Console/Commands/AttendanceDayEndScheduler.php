@@ -41,14 +41,13 @@ class AttendanceDayEndScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockOut') );
         
         $attDate = Carbon::now()->timezone('Asia/Muscat')->subDays(1)->format('Y-m-d');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             $msg = "Tenant details not found ( {$attDate} ).";
-            Log::error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('attendance_job_service')->error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return;
         }
         

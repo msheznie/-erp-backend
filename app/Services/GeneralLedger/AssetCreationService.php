@@ -41,7 +41,6 @@ class AssetCreationService extends AppBaseController
 
     public function assetUploadErrorLog($errorLine, $logMessage, $assetCostingUploadID){
 
-        Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
 
         DB::beginTransaction();
         try {
@@ -57,9 +56,9 @@ class AssetCreationService extends AppBaseController
             UploadAssetCosting::where('id', $assetCostingUploadID)->update(['uploadStatus' => 0]);
             DB::commit();
         } catch (\Exception $e) {
-            Log::error('Exception caught: ' . $e->getMessage());
-            Log::error('Error Line No: ' . $e->getLine());
-            Log::error('Error File: ' . $e->getFile());
+            Log::channel('asset_costing_bulk_insert')->error('Exception caught: ' . $e->getMessage());
+            Log::channel('asset_costing_bulk_insert')->error('Error Line No: ' . $e->getLine());
+            Log::channel('asset_costing_bulk_insert')->error('Error File: ' . $e->getFile());
             DB::rollBack();
         }
     }

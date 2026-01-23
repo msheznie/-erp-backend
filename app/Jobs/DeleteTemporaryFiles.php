@@ -36,7 +36,6 @@ class DeleteTemporaryFiles implements ShouldQueue
      */
     public function handle()
     {
-        // Log::useFiles(storage_path() . '/logs/file_delete.log');
         $path = $this->path;
         if($path){
             if ($exists = Storage::disk('local_public')->exists($path)) {

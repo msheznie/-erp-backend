@@ -75,7 +75,6 @@ class CreateRecurringVoucherDocument implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('recurring-voucher'));
 
         CommonJobService::db_switch($this->tenantDb);
 
@@ -159,14 +158,14 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                         }
                                         else{
                                             $jvDetailsCreateState = false;
-                                            Log::error("Recurring Voucher Schedule ID (JV details update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailUpdateReturnData['message']}");
+                                            Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (JV details update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailUpdateReturnData['message']}");
                                             $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "JV details update error: {$jvMasterDetailUpdateReturnData['message']}");
                                             break 2;
                                         }
                                     }
                                     else{
                                         $jvDetailsCreateState = false;
-                                        Log::error("Recurring Voucher Schedule ID (JV details store error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailStoreReturnData['message']}");
+                                        Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (JV details store error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterDetailStoreReturnData['message']}");
                                         $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "JV details store error: {$jvMasterDetailStoreReturnData['message']}");
                                         break 2;
                                     }
@@ -199,7 +198,7 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                         }
                                         else{
                                             $jvAttachmentsUpdateState = false;
-                                            Log::error("Recurring Voucher Schedule ID (attachment update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvAttachmentReturnData['message']}");
+                                            Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (attachment update error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvAttachmentReturnData['message']}");
                                             $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "attachment update error: {$jvAttachmentReturnData['message']}");
                                             break 2;
                                         }
@@ -260,47 +259,47 @@ class CreateRecurringVoucherDocument implements ShouldQueue
                                                     }
                                                     else{
                                                         DB::rollBack();
-                                                        Log::error("Recurring Voucher Schedule ID (Approval error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveReturnData['message']}");
+                                                        Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (Approval error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveReturnData['message']}");
                                                         $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "Approval error: {$jvApproveReturnData['message']}");
                                                     }
                                                 }
                                                 else{
-                                                    Log::error("Recurring Voucher Schedule ID (Approval JV pre check error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApprovePreCheckReturnData['message']}");
+                                                    Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (Approval JV pre check error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApprovePreCheckReturnData['message']}");
                                                     $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "Approval JV pre check error: {$jvApprovePreCheckReturnData['message']}");
                                                 }
                                             }
                                             else{
-                                                Log::error("Recurring Voucher Schedule ID (Approval JV get error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveDocumentReturnData['message']}");
+                                                Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (Approval JV get error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvApproveDocumentReturnData['message']}");
                                                 $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "Approval JV get error: {$jvApproveDocumentReturnData['message']}");
                                             }
 
                                         }
                                         else{
                                             DB::rollBack();
-                                            Log::error("Recurring Voucher Schedule ID (JV confirm error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvConfirmReturnData['message']}");
+                                            Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (JV confirm error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvConfirmReturnData['message']}");
                                             $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "JV confirm error: {$jvConfirmReturnData['message']}");
                                         }
                                     }
                                     else{
-                                        Log::error("Recurring Voucher Schedule ID (attachment update error) :- {$rrvSchedule->rrvSetupScheduleAutoID}");
+                                        Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (attachment update error) :- {$rrvSchedule->rrvSetupScheduleAutoID}");
                                         $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "attachment update error");
                                         DB::rollBack();
                                     }
                                 }
                                 else{
-                                    Log::error("Recurring Voucher Schedule ID (jv details create error) :- {$rrvSchedule->rrvSetupScheduleAutoID}");
+                                    Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (jv details create error) :- {$rrvSchedule->rrvSetupScheduleAutoID}");
                                     $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "jv details create error");
                                     DB::rollBack();
                                 }
                             }
                             else{
-                                Log::error("Recurring Voucher Schedule ID (JV create error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterReturnData['message']}");
+                                Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (JV create error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$jvMasterReturnData['message']}");
                                 $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "JV create error: {$jvMasterReturnData['message']}");
                             }
                         }
                     } catch (\Exception $e){
                         DB::rollBack();
-                        Log::error("Recurring Voucher Schedule ID (catch error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$e->getMessage()}");
+                        Log::channel('recurring_voucher_service')->error("Recurring Voucher Schedule ID (catch error) :- {$rrvSchedule->rrvSetupScheduleAutoID} {$e->getMessage()}");
                         $this->saveErrorToDatabase($rrvSchedule->rrvSetupScheduleAutoID, "catch error: {$e->getMessage()}");
                     }
                     break;

@@ -45,7 +45,6 @@ class LeaveCarryForwardCompany implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
-        Log::useFiles($path); 
 
         CommonJobService::db_switch($this->dispatchDb);
 

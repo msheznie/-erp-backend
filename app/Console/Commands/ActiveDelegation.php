@@ -41,7 +41,6 @@ class ActiveDelegation extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('delegation') );                    
 
 
         $tenants = CommonJobService::tenant_list();

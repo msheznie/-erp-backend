@@ -56,7 +56,6 @@ class PrBulkBulkItemProcess implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
         CommonJobService::db_switch($db);
 
         $companyId = $this->companyId;

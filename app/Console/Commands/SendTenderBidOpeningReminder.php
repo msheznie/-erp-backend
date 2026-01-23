@@ -40,8 +40,6 @@ class SendTenderBidOpeningReminder extends Command
      */
     public function handle()
     {
-        //Log::useFiles( CommonJobService::get_specific_log_file('tender-bid') );
-
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             return false;

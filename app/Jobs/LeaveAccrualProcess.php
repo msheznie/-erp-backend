@@ -51,7 +51,6 @@ class LeaveAccrualProcess implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-accrual');
-        Log::useFiles($path);
 
         ['code'=> $company_code, 'name'=> $company_name, 'id'=> $companyId] = $this->company;
 

@@ -55,7 +55,6 @@ class TaxLedgerInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/tax_ledger_jobs.log');
         $masterModel = $this->masterModel;
         $taxLedgerData = $this->taxLedgerData;
 
@@ -65,7 +64,7 @@ class TaxLedgerInsert implements ShouldQueue
                 $res = TaxLedgerService::postLedgerEntry($taxLedgerData, $masterModel);
                 if (!$res['status']) {
                     DB::rollback();
-                    Log::error($res['error']['message']);
+                    Log::channel('tax_ledger_jobs')->error($res['error']['message']);
 
                     JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                 } else {
@@ -73,7 +72,7 @@ class TaxLedgerInsert implements ShouldQueue
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('tax_ledger_jobs')->error($this->failed($e));
 
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());            
             }

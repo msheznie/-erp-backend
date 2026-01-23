@@ -49,10 +49,9 @@ class EmpProfileCreateNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('emp_create_profile') );
     
         if (empty($this->dbName)) {
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('emp_create_profile_service')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
            
         } else {            
 

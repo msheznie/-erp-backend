@@ -89,7 +89,6 @@ class SupplierInvoiceCreation implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/supplier_invoice_creation.log');
         CommonJobService::db_switch($this->db);
         $returnData = [];
         try {

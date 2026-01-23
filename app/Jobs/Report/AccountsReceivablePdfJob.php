@@ -53,7 +53,6 @@ class AccountsReceivablePdfJob implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $request = $this->requestData;
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);

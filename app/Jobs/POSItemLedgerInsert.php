@@ -32,7 +32,6 @@ class POSItemLedgerInsert implements ShouldQueue
 
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/item_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -90,13 +89,13 @@ class POSItemLedgerInsert implements ShouldQueue
                 }
                 break;
                     case 111: // RPOS
-                        Log::warning('11Id RPOS' . date('H:i:s'));
+                        Log::channel('item_ledger_jobs')->warning('11Id RPOS' . date('H:i:s'));
 
                         $gl = POSGLEntries::where('shiftId', $masterModel["autoID"])->first();
-                        Log::warning($gl . date('H:i:s'));
+                        Log::channel('item_ledger_jobs')->warning($gl . date('H:i:s'));
 
                         $items = POSItemGLEntries::where('shiftId', $masterModel["autoID"])->get();
-                        Log::warning($items . date('H:i:s'));
+                        Log::channel('item_ledger_jobs')->warning($items . date('H:i:s'));
 
                         foreach ($items as $item) {
 
@@ -139,7 +138,7 @@ class POSItemLedgerInsert implements ShouldQueue
                         }
                         break;
                     default:
-                        Log::warning('Document ID not found ' . date('H:i:s'));
+                        Log::channel('item_ledger_jobs')->warning('Document ID not found ' . date('H:i:s'));
             }
                 if ($finalData) {
                     //$bankLedgerInsert = BankLedger::insert($finalData);
@@ -152,7 +151,7 @@ class POSItemLedgerInsert implements ShouldQueue
             }
             catch (\Exception $e){
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('item_ledger_jobs')->error($this->failed($e));
             }
         }
     }

@@ -55,7 +55,6 @@ class CreateConsoleJV implements ShouldQueue
      * @return void
      */
     public function handle() {
-        Log::useFiles(storage_path() . '/logs/create_console_jv_jobs.log');
 
         DB::beginTransaction();
 
@@ -78,7 +77,7 @@ class CreateConsoleJV implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('create_console_jv_jobs')->error($this->failed($e));
         }
     }
 
