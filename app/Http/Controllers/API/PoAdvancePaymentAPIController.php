@@ -32,7 +32,7 @@ use App\Repositories\PoAdvancePaymentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Models\ProcumentOrder;
 use App\Models\CurrencyMaster;

@@ -12,7 +12,7 @@ use App\Models\FinalReturnIncomeTemplateColumns;
 use App\Models\FinalReturnIncomeTemplateDefaults;
 use App\Models\FinalReturnIncomeReports;
 use App\Models\FinalReturnIncomeTemplateLinks;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;

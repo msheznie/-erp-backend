@@ -11,7 +11,7 @@ use App\Models\WarehouseSubLevels;
 use App\Repositories\WarehouseBinLocationRepository;
 use App\Repositories\WarehouseSubLevelsRepository;
 use Illuminate\Http\Request;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

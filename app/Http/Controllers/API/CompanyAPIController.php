@@ -51,7 +51,7 @@ use App\Repositories\CompanyDigitalStampRepository;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;

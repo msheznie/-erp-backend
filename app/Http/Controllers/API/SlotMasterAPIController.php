@@ -15,7 +15,7 @@ use App\Models\Location;
 use App\Models\WarehouseMaster;
 use App\Models\WeekDays;
 use Carbon\Carbon;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use DateInterval;

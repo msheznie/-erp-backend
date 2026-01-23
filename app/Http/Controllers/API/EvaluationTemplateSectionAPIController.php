@@ -12,7 +12,7 @@ use App\Models\EvaluationTemplateSectionFormula;
 use App\Models\EvaluationTemplateSectionLabel;
 use App\Models\SupplierEvaluationMasters;
 use App\Models\SupplierEvaluationTemplateSectionTable;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
