@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderDocumentTypeAssignLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateTenderDocumentTypeAssignLogAPIRequest extends APIRequest
+class CreateTenderDocumentTypeAssignLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

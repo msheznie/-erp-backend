@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BidDocumentVerification;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBidDocumentVerificationAPIRequest extends APIRequest
+class UpdateBidDocumentVerificationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

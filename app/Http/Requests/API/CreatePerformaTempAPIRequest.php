@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PerformaTemp;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePerformaTempAPIRequest extends APIRequest
+class CreatePerformaTempAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

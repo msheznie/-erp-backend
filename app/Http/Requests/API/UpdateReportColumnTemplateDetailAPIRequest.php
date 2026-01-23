@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ReportColumnTemplateDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateReportColumnTemplateDetailAPIRequest extends APIRequest
+class UpdateReportColumnTemplateDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

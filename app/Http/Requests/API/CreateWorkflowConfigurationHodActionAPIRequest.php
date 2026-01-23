@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\WorkflowConfigurationHodAction;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateWorkflowConfigurationHodActionAPIRequest extends APIRequest
+class CreateWorkflowConfigurationHodActionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

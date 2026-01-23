@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\WarehouseItems;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateWarehouseItemsAPIRequest extends APIRequest
+class CreateWarehouseItemsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

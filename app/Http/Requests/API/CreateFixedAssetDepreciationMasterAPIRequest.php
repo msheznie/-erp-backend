@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FixedAssetDepreciationMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateFixedAssetDepreciationMasterAPIRequest extends APIRequest
+class CreateFixedAssetDepreciationMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

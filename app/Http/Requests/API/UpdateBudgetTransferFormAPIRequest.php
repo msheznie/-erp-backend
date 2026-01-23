@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BudgetTransferForm;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBudgetTransferFormAPIRequest extends APIRequest
+class UpdateBudgetTransferFormAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

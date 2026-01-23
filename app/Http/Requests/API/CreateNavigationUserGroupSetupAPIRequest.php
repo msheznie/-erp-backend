@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\NavigationUserGroupSetup;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateNavigationUserGroupSetupAPIRequest extends APIRequest
+class CreateNavigationUserGroupSetupAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

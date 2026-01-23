@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CustomerInvoiceStatusType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCustomerInvoiceStatusTypeAPIRequest extends APIRequest
+class CreateCustomerInvoiceStatusTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

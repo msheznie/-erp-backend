@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderBoqItems;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTenderBoqItemsAPIRequest extends APIRequest
+class UpdateTenderBoqItemsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

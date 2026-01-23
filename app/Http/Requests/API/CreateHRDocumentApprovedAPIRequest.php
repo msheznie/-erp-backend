@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\HRDocumentApproved;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateHRDocumentApprovedAPIRequest extends APIRequest
+class CreateHRDocumentApprovedAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

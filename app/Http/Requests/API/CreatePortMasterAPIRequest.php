@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PortMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePortMasterAPIRequest extends APIRequest
+class CreatePortMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\API;
 
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateAssetVerificationDetailAPIRequest extends APIRequest
+class CreateAssetVerificationDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

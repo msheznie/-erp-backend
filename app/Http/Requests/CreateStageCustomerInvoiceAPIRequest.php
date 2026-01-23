@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\StageCustomerInvoice;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateStageCustomerInvoiceAPIRequest extends APIRequest
+class CreateStageCustomerInvoiceAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
