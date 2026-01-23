@@ -11,20 +11,54 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Utils\ResponseUtil;
 use Psr\Http\Message\ServerRequestInterface;
-use \Laravel\Passport\Http\Controllers\AccessTokenController as PassportAccessTokenController;
-use League\OAuth2\Server\Exception\OAuthServerException;
-use Zend\Diactoros\Response as Psr7Response;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 
-class AuthAPIController extends PassportAccessTokenController
+class AuthAPIController extends Controller
 {
-    use AuthenticatesUsers, AuditLogsTrait;
+    use AuditLogsTrait;
 
-    public function auth(ServerRequestInterface $request, Request $request2)
+    public function auth(Request $request2)
     {
-        $user = User::where('email',$request2->username)->first();
+        // Validate required fields
+        $validator = Validator::make($request2->all(), [
+            'username' => 'required',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            $this->log('auth', [
+                'event' => 'login_failure',
+                'username' => $request2->username ?? '-',
+                'reason' => 'Missing required fields',
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
+            ]);
+            return Response::json(ResponseUtil::makeError($validator->messages(), array('type' => '')), 422);
+        }
+
+        // Find user by email
+        $user = User::where('email', $request2->username)->first();
+
+        // Verify password manually (since Passport TokenGuard doesn't support attempt())
+        if (!$user || !Hash::check($request2->password, $user->password)) {
+            if($user){
+                $employees = Employee::find($user->employee_id);
+                if($employees){
+                    Employee::find($user->employee_id)->increment('isLock');
+                }
+            }
+            
+            $this->log('auth', [
+                'event' => 'login_failure',
+                'username' => $request2->username,
+                'reason' => 'Invalid credentials',
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
+            ]);
+            return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
+        }
+        
+        // Validate employee status
         if($user){
             $employees = Employee::find($user->employee_id);
 
@@ -88,91 +122,38 @@ class AuthAPIController extends PassportAccessTokenController
                 return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
         }
+
         try {
-            $response = $this->server->respondToAccessTokenRequest($request, new Psr7Response);
-            if($response){
-                $user = User::where('email',$request2->username)->first();
-                if($user){
-                    Employee::find($user->employee_id)->update(['isLock' => 0]);
-                }
+            // Reset lock counter on successful login
+            if($user && $user->employee_id){
+                Employee::find($user->employee_id)->update(['isLock' => 0]);
             }
 
+            // Create Passport personal access token
+            $tokenResult = $user->createToken('personal');
+            
+            // Format response to match OAuth2 token response format
+            $response = response()->json([
+                'token_type' => 'Bearer',
+                'expires_in' => $tokenResult->token->expires_at ? $tokenResult->token->expires_at->diffInSeconds(now()) : 3600,
+                'access_token' => $tokenResult->accessToken,
+            ]);
+
             // Extract login data BEFORE dispatching job to avoid serialization issues
-            $loginData = \App\Services\AuditLog\AuthAuditService::extractLoginDataFromResponse($response, $request2);
+            $loginData = \App\Services\AuditLog\AuthAuditService::extractLoginDataFromToken($tokenResult, $request2);
             if (!empty($loginData)) {
                 $this->log('auth', $loginData);
             }
 
             return $response;
-        } catch (OAuthServerException $exception) {
-            $user = User::where('email',$request2->username)->first();
-            if($user){
-                $employees = Employee::find($user->employee_id);
-
-                if(empty($employees)){
-                    $this->log('auth', [
-                        'event' => 'login_failure',
-                        'username' => $request2->username,
-                        'reason' => 'Employee not found',
-                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
-                    ]);
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-                }
-
-                if($employees->discharegedYN){
-                    $this->log('auth', [
-                        'event' => 'login_failure',
-                        'username' => $request2->username,
-                        'reason' => 'Employee discharged',
-                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
-                    ]);
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-                }
-
-                if(!$employees->ActivationFlag){
-                    $this->log('auth', [
-                        'event' => 'login_failure',
-                        'username' => $request2->username,
-                        'reason' => 'Account not activated',
-                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
-                    ]);
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-                }
-
-                if($employees->empLoginActive != 1){
-                    $this->log('auth', [
-                        'event' => 'login_failure',
-                        'username' => $request2->username,
-                        'reason' => 'Login disabled',
-                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
-                    ]);
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-                }
-
-                if($employees->empActive != 1){
-                    $this->log('auth', [
-                        'event' => 'login_failure',
-                        'username' => $request2->username,
-                        'reason' => 'Employee inactive',
-                        'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
-                    ]);
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-                }
-
-                 Employee::find($user->employee_id)->increment('isLock');
-            }
-            
-            // Log failed login attempt
+        } catch (\Exception $exception) {
             $this->log('auth', [
                 'event' => 'login_failure',
                 'username' => $request2->username,
-                'reason' => 'Invalid credentials',
-                'request' => $request2
+                'reason' => 'Token creation failed: ' . $exception->getMessage(),
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
             ]);
-            
-            return $this->withErrorHandling(function () use($exception,$user) {
-                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
-            });
+            return Response::json(ResponseUtil::makeError(trans('custom.error'),array('type' => '')), 500);
         }
     }
 
@@ -266,11 +247,9 @@ class AuthAPIController extends PassportAccessTokenController
                 'event' => 'login_failure',
                 'username' => $user->email ?? '-',
                 'reason' => 'Token creation failed',
-                'request' => $request2
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
             ]);
-            return $this->withErrorHandling(function () use($exception) {
-                return response(["message" => trans('custom.error')], 401);
-            });
+            return response(["message" => trans('custom.error')], 401);
         }
     }
 
@@ -283,12 +262,33 @@ class AuthAPIController extends PassportAccessTokenController
     protected function hasTooManyLoginAttempts(Request $request)
     {
         $attempts = 3;
-        $lockoutMinites = 10;
+        $lockoutMinutes = 10;
 
         return $this->limiter()->tooManyAttempts(
             $this->throttleKey($request),
             $attempts,
-            $lockoutMinites
+            $lockoutMinutes
         );
+    }
+
+    /**
+     * Get the rate limiter instance.
+     *
+     * @return \Illuminate\Cache\RateLimiter
+     */
+    protected function limiter()
+    {
+        return app(\Illuminate\Cache\RateLimiter::class);
+    }
+
+    /**
+     * Get the throttle key for the given request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return string
+     */
+    protected function throttleKey(Request $request)
+    {
+        return mb_strtolower($request->input('username', $request->ip())).'|'.$request->ip();
     }
 }
