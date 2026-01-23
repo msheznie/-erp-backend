@@ -40,7 +40,6 @@ class ApprovalGroups extends Model
     const UPDATED_AT = 'timestamp';
 
 
-    protected $dates = ['deleted_at'];
 
     protected $primaryKey = 'rightsGroupId';
 
@@ -71,7 +70,8 @@ class ApprovalGroups extends Model
         'departmentSystemID' => 'integer',
         'departmentID' => 'string',
         'condition' => 'string',
-        'sortOrder' => 'integer'
+        'sortOrder' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

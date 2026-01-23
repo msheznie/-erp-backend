@@ -444,7 +444,6 @@ class FixedAssetMaster extends Model
 
     protected $primaryKey = 'faID';
 
-    protected $dates = ['deleted_at'];
     protected $appends = ['asset_code_concat', 'image_url'];
 
     public $fillable = [
@@ -665,6 +664,7 @@ class FixedAssetMaster extends Model
         'empID' => 'integer',
         'assetCostingUploadID' => 'integer'
 
+        'deleted_at' => 'datetime',
     ];
 
     /**

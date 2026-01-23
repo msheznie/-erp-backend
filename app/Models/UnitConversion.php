@@ -32,7 +32,6 @@ class UnitConversion extends Model
     
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
-    protected $dates = ['deleted_at'];
     protected $primaryKey  = 'unitsConversionAutoID';
 
 
@@ -52,7 +51,8 @@ class UnitConversion extends Model
         'unitsConversionAutoID' => 'integer',
         'masterUnitID' => 'integer',
         'subUnitID' => 'integer',
-        'conversion' => 'float'
+        'conversion' => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

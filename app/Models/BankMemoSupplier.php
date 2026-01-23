@@ -39,7 +39,6 @@ class BankMemoSupplier extends Model
     protected $primaryKey  = 'bankMemoID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -67,7 +66,8 @@ class BankMemoSupplier extends Model
         'supplierCurrencyID' => 'integer',
         'bankMemoTypeID' => 'integer',
         'updatedByUserID' => 'string',
-        'updatedByUserName' => 'string'
+        'updatedByUserName' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

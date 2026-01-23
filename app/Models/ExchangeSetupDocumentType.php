@@ -28,13 +28,11 @@ class ExchangeSetupDocumentType extends Model
         'sort' => 'integer',
         'name' => 'string',
         'slug' => 'string',
-        'isActive' => 'boolean'
+        'isActive' => 'boolean',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at'
-    ];
 
     /**
      * Validation rules

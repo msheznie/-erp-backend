@@ -48,7 +48,6 @@ class UserGroupAssign extends Model
     const UPDATED_AT = 'timestamp';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -102,7 +101,8 @@ class UserGroupAssign extends Model
         'delete' => 'boolean',
         'print' => 'boolean',
         'isPortalYN' => 'integer',
-        'externalLink' => 'string'
+        'externalLink' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

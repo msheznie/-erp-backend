@@ -46,7 +46,6 @@ class NavigationMenus extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -93,7 +92,8 @@ class NavigationMenus extends Model
         'isCoreModule' => 'integer',
         'isGroup' => 'integer',
         'isPortalYN' => 'integer',
-        'externalLink' => 'string'
+        'externalLink' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

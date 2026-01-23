@@ -31,7 +31,6 @@ class Location extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
     protected $primaryKey = 'locationID';
 
@@ -47,7 +46,8 @@ class Location extends Model
      */
     protected $casts = [
         'locationID' => 'integer',
-        'locationName' => 'string'
+        'locationName' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -95,7 +95,6 @@ class ProcumentOrderDetail extends Model
 
     protected $primaryKey  = 'purchaseOrderDetailsID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -256,7 +255,8 @@ class ProcumentOrderDetail extends Model
         'modifiedUser' => 'string',
         'VATApplicableOn' => 'integer',
         'altUnit'  => 'integer',
-        'altUnitValue'  => 'float'
+        'altUnitValue'  => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

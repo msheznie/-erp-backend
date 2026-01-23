@@ -12,7 +12,6 @@ class ContractUserGroup extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
     protected $hidden = ['id'];
 
 
@@ -36,7 +35,8 @@ class ContractUserGroup extends Model
         'groupName' => 'string',
         'companySystemID' => 'integer',
         'status' => 'integer',
-        'isDefault' => 'integer'
+        'isDefault' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

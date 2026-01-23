@@ -27,7 +27,6 @@ class DocumentMaster extends Model
 
     protected $appends = ['documentDescription'];
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -48,7 +47,8 @@ class DocumentMaster extends Model
         'documentID' => 'string',
         'documentDescription' => 'string',
         'departmentSystemID' => 'integer',
-        'departmentID' => 'string'
+        'departmentID' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -49,7 +49,6 @@ class DepartmentMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
     protected $primaryKey = 'departmentSystemID';
 
     protected $appends = ['department_description'];
@@ -100,7 +99,8 @@ class DepartmentMaster extends Model
         'isFunctionalDepartment' => 'integer',
         'isReportGroupYN' => 'integer',
         'hrObjectiveSetting' => 'integer',
-        'isFinancialYearYN' => 'integer'
+        'isFinancialYearYN' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

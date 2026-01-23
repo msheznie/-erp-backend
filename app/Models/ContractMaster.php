@@ -11,7 +11,6 @@ class ContractMaster extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
     protected $hidden = ['contractType' , 'created_by'];
 
 
@@ -126,6 +125,7 @@ class ContractMaster extends Model
         'parent_id' => 'integer',
         'tender_id' => 'integer',
         'contract_history_id' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

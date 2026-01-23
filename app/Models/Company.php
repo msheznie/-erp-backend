@@ -102,7 +102,6 @@ class Company extends Model
     protected $primaryKey = 'companySystemID';
 
     protected $appends = ['logo_url'];
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'CompanyID',
@@ -280,7 +279,8 @@ class Company extends Model
         'logoPath' => 'string',
         'isHrmsIntergrated' => 'boolean',
         'qhseApiKey' => 'string',
-        'helpDeskApiKey' => 'string'
+        'helpDeskApiKey' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

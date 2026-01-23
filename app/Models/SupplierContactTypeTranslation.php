@@ -32,7 +32,6 @@ class SupplierContactTypeTranslation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'supplierContactTypeID',
@@ -49,7 +48,8 @@ class SupplierContactTypeTranslation extends Model
         'id' => 'integer',
         'supplierContactTypeID' => 'integer',
         'languageCode' => 'string',
-        'supplierContactDescription' => 'string'
+        'supplierContactDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

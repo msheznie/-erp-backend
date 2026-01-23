@@ -32,7 +32,6 @@ class SupplierContactType extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -47,7 +46,8 @@ class SupplierContactType extends Model
      */
     protected $casts = [
         'supplierContactTypeID' => 'integer',
-        'supplierContactDescription' => 'string'
+        'supplierContactDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -36,7 +36,6 @@ class CompanyDepartment extends Model
 
     protected $primaryKey = 'departmentSystemID';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'departmentCode',
@@ -65,7 +64,8 @@ class CompanyDepartment extends Model
         'isFinance' => 'integer',
         'isActive' => 'integer',
         'createdUserSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

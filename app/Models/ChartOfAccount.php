@@ -54,7 +54,6 @@ class ChartOfAccount extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'chartOfAccountSystemID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -144,7 +143,8 @@ class ChartOfAccount extends Model
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
         'refferedBackYN' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

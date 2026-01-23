@@ -31,7 +31,6 @@ class suppliernature extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -45,7 +44,8 @@ class suppliernature extends Model
      */
     protected $casts = [
         'supplierNatureID' => 'integer',
-        'natureDescription' => 'string'
+        'natureDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

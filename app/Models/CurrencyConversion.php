@@ -35,7 +35,6 @@ class CurrencyConversion extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'currencyConversionAutoID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -54,7 +53,8 @@ class CurrencyConversion extends Model
         'currencyConversionAutoID' => 'integer',
         'masterCurrencyID' => 'integer',
         'subCurrencyID' => 'integer',
-        'conversion' => 'float'
+        'conversion' => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

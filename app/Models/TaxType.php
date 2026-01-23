@@ -32,7 +32,6 @@ class TaxType extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -46,7 +45,8 @@ class TaxType extends Model
      */
     protected $casts = [
         'taxTypeID' => 'integer',
-        'typeDescription' => 'string'
+        'typeDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

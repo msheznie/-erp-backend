@@ -36,7 +36,6 @@ class CountryMaster extends Model
     const UPDATED_AT = 'updated_at';
     protected $primaryKey = 'countryID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -60,7 +59,8 @@ class CountryMaster extends Model
         'countryName_O' => 'string',
         'nationality' => 'string',
         'isLocal' => 'integer',
-        'countryFlag' => 'string'
+        'countryFlag' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

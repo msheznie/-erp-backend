@@ -13,7 +13,6 @@ class StageCustomerInvoice extends Model
     const CREATED_AT = 'timeStamp';
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'custInvoiceDirectAutoID';
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'referenceNumber',
@@ -170,7 +169,8 @@ class StageCustomerInvoice extends Model
         'createdDateTime' => 'string',
         'discountLocalAmount' => 'float',
         'discountAmount' => 'float',
-        'discountRptAmount' => 'float'
+        'discountRptAmount' => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

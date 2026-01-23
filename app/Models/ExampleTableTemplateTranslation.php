@@ -32,7 +32,6 @@ class ExampleTableTemplateTranslation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'example_table_template_id',
@@ -49,7 +48,8 @@ class ExampleTableTemplateTranslation extends Model
         'id' => 'integer',
         'example_table_template_id' => 'integer',
         'languageCode' => 'string',
-        'data' => 'string'
+        'data' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

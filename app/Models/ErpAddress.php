@@ -43,7 +43,6 @@ class ErpAddress extends Model
 
     protected $primaryKey  = 'addressID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -76,7 +75,8 @@ class ErpAddress extends Model
         'contactPersonTelephone' => 'string',
         'contactPersonFaxNo' => 'string',
         'contactPersonEmail' => 'string',
-        'isDefault' => 'integer'
+        'isDefault' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

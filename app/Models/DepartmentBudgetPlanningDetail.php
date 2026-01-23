@@ -29,11 +29,6 @@ class DepartmentBudgetPlanningDetail extends Model
         'difference_current_request'
     ];
 
-    protected $dates = [
-        'time_for_submission',
-        'created_at',
-        'updated_at'
-    ];
 
     protected $casts = [
         'request_amount' => 'double',
@@ -44,7 +39,10 @@ class DepartmentBudgetPlanningDetail extends Model
         'amount_given_by_hod' => 'double',
         'difference_current_request' => 'double',
         'responsible_person_type' => 'integer',
-        'internal_status' => 'integer'
+        'internal_status' => 'integer',
+        'time_for_submission' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**

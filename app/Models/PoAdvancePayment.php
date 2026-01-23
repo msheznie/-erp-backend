@@ -60,7 +60,6 @@ class PoAdvancePayment extends Model
 
     protected $primaryKey = 'poAdvPaymentID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -156,7 +155,8 @@ class PoAdvancePayment extends Model
         'VATPercentage' => 'float',
         'VATAmountRpt' => 'float',
         'addVatOnPO' => 'boolean',
-        'sum_payment' => 'float'
+        'sum_payment' => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

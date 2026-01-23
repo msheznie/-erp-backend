@@ -43,7 +43,6 @@ class NavigationUserGroupSetup extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
     protected $appends = ['pageTitle'];
 
@@ -86,7 +85,8 @@ class NavigationUserGroupSetup extends Model
         'sortOrder' => 'integer',
         'isSubExist' => 'integer',
         'isPortalYN' => 'integer',
-        'externalLink' => 'string'
+        'externalLink' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

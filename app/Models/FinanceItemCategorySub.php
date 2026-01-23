@@ -46,7 +46,6 @@ class FinanceItemCategorySub extends Model
     protected $primaryKey  = 'itemCategorySubID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -102,7 +101,8 @@ class FinanceItemCategorySub extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'enableSpecification' => 'integer'
+        'enableSpecification' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

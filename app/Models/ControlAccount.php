@@ -37,7 +37,6 @@ class ControlAccount extends Model
     protected $primaryKey = 'supplierCodeSystem';
     protected $appends = ['description'];
 
-    protected $dates = ['timeStamp'];
 
 
     public $fillable = [
@@ -57,7 +56,8 @@ class ControlAccount extends Model
         'controlAccountsID' => 'string',
         'controlAccountCode' => 'string',
         'description' => 'string',
-        'itemLedgerShymbol' => 'string'
+        'itemLedgerShymbol' => 'string',
+        'timeStamp' => 'datetime',
     ];
 
     /**

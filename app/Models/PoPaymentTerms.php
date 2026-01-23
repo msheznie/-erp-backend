@@ -41,7 +41,6 @@ class PoPaymentTerms extends Model
 
     protected $primaryKey = 'paymentTermID';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'paymentTermsCategory',
@@ -68,7 +67,8 @@ class PoPaymentTerms extends Model
         'comAmount' => 'float',
         'comPercentage' => 'float',
         'inDays' => 'integer',
-        'LCPaymentYN' => 'integer'
+        'LCPaymentYN' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

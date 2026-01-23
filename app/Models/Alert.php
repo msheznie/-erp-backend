@@ -49,7 +49,6 @@ class Alert extends Model
 
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -98,7 +97,8 @@ class Alert extends Model
         'ccEmailID' => 'string',
         'emailAlertMessage' => 'string',
         'isEmailSend' => 'integer',
-        'attachmentFileName' => 'string'
+        'attachmentFileName' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

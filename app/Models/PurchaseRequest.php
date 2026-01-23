@@ -108,7 +108,6 @@ class PurchaseRequest extends Model
     protected $primaryKey  = 'purchaseRequestID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -304,7 +303,8 @@ class PurchaseRequest extends Model
         'manuallyClosedDate' => 'string',
         'manuallyClosedComment' => 'string',
         'approval_remarks' => 'string',
-        'requested_by' =>'integer'
+        'requested_by' =>'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -79,7 +79,6 @@ class TenderBidFormatMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'tender_name',
@@ -102,7 +101,8 @@ class TenderBidFormatMaster extends Model
         'company_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
-        'deleted_by' => 'integer'
+        'deleted_by' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

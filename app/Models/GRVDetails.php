@@ -96,7 +96,6 @@ class GRVDetails extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'grvDetailsID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -268,7 +267,8 @@ class GRVDetails extends Model
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string',
-        'detail_project_id' => 'integer'
+        'detail_project_id' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

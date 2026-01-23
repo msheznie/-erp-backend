@@ -45,7 +45,6 @@ class ApprovalRole extends Model
     protected $primaryKey = 'rollMasterID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -82,7 +81,8 @@ class ApprovalRole extends Model
         'serviceLineID' => 'string',
         'rollLevel' => 'integer',
         'approvalLevelID' => 'integer',
-        'approvalGroupID' => 'integer'
+        'approvalGroupID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

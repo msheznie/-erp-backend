@@ -82,7 +82,6 @@ class SupplierMaster extends Model
     protected $primaryKey  = 'supplierCodeSystem';
     protected $appends = ['isSUPDAmendAccess'];
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -261,7 +260,8 @@ class SupplierMaster extends Model
         'whtType' => 'integer',
         'mol_applicable' => 'integer',
         'mol_rate' => 'float',
-        'mol_payment_mode' => 'integer'
+        'mol_payment_mode' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

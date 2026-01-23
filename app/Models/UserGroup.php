@@ -34,7 +34,6 @@ class UserGroup extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey = 'userGroupID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -59,7 +58,8 @@ class UserGroup extends Model
         'description' => 'string',
         'isActive' => 'integer',
         'isDeleted' => 'integer',
-        'defaultYN' => 'boolean'
+        'defaultYN' => 'boolean',
+        'deleted_at' => 'datetime',
     ];
 
     /**

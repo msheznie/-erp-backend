@@ -11,7 +11,6 @@ class ContractUserAssign extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
     protected $hidden = ['id', 'userGroupId', 'userId', 'createdBy', 'updatedBy'];
 
     public $fillable = [
@@ -39,7 +38,8 @@ class ContractUserAssign extends Model
         'userId' => 'integer',
         'status' => 'integer',
         'createdBy' => 'integer',
-        'updatedBy' => 'integer'
+        'updatedBy' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

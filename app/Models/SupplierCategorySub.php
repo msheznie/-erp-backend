@@ -41,7 +41,6 @@ class SupplierCategorySub extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -74,7 +73,8 @@ class SupplierCategorySub extends Model
         'isActive' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -47,7 +47,6 @@ class TaxFormulaMaster extends Model
     protected $primaryKey = 'taxCalculationformulaID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -84,7 +83,8 @@ class TaxFormulaMaster extends Model
         'createdUserName' => 'string',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

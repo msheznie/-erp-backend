@@ -53,7 +53,6 @@ class CustomerAssigned extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'customerAssignedID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -124,7 +123,8 @@ class CustomerAssigned extends Model
         'vatEligible' => 'integer',
         'vatNumber' => 'string',
         'vendorCode' => 'string',
-        'vatPercentage' => 'integer'
+        'vatPercentage' => 'integer',
+        'deleted_at' => 'datetime'
     ];
 
     /**

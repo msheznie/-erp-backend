@@ -43,7 +43,6 @@ class DocumentAttachments extends Model
     protected $primaryKey  = 'attachmentID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -90,7 +89,8 @@ class DocumentAttachments extends Model
         'pullFromAnotherDocument' => 'integer',
         'parent_id' => 'integer',
         'isAutoCreateDocument' => 'integer',
-        'envelopType' => 'string'
+        'envelopType' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

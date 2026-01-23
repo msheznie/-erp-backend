@@ -71,7 +71,6 @@ class PurchaseRequestDetails extends Model
     protected $primaryKey  = 'purchaseRequestDetailsID';
 
 
-    protected $dates = ['deleted_at'];
 
 //    protected $appends = ['quantityRequested'];
     public $fillable = [
@@ -179,7 +178,8 @@ class PurchaseRequestDetails extends Model
         'isMRPulled' => 'boolean',
         'altUnit'  => 'integer',
         'altUnitValue'  => 'float',
-        'is_eligible_mr' => 'boolean'
+        'is_eligible_mr' => 'boolean',
+        'deleted_at' => 'datetime',
     ];
 
     /**

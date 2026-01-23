@@ -44,7 +44,6 @@ class CompanyPolicyMaster extends Model
     protected $primaryKey = 'companyPolicyMasterAutoID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -78,7 +77,8 @@ class CompanyPolicyMaster extends Model
         'createdByUserID' => 'string',
         'createdByUserName' => 'string',
         'createdByPCID' => 'string',
-        'modifiedByUserID' => 'string'
+        'modifiedByUserID' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

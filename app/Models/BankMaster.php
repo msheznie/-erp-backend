@@ -34,7 +34,6 @@ class BankMaster extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-    protected $dates = ['deleted_at'];
     protected $primaryKey  = 'bankmasterAutoID';
 
 
@@ -56,7 +55,8 @@ class BankMaster extends Model
         'bankmasterAutoID' => 'integer',
         'bankShortCode' => 'string',
         'bankName' => 'string',
-        'createdByEmpID' => 'string'
+        'createdByEmpID' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

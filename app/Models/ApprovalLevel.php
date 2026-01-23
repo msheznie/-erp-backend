@@ -50,7 +50,6 @@ class ApprovalLevel extends Model
     protected $primaryKey = 'approvalLevelID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -110,7 +109,8 @@ class ApprovalLevel extends Model
         'tenderTypeCode' => 'string',
         'workflow' => 'integer',
         'prType' => 'integer',
-        'prTypeWise' => 'integer'
+        'prTypeWise' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -95,7 +95,6 @@ class Employee extends Model
      * @var array
      */
 
-    protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
 
     // protected $attributes = $this->getAttributes();
@@ -232,7 +231,8 @@ class Employee extends Model
         'isHSEadmin' => 'integer',
         'isEmailVerified' => 'integer',
         'excludeObjectivesYN' => 'integer',
-        'machineID' => 'integer'
+        'machineID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**
