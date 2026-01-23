@@ -26,7 +26,7 @@ use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
-use App\User;
+use App\Models\User;
 use App\helper\CreateExcel;
 use App\Models\Company;
 use Carbon\Carbon;

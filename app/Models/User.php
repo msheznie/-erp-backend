@@ -37,8 +37,8 @@ class User extends Authenticatable
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
-    protected $dates = ['deleted_at'];
+    // Note: $dates property is deprecated in Laravel 12, use $casts instead
+    // protected $dates = ['deleted_at'];
 
 
     public $fillable = [

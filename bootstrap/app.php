@@ -35,19 +35,24 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Foundation\Http\Middleware\ConvertEmptyStringsToNull::class,
         ]);
 
-        // Trust proxies configuration (from config/trustedproxy.php)
-        $proxies = config('trustedproxy.proxies');
-        $headers = config('trustedproxy.headers', 
+        // Trust proxies configuration
+        // Note: We can't use config() here as config service isn't bootstrapped yet
+        // Read config file directly or use environment variables
+        $trustedProxyConfig = require __DIR__.'/../config/trustedproxy.php';
+        $proxies = $trustedProxyConfig['proxies'] ?? null;
+        $headers = $trustedProxyConfig['headers'] ?? (
             \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
+        
         if ($proxies === '*') {
             $middleware->trustProxies(at: '*', headers: $headers);
-        } elseif (is_array($proxies)) {
+        } elseif (is_array($proxies) && !empty($proxies)) {
             $middleware->trustProxies(at: $proxies, headers: $headers);
         } else {
+            // Default: trust all proxies if not specified
             $middleware->trustProxies(at: '*', headers: $headers);
         }
 
