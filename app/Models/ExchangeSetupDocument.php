@@ -20,13 +20,11 @@ class ExchangeSetupDocument extends Model
     protected $casts = [
         'id' => 'integer',
         'documentSystemID' => 'integer',
-        'sort' => 'integer'
+        'sort' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at'
-    ];
 
     /**
      * Validation rules

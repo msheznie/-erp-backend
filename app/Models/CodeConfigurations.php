@@ -12,7 +12,6 @@ class CodeConfigurations extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
     protected $hidden = ['id', 'created_by', 'updated_by'];
 
 
@@ -39,7 +38,8 @@ class CodeConfigurations extends Model
         'company_id' => 'string',
         'company_system_id' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

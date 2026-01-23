@@ -43,7 +43,6 @@ class CompanyDocumentAttachment extends Model
     protected $primaryKey  = 'companyDocumentAttachmentID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -86,7 +85,8 @@ class CompanyDocumentAttachment extends Model
         'blockYN' => 'integer',
         'isCategoryApproval' => 'integer',
         'enableAttachmentAfterApproval' => 'integer',
-        'isPRTypeApproval' => 'integer'
+        'isPRTypeApproval' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

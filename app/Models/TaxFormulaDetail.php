@@ -49,7 +49,6 @@ class TaxFormulaDetail extends Model
     const UPDATED_AT = 'modifiedDateTime';
 
     protected $primaryKey = 'formulaDetailID';
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -94,7 +93,8 @@ class TaxFormulaDetail extends Model
         'createdUserName' => 'string',
         'modifiedPCID' => 'string',
         'modifiedUserID' => 'string',
-        'modifiedUserName' => 'string'
+        'modifiedUserName' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

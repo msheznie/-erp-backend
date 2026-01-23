@@ -33,7 +33,6 @@ class UserToken extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -50,6 +49,7 @@ class UserToken extends Model
      */
     protected $casts = [
 
+        'deleted_at' => 'datetime',
     ];
 
     /**

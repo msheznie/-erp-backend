@@ -67,7 +67,6 @@ class ItemMaster extends Model
     protected $primaryKey  = 'itemCodeSystem';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -184,7 +183,8 @@ class ItemMaster extends Model
         'faSubCatID'=>'integer',
         'faSubCatID2'=>'integer',
         'faSubCatID3'=>'integer',
-        'pos_type' => 'integer'
+        'pos_type' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

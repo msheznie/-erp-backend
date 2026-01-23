@@ -48,7 +48,6 @@ class SegmentMaster extends Model
     protected $primaryKey  = 'serviceLineSystemID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -119,7 +118,8 @@ class SegmentMaster extends Model
         'createdUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'documentSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

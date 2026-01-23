@@ -37,7 +37,6 @@ class Unit extends Model
     
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-    protected $dates = ['deleted_at'];
     protected $primaryKey  = 'UnitID';
 
 
@@ -71,7 +70,8 @@ class Unit extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -57,7 +57,6 @@ class BankAccount extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-    protected $dates = ['deleted_at'];
 
     protected $primaryKey = 'bankAccountAutoID';
 
@@ -174,8 +173,8 @@ class BankAccount extends Model
         'documentID' => 'string',
         'refferedBackYN' => 'integer',
         'isTempBank' => 'integer',
-        'timesReferred' => 'integer'
-
+        'timesReferred' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

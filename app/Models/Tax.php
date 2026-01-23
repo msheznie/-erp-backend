@@ -54,7 +54,6 @@ class Tax extends Model
     protected $primaryKey = 'taxMasterAutoID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -132,7 +131,8 @@ class Tax extends Model
         'modifiedUserID' => 'string',
         'modifiedUserName' => 'string',
         'whtPercentage' => 'float',
-        'whtType' => 'integer'
+        'whtType' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**
