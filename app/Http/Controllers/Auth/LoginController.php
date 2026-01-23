@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -13,12 +13,12 @@ class LoginController extends Controller
     |--------------------------------------------------------------------------
     |
     | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
+    | redirecting them to your home screen.
+    |
+    | Note: AuthenticatesUsers trait is not available in Laravel 12 core.
+    | If you need full authentication scaffolding, install laravel/ui package.
     |
     */
-
-    use AuthenticatesUsers;
 
     /**
      * Where to redirect users after login.
