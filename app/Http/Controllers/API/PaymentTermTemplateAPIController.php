@@ -121,13 +121,14 @@ class PaymentTermTemplateAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'templateName' => 'required|string|max:25',
             'description' => 'required|string|max:25',
+            'companySystemID' => 'required|integer',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $checkTemplate = PaymentTermTemplate::where('templateName', $input['templateName'])->first();
+        $checkTemplate = PaymentTermTemplate::where('templateName', $input['templateName'])->where('companySystemID', $input['companySystemID'])->first();
 
         if ($checkTemplate) {
             return $this->sendError(trans('custom.template_name_already_exists'));
@@ -353,7 +354,7 @@ class PaymentTermTemplateAPIController extends AppBaseController
         }
 
         $paymentTermTemplates =  DB::table('payment_term_templates');
-
+        $paymentTermTemplates = $paymentTermTemplates->where('companySystemID', $input['companySystemID']);
         $search = $request->input('search.value');
 
         if ($search) {

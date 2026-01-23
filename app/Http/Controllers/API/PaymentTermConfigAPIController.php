@@ -118,6 +118,17 @@ class PaymentTermConfigAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $validator = \Validator::make($input, [
+            'term' => 'required|string|max:25',
+            'sortOrder' => 'required|integer',
+            'templateId' => 'required|integer',
+            'companySystemID' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         $paymentTermConfig = $this->paymentTermConfigRepository->create($input);
 
         return $this->sendResponse($paymentTermConfig->toArray(), trans('custom.payment_term_config_saved_successfully'));
