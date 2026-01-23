@@ -50,7 +50,6 @@ class EmployeeLedgerInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/employee_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -58,7 +57,7 @@ class EmployeeLedgerInsert implements ShouldQueue
                 $res = EmployeeLedgerService::postLedgerEntry($masterModel);
                 if (!$res['status']) {
                     DB::rollback();
-                    Log::error($res['error']['message']);
+                    Log::channel('employee_ledger_jobs')->error($res['error']['message']);
 
                     JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                 } else {
@@ -67,7 +66,7 @@ class EmployeeLedgerInsert implements ShouldQueue
             } catch
             (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('employee_ledger_jobs')->error($this->failed($e));
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $e->getMessage(), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         }

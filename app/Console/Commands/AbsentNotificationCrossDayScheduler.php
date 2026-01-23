@@ -19,13 +19,12 @@ class AbsentNotificationCrossDayScheduler extends Command
 
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('absent-notification') );                    
         $currentDate = Carbon::now()->timezone('Asia/Muscat');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             $msg = "Tenant details not found ( {$currentDate} ).";
-            Log::error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('absent_notification')->error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return;
         }
 
@@ -34,7 +33,7 @@ class AbsentNotificationCrossDayScheduler extends Command
             $tenantDb = $tenant->database;
             $msg = "{$tenantDb} DB added to the queue for non cross day absent notification";
             $msg .= " ( {$currentDate} ).";
-            Log::error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('absent_notification')->error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             AbsentNotificationCrossDayTenant::dispatch($tenantDb);            
         }
     }

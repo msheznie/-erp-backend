@@ -48,7 +48,6 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $compAssignScenario = $this->compAssignScenarioData;
         CommonJobService::db_switch($db);
@@ -66,7 +65,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
 
         $partiallyRecivedPos = $partiallyRecivedPos->toArray();
         if (count($compAssignScenario['notification_day_setup']) == 0) {
-            Log::error('Notification day setup not exist in '.$db);
+            Log::channel('budget_cutoff_po')->error('Notification day setup not exist in '.$db);
         } else {
             foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
                 $beforeAfter = $notDaySetup['beforeAfter'];
@@ -74,7 +73,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::error("User setup not found for scenario");
+                    Log::channel('budget_cutoff_po')->error("User setup not found for scenario");
                     continue;
                 }
 

@@ -141,9 +141,8 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             'execution_time_ms' => $this->executionTime
         ];
 
-        Log::useFiles(storage_path() . '/logs/audit.log');
 
-        Log::info('third_party_api_log:', [
+        Log::channel('audit')->info('third_party_api_log:', [
             'channel' => 'third_party_api',
             'external_reference' => $externalReference,
             'error_message' => $this->errorMessage,

@@ -45,7 +45,6 @@ class AttendanceCrossDayPullingInitiate implements ShouldQueue
     public function handle()
     {
 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-cross-day-clockOut') );
 
         CommonJobService::db_switch( $this->dispatchDb );
         $companies = CommonJobService::get_active_companies($this->signature);
@@ -53,7 +52,7 @@ class AttendanceCrossDayPullingInitiate implements ShouldQueue
         if(empty($companies)){
             $msg = "There is not a single company found for process the {$this->signature}";
             $msg .= " in {$this->dispatchDb} DB";
-            Log::error("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('attendance_cross_day_job_service')->error("$msg \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
             return;
         }

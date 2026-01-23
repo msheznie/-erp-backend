@@ -102,7 +102,6 @@ class PdcDoubleEntry implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/pdc_double_entry_jobs.log');
         $masterModel = $this->masterModel;
         $pdcData = $this->pdcData;
 
@@ -672,7 +671,7 @@ class PdcDoubleEntry implements ShouldQueue
                         }
                         break;
                     default:
-                        Log::warning('Document ID not found ' . date('H:i:s'));
+                        Log::channel('pdc_double_entry_jobs')->warning('Document ID not found ' . date('H:i:s'));
                 }
 
                 if ($finalData) {
@@ -710,7 +709,7 @@ class PdcDoubleEntry implements ShouldQueue
                                 }
                                 break;
                             default:
-                                Log::warning('Posted date document id not found ' . date('H:i:s'));
+                                Log::channel('pdc_double_entry_jobs')->warning('Posted date document id not found ' . date('H:i:s'));
                         }
                     }
                     DB::commit();
@@ -718,7 +717,7 @@ class PdcDoubleEntry implements ShouldQueue
 
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('pdc_double_entry_jobs')->error($this->failed($e));
             }
         }
     }

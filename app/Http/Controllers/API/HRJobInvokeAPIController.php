@@ -54,13 +54,12 @@ class HRJobInvokeAPIController extends AppBaseController
         $pullingDate = $request->input('attendanceDate');
         $isClockOutPulling = false;
         
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $data = [
             'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
         ];
 
-        Log::info('auto sync triggered', $data);
+        Log::channel('attendance_job_service')->info('auto sync triggered', $data);
 
         AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
             //->delay(now()->addSeconds(10));
@@ -148,12 +147,11 @@ class HRJobInvokeAPIController extends AppBaseController
         $pullingDate = $request->input('attendanceDate');
         $isClockOutPulling = true;
 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $dbName = CommonJobService::get_tenant_db($tenantId);
         
         if(empty($dbName)){
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('attendance_job_service')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return $this->sendError(trans('custom.db_details_not_found'));
         }
 

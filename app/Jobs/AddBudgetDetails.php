@@ -46,7 +46,6 @@ class AddBudgetDetails implements ShouldQueue
         $budgetMasters = $this->budget;
         $glData = $this->glData;
         $months = $this->monthArray;
-        Log::useFiles(storage_path() . '/logs/budget_details_jobs.log');
         if ($budgetMasters) {
 
             $commonDetail = [

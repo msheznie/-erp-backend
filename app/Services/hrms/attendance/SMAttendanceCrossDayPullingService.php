@@ -19,7 +19,6 @@ class SMAttendanceCrossDayPullingService{
     private $prvDate;
 
     public function __construct($companyId, $pullingDate){
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-cross-day-clockOut') );
 
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;

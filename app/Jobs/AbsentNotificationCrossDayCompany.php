@@ -40,7 +40,6 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
 
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('absent-notification') );
              
         CommonJobService::db_switch( $this->tenantDb );
 
@@ -48,7 +47,7 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
         $msg .= "{$this->tenantDb} DB";
 
         if($this->debug){ 
-            Log::info( $msg ); 
+            Log::channel('absent_notification')->info( $msg ); 
         }
 
         $now = Carbon::now();

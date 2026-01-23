@@ -66,7 +66,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
     {
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
 
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
@@ -331,9 +330,9 @@ class AssetCostingUploadSubJob implements ShouldQueue
             app(AssetCreationService::class)->assetUploadErrorLog($excelRow, $errorMessage, $assetCostingUploadID);
             app(AssetCreationService::class)->assetDeletion($assetCostingUploadID, 1);
 
-            Log::error('Error Message' . $errorMessage);
-            Log::error('Asset Costing Upload ID: ' . $assetCostingUploadID);
-            Log::error('Excel Row: ' . $excelRow);
+            Log::channel('asset_costing_bulk_insert')->error('Error Message' . $errorMessage);
+            Log::channel('asset_costing_bulk_insert')->error('Asset Costing Upload ID: ' . $assetCostingUploadID);
+            Log::channel('asset_costing_bulk_insert')->error('Excel Row: ' . $excelRow);
 
         }
 

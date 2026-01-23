@@ -172,7 +172,6 @@ class ReceiptAPIController extends AppBaseController
         $header = $input['system'].' 0000000000';
 
         try {
-            Log::useFiles(storage_path() . '/logs/receipt_voucher_api_confirmation_logs.log');
 
             $tenants = CommonJobService::tenant_list();
             if(count($tenants) == 0){
@@ -182,7 +181,7 @@ class ReceiptAPIController extends AppBaseController
             // Dispatch a job for each tenant
             foreach ($tenants as $tenant){
                 $tenantDb = $tenant->database;
-                Log::info('Dispatching job for tenant: ' . $tenantDb);
+                Log::channel('receipt_voucher_api_confirmation_logs')->info('Dispatching job for tenant: ' . $tenantDb);
                 ProcessTenantReceiptVouchers::dispatch($tenantDb, $header);
             }
 

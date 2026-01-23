@@ -35,7 +35,6 @@ class CreateDepreciationAmend implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/depreciation_amend_jobs.log');
         DB::beginTransaction();
         try {
             $depMasterAutoID = $this->depAutoID;
@@ -61,7 +60,7 @@ class CreateDepreciationAmend implements ShouldQueue
             DB::commit();
         }catch (\Exception $e) {
             DB::rollBack();
-            Log::error($this->failed($e));
+            Log::channel('depreciation_amend_jobs')->error($this->failed($e));
         }
     }
 

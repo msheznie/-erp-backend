@@ -49,7 +49,6 @@ class LeaveAccrualInitiate implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-accrual');
-        Log::useFiles($path);
         $db = $this->dispatch_db;
         
         CommonJobService::db_switch( $db );
@@ -57,7 +56,7 @@ class LeaveAccrualInitiate implements ShouldQueue
         $company_list = CommonJobService::company_list();
 
         if($company_list->count() == 0){
-            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('notification_service')->error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
         else{
             

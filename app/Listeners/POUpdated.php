@@ -28,11 +28,10 @@ class POUpdated
     public function handle($event)
     {
         $order = $event->order;
-        Log::useFiles(storage_path() . '/logs/po_updated.log');
-        Log::info('Successfully start  po updated' . date('H:i:s'));
+        Log::channel('po_updated')->info('Successfully start  po updated' . date('H:i:s'));
         if (!empty($order)) {
             $original = $order->getOriginal();
-            Log::info($order->serviceLineSystemID . ' to ' . $original['serviceLineSystemID']);
+            Log::channel('po_updated')->info($order->serviceLineSystemID . ' to ' . $original['serviceLineSystemID']);
             if ( ($order->serviceLineSystemID != $original['serviceLineSystemID']) && ($order->poConfirmedYN == 1 && $original['poConfirmedYN'] == 1)) {
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
                 $email_id = 'm.zahlan@pbs-int.net';
@@ -58,10 +57,10 @@ class POUpdated
                 $dataEmail['alertMessage'] = trans('email.segment_changed_for', ['purchaseOrderCode' => $order['purchaseOrderCode']]);
                 $dataEmail['emailAlertMessage'] = $temp;
                 $sendEmail = \Email::sendEmailErp($dataEmail);
-                Log::info('Email array:');
-                Log::info($dataEmail);
+                Log::channel('po_updated')->info('Email array:');
+                Log::channel('po_updated')->info($dataEmail);
             }
         }
-        Log::info('Successfully end  po updated ' . date('H:i:s'));
+        Log::channel('po_updated')->info('Successfully end  po updated ' . date('H:i:s'));
     }
 }

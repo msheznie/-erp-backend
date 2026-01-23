@@ -41,7 +41,6 @@ class EliminationLedgerInsert implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/elimination_ledger_jobs.log');
         $masterModel = $this->masterModel;
 
         if (!empty($masterModel)) {

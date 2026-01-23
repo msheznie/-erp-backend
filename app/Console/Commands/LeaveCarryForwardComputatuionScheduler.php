@@ -41,7 +41,6 @@ class LeaveCarryForwardComputatuionScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('leave-carry-forward'));
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {
             return;

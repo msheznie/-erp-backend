@@ -821,7 +821,6 @@ class PaymentVoucherServices
 
         $input['BPVdate'] = new Carbon($input['BPVdate']);
         $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-        Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
 
         $changeChequeNoBaseOnPolicy = false;
         $is_exist_policy_GCNFCR = Helper::checkPolicy($companySystemID, 35);

@@ -45,12 +45,11 @@ class AttendancePullingJob implements ShouldQueue
     public function handle()
     {
 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $db_name = CommonJobService::get_tenant_db($this->tenantId);
 
         if(empty($db_name)){
-            return Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            return Log::channel('attendance_job_service')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
         CommonJobService::db_switch( $db_name );

@@ -55,7 +55,6 @@ class UploadBankStatement implements ShouldQueue
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path().'/logs/upload_bank_statement.log');
        
         DB::beginTransaction();
         try {
@@ -148,7 +147,7 @@ class UploadBankStatement implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($e->getMessage());
+            Log::channel('upload_bank_statement')->error($e->getMessage());
             BankStatementMaster::where('statementId', $statementMaster['statementId'])
                 ->update([
                     'importStatus' => 2,

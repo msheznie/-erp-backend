@@ -58,7 +58,6 @@ class PrBulkBulkItem implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
         CommonJobService::db_switch($db);
 
         $input = $this->data;
@@ -71,7 +70,7 @@ class PrBulkBulkItem implements ShouldQueue
                                           ->first();
 
         if (!$purchaseRequest) {
-            Log::error('PR not found');
+            Log::channel('pr_bulk_item')->error('PR not found');
             return;
         }
         $budgetYear = $purchaseRequest->budgetYear;

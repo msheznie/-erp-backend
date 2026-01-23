@@ -42,7 +42,6 @@ class ItemWACTriggerJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('item-wac-amount') );
         try {
 
         CommonJobService::db_switch($this->tenantDb);

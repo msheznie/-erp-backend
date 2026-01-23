@@ -58,7 +58,6 @@ class QuotationAddMultipleItemsService
         $items = $records;
         $itemsToUpload = array();
         // $employee = \Helper::getEmployeeInfo();
-        Log::useFiles(storage_path() . '/logs/sales_order_jobs.log');
 
         foreach($items as $item) {
             $data = array();
@@ -146,7 +145,7 @@ class QuotationAddMultipleItemsService
             'isBulkItemJobRun' => 0
         ]);
 
-        Log::info($data);
+        Log::channel('sales_order_jobs')->info($data);
         
     }
 

@@ -36,7 +36,6 @@ class SMAttendancePullingService{
     {
         $this->isFromShift = $isFromShift;
         if(!$this->isFromShift){
-            Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
         }
 
 

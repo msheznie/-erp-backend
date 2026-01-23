@@ -56,7 +56,6 @@ class mrBulkUploadItem implements ShouldQueue
     public function handle()
     {
         $db = $this->db;
-        Log::useFiles(storage_path() . '/logs/mr_bulk_item.log');
         CommonJobService::db_switch($db);
         $record = $this->record;
         $mrRequest = $this->mrRequest;
@@ -68,7 +67,7 @@ class mrBulkUploadItem implements ShouldQueue
 
         $validateItem = self::validateItemUpload($record, $mrRequest, $this->authID);
 
-        Log::info('Add Multiple Items End');
+        Log::channel('mr_bulk_item')->info('Add Multiple Items End');
         $materialRequest = MaterielRequest::find($mrRequest['RequestID']);
         $materialRequest->isBulkItemJobRun = 0;
         $materialRequest->successDetailsCount = $validateItem['successCount'];

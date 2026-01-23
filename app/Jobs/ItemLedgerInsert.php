@@ -58,18 +58,17 @@ class ItemLedgerInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path().'/logs/item_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             if (!isset($masterModel['documentSystemID'])) {
-                Log::warning('Parameter document id is missing' . date('H:i:s'));
+                Log::channel('item_ledger_jobs')->warning('Parameter document id is missing' . date('H:i:s'));
             }
             DB::beginTransaction();
             try {
                $res = ItemLedgerService::postLedgerEntry($masterModel);
                if (!$res['status']) {
                     DB::rollback();
-                    Log::error($res['error']['message']);
+                    Log::channel('item_ledger_jobs')->error($res['error']['message']);
 
                     JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                } else {
@@ -77,11 +76,11 @@ class ItemLedgerInsert implements ShouldQueue
                }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('item_ledger_jobs')->error($this->failed($e));
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         } else {
-            Log::error('Parameter not exist' . date('H:i:s'));
+            Log::channel('item_ledger_jobs')->error('Parameter not exist' . date('H:i:s'));
         }
 
     }

@@ -52,7 +52,6 @@ class PoAddBulkItemJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/po_bulk_item.log');
 
         CommonJobService::db_switch($db);
         $input = $this->data;

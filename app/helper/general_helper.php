@@ -7806,11 +7806,10 @@ class Helper
 
     public static function generateCustomerReceiptVoucher($pvMaster)
     {
-        Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         if ($pvMaster->invoiceType == 3) {
-            Log::info('started');
-            Log::info($pvMaster->PayMasterAutoId);
-            Log::info($pvMaster->expenseClaimOrPettyCash);
+            Log::channel('create_receipt_voucher_jobs')->info('started');
+            Log::channel('create_receipt_voucher_jobs')->info($pvMaster->PayMasterAutoId);
+            Log::channel('create_receipt_voucher_jobs')->info($pvMaster->expenseClaimOrPettyCash);
             $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
             if (count($dpdetails) > 0) {
                 if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
@@ -7897,7 +7896,7 @@ class Helper
                     $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
                     $receivePayment['createdPcID'] = gethostname();
 
-                    Log::info($receivePayment);
+                    Log::channel('create_receipt_voucher_jobs')->info($receivePayment);
 
                     $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
 
@@ -7928,13 +7927,13 @@ class Helper
                             $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
                             $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
                             $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
-                            Log::info($receivePaymentDetail);
+                            Log::channel('create_receipt_voucher_jobs')->info($receivePaymentDetail);
                             $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
                         }
 
                         $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
                         $confirm = self::confirmWithoutRuleDocument($params);
-                        Log::info($confirm["message"]);
+                        Log::channel('create_receipt_voucher_jobs')->info($confirm["message"]);
                     }
                 } else {
                     $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
@@ -8042,12 +8041,12 @@ class Helper
                             $receivePayment['createdPcID'] = gethostname();
 
                             $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
-                            Log::info($receivePayment);
+                            Log::channel('create_receipt_voucher_jobs')->info($receivePayment);
                         }
                     }
                 }
             }
-            Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
+            Log::channel('create_receipt_voucher_jobs')->info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
             $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
             if ($pvMaster->pdcChequeYN == 0) {
                 $jobPV = BankLedgerInsert::dispatch($masterData);

@@ -53,7 +53,6 @@ class SupplierInvoiceAddBulkItemJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/supplier_invoice_bulk_item.log');
 
         CommonJobService::db_switch($db);
         $input = $this->data;

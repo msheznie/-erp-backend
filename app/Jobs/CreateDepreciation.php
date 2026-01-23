@@ -60,7 +60,6 @@ class CreateDepreciation implements ShouldQueue
         ini_set('memory_limit', -1);
 
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
 
         $depMasterAutoID = $this->depAutoID;
         $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);

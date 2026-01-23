@@ -66,7 +66,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
         $totalSegments = $subData['totalSegments'];
         CommonJobService::db_switch($this->db);
 
-        Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
 
 
         DB::beginTransaction();

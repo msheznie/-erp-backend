@@ -47,7 +47,6 @@ class UserWebHook implements ShouldQueue
 
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path().'/logs/create_user_web_hook.log');
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
             $empID = $this->empID;
@@ -58,7 +57,7 @@ class UserWebHook implements ShouldQueue
 
                 if(empty($employees)){
                     DB::rollback();
-                    Log::error("Employee Not Found");
+                    Log::channel('create_user_web_hook')->error("Employee Not Found");
                 }
                 if(!empty($employees)) {
                     if($employees->uuid == null){
@@ -94,7 +93,7 @@ class UserWebHook implements ShouldQueue
         } catch (\Exception $e)
         {
             DB::rollback();
-            Log::error($e->getMessage());
+            Log::channel('create_user_web_hook')->error($e->getMessage());
         }
     }
 }

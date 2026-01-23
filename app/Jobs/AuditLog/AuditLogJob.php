@@ -196,7 +196,6 @@ class AuditLogJob implements ShouldQueue
                 'companySystemIdColumn'
             );
 
-            Log::useFiles(storage_path() . '/logs/audit.log');
             
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
@@ -229,7 +228,7 @@ class AuditLogJob implements ShouldQueue
                     'log_uuid' => bin2hex(random_bytes(16)),
                 ];
                 
-                Log::info('data:', $logData);
+                Log::channel('audit')->info('data:', $logData);
             }
         }
     }

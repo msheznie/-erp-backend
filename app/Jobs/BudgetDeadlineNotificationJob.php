@@ -45,14 +45,13 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 
-        Log::useFiles(storage_path() . '/logs/budget-deadline-notification.log');
-        Log::info('Budget deadline notification job started for database: ' . $db);
+        Log::channel('budget_deadline_notification')->info('Budget deadline notification job started for database: ' . $db);
 
         try {
             $this->sendDeadlineNotifications();
-            Log::info('Budget deadline notification job completed successfully for database: ' . $db);
+            Log::channel('budget_deadline_notification')->info('Budget deadline notification job completed successfully for database: ' . $db);
         } catch (\Exception $e) {
-            Log::error('Error in budget deadline notification job for database ' . $db . ': ' . $e->getMessage());
+            Log::channel('budget_deadline_notification')->error('Error in budget deadline notification job for database ' . $db . ': ' . $e->getMessage());
             throw $e;
         }
     }

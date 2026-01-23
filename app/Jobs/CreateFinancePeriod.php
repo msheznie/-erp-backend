@@ -38,7 +38,6 @@ class CreateFinancePeriod implements ShouldQueue
                            CompanyFinanceYearRepository $financeYearRepo)
     {
         $financeYear = $this->financeYear;
-        Log::useFiles(storage_path() . '/logs/create_finance_period_jobs.log');
         $bigginingDate = new Carbon($financeYear->bigginingDate);
         $endingDate    = new Carbon($financeYear->endingDate);
         $currentMonth  = $bigginingDate->month;

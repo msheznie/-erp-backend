@@ -54,7 +54,6 @@ class GeneralLedgerInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/general_ledger_jobs.log');
         $masterModel = $this->masterModel;
 
         if (!empty($masterModel)) {
@@ -63,8 +62,8 @@ class GeneralLedgerInsert implements ShouldQueue
                 $res = GeneralLedgerService::postGlEntry($masterModel, $this->dataBase, $this->otherData);
                 if (!$res['status']) {
                     DB::rollback();
-                    Log::error('Error');
-                    Log::error($res['error']['message']);
+                    Log::channel('general_ledger_jobs')->error('Error');
+                    Log::channel('general_ledger_jobs')->error($res['error']['message']);
 
                     JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                 } else {
@@ -72,7 +71,7 @@ class GeneralLedgerInsert implements ShouldQueue
 
                     if (!$checkBalance['status']) {
                         DB::rollback();
-                        Log::error($checkBalance['error']['message']);
+                        Log::channel('general_ledger_jobs')->error($checkBalance['error']['message']);
 
                         JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $checkBalance['error']['message']);
                     } else {
@@ -81,7 +80,7 @@ class GeneralLedgerInsert implements ShouldQueue
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('general_ledger_jobs')->error($this->failed($e));
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         }

@@ -34,11 +34,10 @@ class ItemAssignInsert implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path().'/logs/item_assign_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             if (!isset($masterModel['documentSystemID'])) {
-                Log::warning('Parameter document id is missing' . date('H:i:s'));
+                Log::channel('item_assign_jobs')->warning('Parameter document id is missing' . date('H:i:s'));
             }
             DB::beginTransaction();
             try {
@@ -76,11 +75,11 @@ round(sum(inOutQty),2) * if(round(sum(inOutQty),2)=0,0,round((sum((inOutQty*wacR
                     DB::commit();
                 }else{
                     DB::rollback();
-                    Log::error('No records found in itemledger ' . date('H:i:s'));
+                    Log::channel('item_assign_jobs')->error('No records found in itemledger ' . date('H:i:s'));
                 }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error('Error occurred when updating to item assign table ' . date('H:i:s'));
+                Log::channel('item_assign_jobs')->error('Error occurred when updating to item assign table ' . date('H:i:s'));
             }
         }
     }

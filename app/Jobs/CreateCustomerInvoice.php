@@ -51,7 +51,6 @@ class CreateCustomerInvoice implements ShouldQueue
     public function handle(CustomerInvoiceDirectRepository $customerInvoiceRep,
                            CustomerInvoiceDirectDetailRepository $customerInvoiceDetailRep)
     {
-        Log::useFiles(storage_path() . '/logs/create_customer_invoice_jobs.log');
         $dpMaster = $this->disposalMaster;
         DB::beginTransaction();
         try {
@@ -295,16 +294,16 @@ class CreateCustomerInvoice implements ShouldQueue
                     DB::commit();
                 }
                 else {
-                    Log::error('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
-                    Log::error('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
+                    Log::channel('create_customer_invoice_jobs')->error('From Company Finance Period not found, date : '. $dpMaster->disposalDocumentDate);
+                    Log::channel('create_customer_invoice_jobs')->error('From Company Finance Year Id : '. $fromCompanyFinanceYear->companyFinanceYearID);
                 }
             }else {
-                Log::error('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
+                Log::channel('create_customer_invoice_jobs')->error('From Company Finance Year not found, date : '. $dpMaster->disposalDocumentDate);
             }
         } catch
         (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('create_customer_invoice_jobs')->error($this->failed($e));
         }
     }
 

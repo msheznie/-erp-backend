@@ -50,7 +50,6 @@ class CreateDirectGRV implements ShouldQueue
                            GRVDetailsRepository $grvDetailsRepository)
     {
         //
-        Log::useFiles(storage_path() . '/logs/create_direct_grv_jobs.log');
         $data = $this->disposalMaster;
         $dpMaster = AssetDisposalMaster::find($data['assetdisposalMasterAutoID']);
         $invoiceCode = $data['invoiceCode'];

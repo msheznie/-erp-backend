@@ -56,7 +56,6 @@ class SoSentToCustomerJob implements ShouldQueue
         $documentTypeTitle = $input['documentTypeTitle'];
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/so_sent_to_customer.log');
 
         CommonJobService::db_switch($db);
 

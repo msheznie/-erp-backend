@@ -59,7 +59,6 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $days = $this->daysData;
         $type = $this->typeData;
@@ -134,7 +133,7 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
                         $sendEmail = NotificationService::emailNotification($companyIDFromScenario, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
 
                         if (!$sendEmail["success"]) {
-                            Log::error($sendEmail["message"]);
+                            Log::channel('budget_cutoff_po')->error($sendEmail["message"]);
                         }
                     }
 

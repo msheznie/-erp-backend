@@ -26,7 +26,6 @@ class BirthdayWishService
 
     function execute()
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('birthday-wishes'));
         $this->insertToLogTb('execution started');
         if ($this->switchDb) {
             CommonJobService::db_switch($this->switchDb);

@@ -40,7 +40,6 @@ class WarehouseItemUpdate implements ShouldQueue
     {
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path() . '/logs/warehouse_item_update_jobs.log');
             $grvMaster = GRVMaster::find($this->grvMasterAutoID);
             if (!empty($grvMaster) && $grvMaster->approved == -1) {
                 $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
@@ -61,7 +60,7 @@ class WarehouseItemUpdate implements ShouldQueue
                                     'itemSystemCode' => $detail['itemCode']])
                                     ->update(['binNumber' => $detail['binNumber']]);
                             } else {
-                                Log::error('warehouse item not found');
+                                Log::channel('warehouse_item_update_jobs')->error('warehouse item not found');
                                 $item = ItemMaster::find($detail['itemCode']);
 
                                 if(!empty($item)) {
@@ -104,7 +103,7 @@ class WarehouseItemUpdate implements ShouldQueue
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('warehouse_item_update_jobs')->error($this->failed($e));
         }
     }
 

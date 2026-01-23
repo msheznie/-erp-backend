@@ -88,15 +88,14 @@ class NavigationAccessAuditLogJob implements ShouldQueue
     private function writeToAuditLog($eventDataArray)
     {
         try {
-            Log::useFiles(storage_path() . '/logs/audit.log');
             
             // Write logs for each language
             foreach ($eventDataArray as $eventData) {
                 $eventData['log_uuid'] = (string) bin2hex(random_bytes(16));
-                Log::info('data:', $eventData);
+                Log::channel('audit')->info('data:', $eventData);
             }
         } catch (\Exception $e) {
-            Log::error('Failed to write to audit log: ' . $e->getMessage());
+            Log::channel('audit')->error('Failed to write to audit log: ' . $e->getMessage());
         }
     }
 }

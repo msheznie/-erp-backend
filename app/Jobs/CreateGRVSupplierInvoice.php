@@ -46,7 +46,6 @@ class CreateGRVSupplierInvoice implements ShouldQueue
     {
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path() . '/logs/create_supplier_invoice_jobs.log');
             $grvMaster = GRVMaster::find($this->grvMasterAutoID);
             if ($grvMaster) {
                 if ($grvMaster->interCompanyTransferYN == -1) {
@@ -239,7 +238,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('create_supplier_invoice_jobs')->error($this->failed($e));
         }
     }
 

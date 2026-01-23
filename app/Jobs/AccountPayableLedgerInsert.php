@@ -47,7 +47,6 @@ class AccountPayableLedgerInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/accounts_payable_ledger_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -55,7 +54,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                $res = AccountPayableLedgerService::postLedgerEntry($masterModel);
                if (!$res['status']) {
                     DB::rollback();
-                    Log::error($res['error']['message']);
+                    Log::channel('accounts_payable_ledger_jobs')->error($res['error']['message']);
 
                     JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 1, $res['error']['message']);
                } else {
@@ -63,7 +62,7 @@ class AccountPayableLedgerInsert implements ShouldQueue
                }
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('accounts_payable_ledger_jobs')->error($this->failed($e));
                 JobErrorLogService::storeError($this->dataBase, $masterModel['documentSystemID'], $masterModel['autoID'], $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         }

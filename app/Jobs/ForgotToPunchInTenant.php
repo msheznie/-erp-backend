@@ -43,7 +43,6 @@ class ForgotToPunchInTenant implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-notification') );
 
         CommonJobService::db_switch( $this->tenantDb );
         

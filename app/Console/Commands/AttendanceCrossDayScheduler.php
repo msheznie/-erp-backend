@@ -41,14 +41,13 @@ class AttendanceCrossDayScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-cross-day-clockOut') );
 
         $attDate = Carbon::now()->timezone('Asia/Muscat');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
             $msg = "Tenant details not found ( {$attDate} ).";
-            Log::error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('attendance_cross_day_job_service')->error("{$msg} \t on file: " . __CLASS__ ." \tline no :".__LINE__);
             return;
         }
 

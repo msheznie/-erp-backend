@@ -38,7 +38,6 @@ class AttendanceCrossDayPulling implements ShouldQueue{
     {
 
 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-cross-day-clockOut') );
 
         CommonJobService::db_switch($this->dispatchDb);
 
@@ -49,7 +48,7 @@ class AttendanceCrossDayPulling implements ShouldQueue{
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
         if(!$isShiftModule){
-            return Log::error("cannot proceed in old shift module");
+            return Log::channel('attendance_cross_day_job_service')->error("cannot proceed in old shift module");
         }
 
         $obj = new SMAttendanceCrossDayPullingService($this->companyId, $this->attDate);

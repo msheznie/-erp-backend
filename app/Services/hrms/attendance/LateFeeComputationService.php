@@ -12,7 +12,6 @@ class LateFeeComputationService{
     private $companyId;
 
     public function __construct($empId, $attendanceDate, $companyId){
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $this->empId = $empId;
         $this->attendanceDate = $attendanceDate;

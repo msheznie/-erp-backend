@@ -58,7 +58,6 @@ class PoSentToSupplierJob implements ShouldQueue
         $purchaseOrderID = $this->poID;
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/po_sent_to_supplier.log');
 
         CommonJobService::db_switch($db);
 

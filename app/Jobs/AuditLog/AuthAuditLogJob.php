@@ -70,17 +70,16 @@ class AuthAuditLogJob implements ShouldQueue
     private function writeToAuditLog($eventDataArray)
     {
         try {
-            Log::useFiles(storage_path() . '/logs/audit.log');
             
             // Write logs for each language
             foreach ($eventDataArray as $eventData) {
                 $locale = $eventData['locale'] ?? 'en';
                 $translatedData = AuthAuditService::translateEventData($eventData, $locale);
                 $translatedData['log_uuid'] = (string) bin2hex(random_bytes(16));
-                Log::info('data:', $translatedData);
+                Log::channel('audit')->info('data:', $translatedData);
             }
         } catch (\Exception $e) {
-            Log::error('Failed to write to audit log: ' . $e->getMessage());
+            Log::channel('audit')->error('Failed to write to audit log: ' . $e->getMessage());
         }
     }
 }

@@ -48,7 +48,6 @@ class CreateSupplierInvoice implements ShouldQueue
     public function handle(BookInvSuppMasterRepository $bookInvSuppMasterRepo, BookInvSuppDetRepository $bookInvSuppDetRepo,
                            GeneralLedgerRepository $generalLedgerRepo, AccountsPayableLedgerRepository $accountsPayableLedgerRepo)
     {
-        Log::useFiles(storage_path() . '/logs/create_supplier_invoice_jobs.log');
         $sr = $this->srMaster;
         $srMaster = StockReceive::where('stockReceiveAutoID', $sr->stockReceiveAutoID)->first();
         if (!empty($srMaster)) {
@@ -323,7 +322,7 @@ class CreateSupplierInvoice implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('create_supplier_invoice_jobs')->error($this->failed($e));
             }
         }
     }

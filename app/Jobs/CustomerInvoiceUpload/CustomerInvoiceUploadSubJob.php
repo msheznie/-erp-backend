@@ -56,7 +56,6 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
     {
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path().'/logs/customer_invoice_bulk_insert.log');
         
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
@@ -113,10 +112,10 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 DB::commit();
             } catch (\Exception $innerException) {
                 // Log the inner exception
-                Log::error('Inner Exception caught: ' . $innerException->getMessage());
-                Log::error('Inner Exception Line No: ' . $innerException->getLine());
-                Log::error('Inner Exception File: ' . $innerException->getFile());
-                Log::error('Inner Exception Stack Trace: ' . $innerException->getTraceAsString());
+                Log::channel('customer_invoice_bulk_insert')->error('Inner Exception caught: ' . $innerException->getMessage());
+                Log::channel('customer_invoice_bulk_insert')->error('Inner Exception Line No: ' . $innerException->getLine());
+                Log::channel('customer_invoice_bulk_insert')->error('Inner Exception File: ' . $innerException->getFile());
+                Log::channel('customer_invoice_bulk_insert')->error('Inner Exception Stack Trace: ' . $innerException->getTraceAsString());
 
                 // Rollback in case of an exception during rollback
                 DB::rollBack();
@@ -124,11 +123,11 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Exception caught: ' . $e->getMessage());
-            Log::error('Error Line No: ' . $e->getLine());
-            Log::error('Error File: ' . $e->getFile());
-            Log::error('Stack Trace: ' . $e->getTraceAsString());
-            Log::error('---- Customer Invoice Bulk Insert Error ----- ' . date('H:i:s'));
+            Log::channel('customer_invoice_bulk_insert')->error('Exception caught: ' . $e->getMessage());
+            Log::channel('customer_invoice_bulk_insert')->error('Error Line No: ' . $e->getLine());
+            Log::channel('customer_invoice_bulk_insert')->error('Error File: ' . $e->getFile());
+            Log::channel('customer_invoice_bulk_insert')->error('Stack Trace: ' . $e->getTraceAsString());
+            Log::channel('customer_invoice_bulk_insert')->error('---- Customer Invoice Bulk Insert Error ----- ' . date('H:i:s'));
             UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
             LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
                 'is_failed' => 1,

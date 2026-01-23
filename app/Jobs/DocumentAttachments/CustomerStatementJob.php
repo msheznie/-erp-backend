@@ -64,7 +64,6 @@ class CustomerStatementJob implements ShouldQueue
         $companySystemID = $this->input;
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
-        Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
@@ -139,7 +138,7 @@ class CustomerStatementJob implements ShouldQueue
                 $mpdf->WriteHTML($html);
                 $mpdf->Output($filePath, 'F');
             } catch (\Exception $e2) {
-                Log::error('mPDF Error in CustomerStatementJob: ' . $e2->getMessage());
+                Log::channel('payment_released_to_supplier')->error('mPDF Error in CustomerStatementJob: ' . $e2->getMessage());
                 return;
             }
         }
@@ -174,8 +173,8 @@ class CustomerStatementJob implements ShouldQueue
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                         Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                         Log::channel('payment_released_to_supplier')->error('Error');
+                        Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);
                     }
                 }
             }

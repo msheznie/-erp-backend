@@ -44,7 +44,6 @@ class BudgetAdjustment implements ShouldQueue
     {
         $bt = $this->budgetTransfer;
         $budgetTransfer = BudgetTransferForm::with(['detail'])->find($bt->budgetTransferFormAutoID);
-        Log::useFiles(storage_path() . '/logs/budget_adjustment_jobs.log');
         if (!empty($budgetTransfer)) {
             DB::beginTransaction();
 
@@ -296,10 +295,10 @@ class BudgetAdjustment implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('budget_adjustment_jobs')->error($this->failed($e));
             }
         } else {
-            Log::error('Budget Transfer not found' . date('H:i:s'));
+            Log::channel('budget_adjustment_jobs')->error('Budget Transfer not found' . date('H:i:s'));
         }
     }
 

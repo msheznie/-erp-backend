@@ -73,7 +73,6 @@ class CreateReceiptMatching implements ShouldQueue
 
     public function handle()
     {
-        \Log::useFiles(storage_path() . '/logs/create_receipt_matching.log');
         CommonJobService::db_switch($this->db);
 
         $input = $this->input;
@@ -152,7 +151,7 @@ class CreateReceiptMatching implements ShouldQueue
         ];
 
         // Log the response
-        \Log::error($response);
+        \Log::channel('create_receipt_matching')->error($response);
 
         // Dispatch webhook job
         $webhookPayload = $response;

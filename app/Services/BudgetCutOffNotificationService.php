@@ -22,14 +22,13 @@ class BudgetCutOffNotificationService
 
     public static function sendBudgetCutOffNotification($dataBase = "")
     {
-        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $scenarios = NotificationService::getCompanyScenarioConfiguration(18);
         if (count($scenarios) == 0) {
-            Log::info('Notification Company Scenario not exist in '.$dataBase);
+            Log::channel('budget_cutoff_po')->info('Notification Company Scenario not exist in '.$dataBase);
         } else {
             $scenario_des = $scenarios[0]->notification_scenario->scenarioDescription;
 
-            Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
+            Log::channel('budget_cutoff_po')->info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
             $scenarios = $scenarios->toArray();
             foreach ($scenarios as $compAssignScenario) {
                 CompanyWiseCutOffNotificationJob::dispatch($dataBase, $compAssignScenario);

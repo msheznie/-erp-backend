@@ -41,10 +41,6 @@ class BirthdayWishInitiate implements ShouldQueue
      */
     public function handle()
     {
-
-        $path = CommonJobService::get_specific_log_file('birthday-wishes');
-        Log::useFiles($path);
-
         $db = $this->dispatch_db;
 
         CommonJobService::db_switch($db);
@@ -52,7 +48,7 @@ class BirthdayWishInitiate implements ShouldQueue
         $company_list = CommonJobService::company_list();
 
         if ($company_list->count() == 0) {
-            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+            Log::channel('birthday_wishes_service')->error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
             return;
         }
 

@@ -40,7 +40,6 @@ class RecurringVoucherScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('recurring-voucher') );
 
 
         $tenants = CommonJobService::tenant_list();

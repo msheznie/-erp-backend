@@ -92,7 +92,6 @@ class CreateCreditNote implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_credit_note.log');
 
         CommonJobService::db_switch($this->db);
 
@@ -310,7 +309,7 @@ class CreateCreditNote implements ShouldQueue
             ];
         }
 
-        Log::error($returnData);
+        Log::channel('create_credit_note')->error($returnData);
 
 
         // Dispatch webhook job

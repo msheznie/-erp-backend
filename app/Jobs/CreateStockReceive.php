@@ -60,7 +60,6 @@ class CreateStockReceive implements ShouldQueue
                            AccountsReceivableLedgerRepository $accountsReceivableLedgerRep,
                            StockReceiveDetailsRepository $stockReceiveDetailsRepo)
     {
-        Log::useFiles(storage_path() . '/logs/create_stock_receive_jobs.log');
 
         $dataBase = $this->dataBase;
         $st = $this->stMaster;
@@ -740,13 +739,13 @@ class CreateStockReceive implements ShouldQueue
 
 
                     } else {
-                        Log::error(trans('custom.policy_disabled') . date('H:i:s'));
+                        Log::channel('create_stock_receive_jobs')->error(trans('custom.policy_disabled') . date('H:i:s'));
                     }
                 }
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('create_stock_receive_jobs')->error($this->failed($e));
             }
         }
     }

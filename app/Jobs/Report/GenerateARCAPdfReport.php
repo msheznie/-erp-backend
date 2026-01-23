@@ -62,7 +62,6 @@ class GenerateARCAPdfReport implements ShouldQueue
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log');
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
         $db = $this->dispatch_db;
@@ -260,7 +259,7 @@ class GenerateARCAPdfReport implements ShouldQueue
             return true;
             
         } catch (\Exception $e) {
-            Log::error($e->getMessage()." Line : ".$e->getLine());
+            Log::channel('account_recivable_report')->error($e->getMessage()." Line : ".$e->getLine());
         }
     }
 }

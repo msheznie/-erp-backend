@@ -46,7 +46,6 @@ class NotificationService
 
     public static function process($scenarioID){
         $log_file = self::log_file();
-        Log::useFiles($log_file);
 
         $com_assign_scenarios = NotificationService::getCompanyScenarioConfiguration($scenarioID);
         $emailContent = [];
@@ -54,19 +53,19 @@ class NotificationService
 
 
         if (count($com_assign_scenarios) == 0) {
-            Log::info('Notification Company Scenario not exist');
+            Log::channel('notification_service')->info('Notification Company Scenario not exist');
             return true;
         }
 
         $scenario_des = $com_assign_scenarios[0]->notification_scenario->scenarioDescription;
 
-        Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
+        Log::channel('notification_service')->info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
 
         foreach ($com_assign_scenarios as $compAssignScenario) {
-            Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+            Log::channel('notification_service')->info('Company Name: ' . $compAssignScenario->company->CompanyName);
 
             if (count($compAssignScenario->notification_day_setup) == 0) {
-                Log::info('Notification day setup not exist');
+                Log::channel('notification_service')->info('Notification day setup not exist');
                 continue;
             }
 
@@ -147,7 +146,7 @@ class NotificationService
                         break;
 
                     default:
-                        Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
+                        Log::channel('notification_service')->error("Applicable category configuration not exist for scenario {$scenario_des}");
 
                         break;
                 }
@@ -158,13 +157,13 @@ class NotificationService
                 }
 
                 if (count($details) == 0) {
-                    Log::info("No records found for scenario {$scenario_des} ");
+                    Log::channel('notification_service')->info("No records found for scenario {$scenario_des} ");
                     continue;
                 }
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info("User setup not found for scenario {$scenario_des}");
+                    Log::channel('notification_service')->info("User setup not found for scenario {$scenario_des}");
                     continue;
                 }
 
@@ -190,7 +189,7 @@ class NotificationService
                             $emailContent = RolReachedNotification::getReOrderLevelReachedEmailContent($details, $notificationUserVal[$key]['empName']);
                             break;
                         default:
-                            Log::error("Email content configuration not done for scenario {$scenario_des}");
+                            Log::channel('notification_service')->error("Email content configuration not done for scenario {$scenario_des}");
                             break;
                     }
 
@@ -198,14 +197,14 @@ class NotificationService
                     $sendEmail = NotificationService::emailNotification($companyID, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
 
                     if (!$sendEmail["success"]) {
-                        Log::error($sendEmail["message"]);
+                        Log::channel('notification_service')->error($sendEmail["message"]);
                     }
                 }
             }
 
         }
 
-        Log::info('------------ Successfully end ' . $scenario_des . ' Service ' . date('H:i:s') . ' ------------');
+        Log::channel('notification_service')->info('------------ Successfully end ' . $scenario_des . ' Service ' . date('H:i:s') . ' ------------');
 
         return true;
     }

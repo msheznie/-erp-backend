@@ -55,7 +55,6 @@ class MaterialRequestAddBulkItemJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/material_request_bulk_item.log');
 
         CommonJobService::db_switch($db);
         $input = $this->data;

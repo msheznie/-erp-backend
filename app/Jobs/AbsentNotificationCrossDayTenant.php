@@ -31,7 +31,6 @@ class AbsentNotificationCrossDayTenant implements ShouldQueue
 
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('absent-notification') );
 
         CommonJobService::db_switch( $this->tenantDb );
                 

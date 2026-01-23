@@ -44,7 +44,6 @@ class CreateReceiptVoucher implements ShouldQueue
      */
     public function handle(DirectPaymentDetailsRepository $dpdetail, CustomerReceivePaymentRepository $crp, DirectReceiptDetailRepository $ddr)
     {
-        Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         $pvMaster = $this->master;
         if ($pvMaster->invoiceType == 3) {
             DB::beginTransaction();
@@ -229,7 +228,7 @@ class CreateReceiptVoucher implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($e->getMessage());
+                Log::channel('create_receipt_voucher_jobs')->error($e->getMessage());
             }
         }
     }

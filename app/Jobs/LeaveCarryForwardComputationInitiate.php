@@ -43,7 +43,6 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
     {
 
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
-        Log::useFiles($path); 
         
         $db = $this->dispatchDb;
         $mainDb = DB::connection()->getDatabaseName();
@@ -55,7 +54,7 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
         $companyList = CommonJobService::company_list();
 
         if ($companyList->count() == 0) {
-            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+            Log::channel('notification_service')->error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
             return;
         }
 
