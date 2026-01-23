@@ -21,6 +21,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
@@ -30,6 +31,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SRMDocumentMaster;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
@@ -609,10 +611,34 @@ class TenderMasterAPIController extends AppBaseController
             $data['serial_number'] = $lastSerialNumber;
             $data['document_type'] = isset($input['rfx']) ? $input['document_type'] : 0;
             $data['isDelegation'] = $input['isDelegation'] ?? 0;
+
+            $params = ['masterData' => true, 'docSystemId' => $document_system_id];
+            $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
             $result = TenderMaster::create($data);
 
             if ($result) {
                 DB::commit();
+                if (!empty( $getDocumentMasterData)) {
+                    foreach ($getDocumentMasterData as $doc) {
+                        $documentAttachment = [
+                            'companySystemID'      => $data['company_id'],
+                            'documentSystemCode'   => $result->id,
+                            'companyID'            => $company->CompanyID,
+                            'documentSystemID'     => $document_system_id,
+                            'documentID'           => $documentMaster['documentID'],
+                            'attachmentDescription'=> $doc['document_name'],
+                            'path'                 => $doc['path'],
+                            'originalFileName'     => $doc['original_file_name'],
+                            'myFileName'           => $doc['my_file_name'],
+                            'attachmentType'       => $doc['document_area'],
+                            'sizeInKbs'            => $doc['size_in_kbs'],
+                            'isUploaded'           => 1,
+                            'envelopType'          => $doc['envelope_type']
+                        ];
+
+                        DocumentAttachments::create($documentAttachment);
+                    }
+                }
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
