@@ -204,4 +204,11 @@ class TenderDocumentTypes extends Model
             ->get();
     }
 
+    public static function getDocumentAreaByIds($ids)
+    {
+      return self::select('id','document_type')
+          ->whereIn('id', $ids)
+          ->get();
+    }
+
 }
