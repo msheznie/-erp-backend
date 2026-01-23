@@ -426,6 +426,23 @@
                 <th>{{ __('custom.part_number') }}</th>
                 @endif
                 <th>{{ __('custom.uom') }}</th>
+                @php
+                    $hasSegmentData = false;
+                    if(isset($masterdata->detail) && $masterdata->detail->count() > 0) {
+                        foreach($masterdata->detail as $det) {
+                            if(($det->serviceLineSystemID != null && $det->serviceLineSystemID !== '') ||
+                               ($det->segment != null && isset($det->segment))) {
+                                $hasSegmentData = true;
+                                break;
+                            }
+                        }
+                    }
+                    $showSegmentColumn = (isset($masterdata->salesType) && $masterdata->salesType == 2 && isset($masterdata->isSegmentPolicyOn) && $masterdata->isSegmentPolicyOn) ||
+                                         (isset($masterdata->salesType) && $masterdata->salesType == 2 && $hasSegmentData);
+                @endphp
+                @if($showSegmentColumn)
+                <th>{{ __('custom.segments') }}</th>
+                @endif
                 <th>{{ __('custom.quantity') }}</th>
                 @if(isset($masterdata->salesType) && $masterdata->salesType == 2)
                 <th>{{ __('custom.user_qty') }}</th>
@@ -450,6 +467,15 @@
                     <td>{{$item->itemReferenceNo}}</td>
                     @endif
                     <td>{{$item->unitOfMeasure}}</td>
+                    @if($showSegmentColumn)
+                    <td>
+                        @if(isset($item->segment) && $item->segment)
+                            {{$item->segment->ServiceLineDes ?? ''}}
+                        @elseif(isset($item->serviceLineSystemID) && $item->serviceLineSystemID)
+                            {{$item->serviceLineCode ?? ''}}
+                        @endif
+                    </td>
+                    @endif
                     <td class="text-right">{{$item->requestedQty}}</td>
                     @if(isset($masterdata->salesType) && $masterdata->salesType == 2)
                     <td class="text-right">{{$item->userQty}}</td>
@@ -462,24 +488,41 @@
                     <td class="text-right">{{number_format($item->transactionAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endforeach
+            @php
+                // Calculate colspan based on visible columns
+                $baseCols = 4; // #, item_code, item_description, uom
+                if(isset($masterdata->salesType) && $masterdata->salesType == 1) {
+                    $baseCols += 1; // part_number
+                }
+                $baseCols += 2; // quantity, unit_rate
+                if(isset($masterdata->salesType) && $masterdata->salesType == 2) {
+                    $baseCols += 1; // user_qty
+                }
+                if($showSegmentColumn) {
+                    $baseCols += 1; // segment
+                }
+                $baseCols += 1; // discount
+                $colspanWithVat = $baseCols;
+                $colspanWithoutVat = $baseCols;
+            @endphp
             @if($masterdata->isVatEligible)
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">{{ __('custom.sub_total') }}</td>
+                    <td colspan="{{$colspanWithVat}}" class="text-right">{{ __('custom.sub_total') }}</td>
                     <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">{{ __('custom.vat_amount') }}</td>
+                    <td colspan="{{$colspanWithVat}}" class="text-right">{{ __('custom.vat_amount') }}</td>
                     <td class="text-right ">{{number_format($masterdata->VATAmount, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="9" class="text-right">{{ __('custom.grand_total') }}</td>
+                    <td colspan="{{$colspanWithVat}}" class="text-right">{{ __('custom.grand_total') }}</td>
                     <td class="text-right ">{{number_format(($netTotal + $masterdata->VATAmount), $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endif
 
             @if(!$masterdata->isVatEligible)
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="8" class="text-right">{{ __('custom.grand_total') }}</td>
+                    <td colspan="{{$colspanWithoutVat}}" class="text-right">{{ __('custom.grand_total') }}</td>
                     <td class="text-right ">{{number_format($netTotal, $masterdata->transactionCurrencyDecimalPlaces)}}</td>
                 </tr>
             @endif

@@ -4787,6 +4787,7 @@ return
     'secondary_company_saved_successfully' => 'تم حفظ الشالمؤسسةركة الثانوية بنجاح',
     'secondarycompany_updated_successfully' => 'تم تحديث المؤسسة الثانوية بنجاح',
     'segment' => 'الشريحة',
+    'segments' => 'الشرائح',
     'segment_allocated_item_deleted_successfully' => 'تم حذف المادة المخصص للشريحة بنجاح',
     'segment_allocated_item_not_found' => 'المادة المخصص للشريحة غير موجود',
     'segment_allocated_item_retrieved_successfully' => 'تم استرداد المادة المخصص للشريحة بنجاح',
@@ -8752,6 +8753,7 @@ return
     'every_issue_should_have_at_least_one_item' => 'يجب أن يحتوي كل صرف على مادة واحدة على الأقل',
     'every_item_should_have_minimum_qty_requested' => 'يجب أن تحتوي كل مادة على كمية طلب أدنى واحدة على الأقل',
     'material_issue_updated_successfully' => 'تم تحديث إصدار المواد بنجاح',
+    'please_select_segment_for_each_line_item' => 'يرجى تحديد قطاع لكل سطر من سطور العنصر',	
     'data_retrieved' => 'تم استرجاع البيانات!',
     'please_map_the_original_item' => 'يرجى تعيين المادة الأصلي',
     'issuing_quantity_cannot_be_zero' => 'لا يمكن أن يكون المبلغ المصدر صفراً',
@@ -9803,4 +9805,5 @@ return
     'getAll_must_be_a_boolean_value_true_or_false' => 'يجب أن يكون getAll إما true أو false',
     'getAll_is_required' => 'Get all مطلوب',
     'pos_type_must_be_an_integer' => 'نوع الموقع يجب أن يكون رقمًا صحيحًا',
-  ];
+    'cannot_deactivate_policy_documents_with_segment_selection' => 'هناك بعض المستندات التي استخدمت اختيار قطاع عنصر السطر. لا يمكن السماح بإلغاء التفعيل حتى يتم إكمال المستندات',
+];

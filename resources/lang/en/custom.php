@@ -3404,6 +3404,7 @@ return
     'order_cannot_confirm_without_details' => 'Order cannot be confirmed without any details',
     'alternative_uom_should_have_qty' => 'Every Alternative UOM should have Alternative UOM Qty',
     'item_should_have_minimum_qty' => 'Every item should have at least one minimum qty requested',
+    'please_select_segment_for_each_line_item' => 'Segment selection for each line item is Mandatory',
     'added_request_department_different' => 'Added Request department is different from order',
     'item_unit_cost_greater_than_zero' => 'Every item unit cost should be greater than zero',
     'po_should_have_payment_term' => 'PO should have at least one payment term',
@@ -9504,6 +9505,7 @@ return
     'budget_exceeded_gl_account' => 'Budget Exceeded GL Account : ',
     'budget_exceeded_category' => 'Budget Exceeded Category : ',
     'segment' => 'Segment : ',
+    'segments' => 'Segment',
     'gl_account' => 'GL Account : ',
     'budget_amount' => 'Budget Amount : ',
     'document_amount' => 'Document Amount : ',
@@ -9916,4 +9918,5 @@ return
     'getAll_must_be_a_boolean_value_true_or_false' => 'Get all must be a boolean value (true or false)',
     'getAll_is_required' => 'Get all is required',
     'pos_type_must_be_an_integer' => 'POS type must be an integer',
-  ];
+    'cannot_deactivate_policy_documents_with_segment_selection' => 'There are some documents that have used line item segment selection. We cannot allow to deactivate until the documents have been completed',
+];

@@ -373,7 +373,15 @@ class QuotationMasterAPIController extends AppBaseController
         if (empty($quotationMaster)) {
             return $this->sendError(trans('custom.quotation_master_not_found'));
         }
-
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $quotationMaster->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $quotationMaster->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $quotationMaster->isSegmentPolicyOn = false;
+        }
         return $this->sendResponse($quotationMaster->toArray(), trans('custom.quotation_master_retrieved_successfully'));
     }
 
@@ -623,6 +631,20 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
                 if ($checkAmount > 0) {
                     return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
+                }
+            }
+
+            $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isYesNO', 1)
+                ->exists();
+
+            if($quotationMaster->salesType == 2 && $isSegmentPolicyOn){
+                $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
+                    ->whereNull('serviceLineSystemID')
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError(trans('custom.please_select_segment_for_each_line_item'), 500);
                 }
             }
 
@@ -1102,9 +1124,21 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
             $query->with(['term_description']);
         }])->first();
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
+        }
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -1123,7 +1157,9 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID', [67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
@@ -1138,6 +1174,16 @@ class QuotationMasterAPIController extends AppBaseController
             foreach ($soPaymentTerms as $val) {
                 $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val->paymentTemDes.' '.$val['inDays'] . trans('custom.in_days') . ', ';
             }
+        }
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
         }
 
         $order = array(
