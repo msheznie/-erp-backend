@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\TenderNegotiation;
 use Prettus\Repository\Contracts\RepositoryInterface;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * class TenderNegotiationRepository.

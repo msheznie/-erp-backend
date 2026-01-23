@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BudgetTransferFormDetailRefferedBack;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BudgetTransferFormDetailRefferedBackRepository

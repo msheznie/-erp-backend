@@ -11,7 +11,7 @@ use App\Models\EvaluationCriteriaMasterDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class EvaluationCriteriaDetailsRepository

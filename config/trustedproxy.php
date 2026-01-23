@@ -34,12 +34,17 @@ return [
      * 
      * Options include:
      * 
-     * - Illuminate\Http\Request::HEADER_X_FORWARDED_ALL (use all x-forwarded-* headers to establish trust)
+     * - Illuminate\Http\Request::HEADER_X_FORWARDED_FOR | HEADER_X_FORWARDED_HOST | HEADER_X_FORWARDED_PORT | HEADER_X_FORWARDED_PROTO (use all x-forwarded-* headers)
+     * - Illuminate\Http\Request::HEADER_X_FORWARDED_AWS_ELB (for AWS ELB)
+     * - Illuminate\Http\Request::HEADER_X_FORWARDED_TRAEFIK (for Traefik reverse proxy)
      * - Illuminate\Http\Request::HEADER_FORWARDED (use the FORWARDED header to establish trust)
      * 
      * @link https://symfony.com/doc/current/deployment/proxies.html
      */
-    'headers' => Illuminate\Http\Request::HEADER_X_FORWARDED_ALL,
+    'headers' => \Illuminate\Http\Request::HEADER_X_FORWARDED_FOR |
+                 \Illuminate\Http\Request::HEADER_X_FORWARDED_HOST |
+                 \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
+                 \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO,
 
     
 ];

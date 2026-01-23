@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\B2BSubmissionFileDetail;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class B2BSubmissionFileDetailRepository

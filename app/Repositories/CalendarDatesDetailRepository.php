@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CalendarDatesDetail;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class CalendarDatesDetailRepository

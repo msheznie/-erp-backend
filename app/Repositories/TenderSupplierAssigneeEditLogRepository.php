@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\TenderSupplierAssignee;
 use App\Models\TenderSupplierAssigneeEditLog;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use mysql_xdevapi\Exception;
 
 /**

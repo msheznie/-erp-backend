@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ERPAssetTransferDetailsRefferedback;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ERPAssetTransferDetailsRefferedbackRepository

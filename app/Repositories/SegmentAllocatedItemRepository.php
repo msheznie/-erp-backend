@@ -7,7 +7,7 @@ use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseOrderDetails;
 use App\Models\ProcumentOrder;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SegmentAllocatedItemRepository

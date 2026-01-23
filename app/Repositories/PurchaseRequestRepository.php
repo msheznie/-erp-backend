@@ -7,7 +7,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequest;
 use App\Models\TenderPurchaseRequest;
 use Carbon\Carbon;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 
 /**

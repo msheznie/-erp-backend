@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\Appointment;
 use App\Models\PurchaseOrderDetails;
 use App\Models\GRVDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class AppointmentRepository

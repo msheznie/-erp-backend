@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DebitNoteMasterRefferedback;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DebitNoteMasterRefferedbackRepository

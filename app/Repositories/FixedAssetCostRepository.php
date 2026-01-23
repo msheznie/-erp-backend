@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\FixedAssetCost;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class FixedAssetCostRepository

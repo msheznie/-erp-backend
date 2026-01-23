@@ -1,7 +1,7 @@
 <?php
 namespace App\Repositories;
 use App\Models\DepartmentUserBudgetControl;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 class DepartmentUserBudgetControlRepository extends BaseRepository
 {

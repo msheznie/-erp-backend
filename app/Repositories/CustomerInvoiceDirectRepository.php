@@ -6,7 +6,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\MatchDocumentMaster;
 use App\Models\CustomerInvoiceDirect;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
 use Carbon\Carbon;

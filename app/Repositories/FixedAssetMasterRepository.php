@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\FixedAssetMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Models\GRVDetails;
 use App\helper\StatusService;
 

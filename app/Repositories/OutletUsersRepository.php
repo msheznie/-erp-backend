@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\OutletUsers;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class OutletUsersRepository

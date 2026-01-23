@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\AssetVerification;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class AssetVerificationRepository

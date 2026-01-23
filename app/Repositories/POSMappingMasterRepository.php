@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSMappingMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSMappingMasterRepository

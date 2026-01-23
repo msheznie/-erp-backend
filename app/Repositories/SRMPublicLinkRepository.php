@@ -6,7 +6,7 @@ use App\helper\Helper;
 use App\Models\SRMPublicLink;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Exception;
 /**
  * Class SRMPublicLinkRepository

@@ -7,7 +7,7 @@ use App\Models\BankReconciliation;
 use App\Models\BankStatementDetail;
 use App\Models\BankStatementMaster;
 use Carbon\Carbon;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Models\BankAccount;
 use Illuminate\Support\Facades\DB;
 

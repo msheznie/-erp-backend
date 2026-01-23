@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\MolContribution;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class MolContributionRepository

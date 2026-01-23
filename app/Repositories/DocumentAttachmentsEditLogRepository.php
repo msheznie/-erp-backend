@@ -7,7 +7,7 @@ use App\Models\DocumentAttachmentsEditLog;
 use Illuminate\Http\Request;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Services\SrmDocumentModifyService;
 

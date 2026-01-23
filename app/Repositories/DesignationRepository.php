@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Designation;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DesignationRepository

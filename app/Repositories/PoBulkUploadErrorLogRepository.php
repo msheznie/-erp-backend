@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\PoBulkUploadErrorLog;
 use App\Models\ProcumentOrder;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PoBulkUploadErrorLogRepository

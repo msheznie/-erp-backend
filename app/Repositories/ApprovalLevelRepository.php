@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\ApprovalLevel;
 use App\Models\Company;
 use App\Models\WorkflowConfiguration;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ApprovalLevelRepository

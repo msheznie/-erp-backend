@@ -9,7 +9,7 @@ use App\Models\DocumentAttachmentsEditLog;
 use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TenderCircularsEditLogRepository

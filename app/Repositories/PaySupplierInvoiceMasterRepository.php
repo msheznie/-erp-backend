@@ -15,7 +15,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Company;
 use App\Models\PaySupplierInvoiceMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use Illuminate\Http\Request;
 /**

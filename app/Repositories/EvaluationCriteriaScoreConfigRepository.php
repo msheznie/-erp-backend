@@ -9,7 +9,7 @@ use App\Models\EvaluationCriteriaDetailsEditLog;
 use App\Models\EvaluationCriteriaMasterDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class EvaluationCriteriaScoreConfigRepository

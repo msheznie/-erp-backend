@@ -13,7 +13,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\DeliveryOrderDetail;
 use App\Models\SalesReturnDetail;
 use App\Models\CustomerInvoiceItemDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ItemSerialRepository

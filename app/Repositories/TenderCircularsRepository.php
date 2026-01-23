@@ -11,7 +11,7 @@ use App\Models\DocumentAttachmentsEditLog;
 use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Http\Request;
 use App\Services\SrmDocumentModifyService;
 use Illuminate\Container\Container as Application;

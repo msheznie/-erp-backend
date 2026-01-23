@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSSOURCEPaymentGlConfigDetail;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSSOURCEPaymentGlConfigDetailRepository

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\QuotationMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 
 /**

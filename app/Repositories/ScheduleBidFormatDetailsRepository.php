@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ScheduleBidFormatDetailsRepository

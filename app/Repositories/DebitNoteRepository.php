@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\DebitNote;
 use Illuminate\Support\Facades\Log;
 use http\Exception\InvalidArgumentException;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Models\DebitNoteDetails;
 use App\helper\Helper;
 

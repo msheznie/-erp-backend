@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\TenderType;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TenderTypeRepository

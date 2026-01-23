@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSSOURCEShiftDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSSOURCEShiftDetailsRepository

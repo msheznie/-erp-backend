@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PurchaseOrderStatus;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PurchaseOrderStatusRepository

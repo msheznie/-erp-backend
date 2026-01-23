@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SrmPOAcknowledgement;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SrmPOAcknowledgementRepository

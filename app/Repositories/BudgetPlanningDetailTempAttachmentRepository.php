@@ -6,7 +6,7 @@ use App\helper\Helper;
 use App\Models\BudgetPlanningDetailTempAttachment;
 use App\Models\DepartmentBudgetPlanningDetail;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BudgetPlanningDetailTempAttachmentRepository

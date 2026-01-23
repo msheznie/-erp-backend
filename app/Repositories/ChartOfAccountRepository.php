@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ChartOfAccount;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ChartOfAccountRepository

@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\helper\email;
 use App\Models\Company;
 use App\Models\SupplierMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 
 /**

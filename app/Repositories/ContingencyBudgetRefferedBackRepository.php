@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ContingencyBudgetRefferedBack;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ContingencyBudgetRefferedBackRepository

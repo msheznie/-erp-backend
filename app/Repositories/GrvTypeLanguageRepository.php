@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\GrvTypeLanguage;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class GrvTypeLanguageRepository

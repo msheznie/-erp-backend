@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HrDepartmentMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class HrDepartmentMasterRepository

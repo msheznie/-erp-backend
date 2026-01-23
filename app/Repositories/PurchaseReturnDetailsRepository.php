@@ -6,7 +6,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\GRVDetails;
 use App\Models\PoAdvancePayment;
 use App\Models\PurchaseReturnLogistic;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PurchaseReturnDetailsRepository

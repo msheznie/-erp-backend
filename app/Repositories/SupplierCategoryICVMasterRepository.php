@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierCategoryICVMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierCategoryICVMasterRepository

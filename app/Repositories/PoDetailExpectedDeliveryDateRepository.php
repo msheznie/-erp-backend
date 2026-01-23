@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PoDetailExpectedDeliveryDate;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Models\PurchaseOrderDetails;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrder;

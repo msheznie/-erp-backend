@@ -7,7 +7,7 @@ use App\Models\TaxLedgerDetail;
 use App\Models\VatReturnFillingDetail;
 use App\Models\VatReturnFillingCategory;
 use App\Models\Company;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 
 /**

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\RegisteredSupplierAttachment;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class RegisteredSupplierAttachmentRepository

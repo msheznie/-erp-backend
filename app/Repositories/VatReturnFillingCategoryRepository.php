@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\VatReturnFillingCategory;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class VatReturnFillingCategoryRepository

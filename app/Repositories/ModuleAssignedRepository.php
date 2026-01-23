@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ModuleAssigned;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ModuleAssignedRepository

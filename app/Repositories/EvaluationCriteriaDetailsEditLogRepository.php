@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\EvaluationCriteriaDetailsEditLog;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Repositories\EvaluationCriteriaDetailsRepository;
 use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\EvacuationCriteriaScoreConfigLog;

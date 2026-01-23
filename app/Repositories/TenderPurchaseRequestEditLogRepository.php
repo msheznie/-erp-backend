@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\TenderPurchaseRequestEditLog;
 use App\Models\TenderPurchaseRequest;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TenderPurchaseRequestEditLogRepository

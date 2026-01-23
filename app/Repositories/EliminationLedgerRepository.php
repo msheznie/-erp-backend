@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\EliminationLedger;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class EliminationLedgerRepository

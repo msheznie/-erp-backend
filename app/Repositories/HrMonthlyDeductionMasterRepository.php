@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HrMonthlyDeductionMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class HrMonthlyDeductionMasterRepository

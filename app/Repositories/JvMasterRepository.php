@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\helper\Helper;
 use App\Models\JvMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use App\Models\GeneralLedger;
 

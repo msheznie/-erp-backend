@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DirectReceiptDetailsRefferedHistory;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DirectReceiptDetailsRefferedHistoryRepository

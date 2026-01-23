@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\Appointment;
 use App\Models\Company;
 use App\Models\SlotDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;

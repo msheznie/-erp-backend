@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\NavigationMenus;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class NavigationMenusRepository

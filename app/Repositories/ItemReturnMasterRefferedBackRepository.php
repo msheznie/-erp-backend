@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ItemReturnMasterRefferedBack;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ItemReturnMasterRefferedBackRepository

@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentAttachmentType;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DocumentAttachmentTypeRepository

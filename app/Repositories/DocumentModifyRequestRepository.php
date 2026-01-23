@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Repositories\SrmTenderMasterEditLogRepository;
 use App\Repositories\DocumentAttachmentsEditLogRepository;
 use App\Repositories\CalendarDatesDetailEditLogRepository;

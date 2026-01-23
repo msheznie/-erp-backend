@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\GrvMasterRefferedback;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class GrvMasterRefferedbackRepository

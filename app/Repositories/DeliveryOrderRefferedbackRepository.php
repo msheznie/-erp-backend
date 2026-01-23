@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DeliveryOrderRefferedback;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DeliveryOrderRefferedbackRepository
