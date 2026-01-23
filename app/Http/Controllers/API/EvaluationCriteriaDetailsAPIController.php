@@ -22,6 +22,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use function foo\func;
+use App\helper\Helper;
 
 /**
  * Class EvaluationCriteriaDetailsController
@@ -302,7 +303,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_final_level = 0;
         $sort_order = 1;
         $fromTender = $input['fromTender'] ?? false;
@@ -487,7 +488,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $this->convertArrayToSelectedValue($request->all(), ['critera_type_id', 'answer_type_id']);
         $results = EvaluationCriteriaMasterDetails::whereIn('evaluation_criteria_master_id', $ids)->get();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
 
         // Initialize the parent-child mapping
@@ -605,7 +606,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     private function addMasterEvaluationCriteriaDetail(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_final_level = 0;
         $sort_order = 1;
         $sort = EvaluationCriteriaMasterDetails::where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
@@ -745,7 +746,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     private function addMasterEvaluationCriteria(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if($input['level'] == 0){
             $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
@@ -970,7 +971,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function editEvaluationCriteria(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array( 'answer_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(isset($input['eidtMasterCriteria'])&& isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
             return $this->editEvaluationMasterCriteria($request);
@@ -1036,7 +1037,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function editEvaluationMasterCriteria(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array( 'answer_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {

@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class CustomerInvoiceGlService
 {
@@ -125,8 +126,8 @@ class CustomerInvoiceGlService
             $data['documentCode'] = $masterData->bookingInvCode;
 
             $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
             $data['invoiceNumber'] = $masterData->customerInvoiceNo;
             $data['invoiceDate'] = $masterData->customerInvoiceDate;
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
@@ -195,7 +196,7 @@ class CustomerInvoiceGlService
 
             if ($bs) {
                 foreach ($bs as $val) {
-                    $currencyConversion = \Helper::currencyConversionByER($val->localCurrencyID, $masterData->custTransactionCurrencyID, $val->localAmount, $val->localCurrencyER);
+                    $currencyConversion = Helper::currencyConversionByER($val->localCurrencyID, $masterData->custTransactionCurrencyID, $val->localAmount, $val->localCurrencyER);
 
                     $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
                     $data['glCode'] = $val->financeGLcodebBS;
@@ -220,7 +221,7 @@ class CustomerInvoiceGlService
 
             if ($pl) {
                 foreach ($pl as $item) {
-                    $currencyConversion = \Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+                    $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
                     $data['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
                     $data['glCode'] = $item->financeCogsGLcodePL;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -245,7 +246,7 @@ class CustomerInvoiceGlService
             if ($revenue) {
 
                 foreach ($revenue as $item) {
-                    $currencyConversion = \Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+                    $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
 
                     $data['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
                     $data['glCode'] = $item->financeGLcodeRevenue;
@@ -347,8 +348,8 @@ class CustomerInvoiceGlService
                 $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                 $data['documentCode'] = $masterData->bookingInvCode;
                 $data['documentDate'] = $masterDocumentDate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                 $data['invoiceDate'] = $masterData->customerInvoiceDate;
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
@@ -404,8 +405,8 @@ class CustomerInvoiceGlService
                 $data['documentCode'] = $masterData->bookingInvCode;
                 //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
                 $data['documentDate'] = $masterDocumentDate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                 $data['invoiceDate'] = $masterData->customerInvoiceDate;
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
@@ -599,8 +600,8 @@ class CustomerInvoiceGlService
             $data['documentCode'] = $masterData->bookingInvCode;
             //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
             $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
             $data['invoiceNumber'] = $masterData->customerInvoiceNo;
             $data['invoiceDate'] = $masterData->customerInvoiceDate;
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
@@ -675,8 +676,8 @@ class CustomerInvoiceGlService
                     $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
                     $data['documentCode'] = $masterData->bookingInvCode;
                     $data['documentDate'] = $masterDocumentDate;
-                    $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                    $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                    $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                    $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                     $data['invoiceNumber'] = $masterData->customerInvoiceNo;
                     $data['invoiceDate'] = $masterData->customerInvoiceDate;
                     $data['documentConfirmedDate'] = $masterData->confirmedDate;
@@ -841,8 +842,8 @@ class CustomerInvoiceGlService
                 $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                 $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
                 $data['documentDate'] = $masterDocumentDate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['createdUserSystemID'] = $empID->empID;
                 $data['createdDateTime'] = $time;
                 $data['createdUserID'] = $empID->employeeSystemID;

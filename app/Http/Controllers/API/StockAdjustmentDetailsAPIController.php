@@ -30,6 +30,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class StockAdjustmentDetailsController
@@ -227,7 +228,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
 
         $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
         $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockAdjustment->companySystemID,
 
             $item->wacValueReportingCurrencyID,
             $item->wacValueReportingCurrencyID,
@@ -393,7 +394,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         }
 
 
-        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockAdjustment->companySystemID,
             $stockAdjustmentDetails->currentWacLocalCurrencyID,
             $stockAdjustmentDetails->currentWacLocalCurrencyID,
             $input['wacAdjLocal']);

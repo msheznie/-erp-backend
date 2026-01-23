@@ -24,6 +24,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use App\helper\Helper;
 
 /**
  * Class EmployeeNavigationController
@@ -171,7 +172,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         } else {
             $companiesByGroup = "";
             if(isset($input['globalCompanyId'])) {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $companiesByGroup = $input['globalCompanyId'];
                     $userGroup->where('srp_erp_employeenavigation.companyID', $companiesByGroup);
                 }
@@ -224,10 +225,10 @@ class EmployeeNavigationAPIController extends AppBaseController
         $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0);
 
         if ($selectedCompanyId > 0) {
-           $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+           $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
             if($isGroup){
-                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                $subCompanies = Helper::getGroupCompany($selectedCompanyId);
             }else{
                 $subCompanies = [$selectedCompanyId];
             }

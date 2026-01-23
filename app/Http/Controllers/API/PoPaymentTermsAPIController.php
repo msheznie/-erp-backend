@@ -34,6 +34,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\helper\Helper;
 
 /**
  * Class PoPaymentTermsController
@@ -181,7 +182,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             return $this->sendError(trans('custom.po_payment_terms_not_found'));
         }
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+        $supplierCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
 
         if(!empty($purchaseOrder->paymentTerms_by))
         {
@@ -408,7 +409,7 @@ class PoPaymentTermsAPIController extends AppBaseController
             ->get();
 
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
+        $supplierCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($purchaseOrder->supplierTransactionCurrencyID);
 
         $orderAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'];
         $orderAmountRounded = round($orderAmount, $supplierCurrencyDecimalPlace);
@@ -452,7 +453,7 @@ class PoPaymentTermsAPIController extends AppBaseController
                     $advancePaymentTermUpdate->reqAmount = $roundedCalculatePer;
                     $advancePaymentTermUpdate->reqAmountTransCur_amount = $roundedCalculatePer;
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $roundedCalculatePer);
+                    $companyCurrencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $roundedCalculatePer);
 
                     $advancePaymentTermUpdate->reqAmountInPOTransCur = $roundedCalculatePer;
                     $advancePaymentTermUpdate->reqAmountInPOLocalCur = $companyCurrencyConversion['localAmount'];

@@ -276,7 +276,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                     $input['toGLCode'] = $toChartOfAccount->AccountCode;
                     $input['toGLCodeDescription'] = $toChartOfAccount->AccountDescription;
                     
-                    $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
+                    $currency = Helper::currencyConversion($budgetTransferMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
                     $input['adjustmentAmountLocal'] = $currency['localAmount'];
                     
                     if( $input['isFromContingency'] == 1){
@@ -763,7 +763,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-        $companyFinanceYear = \Helper::companyFinanceYear($input['companySystemID'])->first();
+        $companyFinanceYear = Helper::companyFinanceYear($input['companySystemID'])->first();
         if(!isset($companyFinanceYear))
         {
             return $this->sendError(trans('custom.company_current_financial_year_not_found'), 422);

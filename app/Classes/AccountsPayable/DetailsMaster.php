@@ -6,6 +6,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\Tax;
 use App\Models\VatReturnFillingMaster;
+use App\helper\Helper;
 
 class DetailsMaster
 {
@@ -100,7 +101,7 @@ class DetailsMaster
 
     public function setAmount(float $amount)
     {
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->details->localCurrencyER, $this->details->localCurrencyER, $amount);
+        $companyCurrencyConversion = Helper::currencyConversion($this->master->companySystemID, $this->details->localCurrencyER, $this->details->localCurrencyER, $amount);
 
         $this->details->localAmount = $amount;
         $this->details->netAmount = $amount;

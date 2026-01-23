@@ -12,6 +12,7 @@ use App\Models\TenderCircularsEditLog;
 use App\Models\CircularAmendments;
 use App\Models\CircularAmendmentsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class CircularAmendmentsObserver
 {
     /**
@@ -81,7 +82,7 @@ class CircularAmendmentsObserver
     public function process($tender,$obj,$type,$tenderObj,$reflog)
     {
         
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

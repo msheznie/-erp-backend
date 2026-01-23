@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class AssetCapitalizationDetailController
@@ -156,8 +157,8 @@ class AssetCapitalizationDetailAPIController extends AppBaseController
             $input['assetNBVRpt'] = $nbvRpt;
 
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $assetCapitalizationDetails = $this->assetCapitalizationDetailRepository->create($input);
             DB::commit();

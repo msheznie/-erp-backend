@@ -345,8 +345,8 @@ class SlotMasterRepository extends AppBaseController
 
     private function getCompanyHierarchy($companyID) {
 
-        return \Helper::checkIsCompanyGroup($companyID)
-            ? \Helper::getGroupCompany($companyID)
+        return Helper::checkIsCompanyGroup($companyID)
+            ? Helper::getGroupCompany($companyID)
             : [$companyID];
     }
 

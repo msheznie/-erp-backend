@@ -214,7 +214,7 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                             $insertData['itemFinanceCategoryID'] = $item->financeCategoryMaster;
                             $insertData['itemFinanceCategorySubID'] = $item->financeCategorySub;
 
-                            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
 
 
                             if (isset($input['estimated_unit_cost'])) {

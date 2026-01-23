@@ -348,7 +348,7 @@ class TenderMasterRepository extends BaseRepository
         }
 
         $companyId = $input['companyId'];
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $tenderPaymentProof =  SRMTenderPaymentProof::getTenderPaymentReview($companyId,$empId);
 
         $search = $request->input('search.value');
@@ -377,7 +377,7 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierWiseProofNotApproved($request)
     {
         $input = $request->all();
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $companyId = $input['companyId'];
         $tenderUuid = $input['uuid'];
         $tenderData = TenderMaster::getTenderByUuid($tenderUuid);
@@ -414,7 +414,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['approvedComments']);
         $data['approvedComments'] = ($input['approvedComments']) ?? null;
 
-        $approve = \Helper::approveDocument($data);
+        $approve = Helper::approveDocument($data);
 
         if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
             $this->purchaseTender($request);
@@ -446,7 +446,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['rejectedComments']);
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
-        $approve = \Helper::rejectDocument($data);
+        $approve = Helper::rejectDocument($data);
 
         if($approve['success'])
         {
@@ -475,7 +475,7 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierWiseProofApproved($request)
     {
         $input = $request->all();
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $companyId = $input['companyId'];
         $tenderUuid = $input['uuid'];
         $tenderData = TenderMaster::getTenderByUuid($tenderUuid);

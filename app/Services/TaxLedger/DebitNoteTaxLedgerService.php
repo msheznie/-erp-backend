@@ -41,6 +41,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class DebitNoteTaxLedgerService
 {
@@ -59,10 +60,10 @@ class DebitNoteTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -82,11 +83,11 @@ class DebitNoteTaxLedgerService
         $ledgerData['partyID'] = $masterData->supplierID;
         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
-        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->debitAmountTrans);
+        $currencyConversionAmount = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->debitAmountTrans);
 
-        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->debitAmountTrans);
-        $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
-        $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
+        $ledgerData['documentTransAmount'] = Helper::roundValue($masterData->debitAmountTrans);
+        $ledgerData['documentLocalAmount'] = Helper::roundValue($currencyConversionAmount['localAmount']);
+        $ledgerData['documentReportingAmount'] = Helper::roundValue($currencyConversionAmount['reportingAmount']);
             
 
         $details = DebitNoteDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,debitAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,debitAmountCurrencyER as transCurrencyER')

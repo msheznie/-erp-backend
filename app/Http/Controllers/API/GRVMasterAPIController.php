@@ -144,14 +144,14 @@ class GRVMasterAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -232,7 +232,7 @@ class GRVMasterAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0,null,true);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0,null,true);
 
         //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -594,14 +594,14 @@ class GRVMasterAPIController extends AppBaseController
             if(($input['isSupplierBlocked']) && ($gRVMaster->grvTypeID == 2))
             {
 
-                $validatorResult = \Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
+                $validatorResult = Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
                 if (!$validatorResult['success']) {              
                     return $this->sendError(trans('custom.supplier_blocked_confirm_proceed'), 500,['type' => 'blockSupplier']);
     
                 }
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
@@ -615,7 +615,7 @@ class GRVMasterAPIController extends AppBaseController
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
             
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -740,8 +740,8 @@ class GRVMasterAPIController extends AppBaseController
                     $lineVATAmountTotal += ($value->VATAmount * $value->noQty);
                 }
 
-                $currency = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
-                $currencyVAT = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
+                $currency = Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
+                $currencyVAT = Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
 
                 $grvTotalSupplierTransactionCurrency['transactionTotalSum'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'] - $exemptVATAmount + $lineVATAmountTotal;
                 $grvTotalSupplierTransactionCurrency['reportingTotalSum'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'] - $currency['reportingAmount'] + $currencyVAT['reportingAmount'];
@@ -784,9 +784,9 @@ class GRVMasterAPIController extends AppBaseController
 
                     $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
-                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
-                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
-                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = \Helper::roundValue($logisticsChargest_RptCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = Helper::roundValue($logisticsCharges_TransCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = Helper::roundValue($logisticsCharges_LocalCur);
+                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = Helper::roundValue($logisticsChargest_RptCur);
 
                     $exemptExpenseDetails = TaxService::processGrvExpenseDetail($row['grvDetailsID']);
                     $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($row) {
@@ -805,9 +805,9 @@ class GRVMasterAPIController extends AppBaseController
                     }
 
 
-                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'] - $exemptVatTrans;
-                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'] - $exemptVATLocal;
-                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'] - $exemptVatRpt;
+                    $updateGRVDetail_log_detail->landingCost_TransCur = Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'] - $exemptVatTrans;
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'] - $exemptVATLocal;
+                    $updateGRVDetail_log_detail->landingCost_RptCur = Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'] - $exemptVatRpt;
 
                     $updateGRVDetail_log_detail->save();
 
@@ -955,7 +955,7 @@ class GRVMasterAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -1481,7 +1481,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 3)
@@ -1553,7 +1553,7 @@ class GRVMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -1585,7 +1585,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_grvmaster.grvAutoID',
@@ -1655,7 +1655,7 @@ class GRVMasterAPIController extends AppBaseController
 
     public function approveGoodReceiptVoucher(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1667,7 +1667,7 @@ class GRVMasterAPIController extends AppBaseController
 
     public function rejectGoodReceiptVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1807,7 +1807,7 @@ class GRVMasterAPIController extends AppBaseController
             $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->save();
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
 
@@ -2326,7 +2326,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
      public function procumentOrderCancel($purchaseOrderID, $grvCancelledComment)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 

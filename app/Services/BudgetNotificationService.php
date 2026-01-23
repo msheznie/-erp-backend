@@ -13,6 +13,7 @@ use App\Models\Employee;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Exception;
+use App\helper\Helper;
 
 class BudgetNotificationService
 {
@@ -183,7 +184,7 @@ class BudgetNotificationService
 
         $hod = $department->hod->employee;
 
-        $baseurl = \Helper::checkDomai();
+        $baseurl = Helper::checkDomai();
         $parsedUrl = parse_url($baseurl);
         $domain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
         $linkUrl = $domain . '/#/budget-planning/planning';

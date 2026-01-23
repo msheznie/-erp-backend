@@ -24,6 +24,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class TaxFormulaMasterController
@@ -161,11 +162,11 @@ class TaxFormulaMasterAPIController extends AppBaseController
                 $formula = $formula->where('companySystemID', $input['selectedCompanyID']);
             }
         }else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $companiesByGroup = $input['globalCompanyId'];
                 $formula = $formula->where('companySystemID', $companiesByGroup);
             } else {
-                $subCompanies = \Helper::getGroupCompany($input['globalCompanyId']);
+                $subCompanies = Helper::getGroupCompany($input['globalCompanyId']);
                 $formula = $formula->whereIn('companySystemID', $subCompanies);
             }
         }

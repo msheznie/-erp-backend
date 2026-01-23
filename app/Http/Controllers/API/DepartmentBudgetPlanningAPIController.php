@@ -738,7 +738,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     // Validate file size using same limit as DocumentAttachmentsAPIController
                     if (isset($attachment['fileSize'])) {
                         if ($attachment['fileSize'] > env('ATTACH_UPLOAD_SIZE_LIMIT', 10485760)) { // 10MB default
-                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                         }
                     }
 
@@ -775,14 +775,14 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $planningCode = $budgetPlanning->masterBudgetPlannings->planningCode ?? 'DEFAULT';
 
                     // Use Helper::checkPolicy and Helper::policyWiseDisk like DocumentAttachmentsAPIController
-                    if (\Helper::checkPolicy($companySystemID, 50)) {
+                    if (Helper::checkPolicy($companySystemID, 50)) {
                         $filePath = $companyId . '/G_ERP/TIME_EXT/' . $planningCode . '/' . $timeRequest->request_code . '/' . $fileName;
                     } else {
                         $filePath = 'TIME_EXT/' . $planningCode . '/' . $timeRequest->request_code . '/' . $fileName;
                     }
 
                     // Store the file using policy-wise disk (S3 or local based on company policy)
-                    $disk = \Helper::policyWiseDisk($companySystemID, 'public');
+                    $disk = Helper::policyWiseDisk($companySystemID, 'public');
                      \Storage::disk($disk)->put($filePath, $decodedFile);
 
                     // Update attachment record with file details
@@ -1059,7 +1059,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $companySystemID = $timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
 
             // Determine disk based on company policy
-            $disk = \Helper::policyWiseDisk($companySystemID, 'public');
+            $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
             // Check if file exists
             if (!\Storage::disk($disk)->exists($attachment->file_path)) {

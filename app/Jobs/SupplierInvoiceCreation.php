@@ -277,7 +277,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                                     }
 
                                     if(isset($invMaster['bookingDate'])) {
-                                        $validatorResult = \Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
+                                        $validatorResult = Helper::checkBlockSuppliers($invMaster['bookingDate'],$invMaster['supplierID']);
                                         if (!$validatorResult['success']) {
                                             $headerDataError[] = [
                                                 'field' => 'supplier',
@@ -1008,12 +1008,12 @@ class SupplierInvoiceCreation implements ShouldQueue
                         $det['companyID'] = $returnData['companyID'];
                         $det['localCurrency'] = $returnData['localCurrencyID'];
                         $det['localCurrencyER'] = $returnData['localCurrencyER'];
-                        $det['localAmount' ] = \Helper::roundValue($det['DIAmount'] / $returnData['localCurrencyER']);
-                        $det['netAmountLocal'] = \Helper::roundValue( $det['netAmount']/ $returnData['localCurrencyER']);
+                        $det['localAmount' ] = Helper::roundValue($det['DIAmount'] / $returnData['localCurrencyER']);
+                        $det['netAmountLocal'] = Helper::roundValue( $det['netAmount']/ $returnData['localCurrencyER']);
                         $det['comRptCurrency'] = $returnData['companyReportingCurrencyID'];
                         $det['comRptCurrencyER'] = $returnData['companyReportingER'];
-                        $det['comRptAmount'] = \Helper::roundValue($det['DIAmount'] / $returnData['companyReportingER']);
-                        $det['netAmountRpt'] = \Helper::roundValue($det['netAmount'] / $returnData['companyReportingER']);
+                        $det['comRptAmount'] = Helper::roundValue($det['DIAmount'] / $returnData['companyReportingER']);
+                        $det['netAmountRpt'] = Helper::roundValue($det['netAmount'] / $returnData['companyReportingER']);
                         if ($returnData['FYBiggin']) {
                             $finYearExp = explode('-', $returnData['FYBiggin']);
                             $det['budgetYear'] = $finYearExp[0];
@@ -1021,8 +1021,8 @@ class SupplierInvoiceCreation implements ShouldQueue
                             $det['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $compId);
                         }
                         if($det['VATAmount'] > 0) {
-                            $det['VATAmountLocal'] = \Helper::roundValue($det['VATAmount'] / $returnData['localCurrencyER']);
-                            $det['VATAmountRpt'] = \Helper::roundValue($det['VATAmount'] / $returnData['companyReportingER']);
+                            $det['VATAmountLocal'] = Helper::roundValue($det['VATAmount'] / $returnData['localCurrencyER']);
+                            $det['VATAmountRpt'] = Helper::roundValue($det['VATAmount'] / $returnData['companyReportingER']);
                         }
                         DirectInvoiceDetails::create($det);
                     }
@@ -1050,29 +1050,29 @@ class SupplierInvoiceCreation implements ShouldQueue
                         $det['localCurrencyER'] = $returnData['localCurrencyER'];
 
                         $det['costPerUnitSupTransCur'] = $costPerUnitSupTransCur;
-                        $currencyConversion = \Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $det['costPerUnitSupTransCur']);
-                        $det['costPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
-                        $det['costPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                        $currencyConversion = Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $det['costPerUnitSupTransCur']);
+                        $det['costPerUnitLocalCur'] = Helper::roundValue($currencyConversion['localAmount']);
+                        $det['costPerUnitComRptCur'] = Helper::roundValue($currencyConversion['reportingAmount']);
 
-                        $currencyConversionDefault = \Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $det['supplierDefaultCurrencyID'], $det['costPerUnitSupTransCur']);
-                        $det['costPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                        $currencyConversionDefault = Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $det['supplierDefaultCurrencyID'], $det['costPerUnitSupTransCur']);
+                        $det['costPerUnitSupDefaultCur'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
 
                         if($det['VATAmount'] > 0) {
-                            $det['VATAmountLocal'] = \Helper::roundValue($det['VATAmount'] / $returnData['localCurrencyER']);
-                            $det['VATAmountRpt'] = \Helper::roundValue($det['VATAmount'] / $returnData['companyReportingER']);
+                            $det['VATAmountLocal'] = Helper::roundValue($det['VATAmount'] / $returnData['localCurrencyER']);
+                            $det['VATAmountRpt'] = Helper::roundValue($det['VATAmount'] / $returnData['companyReportingER']);
                         }
 
                         $det['createdPcID'] = getenv('COMPUTERNAME');
                         SupplierInvoiceDirectItem::create($det);
 
                         $bookingAmountTrans += ($det['netAmount'] + ($det['VATAmount'] * $det['noQty']));
-                        $booking = \Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $bookingAmountTrans);
+                        $booking = Helper::currencyConversion($compId, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $bookingAmountTrans);
                         $bookingAmountLocal += $booking['localAmount'];
                         $bookingAmountRpt += $booking['reportingAmount'];
                     }
-                    $updateMaster['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
-                    $updateMaster['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
-                    $updateMaster['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+                    $updateMaster['bookingAmountTrans'] = Helper::roundValue($bookingAmountTrans);
+                    $updateMaster['bookingAmountLocal'] = Helper::roundValue($bookingAmountLocal);
+                    $updateMaster['bookingAmountRpt'] = Helper::roundValue($bookingAmountRpt);
                     BookInvSuppMaster::where('bookingSuppMasInvAutoID', $returnData['bookingSuppMasInvAutoID'])->update($updateMaster);
                 }
             }
@@ -1150,7 +1150,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                 'amount' => '',
                 'isAutoCreateDocument' => 1
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 if($invAttachment['isAttachmentAvailable']) {
                     $attachment = DocumentAttachments::where('attachmentID', $supplierInvoiceAttachmentStoreData['data']['attachmentID'])->first();
@@ -1314,9 +1314,9 @@ class SupplierInvoiceCreation implements ShouldQueue
             $bookingAmountLocal = $directAmountLocal + $detailTaxSumLocal;
             $bookingAmountRpt = $directAmountReport + $detailTaxSumReport;
 
-            $updateRecord['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
-            $updateRecord['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
-            $updateRecord['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+            $updateRecord['bookingAmountTrans'] = Helper::roundValue($bookingAmountTrans);
+            $updateRecord['bookingAmountLocal'] = Helper::roundValue($bookingAmountLocal);
+            $updateRecord['bookingAmountRpt'] = Helper::roundValue($bookingAmountRpt);
 
             /*** retention tax computation */
             if($returnData['retentionPercentage'] > 0) {
@@ -1339,14 +1339,14 @@ class SupplierInvoiceCreation implements ShouldQueue
 
             $totatlDirectItemTrans = $grvAmountTransaction + ($grvAmountLocal->VATAmount ?? 0);
 
-            $currencyConversionDire = \Helper::currencyConversion($companyID, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $totatlDirectItemTrans);
+            $currencyConversionDire = Helper::currencyConversion($companyID, $returnData['supplierTransactionCurrencyID'], $returnData['supplierTransactionCurrencyID'], $totatlDirectItemTrans);
             $bookingAmountTrans = $totatlDirectItemTrans + $directAmountTrans + $detailTaxSumTrans;
             $bookingAmountLocal = $currencyConversionDire['localAmount'] + $directAmountLocal + $detailTaxSumLocal;
             $bookingAmountRpt = $currencyConversionDire['reportingAmount'] + $directAmountReport + $detailTaxSumReport;
 
-            $updateRecord['bookingAmountTrans'] = \Helper::roundValue($bookingAmountTrans);
-            $updateRecord['bookingAmountLocal'] = \Helper::roundValue($bookingAmountLocal);
-            $updateRecord['bookingAmountRpt'] = \Helper::roundValue($bookingAmountRpt);
+            $updateRecord['bookingAmountTrans'] = Helper::roundValue($bookingAmountTrans);
+            $updateRecord['bookingAmountLocal'] = Helper::roundValue($bookingAmountLocal);
+            $updateRecord['bookingAmountRpt'] = Helper::roundValue($bookingAmountRpt);
 
             /*** retention tax computation */
             if($returnData['retentionPercentage'] > 0) {

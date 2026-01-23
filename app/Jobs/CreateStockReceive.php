@@ -31,6 +31,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateStockReceive implements ShouldQueue
 {
@@ -151,7 +152,7 @@ class CreateStockReceive implements ShouldQueue
                         $fromCompany = Company::where('companySystemID', $stMaster->companyFromSystemID)->first();
 
                         if ($fromCompany) {
-                            $companyCurrencyConversion = \Helper::currencyConversion($stMaster->companyFromSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, 0);
+                            $companyCurrencyConversion = Helper::currencyConversion($stMaster->companyFromSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, 0);
                             $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                             $customerInvoiceData['companyReportingER'] = 1;
 
@@ -277,8 +278,8 @@ class CreateStockReceive implements ShouldQueue
                             $data['documentSystemCode'] = $customerInvoice->custInvoiceDirectAutoID;
                             $data['documentCode'] = $customerInvoice->bookingInvCode;
                             $data['documentDate'] = $today;
-                            $data['documentYear'] = \Helper::dateYear($customerInvoice->bookingDate);
-                            $data['documentMonth'] = \Helper::dateMonth($customerInvoice->bookingDate);
+                            $data['documentYear'] = Helper::dateYear($customerInvoice->bookingDate);
+                            $data['documentMonth'] = Helper::dateMonth($customerInvoice->bookingDate);
                             $data['documentConfirmedDate'] = $customerInvoice->confirmedDate;
                             $data['documentConfirmedBy'] = $customerInvoice->confirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $customerInvoice->confirmedByEmpSystemID;
@@ -292,11 +293,11 @@ class CreateStockReceive implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = null;
                             $data['nonHoldingPercentage'] = null;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdDateTime'] = Helper::currentDateTime();
                             $data['createdUserID'] = $stMaster->approvedByUserID;
                             $data['createdUserSystemID'] = $stMaster->approvedByUserSystemID;
                             $data['createdUserPC'] = gethostname();
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
                             $data['invoiceNumber'] = $customerInvoice->customerInvoiceNo;
                             $data['invoiceDate'] = $customerInvoice->customerInvoiceDate;
 
@@ -534,7 +535,7 @@ class CreateStockReceive implements ShouldQueue
                                 $item['localCurrencyID'] = $toCompany->localCurrencyID;
                                 // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
                                 $temUnitCostRpt = $new['unitCostRpt'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100);
-                                $convertCurrencyConversion = \Helper::currencyConversion($stMaster->companyToSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, $temUnitCostRpt);
+                                $convertCurrencyConversion = Helper::currencyConversion($stMaster->companyToSystemID, $fromCompany->reportingCurrency, $fromCompany->reportingCurrency, $temUnitCostRpt);
                                 $item['unitCostLocal'] = $convertCurrencyConversion['localAmount'];
                                 $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
                                 $item['unitCostRpt'] = $convertCurrencyConversion['reportingAmount'];

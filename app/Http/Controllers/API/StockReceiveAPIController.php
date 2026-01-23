@@ -150,12 +150,12 @@ class StockReceiveAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             DB::rollBack();
             return $this->sendError($companyFinanceYear["message"], 500);
@@ -163,7 +163,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             DB::rollBack();
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -427,7 +427,7 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $item['modifiedPc'] = gethostname();
         $item['modifiedUser'] = $employee->empID;
         $item['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -509,14 +509,14 @@ class StockReceiveAPIController extends AppBaseController
         if ($stockReceive->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else{
@@ -625,7 +625,7 @@ class StockReceiveAPIController extends AppBaseController
             unset($input['confirmedDate']);
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -756,9 +756,9 @@ class StockReceiveAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
-        $companies = \Helper::allCompanies();
+        $companies = Helper::allCompanies();
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -783,7 +783,7 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
-        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
+        $stockReceive->docRefNo = Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
 
         return $this->sendResponse($stockReceive->toArray(), trans('custom.stock_receive_retrieved_successfully'));
     }
@@ -797,7 +797,7 @@ class StockReceiveAPIController extends AppBaseController
             return $this->sendError(trans('custom.stock_receive_not_found'));
         }
 
-        $stockReceive->docRefNo = \Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
+        $stockReceive->docRefNo = Helper::getCompanyDocRefNo($stockReceive->companySystemID, $stockReceive->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $stockReceive);
         $time = strtotime("now");
@@ -881,7 +881,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $stockTransferMasters = DB::table('erp_documentapproved')->select(
             'erp_stockreceive.stockReceiveAutoID',
@@ -947,7 +947,7 @@ class StockReceiveAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 10)
@@ -1005,7 +1005,7 @@ class StockReceiveAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $stockTransferMasters = [];
@@ -1054,7 +1054,7 @@ class StockReceiveAPIController extends AppBaseController
 
         $this->stockReceiveRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $stockTransfer->documentSystemID)->first();
 

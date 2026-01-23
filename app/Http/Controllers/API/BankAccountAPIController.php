@@ -43,6 +43,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BankAccountController
@@ -87,7 +88,7 @@ class BankAccountAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCID'] = gethostname();
         $input['createdEmpID'] = $employee->empID;
@@ -226,7 +227,7 @@ class BankAccountAPIController extends AppBaseController
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'currency']);
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPCID'] = gethostname();
         $input['modifiedByEmpID'] = $employee->empID;
@@ -338,7 +339,7 @@ class BankAccountAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -420,10 +421,10 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -492,10 +493,10 @@ class BankAccountAPIController extends AppBaseController
 
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -679,7 +680,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankAccount = DB::table('erp_documentapproved')
@@ -750,7 +751,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankAccount = DB::table('erp_documentapproved')
@@ -798,7 +799,7 @@ class BankAccountAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $bankAccount = [];
@@ -827,7 +828,7 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        $bankAccount->docRefNo = \Helper::getCompanyDocRefNo($bankAccount->companySystemID, $bankAccount->documentSystemID);
+        $bankAccount->docRefNo = Helper::getCompanyDocRefNo($bankAccount->companySystemID, $bankAccount->documentSystemID);
 
         return $this->sendResponse($bankAccount->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
@@ -860,7 +861,7 @@ class BankAccountAPIController extends AppBaseController
 
         $this->bankAccountRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $bankAccount->documentSystemID)->first();
 
@@ -980,10 +981,10 @@ class BankAccountAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

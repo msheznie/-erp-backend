@@ -19,6 +19,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class AssetDisposalDetailController
@@ -191,16 +192,16 @@ class AssetDisposalDetailAPIController extends AppBaseController
                     if($assetDisposalMaster->disposalType == 1 || $assetDisposalMaster->disposalType == 6){
                         $tempArray["revenuePercentage"] = $assetDisposalMaster->revenuePercentage;
                         if($tempArray["netBookValueRpt"] || $tempArray["netBookValueLocal"]){
-                            $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["netBookValueRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
+                            $tempArray["sellingPriceRpt"] = Helper::roundValue(($tempArray["netBookValueRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
 
-                            $companyCurrency = \Helper::companyCurrency($tempArray["companySystemID"]);
-                            $currencyConversion = \Helper::currencyConversion($tempArray["companySystemID"], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $tempArray['sellingPriceRpt']);
+                            $companyCurrency = Helper::companyCurrency($tempArray["companySystemID"]);
+                            $currencyConversion = Helper::currencyConversion($tempArray["companySystemID"], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $tempArray['sellingPriceRpt']);
 
-                            $tempArray["sellingPriceLocal"] = \Helper::roundValue($currencyConversion['localAmount']);
+                            $tempArray["sellingPriceLocal"] = Helper::roundValue($currencyConversion['localAmount']);
 
                         }else if($tempArray["costUnitRpt"] || $tempArray["COSTUNIT"]){
-                            $tempArray["sellingPriceRpt"] = \Helper::roundValue(($tempArray["costUnitRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
-                            $tempArray["sellingPriceLocal"] = \Helper::roundValue(($tempArray["COSTUNIT"] * (100 + $tempArray["revenuePercentage"]))/100);
+                            $tempArray["sellingPriceRpt"] = Helper::roundValue(($tempArray["costUnitRpt"] * (100 + $tempArray["revenuePercentage"]))/100);
+                            $tempArray["sellingPriceLocal"] = Helper::roundValue(($tempArray["COSTUNIT"] * (100 + $tempArray["revenuePercentage"]))/100);
                         }else{
                             $tempArray["revenuePercentage"] = 0;
                         }
@@ -367,9 +368,9 @@ class AssetDisposalDetailAPIController extends AppBaseController
                 }
             }
         }else{
-            $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
-            $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $input['sellingPriceRpt']);
-            $input['sellingPriceLocal'] = \Helper::roundValue($currencyConversion['localAmount']);
+            $companyCurrency = Helper::companyCurrency($input['companySystemID']);
+            $currencyConversion = Helper::currencyConversion($input['companySystemID'], $companyCurrency->reportingCurrency, $companyCurrency->reportingCurrency, $input['sellingPriceRpt']);
+            $input['sellingPriceLocal'] = Helper::roundValue($currencyConversion['localAmount']);
             $input['revenuePercentage'] = round($input['revenuePercentage'],7);
         }
         unset($input['isFromAssign']);

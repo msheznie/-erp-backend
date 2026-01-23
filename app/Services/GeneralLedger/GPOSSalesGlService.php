@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\helper\Helper;
 
 class GPOSSalesGlService
 {
@@ -132,9 +133,9 @@ class GPOSSalesGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $gl->documentCode;
             $data['documentDate'] = date('Y-m-d H:i:s');
-            $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
-            $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['documentYear'] = Helper::dateYear(date('Y-m-d H:i:s'));
+            $data['documentMonth'] = Helper::dateMonth(date('Y-m-d H:i:s'));
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
@@ -168,7 +169,7 @@ class GPOSSalesGlService
             else {
                 return ['status' => false, 'message' => 'error bill was not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
             }
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
             $data['supplierCodeSystem'] = null;
             array_push($finalData, $data);
         }

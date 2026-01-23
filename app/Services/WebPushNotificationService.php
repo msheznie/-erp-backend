@@ -177,7 +177,7 @@ class WebPushNotificationService
                 return ['url' => $notification['data']['url']['erp'], 'type' => 'self'];
                 break;
             case 3:
-                return ['url' => \Helper::getFileUrlFromS3($notification['data']['path']), 'type' => 'external'];
+                return ['url' => Helper::getFileUrlFromS3($notification['data']['path']), 'type' => 'external'];
                 break;
             default:
                 return ['url' => "", 'type' => ''];

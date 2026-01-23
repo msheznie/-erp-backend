@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Models\logUploadBudget;
+use App\helper\Helper;
 
 
 class BudgetSegmentSubJobs implements ShouldQueue
@@ -91,7 +92,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                     'generateStatus' => 100,
                     'createdByUserSystemID' => $employee->employeeSystemID,
                     'createdByUserID' => $employee->empID,
-                    'createdDateTime' => \Helper::currentDateTime(),
+                    'createdDateTime' => Helper::currentDateTime(),
                     'sentNotificationAt' => $notification,
                     'cutOffPeriod' => 3,
                     'budgetUploadID' => $uploadBudget->id
@@ -116,9 +117,9 @@ class BudgetSegmentSubJobs implements ShouldQueue
                         $currencyMaster = CurrencyMaster::where('CurrencyCode', $currency)->first();
 
                         $segmentMaster = SegmentMaster::find($budget->serviceLineSystemID);
-                        $currencyConvection = \Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
+                        $currencyConvection = Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
 
-                        $localAmount = \Helper::roundValue($currencyConvection['localAmount']);
+                        $localAmount = Helper::roundValue($currencyConvection['localAmount']);
                         if($value[$segmentMaster->ServiceLineDes] < 0) {
                             $localAmount = abs($localAmount) * -1;
                         }
@@ -156,7 +157,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                                     'budjetAmtRpt' => round(round($value[$segmentMaster->ServiceLineDes], $currencyMaster->DecimalPlaces) - $budjetAmtRpt,$currencyMaster->DecimalPlaces),
                                     'createdByUserSystemID' => $employee->employeeSystemID,
                                     'createdByUserID' => $employee->empID,
-                                    'createdDateTime' => \Helper::currentDateTime(),
+                                    'createdDateTime' => Helper::currentDateTime(),
                                 );
                             }
                             else {
@@ -177,7 +178,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                                     'budjetAmtRpt' => round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces),
                                     'createdByUserSystemID' => $employee->employeeSystemID,
                                     'createdByUserID' => $employee->empID,
-                                    'createdDateTime' => \Helper::currentDateTime(),
+                                    'createdDateTime' => Helper::currentDateTime(),
                                 );
 
                                 $budjetAmtLocal = $budjetAmtLocal + round($localAmount / 12, $currencyMasterLocal->DecimalPlaces);

@@ -11,6 +11,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class AssetCostingBulk implements ShouldQueue
 {
@@ -75,7 +76,7 @@ class AssetCostingBulk implements ShouldQueue
                 'fromUpload' => true,
                 'approvedBy' => $empID
             );
-            $approve = \Helper::approveDocument($params);
+            $approve = Helper::approveDocument($params);
             
             if (!$approve["success"]) {
                 $errorData[] = [

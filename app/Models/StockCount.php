@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use App\helper\Helper;
 
 /**
  * @SWG\Definition(
@@ -390,7 +391,7 @@ class StockCount extends Model
 
     public function setStockCountDateAttribute($value)
     {
-        $this->attributes['stockCountDate'] = \Helper::dateAddTime($value);
+        $this->attributes['stockCountDate'] = Helper::dateAddTime($value);
     }
 
     public function audit_trial()

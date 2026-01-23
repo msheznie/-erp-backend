@@ -35,6 +35,7 @@ use Carbon\Carbon;
 use Response;
 use App\Services\Sales\QuotationService;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class QuotationDetailsController
@@ -136,7 +137,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
      
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
 
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
@@ -213,7 +214,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input['wacValueLocal'] = ($item) ? $item->wacValueLocal : null;
 
         if ($quotationMasterData->documentSystemID == 68) {
-            $input['unittransactionAmount'] = round(\Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
+            $input['unittransactionAmount'] = round(Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->companyLocalCurrencyID, $quotationMasterData->transactionCurrencyID, $item->wacValueLocal)['documentAmount'], $quotationMasterData->transactionCurrencyDecimalPlaces);
         }
 
         // Get VAT percentage for item
@@ -227,10 +228,10 @@ class QuotationDetailsAPIController extends AppBaseController
             if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
                 $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
             }
-            $currencyConversionVAT = \Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
+            $currencyConversionVAT = Helper::currencyConversion($quotationMasterData->companySystemID, $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
 
-            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
         $input['wacValueReporting'] = ($item) ? $item->wacValueReporting : null;
@@ -360,7 +361,7 @@ class QuotationDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID']);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
         $quotationDetails = $this->quotationDetailsRepository->findWithoutFail($id);
@@ -384,22 +385,22 @@ class QuotationDetailsAPIController extends AppBaseController
         }
 
         // updating transaction amount for local and reporting
-        $currencyConversion = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['transactionAmount']);
+        $currencyConversion = Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['transactionAmount']);
 
-        $input['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
-        $input['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+        $input['companyLocalAmount'] = Helper::roundValue($currencyConversion['localAmount']);
+        $input['companyReportingAmount'] = Helper::roundValue($currencyConversion['reportingAmount']);
 
         // adding customer default currencyID base currency conversion
 
-        $currencyConversionDefault = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['transactionAmount']);
+        $currencyConversionDefault = Helper::currencyConversion($input['companySystemID'], $quotationMasterData->customerCurrencyID, $quotationMasterData->customerCurrencyID, $input['transactionAmount']);
 
-        $input['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+        $input['customerAmount'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
 
-        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
+        $currencyConversionVAT = Helper::currencyConversion($input['companySystemID'], $quotationMasterData->transactionCurrencyID, $quotationMasterData->transactionCurrencyID, $input['VATAmount']);
 
-        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-        $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+        $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmount'] = Helper::roundValue($input['VATAmount']);
 
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($quotationMasterData->documentSystemID, $quotationMasterData->companySystemID, $id, $input);
 
@@ -439,7 +440,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $salesOrderID = $input['quotationMasterID'];
 
         $salesOrder = QuotationMaster::where('quotationMasterID', $salesOrderID)->first();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         DB::beginTransaction();
         try {
@@ -468,7 +469,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
             $totalNetcost = ($quotationDetailData->unittransactionAmount - $quotationDetailData->discountAmount) * $input['requestedQty'];
 
-            $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
+            $new['transactionAmount'] = Helper::roundValue($totalNetcost);
 
            
             $quotationDetails = $this->quotationDetailsRepository->update($new, $input['quotationDetailsID']);
@@ -839,7 +840,7 @@ WHERE
         }
 
         $salesOrder = QuotationMaster::where('quotationMasterID', $salesOrderID)->first();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         DB::beginTransaction();
         try {
@@ -892,19 +893,19 @@ WHERE
 
                             $totalNetcost = ($new['unittransactionAmount'] - $new['discountAmount']) * $new['noQty'];
 
-                            $new['transactionAmount'] = \Helper::roundValue($totalNetcost);
+                            $new['transactionAmount'] = Helper::roundValue($totalNetcost);
 
 
                              // updating transaction amount for local and reporting
-                            $currencyConversion = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['transactionAmount']);
+                            $currencyConversion = Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['transactionAmount']);
 
-                            $new['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
-                            $new['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                            $new['companyLocalAmount'] = Helper::roundValue($currencyConversion['localAmount']);
+                            $new['companyReportingAmount'] = Helper::roundValue($currencyConversion['reportingAmount']);
 
                             // adding customer default currencyID base currency conversion
-                            $currencyConversionDefault = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->customerCurrencyID, $salesOrder->customerCurrencyID, $new['transactionAmount']);
+                            $currencyConversionDefault = Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->customerCurrencyID, $salesOrder->customerCurrencyID, $new['transactionAmount']);
 
-                            $new['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                            $new['customerAmount'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
 
                             unset($new['isChecked']);
                             unset($new['modifiedDateTime']);
@@ -938,10 +939,10 @@ WHERE
                                     }
                                 }
 
-                                $currencyConversionVAT = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['VATAmount']);
+                                $currencyConversionVAT = Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $new['VATAmount']);
 
-                                $new['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                                $new['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                                $new['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $new['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             }
                            
                             $this->quotationDetailsRepository->create($new);
@@ -1073,8 +1074,8 @@ WHERE
     public function addMultipleItems(Request $request)
     {
         $input = $request->all();
-        $empID = \Helper::getEmployeeID();
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
 
         // Handle addAllItems scenario
         if (isset($input['addAllItems']) && $input['addAllItems']) {
@@ -1201,7 +1202,7 @@ WHERE
             ->first();
 
         $quotationMaster = QuotationMaster::find($quotationId);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         // Get unit data
         $unitMasterData = Unit::find($item->itemUnitOfMeasure);
@@ -1214,7 +1215,7 @@ WHERE
         $wacValueLocal = $item->wacValueLocal ?? 0;
         $unittransactionAmount = 0;
         if ($quotationMaster->documentSystemID == 68) {
-            $unittransactionAmount = round(\Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->companyLocalCurrencyID, $quotationMaster->transactionCurrencyID, $wacValueLocal)['documentAmount'], $quotationMaster->transactionCurrencyDecimalPlaces ?? 2);
+            $unittransactionAmount = round(Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->companyLocalCurrencyID, $quotationMaster->transactionCurrencyID, $wacValueLocal)['documentAmount'], $quotationMaster->transactionCurrencyDecimalPlaces ?? 2);
         }
 
         // Get VAT details if applicable
@@ -1237,9 +1238,9 @@ WHERE
                 $vatAmount = (($unittransactionAmount / 100) * $vatPercentage);
             }
             
-            $currencyConversionVAT = \Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->transactionCurrencyID, $quotationMaster->transactionCurrencyID, $vatAmount);
-            $vatAmountLocal = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $vatAmountRpt = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $currencyConversionVAT = Helper::currencyConversion($quotationMaster->companySystemID, $quotationMaster->transactionCurrencyID, $quotationMaster->transactionCurrencyID, $vatAmount);
+            $vatAmountLocal = Helper::roundValue($currencyConversionVAT['localAmount']);
+            $vatAmountRpt = Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
         $itemData = [

@@ -30,6 +30,7 @@ use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
 use App\Models\BookInvSuppDet;
 use Illuminate\Support\Facades\Storage;
+use App\helper\Helper;
 
 
 class DeliveryAppointmentInvoice implements ShouldQueue
@@ -117,12 +118,12 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $detail['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo;
                     $detail['retentionPercentage'] = 0;
                     $detail['createdPcID'] = gethostname();
-                    $detail['createdUserID'] =  \Helper::getEmployeeID();
-                    $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $detail['createdUserID'] =  Helper::getEmployeeID();
+                    $detail['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $detail['documentSystemID'] =  11;
                     $detail['documentID'] = "SI";
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
+                    $companyCurrencyConversion = Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
 
                     $company = Company::find($this->data['companySystemID']);
                     if ($company) {
@@ -155,7 +156,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
 
                     $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                     $detail['bookingInvCode'] = $bookingInvCode;
-                    $detail['isLocalSupplier'] = \Helper::isLocalSupplier($appoinment->supplier_id, $this->data['companySystemID']);
+                    $detail['isLocalSupplier'] = Helper::isLocalSupplier($appoinment->supplier_id, $this->data['companySystemID']);
 
                     $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
                         'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount','VATPercentage')
@@ -583,21 +584,21 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $details['supplierInvoAmount'] = 0;
                 }
     
-                $currency = \Helper::currencyConversion($unbilledData->companySystemID, $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $details['supplierInvoAmount']);
+                $currency = Helper::currencyConversion($unbilledData->companySystemID, $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $details['supplierInvoAmount']);
     
                 $details['totTransactionAmount'] = $details['supplierInvoAmount'];
-                $details['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-                $details['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+                $details['totLocalAmount'] = Helper::roundValue($currency['localAmount']);
+                $details['totRptAmount'] = Helper::roundValue($currency['reportingAmount']);
     
                 $totalVATAmount = ($unbilledData->logisticYN) ? $grvDetail->VATAmount : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
     
                  if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
                     $VATAmount = $totalVATAmount * $percentage;
-                    $currencyVat = \Helper::currencyConversion($unbilledData->companySystemID, $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $VATAmount);
-                        $details['VATAmount'] = \Helper::roundValue($VATAmount);
-                        $details['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
-                        $details['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+                    $currencyVat = Helper::currencyConversion($unbilledData->companySystemID, $groupMaster->supplierTransactionCurrencyID, $groupMaster->supplierTransactionCurrencyID, $VATAmount);
+                        $details['VATAmount'] = Helper::roundValue($VATAmount);
+                        $details['VATAmountLocal'] = Helper::roundValue($currencyVat['localAmount']);
+                        $details['VATAmountRpt'] = Helper::roundValue($currencyVat['reportingAmount']);
                 }
     
                 $createRes = SupplierInvoiceItemDetail::create($details);
@@ -674,11 +675,11 @@ class DeliveryAppointmentInvoice implements ShouldQueue
 
         $input['supplierInvoOrderedAmount'] = $totalPendingAmount - $input['supplierInvoAmount'];
 
-        $currency = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
+        $currency = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
 
         $input['totTransactionAmount'] = $input['supplierInvoAmount'];
-        $input['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-        $input['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+        $input['totLocalAmount'] = Helper::roundValue($currency['localAmount']);
+        $input['totRptAmount'] = Helper::roundValue($currency['reportingAmount']);
 
   
         $bookInvSuppDet = BookInvSuppDet::where('bookingSupInvoiceDetAutoID',$id)->update($input);
@@ -689,11 +690,11 @@ class DeliveryAppointmentInvoice implements ShouldQueue
             $bookInvSuppDet = BookInvSuppDet::find($id);
             $percentage =  ($bookInvSuppDet->totTransactionAmount/$unbilledGrvGroupByMaster->totTransactionAmount);
             $VATAmount = $unbilledGrvGroupByMaster->totalVATAmount * $percentage;
-            $currencyVat = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
+            $currencyVat = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
             $vatData = array(
-                'VATAmount' => \Helper::roundValue($VATAmount),
-                'VATAmountLocal' => \Helper::roundValue($currencyVat['localAmount']),
-                'VATAmountRpt' =>  \Helper::roundValue($currencyVat['reportingAmount'])
+                'VATAmount' => Helper::roundValue($VATAmount),
+                'VATAmountLocal' => Helper::roundValue($currencyVat['localAmount']),
+                'VATAmountRpt' =>  Helper::roundValue($currencyVat['reportingAmount'])
             );
 
             BookInvSuppDet::where('bookingSupInvoiceDetAutoID',$id)->update($vatData);

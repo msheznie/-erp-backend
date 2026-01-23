@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class JournalVoucherGlService
 {
@@ -115,8 +116,8 @@ class JournalVoucherGlService
                 $data['documentSystemCode'] = $masterData->jvMasterAutoId;
                 $data['documentCode'] = $masterData->JVcode;
                 $data['documentDate'] = $masterDocumentDate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 //$data['invoiceNumber'] = ;
                 //$data['invoiceDate'] = ;
 
@@ -153,27 +154,27 @@ class JournalVoucherGlService
 
 
                 if ($item->debitAmountTot > 0) {
-                    $currencyConvertionDebit = \Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->debitAmountTot);
+                    $currencyConvertionDebit = Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->debitAmountTot);
 
                     $data['documentTransAmount'] = $item->debitAmountTot;
                     $data['documentLocalCurrencyID'] = $masterData->company->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = \Helper::roundValue($currencyConvertionDebit['trasToLocER']);
-                    $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionDebit['localAmount']);
+                    $data['documentLocalCurrencyER'] = Helper::roundValue($currencyConvertionDebit['trasToLocER']);
+                    $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionDebit['localAmount']);
                     $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
-                    $data['documentRptCurrencyER'] = \Helper::roundValue($currencyConvertionDebit['trasToRptER']);
-                    $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionDebit['reportingAmount']);
+                    $data['documentRptCurrencyER'] = Helper::roundValue($currencyConvertionDebit['trasToRptER']);
+                    $data['documentRptAmount'] = Helper::roundValue($currencyConvertionDebit['reportingAmount']);
                     array_push($finalData, $data);
                 }
                 if ($item->creditAmountTot > 0) {
-                    $currencyConvertionCredit = \Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->creditAmountTot);
+                    $currencyConvertionCredit = Helper::currencyConversion($masterData->companySystemID, $item->currencyID, $item->currencyID, $item->creditAmountTot);
 
                     $data['documentTransAmount'] = $item->creditAmountTot * -1;
                     $data['documentLocalCurrencyID'] = $masterData->company->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = \Helper::roundValue($currencyConvertionCredit['trasToLocER']);
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionCredit['localAmount'])) * -1;
+                    $data['documentLocalCurrencyER'] = Helper::roundValue($currencyConvertionCredit['trasToLocER']);
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($currencyConvertionCredit['localAmount'])) * -1;
                     $data['documentRptCurrencyID'] = $masterData->company->reportingCurrency;
-                    $data['documentRptCurrencyER'] = \Helper::roundValue(ABS($currencyConvertionCredit['trasToRptER']));
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionCredit['reportingAmount'])) * -1;
+                    $data['documentRptCurrencyER'] = Helper::roundValue(ABS($currencyConvertionCredit['trasToRptER']));
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($currencyConvertionCredit['reportingAmount'])) * -1;
                     array_push($finalData, $data);
                 }
 

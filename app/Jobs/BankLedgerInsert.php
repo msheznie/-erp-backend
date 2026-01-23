@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use ExchangeSetupConfig;
+use App\helper\Helper;
 
 class BankLedgerInsert implements ShouldQueue
 {
@@ -74,7 +75,7 @@ class BankLedgerInsert implements ShouldQueue
                                 $masterData->payAmountCompLocal = ($masterModel['pdcAmount']/$masterData->localCurrencyER);
                                 $masterData->payAmountCompRpt = ($masterModel['pdcAmount']/$masterData->companyRptCurrencyER);
                             }else {
-                                $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
+                                $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $masterModel['pdcAmount']);
 
                                 $masterData->payAmountBank = $masterModel['pdcAmount'];
                                 $masterData->payAmountSuppTrans = $masterModel['pdcAmount'];
@@ -89,7 +90,7 @@ class BankLedgerInsert implements ShouldQueue
                         $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
 
                         if ($retationVATAmount > 0) {
-                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+                            $currencyConvertionRetention = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
 
                             $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
                             $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
@@ -190,7 +191,7 @@ class BankLedgerInsert implements ShouldQueue
                             if ($custReceivePayment) {
                                 if (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) {
                                     $masterDocumentDate = Carbon::parse($masterModel['pdcDate']);
-                                    $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $masterModel['pdcAmount']);
+                                    $currencyConvertionData = Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $masterModel['pdcAmount']);
 
                                     $custReceivePayment->bankAmount = $masterModel['pdcAmount'];
                                     $custReceivePayment->localAmount = $currencyConvertionData['localAmount'];

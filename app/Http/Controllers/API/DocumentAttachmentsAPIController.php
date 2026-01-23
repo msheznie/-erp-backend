@@ -277,7 +277,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                         ];
                     }
                     else{
-                        return $this->sendError(trans('custom.maximum_allowed_file_size', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
+                        return $this->sendError(trans('custom.maximum_allowed_file_size', ['sizeLimit' => Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                     }
                 }
             }
@@ -1322,7 +1322,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         try {
             $data['status'] = $val;
             $data['remarks'] = $comments;
-            $data['verified_by'] = \Helper::getEmployeeSystemID();
+            $data['verified_by'] = Helper::getEmployeeSystemID();
             $data['verified_date'] =  date('Y-m-d H:i:s');
 
             $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
@@ -1333,7 +1333,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             {
 
                 $bid_sub_data['doc_verifiy_yn'] = 1;
-                $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                $bid_sub_data['doc_verifiy_by_emp'] = Helper::getEmployeeSystemID();
                 $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
 
                 $results = BidSubmissionMaster::where('id',$bid_sub_id)->update($bid_sub_data,$bid_sub_id);
@@ -1397,7 +1397,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bid_sub_data['doc_verifiy_by_emp'] = Helper::getEmployeeSystemID();
             $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
             $bid_sub_data['doc_verifiy_status'] = $val;
             $bid_sub_data['doc_verifiy_comment'] = $comments;
@@ -1435,7 +1435,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             if($results == 0)
             {
                 $bid_sub_data['doc_verifiy_yn'] = 1;
-                $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                $bid_sub_data['doc_verifiy_by_emp'] = Helper::getEmployeeSystemID();
                 $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
                 $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
             }

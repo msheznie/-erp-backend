@@ -291,7 +291,7 @@ class PulledItemFromMRController extends AppBaseController
                     ->where('companySystemID', $companySystemID)
                     ->first();
 
-                    $currencyConversion = \Helper::currencyConversion($companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $data->wacValueLocal);
+                    $currencyConversion = Helper::currencyConversion($companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $data->wacValueLocal);
                     $data['estimatedCost'] = $currencyConversion['documentAmount'];
 
 

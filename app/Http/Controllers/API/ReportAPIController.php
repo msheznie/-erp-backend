@@ -123,7 +123,7 @@ class ReportAPIController extends AppBaseController
                 $companyID = "";
                 $checkIsGroup = Company::find($request->companySystemID);
                 if ($checkIsGroup->isGroup) {
-                    $companyID = \Helper::getGroupCompany($request->companySystemID);
+                    $companyID = Helper::getGroupCompany($request->companySystemID);
                 } else {
                     $companyID = (array)$request->companySystemID;
                 }
@@ -987,7 +987,7 @@ class ReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($input['companySystemID']);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($input['companySystemID']);
+            $companyID = Helper::getGroupCompany($input['companySystemID']);
         } else {
             $companyID = (array)$input['companySystemID'];
         }
@@ -1048,7 +1048,7 @@ class ReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($input['companySystemID']);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($input['companySystemID']);
+            $companyID = Helper::getGroupCompany($input['companySystemID']);
         } else {
             $companyID = (array)$input['companySystemID'];
         }
@@ -1473,7 +1473,7 @@ class ReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($input['companySystemID']);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($input['companySystemID']);
+            $companyID = Helper::getGroupCompany($input['companySystemID']);
         } else {
             $companyID = (array)$input['companySystemID'];
         }

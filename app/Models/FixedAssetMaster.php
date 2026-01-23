@@ -763,10 +763,10 @@ class FixedAssetMaster extends Model
      */
 
     public function getImageUrlAttribute(){
-        $awsPolicy = \Helper::checkPolicy($this->companySystemID, 50);
+        $awsPolicy = Helper::checkPolicy($this->companySystemID, 50);
 
         if ($awsPolicy) {
-            return \Helper::getFileUrlFromS3($this->itemPath);    
+            return Helper::getFileUrlFromS3($this->itemPath);    
         } else {
             return $this->itemPath;
         }

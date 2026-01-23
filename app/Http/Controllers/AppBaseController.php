@@ -10,6 +10,7 @@ namespace App\Http\Controllers;
 use Illuminate\Routing\Controller as BaseController;
 use App\Utils\ResponseUtil;
 use Response;
+use App\helper\Helper;
 
 
 class AppBaseController extends BaseController
@@ -85,7 +86,7 @@ class AppBaseController extends BaseController
     protected function setUserLocale()
     {
         try {
-            $employeeSystemID = \App\helper\Helper::getEmployeeSystemID();
+            $employeeSystemID = \App\helperHelper::getEmployeeSystemID();
             
             if ($employeeSystemID) {
                 $employeeLanguage = \App\Models\EmployeeLanguage::where('employeeID', $employeeSystemID)

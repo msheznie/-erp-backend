@@ -149,12 +149,12 @@ class JvMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.jv_code')] = $val->JVcode;
                 $data[$x][trans('custom.type')] = StatusService::getjvType($val->jvType);
-                $data[$x][trans('custom.jv_date')] = \Helper::dateFormat($val->JVdate);
+                $data[$x][trans('custom.jv_date')] = Helper::dateFormat($val->JVdate);
                 $data[$x][trans('custom.narration')] = $val->JVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.transaction_currency')] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
 
 

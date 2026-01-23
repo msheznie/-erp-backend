@@ -14,6 +14,7 @@ use App\Models\SegmentMaster;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 
 class CustomerInvoiceCRUDService
 {
@@ -53,8 +54,8 @@ class CustomerInvoiceCRUDService
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         $myCurr = $input['custTransactionCurrencyID'];
 
-        $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
-        $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
+        $companyCurrency = Helper::companyCurrency($company['companySystemID']);
+        $companyCurrencyConversion = Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
         /*exchange added*/
         $input['custTransactionCurrencyER'] = 1;
         $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -140,10 +141,10 @@ class CustomerInvoiceCRUDService
         $input['documentType'] = 11;
 
         if(!isset($input['isAutoCreateDocument'])){
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         }
         else{
             $systemUser = UserTypeService::getSystemEmployee();

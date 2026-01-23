@@ -6,6 +6,7 @@ use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\Tax;
 use App\Models\VatReturnFillingMaster;
+use App\helper\Helper;
 
 class DebitNoteDetails extends DetailsMaster
 {
@@ -87,7 +88,7 @@ class DebitNoteDetails extends DetailsMaster
 
     public function setAmount(float $amount)
     {
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->master->localCurrencyID, $this->master->localCurrencyID, $amount);
+        $companyCurrencyConversion = Helper::currencyConversion($this->master->companySystemID, $this->master->localCurrencyID, $this->master->localCurrencyID, $amount);
 
         if($this->glAccountType == "InputVATGLAccount")
         {

@@ -15,6 +15,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use App\helper\Helper;
 
 /**
  * Class CustomerMasterCategoryAssignedController
@@ -131,7 +132,7 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
 
             $customerMasterCategoryAssigned = $this->customerMasterCategoryAssignedRepository->update($data, $input['id']);
         }else{
-            $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $input['categoryID'], 'customerCategory');
+            $validatorResult = Helper::checkCompanyForMasters($input['companySystemID'], $input['categoryID'], 'customerCategory');
             if (!$validatorResult['success']) {
                 return $this->sendError($validatorResult['message']);
             }
@@ -320,10 +321,10 @@ class CustomerMasterCategoryAssignedAPIController extends AppBaseController
 
         $categoryID = $request['categoryID'];
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }

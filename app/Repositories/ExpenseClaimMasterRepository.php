@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ExpenseClaimMaster;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class ExpenseClaimMasterRepository
@@ -78,10 +79,10 @@ class ExpenseClaimMasterRepository extends BaseRepository
     public function expenseClaimMasterListQuery($request, $input, $search = '') {
         
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

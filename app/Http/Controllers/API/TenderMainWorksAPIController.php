@@ -299,7 +299,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('item'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         //$priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();
         $priceBidDetail = PricingScheduleDetail::where('id',$input['item'])->first();
 
@@ -431,7 +431,7 @@ class TenderMainWorksAPIController extends AppBaseController
                         return $this->sendError(trans('srm_tender_rfx.item_duplicate'), 500);
                     }
                 }
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 foreach ($record as $vl){
                     $data['tender_id']=$input['tender_id'];
                     $data['schedule_id']=$input['schedule_id'];

@@ -41,6 +41,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class SRTaxLedgerService
 {
@@ -59,10 +60,10 @@ class SRTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -82,11 +83,11 @@ class SRTaxLedgerService
         $ledgerData['partyID'] = $masterData->customerID;
         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedEmpSystemID;
 
-        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $masterData->transactionAmount);
+        $currencyConversionAmount = Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $masterData->transactionAmount);
 
-        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->transactionAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0);
-        $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0);
-        $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0);
+        $ledgerData['documentTransAmount'] = Helper::roundValue($masterData->transactionAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0);
+        $ledgerData['documentLocalAmount'] = Helper::roundValue($currencyConversionAmount['localAmount']) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0);
+        $ledgerData['documentReportingAmount'] = Helper::roundValue($currencyConversionAmount['reportingAmount']) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0);
             
 
         $details = SalesReturnDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount*qtyReturned) as transVATAmount,SUM(VATAmountLocal*qtyReturned) as localVATAmount ,SUM(VATAmountRpt*qtyReturned) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER')

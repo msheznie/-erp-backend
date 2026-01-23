@@ -541,7 +541,7 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currency_id', 'tender_type_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if (isset($input['rfx']) && $input['rfx']) {
             $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
         } else {
@@ -618,7 +618,7 @@ class TenderMasterAPIController extends AppBaseController
     public function deleteTenderMaster(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $data['deleted_by'] = $employee->employeeSystemID;
@@ -1072,7 +1072,7 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $exist = $this->tenderMasterRepository->getTenderExistData($input['id'], $editOrAmend, $versionID);
 
         if (!isset($input['tender_document_fee'])) {
@@ -1735,7 +1735,7 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
@@ -1810,7 +1810,7 @@ class TenderMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseRequests = [];
@@ -1834,7 +1834,7 @@ class TenderMasterAPIController extends AppBaseController
     public function approveTender(Request $request)
     {
 
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
 
         if (!$approve["success"]) {
 
@@ -1847,7 +1847,7 @@ class TenderMasterAPIController extends AppBaseController
 
     public function rejectTender(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1872,7 +1872,7 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
@@ -1948,7 +1948,7 @@ class TenderMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseRequests = [];
@@ -2002,7 +2002,7 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster->RollLevForApp_curr = 1;
         $tenderMaster->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $tenderMaster->document_system_id)->first();
 
@@ -2090,7 +2090,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $urlString = implode('//', $urlArray) . '/';
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $att['updated_by'] = $employee->employeeSystemID;
@@ -2122,7 +2122,7 @@ class TenderMasterAPIController extends AppBaseController
             ->distinct()
             ->get();
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
@@ -2170,7 +2170,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['domain'] =  Helper::getDomainForSrmDocuments($request);
         $request->merge($data);
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
@@ -2235,7 +2235,7 @@ class TenderMasterAPIController extends AppBaseController
             $technicalWeightage = $input['technical_weightage'];
 
             $total = ((int)$commercialWeightage + (int)$technicalWeightage);
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             if ($total != 100) {
                 return ['status' => false, 'message' => trans('srm_tender_rfx.the_total_evaluation_criteria_weightage_cannot_be_less_than_hundred')];
             }
@@ -2313,7 +2313,7 @@ class TenderMasterAPIController extends AppBaseController
     public function updateCalenderDate(Request $request)
     {
         $currentDate = Carbon::now();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $rfx = isset($request['rfq']) ? true : false;
         $fromTime = ($request['from_time']) ? new Carbon($request['from_time']) : null;
@@ -2455,7 +2455,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getPurchasedTenderList(Request $request)
     {
         $input = $request->all();
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -2793,7 +2793,7 @@ class TenderMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bid_sub_data['doc_verifiy_by_emp'] = Helper::getEmployeeSystemID();
             $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
 
             if($isNegotiation == 1){
@@ -2909,7 +2909,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getCommercialBidTenderList(Request $request)
     {
         $input = $request->all();
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -3113,7 +3113,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getEvalCompletedTenderList(Request $request)
     {
         $input = $request->all();
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -4277,7 +4277,7 @@ class TenderMasterAPIController extends AppBaseController
         $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
         $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
         $versionId = $documentID == 117?'srm_tender_master.tender_edit_version_id':'srm_tender_master.tender_edit_confirm_id';
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
@@ -4341,7 +4341,7 @@ class TenderMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseRequests = [];
@@ -4378,7 +4378,7 @@ class TenderMasterAPIController extends AppBaseController
         $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
         $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
         $versionId = $documentID == 117?'srm_tender_master.tender_edit_version_id':'srm_tender_master.tender_edit_confirm_id';
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
@@ -4442,7 +4442,7 @@ class TenderMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseRequests = [];
@@ -4677,7 +4677,7 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderNegotiationList(Request $request)
     {
         $input = $request->all();
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';

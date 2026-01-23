@@ -34,6 +34,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 /**
  * Class ApprovalLevelController
@@ -238,8 +239,8 @@ class ApprovalLevelAPIController extends AppBaseController
         /** all Company  Drop Down */
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -247,7 +248,7 @@ class ApprovalLevelAPIController extends AppBaseController
         $groupCompany = Company::whereIN("companySystemID", $companiesByGroup)->get();
 
         /** all document Drop Down */
-        $document = \Helper::getAllDocuments();
+        $document = Helper::getAllDocuments();
 
         /** all finance category Drop Down */
         $financeCategory = FinanceItemCategoryMaster::all();
@@ -271,7 +272,7 @@ class ApprovalLevelAPIController extends AppBaseController
     {
         /** all Service line  Drop Down */
         $selectedCompanyId = $request['companySystemID'];
-        $serviceline = \Helper::getCompanyServiceline($selectedCompanyId);
+        $serviceline = Helper::getCompanyServiceline($selectedCompanyId);
         $output = array('serviceline' => $serviceline
         );
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));

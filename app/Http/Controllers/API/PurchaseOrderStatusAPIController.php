@@ -36,6 +36,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class PurchaseOrderStatusController
@@ -168,7 +169,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         }
 
         $input['purchaseOrderCode'] = $purchaseOrder->purchaseOrderCode;
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['updatedByEmpSystemID'] = $employee->employeeSystemID;
         $input['updatedByEmpID'] = $employee->empID;
@@ -334,7 +335,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
@@ -365,7 +366,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     {
         $id = $request->get('id');
         $type = $request->get('type');
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $errorMessage = trans('custom.something_went_wrong_contact_admin');
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
@@ -404,7 +405,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     {
         $id = $request->get('POStatusID');
         $type = $request->get('type');
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $errorMessage = trans('custom.something_went_wrong_contact_admin');
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
@@ -494,10 +495,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -625,10 +626,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -671,10 +672,10 @@ class PurchaseOrderStatusAPIController extends AppBaseController
     {
         $input = $request->all();
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -770,9 +771,9 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 trans('custom.company_id') => $val->companyID,
                 trans('custom.po_code') => $val->purchaseOrderCode,
                 trans('custom.segment') => isset($val->segment->ServiceLineDes)?$val->segment->ServiceLineDes:'',
-                trans('custom.created_date') => \Helper::dateFormat($val->createdDateTime),
-                trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
-                trans('custom.eta') => \Helper::dateFormat($val->expectedDeliveryDate),
+                trans('custom.created_date') => Helper::dateFormat($val->createdDateTime),
+                trans('custom.approved_date') => Helper::dateFormat($val->approvedDate),
+                trans('custom.eta') => Helper::dateFormat($val->expectedDeliveryDate),
                 trans('custom.narration') => $val->narration,
                 trans('custom.supplier_code') => $val->supplierPrimaryCode,
                 trans('custom.supplier_name') => $val->supplierName,

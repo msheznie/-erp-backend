@@ -82,8 +82,8 @@ class POSItemLedgerInsert implements ShouldQueue
                             $data['wacRptCurrencyID'] = $invItems->companyReportingCurrencyID;
                             $data['wacRpt'] = $invItems->totalCost / $invItems->defaultQty / $invItems->companyReportingExchangeRate;
                         }
-                        $data['transactionDate'] = \Helper::currentDateTime();
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['transactionDate'] = Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
 
                         array_push($finalData, $data);
                     }
@@ -131,8 +131,8 @@ class POSItemLedgerInsert implements ShouldQueue
                                     $data['wacRptCurrencyID'] = $invItems->companyReportingCurrencyID;
                                     $data['wacRpt'] = $invItems->amount / $invItems->companyReportingExchangeRate;
                                 }
-                                $data['transactionDate'] = \Helper::currentDateTime();
-                                $data['timestamp'] = \Helper::currentDateTime();
+                                $data['transactionDate'] = Helper::currentDateTime();
+                                $data['timestamp'] = Helper::currentDateTime();
 
                                 array_push($finalData, $data);
                             }

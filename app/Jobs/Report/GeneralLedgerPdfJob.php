@@ -17,6 +17,7 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
 use File;
+use App\helper\Helper;
 
 class GeneralLedgerPdfJob implements ShouldQueue
 {
@@ -80,7 +81,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }

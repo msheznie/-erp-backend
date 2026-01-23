@@ -111,9 +111,9 @@ class CompanyAPIController extends AppBaseController
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup",0)->get();
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if($isGroup){
-            $subCompanies  = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies  = Helper::getGroupCompany($selectedCompanyId);
             //$subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
             $companies = Company::whereIn("companySystemID",$subCompanies)->where("isGroup",0)->get();
@@ -658,10 +658,10 @@ class CompanyAPIController extends AppBaseController
 
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+        $isGroup = Helper::checkIsCompanyGroup($companySystemID);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companySystemID);
+            $childCompanies = Helper::getGroupCompany($companySystemID);
         } else {
             $childCompanies = [$companySystemID];
         }
@@ -719,9 +719,9 @@ class CompanyAPIController extends AppBaseController
 
         $selectedCompanyId  = isset($input['companySystemID']) ? $input['companySystemID'] : null;
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($selectedCompanyId);
+            $companies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companies = [$selectedCompanyId];
         }

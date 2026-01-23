@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class DebitNoteGlService
 {
@@ -117,8 +118,8 @@ class DebitNoteGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->debitNoteCode;
             $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -158,23 +159,23 @@ class DebitNoteGlService
 
             $data['documentTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->supplierTransactionCurrencyER;
-            $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount));
+            $data['documentTransAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount));
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-            $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount));
+            $data['documentLocalAmount'] = Helper::roundValue(ABS($masterData->detail[0]->localAmount));
             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-            $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount));
+            $data['documentRptAmount'] = Helper::roundValue(ABS($masterData->detail[0]->rptAmount));
 
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
             $data['documentType'] = $masterData->documentType;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
             array_push($finalData, $data);
 
             $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
@@ -204,9 +205,9 @@ class DebitNoteGlService
                         $data['glCode'] = $chartOfAccountData->AccountCode;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans)) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($taxTrans)) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($taxLocal)) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($taxRpt)) * -1;
                         array_push($finalData, $data);
 
                         $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -231,14 +232,14 @@ class DebitNoteGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                    $data['documentTransAmount'] = \Helper::roundValue(($val->transAmount) * -1);
+                    $data['documentTransAmount'] = Helper::roundValue(($val->transAmount) * -1);
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(($val->localAmount) * -1);
+                    $data['documentLocalAmount'] = Helper::roundValue(($val->localAmount) * -1);
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = \Helper::roundValue(($val->rptAmount) * -1);
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(($val->rptAmount) * -1);
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }

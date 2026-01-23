@@ -27,6 +27,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 /**
  * Class ItemAssignedController
  * @package App\Http\Controllers\API
@@ -113,7 +114,7 @@ class ItemAssignedAPIController extends AppBaseController
             {
 
               
-                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $itemId, 'item');
+                $validatorResult = Helper::checkCompanyForMasters($companie['id'], $itemId, 'item');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }
@@ -393,10 +394,10 @@ class ItemAssignedAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -456,10 +457,10 @@ class ItemAssignedAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -521,10 +522,10 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+        $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($input['companySystemID']);
+            $childCompanies = Helper::getGroupCompany($input['companySystemID']);
         } else {
             $childCompanies = [$input['companySystemID']];
         }
@@ -574,10 +575,10 @@ class ItemAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['selectedCompanyId']);
+        $isGroup = Helper::checkIsCompanyGroup($input['selectedCompanyId']);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($input['selectedCompanyId']);
+            $childCompanies = Helper::getGroupCompany($input['selectedCompanyId']);
         } else {
             $childCompanies = [$input['selectedCompanyId']];
         }

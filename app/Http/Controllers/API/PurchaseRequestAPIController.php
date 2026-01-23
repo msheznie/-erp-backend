@@ -220,10 +220,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -321,7 +321,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $conditions['allocateItemToSegment'] = $allocateItemToSegment->isYesNO;
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $prTypeApproval = CompanyDocumentAttachment::where('companySystemID', $companyId)->where('documentSystemID', 1)->first();
 
@@ -367,10 +367,10 @@ class PurchaseRequestAPIController extends AppBaseController
     public function getWarehouse(Request $request){
         $input = $request->all();
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         }else{
             $subCompanies = [$companyId];
         }
@@ -421,7 +421,7 @@ class PurchaseRequestAPIController extends AppBaseController
                             'location'=>$wareHouseSystemCode,
                             ];
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $inputData['createdPcID'] = gethostname();
             $inputData['createdUserID'] = $employee->empID;
@@ -735,7 +735,7 @@ class PurchaseRequestAPIController extends AppBaseController
                     $data[$x][trans('custom.processed_by')] = '';
                 }
 
-                $data[$x][trans('custom.pr_date')] = \Helper::dateFormat($value->PRRequestedDate);
+                $data[$x][trans('custom.pr_date')] = Helper::dateFormat($value->PRRequestedDate);
                 $data[$x][trans('custom.pr_comment')] = $value->comments;
 
                 if ($value->approved == -1) {
@@ -800,7 +800,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                                 if ($poDetail->order) {
                                     $data[$x][trans('custom.po_number')] = $poDetail->order->purchaseOrderCode;
-                                    $data[$x][trans('custom.eta')] = \Helper::dateFormat($poDetail->order->expectedDeliveryDate);
+                                    $data[$x][trans('custom.eta')] = Helper::dateFormat($poDetail->order->expectedDeliveryDate);
                                     $data[$x][trans('custom.supplier_code')] = $poDetail->order->supplierPrimaryCode;
                                     $data[$x][trans('custom.supplier_name')] = $poDetail->order->supplierName;
                                 } else {
@@ -822,7 +822,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                 $data[$x][trans('custom.po_cost')] = round($poDetail->GRVcostPerUnitComRptCur, 2);
 
                                 if ($poDetail->order) {
-                                    $data[$x][trans('custom.po_confirmed_date')] = \Helper::dateFormat($poDetail->order->poConfirmedDate);
+                                    $data[$x][trans('custom.po_confirmed_date')] = Helper::dateFormat($poDetail->order->poConfirmedDate);
                                 } else {
                                     $data[$x][trans('custom.po_confirmed_date')] = '';
                                 }
@@ -838,7 +838,7 @@ class PurchaseRequestAPIController extends AppBaseController
                                 }
 
                                 if ($poDetail->order) {
-                                    $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($poDetail->order->approvedDate);
+                                    $data[$x][trans('custom.approved_date')] = Helper::dateFormat($poDetail->order->approvedDate);
                                 } else {
                                     $data[$x][trans('custom.approved_date')] = '';
                                 }
@@ -885,7 +885,7 @@ class PurchaseRequestAPIController extends AppBaseController
 
                                         if ($grvDetail->grv_master) {
                                             $data[$x][trans('custom.receipt_doc_number')] = $grvDetail->grv_master->grvPrimaryCode;
-                                            $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($grvDetail->grv_master->grvDate);
+                                            $data[$x][trans('custom.receipt_date')] = Helper::dateFormat($grvDetail->grv_master->grvDate);
                                         } else {
                                             $data[$x][trans('custom.receipt_doc_number')] = '';
                                             $data[$x][trans('custom.receipt_date')] = '';
@@ -1185,7 +1185,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
 
         $purchaseRequests = DB::table('erp_documentapproved')
@@ -1256,7 +1256,7 @@ class PurchaseRequestAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseRequests = [];
@@ -1298,7 +1298,7 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $purchaseRequests = DB::table('erp_documentapproved')
@@ -1733,7 +1733,7 @@ class PurchaseRequestAPIController extends AppBaseController
             //$input['estimatedCost'] = $item->wacValueLocal;
 
             if (!$itemNotound) {
-                $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
                 $input['estimatedCost'];
                 $input['altUnitValue'] = $input['quantityRequested'];
                 $input['altUnit'];
@@ -2135,7 +2135,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'prType' => $input['prType']
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             $datas =  PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->get();
 
             if(isset($datas)) {
@@ -2212,7 +2212,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $result = $controller->approveEditDocument($request);
             return $result;
         }else { 
-            $approve = \Helper::approveDocument($request);
+            $approve = Helper::approveDocument($request);
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"]);
             } else {
@@ -2248,7 +2248,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $result = $controllerApprovalStatus->rejectSupplierKYC($request);
             return $result;
         }else {
-            $reject = \Helper::rejectDocument($request);
+            $reject = Helper::rejectDocument($request);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } else {
@@ -2324,7 +2324,7 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.cannot_cancel_order_is_created_for_this_request'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $purchaseRequest->cancelledYN = -1;
         $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
@@ -2438,7 +2438,7 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.cannot_return_back_to_amend_order_is_created_for_t'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $emails = array();
         $ids_to_delete = array();
@@ -2566,7 +2566,7 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_can_only_close_approved_request'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $emails = array();
         $ids_to_delete = array();
@@ -2729,10 +2729,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -2786,10 +2786,10 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -2828,21 +2828,21 @@ class PurchaseRequestAPIController extends AppBaseController
             {
                 $data[] = array(
                     trans('custom.pr_number') => $val->purchaseRequestCode,
-                    trans('custom.pr_requested_date') => \Helper::dateFormat($val->createdDateTime),
+                    trans('custom.pr_requested_date') => Helper::dateFormat($val->createdDateTime),
                     trans('custom.department') => $serviceLineDes,
                     trans('custom.narration') => $val->comments,
                     trans('custom.location') => $location,
                     trans('custom.priority') => $priority,
                     trans('custom.created_by') => $createdBy,
-                    trans('custom.confirmed_date') => \Helper::dateFormat($val->PRConfirmedDate),
-                    trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+                    trans('custom.confirmed_date') => Helper::dateFormat($val->PRConfirmedDate),
+                    trans('custom.approved_date') => Helper::dateFormat($val->approvedDate),
                 );
             }
             else
             {
             $data[] = array(
                 trans('custom.pr_number') => $val->purchaseRequestCode,
-                trans('custom.pr_requested_date') => \Helper::dateFormat($val->createdDateTime),
+                trans('custom.pr_requested_date') => Helper::dateFormat($val->createdDateTime),
                 trans('custom.department') => $serviceLineDes,
 
                 trans('custom.item_code') => '',
@@ -2855,8 +2855,8 @@ class PurchaseRequestAPIController extends AppBaseController
                 trans('custom.location') => $location,
                 trans('custom.priority') => $priority,
                 trans('custom.created_by') => $createdBy,
-                trans('custom.confirmed_date') => \Helper::dateFormat($val->PRConfirmedDate),
-                trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+                trans('custom.confirmed_date') => Helper::dateFormat($val->PRConfirmedDate),
+                trans('custom.approved_date') => Helper::dateFormat($val->approvedDate),
             );
 
             if (!empty($val->details)) {
@@ -3280,7 +3280,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'amount' => $input['amount'],
         );
 
-        $approve = \Helper::confirmDocument($params);
+        $approve = Helper::confirmDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

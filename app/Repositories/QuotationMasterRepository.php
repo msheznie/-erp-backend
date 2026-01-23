@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\QuotationMaster;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class QuotationMasterRepository
@@ -109,10 +110,10 @@ class QuotationMasterRepository extends BaseRepository
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -196,14 +197,14 @@ class QuotationMasterRepository extends BaseRepository
                 $data[$x][trans('custom.document_code')] = $val->quotationCode;
                 $data[$x][trans('custom.type')] = StatusService::getQuotationType($val->quotationType, $val->documentSystemID);
                 $data[$x][trans('custom.customer_name')] = $val->customerName;
-                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
-                $data[$x][trans('custom.document_exp_date')] = \Helper::dateFormat($val->documentExpDate);
+                $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.document_exp_date')] = Helper::dateFormat($val->documentExpDate);
                 $data[$x][trans('custom.segment')] = $val->segment? $val->segment->ServiceLineDes : '';
                 $data[$x][trans('custom.comments')] = $val->narration;
                 $data[$x][trans('custom.created_by')] = $val->createdUserName;
-                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x][trans('custom.approved_on')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = Helper::dateFormat($val->approvedDate);
                 $data[$x][trans('custom.transaction_currency')] = $val->transaction_currency? $val->transaction_currency->CurrencyCode : '';
                 $data[$x][trans('custom.transaction_amount')] = number_format($val->transactionAmount, $val->transaction_currency? $val->transaction_currency->DecimalPlaces : '', ".", "");
                 

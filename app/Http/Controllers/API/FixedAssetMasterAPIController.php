@@ -236,7 +236,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -340,8 +340,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input["faCode"] = $documentCode;
                         $input["faBarcode"] = $documentCode;
                         $input['createdPcID'] = gethostname();
-                        $input['createdUserID'] = \Helper::getEmployeeID();
-                        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $input['createdUserID'] = Helper::getEmployeeID();
+                        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                         $input["timestamp"] = date('Y-m-d H:i:s');
                         unset($input['grvDetailsID']);
@@ -438,8 +438,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input["faCode"] = $documentCode;
                                 $input["faBarcode"] = $documentCode;
                                 $input['createdPcID'] = gethostname();
-                                $input['createdUserID'] = \Helper::getEmployeeID();
-                                $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                $input['createdUserID'] = Helper::getEmployeeID();
+                                $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
                                 $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                                 $input["timestamp"] = date('Y-m-d H:i:s');
                                 unset($input['grvDetailsID']);
@@ -778,7 +778,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
                 if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -950,7 +950,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }
@@ -958,8 +958,8 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             /** @var FixedAssetMaster $fixedAssetMaster */
             $input['modifiedPc'] = gethostname();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
@@ -1098,10 +1098,10 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -1109,13 +1109,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $companyCurrency = \Helper::companyCurrency($companyId);
+        $companyCurrency = Helper::companyCurrency($companyId);
 
         $department = DepartmentMaster::showInCombo()->get();
 
@@ -1241,10 +1241,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1515,7 +1515,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $this->fixedAssetMasterRepository->update($updateInput, $id);
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetMaster->documentSystemID)->first();
 
@@ -1598,7 +1598,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -1654,7 +1654,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -1687,7 +1687,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -1807,8 +1807,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.asset_code')] = $val->AssetCode;
                 $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
                 $data[$x][trans('custom.serial_number')] = $val->SerialNumber;
-                $data[$x][trans('custom.date_aq')] = \Helper::dateFormat($val->dateAQ);
-                $data[$x][trans('custom.date_dep')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.date_aq')] = Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.date_dep')] = Helper::dateFormat($val->dateDEP);
                 $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
                 $data[$x][trans('custom.cost_local')] = number_format($val->CostLocal, 3);
                 $data[$x][trans('custom.dep_local')] = number_format($val->DepLocal, 3);
@@ -1817,8 +1817,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.department')] = $val->department;
                 $data[$x][trans('custom.policy_type')] = $val->policyType;
                 $data[$x][trans('custom.policy_number')] = $val->policyNumber;
-                $data[$x][trans('custom.date_from')] = \Helper::dateFormat($val->dateFrom);
-                $data[$x][trans('custom.date_to')] = \Helper::dateFormat($val->dateTo);
+                $data[$x][trans('custom.date_from')] = Helper::dateFormat($val->dateFrom);
+                $data[$x][trans('custom.date_to')] = Helper::dateFormat($val->dateTo);
                 $data[$x][trans('custom.insurer_name')] = $val->insurerName;
                 $x++;
             }
@@ -1851,10 +1851,10 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function assetInsuranceReport($input, $search)
     {
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -2068,12 +2068,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                     return $this->sendError(trans('custom.maximum_size_allow_upload_20mb'),500);
                 }
 
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
 
                 $uploadArray = array(
                     'companySystemID' => $input['companySystemID'],
                     'assetDescription' => $input['assetDescription'],
-                    'uploadedDate' => \Helper::currentDateTime(),
+                    'uploadedDate' => Helper::currentDateTime(),
                     'uploadedBy' => $employee->empID,
                     'uploadStatus' => -1
                 );
@@ -2284,8 +2284,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.serial_no')] = $val->faUnitSerialNo;
                 $data[$x][trans('custom.comments')] = $val->COMMENTS;
                 $data[$x][trans('custom.manufacture')] = $val->MANUFACTURE;
-                $data[$x][trans('custom.date_acquired')] = \Helper::dateFormat($val->dateAQ);
-                $data[$x][trans('custom.dep_date_start')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.date_acquired')] = Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.dep_date_start')] = Helper::dateFormat($val->dateDEP);
                 $data[$x][trans('custom.life_time_in_years')] = $val->depMonth;
                 $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
                 $data[$x][trans('custom.grv_no')] = $val->docOrigin;
@@ -2302,27 +2302,27 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.asset_type')] = $val->asset_type?$val->asset_type->typeDes:'';
                 $data[$x][trans('custom.supplier_code')] = $val->supplier?$val->supplier->primarySupplierCode:'';
                 $data[$x][trans('custom.supplier_name')] = $val->supplier? $val->supplier->supplierName:'';
-                $data[$x][trans('custom.disposed_date')] = \Helper::dateFormat($val->disposedDate);
-                $data[$x][trans('custom.last_physical_verified_date')] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x][trans('custom.disposed_date')] = Helper::dateFormat($val->disposedDate);
+                $data[$x][trans('custom.last_physical_verified_date')] = Helper::dateFormat($val->lastVerifiedDate);
                 $data[$x][trans('custom.unit_price_local')] = $val->COSTUNIT;
                 $data[$x][trans('custom.unit_price_rpt')] = $val->costUnitRpt;
 
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateAndTime);
+                $data[$x][trans('custom.created_at')] = Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
                     $data[$x][trans('custom.confirmed_status')] = trans('custom.yes');
                 } else {
                     $data[$x][trans('custom.confirmed_status')] = trans('custom.no');
                 }
-                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                 $data[$x][trans('custom.confirmed_by')] = $val->confirmed_by?$val->confirmed_by->empName:'';
                 if ($val->approved == -1) {
                     $data[$x][trans('custom.approved_status')] = trans('custom.yes');
                 } else {
                     $data[$x][trans('custom.approved_status')] = trans('custom.no');
                 }
-                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->approvedDate);
                 $x++;
             }
         } else {
@@ -2352,7 +2352,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $id = isset($input['id'])?$input['id']:0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = $this->fixedAssetMasterRepository->findWithoutFail($id);
@@ -2582,7 +2582,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         
 
@@ -2611,7 +2611,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -2645,7 +2645,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
         $grv_id = $input['grv_id'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $query1 = DB::table('erp_documentapproved')
@@ -2716,7 +2716,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
         }
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];

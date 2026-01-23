@@ -19,6 +19,7 @@ use App\Models\RegisterSupplierBusinessCategoryAssign;
 use App\Models\SupplierBusinessCategoryAssign;
 use App\Models\RegisterSupplierSubcategoryAssign;
 use App\Models\SupplierSubCategoryAssign;
+use App\helper\Helper;
 
 
 class SupplierRegister
@@ -31,7 +32,7 @@ class SupplierRegister
 			return ['status' => false, 'message' => "Supplier registered data not found"];
 		}
 
-		$employee = \Helper::getEmployeeInfo();
+		$employee = Helper::getEmployeeInfo();
 
 		$document = DocumentMaster::where('documentID', 'SUPM')->first();
 

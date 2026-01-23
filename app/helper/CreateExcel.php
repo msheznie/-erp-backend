@@ -3,6 +3,7 @@
 namespace App\helper;
 
 use Illuminate\Support\Facades\Storage;
+use App\helper\Helper;
 
 class CreateExcel
 {
@@ -11,7 +12,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
         $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
@@ -275,7 +276,7 @@ class CreateExcel
                     
                                 {
                                     $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-                                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                                    $fontFamily = Helper::getExcelFontFamily($lang);
                                     $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);
 
                                     $cell->setFont(array(
@@ -373,7 +374,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
 
@@ -383,7 +384,7 @@ class CreateExcel
     public static function processDetailExport($data, $companyCode) {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $excel_content = \Excel::create('po_details_export', function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
@@ -494,7 +495,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;
@@ -504,7 +505,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
             $sheet->cell('A5', function($cell) use($array,$type,$fontFamily)
@@ -549,7 +550,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A4', function($cell) use($array,$fontFamily)
         {
@@ -574,7 +575,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell($col, function($cell) use($array,$fontFamily)
         {
@@ -599,7 +600,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A3', function($cell) use($array,$type,$fontFamily)
         {
@@ -625,7 +626,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A4', function($cell) use($array,$type,$fontFamily)
         {
@@ -663,7 +664,7 @@ class CreateExcel
         }
 
                     $lang = app()->getLocale();
-                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                    $fontFamily = Helper::getExcelFontFamily($lang);
 
                     $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
                         $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName, $fontFamily) {
@@ -712,7 +713,7 @@ class CreateExcel
        {
            if (Storage::disk($disk)->exists($path))
            {
-               $basePath = \Helper::getFileUrlFromS3($path);
+               $basePath = Helper::getFileUrlFromS3($path);
            }
        }
 
@@ -723,7 +724,7 @@ class CreateExcel
     public static function processOpenRequestReport($data,$companyCode) {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data, $fontFamily) {
 
@@ -816,7 +817,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;
@@ -826,7 +827,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $excel_content = \Excel::create('pr_details_export', function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
@@ -907,7 +908,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;

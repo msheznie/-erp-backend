@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\BudgetTransferForm;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class BudgetTransferFormRepository
@@ -70,10 +71,10 @@ class BudgetTransferFormRepository extends BaseRepository
     public function budgetTransferFormListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -124,7 +125,7 @@ class BudgetTransferFormRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.created_date')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.created_date')] = Helper::dateFormat($val->createdDateTime);
                 $data[$x][trans('custom.transfer_document_code')] = $val->transferVoucherNo;
                 $data[$x][trans('custom.narration')] = $val->comments;
                 $data[$x][trans('custom.submitted_by')] = $val->confirmed_by? $val->confirmed_by->empName : '';

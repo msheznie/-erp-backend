@@ -7,6 +7,7 @@ use App\Models\ErpItemLedger;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class ErpItemLedgerRepository
@@ -63,10 +64,10 @@ class ErpItemLedgerRepository extends BaseRepository
         $stockLedger = $data = $items = $docs = $warehouse = [];
         $grandTotalQty = $grandTotalLocalAmount = $grandTotalRepAmount = 0;
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+        $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($input['companySystemID']);
+            $subCompanies = Helper::getGroupCompany($input['companySystemID']);
         }
         else {
             $subCompanies = [$input['companySystemID']];

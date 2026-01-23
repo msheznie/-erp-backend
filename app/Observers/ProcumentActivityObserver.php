@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\ProcumentActivityEditLog;
 use App\Models\ProcumentActivity;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class ProcumentActivityObserver
 {
@@ -68,7 +69,7 @@ class ProcumentActivityObserver
 
     public function process($tender,$reflog_id,$modify_type_val,$version_id,$type)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

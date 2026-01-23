@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\CustomerReceivePayment;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class CustomerReceivePaymentRepository
@@ -358,12 +359,12 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x][trans('custom.payee_type')] = $payeeType? $payeeType : '';
                 $data[$x][trans('custom.other')] = $val->PayeeName? $val->PayeeName : '';
                 $data[$x][trans('custom.project')] = $val->project? $val->project->description : '';
-                $data[$x][trans('custom.rv_brv_date')] = \Helper::dateFormat($val->custPaymentReceiveDate);
+                $data[$x][trans('custom.rv_brv_date')] = Helper::dateFormat($val->custPaymentReceiveDate);
                 $data[$x][trans('custom.narration')] = $val->narration;
                 $data[$x][trans('custom.created_by')] = $val->empName;
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.rv_confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.rv_approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.rv_confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.rv_approved_on')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.transaction_currency')] = $val->transCurrencyCode;
                 $data[$x][trans('custom.transaction_amount')] = $val->receivedAmount? number_format(abs($val->receivedAmount), $transDecimal, ".", "") : '';
                 $data[$x][trans('custom.bank_currency')] = $val->bankCurrencyCode;

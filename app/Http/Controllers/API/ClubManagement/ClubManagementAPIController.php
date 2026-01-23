@@ -41,6 +41,7 @@ use App\Services\API\CustomerMasterAPIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class ClubManagementAPIController extends AppBaseController
 {
@@ -80,7 +81,7 @@ class ClubManagementAPIController extends AppBaseController
                         $myCurr = $customerCurr->currencyID;
                     }
 
-                    $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+                    $companyCurrency = Helper::companyCurrency($dt['companySystemID']);
 
                     $segment = SegmentMaster::find($dt['serviceLineSystemID']);
                     if (empty($segment)) {
@@ -101,14 +102,14 @@ class ClubManagementAPIController extends AppBaseController
                     }
 
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $companyCurrencyConversion = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
 
-                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $companyCurrencyConversionTrans = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
                     $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
                     if (empty($customer)) {
                         return $this->sendError(trans('custom.customer_not_found'));
                     }
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+                    $companyCurrencyConversionVat = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
 
                     $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
@@ -138,9 +139,9 @@ class ClubManagementAPIController extends AppBaseController
                         'customerInvoiceDate' => $dt['bookingDate'],
                         'invoiceDueDate' => $dt['invoiceDueDate'],
                         'date_of_supply' => $dt['dateOfSupply'],
-                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
-                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
-                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                        'bookingAmountTrans' => Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                         'VATPercentage' => $dt['VATPercentage'],
                         'VATAmount' => $dt['VATAmount'],
                         'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
@@ -176,7 +177,7 @@ class ClubManagementAPIController extends AppBaseController
                         $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $custInvoice->companySystemID)->first();
 
                         $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
-                        $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                        $companyCurrency = Helper::companyCurrency($custInvoice->companySystemID);
                         if (empty($customer)) {
                             return $this->sendError(trans('custom.customer_not_found'));
                         }
@@ -184,9 +185,9 @@ class ClubManagementAPIController extends AppBaseController
                             $myCurr = $customer->currencyID;
                         }
 
-                        $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, 0);
-                        $companyCurrencyConversionTrans = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['invoiceAmount']);
-                        $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
+                        $companyCurrencyConversion = Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['invoiceAmount']);
+                        $companyCurrencyConversionVat = Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
                         $company = Company::where('companySystemID', $custInvoice->companySystemID)->first();
                         if (empty($company)) {
                             return $this->sendError(trans('custom.company_not_found'));
@@ -225,10 +226,10 @@ class ClubManagementAPIController extends AppBaseController
                             'salesPrice' => $dt['salesPrice']
                         );
                     } else if ($custInvoice->isPerforma == 2) {
-                        $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
-                        $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
-                        $companyCurrencyConversionMargin = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
-                        $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
+                        $companyCurrencyConversion = Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
+                        $companyCurrency = Helper::companyCurrency($custInvoice->companySystemID);
+                        $companyCurrencyConversionMargin = Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
+                        $companyCurrencyConversionVat = Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
                         $item = ItemAssigned::where('itemCodeSystem', $dt['itemCodeSystem'])->first();
                         if (empty($item)) {
                             return $this->sendError(trans('custom.item_not_found'));
@@ -363,10 +364,10 @@ class ClubManagementAPIController extends AppBaseController
             }
 
 
-            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
-            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receivedAmount']);
-            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
-            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+            $companyCurrencyConversion = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+            $companyCurrencyConversionTrans = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receivedAmount']);
+            $companyCurrencyConversionVat = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
 
 
             $company = Company::where('companySystemID', $dt['companySystemID'])->first();
@@ -402,10 +403,10 @@ class ClubManagementAPIController extends AppBaseController
                 'receivedAmount' => $dt['receivedAmount'],
                 'localCurrencyID' => isset($company->localCurrencyID) ? $company->localCurrencyID : null,
                 'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                'localAmount' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                'localAmount' => Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
                 'companyRptCurrencyID' => isset($company->reportingCurrency) ? $company->reportingCurrency : null,
                 'companyRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
-                'companyRptAmount' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                'companyRptAmount' => Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                 'bankAmount' => $dt['bankAmount'],
                 'documentType' => 13,
                 'isVATApplicable' => $dt['isVATApplicable'],
@@ -435,10 +436,10 @@ class ClubManagementAPIController extends AppBaseController
                     return $this->sendError(trans('custom.company_not_found'));
                 }
                 $myCurr = $dt['custTransactionCurrencyID'];
-                $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
-                $companyCurrency = \Helper::companyCurrency($master->companySystemID);
-                $companyCurrencyConversionTrans = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['bookingAmountTrans']);
-                $companyCurrencyConversionReceive = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['receiveAmountTrans']);
+                $companyCurrencyConversion = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
+                $companyCurrency = Helper::companyCurrency($master->companySystemID);
+                $companyCurrencyConversionTrans = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                $companyCurrencyConversionReceive = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['receiveAmountTrans']);
                 $arAutoID = AccountsReceivableLedger::where('documentCodeSystem', $dt['bookingInvCodeSystem'])->first();
                 if (empty($arAutoID)) {
                     return $this->sendError(trans('custom.customer_invoice_not_found'));
@@ -462,15 +463,15 @@ class ClubManagementAPIController extends AppBaseController
                     'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
                     'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
                     'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                    'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
-                    'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
-                    'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                    'bookingAmountTrans' => Helper::roundValue($dt['bookingAmountTrans']),
+                    'bookingAmountLocal' => Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                    'bookingAmountRpt' => Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                     'custReceiveCurrencyID' => $myCurr,
                     'custReceiveCurrencyER' => 1,
                     'custbalanceAmount' => $dt['custbalanceAmount'],
-                    'receiveAmountTrans' => \Helper::roundValue($dt['receiveAmountTrans']),
-                    'receiveAmountLocal' => \Helper::roundValue($companyCurrencyConversionReceive['localAmount']),
-                    'receiveAmountRpt' => \Helper::roundValue($companyCurrencyConversionReceive['reportingAmount'])
+                    'receiveAmountTrans' => Helper::roundValue($dt['receiveAmountTrans']),
+                    'receiveAmountLocal' => Helper::roundValue($companyCurrencyConversionReceive['localAmount']),
+                    'receiveAmountRpt' => Helper::roundValue($companyCurrencyConversionReceive['reportingAmount'])
                 );
             }
             StageCustomerReceivePaymentDetail::insert($custReceiptVoucherDetArray);
@@ -520,9 +521,9 @@ class ClubManagementAPIController extends AppBaseController
                     $myCurr = $master->custTransactionCurrencyID;
                 }
 
-                $companyCurrencyConversionTrans = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['DRAmount']);
-                $companyCurrencyConversionVat = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
-                $companyCurrencyConversionNet = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+                $companyCurrencyConversionTrans = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['DRAmount']);
+                $companyCurrencyConversionVat = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
+                $companyCurrencyConversionNet = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
 
 
                 $custReceiptDetails[] = array(

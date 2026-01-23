@@ -388,7 +388,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         }*/
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $data['tender_id'] = $tenderMasterID;
@@ -504,7 +504,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function tenderCircularPublish(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $companyName = "";
         $company = Company::find($request->input('company_id'));
         if(isset($company->CompanyName)){
@@ -526,7 +526,7 @@ class TenderCircularsAPIController extends AppBaseController
 
             Log::info($file);
 
-            $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+            $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
             if ($result && $supplierList) {
                 DB::commit();
@@ -658,7 +658,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircularSupplier(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $dataSupplier['circular_id'] = $input['circularId'];
@@ -681,7 +681,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircularAmendment(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $versionID = $input['versionID'] ?? 0;
         $editOrAmend = $versionID > 0;
 

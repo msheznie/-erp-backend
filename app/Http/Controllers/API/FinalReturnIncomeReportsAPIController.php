@@ -23,6 +23,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeReportsController
@@ -475,12 +476,12 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
         $input = Arr::except($input, ['finance_year_by','template','confirmed_by']);
 
         if($input['confirmedYN'] == 1) {
-            $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['confirmedByEmpSystemID'] = Helper::getEmployeeSystemID();
             $input['confirmedDate'] = now();
         }
 
         if($input['submittedYN'] == 1) {
-            $input['submittedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['submittedByEmpSystemID'] = Helper::getEmployeeSystemID();
             $input['submittedDate'] = now();
         }
         

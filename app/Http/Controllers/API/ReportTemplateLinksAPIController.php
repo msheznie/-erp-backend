@@ -31,6 +31,7 @@ use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\DB;
 use App\Models\BudgetMaster;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateLinksController
@@ -179,8 +180,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                             }
                         }
                         $data['createdPCID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserID'] = Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                     }
                 }
@@ -412,8 +413,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
             }
@@ -500,8 +501,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                         }
                     }
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
             }

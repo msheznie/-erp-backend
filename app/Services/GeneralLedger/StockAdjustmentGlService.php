@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class StockAdjustmentGlService
 {
@@ -119,8 +120,8 @@ class StockAdjustmentGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockAdjustmentCode;
             $data['documentDate'] = $postedDateGl;
-            $data['documentYear'] = \Helper::dateYear($postedDateGl);
-            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
+            $data['documentYear'] = Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = Helper::dateMonth($postedDateGl);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -137,11 +138,11 @@ class StockAdjustmentGlService
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
 
             if ($bs) {
                 foreach ($bs as $val) {
@@ -155,7 +156,7 @@ class StockAdjustmentGlService
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
                     $data['documentRptAmount'] = $val->rptAmount;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
@@ -172,7 +173,7 @@ class StockAdjustmentGlService
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
                     $data['documentRptAmount'] = $val->rptAmount * -1;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }

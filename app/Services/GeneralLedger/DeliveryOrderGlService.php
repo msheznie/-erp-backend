@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class DeliveryOrderGlService
 {
@@ -107,8 +108,8 @@ class DeliveryOrderGlService
         $data['documentSystemCode'] = $masterData->deliveryOrderID;
         $data['documentCode'] = $masterData->deliveryOrderCode;
         $data['documentDate'] = $masterDocumentDate;
-        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+        $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+        $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
 
         $data['documentConfirmedDate'] = $masterData->confirmedDate;
         $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;

@@ -3,6 +3,7 @@
 namespace App\Services\Validation;
 
 use App\Models\Company;
+use App\helper\Helper;
 
 class CommonValidationService
 {
@@ -31,7 +32,7 @@ class CommonValidationService
             throw new \Exception("Parameter companySystemID is missing from the input");
 
         try {
-           return \Helper::companyFinancePeriodCheck($input);
+           return Helper::companyFinancePeriodCheck($input);
         }catch (\Exception $exception)
         {
             return $exception;
@@ -52,7 +53,7 @@ class CommonValidationService
             throw new \Exception("Parameter companySystemID is missing from the input");
 
         try {
-            $data =  \Helper::companyFinancePeriodCheck($input);
+            $data =  Helper::companyFinancePeriodCheck($input);
 
             if(!$data['success'])
                 throw new \Exception($data['message']);

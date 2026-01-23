@@ -77,6 +77,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class PurchaseReturnGlService
 {
@@ -129,7 +130,7 @@ class PurchaseReturnGlService
         $grvUnitCostLocal = 0;                                    
         if ($grvCostDetails) {
             $grvUnitCostTran = $grvCostDetails['amount'];
-            $grvCostConvertion = \Helper::convertAmountToLocalRpt(3,$grvCostDetails->grvAutoID,$grvCostDetails->amount);
+            $grvCostConvertion = Helper::convertAmountToLocalRpt(3,$grvCostDetails->grvAutoID,$grvCostDetails->amount);
             $grvUnitCostRpt = $grvCostConvertion['reportingAmount'];        
             $grvUnitCostLocal = $grvCostConvertion['localAmount'];    
         }                                    
@@ -170,8 +171,8 @@ class PurchaseReturnGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->purchaseReturnCode;
             $data['documentDate'] = $postedDateGl;
-            $data['documentYear'] = \Helper::dateYear($postedDateGl);
-            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
+            $data['documentYear'] = Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = Helper::dateMonth($postedDateGl);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -227,11 +228,11 @@ class PurchaseReturnGlService
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
             array_push($finalData, $data);
 
             if ($valEligible && ($vatDetails['masterVATTrans'] > 0 || $logisticDetails['logisticTransVATAmount'] > 0 || $exemptVATTransAmount > 0)) {
@@ -266,16 +267,16 @@ class PurchaseReturnGlService
 
                         $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
-                        $data['documentTransAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATTrans'] + $logisticDetails['logisticTransVATAmount'])) * -1;
+                        $data['documentTransAmount'] = ABS(Helper::roundValue($vatDetails['masterVATTrans'] + $logisticDetails['logisticTransVATAmount'])) * -1;
 
                         $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
-                        $data['documentLocalAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATLocal'] + $logisticDetails['logisticLocalVATAmount'])) * -1;
+                        $data['documentLocalAmount'] = ABS(Helper::roundValue($vatDetails['masterVATLocal'] + $logisticDetails['logisticLocalVATAmount'])) * -1;
 
                         $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
-                        $data['documentRptAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATRpt'] + $logisticDetails['logisticRptVATAmount'])) * -1;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['documentRptAmount'] = ABS(Helper::roundValue($vatDetails['masterVATRpt'] + $logisticDetails['logisticRptVATAmount'])) * -1;
+                        $data['timestamp'] = Helper::currentDateTime();
                         if($data['documentTransAmount'] != 0) {
                             array_push($finalData, $data);
                         }
@@ -310,10 +311,10 @@ class PurchaseReturnGlService
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                            $data['documentTransAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATTrans'] + $exemptVATTransAmount));
-                            $data['documentLocalAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATLocal'] + $exemptVATLocalAmount));
-                            $data['documentRptAmount'] = ABS(\Helper::roundValue($vatDetails['masterVATRpt'] + $exemptVATRptAmount));
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['documentTransAmount'] = ABS(Helper::roundValue($vatDetails['masterVATTrans'] + $exemptVATTransAmount));
+                            $data['documentLocalAmount'] = ABS(Helper::roundValue($vatDetails['masterVATLocal'] + $exemptVATLocalAmount));
+                            $data['documentRptAmount'] = ABS(Helper::roundValue($vatDetails['masterVATRpt'] + $exemptVATRptAmount));
+                            $data['timestamp'] = Helper::currentDateTime();
                             array_push($finalData, $data);
 
                             $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
@@ -339,7 +340,7 @@ class PurchaseReturnGlService
                 $data['documentTransAmount'] = $exemptVatTrans * -1;
                 $data['documentLocalAmount'] = $exemptVATLocal * -1;
                 $data['documentRptAmount'] = $exemptVatRpt * -1;
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 array_push($finalData, $data);
             }
             if ($bs) {
@@ -360,7 +361,7 @@ class PurchaseReturnGlService
                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                 $data['documentRptCurrencyER'] = $bs->companyReportingER;
                 $data['documentRptAmount'] = ABS($bs->rptAmount + $rptBSVAT) * -1;
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 array_push($finalData, $data);
             }
 
@@ -373,16 +374,16 @@ class PurchaseReturnGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->logisticAmountTransTotal + $val->logisticVATAmountTotal));
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($val->logisticAmountTransTotal + $val->logisticVATAmountTotal));
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->logisticAmountLocalTotal + $val->logisticVATAmountLocalTotal));
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->logisticAmountLocalTotal + $val->logisticVATAmountLocalTotal));
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->logisticAmountRptTotal + $val->logisticVATAmountRptTotal));
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->logisticAmountRptTotal + $val->logisticVATAmountRptTotal));
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }

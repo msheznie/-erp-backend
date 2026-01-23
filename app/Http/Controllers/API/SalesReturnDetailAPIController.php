@@ -371,7 +371,7 @@ class SalesReturnDetailAPIController extends AppBaseController
 
                 $totalNetcost = ($currentItemData['unitTransactionAmount'] - $currentItemData['discountAmount']) * $currentItemData['qtyReturned'];
 
-                $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
+                $invDetail_arr['transactionAmount'] = Helper::roundValue($totalNetcost);
                 
                 $item = SalesReturnDetail::where('salesReturnDetailID', $currentItemData['salesReturnDetailID'])->update($invDetail_arr);
 
@@ -493,7 +493,7 @@ class SalesReturnDetailAPIController extends AppBaseController
 
                 $totalNetcost = $currentItemData['unitTransactionAmount'] * $currentItemData['qtyReturned'];
 
-                $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
+                $invDetail_arr['transactionAmount'] = Helper::roundValue($totalNetcost);
                 
                 $item = SalesReturnDetail::where('salesReturnDetailID', $currentItemData['salesReturnDetailID'])->update($invDetail_arr);
 
@@ -774,7 +774,7 @@ class SalesReturnDetailAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
         $totalDetail = SalesReturnDetail::select(DB::raw("SUM(transactionAmount) as amount"))
                                           ->where('salesReturnID', $salesReturnID)
@@ -797,7 +797,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             return ['status' => false, 'message' => 'VAT Detail Already exist.'];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -840,7 +840,7 @@ class SalesReturnDetailAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -859,7 +859,7 @@ class SalesReturnDetailAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
        
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();

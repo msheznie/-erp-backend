@@ -1443,8 +1443,8 @@ WHERE
 
     public function getCommonFormData(Request $request) {
         $input = $request->all();
-        $finacialYear =  \Helper::companyFinanceYear($input['companySystemID'],0);
-        $companyFinancePeriod =  \Helper::companyFinancePeriod($input['companySystemID'],$finacialYear[0]->companyFinanceYearID,11);
+        $finacialYear =  Helper::companyFinanceYear($input['companySystemID'],0);
+        $companyFinancePeriod =  Helper::companyFinancePeriod($input['companySystemID'],$finacialYear[0]->companyFinanceYearID,11);
 
         if($companyFinancePeriod && $finacialYear) {
             return ['finacialYear' => $finacialYear[0],'companyFinancePeriod' => $companyFinancePeriod[0]];
@@ -1624,7 +1624,7 @@ WHERE
 
         $id = $input['deliveryMasterID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = DeliveryOrder::find($id);
@@ -1689,7 +1689,7 @@ WHERE
 
         DB::beginTransaction();
         try {
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             $amendCI = $this->deliveryOrderServices->amendDeliveryOrder($id,$masterData,$input,$employee);
 
             if(isset($amendCI['status']) && $amendCI['status'] == false){

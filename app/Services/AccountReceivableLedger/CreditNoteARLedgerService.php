@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class CreditNoteARLedgerService
 {
@@ -84,19 +85,19 @@ class CreditNoteARLedgerService
                 $data['custDefaultAmount'] = 0;
                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                 $data['localER'] = $masterData->localCurrencyER;
-                $data['localAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax) * -1);
+                $data['localAmount'] = Helper::roundValue(ABS($detail->localAmount + $detail->localTax) * -1);
                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['comRptER'] = $masterData->companyReportingER;
-                $data['comRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax) * -1);
+                $data['comRptAmount'] = Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax) * -1);
                 $data['isInvoiceLockedYN'] = 0;
                 $data['documentType'] = $masterData->documentType;
                 $data['selectedToPaymentInv'] = 0;
                 $data['fullyInvoiced'] = 0;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
                 $data['createdUserID'] = $empID->empID;
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdPcID'] = gethostname();
-                $data['timeStamp'] = \Helper::currentDateTime();
+                $data['timeStamp'] = Helper::currentDateTime();
                 array_push($finalData, $data);
             }
         }

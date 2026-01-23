@@ -8,6 +8,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\Taxdetail;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 class SupplierInvoice
 {
@@ -36,15 +37,15 @@ class SupplierInvoice
                 ->where('documentSystemID', 11)
                 ->delete();
             if(!empty($total)) {
-                $bookInvSuppMaster['bookingAmountTrans'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->DIAmount) : \Helper::roundValue($total->DIAmount) + \Helper::roundValue($total->VATAmount);
-                $bookInvSuppMaster['bookingAmountLocal'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->localAmount) : \Helper::roundValue($total->localAmount) + \Helper::roundValue($total->VATAmountLocal);
-                $bookInvSuppMaster['bookingAmountRpt'] = ($bookInvSuppMaster->rcmActivated) ? \Helper::roundValue($total->comRptAmount) : \Helper::roundValue($total->comRptAmount) + \Helper::roundValue($total->VATAmountRpt);
-                $bookInvSuppMaster['netAmount'] = \Helper::roundValue($total->netAmount);
-                $bookInvSuppMaster['netAmountLocal'] = \Helper::roundValue($total->netAmountLocal);
-                $bookInvSuppMaster['netAmountRpt'] = \Helper::roundValue($total->netAmountRpt);
-                $bookInvSuppMaster['VATAmount'] = \Helper::roundValue($total->VATAmount);
-                $bookInvSuppMaster['VATAmountLocal'] = \Helper::roundValue($total->VATAmountLocal);
-                $bookInvSuppMaster['VATAmountRpt'] = \Helper::roundValue($total->VATAmountRpt);
+                $bookInvSuppMaster['bookingAmountTrans'] = ($bookInvSuppMaster->rcmActivated) ? Helper::roundValue($total->DIAmount) : Helper::roundValue($total->DIAmount) + Helper::roundValue($total->VATAmount);
+                $bookInvSuppMaster['bookingAmountLocal'] = ($bookInvSuppMaster->rcmActivated) ? Helper::roundValue($total->localAmount) : Helper::roundValue($total->localAmount) + Helper::roundValue($total->VATAmountLocal);
+                $bookInvSuppMaster['bookingAmountRpt'] = ($bookInvSuppMaster->rcmActivated) ? Helper::roundValue($total->comRptAmount) : Helper::roundValue($total->comRptAmount) + Helper::roundValue($total->VATAmountRpt);
+                $bookInvSuppMaster['netAmount'] = Helper::roundValue($total->netAmount);
+                $bookInvSuppMaster['netAmountLocal'] = Helper::roundValue($total->netAmountLocal);
+                $bookInvSuppMaster['netAmountRpt'] = Helper::roundValue($total->netAmountRpt);
+                $bookInvSuppMaster['VATAmount'] = Helper::roundValue($total->VATAmount);
+                $bookInvSuppMaster['VATAmountLocal'] = Helper::roundValue($total->VATAmountLocal);
+                $bookInvSuppMaster['VATAmountRpt'] = Helper::roundValue($total->VATAmountRpt);
                 $bookInvSuppMaster->save();
 
                 // insert to tax details

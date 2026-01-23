@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use App\Models\CompanyFinanceYear;
+use App\helper\Helper;
 
 class BudgetReportController extends AppBaseController
 {
@@ -110,7 +111,7 @@ class BudgetReportController extends AppBaseController
                 ];
 
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create('budget_commitment_details_report', function ($excel) use ($outputData,$excelColumnFormat, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat, $fontFamily) {

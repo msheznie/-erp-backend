@@ -17,6 +17,7 @@ use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class StockCountDetailController
@@ -284,7 +285,7 @@ class StockCountDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.item_not_found'));
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,
             $stockCountDetail->currentWacLocalCurrencyID,
             $stockCountDetail->currentWacLocalCurrencyID,
             $input['wacAdjLocal']);
@@ -313,7 +314,7 @@ class StockCountDetailAPIController extends AppBaseController
             $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
 
 
-            $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+            $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
 
             $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
             $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];

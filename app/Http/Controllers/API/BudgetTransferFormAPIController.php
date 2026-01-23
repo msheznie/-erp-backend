@@ -152,7 +152,7 @@ class BudgetTransferFormAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -320,7 +320,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.budget_transfer_form')]));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if ($budgetTransferForm->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
@@ -401,7 +401,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -423,7 +423,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             ->with(['purchase_order', 'purchase_request'])
             ->get();
 
-        $currency = \Helper::companyCurrency($budgetTransferForm->companySystemID);
+        $currency = Helper::companyCurrency($budgetTransferForm->companySystemID);
 
         $consumptionData = [];
         $consumptionDataWithPoPr = [];
@@ -647,7 +647,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $years = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->approved()->withAssigned($companyId)
@@ -724,7 +724,7 @@ class BudgetTransferFormAPIController extends AppBaseController
 
         $this->budgetTransferFormRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $budgetTransfer->documentSystemID)->first();
 
@@ -805,7 +805,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -892,7 +892,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -965,7 +965,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $debitNotes = [];
@@ -1038,7 +1038,7 @@ class BudgetTransferFormAPIController extends AppBaseController
             foreach ($templateIDs as $key => $value) {
                 $commentAndDoc = $this->getBudgetTransferComment($value, $consumptionDataWithPoPr, 1);
 
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 $saveData['createdPcID'] = gethostname();
                 $saveData['createdUserID'] = $employee->empID;
                 $saveData['createdUserSystemID'] = $employee->employeeSystemID;
@@ -1142,13 +1142,13 @@ class BudgetTransferFormAPIController extends AppBaseController
             foreach ($templateIDs as $key => $value) {
                 $commentAndDoc = $this->getBudgetTransferComment($value, $consumptionDataWithPoPr, 2);
 
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 $saveData['createdPcID'] = gethostname();
                 $saveData['createdUserID'] = $employee->empID;
                 $saveData['createdUserSystemID'] = $employee->employeeSystemID;
                 $saveData['createdDate'] = now();
-                $saveData['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-                $saveData['modifiedUser'] = \Helper::getEmployeeID();
+                $saveData['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+                $saveData['modifiedUser'] = Helper::getEmployeeID();
                 $saveData['modifiedPc'] = gethostname();
                 $saveData['year'] = $budgetYears[0];
                 $saveData['companyFinanceYearID'] = CompanyFinanceYear::financeYearID($budgetYears[0], $input['companySystemID']);

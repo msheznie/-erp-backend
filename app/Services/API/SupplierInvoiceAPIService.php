@@ -38,7 +38,7 @@ class SupplierInvoiceAPIService extends AppBaseController
             $lastSerialNumber = intval($lastSerial->serialNo) + 1;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {

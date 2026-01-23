@@ -179,7 +179,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'fa_master_id' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true  ? 0 : $value['assetDropTransferID']),
                     'pr_created_yn' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true ? 1 : 0),
                     'company_id' => $value['company_id'],
-                    'created_user_id' => \Helper::getEmployeeSystemID(),
+                    'created_user_id' => Helper::getEmployeeSystemID(),
                     'itemCodeSystem' => $value['itemCodeSystem'],
                     'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($assetRequest)) ? $assetRequest->departmentSystemID : NULL
                 ];
@@ -441,7 +441,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                             'company_id' => $value['companySystemID'],
                             'from_location_id' => NULL,
                             'to_location_id' => NULL,
-                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                            'created_user_id' => Helper::getEmployeeSystemID(),
                         ];
     
     
@@ -461,7 +461,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                             'to_location_id' => isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location'],
                             'fa_master_id' => $value['asset'],
                             'company_id' => $value['companySystemID'],
-                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                            'created_user_id' => Helper::getEmployeeSystemID(),
                             'from_emp_id' => NULL,
                             'to_emp_id' => NULL,
                         ];

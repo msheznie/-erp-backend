@@ -10,6 +10,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Services\ExchangeSetup\DocumentConfigs\ExchangeSetupDocumentConfigurationService;
 use App\Services\ExchangeSetup\ExchangSetupConfigurationService;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 class ExchangeSetupDocumentController extends AppBaseController
 {
     protected $exchangSetupConfigurationService;
@@ -98,9 +99,9 @@ class ExchangeSetupDocumentController extends AppBaseController
         $paymentVoucherMasterOrg = PaySupplierInvoiceMaster::find($payMasterAutoID);
         $changeSimilarCurrencies = PaySupplierInvoiceMaster::find($payMasterAutoID)->only('companyRptCurrencyID','localCurrencyID','BPVbankCurrency','supplierTransCurrencyID','BPVbank','supplierDefCurrencyID');
 
-        $currencyRate = \Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['supplierDefCurrencyID'],0);
-        $localExchangeRate =  \Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['localCurrencyID'], 0);
-        $currencyRateBank = \Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['BPVbankCurrency'],0);
+        $currencyRate = Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['supplierDefCurrencyID'],0);
+        $localExchangeRate =  Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['localCurrencyID'], 0);
+        $currencyRateBank = Helper::currencyConversion($input['companySystemId'], $changeSimilarCurrencies['supplierTransCurrencyID'], $changeSimilarCurrencies['BPVbankCurrency'],0);
 
         $paymentVoucherMasterOrg['companyRptCurrencyER'] = $currencyRate['trasToRptER'];
         $paymentVoucherMasterOrg['localCurrencyER'] = $localExchangeRate['transToDocER'];

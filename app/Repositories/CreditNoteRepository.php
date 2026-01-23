@@ -6,6 +6,7 @@ use App\Models\CreditNote;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class CreditNoteRepository
@@ -193,7 +194,7 @@ class CreditNoteRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.cn_date')] = \Helper::dateFormat($val->creditNoteDate);
+                $data[$x][trans('custom.cn_date')] = Helper::dateFormat($val->creditNoteDate);
                 $data[$x][trans('custom.credit_note_code')] = $val->creditNoteCode;
                 $data[$x][trans('custom.customer')] = $val->CutomerCode;
                 $data[$x][trans('custom.comments')] = $val->comments;

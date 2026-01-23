@@ -24,6 +24,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class CompanyFinancePeriodController
@@ -369,7 +370,7 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         $companyFinanceYearID = $request['companyFinanceYearID'];
         $departmentSystemID = $request['departmentSystemID'];
 
-        $companyFinancePeriod = \Helper::companyFinancePeriod($companyId, $companyFinanceYearID, $departmentSystemID);
+        $companyFinancePeriod = Helper::companyFinancePeriod($companyId, $companyFinanceYearID, $departmentSystemID);
 
         return $this->sendResponse($companyFinancePeriod, trans('custom.retrieve', ['attribute' => trans('custom.finance_periods')]));
 
@@ -422,10 +423,10 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

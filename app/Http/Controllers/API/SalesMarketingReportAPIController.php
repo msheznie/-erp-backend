@@ -733,7 +733,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $discount_amount = 0;
 
         if ($row->documentSystemID == 71) {
-            $currencyConversionDiscount = \Helper::currencyConversion($row->companySystemID, $currency->currencyID, $currency->currencyID, $row->discountAmount);
+            $currencyConversionDiscount = Helper::currencyConversion($row->companySystemID, $currency->currencyID, $currency->currencyID, $row->discountAmount);
 
             if (isset($input['currencyID']) && $input['currencyID'] == 1)
             {
@@ -1447,7 +1447,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $decimalPlace = array_unique($decimalPlace);
 
                     $currencyCode = "";
-                    $currency = \Helper::companyCurrency($request->companySystemID);
+                    $currency = Helper::companyCurrency($request->companySystemID);
 
                     if ($request->currencyID == 2) {
                         $currencyCode = $currency->localcurrency->CurrencyCode;
@@ -1464,7 +1464,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => Helper::dateFormat($request->fromDate), 'toDate' => Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
 
@@ -1493,7 +1493,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_balance_statement', $dataArr);
 
@@ -1554,7 +1554,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $outputArr[$val->CompanyName][] = $val;
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
 
@@ -1589,7 +1589,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1598,7 +1598,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_aging_summary', $dataArr);
 
@@ -1633,7 +1633,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1645,7 +1645,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
 
                     $html = view('print.customer_aging_detail', $dataArr);
 
@@ -1673,7 +1673,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $creditNoteTotal = array_sum($creditNoteTotal);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1690,7 +1690,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => Helper::dateFormat($request->fromDate), 'toDate' => Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
 
                     $html = view('print.customer_collection', $dataArr);
 
@@ -1721,8 +1721,8 @@ class SalesMarketingReportAPIController extends AppBaseController
         
      
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -1775,8 +1775,8 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -2267,7 +2267,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             foreach ($output as $value) {
                 $data[$x][trans('custom.company_id')] = $value->companyID;
                 $data[$x][trans('custom.so_number')] = $value->quotationCode;
-                $data[$x][trans('custom.so_approved_date')] = \Helper::dateFormat($value->approvedDate);
+                $data[$x][trans('custom.so_approved_date')] = Helper::dateFormat($value->approvedDate);
                 $data[$x][trans('custom.narration')] = $value->narration;
                 if ($value->customer) {
                     $data[$x][trans('custom.customer_code')] = $value->customer->CutomerCode;
@@ -2294,7 +2294,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                         if (isset($grv['master'])) {
                             $data[$x][trans('custom.delivery_code')] = $grv['master']['deliveryOrderCode'];
-                            $data[$x][trans('custom.delivery_date')] = \Helper::dateFormat($grv['master']['deliveryOrderDate']);
+                            $data[$x][trans('custom.delivery_date')] = Helper::dateFormat($grv['master']['deliveryOrderDate']);
                             $data[$x][trans('custom.delivery_amount')] = number_format($grv['rptAmount'], 2);
                         } else {
                             $data[$x][trans('custom.delivery_code')] = '';
@@ -2322,7 +2322,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                                 if ($invoice['master']) {
                                     $data[$x][trans('custom.invoice_code')] = $invoice['master']['bookingInvCode'];
-                                    $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($invoice['master']['bookingDate']);
+                                    $data[$x][trans('custom.invoice_date')] = Helper::dateFormat($invoice['master']['bookingDate']);
                                 } else {
                                     $data[$x][trans('custom.invoice_code')] = '';
                                     $data[$x][trans('custom.invoice_date')] = '';
@@ -2351,8 +2351,8 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                                         if (!empty($payment['master'])) {
                                             $data[$x][trans('custom.receipt_code')] = $payment['master']['custPaymentReceiveCode'];
-                                            $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
-                                            $data[$x][trans('custom.receipt_posted_date')] = \Helper::dateFormat($payment['master']['postedDate']);
+                                            $data[$x][trans('custom.receipt_date')] = Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
+                                            $data[$x][trans('custom.receipt_posted_date')] = Helper::dateFormat($payment['master']['postedDate']);
                                         } else {
                                             $data[$x][trans('custom.receipt_code')] = '';
                                             $data[$x][trans('custom.receipt_date')] = '';

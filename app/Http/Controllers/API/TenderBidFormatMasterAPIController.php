@@ -17,6 +17,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use App\helper\Helper;
 /**
  * Class TenderBidFormatMasterController
  * @package App\Http\Controllers\API
@@ -324,7 +325,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function storeBidFormat(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         /*$boq_applicable = 0;
         if(isset($input['boq_applicable']) && $input['boq_applicable']){
             $boq_applicable = 1;
@@ -390,7 +391,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function addPriceBidDetail(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
@@ -449,7 +450,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($details, array('field_type'));
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
@@ -542,7 +543,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         /*$boq_applicable = 0;
         if(isset($input['boq_applicable']) && $input['boq_applicable']){
             $boq_applicable = 1;
@@ -586,7 +587,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         $tender_id = $input['tender_id'];
         $id = $input['id'];
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
 
@@ -615,7 +616,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function deletePriceBidMaster(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $pricebid = self::priceBidExistInTender($input['id']);

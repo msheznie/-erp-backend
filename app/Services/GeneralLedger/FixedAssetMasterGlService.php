@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class FixedAssetMasterGlService
 {
@@ -107,8 +108,8 @@ class FixedAssetMasterGlService
                 $data['documentSystemCode'] = $masterModel["autoID"];
                 $data['documentCode'] = $masterData->faCode;
                 $data['documentDate'] = $validatePostedDate['postedDate'];
-                $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
-                $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
+                $data['documentYear'] = Helper::dateYear($validatePostedDate['postedDate']);
+                $data['documentMonth'] = Helper::dateMonth($validatePostedDate['postedDate']);
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
                 $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                 $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -136,11 +137,11 @@ class FixedAssetMasterGlService
                 $data['holdingPercentage'] = 0;
                 $data['nonHoldingPercentage'] = 0;
                 $data['contraYN'] = 0;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
                 $data['createdUserID'] = $empID->empID;
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdUserPC'] = gethostname();
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
 
                 if ($masterData->docOriginSystemCode == 63 || $masterData->grvdetail_by || $masterData->postToGLYN) {
                     array_push($finalData, $data);
@@ -162,7 +163,7 @@ class FixedAssetMasterGlService
                             $data['documentRptCurrencyER'] = 0;
                             $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
                             $data['contraYN'] = -1;
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
                     } else {
@@ -180,7 +181,7 @@ class FixedAssetMasterGlService
                             $data['documentRptCurrencyER'] = 0;
                             $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
                             $data['contraYN'] = 0;
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
                     }
@@ -196,7 +197,7 @@ class FixedAssetMasterGlService
                         $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
                         $data['documentRptCurrencyER'] = 0;
                         $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         $data['contraYN'] = 0;
                         array_push($finalData, $data);
                     } else {
@@ -213,7 +214,7 @@ class FixedAssetMasterGlService
                             $data['documentRptCurrencyID'] = $companyCurrency->reportingCurrency;
                             $data['documentRptCurrencyER'] = 0;
                             $data['documentRptAmount'] = ABS($masterData->costUnitRpt) * -1;
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
                             $data['contraYN'] = 0;
                             array_push($finalData, $data);
                         }

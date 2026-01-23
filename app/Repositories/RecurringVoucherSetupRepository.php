@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\helper\StatusService;
 use App\Models\RecurringVoucherSetup;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class RecurringVoucherSetupRepository
@@ -107,16 +108,16 @@ class RecurringVoucherSetupRepository extends BaseRepository
                 $data[$x][trans('custom.rrv_code')] = $val->RRVcode;
                 $data[$x][trans('custom.type')] = StatusService::getrrvType($val->documentType);
                 $data[$x][trans('custom.schedule')] = StatusService::getrrvSchedule($val->schedule);
-                $data[$x][trans('custom.start_date')] = \Helper::dateFormat($val->startDate);
-                $data[$x][trans('custom.end_date')] = \Helper::dateFormat($val->endDate);
+                $data[$x][trans('custom.start_date')] = Helper::dateFormat($val->startDate);
+                $data[$x][trans('custom.end_date')] = Helper::dateFormat($val->endDate);
                 $data[$x][trans('custom.no_of_day_month_year')] = $val->noOfDayMonthYear;
-                $data[$x][trans('custom.process_date')] = \Helper::dateFormat($val->processDate);
+                $data[$x][trans('custom.process_date')] = Helper::dateFormat($val->processDate);
                 $data[$x][trans('custom.document_status')] = StatusService::getrrvStatus($val->documentStatus);
                 $data[$x][trans('custom.narration')] = $val->narration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.currency')] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
                 $data[$x][trans('custom.debit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
                 $data[$x][trans('custom.credit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;

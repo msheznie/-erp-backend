@@ -164,7 +164,7 @@ class BudgetLimitNotification
                             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                                     <thead>
                                         <tr>
-                                            <th colspan="5" style="text-align: center;border: 1px solid black;">Budget for finance year '.\Helper::dateFormat($budgetMasterData->finance_year_by->bigginingDate).' - '.\Helper::dateFormat($budgetMasterData->finance_year_by->endingDate).$serviceLine.'</th>
+                                            <th colspan="5" style="text-align: center;border: 1px solid black;">Budget for finance year '.Helper::dateFormat($budgetMasterData->finance_year_by->bigginingDate).' - '.Helper::dateFormat($budgetMasterData->finance_year_by->endingDate).$serviceLine.'</th>
                                         </tr>
                                         <tr>
                                             <th style="text-align: center;border: 1px solid black;">#</th>
@@ -225,7 +225,7 @@ class BudgetLimitNotification
                             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
                                     <thead>
                                         <tr>
-                                            <th colspan="5" style="text-align: center;border: 1px solid black;">Budget for finance year '.\Helper::dateFormat($budgetMasterData->finance_year_by->bigginingDate).' - '.\Helper::dateFormat($budgetMasterData->finance_year_by->endingDate).$serviceLine.'</th>
+                                            <th colspan="5" style="text-align: center;border: 1px solid black;">Budget for finance year '.Helper::dateFormat($budgetMasterData->finance_year_by->bigginingDate).' - '.Helper::dateFormat($budgetMasterData->finance_year_by->endingDate).$serviceLine.'</th>
                                         </tr>
                                         <tr>
                                             <th style="text-align: center;border: 1px solid black;">#</th>

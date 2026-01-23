@@ -77,6 +77,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\DocumentModifyRequest;
 use Response;
 use App\Models\AppearanceSettings;
+use App\helper\Helper;
 
 class email
 {
@@ -563,7 +564,7 @@ class email
                     $text = $textObj->value;
                 }
 
-                $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+                $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
@@ -619,7 +620,7 @@ class email
              $text = $textObj->value;
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
@@ -671,7 +672,7 @@ class email
             $text = $textObj->value;
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)

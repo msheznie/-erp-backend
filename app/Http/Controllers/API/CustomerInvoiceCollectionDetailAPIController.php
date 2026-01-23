@@ -26,6 +26,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CustomerInvoiceCollectionDetailController
@@ -138,12 +139,12 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
 
         $input['companySystemID'] = $invoiceMasterData->companySystemID;
         $input['companyID'] = $invoiceMasterData->companyID;
-        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $customerInvoiceCollectionDetails = $this->customerInvoiceCollectionDetailRepository->create($input);
 
@@ -267,9 +268,9 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
             $input['collectionDate'] = new Carbon($input['collectionDate']);
         }
 
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->update($input, $id);
 

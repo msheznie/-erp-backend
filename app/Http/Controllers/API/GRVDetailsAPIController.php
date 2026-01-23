@@ -745,14 +745,14 @@ class GRVDetailsAPIController extends AppBaseController
                 $input['grvMasterData'] = $this->convertArrayToValue($input['grvMasterData']);
                 $grvMasterData = $input['grvMasterData'];
 
-                $companyFinanceYear = \Helper::companyFinanceYearCheck($grvMasterData);
+                $companyFinanceYear = Helper::companyFinanceYearCheck($grvMasterData);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500);
                 }
 
                 $inputParam = $grvMasterData;
                 $inputParam["departmentSystemID"] = 10;
-                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
                 if (!$companyFinancePeriod["success"]) {
                     return $this->sendError($companyFinancePeriod["message"], 500);
                 } else {
@@ -837,7 +837,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $grvMasterData['serviceLineCode'] = $segment->ServiceLineCode;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($grvMasterData['companySystemID'], $grvMasterData['supplierTransactionCurrencyID'], $grvMasterData['supplierTransactionCurrencyID'], 0);
+                $companyCurrencyConversion = Helper::currencyConversion($grvMasterData['companySystemID'], $grvMasterData['supplierTransactionCurrencyID'], $grvMasterData['supplierTransactionCurrencyID'], 0);
 
                 $company = Company::where('companySystemID', $grvMasterData['companySystemID'])->first();
                 if ($company) {
@@ -1376,7 +1376,7 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
 
-            $user = \Helper::getEmployeeInfo();
+            $user = Helper::getEmployeeInfo();
             
             $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
                 ->where('companySystemID', $companySystemID)
@@ -1403,7 +1403,7 @@ class GRVDetailsAPIController extends AppBaseController
 
                 $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
-            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
+            $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
             
             // checking the qty request is matching with sum total
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
@@ -1477,13 +1477,13 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['localCurrencyID'] = $grvMaster->localCurrencyID;
             $GRVDetail_arr['localCurrencyER'] = $grvMaster->localCurrencyER;
             $GRVDetail_arr['addonDistCost'] = 0;
-            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
-            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
-            $GRVDetail_arr['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($input['unitCost']);
-            $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currency['defaultAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['landingCost_LocalCur'] = Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['landingCost_TransCur'] = Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['landingCost_RptCur'] = Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['vatRegisteredYN'] = 0;
             $GRVDetail_arr['supplierVATEligible'] = 0;
             $GRVDetail_arr['VATPercentage'] = 0;
@@ -1506,7 +1506,7 @@ class GRVDetailsAPIController extends AppBaseController
                     $GRVDetail_arr['VATAmount'] = (($GRVDetail_arr['unitCost'] / 100) * $vatDetails['percentage']);
                 }
                 $prDetail_arr['netAmount'] = ($GRVDetail_arr['unitCost'] + $GRVDetail_arr['VATAmount']) * $GRVDetail_arr['noQty'];
-                $currencyConversionVAT = \Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $GRVDetail_arr['VATAmount']);
+                $currencyConversionVAT = Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $GRVDetail_arr['VATAmount']);
 
                 $GRVDetail_arr['VATAmount'] = 0;
                 $GRVDetail_arr['VATAmountLocal'] = 0;
@@ -1589,10 +1589,10 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['VATPercentage'] = isset($input['VATPercentage']) ? $input['VATPercentage'] : 0;
 
             if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
-                $currencyConversionVAT = \Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $input['VATAmount']);
-                $GRVDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                $GRVDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                $GRVDetail_arr['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+                $currencyConversionVAT = Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $input['VATAmount']);
+                $GRVDetail_arr['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                $GRVDetail_arr['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                $GRVDetail_arr['VATAmount'] = Helper::roundValue($input['VATAmount']);
             } else {
                 $GRVDetail_arr['VATAmount'] = 0;
                 $GRVDetail_arr['VATAmountLocal'] = 0;
@@ -1600,7 +1600,7 @@ class GRVDetailsAPIController extends AppBaseController
             }
 
 
-            $user = \Helper::getEmployeeInfo();
+            $user = Helper::getEmployeeInfo();
             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
             // checking the qty request is matching with sum total
@@ -1628,16 +1628,16 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
 
-            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$calculateItemDiscount);
+            $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$calculateItemDiscount);
 
-            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($calculateItemDiscount);
-            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currency['defaultAmount']);
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = Helper::roundValue($calculateItemDiscount);
+            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
             
-            $GRVDetail_arr['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($calculateItemDiscount);
-            $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $GRVDetail_arr['landingCost_LocalCur'] = Helper::roundValue($currency['localAmount']);
+            $GRVDetail_arr['landingCost_TransCur'] = Helper::roundValue($calculateItemDiscount);
+            $GRVDetail_arr['landingCost_RptCur'] = Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['modifiedPc'] = gethostname();
             $GRVDetail_arr['modifiedUser'] = $user->empID;
             $GRVDetail_arr['detail_project_id'] = $input['detail_project_id'];

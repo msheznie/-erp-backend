@@ -169,7 +169,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -177,14 +177,14 @@ class PurchaseReturnAPIController extends AppBaseController
         $input['documentSystemID'] = 24;
         $input['documentID'] = 'PRN';
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -229,7 +229,7 @@ class PurchaseReturnAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
         //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -468,14 +468,14 @@ class PurchaseReturnAPIController extends AppBaseController
 
         if ($purchaseReturn->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -625,7 +625,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -636,7 +636,7 @@ class PurchaseReturnAPIController extends AppBaseController
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -837,7 +837,7 @@ class PurchaseReturnAPIController extends AppBaseController
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
 
         $output = array('segments' => $segments,
@@ -970,7 +970,7 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
-        $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
+        $purchaseReturn->docRefNo = Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
 
         return $this->sendResponse($purchaseReturn->toArray(), trans('custom.purchase_return_retrieved_successfully'));
     }
@@ -988,7 +988,7 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
@@ -1071,7 +1071,7 @@ class PurchaseReturnAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseReturnMaster = [];
@@ -1104,7 +1104,7 @@ class PurchaseReturnAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
@@ -1188,7 +1188,7 @@ class PurchaseReturnAPIController extends AppBaseController
             return $this->sendError(trans('custom.purchase_return_not_found'));
         }
 
-        $purchaseReturn->docRefNo = \Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
+        $purchaseReturn->docRefNo = Helper::getCompanyDocRefNo($purchaseReturn->companySystemID, $purchaseReturn->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $purchaseReturn);
         $time = strtotime("now");
@@ -1231,7 +1231,7 @@ class PurchaseReturnAPIController extends AppBaseController
 
         $this->purchaseReturnRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $purchaseReturnMaster->documentSystemID)->first();
 

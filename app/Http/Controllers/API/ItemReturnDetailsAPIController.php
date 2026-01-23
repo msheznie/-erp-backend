@@ -39,6 +39,7 @@ use Illuminate\Support\Arr;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
+use App\helper\Helper;
 /**
  * Class ItemReturnDetailsController
  * @package App\Http\Controllers\API
@@ -446,7 +447,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         {
             $bytes = random_bytes(10);
             $hashKey = bin2hex($bytes);
-            $empID = \Helper::getEmployeeSystemID();
+            $empID = Helper::getEmployeeSystemID();
 
 
             $item_issue = ItemIssueMaster::find($isse_code);

@@ -637,7 +637,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-        $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
+        $raiseAsPrivate = Helper::checkPolicy($companySystemID,87);
 
         return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
     }

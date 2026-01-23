@@ -16,6 +16,7 @@ use App\Models\SupplierCategory;
 use App\Models\SupplierMaster;
 use App\Models\Company;
 use App\Models\PaymentTermTemplate;
+use App\helper\Helper;
 
 /**
  * Class PaymentTermTemplateAssignedController
@@ -344,10 +345,10 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

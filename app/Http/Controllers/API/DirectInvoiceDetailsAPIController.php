@@ -34,6 +34,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class DirectInvoiceDetailsController
@@ -202,7 +203,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $input['glCode'] = $chartOfAccount->AccountCode;
         $input['glCodeDes'] = $chartOfAccount->AccountDescription;
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, 0);
 
         $input['DIAmountCurrency'] = $BookInvSuppMaster->supplierTransactionCurrencyID;
         $input['DIAmountCurrencyER'] = 1;
@@ -399,8 +400,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         if( $input['DIAmount'] == ""){
             $input['DIAmount'] = 0;
         }
-        $input['DIAmount'] = isset($input['DIAmount']) ?  \Helper::stringToFloat($input['DIAmount']) : 0;
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
+        $input['DIAmount'] = isset($input['DIAmount']) ?  Helper::stringToFloat($input['DIAmount']) : 0;
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['DIAmount']);
 
         $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyPolicyCategoryID', 67)
@@ -410,51 +411,51 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
 
         if(($BookInvSuppMaster->documentType == 1 || $BookInvSuppMaster->documentType == 4) && $policy == true){
-            $input['localAmount' ]        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->localCurrencyER);
-            $input['comRptAmount']        = \Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->companyReportingER);
+            $input['localAmount' ]        = Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->localCurrencyER);
+            $input['comRptAmount']        = Helper::roundValue($input['DIAmount'] / $BookInvSuppMaster->companyReportingER);
             $input['localCurrencyER' ]    = $BookInvSuppMaster->localCurrencyER;
             $input['comRptCurrencyER']    = $BookInvSuppMaster->companyReportingER;
         }
 
         if($BookInvSuppMaster->documentType != 1 || $policy == false){
-            $input['localAmount' ]        = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-            $input['comRptAmount']        = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+            $input['localAmount' ]        = Helper::roundValue($companyCurrencyConversion['localAmount']);
+            $input['comRptAmount']        = Helper::roundValue($companyCurrencyConversion['reportingAmount']);
             $input['localCurrencyER' ]    = $companyCurrencyConversion['trasToLocER'];
             $input['comRptCurrencyER']    = $companyCurrencyConversion['trasToRptER'];
         }
 
 
-        $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
-        $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
+        $input['VATAmount'] = isset($input['VATAmount']) ?  Helper::stringToFloat($input['VATAmount']) : 0;
+        $currencyConversionVAT = Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID,$BookInvSuppMaster->supplierTransactionCurrencyID, $input['VATAmount']);
 
 
 
         if($policy == true) {
-            $input['VATAmountLocal'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->localCurrencyER);
-            $input['VATAmountRpt'] = \Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->companyReportingER);
+            $input['VATAmountLocal'] = Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->localCurrencyER);
+            $input['VATAmountRpt'] = Helper::roundValue($input['VATAmount'] / $BookInvSuppMaster->companyReportingER);
         }  if($policy == false) {
-        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
     }
-        $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+        $input['VATAmount'] = Helper::roundValue($input['VATAmount']);
 
-        $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
-        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
+        $input['netAmount'] = isset($input['netAmount']) ?  Helper::stringToFloat($input['netAmount']) : 0;
+        $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $BookInvSuppMaster->supplierTransactionCurrencyID, $BookInvSuppMaster->supplierTransactionCurrencyID, $input['netAmount']);
 
         if($policy == true) {
-            $input['netAmountLocal'] = \Helper::roundValue( $input['netAmount']/ $BookInvSuppMaster->localCurrencyER);
-            $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $BookInvSuppMaster->companyReportingER);
+            $input['netAmountLocal'] = Helper::roundValue( $input['netAmount']/ $BookInvSuppMaster->localCurrencyER);
+            $input['netAmountRpt'] = Helper::roundValue($input['netAmount'] / $BookInvSuppMaster->companyReportingER);
         } if($policy == false) {
-        $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
-        $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
+        $input['netAmountLocal'] = Helper::roundValue($totalCurrencyConversion['localAmount']);
+        $input['netAmountRpt'] = Helper::roundValue($totalCurrencyConversion['reportingAmount']);
     }
 
         $directInvoiceDetails = $this->directInvoiceDetailsRepository->update($input, $id);
 
         SupplierInvoice::updateMaster($input['directInvoiceAutoID']);
 
-        \Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
-        \Helper::updateSupplierDirectWhtAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
+        Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
+        Helper::updateSupplierDirectWhtAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
 
 
         return $this->sendResponse($directInvoiceDetails->toArray(), trans('custom.direct_invoice_details_updated_successfully'));
@@ -526,8 +527,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $directInvoiceDetails->delete();
 
         $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
-        \Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
-        \Helper::updateSupplierDirectWhtAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
+        Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
+        Helper::updateSupplierDirectWhtAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
         SupplierInvoice::updateMaster($directInvoiceDetails->directInvoiceAutoID);
 
         return $this->sendResponse($id, trans('custom.direct_invoice_details_deleted_successfully'));
@@ -579,8 +580,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
                 }
             }
-        \Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
-        \Helper::updateSupplierDirectWhtAmount($directInvoiceAutoID,$supInvoice);
+        Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
+        Helper::updateSupplierDirectWhtAmount($directInvoiceAutoID,$supInvoice);
         SupplierInvoice::updateMaster($directInvoiceAutoID);
 
         return $this->sendResponse($directInvoiceAutoID, trans('custom.details_deleted_successfully'));

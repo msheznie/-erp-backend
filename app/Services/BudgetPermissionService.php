@@ -13,6 +13,7 @@ use App\Models\WorkflowConfigurationHodAction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\helper\Helper;
 
 class BudgetPermissionService
 {
@@ -34,7 +35,7 @@ class BudgetPermissionService
             ];
         }
 
-        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] : \Helper::getEmployeeSystemID();
+        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] : Helper::getEmployeeSystemID();
 
         $userPermissions = [
             'financeUser' => [
@@ -219,7 +220,7 @@ class BudgetPermissionService
      */
     public function isFinanceUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -238,7 +239,7 @@ class BudgetPermissionService
      */
     public function isHODUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -258,7 +259,7 @@ class BudgetPermissionService
      */
     public function isDelegateUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         $assignDepartments = CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -281,7 +282,7 @@ class BudgetPermissionService
      */
     public function getUserAssignedDepartments(int $companyId, ?int $employeeId = null)
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)

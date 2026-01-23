@@ -336,7 +336,7 @@ class AssetTransferService
 					$data_detail['partNumber'] = $item->secondaryItemCode;
 					$data_detail['itemFinanceCategoryID'] = $item->financeCategoryMaster;
 					$data_detail['itemFinanceCategorySubID'] =  $item->financeCategorySub;
-					$currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+					$currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
 					$data_detail['estimatedCost'] = $currencyConversion['documentAmount'];
 					$data_detail['companySystemID'] = $item->companySystemID;
 					$data_detail['companyID'] = $item->companyID;

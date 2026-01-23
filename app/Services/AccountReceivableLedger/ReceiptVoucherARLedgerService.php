@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class ReceiptVoucherARLedgerService
 {
@@ -87,8 +88,8 @@ class ReceiptVoucherARLedgerService
                 }
 
 
-                $transAmountLocal = \Helper::roundValue($transAmountLocal);
-                $transAmountRpt = \Helper::roundValue($transAmountRpt);
+                $transAmountLocal = Helper::roundValue($transAmountLocal);
+                $transAmountRpt = Helper::roundValue($transAmountRpt);
 
                 $data['companySystemID'] = $masterData->companySystemID;
                 $data['companyID'] = $masterData->companyID;
@@ -113,11 +114,11 @@ class ReceiptVoucherARLedgerService
                 $data['documentType'] = $masterData->documentType;
                 $data['selectedToPaymentInv'] = 0;
                 $data['fullyInvoiced'] = 0;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
                 $data['createdUserID'] = $empID->empID;
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdPcID'] = gethostname();
-                $data['timeStamp'] = \Helper::currentDateTime();
+                $data['timeStamp'] = Helper::currentDateTime();
 
                 if ($masterData->documentType == 13) {
                     $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans, SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, erp_accountsreceivableledger.serviceLineSystemID as serviceLineSystemID, erp_accountsreceivableledger.serviceLineCode as serviceLineCode')

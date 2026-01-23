@@ -6,6 +6,7 @@ use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class ItemIssueMasterRepository
@@ -112,10 +113,10 @@ class ItemIssueMasterRepository extends BaseRepository
     public function itemIssueListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -206,13 +207,13 @@ class ItemIssueMasterRepository extends BaseRepository
                 $data[$x][trans('custom.issue_code')] = $val->itemIssueCode;
                 $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
                 $data[$x][trans('custom.reference_no')] = $val->issueRefNo;
-                $data[$x][trans('custom.issue_date')] = \Helper::dateFormat($val->issueDate);
+                $data[$x][trans('custom.issue_date')] = Helper::dateFormat($val->issueDate);
                 $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
                 $data[$x][trans('custom.comment')] = $val->comment;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

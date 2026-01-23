@@ -67,7 +67,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $suppliersDetail = DB::table('erp_documentapproved')
             ->select(
@@ -296,7 +296,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $isApprovalAmmend = isset($supplierMasterData['isApprovalAmmend']) ? $supplierMasterData['isApprovalAmmend'] : 0;
         //$countryID =  $input['supplierCountryID'];
         $company = Company::where('companySystemID', $supplierMasterData['company_id'])->first();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $document = DocumentMaster::where('documentID', 'SUPM')->first();
         $selectedCompanyId = $supplierMasterData['company_id'];
 
@@ -609,7 +609,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $empId = $employee['empID'];
         $empName = $employee['empName'];
         $temBankMemo = new BankMemoSupplier();

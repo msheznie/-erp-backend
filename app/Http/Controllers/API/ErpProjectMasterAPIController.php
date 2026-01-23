@@ -16,6 +16,7 @@ use Error;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class ErpProjectMasterController
@@ -74,7 +75,7 @@ class ErpProjectMasterAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($companySystemID);
+            $companyID = Helper::getGroupCompany($companySystemID);
         } else {
             $companyID = [$companySystemID];
         }
@@ -216,7 +217,7 @@ class ErpProjectMasterAPIController extends AppBaseController
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['start_date'] = Carbon::parse($input['startDate']);
         $input['end_date'] = Carbon::parse($input['endDate']);
         $input['createdPCID'] = gethostname();
@@ -354,7 +355,7 @@ class ErpProjectMasterAPIController extends AppBaseController
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['start_date'] = Carbon::parse($input['startDate']);
         $input['end_date'] = Carbon::parse($input['endDate']);
         $input['modifiedPCID'] = gethostname();

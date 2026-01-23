@@ -12,6 +12,7 @@ use App\Models\CurrencyMaster;
 use App\Models\Unit;
 use App\Models\Company;
 use App\Models\Employee;
+use App\helper\Helper;
 
 class QuotationService
 {
@@ -104,7 +105,7 @@ class QuotationService
         $wacValueLocal = $item->wacValueLocal ?? 0;
         $unittransactionAmount = 0;
         if ($quotationMaster->documentSystemID == 68) {
-            $unittransactionAmount = round(\Helper::currencyConversion(
+            $unittransactionAmount = round(Helper::currencyConversion(
                 $quotationMaster->companySystemID, 
                 $quotationMaster->companyLocalCurrencyID, 
                 $quotationMaster->transactionCurrencyID, 
@@ -137,14 +138,14 @@ class QuotationService
                 $vatAmount = (($unittransactionAmount / 100) * $vatPercentage);
             }
             
-            $currencyConversionVAT = \Helper::currencyConversion(
+            $currencyConversionVAT = Helper::currencyConversion(
                 $quotationMaster->companySystemID, 
                 $quotationMaster->transactionCurrencyID, 
                 $quotationMaster->transactionCurrencyID, 
                 $vatAmount
             );
-            $vatAmountLocal = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $vatAmountRpt = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $vatAmountLocal = Helper::roundValue($currencyConversionVAT['localAmount']);
+            $vatAmountRpt = Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
         $itemData = [

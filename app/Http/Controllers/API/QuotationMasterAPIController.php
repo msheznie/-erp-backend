@@ -180,7 +180,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if (isset($input['documentDate'])) {
             if ($input['documentDate']) {
@@ -224,7 +224,7 @@ class QuotationMasterAPIController extends AppBaseController
             //$input['customerEmail'] = $customerData->CutomerCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -285,7 +285,7 @@ class QuotationMasterAPIController extends AppBaseController
             $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
 
             //updating customer currency exchange rate
-            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+            $currencyConversionCustomerDefault = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
 
             if ($currencyConversionCustomerDefault) {
                 $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
@@ -430,7 +430,7 @@ class QuotationMasterAPIController extends AppBaseController
         $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $tempName = '';
         if ($input['documentSystemID'] == 67) {
@@ -538,7 +538,7 @@ class QuotationMasterAPIController extends AppBaseController
             $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
 
             //updating customer currency exchange rate
-            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+            $currencyConversionCustomerDefault = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
 
             if ($currencyConversionCustomerDefault) {
                 $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
@@ -555,19 +555,19 @@ class QuotationMasterAPIController extends AppBaseController
                                                      COALESCE(SUM(VATAmountRpt * requestedQty),0) as totalVATAmountRpt
                                                      ")
                                          ->where('quotationMasterID', $id)->first();
-        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
-        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
-        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
-        $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
+        $input['transactionAmount'] = Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
+        $input['companyLocalAmount'] = Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
+        $input['companyReportingAmount'] = Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
+        $input['customerCurrencyAmount'] = Helper::roundValue($totalAmount->totalCustomerAmount);
 
         if(!TaxService::checkPOVATEligible($input['customerVATEligible'],$input['vatRegisteredYN'])){
             $input['VATAmount'] = 0;
             $input['VATAmountLocal'] = 0;
             $input['VATAmountRpt'] = 0;
         }else{
-            $input['VATAmount'] = \Helper::roundValue($totalAmount->totalVATAmount);
-            $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->totalVATAmountLocal);
-            $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->totalVATAmountRpt);
+            $input['VATAmount'] = Helper::roundValue($totalAmount->totalVATAmount);
+            $input['VATAmountLocal'] = Helper::roundValue($totalAmount->totalVATAmountLocal);
+            $input['VATAmountRpt'] = Helper::roundValue($totalAmount->totalVATAmountRpt);
         }
 
         if ($quotationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -683,7 +683,7 @@ class QuotationMasterAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['transactionAmount']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -755,10 +755,10 @@ class QuotationMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -907,7 +907,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companyID = $request->companyId;
         $documentSystemID = $request->documentSystemID;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'employeesdepartments.approvalDeligated',
@@ -990,7 +990,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companyID = $request->companyId;
         $documentSystemID = $request->documentSystemID;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_quotationmaster.quotationMasterID',
@@ -1054,7 +1054,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function approveSalesQuotation(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1065,7 +1065,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function rejectSalesQuotation(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1235,7 +1235,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData->RollLevForApp_curr = 1;
         $quotationMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $quotationMasterData->documentSystemID)->first();
 
@@ -1316,7 +1316,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMasterID = $input['quotationMasterID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
         $currentVersion = 0;
 
@@ -1665,7 +1665,7 @@ class QuotationMasterAPIController extends AppBaseController
         $id = $input['quotationMasterID'];
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = QuotationMaster::find($id);
@@ -1841,7 +1841,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $msg = $order_type . ' ' . trans('custom.successfully_cancelled');
         
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $quotationMaster->cancelledYN =-1;
         $quotationMaster->cancelledByEmpID = $employee->empID;
@@ -1921,7 +1921,7 @@ class QuotationMasterAPIController extends AppBaseController
         
   
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $quotationMaster->manuallyClosed =1;
         $quotationMaster->manuallyClosedByEmpID = $employee->empID;

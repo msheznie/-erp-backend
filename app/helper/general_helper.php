@@ -135,6 +135,7 @@ use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
 use ExchangeSetupConfig;
 use App\Services\AssignedServices\SegmentAssignedService;
+use App\helper\Helper;
 
 class Helper
 {
@@ -2298,8 +2299,8 @@ class Helper
                                                     $data["costUnitRpt"] = $val["unitCostRpt"];
                                                     $data["assetType"] = 1;
                                                     $data['createdPcID'] = gethostname();
-                                                    $data['createdUserID'] = \Helper::getEmployeeID();
-                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data['createdUserID'] = Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                                                     $data["timestamp"] = date('Y-m-d H:i:s');
                                                     $qtyRangeArr[] = $data;
                                                     $lastSerialNumber++;
@@ -5327,8 +5328,8 @@ class Helper
                                                     $data["costUnitRpt"] = $val["unitCostRpt"];
                                                     $data["assetType"] = 1;
                                                     $data['createdPcID'] = gethostname();
-                                                    $data['createdUserID'] = \Helper::getEmployeeID();
-                                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                                    $data['createdUserID'] = Helper::getEmployeeID();
+                                                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                                                     $data["timestamp"] = date('Y-m-d H:i:s');
                                                     $qtyRangeArr[] = $data;
                                                     $lastSerialNumber++;
@@ -7034,7 +7035,7 @@ class Helper
         $companyID = "";
         $checkIsGroup = Models\Company::find($companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($companySystemID);
+            $companyID = Helper::getGroupCompany($companySystemID);
         } else {
             $companyID = [$companySystemID];
         }
@@ -7605,8 +7606,8 @@ class Helper
                     $data["timesReferred"] = 0;
                     $data["refferedBackYN"] = 0;
                     $data['createdPcID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $data['createdDateAndTime'] = date('Y-m-d H:i:s');
                     $data["modifiedUser"] = null;
                     $data["modifiedUserSystemID"] = null;
@@ -7988,15 +7989,15 @@ class Helper
                             $receivePayment['bankCurrency'] = $val->bankCurrencyID;
                             $receivePayment['bankCurrencyER'] = 1;
 
-                            $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
+                            $companyCurrencyConversion = Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID, $val->bankCurrencyID, $val->bankAmount);
 
                             $receivePayment['localCurrencyID'] = $val->localCurrency;
                             $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                             $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
                             $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                             $receivePayment['bankAmount'] = $val->bankAmount;
-                            $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-                            $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                            $receivePayment['localAmount'] = Helper::roundValue($companyCurrencyConversion['localAmount']);
+                            $receivePayment['companyRptAmount'] = Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                             $receivePayment['receivedAmount'] = $val->bankAmount;
 
                             if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($pvMaster))
@@ -8010,7 +8011,7 @@ class Helper
                                 {
                                     $receivePayment['localAmount'] = ($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount);
                                 }else {
-                                    $receivePayment['localAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->localCurrencyER);
+                                    $receivePayment['localAmount'] = Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->localCurrencyER);
                                 }
 
                                 if($pvMaster->companyRptCurrencyID == $pvMaster->supplierTransCurrencyID)
@@ -8019,9 +8020,9 @@ class Helper
                                 }else {
                                     if(isset($pvMaster->comRptCurrencyER))
                                     {
-                                        $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
+                                        $receivePayment['companyRptAmount'] = Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount) / $pvMaster->comRptCurrencyER);
                                     }else {
-                                        $receivePayment['companyRptAmount'] = \Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount));
+                                        $receivePayment['companyRptAmount'] = Helper::roundValue(($pvMaster->payAmountSuppTrans + $pvMaster->VATAmount));
                                     }
                                 }
 
@@ -8518,7 +8519,7 @@ class Helper
 
             $documentFromBankReconciliation = Models\BankReconciliationDocuments::where('documentSystemID', $custReceivePayment->documentSystemID)->where('documentAutoId', $custReceivePayment->custReceivePaymentAutoID)->first();
             if (!empty($treasuryClearPolicy) || !empty($documentFromBankReconciliation)) {
-                $empID = $isAutoCreateDoc ? UserTypeService::getSystemEmployee() : \Helper::getEmployeeInfo();
+                $empID = $isAutoCreateDoc ? UserTypeService::getSystemEmployee() : Helper::getEmployeeInfo();
                 $data['trsClearedYN'] = -1;
                 $data['trsClearedDate'] = NOW();
                 $data['trsClearedByEmpSystemID'] = $empID->employeeSystemID;

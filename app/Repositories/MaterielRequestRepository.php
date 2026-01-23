@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\MaterielRequest;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class MaterielRequestRepository
@@ -91,10 +92,10 @@ class MaterielRequestRepository extends BaseRepository
     public function materialrequestsListQuery($request, $input, $search = '', $serviceLineSystemID) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -156,7 +157,7 @@ class MaterielRequestRepository extends BaseRepository
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
                 $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
-                $data[$x][trans('custom.requested_date')] = \Helper::dateFormat($val->RequestedDate);
+                $data[$x][trans('custom.requested_date')] = Helper::dateFormat($val->RequestedDate);
                 $data[$x][trans('custom.priority')] = $val->priority_by? $val->priority_by->priorityDescription : '';
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelledYN, NULL, $val->ConfirmedYN, $val->approved, $val->refferedBackYN);
 

@@ -9,6 +9,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\Taxdetail;
+use App\helper\Helper;
 
 class PaySupplier
 {
@@ -35,15 +36,15 @@ class PaySupplier
                 ->delete();
             if(!empty($total)) {
 
-                $convertAmount = \Helper::convertAmountToLocalRpt(203, $id, $total->VATAmount);
+                $convertAmount = Helper::convertAmountToLocalRpt(203, $id, $total->VATAmount);
 
-                $paySuppMaster['netAmount'] = \Helper::roundValue($total->netAmount);
-                $paySuppMaster['netAmountLocal'] = \Helper::roundValue($total->netAmountLocal);
-                $paySuppMaster['netAmountRpt'] = \Helper::roundValue($total->netAmountRpt);
-                $paySuppMaster['VATAmount'] = \Helper::roundValue($total->VATAmount);
-                $paySuppMaster['VATAmountBank'] = \Helper::roundValue($convertAmount['defaultAmount']);
-                $paySuppMaster['VATAmountLocal'] = \Helper::roundValue($total->VATAmountLocal);
-                $paySuppMaster['VATAmountRpt'] = \Helper::roundValue($total->VATAmountRpt);
+                $paySuppMaster['netAmount'] = Helper::roundValue($total->netAmount);
+                $paySuppMaster['netAmountLocal'] = Helper::roundValue($total->netAmountLocal);
+                $paySuppMaster['netAmountRpt'] = Helper::roundValue($total->netAmountRpt);
+                $paySuppMaster['VATAmount'] = Helper::roundValue($total->VATAmount);
+                $paySuppMaster['VATAmountBank'] = Helper::roundValue($convertAmount['defaultAmount']);
+                $paySuppMaster['VATAmountLocal'] = Helper::roundValue($total->VATAmountLocal);
+                $paySuppMaster['VATAmountRpt'] = Helper::roundValue($total->VATAmountRpt);
                 $paySuppMaster->save();
 
                 // insert to tax details

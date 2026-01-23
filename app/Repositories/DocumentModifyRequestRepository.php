@@ -32,6 +32,7 @@ use App\Repositories\TenderSupplierAssigneeEditLogRepository;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 
 /**
  * Class DocumentModifyRequestRepository
@@ -284,7 +285,7 @@ class DocumentModifyRequestRepository extends BaseRepository
         $code = ($companyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['version'] = $version;
-        $input['requested_employeeSystemID'] =\Helper::getEmployeeSystemID();
+        $input['requested_employeeSystemID'] =Helper::getEmployeeSystemID();
         $input['requested_date'] = now();
         $input['RollLevForApp_curr'] = 1;
         $input['code'] = $code;

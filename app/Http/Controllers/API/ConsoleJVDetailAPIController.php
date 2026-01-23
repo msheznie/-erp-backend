@@ -27,6 +27,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ConsoleJVDetailController
@@ -145,8 +146,8 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $input['currencyID'] = $jvMaster->currencyID;
         $input['currencyER'] = $jvMaster->currencyER;
 
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $input['createdPcID'] = gethostname();
 
         $consoleJVDetails = $this->consoleJVDetailRepository->create($input);
@@ -280,7 +281,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         }
 
         if($input['debitAmount']){
-            $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input['debitAmount']);
+            $conversionAmount = Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input['debitAmount']);
             $input["localDebitAmount"] = $conversionAmount["localAmount"];
             $input["rptDebitAmount"] = $conversionAmount["reportingAmount"];
         }else{
@@ -288,7 +289,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         }
 
         if($input['creditAmount']){
-            $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input["creditAmount"]);
+            $conversionAmount = Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input["creditAmount"]);
             $input["localCreditAmount"] = $conversionAmount["localAmount"];
             $input["rptCreditAmount"] = $conversionAmount["reportingAmount"];
         }else{

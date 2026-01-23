@@ -35,6 +35,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class DepartmentBudgetPlanningDetailController
@@ -186,7 +187,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
-        $employeeID =  \Helper::getEmployeeSystemID();
+        $employeeID =  Helper::getEmployeeSystemID();
 
 //        $employeeID = 110;
         $newRequest = new Request();
@@ -590,7 +591,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -806,7 +807,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companyId'],
                 'departmentBudgetPlanningDetailID' => $input['id'],
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
 
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -828,7 +829,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
                 if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']))
                 {
-                    $entries = $entries->where('created_by',\Helper::getEmployeeSystemID());
+                    $entries = $entries->where('created_by',Helper::getEmployeeSystemID());
                 }
 
                 $entries = $entries->where('budget_detail_id', $input['id'])
@@ -859,10 +860,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'entryData' => [],
                     'unitItems' => [],
                     'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
-                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        (($entry->created_by == Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true,
                     'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
-                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        (($entry->created_by == Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true
                 ];
 
@@ -972,7 +973,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -1023,10 +1024,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $companyId = $request->input('companyId');
 
         $selectedCompanyId = $companyId;
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1082,7 +1083,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
     public function updateDepartmentBudgetPlanningDetailAmount(Request $request)
     {
-        $employeeID =  \Helper::getEmployeeSystemID();
+        $employeeID =  Helper::getEmployeeSystemID();
 
 //        $employeeID = 110;
         $newRequest = new Request();
@@ -1265,7 +1266,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 return $this->sendError(trans('custom.department_planning_id_is_required'));
             }
 
-            $employeeID = \Helper::getEmployeeSystemID();
+            $employeeID = Helper::getEmployeeSystemID();
             $newRequest = new Request();
             $newRequest->replace([
                 'companyId' => $request->input('companySystemID'),

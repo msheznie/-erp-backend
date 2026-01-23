@@ -6,6 +6,7 @@ use App\Models\PaymentBankTransfer;
 use App\Repositories\BaseRepository;
 use Carbon\Carbon;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class PaymentBankTransferRepository
@@ -61,10 +62,10 @@ class PaymentBankTransferRepository extends BaseRepository
     public function paymentBankTransferListQuery($request, $input, $search = '', $bankmasterAutoID, $approved = 0) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -128,7 +129,7 @@ class PaymentBankTransferRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.document_code')] = $val->bankTransferDocumentCode;
-                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                 $data[$x][trans('custom.bank_name')] = $val->bank_account? $val->bank_account->bankName : '';
                 $data[$x][trans('custom.account_no')] = $val->bank_account? $val->bank_account->AccountNo : '';
                 $data[$x][trans('custom.narration')] = $val->narration;

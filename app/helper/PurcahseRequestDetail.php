@@ -111,7 +111,7 @@ class PurcahseRequestDetail
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;
@@ -534,7 +534,7 @@ class PurcahseRequestDetail
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;

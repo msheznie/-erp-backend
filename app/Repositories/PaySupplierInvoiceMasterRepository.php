@@ -18,6 +18,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 /**
  * Class PaySupplierInvoiceMasterRepository
  * @package App\Repositories
@@ -203,10 +204,10 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
     public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID,$createdBy,$customerID) {
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -390,13 +391,13 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                     $data[$x][trans('custom.payee_type')] = "";
                     $data[$x][trans('custom.sup_emp_other')] = "";
                 }
-                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($val->BPVdate);
+                $data[$x][trans('custom.invoice_date')] = Helper::dateFormat($val->BPVdate);
                 $data[$x][trans('custom.cheque_no')] = $val->BPVchequeNo;
                 $data[$x][trans('custom.comments')] = $val->BPVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.supplier_currency')] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
                 $data[$x][trans('custom.supplier_amount')] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x][trans('custom.bank_currency')] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';
@@ -513,7 +514,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $poTotalAmountTrans = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'];
 
 
-            $poConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $poTotalAmountTrans);
+            $poConversion = Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $poTotalAmountTrans);
 
 
             $poComareAmountRpt += $poConversion['reportingAmount'];
@@ -537,7 +538,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
             if ($extraCharges) {
                 foreach ($extraCharges as $key => $value) {
-                    $extraChargesConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->DIAmountCurrency, $value->DIAmountCurrency, $value->totalExtraCharges);
+                    $extraChargesConversion = Helper::currencyConversion($procumentOrder->companySystemID, $value->DIAmountCurrency, $value->DIAmountCurrency, $value->totalExtraCharges);
 
 
                     $poComareAmountRpt += $extraChargesConversion['reportingAmount'];
@@ -555,7 +556,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             }
 
             foreach ($logistics as $key => $value) {
-                $logisticConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->currencyID, $value->currencyID, $value->reqAmountSum);
+                $logisticConversion = Helper::currencyConversion($procumentOrder->companySystemID, $value->currencyID, $value->currencyID, $value->reqAmountSum);
 
 
                 $poComareAmountRpt += $logisticConversion['reportingAmount'];
@@ -585,7 +586,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
 
             foreach ($totalAdavancePayment as $key => $value) {
-                $advConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->paymentAmountSum);
+                $advConversion = Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->paymentAmountSum);
 
 
                 $paymentCompareRpt += $advConversion['reportingAmount'];
@@ -612,7 +613,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
 
             foreach ($totalSupplierPayment as $key => $value) {
-                $suppPayConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->supplierPaymentAmountSum);
+                $suppPayConversion = Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->supplierPaymentAmountSum);
 
 
                 $paymentCompareRpt += $suppPayConversion['reportingAmount'];

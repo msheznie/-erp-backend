@@ -32,6 +32,7 @@ use App\Models\GRVDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\GrvDetailsPrn;
 use App\Models\PurchaseReturn;
+use App\helper\Helper;
 
 
 class DeliveryAppoinmentGRV implements ShouldQueue
@@ -116,8 +117,8 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $detail['FYBiggin'] = $fromCompanyFinancePeriod->dateFrom;
                     $detail['FYEnd'] = $fromCompanyFinancePeriod->dateTo;
                     $detail['createdPcID'] = gethostname();
-                    $detail['createdUserID'] =  \Helper::getEmployeeID();
-                    $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $detail['createdUserID'] =  Helper::getEmployeeID();
+                    $detail['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $detail['documentSystemID'] =  3;
                     $detail['documentID'] = "GRV";
                     $detail["grvType"] = 'POG';
@@ -131,7 +132,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     }
 
                     $detail['vatRegisteredYN'] = 1;
-                    $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
+                    $companyCurrencyConversion = Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
 
                     $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
@@ -322,8 +323,8 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $detail['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
 
                         $detail['createdPcID'] = gethostname();
-                        $detail['createdUserID'] = \Helper::getEmployeeID();
-                        $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $detail['createdUserID'] = Helper::getEmployeeID();
+                        $detail['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
                         $mp = isset($po_details->markupPercentage)?$po_details->markupPercentage:0;
                         $markupArray = $this->setMarkupPercentage($po_details->GRVcostPerUnitSupTransCur,$GRVMaster,$mp);
@@ -398,7 +399,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
         $output['markupLocalAmount'] = 0;
         $output['markupReportingAmount'] = 0;
 
-        $markupAmendRestrictionPolicy = \Helper::checkRestrictionByPolicy($grvData->companySystemID,6);
+        $markupAmendRestrictionPolicy = Helper::checkRestrictionByPolicy($grvData->companySystemID,6);
 
         if(isset($grvData->supplierID) && $grvData->supplierID && $markupAmendRestrictionPolicy){
 
@@ -439,7 +440,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     if($output['markupTransactionAmount']>0){
 
                         if($grvData->supplierDefaultCurrencyID != $grvData->localCurrencyID){
-                            $currencyConversion = \Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->localCurrencyID,$output['markupTransactionAmount']);
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->localCurrencyID,$output['markupTransactionAmount']);
                             if(!empty($currencyConversion)){
                                 $output['markupLocalAmount'] = $currencyConversion['documentAmount'];
                             }
@@ -448,7 +449,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         }
 
                         if($grvData->supplierDefaultCurrencyID != $grvData->companyReportingCurrencyID){
-                            $currencyConversion = \Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->companyReportingCurrencyID,$output['markupTransactionAmount']);
+                            $currencyConversion = Helper::currencyConversion($grvData->companySystemID,$grvData->supplierDefaultCurrencyID,$grvData->companyReportingCurrencyID,$output['markupTransactionAmount']);
                             if(!empty($currencyConversion)){
                                 $output['markupReportingAmount'] = $currencyConversion['documentAmount'];
                             }
@@ -457,9 +458,9 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         }
 
                       
-                        $output['markupTransactionAmount'] = \Helper::roundValue($output['markupTransactionAmount']);
-                        $output['markupLocalAmount'] = \Helper::roundValue($output['markupLocalAmount']);
-                        $output['markupReportingAmount'] = \Helper::roundValue($output['markupReportingAmount']);
+                        $output['markupTransactionAmount'] = Helper::roundValue($output['markupTransactionAmount']);
+                        $output['markupLocalAmount'] = Helper::roundValue($output['markupLocalAmount']);
+                        $output['markupReportingAmount'] = Helper::roundValue($output['markupReportingAmount']);
 
                     }
 

@@ -26,6 +26,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateColumnLinkController
@@ -150,8 +151,8 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
                 $data['companySystemID'] = $input['companySystemID'];
                 $data['companyID'] = $input['companyID'];
                 $data['createdPCID'] = gethostname();
-                $data['createdUserID'] = \Helper::getEmployeeID();
-                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data['createdUserID'] = Helper::getEmployeeID();
+                $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateColumnLinks = $this->reportTemplateColumnLinkRepository->create($data);
             }
         }
@@ -294,7 +295,7 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
@@ -434,8 +435,8 @@ class ReportTemplateColumnLinkAPIController extends AppBaseController
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateColumnLinks = $this->reportTemplateColumnLinkRepository->create($data);
                 }
             }

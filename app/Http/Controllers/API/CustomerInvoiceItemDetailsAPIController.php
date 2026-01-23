@@ -1225,10 +1225,10 @@ WHERE
                                 if ($unitCostForCalculation > 0) {
                                     $invDetail_arr['VATAmount'] = (($unitCostForCalculation / 100) * $vatDetails['percentage']);
                                 }
-                                $currencyConversionVAT = \Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
+                                $currencyConversionVAT = Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
 
-                                $invDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                                $invDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                                $invDetail_arr['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $invDetail_arr['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             } else {
                                 $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
                                 $invDetail_arr['VATAmount'] = $new['VATAmount'];

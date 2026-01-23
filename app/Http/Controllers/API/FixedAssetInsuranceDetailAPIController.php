@@ -13,6 +13,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class FixedAssetInsuranceDetailController
@@ -142,8 +143,8 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
             }
         }
 
-        $input['createdByUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdByUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $fixedAssetInsuranceDetails = $this->fixedAssetInsuranceDetailRepository->create($input);
 

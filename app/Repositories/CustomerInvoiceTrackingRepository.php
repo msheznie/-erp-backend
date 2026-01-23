@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CustomerInvoiceTracking;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class CustomerInvoiceTrackingRepository
@@ -64,10 +65,10 @@ class CustomerInvoiceTrackingRepository extends BaseRepository
     public function customerInvoiceTrackingListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -127,7 +128,7 @@ class CustomerInvoiceTrackingRepository extends BaseRepository
                 $data[$x][trans('custom.tracking_no')] = $val->customerInvoiceTrackingCode;
                 $data[$x][trans('custom.batch_no')] = $val->manualTrackingNo;
                 $data[$x][trans('custom.customer')] = $val->customer? $val->customer->CustomerName : '';
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->submittedDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->submittedDate);
                 $data[$x][trans('custom.month')] = date('M', strtotime($val->submittedDate));
                 $data[$x][trans('custom.year')] = date('Y', strtotime($val->submittedYear));
                 $data[$x][trans('custom.comments')] = $val->comments;

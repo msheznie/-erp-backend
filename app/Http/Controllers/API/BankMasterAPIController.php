@@ -29,6 +29,7 @@ use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BankMasterController
@@ -244,10 +245,10 @@ class BankMasterAPIController extends AppBaseController
     {
         $bankId = $request['bankmasterAutoID'];
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -287,10 +288,10 @@ class BankMasterAPIController extends AppBaseController
     {
         $bankId = $request['bankmasterAutoID'];
          $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }

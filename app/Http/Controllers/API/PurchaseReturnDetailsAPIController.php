@@ -36,6 +36,7 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use App\helper\ItemTracking;
 use App\Models\PurchaseReturnLogistic;
+use App\helper\Helper;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -460,7 +461,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         /** @var PurchaseReturn $purchaseReturn */
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($input['purhaseReturnAutoID']);

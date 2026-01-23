@@ -62,6 +62,7 @@ use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class AssetDisposalMasterController
@@ -175,7 +176,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         } else {
@@ -185,7 +186,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 9;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -252,8 +253,8 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }
         $input['serialNo'] = $lastSerialNumber;
         $input['revenuePercentage'] = (float)$input['revenuePercentage'];
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $assetDisposalMasters = $this->assetDisposalMasterRepository->create($input);
 
@@ -410,7 +411,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             if ($assetDisposalMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                $companyFinanceYear = Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500, ['type' => 'confirm']);
                 } else {
@@ -420,7 +421,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
                 $inputParam = $input;
                 $inputParam["departmentSystemID"] = 9;
-                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
                 if (!$companyFinancePeriod["success"]) {
                     return $this->sendError($companyFinancePeriod["message"], 500, ['type' => 'confirm']);
                 } else {
@@ -596,15 +597,15 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 unset($input['confirmType']);
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }
             }
 
             $input['modifiedPc'] = gethostname();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
             $assetDisposalMaster = $this->assetDisposalMasterRepository->update($input, $id);
             DB::commit();
@@ -688,10 +689,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -753,21 +754,21 @@ class AssetDisposalMasterAPIController extends AppBaseController
     public function getDisposalFormData(Request $request)
     {
         $companyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
-        $companyCurrency = \Helper::companyCurrency($companyId);
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
+        $companyCurrency = Helper::companyCurrency($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId,1);
         $disposalType = AssetDisposalType::where('activeYN',1)->get();
         $customer = CustomerAssigned::ofCompany($companyId)->where('isAssigned', '-1')->where('isActive', '1')->get();
         $month = Months::all();
-        $companies = \Helper::allCompanies();
+        $companies = Helper::allCompanies();
         $years = AssetDisposalMaster::selectRaw("YEAR(createdDateTime) as year")
             ->whereNotNull('createdDateTime')
             ->groupby('year')
@@ -863,7 +864,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
             $this->assetDisposalMasterRepository->update($updateInput, $id);
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $assetDisposal->documentSystemID)->first();
 
@@ -944,7 +945,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
@@ -997,7 +998,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $capitalization = [];
@@ -1030,7 +1031,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
@@ -1161,7 +1162,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
 
         $id = isset($input['id'])?$input['id']:0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = $this->assetDisposalMasterRepository->findWithoutFail($id);

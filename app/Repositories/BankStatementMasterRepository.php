@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Repositories\BaseRepository;
 use App\Models\BankAccount;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class BankStatementMasterRepository
@@ -59,9 +60,9 @@ class BankStatementMasterRepository extends BaseRepository
 
     public function bankStatementImportHistory($searchValue, $companyId)
     {
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -80,9 +81,9 @@ class BankStatementMasterRepository extends BaseRepository
 
     public function bankStatementWorkBook($searchValue, $companyId)
     {
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }

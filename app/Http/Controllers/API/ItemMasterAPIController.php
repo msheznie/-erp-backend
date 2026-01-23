@@ -203,7 +203,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = Helper::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"], 500);
                     }
@@ -351,10 +351,10 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemType = $request->itemTypeID;
         $companyId = $request->primaryCompanySystemID;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -413,10 +413,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -494,16 +494,16 @@ class ItemMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
         $itemMasters = DB::table('erp_documentapproved')->select( 'employeesdepartments.approvalDeligated','itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode', DB::raw('GROUP_CONCAT(item_category_type_master.name SEPARATOR ", ") as category_descriptions'))->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -539,7 +539,7 @@ class ItemMasterAPIController extends AppBaseController
             ->whereIn('erp_documentapproved.companySystemID', $companyID)
             ->groupBy('itemmaster.itemCodeSystem');
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $itemMasters = [];
@@ -625,8 +625,8 @@ class ItemMasterAPIController extends AppBaseController
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
         foreach ($companyList as $companyId) {
-            if (\Helper::checkIsCompanyGroup($companyId)) {
-                $subCompanies = array_merge($subCompanies, \Helper::getGroupCompany($companyId));
+            if (Helper::checkIsCompanyGroup($companyId)) {
+                $subCompanies = array_merge($subCompanies, Helper::getGroupCompany($companyId));
             } else {
                 $subCompanies = [$companyId];
             }
@@ -822,7 +822,7 @@ class ItemMasterAPIController extends AppBaseController
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        $validatorResult = Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -1219,7 +1219,7 @@ class ItemMasterAPIController extends AppBaseController
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1294,10 +1294,10 @@ class ItemMasterAPIController extends AppBaseController
         $itemId = $request['itemCodeSystem'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1411,7 +1411,7 @@ class ItemMasterAPIController extends AppBaseController
                         // $data_info = file_get_contents($path);
                     
                         // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
-                        $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
+                        $baseimg = Helper::getFileUrlFromS3($decode_image->path);
     
                         $info['flag'] = true;
                         $info['path'] = $baseimg;
@@ -1527,7 +1527,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function approveItem(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1538,7 +1538,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function rejectItem(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1789,10 +1789,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -1924,10 +1924,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

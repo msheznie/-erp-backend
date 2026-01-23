@@ -636,10 +636,10 @@ class BookInvSuppMaster extends Model
     public function updateBookingAmount($amount)
     {
         $totatlDirectItemTrans = $amount;
-        $currencyConversionDire = \Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $totatlDirectItemTrans);
-        $this->bookingAmountTrans = abs(\Helper::roundValue($totatlDirectItemTrans));
-        $this->bookingAmountLocal = abs(\Helper::roundValue($currencyConversionDire['localAmount']));
-        $this->bookingAmountRpt = abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $currencyConversionDire = Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $totatlDirectItemTrans);
+        $this->bookingAmountTrans = abs(Helper::roundValue($totatlDirectItemTrans));
+        $this->bookingAmountLocal = abs(Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->bookingAmountRpt = abs(Helper::roundValue($currencyConversionDire['reportingAmount']));
         $this->save();
     }
 

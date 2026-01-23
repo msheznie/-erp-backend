@@ -42,6 +42,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class GRVTaxLedgerService
 {
@@ -60,10 +61,10 @@ class GRVTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -143,9 +144,9 @@ class GRVTaxLedgerService
                     {
                         $ledgerData['subCategoryID'] = $value1['subcat'];
                         $ledgerData['masterCategoryID'] = $value1['mastercat'];
-                        $ledgerData['localAmount'] = \Helper::roundValue($localVATAmount);
-                        $ledgerData['rptAmount'] = \Helper::roundValue($reportingVATAmount);
-                        $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerData['localAmount'] = Helper::roundValue($localVATAmount);
+                        $ledgerData['rptAmount'] = Helper::roundValue($reportingVATAmount);
+                        $ledgerData['transAmount'] = Helper::roundValue($value1['amount']);
                         $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
                         $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
                         $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
@@ -254,9 +255,9 @@ class GRVTaxLedgerService
                     {
                         $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                         $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
-                        $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($reportingVATAmountDetail);
-                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($localVATAmountDetail);
+                        $ledgerDetailsData['VATAmount'] = Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['VATAmountRpt'] = Helper::roundValue($reportingVATAmountDetail);
+                        $ledgerDetailsData['VATAmountLocal'] = Helper::roundValue($localVATAmountDetail);
                         $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                         $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
                         $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];

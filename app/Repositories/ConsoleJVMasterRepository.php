@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ConsoleJVMaster;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class ConsoleJVMasterRepository
@@ -102,7 +103,7 @@ class ConsoleJVMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->consoleJVdate);
+                $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->consoleJVdate);
                 $data[$x][trans('custom.document_code')] = $val->consoleJVcode;
                 $data[$x][trans('custom.narration')] = $val->consoleJVNarration;
                 $data[$x][trans('custom.type')] = $val->jvType == 1? 'IFRS' : ($val->jvType == 2? 'GAAP' : '');

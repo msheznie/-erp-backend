@@ -483,11 +483,11 @@ class JvMasterAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
-        $isGroupCompany = \Helper::checkIsCompanyGroup($companyId);
+        $isGroupCompany = Helper::checkIsCompanyGroup($companyId);
 
         $allSubCompanies = [];
         if ($isGroupCompany) {
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($companyId);
+            $subCompanies = Helper::getSubCompaniesByGroupCompany($companyId);
             $allSubCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         }
 
@@ -796,7 +796,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $empID = $employee->employeeSystemID;
         }
         else{
-            $empID = \Helper::getEmployeeSystemID();
+            $empID = Helper::getEmployeeSystemID();
         }
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
@@ -871,7 +871,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -920,7 +920,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_jvmaster.jvMasterAutoId',
@@ -1002,7 +1002,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $approve = \Helper::approveDocument($input);
+        $approve = Helper::approveDocument($input);
 
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -1030,7 +1030,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function rejectJournalVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1263,7 +1263,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $jvMasterData->RollLevForApp_curr = 1;
         $jvMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
 
@@ -1563,8 +1563,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $data['debitAmount'] = $debitAmount;
                             $data['creditAmount'] = $creditAmount;
                             $data['createdPcID'] = gethostname();
-                            $data['createdUserID'] = \Helper::getEmployeeID();
-                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['createdUserID'] = Helper::getEmployeeID();
+                            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                             $data['createdDateTime'] = NOW();
                             $data['timeStamp'] = NOW();
                             $data['detail_project_id'] = $projectID;
@@ -1644,7 +1644,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
-        $refernaceDoc = \Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
+        $refernaceDoc = Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
 
         $companyId = $jvMasterDataLine->companySystemID;
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -1708,7 +1708,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function approvalPreCheckJV(Request $request)
     {
         $input = $request->all();
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
@@ -1877,7 +1877,7 @@ HAVING
 
         $id = $input['jvMasterAutoId'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $jvMaster = JvMaster::find($id);
@@ -2017,7 +2017,7 @@ HAVING
 
         $id = isset($input['jvMasterAutoId']) ? $input['jvMasterAutoId'] : 0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $jvMaster = JvMaster::find($id);
 

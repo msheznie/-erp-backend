@@ -9,6 +9,7 @@ use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class DirectPaymentDetailsRepository
@@ -146,7 +147,7 @@ class DirectPaymentDetailsRepository extends BaseRepository
             $account = BankAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->where('companySystemID', $payMaster->companySystemID)->first();
             if($account) {
                 $input['bankCurrencyID'] = $account->accountCurrencyID;
-                $conversionAmount = \Helper::currencyConversion($payMaster->companySystemID, $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
+                $conversionAmount = Helper::currencyConversion($payMaster->companySystemID, $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
                 $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
             }else{
                 return ['status' => false, 'message' => 'GL code - '.$chartOfAccount->AccountCode.' cannot be added, No bank accound found.'];

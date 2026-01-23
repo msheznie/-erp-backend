@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 /**
  * Class SupplierRegistrationLinkRepository
  * @package App\Repositories
@@ -46,7 +47,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->company_id = $request->input('company_id');
         $supplierRegistrationLink->token = $token;
         $supplierRegistrationLink->token_expiry_date_time = Carbon::now()->addHours(96);
-        $supplierRegistrationLink->created_by = \Helper::getEmployeeSystemID();
+        $supplierRegistrationLink->created_by = Helper::getEmployeeSystemID();
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
         $supplierRegistrationLink->created_via =  1;

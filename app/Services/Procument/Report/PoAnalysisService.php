@@ -12,6 +12,7 @@ use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportReportToExcelService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 class PoAnalysisService
 {
@@ -29,7 +30,7 @@ class PoAnalysisService
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }

@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Artisan;
 use mysql_xdevapi\Exception;
+use App\helper\Helper;
 
 class VRFDocumentGenerateController extends AppBaseController
 {
@@ -189,7 +190,7 @@ class VRFDocumentGenerateController extends AppBaseController
             'isAutoCreateDocument' => true
         );
 
-        $confirmation = \Helper::confirmDocument($params);
+        $confirmation = Helper::confirmDocument($params);
 
         if($confirmation['success'])
         {
@@ -206,7 +207,7 @@ class VRFDocumentGenerateController extends AppBaseController
         $approveData['approvedComments'] = trans('custom.system_auto_generated');
         $approveData['supplierPrimaryCode'] = $master->supplierID;
         $approveData['db'] = $this->db;
-        $approval = \Helper::approveDocument($approveData);
+        $approval = Helper::approveDocument($approveData);
 
         if(!$approval['success'])
             throw new \Exception($approval['message']);

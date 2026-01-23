@@ -16,6 +16,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeTemplateDetailsController
@@ -144,8 +145,8 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
             $input['companySystemID'] = $input['companySystemID'];
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $finalReturnIncomeTemplateDetails = $this->finalReturnIncomeTemplateDetailsRepository->create($input);
             DB::commit();
             return $this->sendResponse($finalReturnIncomeTemplateDetails->toArray(), trans('custom.final_return_income_template_details_saved_success'));
@@ -430,7 +431,7 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                 ->get();
 
             $companySystemID = $request->query('companySystemID');
-            $localCurrency = \Helper::companyCurrency($companySystemID);
+            $localCurrency = Helper::companyCurrency($companySystemID);
             $isTemplateUsed = FinalReturnIncomeReports::isTemplateUsed($templateId);
 
             $output = [
@@ -473,8 +474,8 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                         'rawId'                 => $rawTemplate['id'],
                         'companySystemID'       => $input['companySystemID'],
                         'createdPCID'           => gethostname(),
-                        'createdUserID'         => \Helper::getEmployeeID(),
-                        'createdUserSystemID'   => \Helper::getEmployeeSystemID(),
+                        'createdUserID'         => Helper::getEmployeeID(),
+                        'createdUserSystemID'   => Helper::getEmployeeSystemID(),
                         'createdDateTime'       => now(),
                     ];
 
@@ -496,8 +497,8 @@ class FinalReturnIncomeTemplateDetailsAPIController extends AppBaseController
                         'fontColor'             => '#000000',
                         'bgColor'               => null,
                         'createdPCID'           => gethostname(),
-                        'createdUserID'         => \Helper::getEmployeeID(),
-                        'createdUserSystemID'   => \Helper::getEmployeeSystemID(),
+                        'createdUserID'         => Helper::getEmployeeID(),
+                        'createdUserSystemID'   => Helper::getEmployeeSystemID(),
                         'createdDateTime'       => now(),
                     ];
 

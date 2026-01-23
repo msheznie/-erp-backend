@@ -99,10 +99,10 @@ class ExpenseClaimRepository extends BaseRepository
     public function expenseClaimListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -147,7 +147,7 @@ class ExpenseClaimRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.expense_claim_date')] = \Helper::dateFormat($val->expenseClaimDate);
+                $data[$x][trans('custom.expense_claim_date')] = Helper::dateFormat($val->expenseClaimDate);
                 $data[$x][trans('custom.document_code')] = $val->expenseClaimCode;
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';

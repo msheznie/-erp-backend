@@ -25,6 +25,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class SegmentRightsController
@@ -243,10 +244,10 @@ class SegmentRightsAPIController extends AppBaseController
                 $company = $companiesByGroup;
 
                 $globalCompanyID = (isset($input['globalCompanyID'])) ? $input['globalCompanyID'] : 0;
-                $isGroup = \Helper::checkIsCompanyGroup($globalCompanyID);
+                $isGroup = Helper::checkIsCompanyGroup($globalCompanyID);
 
                 if($isGroup){
-                    $company = \Helper::getGroupCompany($globalCompanyID);
+                    $company = Helper::getGroupCompany($globalCompanyID);
                 }else{
                     $company = [$globalCompanyID];
                 }

@@ -26,6 +26,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class SupplierAssignedController
@@ -135,7 +136,7 @@ class SupplierAssignedAPIController extends AppBaseController
                 }else{
     
                        
-                            $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['supplierCodeSytem'], 'supplier');
+                            $validatorResult = Helper::checkCompanyForMasters($companie['id'], $input['supplierCodeSytem'], 'supplier');
                             if (!$validatorResult['success']) {
                                 return $this->sendError($validatorResult['message']);
                             }

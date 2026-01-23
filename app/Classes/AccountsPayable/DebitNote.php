@@ -9,6 +9,7 @@ use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
+use App\helper\Helper;
 
 class DebitNote
 {
@@ -150,7 +151,7 @@ class DebitNote
             throw new \Exception(trans('custom.supplier_transaction_currency_details_not_found'));
 
         $supplierTranscationCurrency = $supplier->supplierCurrency->first()->currencyMaster->currencyID;
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
 
         $this->master->supplierID = $supplierId;
         $this->master->supplierVATEligible = false;
@@ -180,7 +181,7 @@ class DebitNote
 
     public function setCreatedUserDetails()
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $this->master->createdPcID = gethostname();
         $this->master->createdUserID = $employee->empID;
         $this->master->createdUserSystemID = $employee->employeeSystemID;

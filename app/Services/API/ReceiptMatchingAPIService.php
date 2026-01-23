@@ -381,12 +381,12 @@ class ReceiptMatchingAPIService extends AppBaseController
             $input['createdUserSystemID'] = $employee->employeeSystemID;
         }
         else{
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
         }
 
 
-        $currentFinanceYear = \Helper::companyFinanceYear($input['companySystemID'], 0);
+        $currentFinanceYear = Helper::companyFinanceYear($input['companySystemID'], 0);
 
 
         if(isset($currentFinanceYear) && count($currentFinanceYear) > 0)
@@ -496,10 +496,10 @@ class ReceiptMatchingAPIService extends AppBaseController
         $detail->custbalanceAmount = $arLedger->custInvoiceAmount - ($totalreceivedAmountTrans + $input['receiveAmountTrans']);
 
         if ($arLedger->documentSystemID == 20) {
-            $conversionAmount = \Helper::convertAmountToLocalRpt(20, $sourceDocument->custInvoiceDirectAutoID, ABS($input["receiveAmountTrans"]));
+            $conversionAmount = Helper::convertAmountToLocalRpt(20, $sourceDocument->custInvoiceDirectAutoID, ABS($input["receiveAmountTrans"]));
         }
         elseif ($arLedger->documentSystemID == 19) {
-            $conversionAmount = \Helper::convertAmountToLocalRpt(19, $sourceDocument->creditNoteAutoID, ABS($input["receiveAmountTrans"]));
+            $conversionAmount = Helper::convertAmountToLocalRpt(19, $sourceDocument->creditNoteAutoID, ABS($input["receiveAmountTrans"]));
         }
 
         $detail->receiveAmountLocal = $conversionAmount['localAmount'];
@@ -602,7 +602,7 @@ class ReceiptMatchingAPIService extends AppBaseController
             return ['status' => false, 'message' => trans('custom.match_document_master_not_found')];
         }
 
-        $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
+        $supplierCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($matchDocumentMaster->supplierTransCurrencyID);
 
         if (isset($input['matchingDocdate'])) {
             if ($input['matchingDocdate']) {
@@ -631,8 +631,8 @@ class ReceiptMatchingAPIService extends AppBaseController
 
         $input['matchingAmount'] = $detailAmountTotTran;
         $input['matchedAmount'] = $detailAmountTotTran;
-        $input['matchLocalAmount'] = \Helper::roundValue($detailAmountTotLoc);
-        $input['matchRptAmount'] = \Helper::roundValue($detailAmountTotRpt);
+        $input['matchLocalAmount'] = Helper::roundValue($detailAmountTotLoc);
+        $input['matchRptAmount'] = Helper::roundValue($detailAmountTotRpt);
 
 
         //checking below posted data
@@ -939,12 +939,12 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $input['matchingConfirmedByEmpID'] = $systemEmployee->empID;
                 $input['matchingConfirmedByName'] = $systemEmployee->empName;   
             } else {
-                $input['matchingConfirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
-                $input['matchingConfirmedByEmpID'] = \Helper::getEmployeeID();
-                $input['matchingConfirmedByName'] = \Helper::getEmployeeName();
+                $input['matchingConfirmedByEmpSystemID'] = Helper::getEmployeeSystemID();
+                $input['matchingConfirmedByEmpID'] = Helper::getEmployeeID();
+                $input['matchingConfirmedByName'] = Helper::getEmployeeName();
             }
 
-            $input['matchingConfirmedDate'] = \Helper::currentDateTime();
+            $input['matchingConfirmedDate'] = Helper::currentDateTime();
 
             $data = [];
             $taxLedgerData = [];
@@ -980,8 +980,8 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $data['documentSystemCode'] = $input["PayMasterAutoId"];
                 $data['documentCode'] = $masterData->custPaymentReceiveCode;
                 $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
                 $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
                 $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
@@ -997,7 +997,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $data['nonHoldingPercentage'] = 0;
                 $data['chequeNumber'] = $masterData->custChequeNo;
                 $data['documentType'] = $masterData->documentType;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
 
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     $employee = UserTypeService::getSystemEmployee();
@@ -1005,12 +1005,12 @@ class ReceiptMatchingAPIService extends AppBaseController
                     $input['createdUserSystemID'] = $employee->employeeSystemID;
                 }
                 else{
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 }
                 
                 $data['createdUserPC'] = gethostname();
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
                 $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
@@ -1117,14 +1117,14 @@ class ReceiptMatchingAPIService extends AppBaseController
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                     $data['documentTransCurrencyID'] = $detailRecord->custTransactionCurrencyID;
                                     $data['documentTransCurrencyER'] = $detailRecord->custTransactionCurrencyER;
-                                    $data['documentTransAmount'] =  \Helper::roundValue($detailRecord->receiveAmountTrans) * -1;
+                                    $data['documentTransAmount'] =  Helper::roundValue($detailRecord->receiveAmountTrans) * -1;
                                     $data['documentLocalCurrencyID'] = $detailRecord->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $detailRecord->localCurrencyER;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($detailRecord->receiveAmountLocal) * -1;
+                                    $data['documentLocalAmount'] = Helper::roundValue($detailRecord->receiveAmountLocal) * -1;
                                     $data['documentRptCurrencyID'] = $detailRecord->companyReportingCurrencyID;
                                     $data['documentRptCurrencyER'] = $detailRecord->companyReportingER;
-                                    $data['documentRptAmount'] = \Helper::roundValue($detailRecord->receiveAmountRpt) * -1;
-                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $data['documentRptAmount'] = Helper::roundValue($detailRecord->receiveAmountRpt) * -1;
+                                    $data['timestamp'] = Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
                             }
@@ -1219,9 +1219,9 @@ class ReceiptMatchingAPIService extends AppBaseController
 
 
                                 foreach ($customerMatchingDetails as $key => $value) {
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) ;
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) ;
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) ;
+                                    $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) ;
+                                    $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal)) ;
+                                    $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt)) ;
                                     $data['serviceLineSystemID'] = $matchDocumentMaster->segment->serviceLineSystemID;
                                     $data['serviceLineCode'] = $matchDocumentMaster->segment->ServiceLineCode;
                                     array_push($finalData, $data);
@@ -1251,9 +1251,9 @@ class ReceiptMatchingAPIService extends AppBaseController
                                     Log::info('Output VAT transfer GL Account not configured' . date('H:i:s'));
                                 }
                                 foreach ($customerMatchingDetails as $key => $value) {
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                                    $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) * -1;
+                                    $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                                    $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
                                     $data['serviceLineSystemID'] = $matchDocumentMaster->segment->serviceLineSystemID;
                                     $data['serviceLineCode'] = $matchDocumentMaster->segment->ServiceLineCode;
                                     array_push($finalData, $data);
@@ -1264,7 +1264,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                                     $employeeSystemID = $employee->employeeSystemID;
                                 }
                                 else{
-                                    $employeeSystemID= \Helper::getEmployeeSystemID();
+                                    $employeeSystemID= Helper::getEmployeeSystemID();
                                 }
                                 if (count($taxLedgerData) > 0) {
                                     $masterModel = [
@@ -1316,11 +1316,11 @@ class ReceiptMatchingAPIService extends AppBaseController
                             $data['documentTransAmount'] = 0;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] =\Helper::roundValue($finalLocalAmount);
+                            $data['documentLocalAmount'] =Helper::roundValue($finalLocalAmount);
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($finalRptAmount);
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['documentRptAmount'] = Helper::roundValue($finalRptAmount);
+                            $data['timestamp'] = Helper::currentDateTime();
                             if(isset($advReceipt)) {
                                 $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
                                 $data['serviceLineCode'] = $advReceipt->serviceLineCode;
@@ -1351,8 +1351,8 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $data['documentSystemCode'] = $input["PayMasterAutoId"];
                 $data['documentCode'] = $creditNoteMasterData->creditNoteCode;
                 $data['documentDate'] = $matchDocumentMaster->matchingDocdate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['documentConfirmedDate'] = $matchDocumentMaster->matchingConfirmedDate;
                 $data['documentConfirmedBy'] = $matchDocumentMaster->confirmedByEmpID;
                 $data['documentConfirmedByEmpSystemID'] = $matchDocumentMaster->confirmedByEmpSystemID;
@@ -1368,7 +1368,7 @@ class ReceiptMatchingAPIService extends AppBaseController
                 $data['nonHoldingPercentage'] = 0;
                 $data['chequeNumber'] = 0;
                 $data['documentType'] = $creditNoteMasterData->documentType;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
 
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     $employee = UserTypeService::getSystemEmployee();
@@ -1376,11 +1376,11 @@ class ReceiptMatchingAPIService extends AppBaseController
                     $input['createdUserSystemID'] = $employee->employeeSystemID;
                 }
                 else{
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 }
                 $data['createdUserPC'] = gethostname();
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
                 $gainLocalAmount = $gainRptAmount = 0;
@@ -1405,11 +1405,11 @@ class ReceiptMatchingAPIService extends AppBaseController
                     $data['documentTransAmount'] = 0;
                     $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount);
+                    $data['documentLocalAmount'] = Helper::roundValue($gainLocalAmount);
                     $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount);
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue($gainRptAmount);
+                    $data['timestamp'] = Helper::currentDateTime();
                     $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
                     $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
                     array_push($finalData, $data);
@@ -1424,20 +1424,20 @@ class ReceiptMatchingAPIService extends AppBaseController
                     $data['documentLocalCurrencyID'] = $creditNoteMasterData->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $creditNoteMasterData->localCurrencyER;
                     if($gainLocalAmount < 0) {
-                        $data['documentLocalAmount'] = \Helper::roundValue(abs($gainLocalAmount));
+                        $data['documentLocalAmount'] = Helper::roundValue(abs($gainLocalAmount));
                     }
                     else {
-                        $data['documentLocalAmount'] = \Helper::roundValue($gainLocalAmount) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue($gainLocalAmount) * -1;
                     }
                     $data['documentRptCurrencyID'] = $creditNoteMasterData->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $creditNoteMasterData->companyReportingER;
                     if($gainRptAmount < 0) {
-                        $data['documentRptAmount'] = \Helper::roundValue(abs($gainRptAmount));
+                        $data['documentRptAmount'] = Helper::roundValue(abs($gainRptAmount));
                     }
                     else {
-                        $data['documentRptAmount'] = \Helper::roundValue($gainRptAmount) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue($gainRptAmount) * -1;
                     }
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     $data['serviceLineSystemID'] = $creditNoteMasterData->details->first()->serviceLineSystemID;
                     $data['serviceLineCode'] = $creditNoteMasterData->details->first()->serviceLineCode;
                     array_push($finalData, $data);
@@ -1455,8 +1455,8 @@ class ReceiptMatchingAPIService extends AppBaseController
             $input['modifiedUser'] = $systemEmployee->empID;
             $input['modifiedUserSystemID'] = $systemEmployee->employeeSystemID;
         } else {
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         }
 
         

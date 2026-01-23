@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class TenderFaqController
@@ -287,7 +288,7 @@ class TenderFaqAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('tender_master_id'));
         //$input =$request->all();
         $date_time = Carbon::now();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $tenderMasterId = $input['tender_master_id'];
         $answer = $input['answer'];
         $companySystemID = $input['companySystemID'];

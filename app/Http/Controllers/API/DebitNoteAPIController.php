@@ -180,14 +180,14 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_local'),
                 500
             );
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $type =  $input['type'];
         $company_id = $input['companySystemID'];
@@ -247,7 +247,7 @@ class DebitNoteAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         } else {
@@ -257,7 +257,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 1;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -340,7 +340,7 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_not_found'), 500);
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
         $input['supplierTransactionCurrencyER'] = 1;
         $input['companyID'] = $company->CompanyID;
@@ -535,7 +535,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_to_local'),
                 500
@@ -709,7 +709,7 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if (isset($input['supplierTransactionCurrencyID'])) {
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
             $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                 ->where('companyPolicyCategoryID', 67)
                 ->where('isYesNO', 1)
@@ -722,7 +722,7 @@ class DebitNoteAPIController extends AppBaseController
 //            }
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         } else {
@@ -732,7 +732,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 1;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -793,7 +793,7 @@ class DebitNoteAPIController extends AppBaseController
             if($type == 1 && ($input['isSupplierBlocked']))
             {
                
-                $validatorResult = \Helper::checkBlockSuppliers($input['debitNoteDate'],$input['supplierID']);
+                $validatorResult = Helper::checkBlockSuppliers($input['debitNoteDate'],$input['supplierID']);
                 if (!$validatorResult['success']) {              
                      return $this->sendError(trans('custom.supplier_blocked_proceed'), 500,['type' => 'blockSupplier']);
     
@@ -875,7 +875,7 @@ class DebitNoteAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                $companyCurrencyConversion = Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
 
                 $companyId = $input['companySystemID'];
 
@@ -915,7 +915,7 @@ class DebitNoteAPIController extends AppBaseController
 
             $input['debitAmountTrans'] = $amount;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
 
 
@@ -932,7 +932,7 @@ class DebitNoteAPIController extends AppBaseController
             //vat amount currency conversion
 
             $input['VATAmount'] = $vatAmount;
-            $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatAmount);
+            $VATCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatAmount);
 
             $input['VATAmountLocal'] = $VATCurrencyConversion['localAmount'];
             $input['VATAmountRpt'] = $VATCurrencyConversion['reportingAmount'];
@@ -942,7 +942,7 @@ class DebitNoteAPIController extends AppBaseController
             // total amount currency conversion
 
             $input['netAmount'] = $totalNetAmount;
-            $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totalNetAmount);
+            $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totalNetAmount);
 
             $input['netAmountLocal'] = $totalCurrencyConversion['localAmount'];
             $input['netAmountRpt']   = $totalCurrencyConversion['reportingAmount'];
@@ -1038,7 +1038,7 @@ class DebitNoteAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1056,21 +1056,21 @@ class DebitNoteAPIController extends AppBaseController
             ->where('debitNoteAutoID', $id)
             ->first();
 
-        $input['debitAmountTrans'] = \Helper::roundValue($totalAmount->debitAmountTrans);
-        $input['debitAmountLocal'] = \Helper::roundValue($totalAmount->debitAmountLocal);
-        $input['debitAmountRpt'] = \Helper::roundValue($totalAmount->debitAmountRpt);
+        $input['debitAmountTrans'] = Helper::roundValue($totalAmount->debitAmountTrans);
+        $input['debitAmountLocal'] = Helper::roundValue($totalAmount->debitAmountLocal);
+        $input['debitAmountRpt'] = Helper::roundValue($totalAmount->debitAmountRpt);
 
 
-        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
-        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
-        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+        $input['VATAmount'] = Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = Helper::roundValue($totalAmount->VATAmountRpt);
 
 
-        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
-        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
-        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+        $input['netAmount'] = Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = Helper::roundValue($totalAmount->netAmountRpt);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -1091,7 +1091,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_to_local'),
                 500
@@ -1206,14 +1206,14 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         if (isset($input['supplierTransactionCurrencyID'])) {
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0);
 
             $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
             $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         } else {
@@ -1223,7 +1223,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 1;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -1356,7 +1356,7 @@ class DebitNoteAPIController extends AppBaseController
                     $error_count++;
                 }
 
-                $companyCurrencyConversion = \Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
+                $companyCurrencyConversion = Helper::currencyConversion($updateItem->companySystemID, $updateItem->debitAmountCurrency, $updateItem->debitAmountCurrency, $updateItem->debitAmount);
 
 
 
@@ -1389,7 +1389,7 @@ class DebitNoteAPIController extends AppBaseController
 
             $input['debitAmountTrans'] = $amount;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $amount);
 
 
 
@@ -1406,7 +1406,7 @@ class DebitNoteAPIController extends AppBaseController
             //vat amount currency conversion
 
             $input['VATAmount'] = $vatAmount;
-            $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatAmount);
+            $VATCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $vatAmount);
 
             $input['VATAmountLocal'] = $VATCurrencyConversion['localAmount'];
             $input['VATAmountRpt'] = $VATCurrencyConversion['reportingAmount'];
@@ -1416,7 +1416,7 @@ class DebitNoteAPIController extends AppBaseController
             // total amount currency conversion
 
             $input['netAmount'] = $totalNetAmount;
-            $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totalNetAmount);
+            $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], $totalNetAmount);
 
             $input['netAmountLocal'] = $totalCurrencyConversion['localAmount'];
             $input['netAmountRpt']   = $totalCurrencyConversion['reportingAmount'];
@@ -1487,13 +1487,13 @@ class DebitNoteAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -1729,7 +1729,7 @@ class DebitNoteAPIController extends AppBaseController
             ->groupby('year')
             ->orderby('year', 'desc')
             ->get();
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId, 1);
 
         $suppliers = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName,vatEligible,vatPercentage"))
             ->where('companySystemID', $companyId)
@@ -1818,7 +1818,7 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -1920,7 +1920,7 @@ class DebitNoteAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -2008,7 +2008,7 @@ class DebitNoteAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $debitNotes = [];
@@ -2056,7 +2056,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $this->debitNoteRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $debitNote->documentSystemID)->first();
 
@@ -2136,7 +2136,7 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
-        $debitNote->docRefNo = \Helper::getCompanyDocRefNo($debitNote->companySystemID, $debitNote->documentSystemID);
+        $debitNote->docRefNo = Helper::getCompanyDocRefNo($debitNote->companySystemID, $debitNote->documentSystemID);
 
 
         $totalAmount = DebitNoteDetails::where('debitNoteAutoID', $id)
@@ -2368,7 +2368,7 @@ UNION ALL
 
         $debitNoteAutoID = $input['debitNoteAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
@@ -2567,7 +2567,7 @@ UNION ALL
 
     public function approvalPreCheckDebitNote(Request $request)
     {
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
@@ -2608,7 +2608,7 @@ UNION ALL
                 $data[$x][trans('custom.debit_note_code')] = $value->debitNoteCode;
 
                 if ($value->postedDate) {
-                    $data[$x][trans('custom.posted_date')] = \Helper::convertDateWithTime($value->postedDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::convertDateWithTime($value->postedDate);
                 } else {
                     $data[$x][trans('custom.posted_date')] = '';
                 }
@@ -2652,7 +2652,7 @@ UNION ALL
                 }
 
                 if ($value->approvedDate) {
-                    $data[$x][trans('custom.approved_date')] = \Helper::convertDateWithTime($value->approvedDate);
+                    $data[$x][trans('custom.approved_date')] = Helper::convertDateWithTime($value->approvedDate);
                 } else {
                     $data[$x][trans('custom.approved_date')] = '';
                 }
@@ -2685,10 +2685,10 @@ UNION ALL
     {
         $input = $request;
         $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -2772,23 +2772,23 @@ UNION ALL
 
             // Get local currency exchange rate
             $localCurrency = Company::find($companyId)->localCurrencyID;
-            $localER = \Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localER = Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $localCurrency, 0, null, true);
             $localERValue = $localER['trasToLocER'] ?? 1;
 
             // Get reporting currency exchange rate
             $reportingCurrency = Company::find($companyId)->reportingCurrency;
-            $reportingER = \Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingER = Helper::currencyConversion($companyId, $debitNote->supplierTransactionCurrencyID, $reportingCurrency, 0, null, true);
             $reportingERValue = $reportingER['trasToRptER'] ?? 1;
 
             // Recalculate local currency amounts
-            $debitAmountLocal = \Helper::roundValue($debitNote->debitAmountTrans / $localERValue);
-            $VATAmountLocal = \Helper::roundValue($debitNote->VATAmount / $localERValue);
-            $netAmountLocal = \Helper::roundValue($debitNote->netAmount / $localERValue);
+            $debitAmountLocal = Helper::roundValue($debitNote->debitAmountTrans / $localERValue);
+            $VATAmountLocal = Helper::roundValue($debitNote->VATAmount / $localERValue);
+            $netAmountLocal = Helper::roundValue($debitNote->netAmount / $localERValue);
 
             // Recalculate reporting currency amounts
-            $debitAmountRpt = \Helper::roundValue($debitNote->debitAmountTrans / $reportingERValue);
-            $VATAmountRpt = \Helper::roundValue($debitNote->VATAmount / $reportingERValue);
-            $netAmountRpt = \Helper::roundValue($debitNote->netAmount / $reportingERValue);
+            $debitAmountRpt = Helper::roundValue($debitNote->debitAmountTrans / $reportingERValue);
+            $VATAmountRpt = Helper::roundValue($debitNote->VATAmount / $reportingERValue);
+            $netAmountRpt = Helper::roundValue($debitNote->netAmount / $reportingERValue);
 
             // Update debit note with new exchange rates and recalculated amounts
             $debitNoteArray = array(

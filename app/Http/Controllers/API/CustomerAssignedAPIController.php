@@ -26,6 +26,7 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CustomerAssignedController
@@ -85,7 +86,7 @@ class CustomerAssignedAPIController extends AppBaseController
 
          
                 if($input['isAssigned'] == 1 || $input['isAssigned'] == true){
-                    $validatorResult = \Helper::checkCompanyForMasters($companies, $input['customerCodeSystem'], 'customer', true);
+                    $validatorResult = Helper::checkCompanyForMasters($companies, $input['customerCodeSystem'], 'customer', true);
                     if (!$validatorResult['success']) {
                         return $this->sendError($validatorResult['message']);
                     }
@@ -108,7 +109,7 @@ class CustomerAssignedAPIController extends AppBaseController
 
             foreach($companies as $companie)
             {
-                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['customerCodeSystem'], 'customer');
+                $validatorResult = Helper::checkCompanyForMasters($companie['id'], $input['customerCodeSystem'], 'customer');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }
@@ -143,10 +144,10 @@ class CustomerAssignedAPIController extends AppBaseController
 
         $selectedCompanyId = $request->get('selectedCompanyId');
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -246,10 +247,10 @@ class CustomerAssignedAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }

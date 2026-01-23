@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\TenderMaster;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 
 class TenderBidEmployeeObserver
@@ -24,7 +25,7 @@ class TenderBidEmployeeObserver
     {
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
 
            if($obj && isset($employee))
@@ -42,7 +43,7 @@ class TenderBidEmployeeObserver
     public function created(SrmTenderBidEmployeeDetails $tender)
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
            if($obj && isset($employee))

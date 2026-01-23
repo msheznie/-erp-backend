@@ -10,6 +10,7 @@ use App\Models\AssetVerificationDetail;
 use App\Repositories\AssetVerificationDetailRepository;
 use Illuminate\Http\Request;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class AssetVerificationDetailController
@@ -63,10 +64,10 @@ class AssetVerificationDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -145,8 +146,8 @@ class AssetVerificationDetailAPIController extends AppBaseController
         $rows = [];
 
         $createdPcID = gethostname();
-        $createdUserID = \Helper::getEmployeeID();
-        $createdUserSystemID = \Helper::getEmployeeSystemID();
+        $createdUserID = Helper::getEmployeeID();
+        $createdUserSystemID = Helper::getEmployeeSystemID();
 
         $this->assetVerificationDetailRepository->deleteWhere(['verification_id' => $input['verification_id']]);
 
