@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\helper\StatusService;
 use App\Models\RecurringVoucherSetup;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class RecurringVoucherSetupRepository

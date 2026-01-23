@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\StockAdjustmentDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class StockAdjustmentDetailsRepository

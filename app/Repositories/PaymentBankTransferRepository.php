@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PaymentBankTransfer;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Carbon\Carbon;
 use App\helper\StatusService;
 

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CreditNote;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
 

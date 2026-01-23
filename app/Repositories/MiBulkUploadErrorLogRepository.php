@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ItemIssueMaster;
 use App\Models\MiBulkUploadErrorLog;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class MiBulkUploadErrorLogRepository

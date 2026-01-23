@@ -6,7 +6,7 @@ use App\Models\Company;
 use App\Models\ErpItemLedger;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ErpItemLedgerRepository

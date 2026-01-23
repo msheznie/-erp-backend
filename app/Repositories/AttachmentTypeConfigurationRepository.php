@@ -6,7 +6,7 @@ use App\helper\Helper;
 use App\Models\AttachmentTypeConfiguration;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentType;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 
 /**

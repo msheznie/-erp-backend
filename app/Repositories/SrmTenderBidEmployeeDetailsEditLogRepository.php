@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SrmTenderBidEmployeeDetailsEditLogRepository

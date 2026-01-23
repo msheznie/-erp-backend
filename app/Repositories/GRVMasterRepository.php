@@ -14,7 +14,7 @@ use App\Models\StockTransferDetails;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use Illuminate\Http\Request;
 

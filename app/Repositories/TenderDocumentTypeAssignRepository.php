@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\TenderDocumentTypeAssign;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TenderDocumentTypeAssignRepository

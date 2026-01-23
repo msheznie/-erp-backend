@@ -8,7 +8,7 @@ use App\Models\MatchDocumentMaster;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceItemDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;

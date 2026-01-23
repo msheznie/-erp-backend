@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\InsurancePolicyType;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class InsurancePolicyTypeRepository

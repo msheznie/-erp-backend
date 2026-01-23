@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\BankReconciliationTemplateMapping;
 use App\Models\BankAccount;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BankReconciliationTemplateMappingRepository

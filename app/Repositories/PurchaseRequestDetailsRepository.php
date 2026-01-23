@@ -14,7 +14,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\GRVDetails;
 use App\Models\ErpItemLedger;
 use App\helper\Helper;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 
 /**

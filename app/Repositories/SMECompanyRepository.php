@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SMECompany;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SMECompanyRepository

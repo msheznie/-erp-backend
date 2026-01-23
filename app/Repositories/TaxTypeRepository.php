@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\TaxType;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TaxTypeRepository

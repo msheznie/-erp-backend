@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;

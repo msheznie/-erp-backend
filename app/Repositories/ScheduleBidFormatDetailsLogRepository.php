@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\ScheduleBidFormatDetailsLog;
 use Illuminate\Contracts\Foundation\Application;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Repositories\ScheduleBidFormatDetailsRepository;
 
 /**

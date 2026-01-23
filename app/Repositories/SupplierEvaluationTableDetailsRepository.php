@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierEvaluationTableDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierEvaluationTableDetailsRepository

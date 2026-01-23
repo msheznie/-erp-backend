@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\HRMSLeaveAccrualMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class HRMSLeaveAccrualMasterRepository

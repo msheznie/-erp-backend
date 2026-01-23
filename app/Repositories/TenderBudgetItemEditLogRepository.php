@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\TenderBudgetItemEditLog;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class TenderBudgetItemEditLogRepository

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\GRVTypes;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class GRVTypesRepository

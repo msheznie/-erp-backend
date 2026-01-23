@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\AdvancePaymentDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class AdvancePaymentDetailsRepository

@@ -8,7 +8,7 @@ use App\Models\BankAssign;
 use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DirectPaymentDetailsRepository

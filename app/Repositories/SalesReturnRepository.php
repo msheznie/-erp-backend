@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SalesReturn;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\Helper;
 use App\helper\StatusService;
 
