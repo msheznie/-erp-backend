@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceTrackingController
@@ -339,7 +340,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'companyFinancePeriodID','customerID','contractUID','serviceLineSystemID','approvalType'));
-        $input = array_except($input,['detail','customer','finance_period_by','finance_year_by']);
+        $input = Arr::except($input,['detail','customer','finance_period_by','finance_year_by']);
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',

@@ -28,6 +28,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Arr;
 
 /**
  * Class BankMasterController
@@ -224,7 +225,7 @@ class BankMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422 );
         }
 
-        $data =array_except($input, ['bankmasterAutoID', 'TimeStamp', 'createdByEmpID', 'createdDateTime']);
+        $data =Arr::except($input, ['bankmasterAutoID', 'TimeStamp', 'createdByEmpID', 'createdDateTime']);
 
         $bankMaster = $this->bankMasterRepository->update($data, $input['bankmasterAutoID']);
 

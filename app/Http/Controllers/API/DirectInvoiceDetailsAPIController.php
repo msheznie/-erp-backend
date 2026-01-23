@@ -33,6 +33,7 @@ use App\Models\SrpEmployeeDetails;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class DirectInvoiceDetailsController
@@ -343,7 +344,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectInvoiceDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'purchase_order','chartofaccount','vat_sub_category']);
+        $input = Arr::except($input, ['segment', 'purchase_order','chartofaccount','vat_sub_category']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 

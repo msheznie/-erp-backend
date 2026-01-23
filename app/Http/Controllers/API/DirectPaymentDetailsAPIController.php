@@ -51,6 +51,7 @@ use App\Models\ExpenseEmployeeAllocation;
 use App\Models\ServiceLine;
 use App\Models\SrpEmployeeDetails;
 use App\Models\SMECompany;
+use Illuminate\Support\Arr;
 
 /**
  * Class DirectPaymentDetailsController
@@ -273,7 +274,7 @@ class DirectPaymentDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectPaymentDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'chartofaccount','to_bank']);
+        $input = Arr::except($input, ['segment', 'chartofaccount','to_bank']);
         $input = $this->convertArrayToValue($input);
 
         $updateDocument = PaymentVoucherServices::updateDirectPaymentDetails($id, $input);

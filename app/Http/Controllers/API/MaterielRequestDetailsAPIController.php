@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class MaterielRequestDetailsController
@@ -138,7 +139,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
     {
 
 
-        $input = array_except($request->all(), 'uom_default');
+        $input = Arr::except($request->all(), 'uom_default');
         $input = $this->convertArrayToValue($input);
 
 
@@ -479,7 +480,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateMaterielRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
 

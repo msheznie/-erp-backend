@@ -80,6 +80,7 @@ use App\Models\Taxdetail;
 use App\Services\GeneralLedgerService;
 use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
 use App\Services\ValidateDocumentAmend;
+use Illuminate\Support\Arr;
 
 /**
  * Class MatchDocumentMasterController
@@ -672,7 +673,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $created_by = $input['created_by'];
-            $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','supplier','employee','customer', 'payment_voucher','reciept_voucher']);
+            $input = Arr::except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','supplier','employee','customer', 'payment_voucher','reciept_voucher']);
             $input = $this->convertArrayToValue($input);
 
             
@@ -1824,7 +1825,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                  $input = $request->all();
                 $created_by = $input['created_by'];
-                $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier','payment_voucher','reciept_voucher']);        
+                $input = Arr::except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier','payment_voucher','reciept_voucher']);        
                 $input = $this->convertArrayToValue($input);
                 
                 $employee = \Helper::getEmployeeInfo();

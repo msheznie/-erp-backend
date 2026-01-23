@@ -52,6 +52,7 @@ use App\Services\AuditLog\ChartOfAccountAuditService;
 use App\Traits\AuditLogsTrait;
 use App\Models\ReportTemplate;
 use App\Models\CashFlowTemplateDetail;
+use Illuminate\Support\Arr;
 
 /**
  * Class ChartOfAccountController
@@ -99,7 +100,7 @@ class ChartOfAccountAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['final_approved_by']);
+        $input = Arr::except($input, ['final_approved_by']);
         $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
 
         /** Validation massage : Common for Add & Update */
@@ -376,7 +377,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed_an'), 500);
                 }
 
-                // $input = array_except($input,['currency_master']); // uses only in sub sub tables
+                // $input = Arr::except($input,['currency_master']); // uses only in sub sub tables
 
 
                 /** Validation : Edit Unique */
@@ -392,7 +393,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 $input['modifiedPc'] = gethostname();
                 $input['modifiedUser'] = $empId;
-                $input = array_except($input, ['confirmedEmpSystemID', 'confirmedEmpID', 'confirmedEmpName', 'confirmedEmpDate']);
+                $input = Arr::except($input, ['confirmedEmpSystemID', 'confirmedEmpID', 'confirmedEmpName', 'confirmedEmpDate']);
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
@@ -414,7 +415,7 @@ class ChartOfAccountAPIController extends AppBaseController
                         return $this->sendError($confirm["message"]);
                     }
                 }
-                $input = array_except($input, ['confirmedYN']);
+                $input = Arr::except($input, ['confirmedYN']);
 
                
                 $this->chartOfAccountRepository->update($input, $input['chartOfAccountSystemID']);

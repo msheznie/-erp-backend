@@ -91,6 +91,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ShiftDetailsController
@@ -385,7 +386,7 @@ class ShiftDetailsAPIController extends AppBaseController
     public function update($id, UpdateShiftDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['user', 'counter','outlet']);
+        $input = Arr::except($request->all(), ['user', 'counter','outlet']);
         $input = $this->convertArrayToValue($input);
 
         $messages = array(

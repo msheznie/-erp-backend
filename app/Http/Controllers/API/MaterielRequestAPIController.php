@@ -64,6 +64,7 @@ use App\helper\CancelDocument;
 use App\Models\GeneralLedger;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
+use Illuminate\Support\Arr;
 //use Auth;
 use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
@@ -549,7 +550,7 @@ class MaterielRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by','confirmedEmpName',
+        $input = Arr::except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by','confirmedEmpName',
                                        'ConfirmedBy','ConfirmedDate','confirmed_by','ConfirmedBySystemID']);
 
         $input = $this->convertArrayToValue($input);
@@ -1692,7 +1693,7 @@ class MaterielRequestAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $materialRequest = MaterielRequest::where('RequestID', $input['requestID'])->first();

@@ -79,6 +79,7 @@ use App\Services\GeneralLedger\AssetCreationService;
 use App\Services\GeneralLedgerService;
 use PHPExcel_IOFactory;
 use DateTime;
+use Illuminate\Support\Arr;
 
 /**
  * Class FixedAssetMasterController
@@ -186,7 +187,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $assetSerialNoArr = $input['assetSerialNo'];
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
-        $input = array_except($request->all(), 'assetSerialNo', 'itemImage');
+        $input = Arr::except($request->all(), 'assetSerialNo', 'itemImage');
         $input = $this->convertArrayToValue($input);
         $input['assetSerialNo'] = $assetSerialNoArr;
 
@@ -637,7 +638,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $itemPicture  = isset($input['itemPicture']) ? $input['itemPicture'] : '';
         $attributes  = isset($input['attributes']) ? $input['attributes'] : null;
 
-        $input = array_except($request->all(), 'itemImage');
+        $input = Arr::except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
@@ -2048,7 +2049,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
                 $excelUpload = $input['assetExcelUpload'];
-                $input = array_except($request->all(), 'assetExcelUpload');
+                $input = Arr::except($request->all(), 'assetExcelUpload');
                 $input = $this->convertArrayToValue($input);
 
                 $decodeFile = base64_decode($excelUpload[0]['file']);

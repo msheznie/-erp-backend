@@ -27,6 +27,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Mpdf\Tag\P;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class MobileMasterController
@@ -126,7 +127,7 @@ class MobileMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input,array('employeeSystemID','mobileNoPoolID','isActive'));
-        $input = array_except($input,['employee','mobile_no']);
+        $input = Arr::except($input,['employee','mobile_no']);
         $validator = \Validator::make($input, [
             'employeeSystemID' => 'required|min:1',
             'mobileNoPoolID' => 'required|min:1',

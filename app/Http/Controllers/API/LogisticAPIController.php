@@ -37,6 +37,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use Illuminate\Support\Arr;
 /**
  * Class LogisticController
  * @package App\Http\Controllers\API
@@ -371,7 +372,7 @@ class LogisticAPIController extends AppBaseController
     public function update($id, UpdateLogisticAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['supplier_by','location']);
+        $input = Arr::except($input, ['supplier_by','location']);
         $input = $this->convertArrayToValue($input);
         /** @var Logistic $logistic */
         $logistic = $this->logisticRepository->with(['local_currency','reporting_currency'])->findWithoutFail($id);

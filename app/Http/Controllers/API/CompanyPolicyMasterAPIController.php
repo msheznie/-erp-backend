@@ -25,6 +25,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CompanyPolicyMasterController
@@ -210,7 +211,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
     public function update($id, UpdateCompanyPolicyMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['company',
+        $input = Arr::except($input, ['company',
                                         'policy_category',
                                         'companySystemID',
                                         'companyID',

@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ReportTemplateController
@@ -437,7 +438,7 @@ class ReportTemplateAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['template_type', 'Actions', 'DT_Row_Index']);
+        $input = Arr::except($input, ['template_type', 'Actions', 'DT_Row_Index']);
         $input = $this->convertArrayToValue($input);
         
         /** @var ReportTemplate $reportTemplate */

@@ -16,6 +16,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 
 /**
  * Class StockCountDetailController
@@ -259,7 +260,7 @@ class StockCountDetailAPIController extends AppBaseController
     public function update($id, UpdateStockCountDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['uom', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($input, ['uom', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToValue($input);
 
         /** @var StockCountDetail $stockCountDetail */

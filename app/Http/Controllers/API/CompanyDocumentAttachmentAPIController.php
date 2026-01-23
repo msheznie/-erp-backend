@@ -27,6 +27,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CompanyDocumentAttachmentController
@@ -109,7 +110,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = array_except($input, ['companySystemID','companyID','documentSystemID','documentID','timeStamp','company','document','access']);
+        $input = Arr::except($input, ['companySystemID','companyID','documentSystemID','documentID','timeStamp','company','document','access']);
 
         $input = $this->convertArrayToValue($input);
 

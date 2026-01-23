@@ -30,6 +30,7 @@ use App\Models\ItemMaster;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
@@ -426,7 +427,7 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
@@ -1343,7 +1344,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.document_added_to_sales_order', ['type' => $quotOrSales]),500);
         }
 
-        $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
+        $quotationMasterArray = Arr::except($quotationMasterData->toArray(),'isVatEligible');
 
         
         unset($quotationMasterArray['quotation_last_status']);
@@ -1444,7 +1445,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
-        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible','assetID','isFrom']);
+        $salesQuotationArray = Arr::except($salesQuotationArray,['quotation_last_status', 'isVatEligible','assetID','isFrom']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 
@@ -1983,7 +1984,7 @@ class QuotationMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

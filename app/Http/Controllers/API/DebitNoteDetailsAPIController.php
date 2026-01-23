@@ -29,6 +29,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class DebitNoteDetailsController
@@ -355,7 +356,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
     public function update($id, UpdateDebitNoteDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment']);
+        $input = Arr::except($input, ['segment']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 

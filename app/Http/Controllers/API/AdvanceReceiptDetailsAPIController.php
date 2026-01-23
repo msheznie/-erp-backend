@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class AdvanceReceiptDetailsController
@@ -378,7 +379,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $input = array_except($input, ['sales_order']);
+            $input = Arr::except($input, ['sales_order']);
             $input['custReceivePaymentAutoID'] = isset($input['custReceivePaymentAutoID']) ? $input['custReceivePaymentAutoID'] : 0;
             $input['soAdvPaymentID'] = isset($input['soAdvPaymentID']) ? $input['soAdvPaymentID'] : 0;
             $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWithoutFail($id);

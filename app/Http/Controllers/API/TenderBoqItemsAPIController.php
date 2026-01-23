@@ -25,6 +25,7 @@ use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
 use App\Services\SrmDocumentModifyService;
+use Illuminate\Support\Arr;
 
 /**
  * Class TenderBoqItemsController
@@ -525,7 +526,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $validation = $this->tenderBoqItemsRepository->checkValidUploadRequestParams($input);

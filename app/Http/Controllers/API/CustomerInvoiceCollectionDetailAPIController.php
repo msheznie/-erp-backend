@@ -25,6 +25,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceCollectionDetailController
@@ -248,7 +249,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceCollectionDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['modified_by']);
+        $input = Arr::except($input, ['modified_by']);
         $input = $this->convertArrayToValue($input);
         /** @var CustomerInvoiceCollectionDetail $customerInvoiceCollectionDetail */
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);

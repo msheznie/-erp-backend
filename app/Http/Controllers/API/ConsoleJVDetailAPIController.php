@@ -26,6 +26,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ConsoleJVDetailController
@@ -252,7 +253,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
     public function update($id, UpdateConsoleJVDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['segment','company','segmentList','glOption']);
+        $input = Arr::except($request->all(), ['segment','company','segmentList','glOption']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ConsoleJVDetail $consoleJVDetail */

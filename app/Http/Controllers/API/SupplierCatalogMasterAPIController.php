@@ -20,6 +20,7 @@ use Illuminate\Validation\Rule;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class SupplierCatalogMasterController
@@ -264,7 +265,7 @@ class SupplierCatalogMasterAPIController extends AppBaseController
     public function update($id, UpdateSupplierCatalogMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'created_by');
+        $input = Arr::except($input,'created_by');
         $messages = [
             'catalogID.required' => trans('custom.catalog_code_required')
         ];

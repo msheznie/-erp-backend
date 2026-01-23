@@ -68,6 +68,7 @@ use Response;
 use PHPExcel_IOFactory;
 use App\Models\ApprovalLevel;
 use App\Jobs\GenerateBankReconciliation;
+use Illuminate\Support\Arr;
 /**
  * Class BankReconciliationController
  * @package App\Http\Controllers\API
@@ -435,7 +436,7 @@ class BankReconciliationAPIController extends AppBaseController
     public function update($id, UpdateBankReconciliationAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
             'confirmed_by', 'confirmedByEmpSystemID']);
         /** @var BankReconciliation $bankReconciliation */
         $bankReconciliation = $this->bankReconciliationRepository->findWithoutFail($id);

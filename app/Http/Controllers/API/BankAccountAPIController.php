@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class BankAccountController
@@ -221,7 +222,7 @@ class BankAccountAPIController extends AppBaseController
     public function update($id, UpdateBankAccountAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'chart_of_account', 'amounts',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'chart_of_account', 'amounts',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'currency']);
         $input = $this->convertArrayToValue($input);
 

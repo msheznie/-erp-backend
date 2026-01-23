@@ -1951,7 +1951,7 @@ class PurchaseRequestAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by',
+        $input = Arr::except($input, ['created_by', 'confirmed_by',
             'priority_pdf', 'location_pdf', 'details', 'company', 'approved_by',
             'PRConfirmedBy', 'PRConfirmedByEmpName','currency_by',
             'PRConfirmedBySystemID', 'PRConfirmedDate', 'segment','requestedby']);

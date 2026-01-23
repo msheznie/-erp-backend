@@ -49,6 +49,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
 
 /**
  * Class ItemReturnMasterController
@@ -358,7 +359,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function update($id, UpdateItemReturnMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'finance_period_by', 'finance_year_by']);
 
         $input = $this->convertArrayToValue($input);

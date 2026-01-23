@@ -13,6 +13,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ChartOfAccountAllocationDetailController
@@ -250,7 +251,7 @@ class ChartOfAccountAllocationDetailAPIController extends AppBaseController
     public function update($id, UpdateChartOfAccountAllocationDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'segment');
+        $input = Arr::except($input,'segment');
         /** @var ChartOfAccountAllocationDetail $chartOfAccountAllocationDetail */
         $chartOfAccountAllocationDetail = $this->chartOfAccountAllocationDetailRepository->findWithoutFail($id);
 

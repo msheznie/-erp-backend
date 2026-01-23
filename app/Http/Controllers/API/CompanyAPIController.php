@@ -24,6 +24,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\SupplierCategory;
 use App\Models\SupplierGroup;
+use Illuminate\Support\Arr;
 
 use App\Models\CompanyPolicyMaster;
 use App\Models\CountryMaster;
@@ -598,7 +599,7 @@ class CompanyAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        $input = array_except($input, ['createdDateTime', 'timeStamp']); 
+        $input = Arr::except($input, ['createdDateTime', 'timeStamp']); 
 
         DB::beginTransaction();
         try {

@@ -52,6 +52,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 /**
  * Class BudgetTransferFormController
@@ -310,7 +311,7 @@ class BudgetTransferFormAPIController extends AppBaseController
     public function update($id, UpdateBudgetTransferFormAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'company','approved_by']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'company','approved_by']);
         $input = $this->convertArrayToValue($input);
         /** @var BudgetTransferForm $budgetTransferForm */
         $budgetTransferForm = $this->budgetTransferFormRepository->findWithoutFail($id);

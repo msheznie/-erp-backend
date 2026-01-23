@@ -62,6 +62,7 @@ use Carbon\Carbon;
 use Response;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpProjectMaster;
+use Illuminate\Support\Arr;
 
 /**
  * Class JvDetailController
@@ -315,7 +316,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount','line_segments']);
+        $input = Arr::except($input, ['segment', 'currency_by', 'console_company','chartofaccount','line_segments']);
         $input = $this->convertArrayToValue($input);
 
         $resultData = JournalVoucherService::updateJournalVoucherDetail($id, $input);

@@ -77,6 +77,7 @@ use App\Models\SupplierBlock;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use App\Models\CurrencyConversion;
+use Illuminate\Support\Arr;
 
 /**
  * Class DebitNoteController
@@ -529,7 +530,7 @@ class DebitNoteAPIController extends AppBaseController
     public function update($id, UpdateDebitNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee', 'rptcurrency', 'localcurrency']);
 
         $input = $this->convertArrayToValue($input);
@@ -1085,7 +1086,7 @@ class DebitNoteAPIController extends AppBaseController
     public function updateCurrency($id, UpdateDebitNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
 
         $input = $this->convertArrayToValue($input);
@@ -1509,7 +1510,7 @@ class DebitNoteAPIController extends AppBaseController
     public function updateDebiteNoteType($id, UpdateDebitNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
 
         $input = $this->convertArrayToValue($input);

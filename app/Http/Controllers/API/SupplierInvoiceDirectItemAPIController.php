@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
 use App\helper\TaxService;
+use Illuminate\Support\Arr;
 
 /**
  * Class SupplierInvoiceDirectItemController
@@ -336,7 +337,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
      */
     public function update($id, UpdateSupplierInvoiceDirectItemAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit', 'vat_sub_category');
+        $input = Arr::except($request->all(), 'unit', 'vat_sub_category');
 
         if (isset($input['vat_sub_category'])) {
             unset($input['vat_sub_category']);

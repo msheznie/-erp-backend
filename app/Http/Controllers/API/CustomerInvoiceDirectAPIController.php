@@ -108,6 +108,7 @@ use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
+use Illuminate\Support\Arr;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -1430,7 +1431,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $excelUpload = $input['excelUploadCustomerInvoice'];
-        $input = array_except($request->all(), 'excelUploadCustomerInvoice');
+        $input = Arr::except($request->all(), 'excelUploadCustomerInvoice');
         $input = $this->convertArrayToValue($input);
 
         $decodeFile = base64_decode($excelUpload[0]['file']);

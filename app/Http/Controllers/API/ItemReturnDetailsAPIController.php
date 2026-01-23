@@ -35,6 +35,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
@@ -421,7 +422,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
        
        
         $api_key = $request['api_key'];
-        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
+        $input = Arr::except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         

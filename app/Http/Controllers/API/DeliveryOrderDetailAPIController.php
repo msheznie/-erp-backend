@@ -34,6 +34,7 @@ use Response;
 use App\helper\ItemTracking;
 use Illuminate\Support\Facades\Storage;
 use Auth;
+use Illuminate\Support\Arr;
 /**
  * Class DeliveryOrderDetailController
  * @package App\Http\Controllers\API
@@ -533,7 +534,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
      */
     public function update($id, UpdateDeliveryOrderDetailAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits', 'quotation']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits', 'quotation']);
 
         $input = $this->convertArrayToValue($input);
 
@@ -1715,7 +1716,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

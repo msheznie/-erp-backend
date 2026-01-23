@@ -111,6 +111,7 @@ use DateTime;
 use App\Models\Tax;
 use App\Services\GeneralLedgerService;
 use App\Models\MolContribution;
+use Illuminate\Support\Arr;
 
 /**
  * Class BookInvSuppMasterController
@@ -457,7 +458,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function update($id, UpdateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['supplierTransactionCurrencyID'])) {
@@ -1585,7 +1586,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     public function updateCurrency($id, UpdateBookInvSuppMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice','employee']);
         $input = $this->convertArrayToValue($input);
 
@@ -3386,7 +3387,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             return $this->sendError(trans('custom.you_cannot_refer_back_this_supplier_invoice'));
         }
 
-        $supplierInvoiceArray = array_except($bookInvSuppMaster->toArray(), ['rcmAvailable', 'isVatEligible']);
+        $supplierInvoiceArray = Arr::except($bookInvSuppMaster->toArray(), ['rcmAvailable', 'isVatEligible']);
 
         BookInvSuppMasterRefferedBack::insert($supplierInvoiceArray);
 

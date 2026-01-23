@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceItemDetailsController
@@ -246,7 +247,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
         $input = $this->convertArrayToValue($input);
         $input['customerItemDetailID'] = $id;
 

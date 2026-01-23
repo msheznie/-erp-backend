@@ -85,6 +85,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerReceivePaymentController
@@ -320,7 +321,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'employeeID','companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee','bank_info']);
+        $input = Arr::except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee','bank_info']);
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
@@ -1353,7 +1354,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank','bank_info']);
+        $input = Arr::except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank','bank_info']);
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(

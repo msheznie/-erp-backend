@@ -27,6 +27,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 
 class AssetCreationService extends AppBaseController
 {
@@ -100,7 +101,7 @@ class AssetCreationService extends AppBaseController
     {
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
-        $input = array_except($input, 'itemImage');
+        $input = Arr::except($input, 'itemImage');
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
 
         // if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )

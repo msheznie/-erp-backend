@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class InventoryReclassificationController
@@ -331,7 +332,7 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function update($id, UpdateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'segment_by', 'warehouse_by']);
         $input = $this->convertArrayToValue($input);
 

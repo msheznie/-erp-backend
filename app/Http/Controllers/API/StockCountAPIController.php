@@ -45,6 +45,7 @@ use Response;
 use App\Traits\AuditTrial;
 use App\Jobs\StockCount\StockCountDetailJob;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 /**
  * Class StockCountController
  * @package App\Http\Controllers\API
@@ -425,7 +426,7 @@ class StockCountAPIController extends AppBaseController
     public function update($id, UpdateStockCountAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
 
         $input = $this->convertArrayToValue($input);

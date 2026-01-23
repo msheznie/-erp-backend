@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Models\CustomerMaster;
 use App\Models\CustomerAssigned;
+use Illuminate\Support\Arr;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -155,9 +156,9 @@ class CreatePaymentVoucher implements ShouldQueue
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($pdcChequeData['errors']) && empty($fieldErrors)) {
-                $finalArray = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                $finalArray = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
                 if (!is_null($pdcChequeDetails)) {
-                    $finalArray = array_add($finalArray,'pdcChequeDetails',$pdcChequeDetailsDataSets[$masterIndex]);
+                    $finalArray = Arr::add($finalArray,'pdcChequeDetails',$pdcChequeDetailsDataSets[$masterIndex]);
                 }
                 $masterDatasets[] = $finalArray;
             }

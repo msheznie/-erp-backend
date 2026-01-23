@@ -44,6 +44,7 @@ use App\helper\TaxService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
 
 /**
  * Class SalesReturnController
@@ -359,7 +360,7 @@ class SalesReturnAPIController extends AppBaseController
             return $this->sendError(trans('custom.sales_return_not_found'));
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','returnType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
+        $input = Arr::except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($salesReturn->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -638,7 +639,7 @@ class SalesReturnAPIController extends AppBaseController
                     'category' => '',
                     'amount' => $amount
                 );
-                $update = array_except($input,['confirmedYN']);
+                $update = Arr::except($input,['confirmedYN']);
                 $salesReturn = $this->salesReturnRepository->update($update, $id);
                 $confirm = Helper::confirmDocument($params);
                 if (!$confirm["success"]) {

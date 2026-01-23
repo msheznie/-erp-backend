@@ -25,6 +25,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerCurrencyController
@@ -119,7 +120,7 @@ class CustomerCurrencyAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
 
-        $input = array_except($input,['currency_master']);
+        $input = Arr::except($input,['currency_master']);
 
         $input = $this->convertArrayToValue($input);
 

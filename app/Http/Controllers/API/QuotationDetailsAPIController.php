@@ -34,6 +34,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
 use Response;
 use App\Services\Sales\QuotationService;
+use Illuminate\Support\Arr;
 
 /**
  * Class QuotationDetailsController
@@ -130,7 +131,7 @@ class QuotationDetailsAPIController extends AppBaseController
      */
     public function store(CreateQuotationDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'unit');
+        $input = Arr::except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
      

@@ -41,6 +41,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\AddBudgetDetails;
 use Carbon\CarbonPeriod;
+use Illuminate\Support\Arr;
 
 /**
  * Class BudjetdetailsController
@@ -789,7 +790,7 @@ class BudjetdetailsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['budgetExcelUpload'];
-            $input = array_except($request->all(), 'budgetExcelUpload');
+            $input = Arr::except($request->all(), 'budgetExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

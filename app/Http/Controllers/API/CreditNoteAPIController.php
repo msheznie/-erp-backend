@@ -67,6 +67,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CreditNoteController
@@ -370,7 +371,7 @@ class CreditNoteAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
 
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+        $input = Arr::except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
         /** @var CreditNote $creditNote */
@@ -650,7 +651,7 @@ class CreditNoteAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
 
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+        $input = Arr::except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
         if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {

@@ -27,6 +27,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentReferedHistory;
 use Response;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 /**
  * Class ContingencyBudgetPlanController
@@ -291,7 +292,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = array_except($input, ['currency_by', 'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate',]);
+        $input = Arr::except($input, ['currency_by', 'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate',]);
 
         $input = $this->convertArrayToValue($input);
 

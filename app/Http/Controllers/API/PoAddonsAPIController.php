@@ -24,6 +24,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PurchaseOrderDetails;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
 /**
  * Class PoAddonsController
  * @package App\Http\Controllers\API
@@ -246,7 +247,7 @@ class PoAddonsAPIController extends AppBaseController
                    
         $input = $request->all();
 
-        $input = array_except($input, ['category']);
+        $input = Arr::except($input, ['category']);
 
         $input = $this->convertArrayToValue($input);
 

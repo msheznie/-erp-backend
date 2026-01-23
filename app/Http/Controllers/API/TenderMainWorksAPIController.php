@@ -18,6 +18,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use Illuminate\Support\Arr;
 
 /**
  * Class TenderMainWorksController
@@ -359,7 +360,7 @@ class TenderMainWorksAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

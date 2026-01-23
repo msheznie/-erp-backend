@@ -61,6 +61,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\TaxService;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
 
 /**
  * Class PurchaseReturnController
@@ -407,7 +408,7 @@ class PurchaseReturnAPIController extends AppBaseController
     public function update($id, UpdatePurchaseReturnAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['confirmed_by', 'segment_by', 'location_by', 'finance_period_by', 'finance_year_by',
+        $input = Arr::except($input, ['confirmed_by', 'segment_by', 'location_by', 'finance_period_by', 'finance_year_by',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedDate', 'confirmedByName','supplier_by','currency_by']);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');

@@ -39,6 +39,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class MonthlyAdditionsMasterController
@@ -328,7 +329,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
     public function update($id, UpdateMonthlyAdditionsMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['employment_type', 'currency_by', 'confirmed_by']);
+        $input = Arr::except($input, ['employment_type', 'currency_by', 'confirmed_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */

@@ -49,6 +49,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class StockReceiveController
@@ -417,7 +418,7 @@ class StockReceiveAPIController extends AppBaseController
         $wareHouseFromError = array('type' => 'locationFrom');
         $wareHouseToError   = array('type' => 'locationTo');
         $serviceLineError   = array('type' => 'serviceLine');
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by','finance_period_by','finance_year_by','location_to_by','location_from_by','company_from','company_to']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'segment_by','finance_period_by','finance_year_by','location_to_by','location_from_by','company_from','company_to']);
         $input = $this->convertArrayToValue($input);
         /** @var StockReceive $stockReceive */
         $stockReceive = $this->stockReceiveRepository->findWithoutFail($id);

@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class AssetDisposalDetailController
@@ -332,7 +333,7 @@ class AssetDisposalDetailAPIController extends AppBaseController
     public function update($id, UpdateAssetDisposalDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['item_by', 'segment_by']);
+        $input = Arr::except($input, ['item_by', 'segment_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var AssetDisposalDetail $assetDisposalDetail */

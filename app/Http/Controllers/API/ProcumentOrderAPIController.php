@@ -175,6 +175,7 @@ use App\Models\DocumentCodeMaster;
 use App\Models\DocumentCodeTransaction;
 use App\Models\SupplierBlock;
 use App\Services\DocumentCodeConfigurationService;
+use Illuminate\Support\Arr;
 
 /**
  * Class ProcumentOrderController
@@ -577,7 +578,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $input['poDiscountPercentage'] = $poDiscountPercenrtageToUpdate;
 
-        $input = array_except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location','poDiscountPercentageToTooltip']);
+        $input = Arr::except($input, ['rcmAvailable', 'isVatEligible', 'isWoAmendAccess', 'created_by', 'confirmed_by', 'totalOrderAmount', 'segment', 'isAmendAccess', 'supplier', 'currency', 'isLocalSupplier', 'location','poDiscountPercentageToTooltip']);
         $input = $this->convertArrayToValue($input);
 
 
@@ -5148,7 +5149,7 @@ ORDER BY
             return $this->sendError(trans('custom.cannot_refer_back_po'));
         }
 
-        $purchaseOrderArray = array_except($purchaseOrder->toArray(), ['isWoAmendAccess', 'isVatEligible', 'rcmAvailable']);
+        $purchaseOrderArray = Arr::except($purchaseOrder->toArray(), ['isWoAmendAccess', 'isVatEligible', 'rcmAvailable']);
 
         $storePOMasterHistory = PurchaseOrderMasterRefferedHistory::insert($purchaseOrderArray);
 
@@ -9143,7 +9144,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

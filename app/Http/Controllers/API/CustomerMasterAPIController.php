@@ -84,6 +84,7 @@ use App\Models\SalesReturn;
 use App\Models\ItemIssueMaster;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerMasterController
@@ -632,7 +633,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
 
-        $input = array_except($input, ['final_approved_by']);
+        $input = Arr::except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
@@ -1056,7 +1057,7 @@ class CustomerMasterAPIController extends AppBaseController
             $excelUpload = $input['itemExcelUpload'];
 
             $input['companySystemIDFilter'] = $companySystemID;
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file'],true);

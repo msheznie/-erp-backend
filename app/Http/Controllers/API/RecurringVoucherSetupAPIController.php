@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class RecurringVoucherSetupController
@@ -324,7 +325,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
     public function update($id, UpdateRecurringVoucherSetupAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
         $input = $this->convertArrayToValue($input);
 
         $rrvMaster = $this->recurringVoucherSetupRepository->findWithoutFail($id);

@@ -37,6 +37,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Arr;
 /**
  * Class WarehouseMasterController
  * @package App\Http\Controllers\API
@@ -163,7 +164,7 @@ class WarehouseMasterAPIController extends AppBaseController
             $wareHouseImage = null;
         }
 
-        $input = array_except($input, ['wareHouseImage']);
+        $input = Arr::except($input, ['wareHouseImage']);
         $input = $this->convertArrayToValue($input);
         $entityName = trans('custom.warehouse');
         if(isset($input['isPosLocation']) && $input['isPosLocation'])
@@ -421,7 +422,7 @@ class WarehouseMasterAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422 );
         }
-        $data = array_except($input, ['wareHouseSystemCode', 'timestamp']);
+        $data = Arr::except($input, ['wareHouseSystemCode', 'timestamp']);
 
         $warehouseMaster = $this->warehouseMasterRepository->update($data, $input['wareHouseSystemCode']);
 

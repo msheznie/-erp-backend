@@ -13,6 +13,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 
 /**
  * Class QuotationStatusController
@@ -232,7 +233,7 @@ class QuotationStatusAPIController extends AppBaseController
     public function update($id, UpdateQuotationStatusAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['modified_by']);
+        $input = Arr::except($input, ['modified_by']);
         $input = $this->convertArrayToValue($input);
         
         /** @var QuotationStatus $quotationStatus */

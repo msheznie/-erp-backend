@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerCatalogMasterController
@@ -265,7 +266,7 @@ class CustomerCatalogMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerCatalogMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'created_by');
+        $input = Arr::except($input,'created_by');
         $messages = [
             'catalogID.required' => trans('custom.catalog_code_required')
         ];

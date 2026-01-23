@@ -9,6 +9,7 @@ use App\Repositories\BudgetTemplatePreColumnRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Response;
+use Illuminate\Support\Str;
 
 class BudgetTemplatePreColumnAPIController extends AppBaseController
 {
@@ -44,7 +45,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
 
         // Generate slug from column name if not provided
         if (empty($input['slug'])) {
-            $input['slug'] = str_slug($input['columnName'], '_');
+            $input['slug'] = Str::slug($input['columnName'], '_');
         }
 
         $input['isSystemPredefined'] = 0; // User created columns are not system predefined
@@ -90,7 +91,7 @@ class BudgetTemplatePreColumnAPIController extends AppBaseController
 
         // Generate slug from column name if not provided
         if (empty($input['slug'])) {
-            $input['slug'] = str_slug($input['columnName'], '_');
+            $input['slug'] = Str::slug($input['columnName'], '_');
         }
 
         $budgetTemplatePreColumn = $this->budgetTemplatePreColumnRepository->update($input, $id);

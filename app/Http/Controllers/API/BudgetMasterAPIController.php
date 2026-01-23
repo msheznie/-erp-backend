@@ -74,6 +74,7 @@ use Carbon\CarbonPeriod;
 use PHPExcel_IOFactory;
 use App\Models\FixedAssetMaster;
 use App\Models\logUploadBudget;
+use Illuminate\Support\Arr;
 
 /**
  * Class BudgetMasterController
@@ -393,7 +394,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function update($id, UpdateBudgetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['confirmed_by','segment_by', 'template_master', 'finance_year_by',
+        $input = Arr::except($input, ['confirmed_by','segment_by', 'template_master', 'finance_year_by',
                                         'confirmedByEmpSystemID','confirmedByEmpID','confirmedDate',]);
 
         $input = $this->convertArrayToValue($input);
@@ -4642,7 +4643,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $input = $request->all();
         $excelUpload = $input['excelUploadBudget'];
-        $input = array_except($request->all(), 'excelUploadBudget');
+        $input = Arr::except($request->all(), 'excelUploadBudget');
         $input = $this->convertArrayToValue($input);
 
         $decodeFile = base64_decode($excelUpload[0]['file']);

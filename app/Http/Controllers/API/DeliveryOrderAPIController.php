@@ -58,6 +58,7 @@ use App\Services\ValidateDocumentAmend;
 use App\Services\DeliveryOrderServices;
 use App\Models\StockCount;
 use App\Models\StockAdjustment;
+use Illuminate\Support\Arr;
 
 /**
  * Class DeliveryOrderController
@@ -412,7 +413,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
 
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID','salesType'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
+        $input = Arr::except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -687,7 +688,7 @@ class DeliveryOrderAPIController extends AppBaseController
             );
 
 
-            $update = array_except($input,['confirmedYN', 'tax']);
+            $update = Arr::except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
             $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
@@ -1335,7 +1336,7 @@ WHERE
             return $this->sendError(trans('custom.you_cannot_amend_this_delivery_order'));
         }
 
-        $deliveryOrderArray = array_except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
+        $deliveryOrderArray = Arr::except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
 
         $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
 

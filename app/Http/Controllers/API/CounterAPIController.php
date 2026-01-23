@@ -22,6 +22,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 
 /**
@@ -256,7 +257,7 @@ class CounterAPIController extends AppBaseController
     public function update($id, UpdateCounterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['warehouse']);
+        $input = Arr::except($input, ['warehouse']);
         $input = $this->convertArrayToValue($input);
         /** @var Counter $counter */
         $counter = $this->counterRepository->findWithoutFail($id);

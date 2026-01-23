@@ -75,6 +75,7 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
 use App\Models\WarehouseItems;
+use Illuminate\Support\Arr;
 
 /**
  * Class ItemMasterController
@@ -650,7 +651,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -1011,7 +1012,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         unset($input['categoryType']);
 
-        $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
+        $input = Arr::except($input,['finance_sub_category','company','specification','final_approved_by']);
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -1946,7 +1947,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';

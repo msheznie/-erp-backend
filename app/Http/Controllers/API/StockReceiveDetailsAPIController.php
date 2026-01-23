@@ -26,6 +26,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class StockReceiveDetailsController
@@ -228,7 +229,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveDetailsAPIRequest $request)
     {
 
-        $input = array_except($request->all(), ['unit_by','item_by']);
+        $input = Arr::except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);

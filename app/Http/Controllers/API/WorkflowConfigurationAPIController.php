@@ -15,6 +15,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class WorkflowConfigurationController
@@ -144,7 +145,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             return $this->sendError(trans('custom.workflow_name_already_exists_please_enter_a_unique'), 500);
         }
 
-        $data = array_except($input, ['hodActions']);
+        $data = Arr::except($input, ['hodActions']);
         $data = $this->convertArrayToValue($data);
 
         $data['isActive'] = 0;
@@ -336,7 +337,7 @@ class WorkflowConfigurationAPIController extends AppBaseController
             return $this->sendError(trans('custom.workflow_name_already_exists_please_enter_a_unique'), 500);
         }
 
-        $data = array_except($input, ['hodActions']);
+        $data = Arr::except($input, ['hodActions']);
         $data = $this->convertArrayToValue($data);
 
         /** @var WorkflowConfiguration $workflowConfiguration */

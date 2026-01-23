@@ -47,6 +47,7 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Exceptions\CustomerInvoiceException;
 use App\Models\ApprovalLevel;
 use App\Models\DocumentMaster;
+use Illuminate\Support\Arr;
 
 class CustomerInvoiceService
 {
@@ -972,7 +973,7 @@ class CustomerInvoiceService
     {
 
         $input = $customerInvoiceDirectDetails;
-        $input = array_except($input, array('unit', 'department','performadetails','contract', 'project'));
+        $input = Arr::except($input, array('unit', 'department','performadetails','contract', 'project'));
         $AppBaseController = new AppBaseController();
         $input = $AppBaseController->convertArrayToValue($input);
         $id = $input['custInvDirDetAutoID'];

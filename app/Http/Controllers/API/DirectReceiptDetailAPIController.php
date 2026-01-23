@@ -31,6 +31,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\Models\TaxVatCategories;
+use Illuminate\Support\Arr;
 /**
  * Class DirectReceiptDetailController
  * @package App\Http\Controllers\API
@@ -508,11 +509,11 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $input = $request->all();
         $updateKey =isset($input['updateKey']) ? $input['updateKey'] : '';
 
-        $input = array_except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType']);
+        $input = Arr::except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType']);
 
         $input = $this->convertArrayToValue($input);
         $id = $input['directReceiptDetailsID'];
-        array_except($input, 'directReceiptDetailsID');
+        Arr::except($input, 'directReceiptDetailsID');
 
         $detail = DirectReceiptDetail::where('directReceiptDetailsID', $id)->first();
 

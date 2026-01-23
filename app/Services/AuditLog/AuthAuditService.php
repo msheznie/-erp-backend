@@ -7,6 +7,7 @@ use App\Models\AccessTokens;
 use App\Models\ERPLanguageMaster;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AuthAuditService
 {

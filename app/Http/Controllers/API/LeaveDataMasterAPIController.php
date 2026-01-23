@@ -51,6 +51,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Jobs\PushNotification;
+use Illuminate\Support\Arr;
 
 /**
  * Class LeaveDataMasterController
@@ -622,7 +623,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             }
 
             $leaveArray = $leaveDataMaster->toArray();
-            $leaveArray = array_except($leaveArray,['approvedYN','approvedby','approvedDate','hrapprovalYN','hrapprovedby','hrapprovedDate','leaveType',
+            $leaveArray = Arr::except($leaveArray,['approvedYN','approvedby','approvedDate','hrapprovalYN','hrapprovedby','hrapprovedDate','leaveType',
                 'modifieduser','modifiedpc','createduserGroup','createdpc','timestamp']);
 
             $employee = Employee::select('empTitle', 'empFullName')->where('empID', $leaveDataMaster->empID)->first();
@@ -669,7 +670,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
             // remove array elements from details array, because those elemts set on availability array
 
-            $leaveDataDetail = array_except($leaveDataDetail,['leavemasterID', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays']);
+            $leaveDataDetail = Arr::except($leaveDataDetail,['leavemasterID', 'noOfWorkingDays', 'noOfNonWorkingDays', 'totalDays']);
 
             //get application type (New leave application or Claim)
             $application_type = collect($leaveDataMaster->application_type)->only(['Type'])->toArray();

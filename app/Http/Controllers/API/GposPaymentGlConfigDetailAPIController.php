@@ -23,6 +23,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class GposPaymentGlConfigDetailController
@@ -260,7 +261,7 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
     public function update($id, UpdateGposPaymentGlConfigDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['warehouse','account','type']);
+        $input = Arr::except($input, ['warehouse','account','type']);
         $input = $this->convertArrayToValue($input);
         /** @var GposPaymentGlConfigDetail $gposPaymentGlConfigDetail */
         $gposPaymentGlConfigDetail = $this->gposPaymentGlConfigDetailRepository->findWithoutFail($id);

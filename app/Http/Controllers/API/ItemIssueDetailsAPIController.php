@@ -59,6 +59,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
+use Illuminate\Support\Arr;
 
 /**
  * Class ItemIssueDetailsController
@@ -914,7 +915,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
     public function update($id, UpdateItemIssueDetailsAPIRequest $request)
     {
         $message = trans('custom.item_updated_successfully');
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty','status' => "stock");
         /** @var ItemIssueDetails $itemIssueDetails */
@@ -1601,7 +1602,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input = $request->all();
 
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);

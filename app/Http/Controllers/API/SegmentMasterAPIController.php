@@ -67,6 +67,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditLogsTrait;
+use Illuminate\Support\Arr;
 
 /**
  * Class SegmentMasterController
@@ -1000,7 +1001,7 @@ class SegmentMasterAPIController extends AppBaseController
             $input['confirmed_date'] = $input['timeStamp'];
         }
 
-        $data = array_except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
+        $data = Arr::except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
 
         $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
