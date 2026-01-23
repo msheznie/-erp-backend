@@ -103,10 +103,10 @@ class Kernel extends ConsoleKernel
             ->dailyAt('00:00')
             ->withoutOverlapping();
 
-      /*  $schedule->command('sendTenderBidOpeningReminders')
+        $schedule->command('sendTenderBidOpeningReminders')
             ->timezone('Asia/Muscat')
             ->everyMinute()
-            ->withoutOverlapping();*/
+            ->withoutOverlapping();
     }
 
     /**
