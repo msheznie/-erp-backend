@@ -309,4 +309,10 @@ Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySu
 Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
 Route::post('deleteAllBidMinimumApprovalDetails', 'TenderBidEmployeeDetailsController@deleteAllBidMinimumApprovalDetails')->name("Delete All Bid Minimum Approval Details");
 Route::post('deleteAllTenderUserAccess', 'TenderBidEmployeeDetailsController@deleteAllTenderUserAccess')->name("Delete All Tender User Access");
+Route::post('getAllDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster');
+Route::post('getDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData');
+Route::resource('document_master', 'SRMDocumentMasterAPIController');
+Route::post('documentMasterCrud', 'SRMDocumentMasterAPIController@documentMasterCrud');
+Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster');
+Route::post('removeDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete');
 /*TenderPaymentDetailAPIController*/
