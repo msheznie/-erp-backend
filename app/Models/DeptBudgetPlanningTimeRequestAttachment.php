@@ -37,7 +37,7 @@ class DeptBudgetPlanningTimeRequestAttachment extends Model
      */
     public function uploader()
     {
-        return $this->belongsTo(\App\User::class, 'uploaded_by');
+        return $this->belongsTo(\App\Models\User::class, 'uploaded_by');
     }
 
     /**
