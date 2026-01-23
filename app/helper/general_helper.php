@@ -9066,17 +9066,19 @@ class Helper
         return 'false';
     }
 
-    public static function getFileUrlFromS3($key,$minutes ='+60 minutes')
+    public static function getFileUrlFromS3($key)
     {
-        if ($key) {
+        if($key) {            
+            //return Storage::disk('s3')->url($key);
+
             $s3 = Storage::disk('s3');
-            $client = $s3->getDriver()->getAdapter()->getClient();
+            $client = $s3->getClient();
             $bucket = Config::get('filesystems.disks.s3.bucket');
             $command = $client->getCommand('GetObject', [
                 'Bucket' => $bucket,
                 'Key' => $key
             ]);
-            $request = $client->createPresignedRequest($command, $minutes);
+            $request = $client->createPresignedRequest($command, '+60 minutes');
             return (string)$request->getUri();
         }
         return '';

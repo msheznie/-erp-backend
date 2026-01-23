@@ -463,8 +463,7 @@ class ProcumentOrder extends Model
         'categoryID'  => 'integer',
         'upload_job_status'  => 'integer',
         'successDetailsCount'  => 'integer',
-        'excelRowCount'  => 'integer'
-        
+        'excelRowCount'  => 'integer',
         'deleted_at' => 'datetime',
     ];
 
