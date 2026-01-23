@@ -22,6 +22,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class LogisticShippingStatusController
@@ -122,7 +123,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
 

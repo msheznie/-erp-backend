@@ -20,6 +20,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateStageCustomerInvoice implements ShouldQueue
 {
@@ -272,13 +273,13 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
 
 
-                $confirm = \Helper::confirmDocumentForApi($params);
+                $confirm = Helper::confirmDocumentForApi($params);
 
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->get();
                 foreach ($documentApproveds as $documentApproved) {
                     $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
                     $documentApproved["db"] = $this->dataBase;
-                    \Helper::approveDocumentForApi($documentApproved);
+                    Helper::approveDocumentForApi($documentApproved);
                 }
 
 

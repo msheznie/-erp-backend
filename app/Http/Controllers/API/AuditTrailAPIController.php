@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
 use App\Services\AuditLog\EmployeeAuditReportService;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -486,7 +487,7 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.user_audit_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
@@ -563,7 +564,7 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.event_tracking_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
@@ -832,7 +833,7 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.navigation_access_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {

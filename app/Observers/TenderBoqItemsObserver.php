@@ -15,6 +15,7 @@ use App\Models\PricingScheduleMaster;
 use App\Models\TenderBidFormatDetail;
 use App\Models\PricingScheduleMasterEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class TenderBoqItemsObserver
 {
@@ -31,7 +32,7 @@ class TenderBoqItemsObserver
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         if($obj && isset($employee))
         {
@@ -95,7 +96,7 @@ class TenderBoqItemsObserver
         
         $tenderObj = TenderDetails::getTenderMasterData($tender_id);
         $obj = TenderDetails::validateTenderEdit($tender_id);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
        
         if($obj && isset($employee) && !empty($employee))
@@ -147,7 +148,7 @@ class TenderBoqItemsObserver
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if($obj && isset($employee))
         {   
             $sheduleDetail = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->orderBy('id','desc')->first();
@@ -215,7 +216,7 @@ class TenderBoqItemsObserver
         $result = PricingScheduleMaster::where('id',$details->getAttribute('pricing_schedule_master_id'))->first();
         $tenderObj = TenderMaster::where('id',$details->getAttribute('tender_id'))->first();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
         $data1['tender_id'] = $details->getAttribute('tender_id');
         $data1['scheduler_name'] = $result->getAttribute('scheduler_name');

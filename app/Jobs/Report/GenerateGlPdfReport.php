@@ -16,6 +16,7 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
 use File;
+use App\helper\Helper;
 
 class GenerateGlPdfReport implements ShouldQueue
 {
@@ -69,7 +70,7 @@ class GenerateGlPdfReport implements ShouldQueue
         CommonJobService::db_switch($db);
         
 
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $checkIsGroup = Company::find($request->companySystemID);
         $data = array();
 
@@ -128,8 +129,8 @@ class GenerateGlPdfReport implements ShouldQueue
             'decimalPlaceRpt' => $decimalPlaceRpt,
             'currencyRpt' => $currencyRpt,
             'reportDate' => date('d/m/Y H:i:s A'),
-            'fromDate' => \Helper::dateFormat($request->fromDate),
-            'toDate' => \Helper::dateFormat($request->toDate),
+            'fromDate' => Helper::dateFormat($request->fromDate),
+            'toDate' => Helper::dateFormat($request->toDate),
             'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
             'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
             'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),

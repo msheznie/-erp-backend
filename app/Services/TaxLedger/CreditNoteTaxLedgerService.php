@@ -41,6 +41,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class CreditNoteTaxLedgerService
 {
@@ -59,10 +60,10 @@ class CreditNoteTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -82,11 +83,11 @@ class CreditNoteTaxLedgerService
         $ledgerData['partyID'] = $masterData->customerID;
         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
-        $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->customerCurrencyID, $masterData->customerCurrencyID, $masterData->creditAmountTrans);
+        $currencyConversionAmount = Helper::currencyConversion($masterData->companySystemID, $masterData->customerCurrencyID, $masterData->customerCurrencyID, $masterData->creditAmountTrans);
 
-        $ledgerData['documentTransAmount'] = \Helper::roundValue($masterData->creditAmountTrans);
-        $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
-        $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
+        $ledgerData['documentTransAmount'] = Helper::roundValue($masterData->creditAmountTrans);
+        $ledgerData['documentLocalAmount'] = Helper::roundValue($currencyConversionAmount['localAmount']);
+        $ledgerData['documentReportingAmount'] = Helper::roundValue($currencyConversionAmount['reportingAmount']);
             
 
         $details = CreditNoteDetails::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,creditAmountCurrencyER as transCurrencyER')

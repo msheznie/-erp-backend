@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Jobs\AddBudgetDetails;
 use Carbon\CarbonPeriod;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BudjetdetailsController
@@ -270,9 +271,9 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
 
-        $currencyConvection = \Helper::currencyConversion($budjetdetails->companySystemID, $reportingCurrencyID, $reportingCurrencyID, $input['budjetAmtRpt']);
+        $currencyConvection = Helper::currencyConversion($budjetdetails->companySystemID, $reportingCurrencyID, $reportingCurrencyID, $input['budjetAmtRpt']);
 
-        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+        $input['budjetAmtLocal'] = Helper::roundValue($currencyConvection['localAmount']);
         if ($input['budjetAmtRpt'] < 0) {
             $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
         }
@@ -691,7 +692,7 @@ class BudjetdetailsAPIController extends AppBaseController
                 $q->with('subcategory');
             }])->OfMaster($budgetMaster->templateMasterID)->whereNull('masterID')->orderBy('sortOrder')->get();
 
-        $currencyData = \Helper::companyCurrency($budgetMaster->companySystemID);
+        $currencyData = Helper::companyCurrency($budgetMaster->companySystemID);
 
         $x = 0;
 
@@ -740,9 +741,9 @@ class BudjetdetailsAPIController extends AppBaseController
 
             $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
 
-            $currencyConvection = \Helper::currencyConversion($item['companySystemID'], $reportingCurrencyID, $reportingCurrencyID, $item['budjetAmtRpt']);
+            $currencyConvection = Helper::currencyConversion($item['companySystemID'], $reportingCurrencyID, $reportingCurrencyID, $item['budjetAmtRpt']);
 
-            $item['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+            $item['budjetAmtLocal'] = Helper::roundValue($currencyConvection['localAmount']);
             if ($item['budjetAmtRpt'] < 0) {
                 $item['budjetAmtLocal'] = abs($item['budjetAmtLocal']) * -1;
             }
@@ -915,8 +916,8 @@ class BudjetdetailsAPIController extends AppBaseController
 
         $reportingCurrencyID = ($companyData) ? $companyData->reportingCurrency : 2;
 
-        $currencyConvection = \Helper::currencyConversion($companySystemID, $reportingCurrencyID, $reportingCurrencyID, $budjetAmtRpt);
-        $input['budjetAmtLocal'] = \Helper::roundValue($currencyConvection['localAmount']);
+        $currencyConvection = Helper::currencyConversion($companySystemID, $reportingCurrencyID, $reportingCurrencyID, $budjetAmtRpt);
+        $input['budjetAmtLocal'] = Helper::roundValue($currencyConvection['localAmount']);
 
         if ($budjetAmtRpt < 0) {
             $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;

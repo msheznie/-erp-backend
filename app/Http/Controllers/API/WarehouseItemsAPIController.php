@@ -29,6 +29,7 @@ use App\Models\ItemBatch;
 use App\Models\ItemMaster;
 use App\Models\ItemSerial;
 use App\Models\ErpItemLedger;
+use App\helper\Helper;
 
 /**
  * Class WarehouseItemsController
@@ -490,8 +491,8 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
         foreach ($companyIds as $companyId) {
-            if (\Helper::checkIsCompanyGroup($companyId)) {
-                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+            if (Helper::checkIsCompanyGroup($companyId)) {
+                $childCompanies = array_merge($childCompanies, Helper::getGroupCompany($companyId));
             } else {
                 $childCompanies[] = $companyId;
             }

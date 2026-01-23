@@ -106,7 +106,7 @@ class CreditNoteAPIService extends AppBaseController
             ];
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -128,8 +128,8 @@ class CreditNoteAPIService extends AppBaseController
             $input['createdUserSystemID'] = $employee->employeeSystemID;
         }
         else{
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-            $input['createdUserID'] = \Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
         }
 
 
@@ -154,7 +154,7 @@ class CreditNoteAPIService extends AppBaseController
         $master = CreditNote::select('*')->where('creditNoteAutoID', $creditNoteAutoID)->first();
         $myCurr = $master->customerCurrencyID;               /*currencyID*/
         //$companyCurrency = \Helper::companyCurrency($myCurr);
-        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $decimal = Helper::getCurrencyDecimalPlace($myCurr);
         $x = 0;
 
 
@@ -272,14 +272,14 @@ class CreditNoteAPIService extends AppBaseController
         }
 
         $myCurr = $master->customerCurrencyID;
-        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $decimal = Helper::getCurrencyDecimalPlace($myCurr);
 
         $input['creditAmountCurrency'] = $master->customerCurrencyID;
         $input['creditAmountCurrencyER'] = 1;
         $totalAmount = $input['creditAmount'];
         $input['creditAmount'] = round($input['creditAmount'], $decimal);
         /**/
-        $currency = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $totalAmount);
+        $currency = Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $totalAmount);
         $input["comRptAmount"] = $currency['reportingAmount'];
         $input["localAmount"] = $currency['localAmount'];
 
@@ -291,31 +291,31 @@ class CreditNoteAPIService extends AppBaseController
 
 
         if($policy == true){
-            $input['localAmount']        = \Helper::roundValue($input['creditAmount'] / $master->localCurrencyER);
-            $input['comRptAmount']        = \Helper::roundValue($input['creditAmount'] / $master->companyReportingER);
+            $input['localAmount']        = Helper::roundValue($input['creditAmount'] / $master->localCurrencyER);
+            $input['comRptAmount']        = Helper::roundValue($input['creditAmount'] / $master->companyReportingER);
             $input['localCurrencyER' ]    = $master->localCurrencyER;
             $input['comRptCurrencyER']    = $master->companyReportingER;
         }
 
         // vat amount
         $vatAmount = isset($input['VATAmount'])?$input['VATAmount']:0;
-        $currencyVAT = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
+        $currencyVAT = Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $vatAmount);
         if($policy == true) {
-            $input["VATAmountRpt"] = \Helper::roundValue($vatAmount/$master->companyReportingER);
-            $input["VATAmountLocal"] = \Helper::roundValue($vatAmount/$master->localCurrencyER);
+            $input["VATAmountRpt"] = Helper::roundValue($vatAmount/$master->companyReportingER);
+            $input["VATAmountLocal"] = Helper::roundValue($vatAmount/$master->localCurrencyER);
         } if($policy == false) {
-            $input["VATAmountRpt"] = \Helper::roundValue($currencyVAT['reportingAmount']);
-            $input["VATAmountLocal"] = \Helper::roundValue($currencyVAT['localAmount']);
+            $input["VATAmountRpt"] = Helper::roundValue($currencyVAT['reportingAmount']);
+            $input["VATAmountLocal"] = Helper::roundValue($currencyVAT['localAmount']);
         }
-        $input["VATAmount"] = \Helper::roundValue($vatAmount);
+        $input["VATAmount"] = Helper::roundValue($vatAmount);
         // net amount
         $netAmount = isset($input['netAmount'])?$input['netAmount']:0;
-        $currencyNet = \Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
+        $currencyNet = Helper::convertAmountToLocalRpt(19, $detail->creditNoteAutoID, $netAmount);
 
 
         if($policy == true) {
-            $input["netAmountRpt"] = \Helper::roundValue($netAmount/$master->companyReportingER);
-            $input["netAmountLocal"] = \Helper::roundValue($netAmount/$master->localCurrencyER);
+            $input["netAmountRpt"] = Helper::roundValue($netAmount/$master->companyReportingER);
+            $input["netAmountLocal"] = Helper::roundValue($netAmount/$master->localCurrencyER);
         }
         if($policy == false) {
         $input["netAmountRpt"] = $currencyNet['reportingAmount'];
@@ -397,7 +397,7 @@ class CreditNoteAPIService extends AppBaseController
         $input['departmentSystemID'] = 4;
 
         /*financial Year check*/
-        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYearCheck = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
             return [
                 'status' => false,
@@ -406,7 +406,7 @@ class CreditNoteAPIService extends AppBaseController
             ];
         }
         /*financial Period check*/
-        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+        $companyFinancePeriodCheck = Helper::companyFinancePeriodCheck($input);
         if (!$companyFinancePeriodCheck["success"]) {
             return [
                 'status' => false,
@@ -421,7 +421,7 @@ class CreditNoteAPIService extends AppBaseController
 
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
             $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                 ->where('companyPolicyCategoryID', 67)
                 ->where('isYesNO', 1)
@@ -466,19 +466,19 @@ class CreditNoteAPIService extends AppBaseController
                                             ->where('creditNoteAutoID', $id)
                                             ->first();
 
-        $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
-        $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
-        $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+        $input['creditAmountTrans'] = Helper::roundValue($totalAmount->creditAmountTrans);
+        $input['creditAmountLocal'] = Helper::roundValue($totalAmount->creditAmountLocal);
+        $input['creditAmountRpt'] = Helper::roundValue($totalAmount->creditAmountRpt);
 
 
-        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
-        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
-        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+        $input['VATAmount'] = Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = Helper::roundValue($totalAmount->VATAmountRpt);
 
 
-        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
-        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
-        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+        $input['netAmount'] = Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = Helper::roundValue($totalAmount->netAmountRpt);
 
         $input['customerCurrencyER'] = 1;
 
@@ -638,7 +638,7 @@ class CreditNoteAPIService extends AppBaseController
                 'amount' => $input['creditAmountTrans'],
                 'isAutoCreateDocument' => $input['isAutoCreateDocument']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,
@@ -657,8 +657,8 @@ class CreditNoteAPIService extends AppBaseController
             $input['modifiedUser'] = $employee->empID;
         }
         else{
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
         }
 
         DB::beginTransaction();

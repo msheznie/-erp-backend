@@ -18,6 +18,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DocumentMaster;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 class DocumentControlAPIController extends AppBaseController
 {
@@ -25,8 +26,8 @@ class DocumentControlAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -66,8 +67,8 @@ class DocumentControlAPIController extends AppBaseController
         $documents = (array)$request->documents;
         $financialYearID = $request->yearID;
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }

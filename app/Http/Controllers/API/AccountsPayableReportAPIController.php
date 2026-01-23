@@ -94,8 +94,8 @@ class AccountsPayableReportAPIController extends AppBaseController
    
 
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -140,7 +140,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $allAc)->get();
 
-            $departments = \Helper::getCompanyServiceline($selectedCompanyId);
+            $departments = Helper::getCompanyServiceline($selectedCompanyId);
 
             $filterSuppliers = AccountsPayableLedger::whereIN('companySystemID', $companiesByGroup)
                 ->select('supplierCodeSystem')
@@ -655,7 +655,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -710,7 +710,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -747,7 +747,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -780,7 +780,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -849,7 +849,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     'balanceRptAmount' => 0,
                 );
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
                         $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1052,7 +1052,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 foreach ($output as $val) {
                                     $data[$x][trans('custom.company_id')] = $val->companyID;
                                     $data[$x][trans('custom.company_name')] = $val->CompanyName;
-                                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                                     $data[$x][trans('custom.payment_type')] = $val->PaymentType;
                                     $data[$x][trans('custom.payment_document_number')] = $val->documentCode;
                                     $data[$x][trans('custom.supplier_code')] = $val->supplierCode;
@@ -1100,7 +1100,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 foreach ($output as $val) {
                                     $data[$x][trans('custom.company_id')] = $val->companyID;
                                     $data[$x][trans('custom.company_name')] = $val->CompanyName;
-                                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                                     $data[$x][trans('custom.payment_document_number')] = $val->documentCode;
                                     $data[$x][trans('custom.gl_code')] = $val->glCode;
                                     $data[$x][trans('custom.account_description')] = $val->AccountDescription;
@@ -1176,16 +1176,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 $data[$x][trans('custom.company_id')] = $val->companyID;
                                 $data[$x][trans('custom.company_name')] = $val->CompanyName;
                                 $data[$x][trans('custom.bpvcode')] = $val->BPVcode;
-                                $data[$x][trans('custom.doc_date')] = \Helper::dateFormat($val->BPVdate);
-                                $data[$x][trans('custom.doc_confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                                $data[$x][trans('custom.doc_date')] = Helper::dateFormat($val->BPVdate);
+                                $data[$x][trans('custom.doc_confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                                 $data[$x][trans('custom.payee_name')] = $val->PayeeName;
                                 $data[$x][trans('custom.credit_period')] = $val->creditPeriod;
                                 $data[$x][trans('custom.bank')] = $val->bankName;
                                 $data[$x][trans('custom.bank_account_no')] = $val->AccountNo;
                                 $data[$x][trans('custom.cheque_no')] = $val->BPVchequeNo;
-                                $data[$x][trans('custom.cheque_date')] = \Helper::dateFormat($val->ChequeDate);
+                                $data[$x][trans('custom.cheque_date')] = Helper::dateFormat($val->ChequeDate);
                                 $data[$x][trans('custom.cheque_printed_by')] = $val->chequePrintedByEmpName;
-                                $data[$x][trans('custom.cheque_printed_date')] = \Helper::dateFormat($val->chequePrintedDate);
+                                $data[$x][trans('custom.cheque_printed_date')] = Helper::dateFormat($val->chequePrintedDate);
 
                                 if ($currency == 1) {
                                     $data[$x][trans('custom.currency')] = $val->documentTransCurrency;
@@ -1903,7 +1903,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2152,7 +2152,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2470,7 +2470,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2750,7 +2750,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3431,7 +3431,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3499,7 +3499,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3884,7 +3884,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -4276,7 +4276,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -4653,7 +4653,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5033,7 +5033,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5102,7 +5102,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5390,7 +5390,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5462,7 +5462,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5709,7 +5709,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -5981,7 +5981,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6376,7 +6376,7 @@ ORDER BY
         $languageCode = app()->getLocale() ?: 'en';
         $reportID = $request->reportID;
         $db = isset($request->db) ? $request->db : "";
-        $employeeID = \Helper::getEmployeeSystemID();
+        $employeeID = Helper::getEmployeeSystemID();
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         AccountsPayableReportJob::dispatch($db, $request, [$employeeID],$languageCode)->onQueue('reporting');
         return $this->sendResponse([], trans('custom.supplier_statement_PDF_report'));
@@ -6416,7 +6416,7 @@ ORDER BY
         $totalArray['totalPrepayment'] = $totalPrepayment;
         $totalArray['totalNetOutstanding'] = $totalNetOutstanding;
 
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'sentEmail' => $sentEmail, 'totalArray' => $totalArray);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => Helper::dateFormat($request->fromDate), 'sentEmail' => $sentEmail, 'totalArray' => $totalArray);
 
         $html = view('print.supplier_statement_details', $dataArr);
 
@@ -6452,7 +6452,7 @@ ORDER BY
             }
         }
         $languageCode = app()->getLocale() ?: 'en';
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => $sentEmail, 'lang' => $languageCode);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => $sentEmail, 'lang' => $languageCode);
 
         $html = view('print.supplier_statement', $dataArr);
 
@@ -6682,7 +6682,7 @@ ORDER BY
             }
         }
         $languageCode = app()->getLocale() ?: 'en';
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'companylogo' => $companyLogo, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'lang' => $languageCode);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount, 'companylogo' => $companyLogo, 'fromDate' => Helper::dateFormat($request->fromDate), 'toDate' => Helper::dateFormat($request->toDate), 'lang' => $languageCode);
         
         $html = view('print.supplier_ledger', $dataArr);
 

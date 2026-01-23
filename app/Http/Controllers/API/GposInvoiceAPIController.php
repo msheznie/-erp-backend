@@ -34,6 +34,7 @@ use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class GposInvoiceController
@@ -195,12 +196,12 @@ class GposInvoiceAPIController extends AppBaseController
                 return $this->sendError(trans('custom.company_not_found'), 500);
             }
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $invoiceMasterData['segmentID'] = '';
             $invoiceMasterData['segmentCode'] = '';
             $invoiceMasterData['companySystemID'] = $input['companySystemID'];
-            $invoiceMasterData['companyID'] = \Helper::getCompanyById($input['companySystemID']);
+            $invoiceMasterData['companyID'] = Helper::getCompanyById($input['companySystemID']);
             $invoiceMasterData['documentSystemID'] = 67;
             $invoiceMasterData['documentID'] = 'GPOS';
 
@@ -412,7 +413,7 @@ class GposInvoiceAPIController extends AppBaseController
                         $temItem['companyReportingCurrencyID'] = $posInvoices->companyReportingCurrencyID;
                         $temItem['companyReportingCurrency'] = $posInvoices->companyReportingCurrency;
 
-                        $currencyConvert = \Helper::convertAmountToLocalRpt(208, $posInvoices->invoiceID, $item['netTotal']);
+                        $currencyConvert = Helper::convertAmountToLocalRpt(208, $posInvoices->invoiceID, $item['netTotal']);
                         $temItem['companyReportingAmount'] = round($currencyConvert['reportingAmount'], $posInvoices->companyLocalCurrencyDecimalPlaces);
 
                         $temItem['companyReportingCurrencyDecimalPlaces'] = $posInvoices->companyReportingCurrencyDecimalPlaces;
@@ -606,7 +607,7 @@ class GposInvoiceAPIController extends AppBaseController
             if($gposInvoice->isVoid == 1){
                 return $this->sendError(trans('custom.invoice_already_voided'));
             }
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             $input['voidBy'] = $employee->employeeSystemID;
             $input['voidDatetime'] = now();
         }

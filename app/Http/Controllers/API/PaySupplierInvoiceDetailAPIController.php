@@ -402,8 +402,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["paymentBalancedAmount"] = $paymentBalancedAmount - (float) preg_replace("/[^0-9.]/", "",$supplierPaymentAmount);
         }       
 
-        $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], $input["supplierPaymentAmount"]);
-        $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
+        $conversionAmount = Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], $input["supplierPaymentAmount"]);
+        $input["paymentSupplierDefaultAmount"] = Helper::roundValue($conversionAmount["defaultAmount"]);
         $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
         $input["paymentComRptAmount"] = $conversionAmount["reportingAmount"];
         unset($input['pomaster']);
@@ -1511,7 +1511,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_update_the_detail_this_document_already'), 500);
         }
 
-        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+        $documentCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
         
 
@@ -1524,7 +1524,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $detailAmountTot = PaySupplierInvoiceDetail::where('matchingDocID', $input['matchingDocID'])
             ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
             ->sum('supplierPaymentAmount');
-        $input['supplierPaymentAmount'] = isset($input['supplierPaymentAmount']) ?  \Helper::stringToFloat($input['supplierPaymentAmount']) : 0;
+        $input['supplierPaymentAmount'] = isset($input['supplierPaymentAmount']) ?  Helper::stringToFloat($input['supplierPaymentAmount']) : 0;
         $existTotal = $detailAmountTot + $input['supplierPaymentAmount'];
         $currencyDecimal = CurrencyMaster::where('currencyID',$matchDocumentMasterData->supplierTransCurrencyID)->select('DecimalPlaces')->first();
         $matchAmount = round($matchDocumentMasterData->matchBalanceAmount,$currencyDecimal->DecimalPlaces);
@@ -1648,12 +1648,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $paymentBalancedAmount = $paymentBalancedAmount - $input["supplierPaymentAmount"];
 
 
-        $input["paymentBalancedAmount"] = \Helper::roundValue($paymentBalancedAmount);
+        $input["paymentBalancedAmount"] = Helper::roundValue($paymentBalancedAmount);
 
-        $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
-        $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["paymentLocalAmount"] = \Helper::roundValue($conversionAmount["localAmount"]);
-        $input["paymentComRptAmount"] = \Helper::roundValue($conversionAmount["reportingAmount"]);
+        $conversionAmount = Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
+        $input["paymentSupplierDefaultAmount"] = Helper::roundValue($conversionAmount["defaultAmount"]);
+        $input["paymentLocalAmount"] = Helper::roundValue($conversionAmount["localAmount"]);
+        $input["paymentComRptAmount"] = Helper::roundValue($conversionAmount["reportingAmount"]);
 
         unset($input['pomaster']);
 
@@ -1773,7 +1773,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = \Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        $paymentBalancedAmount = Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
 
         if (!$supplierPaidAmountSum) {
             $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
@@ -1961,7 +1961,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $myCurr = $master->supplierTransCurrencyID;
-        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $decimal = Helper::getCurrencyDecimalPlace($myCurr);
 
         $input['dpAmountCurrency'] = $master->supplierTransCurrencyID;
         $input['dpAmountCurrencyER'] = $master->supplierTransCurrencyER;
@@ -1969,9 +1969,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $input['dpAmount'] = round($input['dpAmount'], $decimal);
 
         try {
-            $currency = \Helper::convertAmountToLocalRpt(203, $detail->payMasterAutoID, $totalAmount);
-            $input["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
-            $input["localAmount"] = \Helper::roundValue($currency['localAmount']);
+            $currency = Helper::convertAmountToLocalRpt(203, $detail->payMasterAutoID, $totalAmount);
+            $input["comRptAmount"] = Helper::roundValue($currency['reportingAmount']);
+            $input["localAmount"] = Helper::roundValue($currency['localAmount']);
 
             DB::beginTransaction();
 

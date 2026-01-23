@@ -24,6 +24,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class TaxAuthorityController
@@ -169,11 +170,11 @@ class TaxAuthorityAPIController extends AppBaseController
                 $authority = $authority->where('companySystemID', $input['selectedCompanyID']);
             }
         }else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $companiesByGroup = $input['globalCompanyId'];
                 $authority = $authority->where('companySystemID', $companiesByGroup);
             } else {
-                $subCompanies = \Helper::getGroupCompany($input['globalCompanyId']);
+                $subCompanies = Helper::getGroupCompany($input['globalCompanyId']);
                 $authority = $authority->whereIn('companySystemID', $subCompanies);
             }
         }
@@ -203,9 +204,9 @@ class TaxAuthorityAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companies = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($selectedCompanyId);
+            $companies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companies = [$selectedCompanyId];
         }

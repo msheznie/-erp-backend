@@ -9,6 +9,7 @@ use App\Repositories\BaseRepository;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class SlotDetailsRepository
@@ -88,11 +89,11 @@ class SlotDetailsRepository extends BaseRepository
     }
 
     public function getSlotDetailsFormData($companyID){
-        $subCompanies = \Helper::checkIsCompanyGroup($companyID)
-            ? \Helper::getGroupCompany($companyID)
+        $subCompanies = Helper::checkIsCompanyGroup($companyID)
+            ? Helper::getGroupCompany($companyID)
             : [$companyID];
         return [
-            'isGroupCompany' => \Helper::checkIsCompanyGroup($companyID),
+            'isGroupCompany' => Helper::checkIsCompanyGroup($companyID),
             'company' => Company::getCompanyList($subCompanies)
         ];
     }

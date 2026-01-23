@@ -95,10 +95,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             if($request->primaryCompanySystemID) {
                 $companyId = $request->primaryCompanySystemID;
 
-                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                $isGroup = Helper::checkIsCompanyGroup($companyId);
 
                 if ($isGroup) {
-                    $companyID = \Helper::getGroupCompany($companyId);
+                    $companyID = Helper::getGroupCompany($companyId);
                 }
                 else {
                     $companyID = [$companyId];
@@ -288,10 +288,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $mainCategoryIds = collect($mainCategory)->pluck('id');
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }

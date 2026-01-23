@@ -29,6 +29,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BankMemoSupplierController
@@ -149,7 +150,7 @@ class BankMemoSupplierAPIController extends AppBaseController
         $companyDefaultBankMemos = $request->get('memos');
         $createdArray = array();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         foreach ($companyDefaultBankMemos as $value) {
             if($value['isChecked']){
                 $temBankMemo = new BankMemoSupplier();

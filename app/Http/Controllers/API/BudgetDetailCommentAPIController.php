@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BudgetDetailCommentController
@@ -116,7 +117,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
             if (isset($commentData['id']) && $commentData['id'] > 0) {
                 $updateData = [
                     'comment' => $input['comment']['comment'],
-                    'created_by' => \Helper::getEmployeeSystemID()
+                    'created_by' => Helper::getEmployeeSystemID()
                 ];
 
                 $budgetDetailComment = $this->budgetDetailCommentRepository->update($updateData, $commentData['id']);   
@@ -125,7 +126,7 @@ class BudgetDetailCommentAPIController extends AppBaseController
                     $saveData = [
                         'budgetDetailID' => $input['budgetDetails'][0]['budjetDetailsID'],
                         'comment' => $input['comment']['comment'],
-                        'created_by' => \Helper::getEmployeeSystemID()
+                        'created_by' => Helper::getEmployeeSystemID()
                     ];
                     
                     $budgetDetailComment = $this->budgetDetailCommentRepository->create($saveData);

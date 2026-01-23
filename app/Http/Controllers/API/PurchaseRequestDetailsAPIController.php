@@ -179,7 +179,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;
@@ -1340,10 +1340,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function getItemMasterPurchaseRequestHistory(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1386,10 +1386,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $type = $request['type'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1639,7 +1639,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                         
    
-                        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                        $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
               
                         $request_data_details['estimatedCost'] = $itemVal->estimatedCost;
                         $request_data_details['companySystemID'] = $item->companySystemID;

@@ -61,8 +61,8 @@ class AssetManagementReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -315,7 +315,7 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
 
                     $sort = 'asc';
                     return \DataTables::of($output)
@@ -375,7 +375,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
 
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
     
                     $sort = 'asc';
 
@@ -442,7 +442,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $output['nbvQry'][] = $nbv;
                     $output['nbvQry'][] = $nbvEnd;
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     return array('reportData' => $output, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'date' => Carbon::parse($financePeriod->dateTo)->format('Y-m-d'), 'companyName' => $companyCurrency->CompanyName);
 
@@ -453,7 +453,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     //return phpinfo();
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
                     $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
 
@@ -497,7 +497,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     $output = $this->getAssetRegisterDetail($request);
 
@@ -539,7 +539,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $companyCurrency = \Helper::groupCompaniesCurrency($request->companySystemID);
+                $companyCurrency = Helper::groupCompaniesCurrency($request->companySystemID);
 
                 return array('reportData' => $outputArr, 'assetCostLocal' => $assetCostLocal, 'assetCostRpt' => $assetCostRpt, 'companyCurrency' => $companyCurrency);
 
@@ -560,7 +560,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyID = "";
                 $checkIsGroup = Company::find($request->companySystemID);
                 if ($checkIsGroup->isGroup) {
-                    $companyID = \Helper::getGroupCompany($request->companySystemID);
+                    $companyID = Helper::getGroupCompany($request->companySystemID);
                 } else {
                     $companyID = [$request->companySystemID];
                 }
@@ -577,7 +577,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $currency = \Helper::companyCurrency($request->companySystemID);
+                $currency = Helper::companyCurrency($request->companySystemID);
                 $companyCurrency = $outputArr2;
            
                 $total = array();
@@ -619,7 +619,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -660,7 +660,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -698,7 +698,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $grandTotalArr['prevYearDepAmount'] = array_sum($prevYearDepAmount);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -735,7 +735,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $grandTotalArr['prevYearDepAmount'] = array_sum($prevYearDepAmount);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -776,7 +776,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -791,7 +791,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                 $output = $this->getAssetCWIPQRY($request);
                 return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
@@ -900,7 +900,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $totDisPro = 0;
                     $data = [];
 
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
 
                     $decimalPlaces = ($request->currencyID == 3) ? $companyData->reportingcurrency->DecimalPlaces : $companyData->localcurrency->DecimalPlaces;
                     $currencyCode = ($request->currencyID == 3) ? $companyData->reportingcurrency->CurrencyCode : $companyData->localcurrency->CurrencyCode;
@@ -918,10 +918,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             $data[$x][trans('custom.serial_number')] = $value->faUnitSerialNo;
                             $data[$x][trans('custom.location')] = $value->locationName;
                             $data[$x][trans('custom.sub_location')] = $value->ServiceLineDes;
-                            $data[$x][trans('custom.acquisition_date')] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateAQ)) : null;
+                            $data[$x][trans('custom.acquisition_date')] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($value->dateAQ)) : null;
                             $data[$x][trans('custom.supplier_name')] = $value->supplierName;
                             $data[$x][trans('custom.acquisition_cost')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces));
-                            $data[$x][trans('custom.place_in_service_date')] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateDEP)) : null;
+                            $data[$x][trans('custom.place_in_service_date')] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($value->dateDEP)) : null;
                             $data[$x][trans('custom.useful_life')] = $value->depMonth;
                             $data[$x][trans('custom.remaining_life')] = $value->depMonth - $value->depreciatedMonths;
                             $data[$x][trans('custom.depr_type')] = "SL";
@@ -1016,7 +1016,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                     $output = $this->getAssetRegisterDetail2($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
                         $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
                         $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
@@ -1254,7 +1254,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $currencyCode = '';
                     $currencyDecimalPlace = 2;
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
                         $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
                         $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
@@ -1389,7 +1389,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     $final = $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
                     $outputArr = $final['reportData'];
@@ -1713,7 +1713,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x][trans('custom.company_id')] = $val->companyID;
                     $data[$x][trans('custom.company_name')] = $val->CompanyName;
 
-                    $data[$x][trans('custom.disposal_date')] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->disposalDate)): null;
+                    $data[$x][trans('custom.disposal_date')] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->disposalDate)): null;
                     $data[$x][trans('custom.doc_code')] = $val->disposalDocumentCode;
                     $data[$x][trans('custom.narration')] = $val->narration;
                     $data[$x][trans('custom.category')] = $val->AssetCategory;
@@ -1971,7 +1971,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                 $output = $this->getAssetCWIPQRY($request);
                 if (count($output) > 0) {
@@ -2103,7 +2103,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $name = trans('custom.finance');
 
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
@@ -2149,7 +2149,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $name = trans('custom.finance');
 
                     $lang = app()->getLocale();
-                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                    $fontFamily = Helper::getExcelFontFamily($lang);
 
                     return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
                         $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
@@ -2198,7 +2198,7 @@ class AssetManagementReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2270,7 +2270,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2374,7 +2374,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2445,7 +2445,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2509,7 +2509,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2611,7 +2611,7 @@ erp_fa_asset_master.faID';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2791,7 +2791,7 @@ erp_fa_asset_master.faID;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2994,7 +2994,7 @@ erp_fa_asset_master.faID;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3154,7 +3154,7 @@ erp_fa_asset_master.AUDITCATOGARY;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3438,7 +3438,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -3525,7 +3525,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3639,7 +3639,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3784,7 +3784,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3919,15 +3919,15 @@ WHERE
 
             if ($request->subType == 3) {
                 if ($request->catType == 1) {
-                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->disposedDate);
                 } else {
-                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->asset_by->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->asset_by->disposedDate);
                 }
             } else {
                 if ($request->catType == 1) {
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->postedDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->postedDate);
                 } else {
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->asset_by->postedDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->asset_by->postedDate);
                 }
             }
 
@@ -4011,7 +4011,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4081,7 +4081,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4135,7 +4135,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4346,7 +4346,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }

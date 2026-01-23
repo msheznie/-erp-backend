@@ -405,7 +405,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function updateTenderBoqItem(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array('item_id','uom'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(!isset($input['item_name']) || empty($input['item_name'])){
             return ['success' => false, 'message' => trans('srm_tender_rfx.item_required')];
@@ -606,7 +606,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                 $duplicateEntries = [];
                 $success = 0;
                 $skipRecords = [];
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 foreach ($excelUploadDataN as $vl){
                     $exist = $this->tenderBoqItemsRepository->checkItemExistsForUpload($input, $vl['item']);
 

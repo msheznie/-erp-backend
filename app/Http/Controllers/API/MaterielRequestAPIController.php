@@ -192,7 +192,7 @@ class MaterielRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyId = $request['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
@@ -243,7 +243,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $materielRequests = [];
@@ -289,7 +289,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $mangerID = Employee::find($empID)->empID;
         $search = $request->input('search.value');
         $materielRequests = DB::table('erp_documentapproved')
@@ -387,7 +387,7 @@ class MaterielRequestAPIController extends AppBaseController
         DB::beginTransaction();
         $input = $this->convertArrayToValue($request->all());
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -562,7 +562,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -616,7 +616,7 @@ class MaterielRequestAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -694,10 +694,10 @@ class MaterielRequestAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         }else{
             $subCompanies = [$companyId];
         }
@@ -795,7 +795,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielRequest->docRefNo = Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $materielRequest);
         $time = strtotime("now");
@@ -844,7 +844,7 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest->RollLevForApp_curr = 1;
         $materielRequest->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
 
@@ -1275,7 +1275,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.cannot_cancel_purchase_request_is_created_for_this'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
 
         $materielRequest->cancelledYN = -1;
@@ -1464,7 +1464,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $emails = array();
         $ids_to_delete = array();
@@ -1551,9 +1551,9 @@ class MaterielRequestAPIController extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
 
                 $selectedCompanyId = $input['companyId'];
-                $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+                $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
                 if ($isGroup) {
-                    $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                    $subCompanies = Helper::getGroupCompany($selectedCompanyId);
                 } else {
                     $subCompanies = [$selectedCompanyId];
                 }

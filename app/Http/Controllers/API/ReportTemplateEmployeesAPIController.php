@@ -21,6 +21,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateEmployeesController
@@ -127,7 +128,7 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
+        $input['companyID'] = Helper::getCompanyById($input['companySystemID']);
 
         $reportTemplateEmployees = '';
         foreach ($input['employeeSystemID'] as $val) {
@@ -136,8 +137,8 @@ class ReportTemplateEmployeesAPIController extends AppBaseController
             $data['companySystemID'] = $input['companySystemID'];
             $data['companyID'] = $input['companyID'];
             $data['createdPCID'] = gethostname();
-            $data['createdUserID'] = \Helper::getEmployeeID();
-            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data['createdUserID'] = Helper::getEmployeeID();
+            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateEmployees = $this->reportTemplateEmployeesRepository->create($data);
         }
 

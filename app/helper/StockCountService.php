@@ -40,7 +40,7 @@ class StockCountService
                                 ->first();
 
             if ($item) {
-                $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+                $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
                 $updateData['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
                 $updateData['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
                 $updateData['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];

@@ -415,10 +415,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             if (isset($input['unittransactionAmount']) && $input['unittransactionAmount'] > 0) {
                 $input['VATAmount'] = (($input['unittransactionAmount'] / 100) * $vatDetails['percentage']);
             }
-            $currencyConversionVAT = \Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
+            $currencyConversionVAT = Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
 
-            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
 
 
@@ -646,11 +646,11 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
         }
 
-        $currencyConversionVAT = \Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
+        $currencyConversionVAT = Helper::currencyConversion($deliveryOrderMaster->companySystemID, $deliveryOrderMaster->transactionCurrencyID, $deliveryOrderMaster->transactionCurrencyID, $input['VATAmount']);
 
-        $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-        $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-        $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+        $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+        $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+        $input['VATAmount'] = Helper::roundValue($input['VATAmount']);
 
         $input['transactionAmount'] = $discountedUnit*$input['qtyIssuedDefaultMeasure'];
 
@@ -1215,10 +1215,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 if (isset($new['unittransactionAmount']) && $new['unittransactionAmount'] > 0) {
                                     $DODetail_arr['VATAmount'] = (($new['unittransactionAmount'] / 100) * $vatDetails['percentage']);
                                 }
-                                $currencyConversionVAT = \Helper::currencyConversion($deliveryOrder->companySystemID, $deliveryOrder->transactionCurrencyID, $deliveryOrder->transactionCurrencyID, $DODetail_arr['VATAmount']);
+                                $currencyConversionVAT = Helper::currencyConversion($deliveryOrder->companySystemID, $deliveryOrder->transactionCurrencyID, $deliveryOrder->transactionCurrencyID, $DODetail_arr['VATAmount']);
 
-                                $DODetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                                $DODetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                                $DODetail_arr['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $DODetail_arr['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             } else {
                                 $DODetail_arr['VATPercentage'] = $new['VATPercentage'];
                                 $DODetail_arr['VATAmount'] = $new['VATAmount'];
@@ -1462,7 +1462,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
         $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(transactionAmount) as amount"))
                                           ->where('deliveryOrderID', $deliveryOrderID)
@@ -1485,7 +1485,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -1528,7 +1528,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -1547,7 +1547,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
        
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
@@ -1609,7 +1609,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
         $totalDetail = DeliveryOrderDetail::select(DB::raw("SUM(transactionAmount) as amount"))
                                           ->where('deliveryOrderID', $deliveryOrderID)
@@ -1628,7 +1628,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             return $this->sendResponse('e', trans('custom.vat_detail_already_exist_1'));
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -1671,7 +1671,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalAmount;
         } else {
@@ -1689,7 +1689,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
             }
         }
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
 
 
         DB::beginTransaction();
@@ -1818,7 +1818,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
             $totalVATAmount = 0;
             $totalAmount = 0;
-            $decimal = \Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
+            $decimal = Helper::getCurrencyDecimalPlace($masterData->transactionCurrencyID);
             foreach($record as $item) {
                 if(is_numeric($item['qty'])  && ($masterData->isVatEligible && isset($item['vat']))  && is_numeric($item['discount'])) { 
                     $itemDetails  = ItemMaster::where('primaryCode',$item['item_code'])->first();
@@ -1921,10 +1921,10 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 if (isset($item['vat'])) {
                                     $itemArray['VATAmount'] = round(($itemArray['unitTransactionAmount'] -  $itemArray['discountAmount']) * ($item['vat'] / 100),3);
                                 }
-                                $currencyConversionVAT = \Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
+                                $currencyConversionVAT = Helper::currencyConversion($masterData->companySystemID, $masterData->transactionCurrencyID, $masterData->transactionCurrencyID, $itemArray['VATAmount']);
 
-                                $itemArray['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                                $itemArray['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                                $itemArray['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $itemArray['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
 
                             }
                             
@@ -2001,7 +2001,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -2020,7 +2020,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
         $finalItems =  collect($finalItems)->unique('itemPrimaryCode')->toArray();
 
         if(count($finalItems) == 0) {

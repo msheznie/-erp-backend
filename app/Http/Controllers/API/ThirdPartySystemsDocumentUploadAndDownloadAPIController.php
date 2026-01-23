@@ -75,7 +75,7 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
 
             /*  if (isset($size)) {
                 if ($size > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                 }
             } */
             if ($deleteYn == 1) {

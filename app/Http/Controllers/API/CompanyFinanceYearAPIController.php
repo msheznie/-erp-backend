@@ -49,6 +49,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class CompanyFinanceYearController
@@ -184,7 +185,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             return  $this->sendError(trans('custom.already_finance_year_has_been_created_for_this_date_range'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -309,7 +310,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
     public function update($id, UpdateCompanyFinanceYearAPIRequest $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         /** @var CompanyFinanceYear $companyFinanceYear */
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
 
@@ -429,7 +430,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
     {
         /** @var CompanyFinanceYear $companyFinanceYear */
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
@@ -477,10 +478,10 @@ class CompanyFinanceYearAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

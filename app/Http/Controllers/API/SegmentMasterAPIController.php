@@ -164,7 +164,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
                 $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
@@ -689,10 +689,10 @@ class SegmentMasterAPIController extends AppBaseController
         $isActive = $input['isActive'];
         $approvalStatus = $input['approved_yn'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }
@@ -777,10 +777,10 @@ class SegmentMasterAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -994,7 +994,7 @@ class SegmentMasterAPIController extends AppBaseController
                 'document' => 132,
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
@@ -1045,10 +1045,10 @@ class SegmentMasterAPIController extends AppBaseController
 
         $isDeletedShow = ($input['isDeletedShow'] == 'false') ? 0 : 1;
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId,true);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId,true);
 
             $companyData = Company::find($selectedCompanyId);
             $segmenntData = [];
@@ -1145,15 +1145,15 @@ class SegmentMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $values = implode(',', array_map(function($value)
         {
             return trim($value, ',');
@@ -1199,7 +1199,7 @@ class SegmentMasterAPIController extends AppBaseController
                 GROUP BY serviceline.serviceLineSystemID 
                 ORDER BY documentApprovedID";
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         $segments = DB::select($sql);
         if ($isEmployeeDischarched == 'true') {
@@ -1268,10 +1268,10 @@ class SegmentMasterAPIController extends AppBaseController
         $isActive = $input['isActive'];
         $approvalStatus = $input['approved_yn'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }

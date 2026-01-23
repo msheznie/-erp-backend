@@ -27,6 +27,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class StockReceiveDetailsController
@@ -401,7 +402,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $input = $request->all();
         $stockReceiveAutoID = $input['stockReceiveAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
 
         foreach ($input['detailTable'] as $newValidation) {

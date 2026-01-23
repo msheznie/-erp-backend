@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeTemplateColumnsController
@@ -136,8 +137,8 @@ class FinalReturnIncomeTemplateColumnsAPIController extends AppBaseController
             $input['isDefault'] = 0;
             $input['companySystemID'] = $input['companySystemID'];
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
              $finalReturnIncomeTemplateColumns = $this->finalReturnIncomeTemplateColumnsRepository->create($input);
            

@@ -14,6 +14,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class QuotationStatusController
@@ -126,8 +127,8 @@ class QuotationStatusAPIController extends AppBaseController
         }
 
         $input['companySystemID'] = $quotationMasterData->companySystemID;
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $quotationStatus = $this->quotationStatusRepository->create($input);
 
@@ -252,7 +253,7 @@ class QuotationStatusAPIController extends AppBaseController
             $input['quotationStatusDate'] = new Carbon($input['quotationStatusDate']);
         }
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $quotationStatus = $this->quotationStatusRepository->update($input, $id);
 

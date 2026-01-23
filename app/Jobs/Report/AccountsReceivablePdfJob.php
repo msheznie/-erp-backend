@@ -17,6 +17,7 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
 use File;
+use App\helper\Helper;
 
 class AccountsReceivablePdfJob implements ShouldQueue
 {
@@ -82,7 +83,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $companyID = "";
             $checkIsGroup = Company::find($request->companySystemID);
             if ($checkIsGroup->isGroup) {
-                $companyID = \Helper::getGroupCompany($request->companySystemID);
+                $companyID = Helper::getGroupCompany($request->companySystemID);
             } else {
                 $companyID = (array)$request->companySystemID;
             }
@@ -414,7 +415,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $companyID = "";
             $checkIsGroup = Company::find($request->companySystemID);
             if ($checkIsGroup->isGroup) {
-                $companyID = \Helper::getGroupCompany($request->companySystemID);
+                $companyID = Helper::getGroupCompany($request->companySystemID);
             } else {
                 $companyID = (array)$request->companySystemID;
             }

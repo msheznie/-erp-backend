@@ -834,9 +834,9 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
                 $data[$x]['Rig'] = $value->rigNo;
                 $data[$x]['WellNo'] = $value->wellNo;
                 $data[$x]['Booking Inv Code'] = $value->bookingInvCode;
-                $data[$x]['Customer Invoice Date'] = \Helper::dateFormat($value->bookingDate);
-                $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
-                $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
+                $data[$x]['Customer Invoice Date'] = Helper::dateFormat($value->bookingDate);
+                $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
+                $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
                 $data[$x]['Month Service Formation'] = $value->servicePeriod;
                 $data[$x]['Amount ('.$companyRptCurrency.')'] = number_format($value->amount, 2);
                 $data[$x]['Description'] = isset($value->master->approval_type->description)?$value->master->approval_type->description:'';

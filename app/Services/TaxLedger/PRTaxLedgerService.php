@@ -41,6 +41,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class PRTaxLedgerService
 {
@@ -59,10 +60,10 @@ class PRTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -101,9 +102,9 @@ class PRTaxLedgerService
         $ledgerData['partyID'] = $master->supplierID;
         $ledgerData['documentFinalApprovedByEmpSystemID'] = $master->approvedByUserSystemID;
 
-        $ledgerData['documentTransAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->transAmount + $master->details[0]->transVATAmount : $master->details[0]->transAmount));
-        $ledgerData['documentLocalAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->localAmount + $master->details[0]->localVATAmount : $master->details[0]->localAmount));
-        $ledgerData['documentReportingAmount'] = \Helper::roundValue((($valEligible) ? $master->details[0]->rptAmount + $master->details[0]->rptVATAmount : $master->details[0]->rptAmount));
+        $ledgerData['documentTransAmount'] = Helper::roundValue((($valEligible) ? $master->details[0]->transAmount + $master->details[0]->transVATAmount : $master->details[0]->transAmount));
+        $ledgerData['documentLocalAmount'] = Helper::roundValue((($valEligible) ? $master->details[0]->localAmount + $master->details[0]->localVATAmount : $master->details[0]->localAmount));
+        $ledgerData['documentReportingAmount'] = Helper::roundValue((($valEligible) ? $master->details[0]->rptAmount + $master->details[0]->rptVATAmount : $master->details[0]->rptAmount));
 
         foreach ($details as $key => $value) {
             $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -136,14 +137,14 @@ class PRTaxLedgerService
                 ];
 
                 foreach ($info as $key1 => $value1) {
-                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+                    $currencyConversionVAT = Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
                     if($value1['amount'] != 0)
                     {
                     $ledgerData['subCategoryID'] = $value1['subcat'];
                     $ledgerData['masterCategoryID'] = $value1['mastercat'];
-                    $ledgerData['localAmount'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $ledgerData['rptAmount'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                    $ledgerData['transAmount'] = \Helper::roundValue($value1['amount']);
+                    $ledgerData['localAmount'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $ledgerData['rptAmount'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                    $ledgerData['transAmount'] = Helper::roundValue($value1['amount']);
                     $ledgerData['inputVATGlAccountID'] = $value1['inVat'];
                     $ledgerData['inputVatTransferAccountID'] =  $value1['inTra'];
                     $ledgerData['outputVatTransferGLAccountID'] = $value1['outTra'];
@@ -250,14 +251,14 @@ class PRTaxLedgerService
                 ];
 
                 foreach ($info as $key1 => $value1) {
-                    $currencyConversionVAT = \Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
+                    $currencyConversionVAT = Helper::currencyConversion($masterModel['companySystemID'], $master->supplierTransactionCurrencyID,$master->supplierTransactionCurrencyID, $value1['amount']);
                     if($value1['amount'] != 0)
                     {   
                         $ledgerDetailsData['vatSubCategoryID'] = $value1['subcat'];
                         $ledgerDetailsData['vatMasterCategoryID'] = $value1['mastercat'];
-                        $ledgerDetailsData['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $ledgerDetailsData['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        $ledgerDetailsData['VATAmount'] = \Helper::roundValue($value1['amount']);
+                        $ledgerDetailsData['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $ledgerDetailsData['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $ledgerDetailsData['VATAmount'] = Helper::roundValue($value1['amount']);
                         $ledgerDetailsData['inputVATGlAccountID'] = $value1['inVat'];
                         $ledgerDetailsData['inputVatTransferAccountID'] =  $value1['inTra'];
                         $ledgerDetailsData['outputVatTransferGLAccountID'] = $value1['outTra'];

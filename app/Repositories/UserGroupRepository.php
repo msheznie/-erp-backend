@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\UserGroup;
 use App\Models\Company;
 use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class UserGroupRepository
@@ -46,7 +47,7 @@ class UserGroupRepository extends BaseRepository
         }else{
             $companiesByGroup = "";
             if(isset($input['globalCompanyId'])) {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $companiesByGroup = $input['globalCompanyId'];
                     $userGroup->where('srp_erp_usergroups.companyID', $companiesByGroup);
                 }

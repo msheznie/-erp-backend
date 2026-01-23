@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class ErpBudgetAdditionDetailController
@@ -173,7 +174,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $input['adjustmentAmountRpt'] = floatval($input['adjustmentAmountRpt']);
 
         /*Local Amount*/
-        $currency = \Helper::currencyConversion($budgetAdditionMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
+        $currency = Helper::currencyConversion($budgetAdditionMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
 
         if($input['adjustmentAmountRpt'] < 0) {
             $input['adjustmentAmountLocal'] = -$currency['localAmount'];

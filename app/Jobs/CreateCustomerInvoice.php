@@ -24,6 +24,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateCustomerInvoice implements ShouldQueue
 {
@@ -145,7 +146,7 @@ class CreateCustomerInvoice implements ShouldQueue
 
                     $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
+                    $companyCurrencyConversion = Helper::currencyConversion($dpMaster->companySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
                     $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                     $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
 
@@ -173,13 +174,13 @@ class CreateCustomerInvoice implements ShouldQueue
                         }
                     }
 
-                    $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
-                    $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
-                    $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
-                    $customerInvoiceData['VATPercentage'] = \Helper::roundValue($vatAmountLocal / $localAmount * 100);
-                    $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmountLocal);
-                    $customerInvoiceData['VATAmountLocal'] = \Helper::roundValue($vatAmountLocal);
-                    $customerInvoiceData['VATAmountRpt'] = \Helper::roundValue($vatAmountRpt);
+                    $customerInvoiceData['bookingAmountTrans'] = Helper::roundValue($localAmount);
+                    $customerInvoiceData['bookingAmountLocal'] = Helper::roundValue($localAmount);
+                    $customerInvoiceData['bookingAmountRpt'] = Helper::roundValue($comRptAmount);
+                    $customerInvoiceData['VATPercentage'] = Helper::roundValue($vatAmountLocal / $localAmount * 100);
+                    $customerInvoiceData['VATAmount'] = Helper::roundValue($vatAmountLocal);
+                    $customerInvoiceData['VATAmountLocal'] = Helper::roundValue($vatAmountLocal);
+                    $customerInvoiceData['VATAmountRpt'] = Helper::roundValue($vatAmountRpt);
                     $customerInvoiceData['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
                     $customerInvoiceData['customerVATEligible'] = $dpMaster->vatRegisteredYN;
                     $customerInvoiceData['confirmedYN'] = 1;
@@ -263,11 +264,11 @@ class CreateCustomerInvoice implements ShouldQueue
                             $cusInvoiceDetails['VATAmount'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'];
                             $cusInvoiceDetails['VATAmountLocal'] = $val->vatAmount * $companyCurrencyConversion['trasToRptER'] / $companyCurrencyConversion['trasToLocER'];
                             $cusInvoiceDetails['VATAmountRpt'] = $val->vatAmount;
-                            $cusInvoiceDetails['salesPrice'] = \Helper::roundValue($localAmountDetail);
-                            $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
-                            $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
-                            $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
-                            $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['salesPrice'] = Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['localAmount'] = Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['comRptAmount'] = Helper::roundValue($comRptAmountDetail);
+                            $cusInvoiceDetails['invoiceAmount'] = Helper::roundValue($localAmountDetail);
+                            $cusInvoiceDetails['unitCost'] = Helper::roundValue($localAmountDetail);
                             $customerInvoiceDet = $customerInvoiceDetailRep->create($cusInvoiceDetails);
                         }
                     }

@@ -19,6 +19,7 @@ use Response;
 use App\Models\GRVDetails;
 use App\Models\FinanceItemCategorySub;
 use App\Models\JvDetail;
+use App\helper\Helper;
 /**
  * Class ExpenseAssetAllocationController
  * @package App\Http\Controllers\API
@@ -148,7 +149,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->supplier_invoice_master->supplierTransactionCurrencyID) ? $directDetail->supplier_invoice_master->supplierTransactionCurrencyID : null;
 
-            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+            $currencyConversion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
 
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
@@ -165,7 +166,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $companySystemID = isset($directDetail->master->companySystemID) ? $directDetail->master->companySystemID : null;
             $transactionCurrencyID = isset($directDetail->master->supplierTransCurrencyID) ? $directDetail->master->supplierTransCurrencyID : null;
 
-            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+            $currencyConversion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
 
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
@@ -192,7 +193,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $companySystemID = isset($grvDetail->master->companySystemID) ? $grvDetail->master->companySystemID : null;
 
             $transactionCurrencyID = isset($grvDetail->master->supplierTransactionCurrencyID) ? $grvDetail->master->supplierTransactionCurrencyID : null;
-            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+            $currencyConversion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
         
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
@@ -221,7 +222,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $companySystemID = isset($jvDetail->master->companySystemID) ? $jvDetail->master->companySystemID : null;
 
             $transactionCurrencyID = isset($jvDetail->master->currencyID) ? $jvDetail->master->currencyID : null;
-            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+            $currencyConversion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
         
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];

@@ -84,7 +84,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
 
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url,'lang' => $languageCode);
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url,'lang' => $languageCode);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_one', $dataArr)->render();
@@ -151,7 +151,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
             $lang = app()->getLocale();
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']), 'toDate' => \Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url, 'lang' => $lang);
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => Helper::dateFormat($input['fromDate']), 'toDate' => Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url, 'lang' => $lang);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_two', $dataArr)->render();

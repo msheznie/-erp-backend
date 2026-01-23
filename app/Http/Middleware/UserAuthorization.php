@@ -6,6 +6,7 @@ use Closure;
 use App\Models\EmployeeNavigation;
 use App\Models\RoleRoute;
 use App\Models\NavigationRoute;
+use App\helper\Helper;
 
 class UserAuthorization
 {
@@ -30,7 +31,7 @@ class UserAuthorization
             return $next($request);
         }
 
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
 
         $userGroups = EmployeeNavigation::where('employeeSystemID', $employeeSystemID)
                                         ->get();

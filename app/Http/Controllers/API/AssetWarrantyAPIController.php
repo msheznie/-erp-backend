@@ -12,6 +12,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use App\helper\Helper;
 /**
  * Class AssetWarrantyController
  * @package App\Http\Controllers\API
@@ -117,8 +118,8 @@ class AssetWarrantyAPIController extends AppBaseController
         $input = $request->all();
         $input['start_date'] = new Carbon($input['start_date']);
         $input['end_date'] = new Carbon($input['end_date']);
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $assetWarranty = $this->assetWarrantyRepository->create($input);
 
         return $this->sendResponse($input, trans('custom.asset_warranty_saved_successfully'));

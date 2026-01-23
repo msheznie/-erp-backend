@@ -33,6 +33,7 @@ use Response;
 use App\helper\DocumentCodeGenerate;
 use App\Models\ReportTemplateEquity;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateDetailsController
@@ -166,8 +167,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
             DB::commit();
             return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_saved_successfully'));
@@ -648,8 +649,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $subCategory = $input['subCategory'];
             unset($input['subCategory']);
@@ -1041,8 +1042,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $data3['companySystemID'] = $input['companySystemID'];
                 $data3['companyID'] = $input['companyID'];
                 $data3['createdPCID'] = gethostname();
-                $data3['createdUserID'] = \Helper::getEmployeeID();
-                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data3['createdUserID'] = Helper::getEmployeeID();
+                $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 ReportTemplateLinks::create($data3);
             }
 

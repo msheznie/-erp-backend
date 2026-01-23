@@ -28,6 +28,7 @@ use App\Services\GeneralLedger\StockRecieveGlService;
 use App\Services\GeneralLedger\StockTransferGlService;
 use App\Services\GeneralLedger\SupplierInvoiceGlService;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 
 class ChartOfAccountValidationService
 {
@@ -40,7 +41,7 @@ class ChartOfAccountValidationService
     public function checkChartOfAccountStatus($documentSystemID, $autoID, $companySystemID, $uploadEmployeeID = null)
     {
         $masterModel = [
-            'employeeSystemID' => is_null($uploadEmployeeID) ? \Helper::getEmployeeSystemID() : $uploadEmployeeID,
+            'employeeSystemID' => is_null($uploadEmployeeID) ? Helper::getEmployeeSystemID() : $uploadEmployeeID,
             'autoID' => $autoID,
             'documentSystemID' => $documentSystemID,
             'companySystemID' => $companySystemID

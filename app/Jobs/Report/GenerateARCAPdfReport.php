@@ -96,7 +96,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
         
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
                         $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -108,7 +108,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $lang = app()->getLocale();
                 $isRTL = ($lang === 'ar');
 
-                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
+                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => Helper::dateFormat($request->fromDate), 'lang' => $lang);
 
                 $html = view('print.customer_aging_summary', $dataArr);
                 $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
@@ -160,7 +160,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
 
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
                         $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -175,7 +175,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $lang = app()->getLocale();
                 $isRTL = ($lang === 'ar');
 
-                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
+                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
 
                 $html = view('print.customer_aging_detail', $dataArr);
                 $htmlHeader = view('print.customer_aging_detail_header', $dataArr);

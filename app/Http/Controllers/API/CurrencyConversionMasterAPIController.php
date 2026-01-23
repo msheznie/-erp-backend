@@ -140,7 +140,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
 
         $input['conversionCode'] = $bookingInvCode = 'CURCONV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT);
 
-        $input['createdBy'] = \Helper::getEmployeeSystemID();
+        $input['createdBy'] = Helper::getEmployeeSystemID();
         $input['serialNumber'] = $lastSerialNumber;
 
 
@@ -280,7 +280,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         if ($input['confirmedYN'] == 1 && $currencyConversionMaster->confirmedYN == 0) {
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => 96);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if(!$confirm["success"]){
                 return $this->sendError($confirm["message"]);
             }
@@ -455,15 +455,15 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         }else{
             $companyID = [$companyId];
         }
         
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -494,7 +494,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.documentSystemID',96)
             ->whereIn('erp_documentapproved.companySystemID',$companyID);
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $conversions = [];
@@ -515,7 +515,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
     }
 
     public function approveCurrencyConversion(Request $request){
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if(!$approve["success"]){
             return $this->sendError($approve["message"]);
         }else{
@@ -525,7 +525,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
     }
 
     public function rejectCurrencyConversion(Request $request){
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if(!$reject["success"]){
             return $this->sendError($reject["message"]);
         }else{

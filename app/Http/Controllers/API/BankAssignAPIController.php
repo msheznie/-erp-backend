@@ -28,6 +28,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BankAssignController
@@ -214,10 +215,10 @@ class BankAssignAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

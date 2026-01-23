@@ -53,7 +53,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use App\Criteria\LimitOffsetCriteria;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ChartOfAccount;
@@ -688,7 +688,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                     ->get();
 
 
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $outputData = (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID);
 
         // This ensures Party Name shows the main supplier instead of logistics supplier for GL review
@@ -753,7 +753,7 @@ class GeneralLedgerAPIController extends AppBaseController
     {
         $company = Company::where('companySystemID', $companySystemID)->first();
         $masterModel = [
-            'employeeSystemID' => \Helper::getEmployeeSystemID(),
+            'employeeSystemID' => Helper::getEmployeeSystemID(),
             'autoID' => $autoID,
             'documentSystemID' => $documentSystemID,
             'companySystemID' => $companySystemID,
@@ -974,10 +974,10 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -1562,7 +1562,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $checkIsGroup = Company::find($company);
         
-        $companyCurrency = \Helper::companyCurrency($company);
+        $companyCurrency = Helper::companyCurrency($company);
  
 
         $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
@@ -1629,7 +1629,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
         $seg_info = SegmentMaster::where('companySystemID',$company)->pluck('serviceLineSystemID');
 
-        $companyCurrency = \Helper::companyCurrency($company);
+        $companyCurrency = Helper::companyCurrency($company);
         if($companyCurrency) {
             $requestCurrencyLocal = $companyCurrency->localcurrency;
             $requestCurrencyRpt = $companyCurrency->reportingcurrency;

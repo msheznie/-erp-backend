@@ -119,7 +119,7 @@ class ReOrderItemPR implements ShouldQueue
 
                             $currency = (isset($company)) ? $company->localCurrencyID : 0;
                             $request_data['currency'] = $currency;
-                            $companyFinanceYear = \Helper::companyFinanceYear($companyID);
+                            $companyFinanceYear = Helper::companyFinanceYear($companyID);
 
                             $budger_year_id = 1;
                             if (count($companyFinanceYear) > 0) {
@@ -211,7 +211,7 @@ class ReOrderItemPR implements ShouldQueue
                                     $request_data_details['itemFinanceCategoryID'] = $item->financeCategoryMaster;
                                     $request_data_details['itemFinanceCategorySubID'] = $item->financeCategorySub;
      
-                                    $currencyConversion = \Helper::currencyConversion($companySystemID, $item->wacValueLocalCurrencyID, $currency, $item->wacValueLocal);
+                                    $currencyConversion = Helper::currencyConversion($companySystemID, $item->wacValueLocalCurrencyID, $currency, $item->wacValueLocal);
 
                                     $request_data_details['estimatedCost'] = $currencyConversion['documentAmount'];
                                     $request_data_details['companySystemID'] = $item->companySystemID;

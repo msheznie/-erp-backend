@@ -166,7 +166,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $search = $request->input('search.value');
 
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
         $employee = Helper::getEmployeeInfo();
 
         $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
@@ -3583,7 +3583,7 @@ class DocumentApprovedAPIController extends AppBaseController
 		$data['search']['value'] = '';
 		$request->merge($data);
 
-		$isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+		$isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
 		if ($isEmployeeDischarched == 'true') {
 			$output = [];
@@ -3609,7 +3609,7 @@ class DocumentApprovedAPIController extends AppBaseController
 
 	function getTotalCountOfApproval()
 	{
-		$employeeSystemID = \Helper::getEmployeeSystemID();
+		$employeeSystemID = Helper::getEmployeeSystemID();
 		$qry = " SELECT IFNULL(SUM(totalCount),0) as totalCount FROM (
 		SELECT
 		*
@@ -3823,7 +3823,7 @@ class DocumentApprovedAPIController extends AppBaseController
 
     public function getAllcompaniesByDepartment(Request $request)
     {
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
 
         $allCompanies = DB::select("select `companymaster`.`companySystemID`, `companymaster`.`CompanyID`, `companymaster`.`CompanyName` FROM `employeesdepartments` INNER JOIN `companymaster` ON `employeesdepartments`.`companySystemID` = `companymaster`.`companySystemID` WHERE `employeeSystemID` = $employeeSystemID AND `isGroup` = 0 GROUP BY employeesdepartments.companySystemID");
         return $this->sendResponse($allCompanies, '');
@@ -3832,7 +3832,7 @@ class DocumentApprovedAPIController extends AppBaseController
 
     public function approvalPreCheckAllDoc(Request $request)
     {
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"],500,['type' => $approve["type"]]);
         } else {
@@ -3863,7 +3863,7 @@ class DocumentApprovedAPIController extends AppBaseController
 		}else if($request->input('documentSystemID') && ($request->input('documentSystemID') == 108 || $request->input('documentSystemID') == 113)){
             $requestData['id'] = $request->input('documentSystemCode');
             $request->merge($requestData);
-            $approve = \Helper::approveDocument($request);
+            $approve = Helper::approveDocument($request);
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
             } else {
@@ -3882,7 +3882,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $result = $controller->approveSupplierKYC($request);
             return $result;
         }else {
-			$approve = \Helper::approveDocument($request);
+			$approve = Helper::approveDocument($request);
 			if (!$approve["success"]) {
 				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
 			} else {
@@ -3992,7 +3992,7 @@ class DocumentApprovedAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
         $grv_id = $input['docOriginSystemCode'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $db = isset($request->db) ? $request->db : "";
         $results = $this->getPendingData($companyId,$grv_id);
 
@@ -4030,7 +4030,7 @@ class DocumentApprovedAPIController extends AppBaseController
 		$input = $request->all();
 		$companyId = $input['companyId'];
 		$grv_id = $input['docOriginSystemCode'];
-		$empID = \Helper::getEmployeeSystemID();
+		$empID = Helper::getEmployeeSystemID();
 
 		$results = $this->getPendingData($companyId,$grv_id); 
 		if(count($results) == 0)
@@ -4049,7 +4049,7 @@ class DocumentApprovedAPIController extends AppBaseController
 				'rejectedComments' => $input['rejectedComments'],
 				'document_system_id' => $result->documentSystemID,
 			);
-			$reject = \Helper::rejectDocument($params);
+			$reject = Helper::rejectDocument($params);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } 
@@ -4062,7 +4062,7 @@ class DocumentApprovedAPIController extends AppBaseController
 	
 	public function getPendingData($companyId,$grv_id){ 
 		
-		$empID = \Helper::getEmployeeSystemID();
+		$empID = Helper::getEmployeeSystemID();
 		return DB::table('erp_documentapproved')
 		->select(
 			'employeesdepartments.approvalDeligated',

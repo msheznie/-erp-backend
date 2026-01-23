@@ -519,7 +519,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             }
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 

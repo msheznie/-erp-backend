@@ -226,9 +226,9 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -308,14 +308,14 @@ class EmployeeAPIController extends AppBaseController
 
     public function getAllNotDishachargeEmployeesDropdown(Request $request) {
         $companyId = $request['empCompanySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
 
-        $child = \Helper::getSimilarGroupCompanies($companyId);
+        $child = Helper::getSimilarGroupCompanies($companyId);
 
         $srm_employees = SrmEmployees::where('company_id',$companyId)->pluck('emp_id')->toArray();
 
@@ -345,9 +345,9 @@ class EmployeeAPIController extends AppBaseController
 
 
         $companyId = $request['empCompanySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -538,10 +538,10 @@ class EmployeeAPIController extends AppBaseController
     {
         $selectedCompanySystemID = $request['selectedCompanySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanySystemID);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanySystemID);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanySystemID);
+            $subCompanies = Helper::getGroupCompany($selectedCompanySystemID);
         } else {
             $subCompanies = [$selectedCompanySystemID];
         }

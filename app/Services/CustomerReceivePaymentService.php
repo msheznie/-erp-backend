@@ -16,6 +16,7 @@ use App\Models\SegmentMaster;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 class CustomerReceivePaymentService
 {
@@ -105,7 +106,7 @@ class CustomerReceivePaymentService
             ];
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return [
                 'status' => false,
@@ -115,7 +116,7 @@ class CustomerReceivePaymentService
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 4;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return [
                 'status' => false,
@@ -168,7 +169,7 @@ class CustomerReceivePaymentService
 
         /*currency*/
         $myCurr = $input['custTransactionCurrencyID'];
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $myCurr, $myCurr, 0);
         if ($company) {
             $input['companyID'] = $company->CompanyID;
             $input['localCurrencyID'] = $company->localCurrencyID;
@@ -218,11 +219,11 @@ class CustomerReceivePaymentService
             }
         }
 
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         if ($input['documentType'] == 13 || $input['documentType'] == 15) {
@@ -316,22 +317,22 @@ class CustomerReceivePaymentService
 
             /*** Currency */
             $myCurr = $master->custTransactionCurrencyID;
-            $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+            $decimal = Helper::getCurrencyDecimalPlace($myCurr);
 
             $inputData['DRAmountCurrency'] = $master->custTransactionCurrencyID;
             $inputData['DDRAmountCurrencyER'] = $master->custTransactionCurrencyER;
             $inputData['DRAmount'] = round($row['amount'], $decimal);
             $inputData['netAmount'] = $inputData['DRAmount'];
 
-            $currency = \Helper::currencyConversion($companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $row['amount']);
+            $currency = Helper::currencyConversion($companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $row['amount']);
             $inputData['comRptCurrency'] = $master->companyRptCurrencyID;
             $inputData['comRptCurrencyER'] = $master->companyRptCurrencyER;
-            $inputData["comRptAmount"] = \Helper::roundValue($currency['reportingAmount']);
+            $inputData["comRptAmount"] = Helper::roundValue($currency['reportingAmount']);
             $inputData["netAmountRpt"] = $inputData["comRptAmount"];
 
             $inputData['localCurrency'] = $master->localCurrencyID;
             $inputData['localCurrencyER'] = $master->localCurrencyER;
-            $inputData["localAmount"] = \Helper::roundValue($currency['localAmount']);
+            $inputData["localAmount"] = Helper::roundValue($currency['localAmount']);
             $inputData["netAmountLocal"] = $inputData["localAmount"];
 
             $inputData['VATAmount'] = 0;

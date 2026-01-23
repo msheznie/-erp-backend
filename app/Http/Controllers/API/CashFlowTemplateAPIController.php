@@ -13,6 +13,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class CashFlowTemplateController
@@ -125,7 +126,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $input['isActive'] = 1;
             $input['type'] = 1;
             $input['createdPCID'] = gethostname();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplates = $this->cashFlowTemplateRepository->create($input);
 
             $data['cashFlowTemplateID'] = $reportTemplates->id;
@@ -138,7 +139,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data['logicType'] = null;
             $data['controlAccountType'] = null;
             $data['createdPCID'] = gethostname();
-            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails = CashFlowTemplateDetail::create($data);
 
             $data2['cashFlowTemplateID'] = $reportTemplates->id;
@@ -151,7 +152,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data2['isDefault'] = 1;
             $data2['controlAccountType'] = 1;
             $data2['createdPCID'] = gethostname();
-            $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data2['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails2 = CashFlowTemplateDetail::create($data2);
 
             $data3['cashFlowTemplateID'] = $reportTemplates->id;
@@ -164,7 +165,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data3['isDefault'] = 1;
             $data3['controlAccountType'] = 1;
             $data3['createdPCID'] = gethostname();
-            $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails3 = CashFlowTemplateDetail::create($data3);
 
             $data4['cashFlowTemplateID'] = $reportTemplates->id;
@@ -177,7 +178,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data4['isDefault'] = 1;
             $data4['controlAccountType'] = 2;
             $data4['createdPCID'] = gethostname();
-            $data4['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data4['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails4 = CashFlowTemplateDetail::create($data4);
 
             $data5['cashFlowTemplateID'] = $reportTemplates->id;
@@ -191,7 +192,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data5['isDefault'] = 1;
             $data5['controlAccountType'] = null;
             $data5['createdPCID'] = gethostname();
-            $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data5['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails5 = CashFlowTemplateDetail::create($data5);
 
             $data6['cashFlowTemplateID'] = $reportTemplates->id;
@@ -205,7 +206,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data6['isDefault'] = 1;
             $data6['manualGlMapping'] = 1;
             $data6['createdPCID'] = gethostname();
-            $data6['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data6['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails6 = CashFlowTemplateDetail::create($data6);
 
             $data7['cashFlowTemplateID'] = $reportTemplates->id;
@@ -219,7 +220,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data7['isDefault'] = 1;
             $data7['manualGlMapping'] = 1;
             $data7['createdPCID'] = gethostname();
-            $data7['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data7['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails7 = CashFlowTemplateDetail::create($data7);
 
             $data8['cashFlowTemplateID'] = $reportTemplates->id;
@@ -233,7 +234,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data8['isDefault'] = 1;
             $data8['controlAccountType'] = null;
             $data8['createdPCID'] = gethostname();
-            $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data8['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails8 = CashFlowTemplateDetail::create($data8);
 
 
@@ -250,7 +251,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data9['proceedPaymentSelection'] = 1;
             $data9['manualGlMapping'] = 1;
             $data9['createdPCID'] = gethostname();
-            $data9['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data9['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails9 = CashFlowTemplateDetail::create($data9);
 
             $data10['cashFlowTemplateID'] = $reportTemplates->id;
@@ -264,7 +265,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data10['logicType'] = 2;
             $data10['controlAccountType'] = null;
             $data10['createdPCID'] = gethostname();
-            $data10['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data10['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails10 = CashFlowTemplateDetail::create($data10);
 
             $data11['cashFlowTemplateID'] = $reportTemplates->id;
@@ -279,7 +280,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data11['controlAccountType'] = null;
             $data11['proceedPaymentSelection'] = 1;
             $data11['createdPCID'] = gethostname();
-            $data11['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data11['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails11 = CashFlowTemplateDetail::create($data11);
 
             $data12['cashFlowTemplateID'] = $reportTemplates->id;
@@ -293,7 +294,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data12['logicType'] = 2;
             $data12['controlAccountType'] = null;
             $data12['createdPCID'] = gethostname();
-            $data12['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data12['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails12 = CashFlowTemplateDetail::create($data12);
 
             $data13['cashFlowTemplateID'] = $reportTemplates->id;
@@ -307,7 +308,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data13['isDefault'] = 1;
             $data13['controlAccountType'] = null;
             $data13['createdPCID'] = gethostname();
-            $data13['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data13['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails13 = CashFlowTemplateDetail::create($data13);
 
             $data14['cashFlowTemplateID'] = $reportTemplates->id;
@@ -320,7 +321,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data14['logicType'] = 4;
             $data14['controlAccountType'] = 2;
             $data14['createdPCID'] = gethostname();
-            $data14['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data14['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails14 = CashFlowTemplateDetail::create($data14);
 
             $data15['cashFlowTemplateID'] = $reportTemplates->id;
@@ -333,7 +334,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data15['controlAccountType'] = 2;
             $data15['isDefault'] = 1;
             $data15['createdPCID'] = gethostname();
-            $data15['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data15['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails15 = CashFlowTemplateDetail::create($data15);
 
             $data16['cashFlowTemplateID'] = $reportTemplates->id;
@@ -347,7 +348,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data16['controlAccountType'] = null;
             $data16['isDefault'] = 1;
             $data16['createdPCID'] = gethostname();
-            $data16['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data16['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails16 = CashFlowTemplateDetail::create($data16);
 
             DB::commit();

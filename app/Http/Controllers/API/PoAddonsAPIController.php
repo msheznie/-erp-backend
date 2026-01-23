@@ -25,6 +25,7 @@ use Response;
 use App\Models\PurchaseOrderDetails;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 /**
  * Class PoAddonsController
  * @package App\Http\Controllers\API
@@ -293,7 +294,7 @@ class PoAddonsAPIController extends AppBaseController
 
 
 
-        $purchaseOrder->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeductedNotRounded);
+        $purchaseOrder->poTotalSupplierTransactionCurrency = Helper::roundValue($poMasterSumDeductedNotRounded);
         $purchaseOrder->update();
 
         $poAddons = $this->poAddonsRepository->update($input, $id);

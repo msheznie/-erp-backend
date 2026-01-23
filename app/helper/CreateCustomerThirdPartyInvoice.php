@@ -54,6 +54,7 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Services\UserTypeService;
 use App\Http\Controllers\API\CustomerInvoiceDirectAPIController;
 use Illuminate\Http\Request;
+use App\helper\Helper;
 class CreateCustomerThirdPartyInvoice
 {
     /** @var  CustomerInvoiceDirectRepository */
@@ -222,7 +223,7 @@ class CreateCustomerThirdPartyInvoice
                             }
                         }
 
-                        $companyCurrencyConversion = \Helper::currencyConversion($companySystemId, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
+                        $companyCurrencyConversion = Helper::currencyConversion($companySystemId, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
                         $customerInvoiceData['companyReportingCurrencyID'] = $fromCompany->reportingCurrency;
                         $customerInvoiceData['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
     
@@ -272,15 +273,15 @@ class CreateCustomerThirdPartyInvoice
                     }
 
                         $systemUser = UserTypeService::getSystemEmployee();
-                        $customerInvoiceData['bookingAmountTrans'] = \Helper::roundValue($localAmount);
-                        $customerInvoiceData['bookingAmountLocal'] = \Helper::roundValue($localAmount);
-                        $customerInvoiceData['bookingAmountRpt'] = \Helper::roundValue($comRptAmount);
+                        $customerInvoiceData['bookingAmountTrans'] = Helper::roundValue($localAmount);
+                        $customerInvoiceData['bookingAmountLocal'] = Helper::roundValue($localAmount);
+                        $customerInvoiceData['bookingAmountRpt'] = Helper::roundValue($comRptAmount);
                         $customerInvoiceData['vatRegisteredYN'] = $sourceModel->vatRegisteredYN;
                         $customerInvoiceData['customerVATEligible'] = $sourceModel->vatRegisteredYN;
-                        $customerInvoiceData['VATPercentage'] = \Helper::roundValue($vatAmountLocal / $localAmount * 100);
-                        $customerInvoiceData['VATAmount'] = \Helper::roundValue($vatAmountLocal);
-                        $customerInvoiceData['VATAmountLocal'] = \Helper::roundValue($vatAmountLocal);
-                        $customerInvoiceData['VATAmountRpt'] = \Helper::roundValue($vatAmountRpt);
+                        $customerInvoiceData['VATPercentage'] = Helper::roundValue($vatAmountLocal / $localAmount * 100);
+                        $customerInvoiceData['VATAmount'] = Helper::roundValue($vatAmountLocal);
+                        $customerInvoiceData['VATAmountLocal'] = Helper::roundValue($vatAmountLocal);
+                        $customerInvoiceData['VATAmountRpt'] = Helper::roundValue($vatAmountRpt);
                         $customerInvoiceData['postedDate'] = NOW();
                         $customerInvoiceData['isPerforma'] = 0;
                         $customerInvoiceData['documentType'] = 11;
@@ -344,11 +345,11 @@ class CreateCustomerThirdPartyInvoice
                                 $cusInvoiceDetails['VATAmount'] = $disposalDetail->vatAmount * $companyCurrencyConversion['trasToRptER'];
                                 $cusInvoiceDetails['VATAmountLocal'] = $disposalDetail->vatAmount * $companyCurrencyConversion['trasToRptER'] / $companyCurrencyConversion['trasToLocER'];
                                 $cusInvoiceDetails['VATAmountRpt'] = $disposalDetail->vatAmount;
-                                $cusInvoiceDetails['salesPrice'] = \Helper::roundValue($localAmountDetail);
-                                $cusInvoiceDetails['localAmount'] = \Helper::roundValue($localAmountDetail);
-                                $cusInvoiceDetails['comRptAmount'] = \Helper::roundValue($comRptAmountDetail);
-                                $cusInvoiceDetails['invoiceAmount'] = \Helper::roundValue($localAmountDetail);
-                                $cusInvoiceDetails['unitCost'] = \Helper::roundValue($localAmountDetail);
+                                $cusInvoiceDetails['salesPrice'] = Helper::roundValue($localAmountDetail);
+                                $cusInvoiceDetails['localAmount'] = Helper::roundValue($localAmountDetail);
+                                $cusInvoiceDetails['comRptAmount'] = Helper::roundValue($comRptAmountDetail);
+                                $cusInvoiceDetails['invoiceAmount'] = Helper::roundValue($localAmountDetail);
+                                $cusInvoiceDetails['unitCost'] = Helper::roundValue($localAmountDetail);
                                
                                 $customerInvoiceDet = CustomerInvoiceDirectDetail::create($cusInvoiceDetails);
                           
@@ -367,7 +368,7 @@ class CreateCustomerThirdPartyInvoice
                                 'isAutoCreateDocument' => true
                             );
 
-                            $returnData = \Helper::confirmDocument($params);
+                            $returnData = Helper::confirmDocument($params);
 
                             if($returnData['success']){
 
@@ -391,7 +392,7 @@ class CreateCustomerThirdPartyInvoice
                                     $dataset['db'] = $db;
 
 
-                                    $approveDocument = \Helper::approveDocument($dataset);
+                                    $approveDocument = Helper::approveDocument($dataset);
 
                                     if ($approveDocument["success"]) {
                                         DB::commit();

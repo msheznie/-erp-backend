@@ -21,6 +21,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class DocumentMasterController
@@ -138,7 +139,7 @@ class DocumentMasterAPIController extends AppBaseController
 
     public function getAllDocuments()
     {
-        $document = \Helper::getAllDocuments();
+        $document = Helper::getAllDocuments();
         return $this->sendResponse($document, trans('custom.record_retrieved_successfully'));
     }
 

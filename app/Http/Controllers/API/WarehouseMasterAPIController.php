@@ -38,6 +38,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 /**
  * Class WarehouseMasterController
  * @package App\Http\Controllers\API
@@ -110,7 +111,7 @@ class WarehouseMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422 );
         }
         $input['companyID'] = $this->getCompanyById($input['companySystemID']);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -196,7 +197,7 @@ class WarehouseMasterAPIController extends AppBaseController
             return $this->sendError($entityName.' '.trans('custom.error_not_found'));
         }
         $input['companyID'] = $this->getCompanyById($input['companySystemID']);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -279,10 +280,10 @@ class WarehouseMasterAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -338,10 +339,10 @@ class WarehouseMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }

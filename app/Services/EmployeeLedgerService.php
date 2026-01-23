@@ -19,6 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class EmployeeLedgerService
 {
@@ -92,25 +93,25 @@ class EmployeeLedgerService
                    
                     $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                     $data['supplierTransER'] = $masterData->supplierTransactionCurrencyER;
-                    $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
+                    $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
                     $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                     $data['supplierDefaultCurrencyER'] = $masterData->supplierTransactionCurrencyER;
-                    $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
+                    $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
                     $data['localCurrencyID'] = $masterData->localCurrencyID;
                     $data['localER'] = $masterData->localCurrencyER;
-                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->localAmount + $taxLocal));
+                    $data['localAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->localAmount + $taxLocal));
                     $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                     $data['comRptER'] = $masterData->companyReportingER;
-                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->rptAmount + $taxRpt));
+                    $data['comRptAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->rptAmount + $taxRpt));
                     $data['isInvoiceLockedYN'] = 0;
                     $data['invoiceType'] = $masterData->documentType;
                     $data['selectedToPaymentInv'] = 0;
                     $data['fullyInvoice'] = 0;
-                    $data['createdDateTime'] = \Helper::currentDateTime();
+                    $data['createdDateTime'] = Helper::currentDateTime();
                     $data['createdUserID'] = $empID->empID;
                     $data['createdUserSystemID'] = $empID->employeeSystemID;
                     $data['createdPcID'] = gethostname();
-                    $data['timeStamp'] = \Helper::currentDateTime();
+                    $data['timeStamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
                 break;
@@ -140,39 +141,39 @@ class EmployeeLedgerService
                         if ($masterData->invoiceType == 6) {  //employee Payment
                             $data['supplierTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                             $data['supplierTransER'] = $masterData->supplierTransCurrencyER;
-                            $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount) * -1);
+                            $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount) * -1);
                             $data['supplierDefaultCurrencyID'] = $masterData->supplierDefCurrencyID;
                             $data['supplierDefaultCurrencyER'] = $masterData->supplierDefCurrencyER;
-                            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount) * -1);
+                            $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->supplierdetail[0]->transAmount) * -1);
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->localAmount) * -1);
+                            $data['localAmount'] = Helper::roundValue(ABS($masterData->supplierdetail[0]->localAmount) * -1);
                             $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['comRptER'] = $masterData->companyRptCurrencyER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->supplierdetail[0]->rptAmount) * -1);
+                            $data['comRptAmount'] = Helper::roundValue(ABS($masterData->supplierdetail[0]->rptAmount) * -1);
                         } else if ($masterData->invoiceType == 7) { //Advance Payment
                             $data['supplierTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                             $data['supplierTransER'] = $masterData->supplierTransCurrencyER;
-                            $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
+                            $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
                             $data['supplierDefaultCurrencyID'] = $masterData->supplierDefCurrencyID;
                             $data['supplierDefaultCurrencyER'] = $masterData->supplierDefCurrencyER;
-                            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
+                            $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->advancedetail[0]->transAmount) * -1);
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->localAmount) * -1);
+                            $data['localAmount'] = Helper::roundValue(ABS($masterData->advancedetail[0]->localAmount) * -1);
                             $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['comRptER'] = $masterData->companyRptCurrencyER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->advancedetail[0]->rptAmount) * -1);
+                            $data['comRptAmount'] = Helper::roundValue(ABS($masterData->advancedetail[0]->rptAmount) * -1);
                         }
                         $data['isInvoiceLockedYN'] = 0;
                         $data['invoiceType'] = $masterData->invoiceType;
                         $data['selectedToPaymentInv'] = 0;
                         $data['fullyInvoice'] = 0;
-                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdDateTime'] = Helper::currentDateTime();
                         $data['createdUserID'] = $empID->empID;
                         $data['createdUserSystemID'] = $empID->employeeSystemID;
                         $data['createdPcID'] = gethostname();
-                        $data['timeStamp'] = \Helper::currentDateTime();
+                        $data['timeStamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }
@@ -215,19 +216,19 @@ class EmployeeLedgerService
                         $data['supplierDefaultAmount'] = NULL;
                         $data['localCurrencyID'] = $masterData->localCurrencyID;
                         $data['localER'] = $masterData->localCurrencyER;
-                        $data['localAmount'] = \Helper::roundValue(ABS($localAmount) * -1);
+                        $data['localAmount'] = Helper::roundValue(ABS($localAmount) * -1);
                         $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                         $data['comRptER'] = $masterData->companyReportingER;
-                        $data['comRptAmount'] = \Helper::roundValue(ABS($rptAmount) * -1);
+                        $data['comRptAmount'] = Helper::roundValue(ABS($rptAmount) * -1);
                         $data['isInvoiceLockedYN'] = 0;
                         $data['invoiceType'] = $masterData->type;
                         $data['selectedToPaymentInv'] = 0;
                         $data['fullyInvoice'] = 0;
-                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdDateTime'] = Helper::currentDateTime();
                         $data['createdUserID'] = $empID->empID;
                         $data['createdUserSystemID'] = $empID->employeeSystemID;
                         $data['createdPcID'] = gethostname();
-                        $data['timeStamp'] = \Helper::currentDateTime();
+                        $data['timeStamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }

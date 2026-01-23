@@ -13,6 +13,7 @@ use App\Models\TenderBidFormatDetail;
 use App\Models\PricingScheduleDetailEditLog;
 use App\Models\PricingScheduleDetail;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class PricingScheduleMasterObserver
 {
@@ -44,7 +45,7 @@ class PricingScheduleMasterObserver
     public function deleted(PricingScheduleMaster $tender)
     {
        
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
    
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
@@ -172,7 +173,7 @@ class PricingScheduleMasterObserver
 
     public function process($tender,$reflog_id,$modify_type_val,$version_id,$type)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(isset($employee))
         {

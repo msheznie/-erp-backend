@@ -688,7 +688,7 @@ class SRMService
     public function confirmSupplierAppointment(Request $request)
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
-        $confirm = \Helper::confirmDocument($params);
+        $confirm = Helper::confirmDocument($params);
 
         return [
             'success' => $confirm['success'],
@@ -2220,7 +2220,7 @@ class SRMService
 
             $companyId = TenderMaster::select('company_id')->where('id', $extra['tenderId'])->first();
 
-            $raiseAsPrivate = \Helper::checkPolicy($companyId->company_id,87);
+            $raiseAsPrivate = Helper::checkPolicy($companyId->company_id,87);
 
             $data = [
                 'data' => $data,
@@ -6251,7 +6251,7 @@ class SRMService
     public function getPreBidClarificationPolicy($request){
 
         $companyId = $request->input('extra.companySystemId');
-        $raiseAsPrivate = \Helper::checkPolicy($companyId,87);
+        $raiseAsPrivate = Helper::checkPolicy($companyId,87);
 
         return [
             'success' => true,
@@ -6518,7 +6518,7 @@ class SRMService
                 'email' => $paymentProofData['srmSupplier']['email']
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             /*  if($confirm['success'])
               {
                   $this->sendSupplierNotification($params);
@@ -7050,9 +7050,9 @@ class SRMService
 
         $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
         $companyId = $supplierData->company_id;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

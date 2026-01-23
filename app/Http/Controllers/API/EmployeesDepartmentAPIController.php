@@ -37,6 +37,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
 use Carbon\Carbon;
+use App\helper\Helper;
 /**
  * Class EmployeesDepartmentController
  * @package App\Http\Controllers\API
@@ -93,7 +94,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $input[$key]['employeeSystemID'] = $employeeSystemID;
             $input[$key]['employeeGroupID'] = $employeeGroupID;
             $input[$key]['isActive'] = 1;
-            $input[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input[$key]['createdByEmpSystemID'] = Helper::getEmployeeSystemID();
             $input[$key]['createdDate'] = date("Y-m-d H:m:s");
             if ($companySystemID) {
                 $companyID = Company::find($companySystemID);
@@ -214,7 +215,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.unable_to_delete_delegation'),422, ['type' => 'validation']);
         }
 
-        $employeeData = \Helper::getEmployeeInfo();
+        $employeeData = Helper::getEmployeeInfo();
 
         $employeesDepartment->removedYN = 1;
         $employeesDepartment->removedByEmpID = $employeeData->empID;
@@ -255,18 +256,18 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     $q->where('companySystemID', $input['companySystemID']);
                 });
             } else {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
                 } else {
-                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                     $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
                 }
             }
         } else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
             } else {
-                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                 $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
             }
         }
@@ -341,8 +342,8 @@ class EmployeesDepartmentAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array) $selectedCompanyId;
         }
@@ -404,7 +405,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $employeesDepartment->where('removedYN', $input['removedYN']);
         }
 
-        $employeeData = \Helper::getEmployeeInfo();
+        $employeeData = Helper::getEmployeeInfo();
         $employeesDepartment->update(['removedYN' => 1, 'removedByEmpID' => $employeeData->empID, 'removedByEmpSystemID' => $employeeData->employeeSystemID, 'removedDate' => date("Y-m-d H:m:s")]);
 
 
@@ -451,7 +452,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $employeesDepartment->where('removedYN', $input['removedYN']);
         }
 
-        $employeeData = \Helper::getEmployeeInfo();
+        $employeeData = Helper::getEmployeeInfo();
         $employeesDepartment->update(['isActive' => $input['type'], 'activatedByEmpID' => $employeeData->empID, 'activatedByEmpSystemID' => $employeeData->employeeSystemID, 'activatedDate' => date("Y-m-d H:m:s")]);
 
 
@@ -496,18 +497,18 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     $q->where('companySystemID', $input['companySystemID']);
                 });
             } else {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
                 } else {
-                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                     $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
                 }
             }
         } else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
             } else {
-                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                 $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
             }
         }
@@ -579,7 +580,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $temp['approvalDeligatedFrom'] = $value['approvalDeligatedFrom'];
                 $temp['approvalDeligatedTo'] = $value['approvalDeligatedTo'];
                 $temp['dmsIsUploadEnable'] = $value['dmsIsUploadEnable'];
-                $temp['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                $temp['createdByEmpSystemID'] = Helper::getEmployeeSystemID();
                 $temp['createdDate'] = date("Y-m-d H:m:s");
                 $finalData[] = $temp;
             }
@@ -626,7 +627,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.unable_to_perform_delegation'),422, ['type' => 'validation']);
         }
 
-        $employeeData = \Helper::getEmployeeInfo();
+        $employeeData = Helper::getEmployeeInfo();
 
         $employeesDepartment->isActive = ($employeesDepartment->isActive == 1) ? 0 : 1;
         $employeesDepartment->activatedByEmpID = $employeeData->empID;
@@ -1079,18 +1080,18 @@ class EmployeesDepartmentAPIController extends AppBaseController
                     $q->where('companySystemID', $rollMasterDetailData['companySystemID']);
                 });
             } else {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
                 } else {
-                    $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                     $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
                 }
             }
         } else {
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+            if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                 $employeesDepartment->where('companySystemID', $input['globalCompanyId']);
             } else {
-                $companiesByGroup = \Helper::getGroupCompany($input['globalCompanyId']);
+                $companiesByGroup = Helper::getGroupCompany($input['globalCompanyId']);
                 $employeesDepartment->whereIN('companySystemID', $companiesByGroup);
             }
         }
@@ -1232,7 +1233,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $saveData[$key]['ServiceLineSystemID'] = $input['rollMasterDetailData']['serviceLineSystemID'];
                 $saveData[$key]['employeeSystemID'] = $val['employeeSystemID'];
                 $saveData[$key]['employeeGroupID'] = $employeeGroupID;
-                $saveData[$key]['createdByEmpSystemID'] = \Helper::getEmployeeSystemID();
+                $saveData[$key]['createdByEmpSystemID'] = Helper::getEmployeeSystemID();
                 $saveData[$key]['createdDate'] = date("Y-m-d H:m:s");
                 if ($input['rollMasterDetailData']['companySystemID']) {
                     $companyID = Company::find($input['rollMasterDetailData']['companySystemID']);
@@ -1254,7 +1255,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
                 $saveData[$key]['employeeID'] = $val['empID'];
                 $saveData[$key]['timeStamp'] = date("Y-m-d H:m:s");
 
-                $employeeData = \Helper::getEmployeeInfo();
+                $employeeData = Helper::getEmployeeInfo();
                 
                 $saveData[$key]['isActive'] = 1;
                 $saveData[$key]['activatedByEmpID'] = $employeeData->empID;

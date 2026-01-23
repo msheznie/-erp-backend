@@ -155,7 +155,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
                 return $this->sendError('Item not assigned');
             }
 
-            $user = \Helper::getEmployeeInfo();
+            $user = Helper::getEmployeeInfo();
 
             $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
                                 ->where('companySystemID', $companySystemID)
@@ -182,7 +182,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
                 $currency = Helper::convertAmountToLocalRpt($invoice->documentSystemID, $bookingSuppMasInvAutoID, $input['unitCost']);
             }
             else {
-                $currency = \Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
+                $currency = Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
             }
     
             // checking the qty request is matching with sum total
@@ -213,10 +213,10 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $detailArray['localCurrencyID'] = $invoice->localCurrencyID;
             $detailArray['localCurrencyER'] = $invoice->localCurrencyER;
 
-            $detailArray['costPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $detailArray['costPerUnitSupDefaultCur'] = \Helper::roundValue($input['unitCost']);
-            $detailArray['costPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
-            $detailArray['costPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            $detailArray['costPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
+            $detailArray['costPerUnitSupDefaultCur'] = Helper::roundValue($input['unitCost']);
+            $detailArray['costPerUnitSupTransCur'] = Helper::roundValue($input['unitCost']);
+            $detailArray['costPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
 
             $detailArray['VATAmount'] = 0;
             if ($invoice->isVatEligible) {
@@ -384,7 +384,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             }
 
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
-            $input['discountAmount'] = isset($input['discountAmount']) ? \Helper::roundValue($input['discountAmount']) : 0;
+            $input['discountAmount'] = isset($input['discountAmount']) ? Helper::roundValue($input['discountAmount']) : 0;
             $discountedUnitPrice = $input['unitCost']  - $input['discountAmount'];
             if(TaxService::checkPOVATEligible($supplierInvoice->supplierVATEligible, $supplierInvoice->vatRegisteredYN)){
                 $discountedUnitPrice =  $discountedUnitPrice + $input['VATAmount'];
@@ -392,27 +392,27 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
 
             if ($discountedUnitPrice > 0) {
                 if (in_array($supplierInvoice->documentType, [1, 3, 4])) {
-                    $currencyConversion = \Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $discountedUnitPrice);
+                    $currencyConversion = Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $discountedUnitPrice);
                 }
                 else {
-                    $currencyConversion = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $discountedUnitPrice);
+                    $currencyConversion = Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $discountedUnitPrice);
                 }
 
-                $input['costPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
+                $input['costPerUnitLocalCur'] = Helper::roundValue($currencyConversion['localAmount']);
                 $input['costPerUnitSupTransCur'] = $discountedUnitPrice;
-                $input['costPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                $input['costPerUnitComRptCur'] = Helper::roundValue($currencyConversion['reportingAmount']);
             }
 
             if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
                 if (in_array($supplierInvoice->documentType, [1, 3, 4])) {
-                    $currencyConversionVAT = \Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $input['VATAmount']);
+                    $currencyConversionVAT = Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $input['VATAmount']);
                 }
                 else {
-                    $currencyConversionVAT = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $input['VATAmount']);
+                    $currencyConversionVAT = Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierTransactionCurrencyID, $input['VATAmount']);
                 }
-                $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                $input['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+                $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                $input['VATAmount'] = Helper::roundValue($input['VATAmount']);
             } else {
                 $input['VATAmount'] = 0;
                 $input['VATAmountLocal'] = 0;
@@ -425,10 +425,10 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
                     $currencyConversionDefault = Helper::convertAmountToLocalRpt($supplierInvoice->documentSystemID, $supplierInvoice->bookingSuppMasInvAutoID, $discountedUnitPrice);
                 }
                 else {
-                    $currencyConversionDefault = \Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierDefaultCurrencyID, $discountedUnitPrice);
+                    $currencyConversionDefault = Helper::currencyConversion($supplierInvoice->companySystemID, $supplierInvoice->supplierTransactionCurrencyID, $supplierInvoice->supplierDefaultCurrencyID, $discountedUnitPrice);
                 }
 
-                $input['costPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                $input['costPerUnitSupDefaultCur'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
             }
 
             $input['modifiedPc'] = gethostname();
@@ -438,8 +438,8 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $suppItemDetails = $this->supplierInvoiceDirectItemRepository->update($input, $id);
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
 
-            \Helper::updateSupplierRetentionAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
-            \Helper::updateSupplierItemWhtAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
+            Helper::updateSupplierRetentionAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
+            Helper::updateSupplierItemWhtAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
             DB::commit();
             return $this->sendResponse($suppItemDetails->toArray(), trans('custom.supplier_invoice_details_updated_successfully'));
         } catch (\Exception $ex) {
@@ -501,8 +501,8 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $supplierInvoiceDirectItem->delete();
 
     
-        \Helper::updateSupplierRetentionAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
-        \Helper::updateSupplierItemWhtAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
+        Helper::updateSupplierRetentionAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
+        Helper::updateSupplierItemWhtAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
 
         return $this->sendResponse([], trans('custom.supplier_invoice_direct_item_deleted_successfully'));
     }
@@ -556,8 +556,8 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $deleteDetails = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->delete();
         }
 
-        \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
-        \Helper::updateSupplierItemWhtAmount($bookingSuppMasInvAutoID,$supInvoice);
+        Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
+        Helper::updateSupplierItemWhtAmount($bookingSuppMasInvAutoID,$supInvoice);
         return $this->sendResponse($bookingSuppMasInvAutoID, trans('custom.details_deleted_successfully'));
     }
 

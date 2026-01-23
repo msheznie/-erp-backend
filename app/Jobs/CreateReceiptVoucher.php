@@ -20,6 +20,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateReceiptVoucher implements ShouldQueue
 {
@@ -155,7 +156,7 @@ class CreateReceiptVoucher implements ShouldQueue
                             }
 
                             $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
-                            $confirm = \Helper::confirmDocument($params);
+                            $confirm = Helper::confirmDocument($params);
                         }
                     } else {
                         $dpdetails = $dpdetail->findWhere(['directPaymentAutoID' => $pvMaster->PayMasterAutoId, 'glCodeIsBank' => 1]);
@@ -194,15 +195,15 @@ class CreateReceiptVoucher implements ShouldQueue
                                 $receivePayment['bankCurrency'] = $val->bankCurrencyID;
                                 $receivePayment['bankCurrencyER'] = 1;
 
-                                $companyCurrencyConversion = \Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID,$val->bankCurrencyID, $val->bankAmount);
+                                $companyCurrencyConversion = Helper::currencyConversion($pvMaster->companySystemID, $val->bankCurrencyID,$val->bankCurrencyID, $val->bankAmount);
 
                                 $receivePayment['localCurrencyID'] = $val->localCurrency;
                                 $receivePayment['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                                 $receivePayment['companyRptCurrencyID'] = $val->comRptCurrency;
                                 $receivePayment['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                                 $receivePayment['bankAmount'] = $val->bankAmount;
-                                $receivePayment['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-                                $receivePayment['companyRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                                $receivePayment['localAmount'] = Helper::roundValue($companyCurrencyConversion['localAmount']);
+                                $receivePayment['companyRptAmount'] = Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                                 $receivePayment['receivedAmount'] = $val->bankAmount;
 
                                 $receivePayment['confirmedYN'] = 1;

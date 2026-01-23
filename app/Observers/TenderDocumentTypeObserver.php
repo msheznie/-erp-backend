@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class TenderDocumentTypeObserver
 {
     /**
@@ -51,7 +52,7 @@ class TenderDocumentTypeObserver
     
     public function process($tender,$type,$ref)
     {           
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
       
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));

@@ -325,11 +325,11 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $input['supplierInvoOrderedAmount'] = $totalPendingAmount - $input['supplierInvoAmount'];
 
-        $currency = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
+        $currency = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
 
         $input['totTransactionAmount'] = $input['supplierInvoAmount'];
-        $input['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-        $input['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+        $input['totLocalAmount'] = Helper::roundValue($currency['localAmount']);
+        $input['totRptAmount'] = Helper::roundValue($currency['reportingAmount']);
 
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
 
@@ -339,11 +339,11 @@ class BookInvSuppDetAPIController extends AppBaseController
             $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
             $percentage =  ($bookInvSuppDet->totTransactionAmount/$unbilledGrvGroupByMaster->totTransactionAmount);
             $VATAmount = $unbilledGrvGroupByMaster->totalVATAmount * $percentage;
-            $currencyVat = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
+            $currencyVat = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
             $vatData = array(
-                'VATAmount' => \Helper::roundValue($VATAmount),
-                'VATAmountLocal' => \Helper::roundValue($currencyVat['localAmount']),
-                'VATAmountRpt' =>  \Helper::roundValue($currencyVat['reportingAmount'])
+                'VATAmount' => Helper::roundValue($VATAmount),
+                'VATAmountLocal' => Helper::roundValue($currencyVat['localAmount']),
+                'VATAmountRpt' =>  Helper::roundValue($currencyVat['reportingAmount'])
             );
 
             $this->bookInvSuppDetRepository->update($vatData, $id);
@@ -498,8 +498,8 @@ class BookInvSuppDetAPIController extends AppBaseController
         $bookInvSuppMaster->whtEdited = false;
         $bookInvSuppMaster->save();
 
-        \Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
-        \Helper::updateSupplierWhtAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
+        Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
+        Helper::updateSupplierWhtAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
@@ -799,8 +799,8 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
 
 
-            \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
-            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
@@ -874,21 +874,21 @@ class BookInvSuppDetAPIController extends AppBaseController
 
                 $updateData['supplierInvoOrderedAmount'] = $totalPendingAmount - $value['supplierInvoAmount'];
 
-                $currency = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $updateData['supplierInvoAmount']);
+                $currency = Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $updateData['supplierInvoAmount']);
 
                 $updateData['totTransactionAmount'] = $updateData['supplierInvoAmount'];
-                $updateData['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-                $updateData['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+                $updateData['totLocalAmount'] = Helper::roundValue($currency['localAmount']);
+                $updateData['totRptAmount'] = Helper::roundValue($currency['reportingAmount']);
 
                 $totalVATAmount = ($groupMaster->logisticYN) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : TaxService::processGRVDetailVATForUnbilled($grvDetail->grvDetailsID)['totalTransVATAmount'];
 
                 if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($updateData['totTransactionAmount'])/$value['transactionAmount']);
                     $VATAmount = $totalVATAmount * $percentage;
-                    $currencyVat = \Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $VATAmount);
-                        $updateData['VATAmount'] = \Helper::roundValue($VATAmount);
-                        $updateData['VATAmountLocal'] = \Helper::roundValue($currencyVat['localAmount']);
-                        $updateData['VATAmountRpt'] = \Helper::roundValue($currencyVat['reportingAmount']);
+                    $currencyVat = Helper::currencyConversion($bookInvSuppMaster->companySystemID, $bookInvSuppDetail->supplierTransactionCurrencyID, $bookInvSuppDetail->supplierTransactionCurrencyID, $VATAmount);
+                        $updateData['VATAmount'] = Helper::roundValue($VATAmount);
+                        $updateData['VATAmountLocal'] = Helper::roundValue($currencyVat['localAmount']);
+                        $updateData['VATAmountRpt'] = Helper::roundValue($currencyVat['reportingAmount']);
                 }
 
                 SupplierInvoiceItemDetail::when($groupMaster->logisticYN != 1, function($query) use ($value) {
@@ -912,8 +912,8 @@ class BookInvSuppDetAPIController extends AppBaseController
                     return $this->sendError($result['message'], 500);
                 } 
             }
-            \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
-            \Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
+            Helper::updateSupplierWhtAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
         } catch (\Exception $exception) {
@@ -982,10 +982,10 @@ class BookInvSuppDetAPIController extends AppBaseController
             $details['totTransactionAmount'] = $details['supplierInvoAmount'];
 
             $totLocalAmount = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $details['supplierInvoAmount'], $groupMaster->localCurrencyER);
-            $details['totLocalAmount'] = \Helper::roundValue($totLocalAmount);
+            $details['totLocalAmount'] = Helper::roundValue($totLocalAmount);
             
             $totRptAmount = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $details['supplierInvoAmount'], $groupMaster->companyReportingER);
-            $details['totRptAmount'] = \Helper::roundValue($totRptAmount);
+            $details['totRptAmount'] = Helper::roundValue($totRptAmount);
 
             $grvDetailsInfo = GRVDetails::with(['vat_sub_category'])->find($grvDetail->grvDetailsID);
             if(!$unbilledData['logisticYN'])
@@ -1001,22 +1001,22 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
 
             if($value['logisticID'] > 0){
-                $details['VATAmount'] = \Helper::roundValue($value['VATAmount']);
-                $details['VATAmountLocal'] = \Helper::roundValue($value['VATAmountLocal']);
-                $details['VATAmountRpt'] = \Helper::roundValue($value['VATAmountRpt']);
+                $details['VATAmount'] = Helper::roundValue($value['VATAmount']);
+                $details['VATAmountLocal'] = Helper::roundValue($value['VATAmountLocal']);
+                $details['VATAmountRpt'] = Helper::roundValue($value['VATAmountRpt']);
             } else {
                 $totalVATAmount = ($unbilledData['logisticYN']) ? TaxService::poLogisticVATDistributionForGRV($grvDetail->grvAutoID,0,$grvDetail->supplierID)['vatOnPOTotalAmountTrans'] : $examptVal;
                  if($totalVATAmount > 0 && $value['transactionAmount'] > 0){
                     $percentage =  (floatval($details['totTransactionAmount'])/$value['transactionAmount']);
                     $VATAmount = $totalVATAmount * $percentage;
-                        $details['VATAmount'] = \Helper::roundValue($VATAmount);
+                        $details['VATAmount'] = Helper::roundValue($VATAmount);
 
                         $VATAmountLocal = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->localCurrencyID, $VATAmount, $groupMaster->localCurrencyER);
-                        $details['VATAmountLocal'] = \Helper::roundValue($VATAmountLocal);
+                        $details['VATAmountLocal'] = Helper::roundValue($VATAmountLocal);
 
 
                         $VATAmountRpt = CurrencyConversionService::localAndReportingConversionByER($groupMaster->supplierTransactionCurrencyID, $groupMaster->companyReportingCurrencyID, $VATAmount, $groupMaster->companyReportingER);
-                        $details['VATAmountRpt'] = \Helper::roundValue($VATAmountRpt);
+                        $details['VATAmountRpt'] = Helper::roundValue($VATAmountRpt);
                 }
             }
 
@@ -1102,11 +1102,11 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $input['supplierInvoOrderedAmount'] = $totalPendingAmount - $input['supplierInvoAmount'];
 
-        $currency = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
+        $currency = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $input['supplierInvoAmount']);
 
         $input['totTransactionAmount'] = $input['supplierInvoAmount'];
-        $input['totLocalAmount'] = \Helper::roundValue($currency['localAmount']);
-        $input['totRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
+        $input['totLocalAmount'] = Helper::roundValue($currency['localAmount']);
+        $input['totRptAmount'] = Helper::roundValue($currency['reportingAmount']);
 
         $bookInvSuppDet = $this->bookInvSuppDetRepository->update($input, $id);
 
@@ -1114,11 +1114,11 @@ class BookInvSuppDetAPIController extends AppBaseController
             $bookInvSuppDet = $this->bookInvSuppDetRepository->findWithoutFail($id);
             $percentage =  ($bookInvSuppDet->totTransactionAmount/$unbilledGrvGroupByMaster->totTransactionAmount);
             $VATAmount = $unbilledGrvGroupByMaster->totalVATAmount * $percentage;
-            $currencyVat = \Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
+            $currencyVat = Helper::convertAmountToLocalRpt(200, $bookInvSuppDet->unbilledgrvAutoID, $VATAmount);
             $vatData = array(
-                'VATAmount' => \Helper::roundValue($VATAmount),
-                'VATAmountLocal' => \Helper::roundValue($currencyVat['localAmount']),
-                'VATAmountRpt' =>  \Helper::roundValue($currencyVat['reportingAmount'])
+                'VATAmount' => Helper::roundValue($VATAmount),
+                'VATAmountLocal' => Helper::roundValue($currencyVat['localAmount']),
+                'VATAmountRpt' =>  Helper::roundValue($currencyVat['reportingAmount'])
             );
 
             $this->bookInvSuppDetRepository->update($vatData, $id);

@@ -501,7 +501,7 @@ class ExpenseClaimAPIController extends AppBaseController
             return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
-        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+        $expenseClaim->docRefNo = Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
 
         return $this->sendResponse($expenseClaim->toArray(), trans('custom.expense_claim_retrieved_successfully'));
     }
@@ -515,7 +515,7 @@ class ExpenseClaimAPIController extends AppBaseController
             return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
-        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+        $expenseClaim->docRefNo = Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
         $expenseClaim->localDecimal = 3;
         $expenseClaim->localDecimal = 'OMR';
         $expenseClaim->total = 0;

@@ -77,6 +77,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class CustomerReceivePaymentGlService
 {
@@ -168,8 +169,8 @@ class CustomerReceivePaymentGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->custPaymentReceiveCode;
             $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -185,11 +186,11 @@ class CustomerReceivePaymentGlService
             $data['nonHoldingPercentage'] = 0;
             $data['chequeNumber'] = $masterData->custChequeNo;
             $data['documentType'] = $masterData->documentType;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
 
 
             if ($masterData->documentType == 13) { //Customer Receive Payment
@@ -204,7 +205,7 @@ class CustomerReceivePaymentGlService
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
 
                     $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans,
                             SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, 
@@ -218,9 +219,9 @@ class CustomerReceivePaymentGlService
                     $serviceLineSystemIDs = collect($receiptDetails)->pluck('serviceLineSystemID')->toArray();
 
                     foreach ($receiptDetails as $keyRe => $valueRe) {
-                        $data['documentTransAmount'] = \Helper::roundValue($valueRe->receiveAmountTrans) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue($valueRe->receiveAmountLocal) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue($valueRe->receiveAmountRpt) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue($valueRe->receiveAmountTrans) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue($valueRe->receiveAmountLocal) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue($valueRe->receiveAmountRpt) * -1;
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                         $data['serviceLineCode'] =  $valueRe->serviceLineCode;
                         array_push($finalData, $data);
@@ -237,7 +238,7 @@ class CustomerReceivePaymentGlService
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
 
                     $directReceiptsBySegments = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
                                                                 ->WHERE('directReceiptAutoID', $masterModel["autoID"])
@@ -250,9 +251,9 @@ class CustomerReceivePaymentGlService
                         $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
 
                         if($valueRe->net_amount > 0){
-                            $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentLocalAmount'] = (\Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentRptAmount'] = (\Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentTransAmount'] = (Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentLocalAmount'] = (Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                            $data['documentRptAmount'] = (Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
                             $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                             $data['serviceLineCode'] =  $valueRe->serviceLineCode;
                             array_push($finalData, $data); 
@@ -266,9 +267,9 @@ class CustomerReceivePaymentGlService
                                                                 ->get();
                     
                     foreach ($directReceiptsBySegmentsData as $key => $val) {
-                        $data['documentTransAmount'] = (\Helper::roundValue($val->transAmount));
-                        $data['documentLocalAmount'] = (\Helper::roundValue($val->localAmount));
-                        $data['documentRptAmount'] = (\Helper::roundValue($val->rptAmount));
+                        $data['documentTransAmount'] = (Helper::roundValue($val->transAmount));
+                        $data['documentLocalAmount'] = (Helper::roundValue($val->localAmount));
+                        $data['documentRptAmount'] = (Helper::roundValue($val->rptAmount));
                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                         $data['serviceLineCode'] =  $val->serviceLineCode;
                         array_push($finalData, $data);
@@ -292,12 +293,12 @@ class CustomerReceivePaymentGlService
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
 
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($dgd));
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($dgd))/$masterData->localCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($dgd))/$masterData->companyRptCurrencyER;
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($dgd));
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($dgd))/$masterData->localCurrencyER;
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($dgd))/$masterData->companyRptCurrencyER;
                       
 
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
 
@@ -321,16 +322,16 @@ class CustomerReceivePaymentGlService
                             $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
 
                             if ($val->transAmount < 0) {
-                                $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
-                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
-                                $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
+                                $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount));
+                                $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount));
+                                $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount));
                             } else {
-                                $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount)) * -1;
-                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount)) * -1;
-                                $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount)) * -1;
+                                $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount)) * -1;
+                                $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount)) * -1;
+                                $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount)) * -1;
                             }
 
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
                     }
@@ -349,16 +350,16 @@ class CustomerReceivePaymentGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($directReceipt->transAmount);
+                        $data['documentTransAmount'] = Helper::roundValue($directReceipt->transAmount);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($directReceipt->localAmount);
+                        $data['documentLocalAmount'] = Helper::roundValue($directReceipt->localAmount);
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($directReceipt->rptAmount);
+                        $data['documentRptAmount'] = Helper::roundValue($directReceipt->rptAmount);
                         $data['serviceLineSystemID'] = $directReceipt->serviceLineSystemID;
                         $data['serviceLineCode'] = $directReceipt->serviceLineCode;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
 
@@ -370,16 +371,16 @@ class CustomerReceivePaymentGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount);
+                        $data['documentTransAmount'] = Helper::roundValue($advReceipt->transAmount);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount);
+                        $data['documentLocalAmount'] = Helper::roundValue($advReceipt->localAmount);
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount);
+                        $data['documentRptAmount'] = Helper::roundValue($advReceipt->rptAmount);
                         $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
                         $data['serviceLineCode'] = $advReceipt->serviceLineCode;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
 
@@ -396,14 +397,14 @@ class CustomerReceivePaymentGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($directReceipt->transAmount) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue($directReceipt->transAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($directReceipt->localAmount) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue($directReceipt->localAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($directReceipt->rptAmount) * -1;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['documentRptAmount'] = Helper::roundValue($directReceipt->rptAmount) * -1;
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
 
@@ -416,14 +417,14 @@ class CustomerReceivePaymentGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue($advReceipt->transAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue($advReceipt->localAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount) * -1;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['documentRptAmount'] = Helper::roundValue($advReceipt->rptAmount) * -1;
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
 
@@ -453,14 +454,14 @@ class CustomerReceivePaymentGlService
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         foreach ($ddBySegments as $key => $value) {
                             $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                             $data['serviceLineCode'] = $value->serviceLineCode;
 
-                            $data['documentTransAmount'] = \Helper::roundValue($value->transAmountDR);
-                            $data['documentLocalAmount'] = \Helper::roundValue($value->localAmountDR);
-                            $data['documentRptAmount'] = \Helper::roundValue($value->comRptAmountDR);
+                            $data['documentTransAmount'] = Helper::roundValue($value->transAmountDR);
+                            $data['documentLocalAmount'] = Helper::roundValue($value->localAmountDR);
+                            $data['documentRptAmount'] = Helper::roundValue($value->comRptAmountDR);
                             array_push($finalData, $data);
                         }
                     }
@@ -477,14 +478,14 @@ class CustomerReceivePaymentGlService
                             $data['documentNarration'] = $val->comments;
                             $data['documentTransCurrencyID'] = $val->transCurrencyID;
                             $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount)) * -1;
+                            $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount)) * -1;
                             $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                            $data['documentLocalAmount'] = (($val->VATAmountLocal == 0 || $val->VATAmountLocal == null) ? \Helper::roundValue(ABS($val->localAmountDR)) : \Helper::roundValue(ABS($val->localAmount))) * -1;
+                            $data['documentLocalAmount'] = (($val->VATAmountLocal == 0 || $val->VATAmountLocal == null) ? Helper::roundValue(ABS($val->localAmountDR)) : Helper::roundValue(ABS($val->localAmount))) * -1;
                             $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                             $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                            $data['documentRptAmount'] = (($val->VATAmountRpt == 0 || $val->VATAmountRpt == null) ? \Helper::roundValue(ABS($val->comRptAmountDR)) : \Helper::roundValue(ABS($val->rptAmount))) * -1;
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['documentRptAmount'] = (($val->VATAmountRpt == 0 || $val->VATAmountRpt == null) ? Helper::roundValue(ABS($val->comRptAmountDR)) : Helper::roundValue(ABS($val->rptAmount))) * -1;
+                            $data['timestamp'] = Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
                     }
@@ -547,26 +548,26 @@ class CustomerReceivePaymentGlService
                 
                 if ($masterData->documentType == 14) {
                     foreach ($ddBySegments as $key => $value) {
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmount / $tax->localCurrencyER)) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmount / $tax->companyReportingER)) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmount / $tax->localCurrencyER)) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmount / $tax->companyReportingER)) * -1;
                         $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                         $data['serviceLineCode'] = $value->serviceLineCode;
                         array_push($finalData, $data);
                     }
                 } else {
                     foreach ($directReceipts as $key => $value) {
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
                         $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                         $data['serviceLineCode'] = $value->serviceLineCode;
                         array_push($finalData, $data);
                     }
                     foreach ($advReceipts as $key => $value) {
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
                         $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                         $data['serviceLineCode'] = $value->serviceLineCode;
                         array_push($finalData, $data);
@@ -599,18 +600,18 @@ class CustomerReceivePaymentGlService
                         Log::info('Output VAT transfer GL Account not configured' . date('H:i:s'));
                     }
                     foreach ($directReceipts as $key => $value) {
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount));
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal));
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt));
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount));
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal));
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt));
                         $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                         $data['serviceLineCode'] = $value->serviceLineCode;
                         array_push($finalData, $data);
                     }
 
                     foreach ($advReceipts as $key => $value) {
-                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount));
-                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal));
-                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt));
+                        $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount));
+                        $data['documentLocalAmount'] = Helper::roundValue(ABS($value->VATAmountLocal));
+                        $data['documentRptAmount'] = Helper::roundValue(ABS($value->VATAmountRpt));
                         $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                         $data['serviceLineCode'] = $value->serviceLineCode;
                         array_push($finalData, $data);
@@ -638,11 +639,11 @@ class CustomerReceivePaymentGlService
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
 
                     $data['documentTransAmount'] = 0;
-                    $data['documentLocalAmount'] = \Helper::roundValue($localAmountSum);
-                    $data['documentRptAmount'] = \Helper::roundValue($rptAmountSum);
+                    $data['documentLocalAmount'] = Helper::roundValue($localAmountSum);
+                    $data['documentRptAmount'] = Helper::roundValue($rptAmountSum);
 
                     $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                     $data['serviceLineCode'] =  $valueRe->serviceLineCode;

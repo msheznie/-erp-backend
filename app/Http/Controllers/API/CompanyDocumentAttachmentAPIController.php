@@ -177,10 +177,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         $companyId = $request['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }

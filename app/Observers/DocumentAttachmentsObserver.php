@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class DocumentAttachmentsObserver
 {
@@ -24,7 +25,7 @@ class DocumentAttachmentsObserver
         
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $type = 2;
         if($obj && isset($employee))
@@ -58,7 +59,7 @@ class DocumentAttachmentsObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
      
         if($obj && isset($employee))
         {
@@ -132,7 +133,7 @@ class DocumentAttachmentsObserver
 
     public function process($tender,$tenderObj,$reflogId,$type)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

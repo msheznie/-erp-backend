@@ -77,6 +77,7 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\BankLedgerInsert;
 use App\Jobs\TaxLedgerInsert;
 use ExchangeSetupConfig;
+use App\helper\Helper;
 class PdcDoubleEntry implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -151,8 +152,8 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->BPVcode;
                             $data['documentDate'] = $masterDocumentDate;
-                            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                             $data['documentConfirmedDate'] = $masterData->confirmedDate;
                             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -169,11 +170,11 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['chequeNumber'] = $pdcLogData ? $pdcLogData->chequeNo : null;
                             $data['pdcID'] = $pdcLogData ? $pdcLogData->id : null;
                             $data['documentType'] = $masterData->invoiceType;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdDateTime'] = Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
                             $data['createdUserPC'] = gethostname();
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
 
                             if ($masterData->invoiceType == 2) { //Supplier Payment
                                 if ($si) {
@@ -196,43 +197,43 @@ class PdcDoubleEntry implements ShouldQueue
                                         $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['timestamp'] = Helper::currentDateTime();
 
-                                        $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
+                                        $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
                                         if ($pdcData['newStatus'] == 1) {
                                             $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                            $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                            $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                            $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                            $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
                                             array_push($finalData, $data);
 
                                             $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                             $data['glCode'] = $masterData->bank->glCodeLinked;
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                            $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                            $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                            $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                            $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
                                             array_push($finalData, $data);
                                         }
 
                                         if ($pdcData['newStatus'] == 2) {
                                             $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                            $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                            $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                            $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                            $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
                                             array_push($finalData, $data);
 
                                             $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                             $data['glCode'] = $masterData->bank->glCodeLinked;
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                            $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                            $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                            $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                            $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
                                             array_push($finalData, $data);
                                         }
                                     } else {
                                         //convert amount in currency conversion
-                                        $convertAmount = \Helper::convertAmountToLocalRpt(203, $masterModel["autoID"], $pdcData['amount']);
+                                        $convertAmount = Helper::convertAmountToLocalRpt(203, $masterModel["autoID"], $pdcData['amount']);
 
                                         $transAmountTotal = $pdcData['amount'];
                                         $localAmountTotal = $convertAmount["localAmount"];
@@ -248,19 +249,19 @@ class PdcDoubleEntry implements ShouldQueue
                                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['timestamp'] = Helper::currentDateTime();
 
                                         if ($pdcData['newStatus'] == 1) {
                                             $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"];
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"];
                                             array_push($finalData, $data);
 
                                             $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                             $data['glCode'] = $masterData->bank->glCodeLinked;
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"] * -1;
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"] * -1;
                                             array_push($finalData, $data);
@@ -269,14 +270,14 @@ class PdcDoubleEntry implements ShouldQueue
                                         if ($pdcData['newStatus'] == 2) {
                                             $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                             $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"] * -1;
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"] * -1;
                                             array_push($finalData, $data);
 
                                             $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                             $data['glCode'] = $masterData->bank->glCodeLinked;
-                                            $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
+                                            $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
                                             $data['documentLocalAmount'] = $convertAmount["localAmount"];
                                             $data['documentRptAmount'] = $convertAmount["reportingAmount"];
                                             array_push($finalData, $data);
@@ -287,7 +288,7 @@ class PdcDoubleEntry implements ShouldQueue
 
                             if ($masterData->invoiceType == 5) { //Advance Payment
                                 if ($ap) {
-                                    $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
+                                    $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
                                     $data['glAccountType'] = 'BS';
@@ -302,36 +303,36 @@ class PdcDoubleEntry implements ShouldQueue
                                     if ($pdcData['newStatus'] == 1) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                        $data['timestamp'] = Helper::currentDateTime();
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                        $data['timestamp'] = Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
 
                                      if ($pdcData['newStatus'] == 2) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                        $data['timestamp'] = Helper::currentDateTime();
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
-                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                        $data['timestamp'] = Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
                                 }
@@ -342,7 +343,7 @@ class PdcDoubleEntry implements ShouldQueue
                                     $masterLocal = ($pdcData['amount']/$masterData->localCurrencyER);
                                     $masterRpt = ($pdcData['amount']/$masterData->companyRptCurrencyER);
                                 }else {
-                                    $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
+                                    $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->BPVbankCurrency, $masterData->BPVbankCurrency, $pdcData['amount']);
                                     $masterLocal = $currencyConvertionData['localAmount'];
                                     $masterRpt = $currencyConvertionData['reportingAmount'];
                                 }
@@ -356,37 +357,37 @@ class PdcDoubleEntry implements ShouldQueue
                                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                                 $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                 $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                $data['timestamp'] = \Helper::currentDateTime();
+                                $data['timestamp'] = Helper::currentDateTime();
 
                                 if ($pdcData['newStatus'] == 1) {
                                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                    $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                    $data['documentLocalAmount'] = \Helper::roundValue($masterLocal);
-                                    $data['documentRptAmount'] = \Helper::roundValue($masterRpt);
+                                    $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                    $data['documentLocalAmount'] = Helper::roundValue($masterLocal);
+                                    $data['documentRptAmount'] = Helper::roundValue($masterRpt);
                                     array_push($finalData, $data);
 
                                     $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                     $data['glCode'] = $masterData->bank->glCodeLinked;
-                                    $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
-                                    $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
+                                    $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                    $data['documentLocalAmount'] = Helper::roundValue($masterLocal) * -1;
+                                    $data['documentRptAmount'] = Helper::roundValue($masterRpt) * -1;
                                     array_push($finalData, $data);
                                 }
 
                                 if ($pdcData['newStatus'] == 2) {
                                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
                                     $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-payable-account");
-                                    $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                    $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
-                                    $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
+                                    $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                    $data['documentLocalAmount'] = Helper::roundValue($masterLocal) * -1;
+                                    $data['documentRptAmount'] = Helper::roundValue($masterRpt) * -1;
                                     array_push($finalData, $data);
 
                                     $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                     $data['glCode'] = $masterData->bank->glCodeLinked;
-                                    $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                    $data['documentLocalAmount'] = \Helper::roundValue($masterLocal);
-                                    $data['documentRptAmount'] = \Helper::roundValue($masterRpt);
+                                    $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                    $data['documentLocalAmount'] = Helper::roundValue($masterLocal);
+                                    $data['documentRptAmount'] = Helper::roundValue($masterRpt);
                                     array_push($finalData, $data);
                                 }
                             }
@@ -461,8 +462,8 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->custPaymentReceiveCode;
                             $data['documentDate'] = $masterDocumentDate;
-                            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                             $data['documentConfirmedDate'] = $masterData->confirmedDate;
                             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -479,16 +480,16 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['chequeNumber'] = $pdcLogData ? $pdcLogData->chequeNo : null;
                             $data['pdcID'] = $pdcLogData ? $pdcLogData->id : null;
                             $data['documentType'] = $masterData->documentType;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdDateTime'] = Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
                             $data['createdUserSystemID'] = $empID->employeeSystemID;
                             $data['createdUserPC'] = gethostname();
-                            $data['timestamp'] = \Helper::currentDateTime();
+                            $data['timestamp'] = Helper::currentDateTime();
 
 
                             if ($masterData->documentType == 13) { //Customer Receive Payment
                                 if ($cpd) {
-                                    $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->bankCurrency, $masterData->bankCurrency, $pdcData['amount']);
+                                    $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->bankCurrency, $masterData->bankCurrency, $pdcData['amount']);
                                     $data['serviceLineSystemID'] = 24;
                                     $data['serviceLineCode'] = 'X';
                                     $data['glAccountType'] = 'BS';
@@ -499,38 +500,38 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $data['timestamp'] = Helper::currentDateTime();
 
 
                                     if ($pdcData['newStatus'] == 1) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount'])) * -1;
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount'])) * -1;
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount'])) * -1;
+                                        $data['documentTransAmount'] = abs(Helper::roundValue($pdcData['amount'])) * -1;
+                                        $data['documentLocalAmount'] = abs(Helper::roundValue($currencyConvertionData['localAmount'])) * -1;
+                                        $data['documentRptAmount'] = abs(Helper::roundValue($currencyConvertionData['reportingAmount'])) * -1;
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount']));
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount']));
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount']));
+                                        $data['documentTransAmount'] = abs(Helper::roundValue($pdcData['amount']));
+                                        $data['documentLocalAmount'] = abs(Helper::roundValue($currencyConvertionData['localAmount']));
+                                        $data['documentRptAmount'] = abs(Helper::roundValue($currencyConvertionData['reportingAmount']));
                                         array_push($finalData, $data);
                                     }
 
                                     if ($pdcData['newStatus'] == 2) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount']));
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount']));
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount']));
+                                        $data['documentTransAmount'] = abs(Helper::roundValue($pdcData['amount']));
+                                        $data['documentLocalAmount'] = abs(Helper::roundValue($currencyConvertionData['localAmount']));
+                                        $data['documentRptAmount'] = abs(Helper::roundValue($currencyConvertionData['reportingAmount']));
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue($pdcData['amount'])) * -1;
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue($currencyConvertionData['localAmount'])) * -1;
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue($currencyConvertionData['reportingAmount'])) * -1;
+                                        $data['documentTransAmount'] = abs(Helper::roundValue($pdcData['amount'])) * -1;
+                                        $data['documentLocalAmount'] = abs(Helper::roundValue($currencyConvertionData['localAmount'])) * -1;
+                                        $data['documentRptAmount'] = abs(Helper::roundValue($currencyConvertionData['reportingAmount'])) * -1;
                                         array_push($finalData, $data);
                                     }
 
@@ -539,7 +540,7 @@ class PdcDoubleEntry implements ShouldQueue
 
                             if ($masterData->documentType == 14 || $masterData->documentType == 15) { //Direct Receipt & advance receipt
                                 if ($totaldd) {
-                                    $currencyConvertionData = \Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $pdcData['amount']);
+                                    $currencyConvertionData = Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $pdcData['amount']);
                                     if($totaldd->transAmount == 0){
                                         $totaldd = $totalAdv;
                                         $data['serviceLineSystemID'] = 24;
@@ -558,37 +559,37 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $data['timestamp'] = Helper::currentDateTime();
 
                                     if ($pdcData['newStatus'] == 1) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
                                         array_push($finalData, $data);
                                     }
 
                                     if ($pdcData['newStatus'] == 2) {
                                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
                                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account");
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']);
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']);
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']);
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']);
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']);
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']);
                                         array_push($finalData, $data);
 
                                         $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
                                         $data['glCode'] = $masterData->bank->glCodeLinked;
-                                        $data['documentTransAmount'] = \Helper::roundValue($pdcData['amount']) * -1;
-                                        $data['documentLocalAmount'] = \Helper::roundValue($currencyConvertionData['localAmount']) * -1;
-                                        $data['documentRptAmount'] = \Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
+                                        $data['documentTransAmount'] = Helper::roundValue($pdcData['amount']) * -1;
+                                        $data['documentLocalAmount'] = Helper::roundValue($currencyConvertionData['localAmount']) * -1;
+                                        $data['documentRptAmount'] = Helper::roundValue($currencyConvertionData['reportingAmount']) * -1;
                                         array_push($finalData, $data);
                                     }
                                 }
@@ -606,7 +607,7 @@ class PdcDoubleEntry implements ShouldQueue
                                         $masterDocumentDate = Carbon::parse($pdcData['date']);
                                     }
 
-                                    $currencyConvertionData = \Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $pdcData['amount']);
+                                    $currencyConvertionData = Helper::currencyConversion($custReceivePayment->companySystemID, $custReceivePayment->custTransactionCurrencyID, $custReceivePayment->custTransactionCurrencyID, $pdcData['amount']);
 
                                     $pdcAmount = ($custReceivePayment->bankAmount > 0) ?  $pdcData['amount'] : $pdcData['amount'] * -1;
                                     $pdcAmountLocalAmount = ($custReceivePayment->bankAmount > 0) ?  $currencyConvertionData['localAmount'] : $currencyConvertionData['localAmount'] * -1;

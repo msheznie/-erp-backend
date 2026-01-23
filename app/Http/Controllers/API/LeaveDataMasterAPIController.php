@@ -1513,7 +1513,7 @@ class LeaveDataMasterAPIController extends AppBaseController
          * getting from my sql view.
          *
          * */
-        $employee = $employee = \Helper::getEmployeeInfo();
+        $employee = $employee = Helper::getEmployeeInfo();
         $i = 0;
         $calculated  = 0;
         $track=0;
@@ -1694,7 +1694,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
     public function getLeaveBalance(){
 
-        $employee = $employee = \Helper::getEmployeeInfo();
+        $employee = $employee = Helper::getEmployeeInfo();
         $i = 0;
         $calculated  = 0;
         $track=0;

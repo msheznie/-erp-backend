@@ -38,6 +38,7 @@ use Illuminate\Support\Str;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class CompanyBudgetPlanningController
@@ -558,7 +559,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             );
         }
         else {
-            $employeeID = \Helper::getEmployeeSystemID();
+            $employeeID = Helper::getEmployeeSystemID();
             $isFinanceUser = $request['isFinanceUser'];
 
             $years = CompanyBudgetPlanning::select('yearID')->groupby('yearID')->get()->pluck('yearID')->toArray();
@@ -774,7 +775,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data = collect();
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $isFinanceUser = false;
 
                 
@@ -1328,7 +1329,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data = collect();
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
 
                 $isFinanceUser = false;
 
@@ -1632,8 +1633,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         try {
             $input = $request->all();
 
-            $input['empID'] =  \Helper::getEmployeeSystemID();
-            $input['created_by'] = \Helper::getEmployeeSystemID();
+            $input['empID'] =  Helper::getEmployeeSystemID();
+            $input['created_by'] = Helper::getEmployeeSystemID();
             // Validate that we have the required data
             if (empty($input)) {
                 return $this->sendError('No data provided', 400);

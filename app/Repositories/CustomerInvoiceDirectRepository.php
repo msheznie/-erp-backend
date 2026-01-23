@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
 use App\helper\Helper;
 use Carbon\Carbon;
+use App\helper\Helper;
 
 /**
  * Class CustomerInvoiceDirectRepository
@@ -398,11 +399,11 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.invoice_code')] = $val->bookingInvCode;
-                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->approvedDate);
                 $data[$x][trans('custom.invoice_type')] = StatusService::getCustomerInvoiceType($val->isPerforma);
                 $data[$x][trans('custom.customer')] = $val->CustomerName;
                 $data[$x][trans('custom.invoice')] = $val->customerInvoiceNo;
-                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($val->customerInvoiceDate);
+                $data[$x][trans('custom.invoice_date')] = Helper::dateFormat($val->customerInvoiceDate);
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.created_by')] = $val->empName;
                 $data[$x][trans('custom.transaction_currency')] = $val->CurrencyCode;

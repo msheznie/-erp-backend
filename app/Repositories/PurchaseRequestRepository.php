@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use App\Services\ProcurementLifecycleService;
+use App\helper\Helper;
 
 /**
  * Class PurchaseRequestRepository
@@ -274,7 +275,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x][trans('custom.excel_comments')] = $val->comments;
                 $data[$x][trans('custom.excel_internal_note')] = $val->internalNotes;
                 $data[$x][trans('custom.excel_created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.excel_created_at')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.excel_created_at')] = Helper::dateFormat($val->createdDateTime);
                 $data[$x][trans('custom.excel_status')] = StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
@@ -334,7 +335,7 @@ class PurchaseRequestRepository extends BaseRepository
             trans('custom.excel_comments') => $val->comments,
             trans('custom.excel_internal_note') => $val->internalNotes,
             trans('custom.excel_created_by') => $val->created_by? $val->created_by->empName : '',
-            trans('custom.excel_created_at') =>\Helper::dateFormat($val->createdDateTime),
+            trans('custom.excel_created_at') =>Helper::dateFormat($val->createdDateTime),
             trans('custom.excel_status') => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
         ];
     }

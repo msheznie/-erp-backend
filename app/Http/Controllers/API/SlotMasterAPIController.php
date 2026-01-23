@@ -375,11 +375,11 @@ class SlotMasterAPIController extends AppBaseController
         $input = $request->all();
         $slotMasterID = $input['slotMasterID'];
         $companyID = $input['companyID'];
-        $isGroupCompany = \Helper::checkIsCompanyGroup($companyID);
+        $isGroupCompany = Helper::checkIsCompanyGroup($companyID);
         $companyData = [];
         if($isGroupCompany)
         {
-            $companiesByGroup = \Helper::getGroupCompany($companyID);
+            $companiesByGroup = Helper::getGroupCompany($companyID);
             $companyData = Company::getCompanyList($companiesByGroup);
         }
 

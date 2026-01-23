@@ -347,7 +347,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
                 if (isset($input['sizeInKbs'])) {
                     if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                        return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                        return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                     }
                 }
 

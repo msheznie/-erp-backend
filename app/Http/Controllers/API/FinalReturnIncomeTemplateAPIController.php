@@ -19,6 +19,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeTemplateController
@@ -149,8 +150,8 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
             $input['isActive'] = 1;
             $input['isDefault'] = 0;
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $finalReturnIncomeTemplate = $this->finalReturnIncomeTemplateRepository->create($input);
             $this->updateDetailAndLinksOnCreate($finalReturnIncomeTemplate);
@@ -448,8 +449,8 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
                 'fontColor'            => '#000000',
                 'companySystemID'      => $masterData->companySystemID,
                 'createdPCID'          => gethostname(),
-                'createdUserSystemID'  => \Helper::getEmployeeSystemID(),
-                'createdUserID'        => \Helper::getEmployeeID(),
+                'createdUserSystemID'  => Helper::getEmployeeSystemID(),
+                'createdUserID'        => Helper::getEmployeeID(),
                 'createdDateTime'      => now(),
             ];
 
@@ -478,8 +479,8 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
                     'bgColor'              => null,
                     'companySystemID'      => $masterData->companySystemID,
                     'createdPCID'          => gethostname(),
-                    'createdUserSystemID'  => \Helper::getEmployeeSystemID(),
-                    'createdUserID'        => \Helper::getEmployeeID(),
+                    'createdUserSystemID'  => Helper::getEmployeeSystemID(),
+                    'createdUserID'        => Helper::getEmployeeID(),
                     'createdDateTime'      => $timestamp,
                 ];
                 $sortOrder++;
@@ -506,8 +507,8 @@ class FinalReturnIncomeTemplateAPIController extends AppBaseController
                     'glDescription'        => $gl->AccountDescription,
                     'companySystemID'      => $masterData->companySystemID,
                     'createdPCID'          => gethostname(),
-                    'createdUserSystemID'  => \Helper::getEmployeeSystemID(),
-                    'createdUserID'        => \Helper::getEmployeeID(),
+                    'createdUserSystemID'  => Helper::getEmployeeSystemID(),
+                    'createdUserID'        => Helper::getEmployeeID(),
                     'createdDateTime'      => $timestamp,
                 ];
                 $sortOrder++;

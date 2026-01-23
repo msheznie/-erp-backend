@@ -26,6 +26,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class SalesPersonTargetController
@@ -124,7 +125,7 @@ class SalesPersonTargetAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $masterData = SalesPersonMaster::find($input['salesPersonID']);
 

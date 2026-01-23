@@ -9,6 +9,7 @@ use App\Models\ExchangeSetupConfiguration;
 use App\Models\ExchangeSetupDocument;
 use App\Models\ExchangeSetupDocumentType;
 use Auth;
+use App\helper\Helper;
 
 class ExchangeSetupConfig
 {
@@ -64,9 +65,9 @@ class ExchangeSetupConfig
         $masterExchangeRates = collect($masterData->only('companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER'));
         $paymentVoucherMasterOrg = [];
 
-        $currencyRate = \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['supplierDefCurrencyID'],0);
-        $localExchangeRate =  \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['localCurrencyID'], 0);
-        $currencyRateBank = \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['BPVbankCurrency'],0);
+        $currencyRate = Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['supplierDefCurrencyID'],0);
+        $localExchangeRate =  Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['localCurrencyID'], 0);
+        $currencyRateBank = Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['BPVbankCurrency'],0);
         $paymentVoucherMasterOrg['companyRptCurrencyER'] = $currencyRate['trasToRptER'];
         $paymentVoucherMasterOrg['localCurrencyER'] = $localExchangeRate['transToDocER'];
         $paymentVoucherMasterOrg['BPVbankCurrencyER'] = $currencyRateBank['transToDocER'];
@@ -85,9 +86,9 @@ class ExchangeSetupConfig
         $masterExchangeRates = collect($masterData->only('companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER'));
         $paymentVoucherMasterOrg = [];
 
-        $currencyRate = \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['supplierDefCurrencyID'],0);
-        $localExchangeRate =  \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['localCurrencyID'], 0);
-        $currencyRateBank = \Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['BPVbankCurrency'],0);
+        $currencyRate = Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['supplierDefCurrencyID'],0);
+        $localExchangeRate =  Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['localCurrencyID'], 0);
+        $currencyRateBank = Helper::currencyConversion($masterData['companySystemID'], $masterData['supplierTransCurrencyID'], $masterData['BPVbankCurrency'],0);
         $paymentVoucherMasterOrg['companyRptCurrencyER'] = $currencyRate['trasToRptER'];
         $paymentVoucherMasterOrg['localCurrencyER'] = $localExchangeRate['transToDocER'];
         $paymentVoucherMasterOrg['BPVbankCurrencyER'] = $currencyRateBank['transToDocER'];

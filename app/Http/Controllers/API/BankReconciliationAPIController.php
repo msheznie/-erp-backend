@@ -178,7 +178,7 @@ class BankReconciliationAPIController extends AppBaseController
             $input['createdUserID'] = $employee->empID;
             $input['createdUserSystemID'] = $employee->employeeSystemID;
         } else {
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             $input['createdUserID'] = $employee->empID;
             $input['createdUserSystemID'] = $employee->employeeSystemID;
         }
@@ -469,7 +469,7 @@ class BankReconciliationAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -578,10 +578,10 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -714,7 +714,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankReconciliation = DB::table('erp_documentapproved')
@@ -768,7 +768,7 @@ class BankReconciliationAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $bankReconciliation = [];
@@ -801,7 +801,7 @@ class BankReconciliationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankReconciliation = DB::table('erp_documentapproved')
@@ -882,7 +882,7 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_reconciliation')]));
         }
 
-        $bankReconciliation->docRefNo = \Helper::getCompanyDocRefNo($bankReconciliation->companySystemID, $bankReconciliation->documentSystemID);
+        $bankReconciliation->docRefNo = Helper::getCompanyDocRefNo($bankReconciliation->companySystemID, $bankReconciliation->documentSystemID);
         $bankReconciliation = $this->getUnClearReceiptPayment($bankReconciliation);
 
         $decimalPlaces = 2;
@@ -1006,8 +1006,8 @@ class BankReconciliationAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $subCompaniesByGroup = [];
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $subCompaniesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $subCompaniesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompaniesByGroup = (array)$selectedCompanyId;
         }
@@ -1095,7 +1095,7 @@ class BankReconciliationAPIController extends AppBaseController
 
                         $data[$x][trans('custom.company_id')] = $val->companyID;
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.narration')] = $val->documentNarration;
                         $data[$x][trans('custom.payee_name')] = $val->payeeName;
                         $decimal = 3;
@@ -1110,9 +1110,9 @@ class BankReconciliationAPIController extends AppBaseController
                             $data[$x][trans('custom.bank_currency')] = '';
                         }
                         $data[$x][trans('custom.bank_amount')] = number_format($val->payAmountBank, $decimal);
-                        $data[$x][trans('custom.reconciliation_date')] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x][trans('custom.reconciliation_date')] = Helper::dateFormat($val->bankReconciliationDate);
                         $data[$x][trans('custom.bank_cleared_by')] = $val->bankClearedByEmpName;
-                        $data[$x][trans('custom.bank_cleared_date')] = \Helper::dateFormat($val->bankClearedDate);
+                        $data[$x][trans('custom.bank_cleared_date')] = Helper::dateFormat($val->bankClearedDate);
                         $x++;
                     }
                 }
@@ -1175,7 +1175,7 @@ class BankReconciliationAPIController extends AppBaseController
 
                         $data[$x][trans('custom.company_id')] = $val->companyID;
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.narration')] = $val->documentNarration;
                         $data[$x][trans('custom.payee_name')] = $val->payeeName;
                         $decimal = 3;
@@ -1191,11 +1191,11 @@ class BankReconciliationAPIController extends AppBaseController
                         }
                         $data[$x][trans('custom.bank_amount')] = number_format($val->payAmountBank, $decimal);
                         $data[$x][trans('custom.treasury_cleared_status')] = ($val->trsClearedYN == -1) ? trans('custom.yes') : trans('custom.no');
-                        $data[$x][trans('custom.treasury_cleared_date')] = \Helper::dateFormat($val->trsClearedDate);
+                        $data[$x][trans('custom.treasury_cleared_date')] = Helper::dateFormat($val->trsClearedDate);
                         $data[$x][trans('custom.treasury_cleared_by')] = $val->trsClearedByEmpName;
-                        $data[$x][trans('custom.reconciliation_date')] = \Helper::dateFormat($val->bankReconciliationDate);
+                        $data[$x][trans('custom.reconciliation_date')] = Helper::dateFormat($val->bankReconciliationDate);
                         $data[$x][trans('custom.bank_cleared_by')] = $val->bankClearedByEmpName;
-                        $data[$x][trans('custom.bank_cleared_date')] = \Helper::dateFormat($val->bankClearedDate);
+                        $data[$x][trans('custom.bank_cleared_date')] = Helper::dateFormat($val->bankClearedDate);
                         $x++;
                     }
                 }
@@ -1259,7 +1259,7 @@ class BankReconciliationAPIController extends AppBaseController
         $companyID = [];
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -1309,7 +1309,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $this->bankReconciliationRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $bankReconciliation->documentSystemID)->first();
 
@@ -1445,7 +1445,7 @@ class BankReconciliationAPIController extends AppBaseController
 
         $id = $input['bankRecAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = BankReconciliation::find($id);
@@ -1564,9 +1564,9 @@ class BankReconciliationAPIController extends AppBaseController
     public function getAllActiveSegments(Request $request)
     {
         $companyId = isset($request['companyId']) ? $request['companyId'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -1789,10 +1789,10 @@ class BankReconciliationAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

@@ -2015,7 +2015,7 @@ class BudgetConsumptionService
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 
-				$currencyConversionRptAmount = \Helper::currencyConversion($group->first()['companySystemID'], $group->first()['currencyID'], $group->first()['currencyID'], $group->sum('amount'));
+				$currencyConversionRptAmount = Helper::currencyConversion($group->first()['companySystemID'], $group->first()['currencyID'], $group->first()['currencyID'], $group->sum('amount'));
 
 			    return [
 			        'templateDetailID' => $group->first()['templateDetailID'],
@@ -2037,7 +2037,7 @@ class BudgetConsumptionService
 			return $finalData;
 		} else {
 			foreach ($pendingSupInvQry as $key => $value) {
-				$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
+				$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
 
 				$value->localAmt = $currencyConversionRptAmount['localAmount'];
 				$value->rptAmt = $currencyConversionRptAmount['reportingAmount'];
@@ -2128,7 +2128,7 @@ class BudgetConsumptionService
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 
-				$currencyConversionRptAmount = \Helper::currencyConversion($group->first()['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $group->sum('amount'));
+				$currencyConversionRptAmount = Helper::currencyConversion($group->first()['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $group->sum('amount'));
 
 			    return [
 			        'templateDetailID' => $group->first()['templateDetailID'],
@@ -2150,7 +2150,7 @@ class BudgetConsumptionService
 			return $finalData;
 		} else {
 			foreach ($pendingSupInvQry as $key => $value) {
-				$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $budgetFormData['currency'], $budgetFormData['currency'], $value->amount);
+				$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $budgetFormData['currency'], $budgetFormData['currency'], $value->amount);
 
 				$value->localAmt = $currencyConversionRptAmount['localAmount'];
 				$value->rptAmt = $value->amount;
@@ -3839,7 +3839,7 @@ class BudgetConsumptionService
 
                 	$companyData = Company::find($value->companySystemID);
 
-                	$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+                	$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
 
                     $budgetConsumeData[] = array(
@@ -3882,7 +3882,7 @@ class BudgetConsumptionService
             	$companyData = Company::find($faMaster->companySystemID);
 
             	if ($companyData) {
-	            	$currencyConversionRptAmount = \Helper::currencyConversion($faMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $faMaster->costUnitRpt);
+	            	$currencyConversionRptAmount = Helper::currencyConversion($faMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $faMaster->costUnitRpt);
 
 
 	                $budgetConsumeData[] = array(
@@ -6069,12 +6069,12 @@ class BudgetConsumptionService
 
 						
 
-						$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+						$currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 			
 
-						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+						$currencyConversionRptAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 						$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
-						$currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+						$currencyConversionRptAmountRec = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
 						$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
 					}
 				
@@ -6093,7 +6093,7 @@ class BudgetConsumptionService
 		{
 			$commited_amount = $tot - $fixedCOmmitedAmount;
 			$commited_amount = $commited_amount < 1?0:$commited_amount;							
-			$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+			$currencyConversionRptAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
 			$committedAmount = $currencyConversionRptAmount['reportingAmount'];
 
 			$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
@@ -6510,7 +6510,7 @@ class BudgetConsumptionService
 
             $amount = $value->debitAmount + $value->creditAmount * -1;
 
-            $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+            $currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
             $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
 
@@ -6956,10 +6956,10 @@ class BudgetConsumptionService
 									}
 								}
 
-								$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
-								$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+								$currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+								$currencyConversionRptAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 								$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
-								$currencyConversionRptAmountRec = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+								$currencyConversionRptAmountRec = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
 								$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
 							}
 						}
@@ -6967,7 +6967,7 @@ class BudgetConsumptionService
 
                     $commited_amount = $tot - $fixedCOmmitedAmount;
                     $commited_amount = $commited_amount < 1?0:$commited_amount;
-                    $currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+                    $currencyConversionRptAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
                     $committedAmount = $currencyConversionRptAmount['reportingAmount'];
 				}
 

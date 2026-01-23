@@ -16,6 +16,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CashFlowTemplateDetailController
@@ -404,7 +405,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
 
 
             $input['createdPCID'] = gethostname();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $subCategory = $input['subCategory'];
             unset($input['subCategory']);

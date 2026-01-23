@@ -269,7 +269,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     }
                 }
 
-                $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
+                $input['technical_verify_by'] = Helper::getEmployeeSystemID();
                 $input['technical_verify_at'] = Carbon::now();
                 $input['technical_eval_remarks'] = $input['technical_eval_remarks'];
 
@@ -295,7 +295,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }
             else if($meth == 2)
             {
-                $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
+                $input['commercial_verify_by'] = Helper::getEmployeeSystemID();
                 $input['commercial_verify_at'] = Carbon::now();
 
 
@@ -339,7 +339,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 {
                     $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
                     $tenderMaster->commercial_verify_status = 1;
-                    $tenderMaster->commercial_verify_by = \Helper::getEmployeeSystemID();
+                    $tenderMaster->commercial_verify_by = Helper::getEmployeeSystemID();
                     $tenderMaster->commercial_verify_at = Carbon::now();
                     $tenderMaster->save();
                 }
@@ -578,7 +578,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function updateBidSubmission($tenderId){
         try {
             $bidSubData['doc_verifiy_yn'] = 1;
-            $bidSubData['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bidSubData['doc_verifiy_by_emp'] = Helper::getEmployeeSystemID();
             $bidSubData['doc_verifiy_date'] =  date('Y-m-d H:i:s');
             $bidSubData['doc_verifiy_status'] = 1;
             $bidSubData['doc_verifiy_comment'] = '';
@@ -641,7 +641,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         try {
             $att['go_no_go_criteria_result'] = $input['value'];
             $att['updated_at'] = Carbon::now();
-            $att['updated_by'] = \Helper::getEmployeeSystemID();
+            $att['updated_by'] = Helper::getEmployeeSystemID();
             $result = BidSubmissionDetail::where('id', $input['id'])->update($att);
 
             DB::commit();
@@ -672,7 +672,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }
 
             $att['updated_at'] = Carbon::now();
-            $att['updated_by'] = \Helper::getEmployeeSystemID();
+            $att['updated_by'] = Helper::getEmployeeSystemID();
             $result = BidSubmissionMaster::where('id', $input['id'])->update($att);
 
             $details = BidSubmissionMaster::where('id', $input['id'])->first();
@@ -826,7 +826,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             $att['eval_score'] = $val;
             $att['eval_result'] = $result;
-            $att['evaluate_by'] = \Helper::getEmployeeSystemID();
+            $att['evaluate_by'] = Helper::getEmployeeSystemID();
             $att['evaluate_at'] =Carbon::now();
             $att['bid_selection_id'] = $id;
             $att['eval_score_id'] = $score_id;

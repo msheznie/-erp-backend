@@ -63,6 +63,7 @@ use Response;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpProjectMaster;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class JvDetailController
@@ -1241,8 +1242,8 @@ GROUP BY
         $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
         $temp['comments'] = $jvMaster['JVNarration'];
-        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
-        $temp['creditAmount'] = (!$creditFlag) ? 0 : \Helper::roundValue($jvAmount);
+        $temp['debitAmount'] = (!$creditFlag) ? Helper::roundValue($jvAmount) : 0;
+        $temp['creditAmount'] = (!$creditFlag) ? 0 : Helper::roundValue($jvAmount);
         $temp['cuurencyname'] = null;
         $temp['documentSystemID'] = 17;
         $temp['documentID'] = "JV";
@@ -1456,7 +1457,7 @@ GROUP BY
         $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
         $temp['comments'] = $jvMaster['JVNarration'];
-        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
+        $temp['debitAmount'] = (!$creditFlag) ? Helper::roundValue($jvAmount) : 0;
         $temp['creditAmount'] = (!$creditFlag) ? 0 : $generalLedgerAmount;
         $temp['cuurencyname'] = null;
         $temp['documentSystemID'] = 17;

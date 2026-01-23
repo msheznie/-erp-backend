@@ -442,10 +442,10 @@ class DashboardWidgetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.widget_master_id_not_found'));
         }
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -458,7 +458,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
 
             $glCategoryType = isset($input['glType']) ? $input['glType'] : '';
             $categoryBLorPL = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 2 : 1;
-            $companyCurrency = \Helper::companyCurrency($companyID);
+            $companyCurrency = Helper::companyCurrency($companyID);
             $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
 
             $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyID)
@@ -1261,10 +1261,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -1455,10 +1455,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }

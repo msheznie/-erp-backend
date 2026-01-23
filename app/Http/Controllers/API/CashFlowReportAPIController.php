@@ -27,6 +27,7 @@ use Carbon\Carbon;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 
 
@@ -129,7 +130,7 @@ class CashFlowReportAPIController extends AppBaseController
         $input = $request->all();
         $input['createdPCID'] = gethostname();
         $input['date'] = Carbon::parse($input['date']);
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $cashFlowReport = $this->cashFlowReportRepository->create($input);
 
@@ -608,10 +609,10 @@ class CashFlowReportAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -650,7 +651,7 @@ class CashFlowReportAPIController extends AppBaseController
         $reportDetails = [];
         if ($reportMasterData) {
 
-            $companyCurrency = \Helper::companyCurrency($reportMasterData->companySystemID);
+            $companyCurrency = Helper::companyCurrency($reportMasterData->companySystemID);
 
             $companyCurrencyCode = isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : '';
 
@@ -856,7 +857,7 @@ class CashFlowReportAPIController extends AppBaseController
             $pv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('pvID', $detail->pvID)->where('grvID',$detail->grvAutoID)->where('invID',$detail->bookingSuppMasInvAutoID)->where('cashFlowReportID',$cashFlowReportID)->where('subCategoryID',$subCategoryID)->first();
             $detail->cashFlowAmount = null;
             if($pv){
-                $companyCurrency = \Helper::companyCurrency($companySystemID);
+                $companyCurrency = Helper::companyCurrency($companySystemID);
 
                 $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
                 $detail->cashFlowAmount = number_format($pv->localAmount,$companyCurrencyDecimal,'.','');
@@ -982,7 +983,7 @@ class CashFlowReportAPIController extends AppBaseController
             $brv = CashFlowSubCategoryGLCode::where('chartOfAccountID',$detail->glAutoID)->where('brvID', $detail->brvID)->where('deoID', $detail->deliveryOrderID)->where('custInvID',$detail->custInvoiceDirectAutoID)->where('cashFlowReportID',$cashFlowReportID)->where('subCategoryID',$subCategoryID)->first();
             $detail->cashFlowAmount = null;
             if($brv){
-                $companyCurrency = \Helper::companyCurrency($companySystemID);
+                $companyCurrency = Helper::companyCurrency($companySystemID);
 
                 $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
                 $detail->cashFlowAmount = number_format($brv->localAmount,$companyCurrencyDecimal,'.','');
@@ -1032,7 +1033,7 @@ class CashFlowReportAPIController extends AppBaseController
 
 
             if(isset($detail['cashFlowAmount'])) {
-                $companyCurrency = \Helper::companyCurrency($cashFlowData->companySystemID);
+                $companyCurrency = Helper::companyCurrency($cashFlowData->companySystemID);
 
                 $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
                 $applicableAmount = min($minArray);
@@ -1117,7 +1118,7 @@ class CashFlowReportAPIController extends AppBaseController
                     array_push($minArray,$detail['receiveAmountLocal']);
                 }
                 if(isset($detail['cashFlowAmount'])) {
-                    $companyCurrency = \Helper::companyCurrency($cashFlowData->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($cashFlowData->companySystemID);
 
                     $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
                     $applicableAmount = min($minArray);
@@ -1185,7 +1186,7 @@ class CashFlowReportAPIController extends AppBaseController
     public function cashFlowConfirmation(Request $request){
         $input = $request->reportData;
         $input = Arr::except($input, ['finance_year_by','template','confirmed_by']);
-        $input['confirmed_by'] = \Helper::getEmployeeSystemID();
+        $input['confirmed_by'] = Helper::getEmployeeSystemID();
         $input['confirmed_date'] = now();
         $cashFlowReport = $this->cashFlowReportRepository->update($input, $input['id']);
 
@@ -1210,7 +1211,7 @@ class CashFlowReportAPIController extends AppBaseController
                             $dataCashFlow['subCategoryID'] = $value1->id;
                             $dataCashFlow['localAmount'] = $this->getLinkedGrouptotal($value1->subcategorytot, $cashFlowReportID);
 
-                            $convertedAmount = \Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
+                            $convertedAmount = Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
 
                             $dataCashFlow['rptAmount'] = $convertedAmount['reportingAmount'];
 
@@ -1231,7 +1232,7 @@ class CashFlowReportAPIController extends AppBaseController
                         $dataCashFlow['subCategoryID'] = $value->id;
                         $dataCashFlow['localAmount'] = $this->getLinkedGrouptotal($value->subcategorytot, $cashFlowReportID);
 
-                        $convertedAmount = \Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
+                        $convertedAmount = Helper::currencyConversion($cashFlowReport->companySystemID, $companyData->localCurrencyID, $companyData->localCurrencyID, $dataCashFlow['localAmount']);
 
                         $dataCashFlow['rptAmount'] = $convertedAmount['reportingAmount'];
                         $isExists = CashFlowSubCategoryGLCode::where('subCategoryID',$dataCashFlow['subCategoryID'])->where('cashFlowReportID', $dataCashFlow['cashFlowReportID'])->first();
@@ -1274,7 +1275,7 @@ class CashFlowReportAPIController extends AppBaseController
          if (!$companyMaster) {
             return $this->sendError(trans('custom.company_not_found'));
           }
-        $currencyConversionVAT = \Helper::currencyConversion($companySystemID, $companyMaster->localCurrencyID,$companyMaster->localCurrencyID, $amount);
+        $currencyConversionVAT = Helper::currencyConversion($companySystemID, $companyMaster->localCurrencyID,$companyMaster->localCurrencyID, $amount);
 
         CashFlowSubCategoryGLCode::where('subCategoryID',$input['data']['id'])->where('chartOfAccountID',null)->where('cashFlowReportID',$id)->update(['localAmount'=>$amount, 'rptAmount'=>$currencyConversionVAT['reportingAmount']]);
  

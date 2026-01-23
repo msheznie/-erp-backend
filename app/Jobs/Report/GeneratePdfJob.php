@@ -88,7 +88,7 @@ class GeneratePdfJob implements ShouldQueue
             }
         }
 
-        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false, 'lang' => $languageCode);
+        $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => Helper::dateFormat($request->fromDate), 'grandTotal' => $grandTotal, 'sentEmail' => false, 'lang' => $languageCode);
 
 
         $html = view('print.supplier_statement',$dataArr);

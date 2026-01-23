@@ -24,6 +24,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class GposPaymentGlConfigDetailController
@@ -150,8 +151,8 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.payment_type_already_exists_in_selected_outlet'), 500);
         }
 
-        $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
-        $employee = \Helper::getEmployeeInfo();
+        $input['companyCode'] = Helper::getCompanyById($input['companyID']);
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -298,8 +299,8 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.payment_type_already_exists_in_selected_outlet'), 500);
         }
 
-        $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
-        $employee = \Helper::getEmployeeInfo();
+        $input['companyCode'] = Helper::getCompanyById($input['companyID']);
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -377,10 +378,10 @@ class GposPaymentGlConfigDetailAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

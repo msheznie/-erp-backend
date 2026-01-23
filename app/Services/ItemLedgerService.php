@@ -489,7 +489,7 @@ class ItemLedgerService
 
                                         $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
 
-                                        $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+                                        $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
                                         $data[$i][$column] = $companyCurrencyConversion['localAmount'];
                                     } else {
@@ -595,7 +595,7 @@ class ItemLedgerService
 
                                     $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
 
-                                    $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+                                    $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
                                     $data[$i][$column] = $companyCurrencyConversion['localAmount'];
                                 }

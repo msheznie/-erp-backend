@@ -9,6 +9,7 @@ use App\Services\GeneralLedger\AssetCreationService;
 use App\Traits\JsonResponseTrait;
 use Carbon\Carbon;
 use DateTime;
+use App\helper\Helper;
 
 class ValidateAssetCreation
 {
@@ -132,7 +133,7 @@ class ValidateAssetCreation
 
         if (isset($input['itemPicture'])) {
             if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                return self::sendJsonResponse(false,"Maximum allowed file size is exceeded. Please upload lesser than".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                return self::sendJsonResponse(false,"Maximum allowed file size is exceeded. Please upload lesser than".Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
             }
         }
     }

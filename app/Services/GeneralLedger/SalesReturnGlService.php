@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class SalesReturnGlService
 {
@@ -125,8 +126,8 @@ class SalesReturnGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->salesReturnCode;
             $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+            $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+            $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -162,13 +163,13 @@ class SalesReturnGlService
 
             $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
-            $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0)) * -1;
+            $data['documentTransAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0)) * -1;
             $data['documentLocalCurrencyID'] = $masterData->companyLocalCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->companyLocalCurrencyER;
-            $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0)) * -1;
+            $data['documentLocalAmount'] = Helper::roundValue(ABS($masterData->detail[0]->localAmount) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0)) * -1;
             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->companyReportingCurrencyER;
-            $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0)) * -1;
+            $data['documentRptAmount'] = Helper::roundValue(ABS($masterData->detail[0]->rptAmount) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0)) * -1;
             $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
             $data['serviceLineCode'] = $masterData->serviceLineCode;
             $data['clientContractID'] = 'X';
@@ -180,11 +181,11 @@ class SalesReturnGlService
             $data['chequeNumber'] = 0;
             $data['invoiceNumber'] = 0;
             $data['documentType'] = null;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
 
             if (!($masterData->returnType != 2 && !$checkFromInvoice)) {
                 array_push($finalData, $data);
@@ -192,7 +193,7 @@ class SalesReturnGlService
 
             if ($allAc) {
                 foreach ($allAc as $val) {
-                    $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
+                    $currencyConversionInv = Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
                     if($val->isPostItemLedger == 0 && $val->reasonCode != null){
                         $data['chartOfAccountSystemID'] = $val->reasonGLCode;
                         $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$val->reasonGLCode)->first();
@@ -208,21 +209,21 @@ class SalesReturnGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($currencyConversionInv['documentAmount']));
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($currencyConversionInv['documentAmount']));
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount));
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount));
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
 
             if ($COSGAc) {
                 foreach ($COSGAc as $val) {
-                    $currencyConversionCog = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
+                    $currencyConversionCog = Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
 
                     $data['chartOfAccountSystemID'] = $val->financeCogsGLcodePLSystemID;
                     $data['glCode'] = $val->financeCogsGLcodePL;
@@ -230,14 +231,14 @@ class SalesReturnGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                    $data['documentTransAmount'] = (\Helper::roundValue(ABS($currencyConversionCog['documentAmount']))) * -1;
+                    $data['documentTransAmount'] = (Helper::roundValue(ABS($currencyConversionCog['documentAmount']))) * -1;
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = (\Helper::roundValue(ABS($val->localAmount))) * -1;
+                    $data['documentLocalAmount'] = (Helper::roundValue(ABS($val->localAmount))) * -1;
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = (\Helper::roundValue(ABS($val->rptAmount))) * -1;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = (Helper::roundValue(ABS($val->rptAmount))) * -1;
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
@@ -250,14 +251,14 @@ class SalesReturnGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount));
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount));
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount));
+                    $data['timestamp'] = Helper::currentDateTime();
                     if (!($masterData->returnType != 2 && !$checkFromInvoice)) {
                         array_push($finalData, $data);
                     } 

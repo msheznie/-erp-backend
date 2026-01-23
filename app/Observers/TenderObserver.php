@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class TenderObserver
 {
     /**
@@ -19,7 +20,7 @@ class TenderObserver
     public function updated(TenderMaster $tender)
     {
         $obj = TenderDetails::validateTenderEdit($tender->getOriginal('id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
           if($obj && isset($employee))
             {

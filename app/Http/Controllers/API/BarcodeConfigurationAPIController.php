@@ -388,10 +388,10 @@ class BarcodeConfigurationAPIController extends AppBaseController
 
         $selectedCompanyId = $request['companyID'];
         $template = $request['template'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }
         else {
             $subCompanies = [$selectedCompanyId];

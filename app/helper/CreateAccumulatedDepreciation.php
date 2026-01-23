@@ -15,6 +15,7 @@ use App\Models\FixedAssetMaster;
 use App\Models\CompanyFinanceYear;
 use Carbon\CarbonPeriod;
 use App\Models\FixedAssetDepreciationPeriod;
+use App\helper\Helper;
 class CreateAccumulatedDepreciation
 {
     private $fixedAssetDepreciationMasterRepository;
@@ -32,7 +33,7 @@ class CreateAccumulatedDepreciation
         $accumulated_month= date('m', strtotime($accumulated_date));
         $companyFinanceYearID = '';
         $companyFinancePeriodID = '';
-        $companyFinanceYear = \Helper::companyFinanceYear($input['companySystemID'],1);
+        $companyFinanceYear = Helper::companyFinanceYear($input['companySystemID'],1);
         foreach($companyFinanceYear as $companyFinance)
         {
 
@@ -71,7 +72,7 @@ class CreateAccumulatedDepreciation
 
         $finance_data['companyFinanceYearID'] = $companyFinanceYearID;
         $finance_data['companySystemID'] = $input['companySystemID'];
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($finance_data);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($finance_data);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         } else {
@@ -83,7 +84,7 @@ class CreateAccumulatedDepreciation
         $inputParam = $finance_data;
         $inputParam["departmentSystemID"] = 9;
         $inputParam["companyFinancePeriodID"] = $companyFinancePeriodID;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
 
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -153,8 +154,8 @@ class CreateAccumulatedDepreciation
         $dep_data['depLocalCur'] = $company->localCurrencyID;
         $dep_data['depRptCur'] = $company->reportingCurrency;
         $dep_data['createdPCID'] = gethostname();
-        $dep_data['createdUserID'] = \Helper::getEmployeeID();
-        $dep_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $dep_data['createdUserID'] = Helper::getEmployeeID();
+        $dep_data['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $dep_data['approved'] = -1;
         
         $depMaster = FixedAssetDepreciationMaster::create($dep_data);

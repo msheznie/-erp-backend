@@ -30,6 +30,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ChartOfAccountsAssignedController
@@ -148,7 +149,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             foreach($companies as $companie)
             {
                 
-                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['chartOfAccountSystemID'], 'chartofaccounts');
+                $validatorResult = Helper::checkCompanyForMasters($companie['id'], $input['chartOfAccountSystemID'], 'chartofaccounts');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }

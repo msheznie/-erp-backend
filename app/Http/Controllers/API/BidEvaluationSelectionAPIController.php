@@ -19,6 +19,7 @@ use App\Repositories\TenderMasterRepository;
 use Illuminate\Support\Facades\DB;
 use App\Models\BidSubmissionMaster;
 use Carbon\Carbon;
+use App\helper\Helper;
 /**
  * Class BidEvaluationSelectionController
  * @package App\Http\Controllers\API
@@ -133,7 +134,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $details['tender_id'] = $input['tender_id'];
         $details['description'] = $input['description'];
         $details['bids'] = json_encode($bids);
-        $details['created_by'] = \Helper::getEmployeeSystemID();
+        $details['created_by'] = Helper::getEmployeeSystemID();
         $details['is_negotiation'] = $input['isNegotiation'];
 
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
@@ -297,7 +298,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         }
 
         if($type == 1){
-            $input['updated_by'] = \Helper::getEmployeeSystemID();
+            $input['updated_by'] = Helper::getEmployeeSystemID();
             $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
         }
 
@@ -326,12 +327,12 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
             // }
 
-            $input['updated_by'] = \Helper::getEmployeeSystemID();
+            $input['updated_by'] = Helper::getEmployeeSystemID();
             $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
 
             BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
                 ['technical_verify_status'=>1,
-                    'technical_verify_by'=>\Helper::getEmployeeSystemID(),
+                    'technical_verify_by'=>Helper::getEmployeeSystemID(),
                     'technical_verify_at'=>Carbon::now(),
                     'technical_eval_remarks'=>$input['remarks']]
             );

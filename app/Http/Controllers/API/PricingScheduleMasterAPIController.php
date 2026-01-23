@@ -22,6 +22,7 @@ use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\TenderBoqItems;
 use App\Services\SrmDocumentModifyService;
+use App\helper\Helper;
 
 /**
  * Class PricingScheduleMasterController
@@ -354,7 +355,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
             }
             $schedule = $scheduleResp['data'];
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $data['tender_id']=$input['tenderMasterId'];

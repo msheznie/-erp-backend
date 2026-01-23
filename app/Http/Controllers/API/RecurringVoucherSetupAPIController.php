@@ -356,7 +356,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             }
         }
 
-        $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($rrvMaster->currencyID);
+        $currencyDecimalPlace = Helper::getCurrencyDecimalPlace($rrvMaster->currencyID);
 
         if ($prevRrvConfirmedYN == 0 && $rrvConfirmedYN == 1) {
 
@@ -451,14 +451,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
                 'amount' => $rrvDetailDebitSum
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -641,7 +641,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             return $this->sendError(trans('custom.rrv_master_not_found'));
         }
 
-        $refernaceDoc = \Helper::getCompanyDocRefNo($rrvMasterDataLine->companySystemID, $rrvMasterDataLine->documentSystemID);
+        $refernaceDoc = Helper::getCompanyDocRefNo($rrvMasterDataLine->companySystemID, $rrvMasterDataLine->documentSystemID);
 
         $companyId = $rrvMasterDataLine->companySystemID;
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -711,7 +711,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)->where('documentSystemID', 119)->first();
 
@@ -772,7 +772,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -803,7 +803,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'recurring_voucher_setup.recurringVoucherAutoId',
@@ -871,7 +871,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
             ->exists();
 
         if($financeYear){
-            $approve = \Helper::approveDocument($input);
+            $approve = Helper::approveDocument($input);
 
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"]);
@@ -886,7 +886,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
     public function rejectRecurringVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -900,7 +900,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         $id = $input['rrvMasterAutoId'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $rrvMaster = RecurringVoucherSetup::find($id);
@@ -1043,7 +1043,7 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $rrvMasterData->RollLevForApp_curr = 1;
         $rrvMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $rrvMasterData->documentSystemID)->first();
 

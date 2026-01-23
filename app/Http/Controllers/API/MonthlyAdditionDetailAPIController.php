@@ -36,6 +36,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SMECompany;
+use App\helper\Helper;
 /**
  * Class MonthlyAdditionDetailController
  * @package App\Http\Controllers\API
@@ -442,7 +443,7 @@ class MonthlyAdditionDetailAPIController extends AppBaseController
 
             foreach($expenseClaimDetails as &$det)
             {
-                $currencyConversion = \Helper::currencyConversion($expenseClaim->companyID, $det->transactionCurrencyID, $voucher->supplierTransCurrencyID, $det->transactionAmount);
+                $currencyConversion = Helper::currencyConversion($expenseClaim->companyID, $det->transactionCurrencyID, $voucher->supplierTransCurrencyID, $det->transactionAmount);
 
                 $det['expence_claim_amount'] = round($currencyConversion['documentAmount'],$det->transactionCurrencyDecimalPlaces);
                 $det['voucher_currency'] = $voucher->transactioncurrency->CurrencyCode;

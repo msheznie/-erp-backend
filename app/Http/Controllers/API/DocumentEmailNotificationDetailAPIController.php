@@ -26,6 +26,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class DocumentEmailNotificationDetailController
@@ -341,10 +342,10 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
 
         $companyId = $input['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

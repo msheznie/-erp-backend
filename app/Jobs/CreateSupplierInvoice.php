@@ -23,6 +23,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateSupplierInvoice implements ShouldQueue
 {
@@ -80,7 +81,7 @@ class CreateSupplierInvoice implements ShouldQueue
                     $supplier = SupplierMaster::where('companyLinkedToSystemID', $srMaster->companyFromSystemID)->first();
 
                     if ($toCompany) {
-                        $companyCurrencyConversion = \Helper::currencyConversion($srMaster->companyToSystemID, $toCompany->reportingCurrency, $toCompany->reportingCurrency, 0);
+                        $companyCurrencyConversion = Helper::currencyConversion($srMaster->companyToSystemID, $toCompany->reportingCurrency, $toCompany->reportingCurrency, 0);
                     }
 
                     $supplierInvoiceData['serialNo'] = $supInvLastSerialNumber;
@@ -208,8 +209,8 @@ class CreateSupplierInvoice implements ShouldQueue
                         $data['documentSystemCode'] = $bookInvSuppMaster->bookingSuppMasInvAutoID;
                         $data['documentCode'] = $bookInvSuppMaster->bookingInvCode;
                         $data['documentDate'] = $today;
-                        $data['documentYear'] = \Helper::dateYear($today);
-                        $data['documentMonth'] = \Helper::dateMonth($today);
+                        $data['documentYear'] = Helper::dateYear($today);
+                        $data['documentMonth'] = Helper::dateMonth($today);
                         $data['invoiceNumber'] = $srMaster->stockReceiveCode;
                         $data['invoiceDate'] = $today;
                         $data['documentConfirmedDate'] = $today;

@@ -34,7 +34,7 @@ class JournalVoucherService
 {
     public static function createJournalVoucher($input)
     {
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return [
                 "status" => false,
@@ -45,7 +45,7 @@ class JournalVoucherService
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 5;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return [
                 "status" => false,
@@ -165,7 +165,7 @@ class JournalVoucherService
             $lastSerialNumber = intval($lastSerial->serialNo) + 1;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
             $input['companyID'] = $company->CompanyID;
@@ -223,11 +223,11 @@ class JournalVoucherService
 
         $jvConfirmedYN = $input['confirmedYN'];
         $prevJvConfirmedYN = $jvMaster->confirmedYN;
-        $currencyDecimalPlace = \Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
+        $currencyDecimalPlace = Helper::getCurrencyDecimalPlace($jvMaster->currencyID);
 
         // set currency exchange rate
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
         $input['currencyER'] = $companyCurrencyConversion['trasToLocER'];
         $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
 
@@ -308,7 +308,7 @@ class JournalVoucherService
                 }
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return [
                     "status" => false,
@@ -322,7 +322,7 @@ class JournalVoucherService
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 5;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return [
                     "status" => false,
@@ -521,7 +521,7 @@ class JournalVoucherService
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     "status" => false,

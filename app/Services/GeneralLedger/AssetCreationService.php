@@ -48,7 +48,7 @@ class AssetCreationService extends AppBaseController
             $assetLog = [
                 'isFailed' => 1,
                 'errorLine' => $errorLine,
-                'logMessage' => \Helper::handleErrorData($logMessage)
+                'logMessage' => Helper::handleErrorData($logMessage)
             ];
 
             DB::commit();
@@ -237,8 +237,8 @@ class AssetCreationService extends AppBaseController
 
 
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
@@ -286,7 +286,7 @@ class AssetCreationService extends AppBaseController
             );
 
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
 
                 return $this->sendJsonResponse(false,$confirm['message']);
@@ -297,7 +297,7 @@ class AssetCreationService extends AppBaseController
                 $documentApproved["db"] = $db;
                 $documentApproved["isAutoCreateDocument"] = true;
                 $documentApproved["isDocumentUpload"] = true;
-                $approve = \Helper::approveDocument($documentApproved);
+                $approve = Helper::approveDocument($documentApproved);
                 if (!$approve["success"]) {
 
                     return $this->sendJsonResponse(false,$approve['message']);

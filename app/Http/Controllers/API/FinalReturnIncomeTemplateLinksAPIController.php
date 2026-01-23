@@ -12,6 +12,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\FinalReturnIncomeReports;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeTemplateLinksController
@@ -141,8 +142,8 @@ class FinalReturnIncomeTemplateLinksAPIController extends AppBaseController
             $data['glDescription'] = $val['AccountDescription'];
             $data['companySystemID'] = $input['companySystemID'];
             $data['createdPCID'] = gethostname();
-            $data['createdUserID'] = \Helper::getEmployeeID();
-            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $data['createdUserID'] = Helper::getEmployeeID();
+            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $data['createdDateTime'] = now();
             $finalReturnIncomeTemplateLinks = $this->finalReturnIncomeTemplateLinksRepository->create($data); 
         }

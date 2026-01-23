@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class CreditNoteGlService
 {
@@ -80,8 +81,8 @@ class CreditNoteGlService
                 $data['documentSystemCode'] = $masterModel["autoID"];
                 $data['documentCode'] = $masterData->creditNoteCode;
                 $data['documentDate'] = $masterDocumentDate;
-                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['documentYear'] = Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
                 $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                 $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -97,13 +98,13 @@ class CreditNoteGlService
 
                 $data['documentTransCurrencyID'] = $masterData->customerCurrencyID;
                 $data['documentTransCurrencyER'] = $masterData->customerCurrencyER;
-                $data['documentTransAmount'] = \Helper::roundValue(ABS($detail->transAmount + $detail->transTax)) * -1;
+                $data['documentTransAmount'] = Helper::roundValue(ABS($detail->transAmount + $detail->transTax)) * -1;
                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                $data['documentLocalAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax)) * -1;
+                $data['documentLocalAmount'] = Helper::roundValue(ABS($detail->localAmount + $detail->localTax)) * -1;
                 $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                $data['documentRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax)) * -1;
+                $data['documentRptAmount'] = Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax)) * -1;
                 $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                 $data['serviceLineCode'] = $detail->serviceLineCode;
                 if ($detail->clientContractID) {
@@ -120,11 +121,11 @@ class CreditNoteGlService
                 $data['chequeNumber'] = 0;
                 $data['invoiceNumber'] = 0;
                 $data['documentType'] = $masterData->documentType;
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['createdDateTime'] = Helper::currentDateTime();
                 $data['createdUserID'] = $empID->empID;
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdUserPC'] = gethostname();
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 array_push($finalData, $data);
             }
 
@@ -154,14 +155,14 @@ class CreditNoteGlService
                     $data['documentNarration'] = $val->comments;
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
                     $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount));
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount));
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount));
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount));
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount));
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
@@ -203,13 +204,13 @@ class CreditNoteGlService
 
                     $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($detail->transTax));
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($detail->transTax));
                     $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($detail->localTax));
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($detail->localTax));
                     $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $tax->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($detail->rptTax));
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($detail->rptTax));
                     array_push($finalData, $data);
                 }
             }

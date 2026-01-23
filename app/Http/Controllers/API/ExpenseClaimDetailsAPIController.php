@@ -623,7 +623,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
         if(isset($input['size'])){
             if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
+                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
             }
             $input['sizeInKbs'] = $input['size'];
         }

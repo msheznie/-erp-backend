@@ -127,7 +127,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -179,7 +179,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             $input['contingencyBudgetNo'] = $code;
         }
 
-        $currency = \Helper::companyCurrency($input['companySystemID']);
+        $currency = Helper::companyCurrency($input['companySystemID']);
 
         $input['currencyID'] = $currency->reportingCurrency;
 
@@ -303,7 +303,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.contingency_budget')]));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $validator = \Validator::make($input, [
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -344,7 +344,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
                 'amount' => 0
             );
             //echo '<pre>';print_r($params);'</pre>';exit;
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -422,10 +422,10 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -462,7 +462,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
         $years = Year::orderBy('year', 'desc')->get();
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
@@ -503,7 +503,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             }
         }
 
-        $currencyData = \Helper::companyCurrency($companyId);
+        $currencyData = Helper::companyCurrency($companyId);
 
         $output = array(
             'reportTemplates' => $reportTemplates,
@@ -550,7 +550,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -629,7 +629,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -701,7 +701,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
     public function approve_contingency_budget(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -712,7 +712,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     public function reject_contingency_budget(Request $request)
     {
         //echo '<pre>';print_r($request->all());'</pre>';exit;
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

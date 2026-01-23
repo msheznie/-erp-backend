@@ -30,6 +30,7 @@ use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
 use App\Models\SupplierMaster;
 use App\Services\POSService;
+use App\helper\Helper;
 
 class PosAPIController extends AppBaseController
 {
@@ -169,10 +170,10 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
 
-            $isGroup = \Helper::checkIsCompanyGroup($company_id);
+            $isGroup = Helper::checkIsCompanyGroup($company_id);
     
             if ($isGroup) {
-                $childCompanies = \Helper::getGroupCompany($company_id);
+                $childCompanies = Helper::getGroupCompany($company_id);
             } else {
                 $childCompanies = [$company_id];
             }
