@@ -39,6 +39,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditTrial;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class ConsoleJVMasterController
@@ -844,7 +845,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

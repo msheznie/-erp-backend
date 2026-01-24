@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 /**
  * Class TenderBidClarificationsController
@@ -626,7 +627,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
                 $dataEmail['emailAlertMessage'] = $body;
                 $dataEmail['attachmentList'] = $file;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
             }
         }
         return ['success' => true, 'message' => trans('srm_faq.emails_sent_successfully')];

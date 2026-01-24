@@ -7,6 +7,7 @@ use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\DB;
 
+use App\helper\email as Email;
 class ReturnToWorkNotificationService
 {
     private $companyId;
@@ -135,7 +136,7 @@ class ReturnToWorkNotificationService
                 'empEmail' => $mailTo,
                 'emailAlertMessage' => $mailBody
             ];
-            $sendEmail = \Email::sendEmailErp($emails);
+            $sendEmail = Email::sendEmailErp($emails);
 
             if (!$sendEmail["success"]) {
                 $msg = "Return to work notification not sent for {$applicableCatDesc} {$name} "; 

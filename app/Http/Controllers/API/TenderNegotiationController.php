@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 class TenderNegotiationController extends AppBaseController
 {
@@ -316,7 +317,7 @@ class TenderNegotiationController extends AppBaseController
                         $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                         $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
             }

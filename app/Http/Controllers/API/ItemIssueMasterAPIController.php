@@ -82,6 +82,8 @@ use GuzzleHttp\Client;
 use App\Models\ErpItemLedger;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Exports\Inventory\MaterialIssueRegister;
+
+use App\helper\email as Email;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -1477,7 +1479,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

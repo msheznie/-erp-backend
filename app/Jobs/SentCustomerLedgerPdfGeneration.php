@@ -17,6 +17,7 @@ use ZipArchive;
 class SentCustomerLedgerPdfGeneration implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+use App\helper\email as Email;
     public $db;
     public $dataArray;
     public $languageCode;
@@ -236,7 +237,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $zipFilePath;
                     $dataEmail['alertMessage'] = trans('custom.customer_ledger_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         Log::error($sendEmail["message"]);
                     } else {

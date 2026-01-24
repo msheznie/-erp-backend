@@ -69,6 +69,8 @@ use PHPExcel_IOFactory;
 use App\Models\ApprovalLevel;
 use App\Jobs\GenerateBankReconciliation;
 use Illuminate\Support\Arr;
+
+use App\helper\email as Email;
 /**
  * Class BankReconciliationController
  * @package App\Http\Controllers\API
@@ -1360,7 +1362,7 @@ class BankReconciliationAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1506,7 +1508,7 @@ class BankReconciliationAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

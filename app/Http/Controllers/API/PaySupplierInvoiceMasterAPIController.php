@@ -102,6 +102,7 @@ use Response;
 use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
 use App\Services\GeneralLedgerService;
+use App\helper\email as Email;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -2924,7 +2925,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -3641,7 +3642,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

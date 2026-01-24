@@ -8,6 +8,7 @@ use App\Models\TenderMaster;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 
+use App\helper\email as Email;
 class SendTenderNotificationService
 {
     public static function tenderNotificationScenarioBased()
@@ -111,7 +112,7 @@ class SendTenderNotificationService
                     $dataEmail['attachmentFileName'] = '';
                     $dataEmail['alertMessage'] = $emailSubject;
                     $dataEmail['emailAlertMessage'] = $emailBody;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         $errorMessage  = $sendEmail["message"];
                         Log::info("Error: $errorMessage");

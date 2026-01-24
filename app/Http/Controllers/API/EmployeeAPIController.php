@@ -57,6 +57,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\HrPayrollDetails;
 use App\Models\HrPayrollMaster;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class EmployeeController
@@ -518,7 +519,7 @@ class EmployeeAPIController extends AppBaseController
             $dataEmail['alertMessage'] = $subject;
             $dataEmail['emailAlertMessage'] = $body;
 
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = Email::sendEmailErp($dataEmail);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

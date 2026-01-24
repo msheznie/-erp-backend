@@ -32,6 +32,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 /**
  * Class VatReturnFillingMasterController
@@ -673,7 +674,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

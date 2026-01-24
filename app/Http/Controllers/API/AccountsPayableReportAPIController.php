@@ -73,6 +73,7 @@ use Illuminate\Support\Facades\File;
 use App\Models\SupplierGroup;
 use App\Exports\AccountsPayable\InvoiceToPayment\InvoiceToPaymentDetails;
 use App\Services\AccountPayableLedger\Report\InvoiceToPaymentReportService;
+use App\helper\email as Email;
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -6605,7 +6606,7 @@ ORDER BY
                             $dataEmail['attachmentFileName'] = $pdfName;
                             $dataEmail['alertMessage'] = trans('custom.supplier_ledger_report_from', ['companyName' => $company->CompanyName]);
                             $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
+                            $sendEmail = Email::sendEmailErp($dataEmail);
                             if (!$sendEmail["success"]) {
                                 $errorMessage[] = $sendEmail["message"];
                             }
@@ -6632,7 +6633,7 @@ ORDER BY
                             $dataEmail['attachmentFileName'] = $pdfName;
                             $dataEmail['alertMessage'] = trans('custom.supplier_ledger_report', ['companyName' => $company->CompanyName]);
                             $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
+                            $sendEmail = Email::sendEmailErp($dataEmail);
                             if (!$sendEmail["success"]) {
                                 $errorMessage[] = $sendEmail["message"];
                             }

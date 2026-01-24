@@ -50,6 +50,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class ItemReturnMasterController
@@ -1070,7 +1071,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

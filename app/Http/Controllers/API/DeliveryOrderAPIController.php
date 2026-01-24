@@ -59,6 +59,7 @@ use App\Services\DeliveryOrderServices;
 use App\Models\StockCount;
 use App\Models\StockAdjustment;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class DeliveryOrderController
@@ -1224,7 +1225,7 @@ WHERE
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

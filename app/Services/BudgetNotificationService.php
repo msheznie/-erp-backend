@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Exception;
 use App\helper\Helper;
 
+use App\helper\email as Email;
 class BudgetNotificationService
 {
 
@@ -204,7 +205,7 @@ class BudgetNotificationService
             'docSystemCode' => $departmentBudgetPlanningID
         );
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
 
    }
 
@@ -253,7 +254,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
 
    }
 
@@ -283,7 +284,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
 
    }
 
@@ -339,7 +340,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -392,7 +393,7 @@ class BudgetNotificationService
                             'docSystemCode' => $departmentBudgetPlanningID
                         );
 
-                        \Email::sendEmail($emails);
+                        Email::sendEmail($emails);
                     }
                 }
             }
@@ -438,7 +439,7 @@ class BudgetNotificationService
             'docSystemCode' => $departmentBudgetPlanningID
         );
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
    }
 
    private function sendFinalSubmissionToFinanceEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -479,7 +480,7 @@ class BudgetNotificationService
                 'docSystemCode' => $departmentBudgetPlanningID
             );
     
-            \Email::sendEmail($emails);
+            Email::sendEmail($emails);
         }
 
    }
@@ -510,7 +511,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
    }
 
 
@@ -550,7 +551,7 @@ class BudgetNotificationService
                 'docSystemCode' => $departmentBudgetPlanningID
             );
     
-            \Email::sendEmail($emails);
+            Email::sendEmail($emails);
         }
    }
 
@@ -582,7 +583,7 @@ class BudgetNotificationService
         );
 
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
    }
 
    private function sendTimeExtensionRequestCancelledEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -609,7 +610,7 @@ class BudgetNotificationService
             'docSystemCode' => $departmentBudgetPlanningID
         );
 
-        \Email::sendEmail($emails);
+        Email::sendEmail($emails);
         
    }
 

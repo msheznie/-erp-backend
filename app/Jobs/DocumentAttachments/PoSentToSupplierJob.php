@@ -171,6 +171,7 @@ class PoSentToSupplierJob implements ShouldQueue
             $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
                 "<br>This is an auto generated email. Please do not reply to this email because we are not " .
                 "monitoring this inbox.</font>";
+use App\helper\email as Email;
             if ($fetchSupEmail) {
                 foreach ($fetchSupEmail as $row) {
                     if (!empty($row->contactPersonEmail)) {
@@ -201,7 +202,7 @@ class PoSentToSupplierJob implements ShouldQueue
                             'documentCode' => $procumentOrderUpdate->purchaseOrderCode
                         ]);
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
                             DB::rollback();
                             Log::error('Error');
@@ -243,7 +244,7 @@ class PoSentToSupplierJob implements ShouldQueue
                             'documentCode' => $procumentOrderUpdate->purchaseOrderCode
                         ]);
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
                             DB::rollback();
                             Log::error('Error');

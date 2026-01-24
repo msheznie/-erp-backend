@@ -45,6 +45,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class PaymentBankTransferController
@@ -1196,7 +1197,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

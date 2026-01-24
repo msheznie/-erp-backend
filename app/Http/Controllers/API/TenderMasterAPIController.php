@@ -102,6 +102,7 @@ use App\Repositories\DocumentModifyRequestRepository;
 use App\helper\email;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
+use App\helper\email as Email;
 
 /**
  * Class TenderMasterController
@@ -2057,7 +2058,7 @@ class TenderMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -2146,7 +2147,7 @@ class TenderMasterAPIController extends AppBaseController
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
             Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company." . "<br /><br />";
             $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = Email::sendEmailErp($dataEmail);
         }
     }
 
@@ -2185,7 +2186,7 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['empEmail'] = $email;
             $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
             $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = Email::sendEmailErp($dataEmail);
 
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
@@ -4133,7 +4134,7 @@ class TenderMasterAPIController extends AppBaseController
                     $dataEmail['companySystemID'] = $request['companySystemID'];
                     $dataEmail['alertMessage'] = "Employee Committee Approval";
                     $dataEmail['emailAlertMessage'] = $body;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                 }
             }
 
@@ -4231,7 +4232,7 @@ class TenderMasterAPIController extends AppBaseController
                 $dataEmail['attachmentList'] = $file;
             }
 
-            $sendEmail = \Email::sendEmailSRM($dataEmail);
+            $sendEmail = Email::sendEmailSRM($dataEmail);
 
             $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
                 ->where('tender_id', $tenderId)
@@ -4255,7 +4256,7 @@ class TenderMasterAPIController extends AppBaseController
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = [];
                     $dataEmail['ccEmail'] = [];
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                 }
             }
 

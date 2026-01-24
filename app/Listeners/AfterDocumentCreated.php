@@ -187,6 +187,7 @@ class AfterDocumentCreated
                 if ($range) {
 
                     $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
+use App\helper\email as Email;
                     $email_id = 'gearssupport@pbs-int.net';
                     $empName = 'Admin';
                     $employeeSystemID = 11;
@@ -218,7 +219,7 @@ class AfterDocumentCreated
                     ]);
                     $dataEmail['emailAlertMessage'] = $temp;
 
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                 }
             }

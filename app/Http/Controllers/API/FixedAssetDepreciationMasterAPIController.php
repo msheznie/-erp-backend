@@ -47,6 +47,7 @@ use Response;
 use App\Models\AssetDisposalMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use App\helper\email as Email;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -794,7 +795,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -1133,7 +1134,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

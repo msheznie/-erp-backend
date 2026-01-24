@@ -112,6 +112,7 @@ use App\Models\Tax;
 use App\Services\GeneralLedgerService;
 use App\Models\MolContribution;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class BookInvSuppMasterController
@@ -2729,7 +2730,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -3591,7 +3592,7 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

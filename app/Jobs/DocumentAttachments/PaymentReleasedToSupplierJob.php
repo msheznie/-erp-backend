@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Storage;
 class PaymentReleasedToSupplierJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+use App\helper\email as Email;
     public $dispatch_db;
     public $orderData;
     public $empEmail;
@@ -73,7 +74,7 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
 
         $dataEmail['attachmentFileName'] = realpath($path.$this->pdfName);
 
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
         if (!$sendEmail["success"]) {
             Log::channel('payment_released_to_supplier')->error('Error');
             Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);

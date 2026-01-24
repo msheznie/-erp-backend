@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
+use App\helper\email as Email;
+
 class BirthdayWishService
 {
 
@@ -103,7 +105,7 @@ class BirthdayWishService
             $emailData['companySystemID'] = $employee->Erp_companyID;
             $emailData['emailAlertMessage'] = $this->getBirthdayEmailMessage($imageUrl, $employee, $clientCode, $template);
             $emailData['alertMessage'] = "Happy Birthday $employee->Ename2.";
-            $sendEmail = \Email::sendEmailErp($emailData);
+            $sendEmail = Email::sendEmailErp($emailData);
 
             if (!$sendEmail["success"]) {
                 $msg = "Birthday wish email not send for {$employee->EIdNo} | {$employee->Ename2} ";

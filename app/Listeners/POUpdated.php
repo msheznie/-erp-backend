@@ -34,6 +34,7 @@ class POUpdated
             Log::channel('po_updated')->info($order->serviceLineSystemID . ' to ' . $original['serviceLineSystemID']);
             if ( ($order->serviceLineSystemID != $original['serviceLineSystemID']) && ($order->poConfirmedYN == 1 && $original['poConfirmedYN'] == 1)) {
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
+use App\helper\email as Email;
                 $email_id = 'm.zahlan@pbs-int.net';
                 $empName = 'Admin';
                 $employeeSystemID = 11;
@@ -56,7 +57,7 @@ class POUpdated
                 $dataEmail['attachmentFileName'] = null;
                 $dataEmail['alertMessage'] = trans('email.segment_changed_for', ['purchaseOrderCode' => $order['purchaseOrderCode']]);
                 $dataEmail['emailAlertMessage'] = $temp;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
                 Log::channel('po_updated')->info('Email array:');
                 Log::channel('po_updated')->info($dataEmail);
             }

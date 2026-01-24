@@ -62,6 +62,7 @@ use Response;
 use App\helper\TaxService;
 use App\helper\ItemTracking;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class PurchaseReturnController
@@ -1287,7 +1288,7 @@ class PurchaseReturnAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

@@ -33,6 +33,7 @@ use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
 use Response;
+use App\helper\email as Email;
 
 class PurcahseRequestDetail
 {
@@ -952,7 +953,7 @@ class PurcahseRequestDetail
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
