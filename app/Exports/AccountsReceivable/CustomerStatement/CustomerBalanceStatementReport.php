@@ -3,6 +3,7 @@
 namespace App\Exports\AccountsReceivable\CustomerStatement;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class CustomerBalanceStatementReport
 {
@@ -23,9 +24,9 @@ class CustomerBalanceStatementReport
 
     public function getColumnFormat() {
         return [
-            'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'E' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'J' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
     /**

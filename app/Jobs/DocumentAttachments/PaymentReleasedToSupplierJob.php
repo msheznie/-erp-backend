@@ -15,11 +15,11 @@ use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\helper\email as Email;
 
 class PaymentReleasedToSupplierJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-use App\helper\email as Email;
     public $dispatch_db;
     public $orderData;
     public $empEmail;

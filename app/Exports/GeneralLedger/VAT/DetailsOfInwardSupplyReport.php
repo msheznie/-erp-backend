@@ -3,6 +3,7 @@
 namespace App\Exports\GeneralLedger\VAT;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class DetailsOfInwardSupplyReport
 {
@@ -51,14 +52,14 @@ class DetailsOfInwardSupplyReport
     public function getCloumnFormat()
     {
         return [
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'AC' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AD' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AF' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AG' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AL' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'N' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'O' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AC' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AD' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AF' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AG' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AL' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

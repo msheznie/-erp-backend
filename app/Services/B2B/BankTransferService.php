@@ -8,7 +8,6 @@ use App\Models\PaymentBankTransfer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 use Illuminate\Support\Facades\File;
 
 class BankTransferService

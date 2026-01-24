@@ -13,6 +13,7 @@ use App\Models\ErpItemLedger;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\SalesReturnDetail;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 class DeliveryOrderServices
 {
@@ -83,7 +84,6 @@ class DeliveryOrderServices
                     $query = $model::with($relation)->where('companySystemID', $masterDataDetails->companySystemID)
                         ->whereHas($relation, function ($q) use ($item) {
                             $q->where('itemCodeSystem', $item);
-use App\helper\email as Email;
                         });
 
                     foreach ($additionalWhere as $column => $value) {

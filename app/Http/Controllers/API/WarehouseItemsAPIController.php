@@ -425,7 +425,7 @@ class WarehouseItemsAPIController extends AppBaseController
 
                 $data[$x][trans('custom.warehouse')] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
                 $bin = WarehouseBinLocation::find($value->binNumber);
-                $data[$x][trans('custom.bin_location')] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
+                $data[$x][trans('custom.bin_location')] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : ($bin ? $bin->binLocationDes : '-');
               
                 $data[$x][trans('custom.min_qty')] = number_format($value->minimumQty, 2);
                 $data[$x][trans('custom.max_qty')] = number_format($value->maximunQty, 2);

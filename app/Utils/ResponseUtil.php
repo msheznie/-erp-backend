@@ -13,7 +13,7 @@ class ResponseUtil
         ];
     }
 
-    public static function makeError(string $message, array $data = []): array
+    public static function makeError(mixed $message, array $data = []): array
     {
         $res = [
             'success' => false,

@@ -32,7 +32,6 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\TenderCircularsRepository;
 use Response;
-use App\helper\email;
 use App\helper\email as Email;
 /**
  * Class TenderCircularsController

@@ -9,8 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use KeycloakGuard\Exceptions\TokenException;
-use KeycloakGuard\Exceptions\UserNotFoundException;
+// Keycloak exceptions are now handled in custom guard
+// use KeycloakGuard\Exceptions\TokenException;
+// use KeycloakGuard\Exceptions\UserNotFoundException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -117,15 +118,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Custom exception handling
         $exceptions->render(function (Throwable $e, Request $request) {
-            // Keycloak exceptions
-            if ($e instanceof TokenException || $e instanceof UserNotFoundException) {
-                return response()->json([
-                    'errors' => [
-                        'status' => 500,
-                        'message' => $e->getMessage(),
-                    ]
-                ], 500);
-            }
+            // Keycloak authentication errors are now handled in the guard
+            // No need for specific exception handling
 
             // Authentication exception
             if ($e instanceof AuthenticationException) {

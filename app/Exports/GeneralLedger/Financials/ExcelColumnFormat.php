@@ -6,6 +6,7 @@ use App\Models\ReportTemplateColumns;
 use phpDocumentor\Reflection\Types\Collection;
 use PhpParser\Node\Expr\Array_;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ExcelColumnFormat
 {
@@ -173,7 +174,7 @@ class ExcelColumnFormat
                     $current = $start;
 
                     while ($current != $end) {
-                        $columns[$current] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
+                        $columns[$current] = NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
                         $current++;
                     }
 
