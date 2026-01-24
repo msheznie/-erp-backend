@@ -3,6 +3,7 @@
 namespace App\Exports\AccountsPayable\UnbilledGRV;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class UnbilledGrvLogisticDetails
 {
@@ -25,13 +26,13 @@ class UnbilledGrvLogisticDetails
     public function getCloumnFormat()
     {
         return [
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+            'D' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
 
         ];
     }

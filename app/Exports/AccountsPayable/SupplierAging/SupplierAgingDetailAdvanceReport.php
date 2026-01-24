@@ -3,6 +3,7 @@
 namespace App\Exports\AccountsPayable\SupplierAging;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class SupplierAgingDetailAdvanceReport
 {
@@ -26,14 +27,14 @@ class SupplierAgingDetailAdvanceReport
     public function getCloumnFormat()
     {
         return [
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'J' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'P' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Q' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'R' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
     public function getHeader($typeAging, $header) :Array {

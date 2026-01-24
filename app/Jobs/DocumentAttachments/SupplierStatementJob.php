@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Company;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
+use App\helper\email as Email;
 
 class SupplierStatementJob implements ShouldQueue
 {
@@ -188,7 +189,6 @@ class SupplierStatementJob implements ShouldQueue
         // Remove !important declarations that can cause issues
         $html = preg_replace('/\s*!important\s*/', '', $html);
         
-use App\helper\email as Email;
         // Fix problematic CSS properties
         $html = str_replace('border-top: 1px solid #0000001', 'border-top: 1px solid #000000', $html);
         

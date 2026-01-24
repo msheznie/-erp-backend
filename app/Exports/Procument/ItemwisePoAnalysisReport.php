@@ -3,6 +3,7 @@
 namespace App\Exports\Procument;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ItemwisePoAnalysisReport
 {
@@ -95,14 +96,14 @@ class ItemwisePoAnalysisReport
 
     public function getColumnFormat() {
         return [
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'R' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'AN' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'AE' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AF' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AH' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AI' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'D' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'R' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AN' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AE' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AF' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AH' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AI' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
     /**

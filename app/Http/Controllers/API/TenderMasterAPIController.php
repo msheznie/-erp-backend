@@ -67,8 +67,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\
-git;
+use Illuminate\Support\Facades\Git;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Criteria\LimitOffsetCriteria;
@@ -97,7 +96,6 @@ use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
 use App\Repositories\DocumentModifyRequestRepository;
-use App\helper\email;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
 use App\helper\email as Email;

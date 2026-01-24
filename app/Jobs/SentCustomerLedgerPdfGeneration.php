@@ -13,11 +13,11 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
+use App\helper\email as Email;
 
 class SentCustomerLedgerPdfGeneration implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-use App\helper\email as Email;
     public $db;
     public $dataArray;
     public $languageCode;

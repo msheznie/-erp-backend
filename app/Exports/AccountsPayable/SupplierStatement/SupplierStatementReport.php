@@ -3,6 +3,7 @@
 namespace App\Exports\AccountsPayable\SupplierStatement;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class SupplierStatementReport
 {
@@ -29,10 +30,10 @@ class SupplierStatementReport
 
     public function getCloumnFormat():Array {
         return [
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'K' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'N' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

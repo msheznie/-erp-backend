@@ -3,6 +3,7 @@
 namespace App\Exports\GeneralLedger\VAT;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class InputOutputVatReport
 {
@@ -29,9 +30,9 @@ class InputOutputVatReport
     public function getCloumnFormat()
     {
         return [
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'D' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'I' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

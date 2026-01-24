@@ -49,8 +49,6 @@ use App\Observers\TenderDocumentTypeObserver;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Observers\FinanceItemcategorySubAssignedObserver;
 use Storage;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 class AppServiceProvider extends ServiceProvider
 {
 
@@ -126,8 +124,8 @@ class AppServiceProvider extends ServiceProvider
         Passport::tokensExpireIn(CarbonInterval::hours(1));
         Passport::refreshTokensExpireIn(CarbonInterval::hours(1));
 
-        Storage::extend('sftp', function ($app, $config) {
-            return new Filesystem(new SftpAdapter($config));
-        });
+        // SFTP is natively supported in Laravel 12 with Flysystem v3
+        // No need for custom Storage::extend() - configure in config/filesystems.php instead
+        // The old League\Flysystem\Sftp\SftpAdapter is not available in Flysystem v3
     }
 }

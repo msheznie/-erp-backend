@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
+use App\helper\email as Email;
 
 class SoSentToCustomerJob implements ShouldQueue
 {
@@ -128,7 +129,6 @@ class SoSentToCustomerJob implements ShouldQueue
                 "<br>This is an auto generated email. Please do not reply to this email because we are not" .
                 "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
 
-use App\helper\email as Email;
             if (count($fetchCusEmail) > 0) {
                 foreach ($fetchCusEmail as $row) {
                     if ($row->contactPersonEmail) {

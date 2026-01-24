@@ -3,6 +3,7 @@
 namespace App\Exports\AccountsPayable\InvoiceToPayment;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class InvoiceToPaymentDetails
 {
@@ -26,15 +27,15 @@ class InvoiceToPaymentDetails
     public function getCloumnFormat()
     {
         return [
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY
+            'D' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'G' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'H' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'I' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'N' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'O' => NumberFormat::FORMAT_DATE_DDMMYYYY
         ];
     }
 

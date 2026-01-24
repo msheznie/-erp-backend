@@ -13,7 +13,7 @@
  */
 namespace App\Http\Controllers\API;
 
-use App\helper\email;
+use App\helper\email as Email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateMonthlyAdditionsMasterAPIRequest;
 use App\Http\Requests\API\UpdateMonthlyAdditionsMasterAPIRequest;
@@ -40,7 +40,6 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
-use App\helper\email as Email;
 
 /**
  * Class MonthlyAdditionsMasterController

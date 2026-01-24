@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
+use App\helper\email as Email;
 
 class PoSentToSupplierJob implements ShouldQueue
 {
@@ -171,7 +172,6 @@ class PoSentToSupplierJob implements ShouldQueue
             $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
                 "<br>This is an auto generated email. Please do not reply to this email because we are not " .
                 "monitoring this inbox.</font>";
-use App\helper\email as Email;
             if ($fetchSupEmail) {
                 foreach ($fetchSupEmail as $row) {
                     if (!empty($row->contactPersonEmail)) {

@@ -3,6 +3,7 @@
 namespace App\Exports\GeneralLedger\VAT;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class VatDetailReport
 {
@@ -48,12 +49,12 @@ class VatDetailReport
     public function getCloumnFormat()
     {
         return [
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AC' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AE' =>  \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AF' => \ PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'F' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'N' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AB' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AC' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AE' =>  NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AF' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 
