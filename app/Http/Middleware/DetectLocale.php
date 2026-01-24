@@ -16,6 +16,12 @@ class DetectLocale
     public function handle($request, Closure $next,...$locales)
     {
         $local = ($request->hasHeader('Accept-Language')) ? $request->header('Accept-Language') : 'en';
+
+        $allowedLocales = ['en', 'ar'];
+        if (!in_array($local, $allowedLocales)) {
+            $local = 'en';
+        }
+
         app()->setLocale($local);
         return $next($request);
     }
