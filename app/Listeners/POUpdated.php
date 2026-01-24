@@ -6,6 +6,7 @@ use App\Models\Alert;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use App\helper\email as Email;
 
 class POUpdated
 {
@@ -34,7 +35,6 @@ class POUpdated
             Log::channel('po_updated')->info($order->serviceLineSystemID . ' to ' . $original['serviceLineSystemID']);
             if ( ($order->serviceLineSystemID != $original['serviceLineSystemID']) && ($order->poConfirmedYN == 1 && $original['poConfirmedYN'] == 1)) {
                 $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
-use App\helper\email as Email;
                 $email_id = 'm.zahlan@pbs-int.net';
                 $empName = 'Admin';
                 $employeeSystemID = 11;
