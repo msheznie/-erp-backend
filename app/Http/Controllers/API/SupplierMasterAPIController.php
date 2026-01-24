@@ -80,7 +80,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
-use App\helper\email;
 use App\Models\DebitNote;
 use Illuminate\Http\Request as LaravelRequest;
 use App\Models\RegisterSupplierBusinessCategoryAssign;
@@ -91,7 +90,6 @@ use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
 use App\helper\CheckPendingDoc;
 use Illuminate\Support\Arr;
-
 use App\helper\email as Email;
 /**
  * Class SupplierMasterController
@@ -2337,7 +2335,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $file = array();
 
-        $email = email::emailAddressFormat($request->input('email'));
+        $email = Email::emailAddressFormat($request->input('email'));
         $companyId = $request->input('company_id');
         if (!empty($isExist)) {
             if($isExist['STATUS'] === 1){
@@ -2412,7 +2410,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $file = array();
 
-        $email = email::emailAddressFormat($supplierdata['email']);
+        $email = Email::emailAddressFormat($supplierdata['email']);
 
         if (!empty($supplierdata)) {
             if ($supplierdata['STATUS'] === 0){

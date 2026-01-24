@@ -3,7 +3,10 @@
 namespace App\helper;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Excel;
 use App\helper\Helper;
+use App\Exports\CreateExcelExport;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class CreateExcel
 {
@@ -15,7 +18,7 @@ class CreateExcel
         $fontFamily = Helper::getExcelFontFamily($lang);
 
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
-        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
+        $excelExport = new CreateExcelExport(function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -417,7 +420,8 @@ class CreateExcel
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->string($type);
+        }, $type);
+        $excel_content = $excelExport->getContent();
         $disk = 's3';
         $companyCode = isset($array['company_code'])?$array['company_code']:trans('custom.common');
 
@@ -441,7 +445,7 @@ class CreateExcel
         $lang = app()->getLocale();
         $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content = \Excel::create('po_details_export', function($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
@@ -516,7 +520,7 @@ class CreateExcel
                     }
 
                     if ($isHeader) {
-                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
                         $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
@@ -535,7 +539,8 @@ class CreateExcel
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = trans('custom.excel_po_detail_export');
@@ -721,7 +726,7 @@ class CreateExcel
                     $lang = app()->getLocale();
                     $fontFamily = Helper::getExcelFontFamily($lang);
 
-                    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
+                    $excelExport = new CreateExcelExport(function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
                         $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName, $fontFamily) {
                             // Set default font for entire sheet
                             $sheet->setStyle([
@@ -754,7 +759,8 @@ class CreateExcel
                                 }
                             }
                        });
-                   })->string($type);
+                   }, $type);
+                   $excel_content = $excelExport->getContent();
 
 
        $disk = 's3';
@@ -781,7 +787,7 @@ class CreateExcel
         $lang = app()->getLocale();
         $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function ($excel) use ($data, $fontFamily) {
 
                 $excel->sheet('open_requests', function ($sheet) use ($data, $fontFamily) {
 
@@ -857,7 +863,8 @@ class CreateExcel
             
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = 'or_detail_export';
@@ -884,7 +891,7 @@ class CreateExcel
         $lang = app()->getLocale();
         $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content = \Excel::create('pr_details_export', function($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
@@ -929,7 +936,7 @@ class CreateExcel
                     $sheet->appendRow($paddedRow);
                     
                     if ($isHeader) {
-                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
                         $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
@@ -948,7 +955,8 @@ class CreateExcel
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = trans('custom.pr_detail_export');

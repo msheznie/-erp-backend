@@ -664,7 +664,7 @@ class FixedAssetMaster extends Model
         'deleteComment' => 'string',
         'postToGLCode' => 'string',
         'empID' => 'integer',
-        'assetCostingUploadID' => 'integer'
+        'assetCostingUploadID' => 'integer',
 
         'deleted_at' => 'datetime',
     ];
