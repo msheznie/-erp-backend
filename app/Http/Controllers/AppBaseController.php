@@ -86,7 +86,7 @@ class AppBaseController extends BaseController
     protected function setUserLocale()
     {
         try {
-            $employeeSystemID = \App\helperHelper::getEmployeeSystemID();
+            $employeeSystemID = \App\helper\Helper::getEmployeeSystemID();
             
             if ($employeeSystemID) {
                 $employeeLanguage = \App\Models\EmployeeLanguage::where('employeeID', $employeeSystemID)
