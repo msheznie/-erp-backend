@@ -123,6 +123,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use App\Models\DocumentModifyRequest;
 use App\helper\TenderDetails;
+use App\helper\email as Email;
 use App\Models\BirthdayTemplate;
 
 use App\Models\DirectInvoiceDetails;
@@ -2369,7 +2370,7 @@ class Helper
                                     $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Registration Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
                             }
 
@@ -2382,7 +2383,7 @@ class Helper
                                     $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved. <br><br> Thank You. </p>';
                                     $dataEmail['alertMessage'] = "Appoinment Approved";
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
                             }
 
@@ -2531,7 +2532,7 @@ class Helper
 
                         if ($notifyConfirm) {
                             if(!isset($input['sendMail']) || (isset($input['sendMail']) && $input['sendMail'])) {
-                                $sendEmail = \Email::sendEmail($emails);
+                                $sendEmail = Email::sendEmail($emails);
 
                                 if (!$sendEmail["success"]) {
                                     return ['success' => false, 'message' => $sendEmail["message"]];
@@ -3706,7 +3707,7 @@ class Helper
                                             $notifyConfirm = (isset($params['fromUpload']) && $params['fromUpload']) ? false : true;
 
                                             if ($notifyConfirm) {
-                                                $sendEmail = \Email::sendEmail($emails);
+                                                $sendEmail = Email::sendEmail($emails);
 
                                                 if (!$sendEmail["success"]) {
                                                     return ['success' => false, 'message' => $sendEmail["message"]];
@@ -5507,7 +5508,7 @@ class Helper
                                     $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]);
                                     $dataEmail['alertMessage'] = trans('email.registration_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
                             }
 
@@ -5532,7 +5533,7 @@ class Helper
 
                                     $dataEmail['alertMessage'] = trans('email.payment_proof_document_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
 
                             }
@@ -5546,7 +5547,7 @@ class Helper
                                     $temp = trans('email.appointment_approved_body');
                                     $dataEmail['alertMessage'] = trans('email.appointment_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
 
                             }
@@ -5889,7 +5890,7 @@ class Helper
                             $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
                             if ($notifyApprove) {
-                                $sendEmail = \Email::sendEmail($emails);
+                                $sendEmail = Email::sendEmail($emails);
 
 
                                 if (!$sendEmail["success"]) {
@@ -6826,7 +6827,7 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
 
 
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }
                                 else
                                 {
@@ -6849,7 +6850,7 @@ class Helper
                                     $temp = $body;
                                     $dataEmail['alertMessage'] = $sub;
                                     $dataEmail['emailAlertMessage'] = $temp;
-                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                    $sendEmail = Email::sendEmailErp($dataEmail);
                                 }else {
                                     return ['success' => false, 'message' => trans('email.unable_to_send')];
                                 }
@@ -8885,7 +8886,7 @@ class Helper
                                 'docSystemCode' => $params["autoID"]
                             );
                         }
-                        $sendEmail = \Email::sendEmail($emails);
+                        $sendEmail = Email::sendEmail($emails);
                     }
                 }
                 break;
@@ -8913,7 +8914,7 @@ class Helper
                                     'docSystemCode' => $params["autoID"]
                                 );
                             }
-                            $sendEmail = \Email::sendEmail($emails);
+                            $sendEmail = Email::sendEmail($emails);
                         }
                     }
                 }
@@ -8947,7 +8948,7 @@ class Helper
                                     'docSystemCode' => $params["autoID"]
                                 );
                             }
-                            $sendEmail = \Email::sendEmail($emails);
+                            $sendEmail = Email::sendEmail($emails);
                         }
                     }
                 }
@@ -10118,7 +10119,7 @@ class Helper
                 'alertMessage' => $documentName . ' ' . trans('email.circular'),
             ];
 
-            \Email::sendEmailErp($dataEmail);
+            Email::sendEmailErp($dataEmail);
         }
     }
 
