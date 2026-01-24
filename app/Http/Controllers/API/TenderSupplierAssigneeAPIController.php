@@ -24,6 +24,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\TenderMaster;
 use App\Repositories\SupplierRegistrationLinkRepository;
 use App\helper\email;
+use App\helper\email as Email;
 /**
  * Class TenderSupplierAssigneeController
  * @package App\Http\Controllers\API
@@ -556,7 +557,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $dataEmail['alertMessage'] = $alertMessage;
         $dataEmail['empEmail'] = $emailFormatted;
         $dataEmail['emailAlertMessage'] = $body;
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
 
 
 

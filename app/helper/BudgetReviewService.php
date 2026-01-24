@@ -11,6 +11,7 @@ use App\Models\EmployeesDepartment;
 use App\Models\PurchaseRequest;
 use App\Models\BudgetReviewTransferAddition;
 
+use App\helper\email as Email;
 class BudgetReviewService
 {
 	public static function notfifyBudgetBlockRemoval($documentSystemID, $documentSystemCode)
@@ -166,7 +167,7 @@ class BudgetReviewService
 	                $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that sufficient budget amounts have been allocated for following documents which are created/confirmed by you or pending for your approval</p><p>'.$value['docs'].'</p>';
 	                $dataEmail['alertMessage'] = "Budget Allocation Approved";
 	                $dataEmail['emailAlertMessage'] = $temp;
-	                $sendEmail = \Email::sendEmailErp($dataEmail);
+	                $sendEmail = Email::sendEmailErp($dataEmail);
 				}
 			}
 		}

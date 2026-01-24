@@ -105,6 +105,8 @@ use App\Models\SupplierInvoiceItemDetail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Config;
 use App\Services\WebPushNotificationService;
+
+use App\helper\email as Email;
 class SRMService
 {
     private $POService = null;
@@ -6501,7 +6503,7 @@ class SRMService
             'emailAlertMessage' => $body,
         ];
 
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
     }
 
     public static function reopenPaymentProof($paymentProofUuid)
@@ -7242,7 +7244,7 @@ class SRMService
             'emailAlertMessage' => $emailBody,
         ];
         
-        \Email::sendEmailErp($dataEmail);
+        Email::sendEmailErp($dataEmail);
     }
 
     private function sendPoAcknowledgementNotification($purchaseOrder, $poCreator, $supplierName)

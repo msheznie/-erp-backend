@@ -93,6 +93,7 @@ use App\Models\SupplierBlock;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class GRVMasterController
@@ -1157,7 +1158,7 @@ class GRVMasterAPIController extends AppBaseController
                 $dataEmail['companySystemID'] = $input['companySystemID'];
                 $dataEmail['alertMessage'] = trans('email.grv_confirmed');
                 $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = \Email::sendEmailErp($dataEmail); 
+                $sendEmail = Email::sendEmailErp($dataEmail); 
             } 
         }
 
@@ -1858,7 +1859,7 @@ class GRVMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -2396,7 +2397,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                 'docSystemCode' => $purchaseOrder->purchaseOrderID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return ['status' => false, 'message' => $sendEmail["message"]];
         }

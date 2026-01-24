@@ -70,6 +70,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Response;
 
+use App\helper\email as Email;
 class CancelDocument
 {
 
@@ -140,7 +141,7 @@ class CancelDocument
                         $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled by '.$cancelledBy.'</p>';
                         $dataEmail['alertMessage'] = $employee->documentID." Document Cancelled";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
             }
@@ -156,7 +157,7 @@ class CancelDocument
                         $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                         $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
         }
@@ -170,7 +171,7 @@ class CancelDocument
                         $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
                         $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
         }

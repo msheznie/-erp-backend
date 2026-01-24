@@ -90,6 +90,8 @@ use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
 use Illuminate\Support\Arr;
+
+use App\helper\email as Email;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1918,7 +1920,7 @@ class SupplierMasterAPIController extends AppBaseController
                         'emailAlertMessage' => trans('email.supplier_registration_thank_you', ['companyName' => $companMaster->CompanyName])
                       ];
 
-            $sendEmail = \Email::sendEmailErp($emails);
+            $sendEmail = Email::sendEmailErp($emails);
 
             DB::commit();
             return $this->sendResponse([], trans('custom.thank_you_for_registering_with').' '.$companMaster->CompanyName.'. '.trans('custom.your_registration_reviewed'));
@@ -2331,7 +2333,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['alertMessage'] = "Registration Link";
                     $dataEmail['empEmail'] = $email;
                     $dataEmail['emailAlertMessage'] = $body;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                     return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
                 } else{
@@ -2352,7 +2354,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $dataEmail['alertMessage'] = "Registration Link";
                 $dataEmail['empEmail'] = $email;
                 $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
 
 
                 return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
@@ -2398,7 +2400,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['empEmail'] = $email;
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                     return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_resent_successfully'));
                 } else{

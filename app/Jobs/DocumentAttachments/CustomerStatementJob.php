@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Storage;
 class CustomerStatementJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+use App\helper\email as Email;
     public $dispatch_db;
     public $dataArr;
     public $empEmail;
@@ -171,7 +172,7 @@ class CustomerStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.customer_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                          Log::channel('payment_released_to_supplier')->error('Error');
                         Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);

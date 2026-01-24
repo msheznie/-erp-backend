@@ -78,6 +78,7 @@ use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use App\Models\CurrencyConversion;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class DebitNoteController
@@ -2108,7 +2109,7 @@ class DebitNoteAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -2460,7 +2461,7 @@ UNION ALL
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

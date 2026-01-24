@@ -109,6 +109,8 @@ use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
 use Illuminate\Support\Arr;
+
+use App\helper\email as Email;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -3648,7 +3650,7 @@ GROUP BY
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -4373,7 +4375,7 @@ WHERE
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

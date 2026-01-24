@@ -69,6 +69,7 @@ use Illuminate\Support\Arr;
 use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
 use function Clue\StreamFilter\fun;
+use App\helper\email as Email;
 
 /**
  * Class MaterielRequestController
@@ -895,7 +896,7 @@ class MaterielRequestAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1322,7 +1323,7 @@ class MaterielRequestAPIController extends AppBaseController
                 'docSystemCode' => $materielRequest->RequestID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -1528,7 +1529,7 @@ class MaterielRequestAPIController extends AppBaseController
             array_push($ids_to_delete, $da->documentApprovedID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }

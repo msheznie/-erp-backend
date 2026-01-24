@@ -99,6 +99,7 @@ use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\DocumentCodeConfigurationService;
 use App\Jobs\ExportDetailedORList;
+use App\helper\email as Email;
 
 /**
  * Class PurchaseRequestController
@@ -2369,7 +2370,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'docSystemCode' => $purchaseRequest->purchaseRequestID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -2493,7 +2494,7 @@ class PurchaseRequestAPIController extends AppBaseController
             array_push($ids_to_delete, $da->documentApprovedID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -2638,7 +2639,7 @@ class PurchaseRequestAPIController extends AppBaseController
             //  array_push($ids_to_delete, $da->documentApprovedID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }

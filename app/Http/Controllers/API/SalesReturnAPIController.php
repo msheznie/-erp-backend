@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class SalesReturnController
@@ -1945,7 +1946,7 @@ class SalesReturnAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

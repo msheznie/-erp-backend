@@ -41,6 +41,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class InventoryReclassificationController
@@ -917,7 +918,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                         return $this->sendError(trans('custom.approval_list_not_found'), 500);
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }

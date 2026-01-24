@@ -38,6 +38,7 @@ use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class ErpBudgetAdditionController
@@ -974,7 +975,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

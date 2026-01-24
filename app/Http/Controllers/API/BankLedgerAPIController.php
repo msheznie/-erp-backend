@@ -64,6 +64,7 @@ use App\helper\CreateExcel;
 use App\Services\BankLedger\BankLedgerService;
 use App\Jobs\Report\BankLedgerPdfJob;
 use App\Models\BankStatementDetail;
+use App\helper\email as Email;
 
 /**
  * Class BankLedgerController
@@ -2457,7 +2458,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

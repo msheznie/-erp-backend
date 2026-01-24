@@ -71,6 +71,7 @@ use App\Models\ErpProjectMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class JvMasterController
@@ -1319,7 +1320,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1964,7 +1965,7 @@ HAVING
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

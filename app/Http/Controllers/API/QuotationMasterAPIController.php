@@ -80,6 +80,7 @@ use App\Jobs\AddMultipleItemsToQuotation;
 use Carbon\Carbon;
 use Response;
 use App\Jobs\DocumentAttachments\SoSentToCustomerJob;
+use App\helper\email as Email;
 
 /**
  * Class QuotationMasterController
@@ -1291,7 +1292,7 @@ class QuotationMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1393,7 +1394,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -1745,7 +1746,7 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

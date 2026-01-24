@@ -52,6 +52,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Jobs\PushNotification;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class LeaveDataMasterController
@@ -1004,7 +1005,7 @@ class LeaveDataMasterAPIController extends AppBaseController
                 $alert["isEmailSend"] = 0;
                 $alert["timeStamp"] = date('Y-m-d');
 
-                $sendEmail = \Email::sendEmailErp($alert);
+                $sendEmail = Email::sendEmailErp($alert);
             }
 
             $pushNotificationMessage = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
@@ -1048,7 +1049,7 @@ class LeaveDataMasterAPIController extends AppBaseController
             $alert["isEmailSend"] = 0;
             $alert["timeStamp"] = date('Y-m-d');
 
-            $sendEmail = \Email::sendEmailErp($alert);
+            $sendEmail = Email::sendEmailErp($alert);
         }
 
         $pushNotificationMessage = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";

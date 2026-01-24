@@ -80,6 +80,7 @@ use App\Services\GeneralLedgerService;
 use PHPExcel_IOFactory;
 use DateTime;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class FixedAssetMasterController
@@ -1562,7 +1563,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -2443,7 +2444,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
     
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return $this->sendError($sendEmail["message"], 500);
                 }

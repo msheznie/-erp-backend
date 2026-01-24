@@ -47,6 +47,8 @@ use App\Jobs\StockCount\StockCountDetailJob;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+
+use App\helper\email as Email;
 /**
  * Class StockCountController
  * @package App\Http\Controllers\API
@@ -775,7 +777,7 @@ class StockCountAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

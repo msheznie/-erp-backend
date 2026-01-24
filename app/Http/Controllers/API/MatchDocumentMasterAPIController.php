@@ -81,6 +81,7 @@ use App\Services\GeneralLedgerService;
 use App\Services\TaxLedger\RecieptVoucherTaxLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class MatchDocumentMasterController
@@ -4089,7 +4090,7 @@ ORDER BY
                 );
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

@@ -176,6 +176,7 @@ use App\Models\DocumentCodeTransaction;
 use App\Models\SupplierBlock;
 use App\Services\DocumentCodeConfigurationService;
 use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class ProcumentOrderController
@@ -1351,7 +1352,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return $this->sendError($sendEmail["message"], 500);
                 }
@@ -2573,7 +2574,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             );
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -2690,7 +2691,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         AuditTrial::createAuditTrial($purchaseOrder->documentSystemID, $purchaseOrderID, $input['returnComment'], 'returned back to amend');
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -3346,7 +3347,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             }
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -4998,7 +4999,7 @@ ORDER BY
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

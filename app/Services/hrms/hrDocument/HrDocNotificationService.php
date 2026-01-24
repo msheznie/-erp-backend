@@ -9,6 +9,7 @@ use App\Models\Company;
 use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\DB;
 
+use App\helper\email as Email;
 class HrDocNotificationService
 {
     private $companyId;
@@ -65,7 +66,7 @@ class HrDocNotificationService
             }
             $dataEmail['emailAlertMessage'] = $temp;
             $dataEmail['alertMessage'] = trans('email.new_hr_document');
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = Email::sendEmailErp($dataEmail);
             if (!$sendEmail["success"]) {
                 $msg = "HR Document notification not sent for {$val['EIdNo']} | {$val['Ename2']} "; 
                 $logType = 'error';

@@ -37,6 +37,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class PurchaseOrderStatusController
@@ -469,7 +470,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
                 'docSystemCode' => $purchaseOrder->purchaseOrderID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
+use App\helper\email as Email;
 class NotificationService
 {
     public static function log_file(){
@@ -296,7 +297,7 @@ class NotificationService
             'empEmail' => $userEmail,
             'emailAlertMessage' => $body
         ];
-        $sendEmail = \Email::sendEmailErp($emails);
+        $sendEmail = Email::sendEmailErp($emails);
         return $sendEmail;
 
     }

@@ -11,6 +11,7 @@ use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
+use App\helper\email as Email;
 class TravelRequestNotificationService
 {
     private $companyId;
@@ -68,7 +69,7 @@ class TravelRequestNotificationService
             '.$this->documentCode.' for your further arrangements and action.</p>';
                 $dataEmail['emailAlertMessage'] = $temp;
                 $dataEmail['alertMessage'] = trans('email.travel_request_alert', ['documentCode' => $this->documentCode]);
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
                 if (!$sendEmail["success"]) {
                     $msg = "Travel request notification not sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";
                     $logType = 'error';

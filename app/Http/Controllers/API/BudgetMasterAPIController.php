@@ -76,6 +76,7 @@ use App\Models\FixedAssetMaster;
 use App\Models\logUploadBudget;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\email as Email;
 
 /**
  * Class BudgetMasterController
@@ -4024,7 +4025,7 @@ class BudgetMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

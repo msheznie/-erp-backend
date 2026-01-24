@@ -83,6 +83,7 @@ class DeliveryOrderServices
                     $query = $model::with($relation)->where('companySystemID', $masterDataDetails->companySystemID)
                         ->whereHas($relation, function ($q) use ($item) {
                             $q->where('itemCodeSystem', $item);
+use App\helper\email as Email;
                         });
 
                     foreach ($additionalWhere as $column => $value) {
@@ -159,7 +160,7 @@ class DeliveryOrderServices
             }
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return ['status' => false,'message'=>$sendEmail["message"]];
         }

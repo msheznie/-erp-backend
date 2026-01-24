@@ -132,7 +132,7 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.supplier_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         Log::channel('supplier_statement_sent')->error('Error');
                         Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
@@ -160,7 +160,7 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.supplier_statement_report', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         Log::channel('supplier_statement_sent')->error('Error');
                         Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
@@ -188,6 +188,7 @@ class SupplierStatementJob implements ShouldQueue
         // Remove !important declarations that can cause issues
         $html = preg_replace('/\s*!important\s*/', '', $html);
         
+use App\helper\email as Email;
         // Fix problematic CSS properties
         $html = str_replace('border-top: 1px solid #0000001', 'border-top: 1px solid #000000', $html);
         

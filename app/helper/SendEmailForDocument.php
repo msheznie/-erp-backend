@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\helper\NotificationService;
 use Illuminate\Support\Facades\Log;
 
+use App\helper\email as Email;
 class SendEmailForDocument
 {
     public static function approvedDocument($input)
@@ -69,7 +70,7 @@ class SendEmailForDocument
                 $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
                 $dataEmail['emailAlertMessage'] = $body;
                 Log::info('Email stared to send to PO',$dataEmail);
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
                 Log::info('Email end here');
             }
 
