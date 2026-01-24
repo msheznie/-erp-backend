@@ -690,7 +690,7 @@ class EmployeesDepartmentAPIController extends AppBaseController
             $statusID = 1;
         }
 
-        $levelStatusID = (isset($input['levelStatusID']) && is_array($input['levelStatusID'])) ? $input['levelStatusID'][0] : isset($input['levelStatusID'])?$input['levelStatusID']:1;
+        $levelStatusID = (isset($input['levelStatusID']) && is_array($input['levelStatusID'])) ? $input['levelStatusID'][0] : (isset($input['levelStatusID']) ? $input['levelStatusID'] : 1);
 
         $approvalMatrixData = DepartmentMaster::select('DepartmentDescription', 'departmentSystemID')
             ->with(['documents' => function ($query1) use ($companySystemID, $selectedDocuments, $selectedEmployees, $selectedSegments, $selectedCategories, $statusID, $levelStatusID) {
