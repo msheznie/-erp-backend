@@ -4788,6 +4788,8 @@ return
     'secondarycompany_updated_successfully' => 'تم تحديث المؤسسة الثانوية بنجاح',
     'segment' => 'الشريحة',
     'segments' => 'الشرائح',
+    'segment_code_is_invalid' => 'الرمز الشريحة المذكور غير صالح، يرجى التحقق مرة أخرى والمحاولة مرة أخرى',
+    'segment_is_not_allowed_for_this_upload' => 'لا يمكن تحميل الشريحة لهذا النوع من المبيعات',
     'segment_allocated_item_deleted_successfully' => 'تم حذف المادة المخصص للشريحة بنجاح',
     'segment_allocated_item_not_found' => 'المادة المخصص للشريحة غير موجود',
     'segment_allocated_item_retrieved_successfully' => 'تم استرداد المادة المخصص للشريحة بنجاح',

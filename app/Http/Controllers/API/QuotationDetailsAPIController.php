@@ -1065,6 +1065,7 @@ WHERE
                             unset($new['userRequestedQty']);
                             unset($new['requestedUnitQty']);
                             unset($new['unitQty']);
+                            unset($new['serviceLineSystemID']);
                             $new['soQuotationDetailID'] = $new['quotationDetailsID'];
                             
                             $new['createdPCID'] = gethostname();
