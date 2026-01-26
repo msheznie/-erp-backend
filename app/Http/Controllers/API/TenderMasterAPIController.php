@@ -611,7 +611,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['serial_number'] = $lastSerialNumber;
             $data['document_type'] = isset($input['rfx']) ? $input['document_type'] : 0;
             $data['isDelegation'] = $input['isDelegation'] ?? 0;
-
+            $data['commercial_weightage'] = isset($input['rfx']) && $input['document_type'] == 1 ? 100 : 0;
             $params = ['masterData' => true, 'docSystemId' => $document_system_id];
             $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
             $result = TenderMaster::create($data);
