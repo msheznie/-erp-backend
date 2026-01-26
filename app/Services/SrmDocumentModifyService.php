@@ -26,6 +26,8 @@ use App\Models\ProcumentActivity;
 use App\Models\ProcumentActivityEditLog;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\ScheduleBidFormatDetailsLog;
+use App\Models\SrmTenderAwardingMember;
+use App\Models\SrmTenderAwardingMemberEditLog;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SrmTenderDepartment;
@@ -175,6 +177,7 @@ class SrmDocumentModifyService
             self::updateCirculars($tenderMasterID, $versionID);
             self::updateEvaluationCriteriaDetail($tenderMasterID, $versionID);
             self::updateEvaluationCriteriaScore($versionID);
+            self::updateTenderAwardingMemberData($tenderMasterID, $versionID);
             return ['success' => true, 'message' => trans('srm_approvals.record_updated_successfully')];
         } catch (\Exception $ex) {
             return ['success' => false, 'message' => $ex->getMessage()];
@@ -1011,5 +1014,55 @@ class SrmDocumentModifyService
         $permissions['assign_suppliers'] = $isClosingDateValid;
 
         return $permissions;
+    }
+    public static function updateTenderAwardingMemberData($tenderMasterID, $versionID){
+        try {
+            return DB::transaction(function () use ($tenderMasterID, $versionID) {
+                $amendRecords = SrmTenderAwardingMemberEditLog::getAmendRecords($versionID, $tenderMasterID, false);
+                $amendRecordIds = $amendRecords->pluck('id');
+
+                foreach ($amendRecords as $amendRecord) {
+                    $masterRecord = SrmTenderAwardingMember::find($amendRecord->id);
+                    if (!$masterRecord) {
+                        continue;
+                    }
+                    $masterRecord->fill($amendRecord->toArray());
+                    $masterRecord->save();
+                }
+                SrmTenderAwardingMember::where('tender_id', $tenderMasterID)
+                    ->whereNotIn('id', $amendRecordIds)
+                    ->delete();
+
+                $newAmendRecords = SrmTenderAwardingMemberEditLog::getAmendRecords($versionID, $tenderMasterID, true);
+                foreach ($newAmendRecords as $amendRecord) {
+                    $newMasterRecord = new SrmTenderAwardingMember();
+                    foreach ($amendRecord->toArray() as $column => $value) {
+                        if (in_array($column, [
+                            'amd_id',
+                            'id',
+                            'version_id',
+                            'updated_by',
+                            'level_no',
+                            'is_deleted'
+                        ])) {
+                            continue;
+                        }
+
+                        $newMasterRecord->{$column} = $value;
+                    }
+
+                    $newMasterRecord->save();
+                    $amendRecord->id = $newMasterRecord->id;
+                    $amendRecord->save();
+                }
+
+                return [
+                    'success' => true,
+                    'message' => 'Success'
+                ];
+            });
+        } catch (\Exception $ex) {
+            return ['success' => false, 'message' => $ex->getMessage()];
+        }
     }
 }

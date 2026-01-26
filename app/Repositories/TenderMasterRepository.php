@@ -51,6 +51,8 @@ use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
+use App\Models\SrmTenderAwardingMember;
+use App\Models\SrmTenderAwardingMemberEditLog;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
@@ -1837,6 +1839,32 @@ class TenderMasterRepository extends BaseRepository
         return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
 
+    public function checkTenderAwardingMembersAdded($tenderMasterID, $editOrAmend, $amdID, $versionID){
+        $tenderMaster = $editOrAmend ? SrmTenderMasterEditLog::find($amdID) : TenderMaster::find($tenderMasterID);
+        if(empty($tenderMaster)) {
+            return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
+        }
+        
+        $minApprovalForAwarding = $tenderMaster->min_approval_awarding ?? 1;
+        
+        if ($minApprovalForAwarding > 0) {
+            $awardingMembers = $editOrAmend ?
+                SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $versionID) :
+                SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
+            
+            if(count($awardingMembers) < $minApprovalForAwarding){
+                return [
+                    'success' => false,
+                    'message' => trans(
+                        'srm_tender_rfx.at_least_min_employee_should_be_selected_for_awarding',
+                        ['count' => $minApprovalForAwarding]
+                    )
+                ];
+            }
+        }
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
+    }
+
     public function getTenderExistData($tenderID, $editOrAmend, $versionID){
         return $editOrAmend ? SrmTenderMasterEditLog::tenderMasterHistory($tenderID, $versionID) :
             TenderMaster::getTenderMasterData($tenderID);
@@ -2217,6 +2245,23 @@ class TenderMasterRepository extends BaseRepository
                     }
                 }
 
+                $minApprovalForAwarding = $input['min_approval_awarding'] ?? 1;
+                if ($minApprovalForAwarding > 0) {
+                    $awardingMembers = $requestData['enableRequestChange'] ?
+                        SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $requestData['versionID']) :
+                        SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
+                    
+                    if (count($awardingMembers) < $minApprovalForAwarding) {
+                        return [
+                            'success' => false,
+                            'message' => trans(
+                                'srm_tender_rfx.at_least_min_employee_should_be_selected_for_awarding',
+                                ['count' => $minApprovalForAwarding]
+                            )
+                        ];
+                    }
+                }
+
                 $data['tender_type_id'] = $input['tender_type_id'];
                 $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
                 $data['evaluation_type_id'] = $input['evaluation_type_id'];
@@ -2228,6 +2273,7 @@ class TenderMasterRepository extends BaseRepository
                 $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
                 $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
                 $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
+                $data['min_approval_awarding'] = $minApprovalForAwarding;
                 $updateTender = self::updateTenderMaster($data, $tenderMasterID, $requestData['enableRequestChange'], $requestData['versionID']);
 
                 if ($updateTender['success'] && !$requestData['enableRequestChange']) {

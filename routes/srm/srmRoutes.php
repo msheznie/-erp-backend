@@ -35,6 +35,13 @@ Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@ge
 Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp')->name("Delete tender bid employee");
 Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval')->name("Get employees approval");
 
+// Awarding Members Routes
+Route::post('tender-awarding-members-store','TenderAwardingMemberController@store')->name("Store awarding members");
+Route::post('tender-awarding-members-get','TenderAwardingMemberController@getAwardingMembers')->name("Get awarding members");
+Route::post('tender-awarding-members-delete','TenderAwardingMemberController@deleteAwardingMember')->name("Delete awarding member");
+Route::post('tender-awarding-members-approval-count','TenderAwardingMemberController@getAwardingApprovalCount')->name("Get awarding approval count");
+Route::post('tender-awarding-members-delete-all','TenderAwardingMemberController@deleteAllAwardingMembers')->name("Delete all awarding members");
+
 Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits')->name("Get tender bits");
 Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse')->name("Get tender bid go no go response");
 Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse')->name("Update tender bid go no go response");
