@@ -522,7 +522,7 @@ class BudgetNotificationService
         // Get all department users with their employee details eager loaded
         $financeUsers = CompanyDepartmentEmployee::with('employee')
                         ->whereHas('department', function ($query) {
-                        $query->where('isFinance', 1)->where('isActive', 1);
+                        $query->where('isFinance', 1)->where('isActive', 1)->where('companySystemID', $budgetPlanning->masterBudgetPlannings->companySystemID);
                         })
                         ->where('isActive', 1)
                         ->get();

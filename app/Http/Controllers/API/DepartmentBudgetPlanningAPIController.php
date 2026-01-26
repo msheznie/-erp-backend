@@ -195,9 +195,9 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $departmentBudgetPlanning['m'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
         }
 
-        if (empty($departmentBudgetPlanning)) {
-            return $this->sendError(trans('custom.department_budget_planning_not_found'));
-        }
+        // if (empty($departmentBudgetPlanning)) {
+        //     return $this->sendError(trans('custom.department_budget_planning_not_found'));
+        // }
 
         return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
     }
