@@ -9939,5 +9939,5 @@ return
     'cannot_change_from_not_in_use_to_idle' => 'Cannot change from "Not in Use" to "Idle"',
     'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'The selected credit note has been pulled into a payment voucher; therefore, this document cannot be amended.',
     'credit_note_link_to_pv_cannot_be_selected' => 'This credit note is already linked to a payment voucher in Draft or Pending Approval status and cannot be selected.',
-    'cannot_deactivate_policy_documents_with_segment_selection' => 'There are some documents that have used line item segment selection. We cannot allow to deactivate until the documents have been completed'
+    'order_cannot_cancelled_multiple_pos' => 'Request can not be cancelled as there is another order created.',
 ];

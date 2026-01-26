@@ -2392,6 +2392,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.documentSystemID',
                 'erp_purchaseordermaster.sentToSupplier',
                 'erp_purchaseordermaster.poType_N',
+                'erp_purchaseordermaster.poTypeID',
                 'erp_purchaseordermaster.partiallyGRVAllowed',
                 'erp_purchaseordermaster.logisticsAvailable'
             ]
@@ -2558,6 +2559,30 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
+        $cancelMethod = isset($input['cancelMethod']) ? $input['cancelMethod'] : 0;
+
+        if ($cancelMethod == 2) {
+            $linkedPRIds = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->whereNotNull('purchaseRequestID')
+                ->distinct()
+                ->pluck('purchaseRequestID')
+                ->toArray();
+
+            if (!empty($linkedPRIds)) {
+                foreach ($linkedPRIds as $prId) {
+                    $otherPOsCount = PurchaseOrderDetails::where('purchaseRequestID', $prId)
+                        ->where('purchaseOrderMasterID', '!=', $purchaseOrderID)
+                        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'erp_purchaseorderdetails.purchaseOrderMasterID')
+                        ->where('erp_purchaseordermaster.poCancelledYN', '!=', -1)
+                        ->distinct()
+                        ->count('erp_purchaseorderdetails.purchaseOrderMasterID');
+
+                    if ($otherPOsCount > 0) {
+                        return $this->sendError(trans('custom.order_cannot_cancelled_multiple_pos'));
+                    }
+                }
+            }
+        }
         $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->update([
                 'poCancelledYN' => -1,
@@ -2647,18 +2672,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
         CancelDocument::sendEmail($input);
 
-        // Handle PR cancellation/release based on cancelMethod
-        $cancelMethod = isset($input['cancelMethod']) ? $input['cancelMethod'] : 0;
-
-        if ($cancelMethod == 1) {
-            // Cancel PO only and Open PR - Release PR linkage so it can be reused
-            // Clear purchaseRequestID from PurchaseOrderDetails for this PO
-            PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
-                ->whereNotNull('purchaseRequestID')
-                ->update(['purchaseRequestID' => null]);
-        } elseif ($cancelMethod == 2) {
-            // Cancel PO and PR - Cancel both PO and PR
-            // Get all unique PR IDs linked to this PO
+        if ($cancelMethod == 2) {
+            // Cancel both PO and PR
             $linkedPRIds = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
                 ->whereNotNull('purchaseRequestID')
                 ->distinct()
@@ -2669,7 +2684,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 foreach ($linkedPRIds as $prId) {
                     $purchaseRequest = PurchaseRequest::find($prId);
                     if ($purchaseRequest && $purchaseRequest->cancelledYN != -1 && $purchaseRequest->manuallyClosed != 1) {
-                        // Cancel the PR following the same pattern as cancelPurchaseRequest
                         $purchaseRequest->cancelledYN = -1;
                         $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
                         $purchaseRequest->cancelledByEmpID = $employee->empID;
@@ -2680,7 +2694,6 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
 
                         AuditTrial::createAuditTrial($purchaseRequest->documentSystemID, $prId, $input['cancelComments'] . ' (Cancelled along with PO)', 'cancelled');
 
-                        // Send emails for PR cancellation (following same pattern as cancelPurchaseRequest)
                         $prEmails = array();
                         $prDocument = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
 
@@ -2727,9 +2740,9 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                                 }
                             }
 
-                            // Send CancelDocument email
                             $prCancelInput = [
                                 'purchaseRequestID' => $prId,
+                                'documentSystemID' => $purchaseRequest->documentSystemID,
                                 'cancelledComments' => $input['cancelComments'] . ' (Cancelled along with PO)'
                             ];
                             CancelDocument::sendEmail($prCancelInput);
@@ -7439,7 +7452,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
+        $currencyCode = ($purchaseRequest->currency_by) ? $purchaseRequest->currency_by->CurrencyCode : "";
+        $decimalPlaces = ($purchaseRequest->currency_by) ? $purchaseRequest->currency_by->DecimalPlaces : 2;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $currencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $decimalPlaces) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {

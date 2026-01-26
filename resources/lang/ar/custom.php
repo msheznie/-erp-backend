@@ -9826,5 +9826,5 @@ return
     'cannot_change_from_not_in_use_to_idle' => 'لا يمكن التغيير من "غير مستخدم" إلى "خامل"',
     'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'تم سحب مذكرة الإئتمان إلى فاتورة الدفع; لذلك، لا يمكن تعديل هذا المستند.',
     'credit_note_link_to_pv_cannot_be_selected' => 'تم ربط مذكرة الإئتمان بفاتورة الدفع في حالة مسودة أو قيد المراجعة ولا يمكن تحديدها.',
-    'cannot_deactivate_policy_documents_with_segment_selection' => 'هناك بعض المستندات التي استخدمت اختيار قطاع عنصر السطر. لا يمكن السماح بإلغاء التفعيل حتى يتم إكمال المستندات'
+    'order_cannot_cancelled_multiple_pos' => 'لا يمكن إلغاء الطلب لأنه تم إنشاء أمر آخر.',
 ];
