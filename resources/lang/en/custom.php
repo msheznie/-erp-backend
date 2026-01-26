@@ -1244,6 +1244,7 @@ return
     'credit_notes_retrieved_successfully' => 'Credit Notes retrieved successfully',
     'cross_exchange' => 'Cross exchange',
     'currency' => 'Currency',
+    'currency_type' => 'Currency Type',
     'currency_conversion_detail_not_found' => 'Currency Conversion Detail not found',
     'currency_conversion_detail_retrieved_successfully' => 'Currency Conversion Detail retrieved successfully',
     'currency_conversion_detail_saved_successfully' => 'Currency Conversion Detail saved successfully',

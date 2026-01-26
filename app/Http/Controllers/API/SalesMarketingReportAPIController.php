@@ -2058,6 +2058,7 @@ class SalesMarketingReportAPIController extends AppBaseController
     public function reportSoToReceipt(Request $request)
     {
         $input = $request->all();
+        $currencyType = $this->resolveSoToReceiptCurrencyType($input);
 
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
@@ -2073,21 +2074,144 @@ class SalesMarketingReportAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
-            ->addColumn('deliveryOrder', function ($row) {
-                return $this->getSOtoReceiptChainViaDeliveryOrder($row);
+            ->addColumn('currencyType', function () use ($currencyType) {
+                return $this->getSoToReceiptCurrencyTypeLabel($currencyType);
             })
-            ->addColumn('soTotalComRptCurrency', function ($row) {
-                return $row->companyReportingAmount;
+            ->addColumn('deliveryOrder', function ($row) use ($currencyType) {
+                return $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);
+            })
+            ->addColumn('soTotalComRptCurrency', function ($row) use ($currencyType) {
+                return $this->getConvertedAmountByType(
+                    (float)$row->transactionAmount,
+                    $row->companySystemID,
+                    $row->transactionCurrencyID,
+                    $currencyType,
+                    $row->companyLocalAmount,
+                    $row->companyReportingAmount
+                );
             })
             ->make(true);
 
         return $data;
     }
 
-    public function getSOtoReceiptChainViaDeliveryOrder($row)
+    private function resolveSoToReceiptCurrencyType(array $input)
+    {
+        $currency = $input['currencyID'] ?? null;
+        if (is_array($currency)) {
+            $currency = $currency[0] ?? null;
+        }
+        $currency = (int)$currency;
+
+        if ($currency === 1) {
+            return 'local';
+        }
+        if ($currency === 2) {
+            return 'reporting';
+        }
+        if ($currency === 3) {
+            return 'transaction';
+        }
+
+        return 'transaction';
+    }
+
+    private function getSoToReceiptCurrencyTypeLabel($currencyType)
+    {
+        if ($currencyType === 'local') {
+            return trans('custom.local_currency');
+        }
+        if ($currencyType === 'reporting') {
+            return trans('custom.reporting_currency');
+        }
+
+        return trans('custom.transaction_currency');
+    }
+
+    private function selectAmountByType($currencyType, $transactionAmount, $localAmount, $reportingAmount)
+    {
+        if ($currencyType === 'local') {
+            return (float)$localAmount;
+        }
+        if ($currencyType === 'transaction') {
+            return (float)$transactionAmount;
+        }
+
+        return (float)$reportingAmount;
+    }
+
+    private function getConvertedAmountByType($transactionAmount, $companySystemID, $transactionCurrencyID, $currencyType, $fallbackLocal, $fallbackReporting)
+    {
+        $localAmount = $fallbackLocal;
+        $reportingAmount = $fallbackReporting;
+
+        if (!empty($companySystemID) && !empty($transactionCurrencyID)) {
+            $conversion = \Helper::currencyConversion(
+                $companySystemID,
+                $transactionCurrencyID,
+                $transactionCurrencyID,
+                $transactionAmount
+            );
+            $localAmount = $conversion['localAmount'] ?? $localAmount;
+            $reportingAmount = $conversion['reportingAmount'] ?? $reportingAmount;
+        }
+
+        return $this->selectAmountByType($currencyType, $transactionAmount, $localAmount, $reportingAmount);
+    }
+
+    private function applyInvoicePaymentsCurrency($invoices, $currencyType)
+    {
+        foreach ($invoices as $invoice) {
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount,
+                                             sum(receiveAmountTrans) as transAmount,
+                                             bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                ->where('addedDocumentSystemID', 20)
+                ->where('matchingDocID', 0)
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('custReceivePaymentAutoID')
+                ->get();
+
+            $invoiceTransactionAmount = (float)$invoice->transAmount;
+            if (!empty($invoice->master) && $invoice->master->bookingAmountTrans !== null) {
+                $invoiceTransactionAmount = (float)$invoice->master->bookingAmountTrans;
+            }
+
+            $invoice->rptAmount = $this->getConvertedAmountByType(
+                $invoiceTransactionAmount,
+                $invoice->master ? $invoice->master->companySystemID : null,
+                $invoice->master ? $invoice->master->custTransactionCurrencyID : null,
+                $currencyType,
+                $invoice->localAmount,
+                $invoice->rptAmount
+            );
+
+            foreach ($recieptVouchers as $payment) {
+                $paymentTransactionAmount = (float)$payment->transAmount;
+                $payment->rptAmount = $this->getConvertedAmountByType(
+                    $paymentTransactionAmount,
+                    $payment->master ? $payment->master->companySystemID : null,
+                    $payment->master ? $payment->master->custTransactionCurrencyID : null,
+                    $currencyType,
+                    $payment->localAmount,
+                    $payment->rptAmount
+                );
+            }
+
+            $invoice->payments = $recieptVouchers->toArray();
+        }
+
+        return $invoices;
+    }
+
+    public function getSOtoReceiptChainViaDeliveryOrder($row, $currencyType)
     {
         $deliveryOrders = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
                                         sum(companyReportingAmount) as rptAmount,
+                                        sum(transactionAmount) as transAmount,
                                         quotationMasterID,deliveryOrderID,deliveryOrderDetailID')
             ->where('quotationMasterID', $row->quotationMasterID)
             ->with(['master' => function ($query) {
@@ -2100,14 +2224,16 @@ class SalesMarketingReportAPIController extends AppBaseController
 
         if (count($deliveryOrders) == 0) {
             $returnData['deliveryOrder'] = false;   
-            $returnData['invoices'] = $this->getSOtoReceiptChainViaCustomerInvoice($row);
+            $returnData['invoices'] = $this->getSOtoReceiptChainViaCustomerInvoice($row, $currencyType);
 
             return [$returnData];
         }
 
         foreach ($deliveryOrders as $do) {
             $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
-                                                 sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+                                                 sum(issueCostRptTotal) as rptAmount,
+                                                 sum(sellingTotal) as transAmount,
+                                                 custInvoiceDirectAutoID,deliveryOrderID')
                 ->where('deliveryOrderID', $do->deliveryOrderID)
                 ->with(['master' => function ($query) {
                     $query->with(['currency']);
@@ -2115,22 +2241,14 @@ class SalesMarketingReportAPIController extends AppBaseController
                 ->groupBy('custInvoiceDirectAutoID')
                 ->get();
 
-            foreach ($invoices as $invoice) {
-                $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
-                                                 sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
-                    ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
-                    ->where('addedDocumentSystemID', 20)
-                    ->where('matchingDocID', 0)
-                    ->with(['master' => function ($query) {
-                        $query->with(['currency']);
-                    }])
-                    ->groupBy('custReceivePaymentAutoID')
-                    ->get();
+            $invoices = $this->applyInvoicePaymentsCurrency($invoices, $currencyType);
 
-                $totalInvoices = $recieptVouchers->toArray();
-
-                $invoice->payments = $totalInvoices;
-            }
+            $do->rptAmount = $this->selectAmountByType(
+                $currencyType,
+                (float)$do->transAmount,
+                (float)$do->localAmount,
+                (float)$do->rptAmount
+            );
 
             $do->invoices = $invoices->toArray();
         }
@@ -2139,10 +2257,12 @@ class SalesMarketingReportAPIController extends AppBaseController
     }
 
     
-    public function getSOtoReceiptChainViaCustomerInvoice($row)
+    public function getSOtoReceiptChainViaCustomerInvoice($row, $currencyType)
     {
         $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
-                                             sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+                                             sum(issueCostRptTotal) as rptAmount,
+                                             sum(sellingTotal) as transAmount,
+                                             custInvoiceDirectAutoID,deliveryOrderID')
             ->where('quotationMasterID', $row->quotationMasterID)
             ->with(['master' => function ($query) {
                 $query->with(['currency']);
@@ -2150,22 +2270,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             ->groupBy('custInvoiceDirectAutoID')
             ->get();
 
-        foreach ($invoices as $invoice) {
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
-                                             sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
-                ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
-                ->where('addedDocumentSystemID', 20)
-                ->where('matchingDocID', 0)
-                ->with(['master' => function ($query) {
-                    $query->with(['currency']);
-                }])
-                ->groupBy('custReceivePaymentAutoID')
-                ->get();
-
-            $totalInvoices = $recieptVouchers->toArray();
-
-            $invoice->payments = $totalInvoices;
-        }
+        $invoices = $this->applyInvoicePaymentsCurrency($invoices, $currencyType);
 
         return $invoices->toArray();
     }
@@ -2255,13 +2360,14 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = array();
+        $currencyType = $this->resolveSoToReceiptCurrencyType($input);
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
         $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'DES')->get();
 
         foreach ($output as $row) {
-            $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row);
+            $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);
         }
 
         $type = $request->type;
@@ -2279,7 +2385,15 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $data[$x][trans('custom.customer_code')] = '';
                     $data[$x][trans('custom.customer_name')] = '';
                 }
-                $data[$x][trans('custom.so_amount')] = number_format($value->companyReportingAmount, 2);
+                $data[$x][trans('custom.currency_type')] = $this->getSoToReceiptCurrencyTypeLabel($currencyType);
+                $data[$x][trans('custom.so_amount')] = number_format((float)$this->getConvertedAmountByType(
+                    (float)$value->transactionAmount,
+                    $value->companySystemID,
+                    $value->transactionCurrencyID,
+                    $currencyType,
+                    $value->companyLocalAmount,
+                    $value->companyReportingAmount
+                ), 2);
 
                 if (count($value->deliveryOrders) > 0) {
                     $grvMasterCount = 0;
@@ -2292,6 +2406,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                             $data[$x][trans('custom.narration')] = '';
                             $data[$x][trans('custom.customer_code')] = '';
                             $data[$x][trans('custom.customer_name')] = '';
+                            $data[$x][trans('custom.currency_type')] = '';
                             $data[$x][trans('custom.so_amount')] = '';
                         }
 
@@ -2317,6 +2432,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                                     $data[$x][trans('custom.narration')] = '';
                                     $data[$x][trans('custom.customer_code')] = '';
                                     $data[$x][trans('custom.customer_name')] = '';
+                                    $data[$x][trans('custom.currency_type')] = '';
                                     $data[$x][trans('custom.po_amount')] = '';
                                     $data[$x][trans('custom.delivery_code')] = '';
                                     $data[$x][trans('custom.delivery_date')] = '';
@@ -2343,6 +2459,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                                             $data[$x][trans('custom.narration')] = '';
                                             $data[$x][trans('custom.customer_code')] = '';
                                             $data[$x][trans('custom.customer_name')] = '';
+                                            $data[$x][trans('custom.currency_type')] = '';
                                             $data[$x][trans('custom.so_amount')] = '';
                                             $data[$x][trans('custom.delivery_code')] = '';
                                             $data[$x][trans('custom.delivery_date')] = '';

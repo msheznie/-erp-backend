@@ -1229,6 +1229,7 @@ return
     'credit_notes_retrieved_successfully' => 'تم استرداد الإشعارات الدائنة بنجاح',
     'cross_exchange' => 'سعر الصرف المتقاطع',
     'currency' => 'العملة',
+    'currency_type' => 'نوع العملة',
     'currency_conversion_detail_not_found' => 'تفاصيل تحويل العملة غير موجودة',
     'currency_conversion_detail_retrieved_successfully' => 'تم استرداد تفاصيل تحويل العملة بنجاح',
     'currency_conversion_detail_saved_successfully' => 'تم حفظ تفاصيل تحويل العملة بنجاح',
