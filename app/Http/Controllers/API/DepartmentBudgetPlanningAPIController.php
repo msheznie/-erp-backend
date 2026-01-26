@@ -192,7 +192,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
 
             $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
 
-            $departmentBudgetPlanning['m'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
+            $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
         }
 
         // if (empty($departmentBudgetPlanning)) {
