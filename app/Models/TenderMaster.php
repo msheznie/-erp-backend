@@ -288,6 +288,7 @@ class TenderMaster extends Model
         'commercial_passing_weightage',
         'technical_passing_weightage',
         'min_approval_bid_opening',
+        'min_approval_awarding',
         'bid_opening_date',
         'bid_opening_end_date',
         'technical_bid_opening_date',
@@ -676,6 +677,11 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\SrmTenderBidEmployeeDetails', 'tender_id', 'id');
     }
+
+    public function tenderAwardingMembers()
+    {
+        return $this->hasMany('App\Models\SrmTenderAwardingMember', 'tender_id', 'id');
+    }
     public static function getTenderDidOpeningDates($tenderId, $companyId)
     {
         return TenderMaster::select('id','stage', 'bid_opening_date',
@@ -764,25 +770,71 @@ class TenderMaster extends Model
                 $q->select('documentSystemCode','status')
                     ->where('companySystemID', $company_id)
                     ->where('documentSystemID', $isTender ? 108 : 113);
-                }
-             ])->where('id', $tender_id)->first();
+            }
+        ])->where('id', $tender_id)->first();
     }
     public static function getTenderMasterData($tenderID){
         return self::where('id', $tenderID)->first();
     }
-    public static function getTenderList($companyID, $scenarioID){
-        $endDates = $scenarioID == 45 ?  'technical_bid_closing_date' : 'commerical_bid_closing_date';
+    public static function getTenderList($companyID, $scenarioID, $time, $beforeAfterType = null, $frequency = null) {
+        $openingDateFields = [
+            45 => [
+                1 => 'bid_opening_date',
+                2 => 'technical_bid_opening_date',
+            ],
+            46 => [
+                1 => 'bid_opening_date',
+                2 => 'commerical_bid_opening_date',
+            ],
+        ];
 
-        return TenderMaster::select(
-            'id', 'title', 'description', 'stage', 'bid_opening_date', 'bid_opening_end_date',
-            'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date',
-            'commerical_bid_closing_date', 'tender_code', 'company_id'
-        )
-            ->where('company_id', $companyID)
-            ->where(function ($query) use ($endDates) {
-                $query->whereDate($endDates, '>=', Carbon::now())
-                    ->orWhere('bid_opening_date', '>=', Carbon::now());
-            })
+        $timeDifference = ($beforeAfterType != 0 && $frequency !== null)
+            ? self::getTimeDifferenceForFrequency($frequency)
+            : null;
+
+        $dateFrom = $time->copy()->subMonth();
+        $dateTo   = $time->copy()->addMonth();
+
+        $query = TenderMaster::select('id', 'title', 'description', 'stage', 'bid_opening_date',
+            'bid_opening_end_date', 'technical_bid_opening_date', 'technical_bid_closing_date',
+            'commerical_bid_opening_date', 'commerical_bid_closing_date', 'tender_code', 'company_id'
+        )->where('company_id', $companyID);
+
+        if (isset($openingDateFields[$scenarioID])) {
+            $query->where(function ($q) use ($openingDateFields, $scenarioID, $beforeAfterType, $frequency,
+                $time, $timeDifference, $dateFrom, $dateTo) {
+                foreach ($openingDateFields[$scenarioID] as $dateField) {
+                    $q->orWhere(function ($subQ) use ($dateField, $beforeAfterType, $frequency, $time,
+                        $timeDifference, $dateFrom, $dateTo) {
+                        $subQ->whereNotNull($dateField);
+
+                        if ($beforeAfterType == 0 && $frequency === null) {
+                            $subQ->whereDate($dateField, $time->toDateString());
+                            return;
+                        }
+
+                        if ($timeDifference) {
+                            $targetTenderDate = clone $time;
+
+                            if ($beforeAfterType == 1) {
+                                $addMethod = str_replace('sub', 'add', $timeDifference['method']);
+                                $targetTenderDate->{$addMethod}($timeDifference['value']);
+                            } elseif ($beforeAfterType == 2) {
+                                $targetTenderDate->{$timeDifference['method']}($timeDifference['value']);
+                            }
+
+                            $subQ->whereDate($dateField, $targetTenderDate->toDateString())
+                                ->whereRaw('HOUR(' . $dateField . ') = ?', [$targetTenderDate->hour])
+                                ->whereRaw('MINUTE(' . $dateField . ') = ?', [$targetTenderDate->minute]);
+                            return;
+                        }
+                        $subQ->whereBetween($dateField, [$dateFrom, $dateTo]);
+                    });
+                }
+            });
+        }
+
+        return $query
             ->with([
                 'tenderBidMinimumApproval' => function ($q) {
                     $q->select('id', 'emp_id', 'tender_id')
@@ -791,10 +843,45 @@ class TenderMaster extends Model
                                 $q->select('employeeSystemID', 'empName', 'empEmail');
                             }
                         ]);
+                }, 'tenderUserAccess' => function ($q) use ($scenarioID){
+                    $q->select('id', 'user_id', 'tender_id', 'module_id')
+                        ->with([
+                            'employee' => function ($q) {
+                                $q->select('employeeSystemID', 'empName', 'empEmail');
+                            }
+                        ])->when($scenarioID == 45, function ($q) {
+                            $q->where('module_id', 1);
+                        })->when($scenarioID == 46, function ($q) {
+                            $q->where('module_id', 2);
+                        });
                 }
+
             ])
             ->get();
     }
+
+    private static function getTimeDifferenceForFrequency($frequency)
+    {
+        switch ($frequency) {
+            case 1:
+                return ['method' => 'subHours', 'value' => 1];
+            case 2:
+                return ['method' => 'subHours', 'value' => 3];
+            case 3:
+                return ['method' => 'subDays', 'value' => 1];
+            case 4:
+                return ['method' => 'subDays', 'value' => 3];
+            case 5:
+                return ['method' => 'subWeeks', 'value' => 1];
+            case 6:
+                return ['method' => 'subWeeks', 'value' => 2];
+            case 7:
+                return ['method' => 'subMonths', 'value' => 1];
+            default:
+                return null;
+        }
+    }
+
 
     public function all_approvals()
     {
@@ -856,8 +943,8 @@ class TenderMaster extends Model
         }
 
         return $query->select('id', 'tender_code', 'document_system_id', 'published_at',
-                'bid_submission_opening_date', 'technical_bid_opening_date',
-                'commerical_bid_opening_date', 'contract_id', 'created_at')
+            'bid_submission_opening_date', 'technical_bid_opening_date',
+            'commerical_bid_opening_date', 'contract_id', 'created_at')
             ->orderBy('created_at', 'desc');
     }
 
@@ -879,7 +966,7 @@ class TenderMaster extends Model
         // Load tender basic info
         $tenders = DB::table('srm_tender_master')
             ->whereIn('id', $tenderIds)
-            ->select('id', 'tender_code', 'published_at', 'bid_submission_opening_date', 
+            ->select('id', 'tender_code', 'published_at', 'bid_submission_opening_date',
                 'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id')
             ->get()
             ->keyBy('id');
@@ -888,7 +975,7 @@ class TenderMaster extends Model
         $approvals = DB::table('erp_documentapproved as da')
             ->join('srm_tender_master as tm', function($join) {
                 $join->on('da.documentSystemCode', '=', 'tm.id')
-                     ->on('da.documentSystemID', '=', 'tm.document_system_id');
+                    ->on('da.documentSystemID', '=', 'tm.document_system_id');
             })
             ->leftJoin('employees as e', 'da.employeeSystemID', '=', 'e.employeeSystemID')
             ->whereIn('tm.id', $tenderIds)
@@ -945,5 +1032,22 @@ class TenderMaster extends Model
             ->where('document_system_id', $documentSystemID)
             ->orderBy('id', 'desc')
             ->first();
+    }
+
+    public static function updateCombinedRankingStatus(int $tenderId, int $isNegotiation, string $comment = ''): void
+    {
+        if ($isNegotiation === 1) {
+            self::where('id', $tenderId)->update([
+                'negotiation_combined_ranking_status' => true,
+                'negotiation_award_comment' => $comment,
+                'negotiation_is_awarded' => true,
+            ]);
+        } else {
+            self::where('id', $tenderId)->update([
+                'combined_ranking_status' => true,
+                'award_comment' => $comment,
+                'is_awarded' => true,
+            ]);
+        }
     }
 }
