@@ -10,6 +10,7 @@ use App\Models\Company;
 use App\Models\DocumentAttachments;
 use App\Models\Employee;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SrmTenderAwardingMember;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
 use App\Models\TenderConfirmationDetail;
@@ -484,7 +485,15 @@ class TenderFinalBidsAPIController extends AppBaseController
         }])->first();
 
 
-        $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+        $awardingMembers = SrmTenderAwardingMember::getAwardingMembers($tenderId);
+        
+        $employeeDetails = $awardingMembers->map(function ($member) {
+            return (object) [
+                'employee' => $member->employee ?? null,
+                'tender_award_commite_mem_status' => $member->status ?? 0,
+                'updated_at' => $member->updated_at ?? null,
+            ];
+        });
 
         $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
 

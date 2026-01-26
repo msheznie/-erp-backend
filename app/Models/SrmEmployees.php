@@ -58,6 +58,14 @@ class SrmEmployees extends Model
     public function tenderUserAccessEditLog(){
         return $this->hasOne('App\Models\SrmTenderUserAccessEditLog','user_id','emp_id');
     }
+    public function tenderAwardingMember()
+    {
+        return $this->hasOne('App\Models\SrmTenderAwardingMember','user_id','emp_id');
+    }
+    public function tenderAwardingMemberEditLog()
+    {
+        return $this->hasOne('App\Models\SrmTenderAwardingMemberEditLog','user_id','emp_id');
+    }
 
     public static function getEmployeesDetails($companyId, $existingEmployeeIDs){
         return self::where('company_id', $companyId)
@@ -90,6 +98,32 @@ class SrmEmployees extends Model
                     $query->where('tender_id', $tenderId)
                         ->where('company_id', $companyId)
                         ->where('module_id', $moduleId);
+                });
+            })
+            ->get();
+    }
+
+    public static function tenderAwardingMemberData($tenderId, $companyId, $requestData)
+    {
+        return self::select('id', 'emp_id', 'company_id', 'is_active')
+            ->whereHas('employee', function ($query) {
+                $query->where('empActive', 1)->where('discharegedYN','!=',-1);
+            })
+            ->with(['employee' => function ($q) {
+                $q->select('employeeSystemID', DB::raw("CONCAT(empID, ' | ', empFullName) as empFullDetails"));
+            }])
+            ->where('company_id', $companyId)
+            ->where('is_active', true)
+            ->when($requestData['enableRequestChange'], function ($q) use ($tenderId, $requestData) {
+                $q->whereDoesntHave('tenderAwardingMemberEditLog', function ($query) use ($tenderId, $requestData) {
+                    $query->where('tender_id', $tenderId)
+                        ->where('version_id', $requestData['versionID'])
+                        ->where('is_deleted', 0);
+                });
+            })
+            ->when(!$requestData['enableRequestChange'], function ($q) use ($tenderId) {
+                $q->whereDoesntHave('tenderAwardingMember', function ($query) use ($tenderId) {
+                    $query->where('tender_id', $tenderId);
                 });
             })
             ->get();
