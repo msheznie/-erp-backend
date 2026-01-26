@@ -123,9 +123,8 @@ class EmployeeTaskingNotificationService
                 }
                 else
                 {
-                    $this->insertToLogTb(['Manager Info' => $manageInfo, 'Message' => 'Manager details found for employee tasking notification'], 'info');
                     $empCode = $manageInfo['ECode'];
-                    $isEmailVerified = $this->checkIsEmailVerified($manageInfo['empID']);
+                    $isEmailVerified = $this->checkIsEmailVerified($manageInfo['EIdNo']);
                     $this->insertToLogTb(['Is Email Verified' => $isEmailVerified, 'Message' => 'Is email verified for employee tasking notification'], 'info');
                     $mailTo = $manageInfo['EEmail'];
                     $name = $manageInfo['Ename2'];
@@ -146,8 +145,15 @@ class EmployeeTaskingNotificationService
                 $empCode = $val['employee']['empID'];
             }
 
-            if ((!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) || ($isEmailVerified == 0)) {
-                $inValidEmails[] = $empCode . ' - ' . $mailTo;
+            if (!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) {
+                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Invalid email format)';
+            } elseif ($isEmailVerified === null) {
+                $this->insertToLogTb([
+                    'Employee Id' => $this->masterDet['empId'],
+                    'Message' => "Email verification status unknown (null) for {$applicableCatDesc} {$name} ({$mailTo}) - Employee record may not exist"
+                ], 'warning');
+            } elseif ($isEmailVerified == 0) {
+                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Email not verified)';
             } else {
                 $mailBody = "Dear {$name},<br/><br/>";
                 $mailBody .= $this->emailBody();
