@@ -1268,6 +1268,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $input['companyId'],
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
+
 
 
         if ($input['type'] == 'company') {
@@ -1326,6 +1331,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 $employeeID = \Helper::getEmployeeSystemID();
 
                 $isFinanceUser = false;
+
+                if ($userPermission['data']['financeApprovalUser']['status']) {
+                    $isFinanceUser = true;
+                }
+
                 $financeDepartment = CompanyDepartment::with(['employees'])
                     ->where('isFinance', 1)
                     ->where('companySystemID', $input['companyId'])
