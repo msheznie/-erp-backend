@@ -31,6 +31,7 @@ use App\Repositories\TenderDepartmentEditLogRepository;
 use App\Repositories\TenderSupplierAssigneeEditLogRepository;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
+use App\Services\TenderAwardingMemberService;
 use Illuminate\Http\Request;
 
 /**
@@ -86,6 +87,7 @@ class DocumentModifyRequestRepository extends BaseRepository
     protected $tenderSupplierAssigneeEditLogRepository;
     protected $pricingScheduleMasterEditLogRepository;
     protected $srmTenderEditAmendService;
+    protected $tenderAwardingMemberService;
     public function __construct(
         SrmTenderMasterEditLogRepository $srmTenderMasterEditLogRepository,
         Application $app,
@@ -107,7 +109,8 @@ class DocumentModifyRequestRepository extends BaseRepository
         SrmDocumentModifyService $documentModifyService,
         TenderSupplierAssigneeEditLogRepository $tenderSupplierAssigneeEditLogRepo,
         PricingScheduleMasterEditLogRepository $pricingScheduleMasterEditLogRepo,
-        SrmTenderEditAmendService $srmTenderEditAmendService
+        SrmTenderEditAmendService $srmTenderEditAmendService,
+        TenderAwardingMemberService $tenderAwardingMemberService
     ){
         parent::__construct($app);
         $this->srmTenderMasterEditLogRepository = $srmTenderMasterEditLogRepository;
@@ -130,6 +133,7 @@ class DocumentModifyRequestRepository extends BaseRepository
         $this->tenderSupplierAssigneeEditLogRepository = $tenderSupplierAssigneeEditLogRepo;
         $this->pricingScheduleMasterEditLogRepository = $pricingScheduleMasterEditLogRepo;
         $this->srmTenderEditAmendService = $srmTenderEditAmendService;
+        $this->tenderAwardingMemberService = $tenderAwardingMemberService;
     }
 
     /**
@@ -165,6 +169,7 @@ class DocumentModifyRequestRepository extends BaseRepository
                 $this->pricingScheduleMasterEditLogRepository->saveTenderPricingScheduleMasters($tenderMaster['id']);
                 $this->tenderCircularsEditLogRepository->saveTenderCircularForAmd($tenderMaster['id']);
                 $this->evaluationCriteriaDetailsEditLogRepository->saveEvacuationCriteriaDetails($tenderMaster['id']);
+                $this->tenderAwardingMemberService->saveTenderAwardingMemberHistory($tenderMaster['id']);
             }
             $this->srmTenderMasterEditLogRepository->saveTenderMasterHistory($tenderMaster, $version_id);
             $this->tenderBidEmployeeDetailsEditLogRepository->saveTenderBidEmployeeDetailHistory($tenderMaster['id'], $version_id);
@@ -180,6 +185,7 @@ class DocumentModifyRequestRepository extends BaseRepository
             $this->pricingScheduleMasterEditLogRepository->saveTenderPricingScheduleMasters($tenderMaster['id'], $version_id);
             $this->tenderCircularsEditLogRepository->saveTenderCircularForAmd($tenderMaster['id'], $version_id);
             $this->evaluationCriteriaDetailsEditLogRepository->saveEvacuationCriteriaDetails($tenderMaster['id'], $version_id);
+            $this->tenderAwardingMemberService->saveTenderAwardingMemberHistory($tenderMaster['id'], $version_id);
 
             return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
         } catch (\Exception $exception){

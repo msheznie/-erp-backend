@@ -8,6 +8,7 @@ use App\Models\SrmTenderUserAccessEditLog;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SrmTenderAwardingMember;
 use App\Http\Controllers\AppBaseController;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,7 @@ use App\Http\Requests\API\CreateTenderBidEmployeeDetailsAPIRequest;
 use App\Http\Requests\API\UserAccessEmployeeRequest;
 use App\Services\TenderBidEmployeeService;
 use App\Services\SrmDocumentModifyService;
+use Illuminate\Support\Facades\Validator;
 
 class TenderBidEmployeeDetailsController extends AppBaseController
 {
@@ -69,11 +71,36 @@ class TenderBidEmployeeDetailsController extends AppBaseController
 
     }
 
-    public function getEmployeesTenderAwardinglApproval(Request $request) {
+    public function getEmployeesTenderAwardinglApproval(Request $request)
+    {
+        try {
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'tender_id' => 'required'
+                ],
+                [
+                    'tender_id.required' => trans('srm_tender_rfx.tender_master_id_required')
+                ]
+            );
 
-        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('tender_award_commite_mem_status', true)->count();
-        return $this->sendResponse($data, 'Employee reterived successfully');
+            if ($validator->fails()) {
+                $message = implode(' ', $validator->errors()->all());
+                return $this->sendError($message, 422);
+            }
 
+            $tenderId = $request->input('tender_id');
+
+            $count = $this->tenderBidEmployeeService->getTenderAwardingMemberApprovals($tenderId);
+
+            return $this->sendResponse($count, trans('srm_tender_rfx.employee_retrieved_successfully'));
+
+        } catch (\Exception $ex) {
+            return $this->sendError(
+                trans('srm_tender_rfx.unable_to_fetch', ['message' => $ex->getMessage()]),
+                500
+            );
+        }
     }
 
     public function removeTenderUserAccess(Request $request) {
