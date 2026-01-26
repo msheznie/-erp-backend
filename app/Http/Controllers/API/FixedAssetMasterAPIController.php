@@ -86,6 +86,49 @@ use DateTime;
  */
 class FixedAssetMasterAPIController extends AppBaseController
 {
+    /**
+     * Asset Status Constants
+     * 1 = Not in Use
+     * 2 = In Use
+     * 3 = Idle
+     * 4 = Suspended
+     */
+    const ASSET_STATUS_NOT_IN_USE = 1;
+    const ASSET_STATUS_IN_USE = 2;
+    const ASSET_STATUS_IDLE = 3;
+    const ASSET_STATUS_SUSPENDED = 4;
+
+    /**
+     * Get asset status ID from string
+     * @param string $status
+     * @return int|null
+     */
+    private function getAssetStatusId($status)
+    {
+        $statusMap = [
+            'Not in Use' => self::ASSET_STATUS_NOT_IN_USE,
+            'In Use' => self::ASSET_STATUS_IN_USE,
+            'Idle' => self::ASSET_STATUS_IDLE,
+            'Suspended' => self::ASSET_STATUS_SUSPENDED,
+        ];
+        return $statusMap[$status] ?? null;
+    }
+
+    /**
+     * Get asset status string from ID
+     * @param int $statusId
+     * @return string|null
+     */
+    private function getAssetStatusString($statusId)
+    {
+        $statusMap = [
+            self::ASSET_STATUS_NOT_IN_USE => 'Not in Use',
+            self::ASSET_STATUS_IN_USE => 'In Use',
+            self::ASSET_STATUS_IDLE => 'Idle',
+            self::ASSET_STATUS_SUSPENDED => 'Suspended',
+        ];
+        return $statusMap[$statusId] ?? null;
+    }
     /** @var  FixedAssetMasterRepository */
     private $fixedAssetMasterRepository;
     private $fixedAssetCostRepository;
@@ -214,6 +257,41 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
 
+            if (!isset($input['assetStatus']) || empty($input['assetStatus'])) {
+                return $this->sendError(trans('custom.asset_status_is_required'), 500);
+            }
+
+            if (is_string($input['assetStatus'])) {
+                $statusId = $this->getAssetStatusId($input['assetStatus']);
+                if ($statusId === null) {
+                    return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                }
+                $input['assetStatus'] = $statusId;
+            } else {
+                $input['assetStatus'] = (int)$input['assetStatus'];
+            }
+
+            $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+            if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+            }
+
+            $accumulatedDepreciation = isset($input['accumulated_depreciation_amount_rpt']) ? $input['accumulated_depreciation_amount_rpt'] : 0;
+            if ($accumulatedDepreciation > 0 && $input['assetStatus'] !== self::ASSET_STATUS_IN_USE) {
+                return $this->sendError(trans('custom.asset_with_accumulated_depreciation_must_be_in_use'), 500);
+            }
+
+            if ($input['assetStatus'] === self::ASSET_STATUS_IN_USE && (empty($input['dateDEP']) || !isset($input['dateDEP']))) {
+                return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+            }
+
+            if (isset($input['dateDEP']) && isset($input['documentDate'])) {
+                $depDate = new Carbon($input['dateDEP']);
+                $docDate = new Carbon($input['documentDate']);
+                if ($depDate < $docDate) {
+                    return $this->sendError(trans('custom.depreciation_start_date_cannot_be_less_than_document_date'), 500);
+                }
+            }
 
             $messages = [
                 'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
@@ -768,6 +846,74 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             ], $messages);
 
+            // Asset Status validation
+            if (isset($input['assetStatus'])) {
+                if (is_string($input['assetStatus'])) {
+                    $statusId = $this->getAssetStatusId($input['assetStatus']);
+                    if ($statusId === null) {
+                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                    }
+                    $input['assetStatus'] = $statusId;
+                } else {
+                    $input['assetStatus'] = (int)$input['assetStatus'];
+                }
+
+                if ($fixedAssetMaster->approved != -1) {
+                    if (empty($input['assetStatus'])) {
+                        return $this->sendError(trans('custom.asset_status_is_required'), 500);
+                    }
+
+                    $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+                    if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                    }
+
+                    $accumulatedDepreciation = isset($input['accumulated_depreciation_amount_rpt']) ? $input['accumulated_depreciation_amount_rpt'] : ($fixedAssetMaster->accumulated_depreciation_amount_rpt ?? 0);
+                    if ($accumulatedDepreciation > 0 && $input['assetStatus'] !== self::ASSET_STATUS_IN_USE) {
+                        return $this->sendError(trans('custom.asset_with_accumulated_depreciation_must_be_in_use'), 500);
+                    }
+
+                    if ($input['assetStatus'] === self::ASSET_STATUS_IN_USE) {
+                        $dateDEP = isset($input['dateDEP']) ? $input['dateDEP'] : $fixedAssetMaster->dateDEP;
+                        if (empty($dateDEP)) {
+                            return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+                        }
+                    }
+                } else {
+                    $allowedStatusesAfterApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE, self::ASSET_STATUS_IDLE];
+                    if (!in_array($input['assetStatus'], $allowedStatusesAfterApproval)) {
+                        return $this->sendError(trans('custom.invalid_asset_status_after_approval'), 500);
+                    }
+
+                    $oldStatus = (int)$fixedAssetMaster->assetStatus;
+                    $newStatus = (int)$input['assetStatus'];
+
+                    if ($oldStatus !== $newStatus) {
+                        // Not in Use → In Use
+                        if ($oldStatus == self::ASSET_STATUS_NOT_IN_USE && $newStatus == self::ASSET_STATUS_IN_USE) {
+                            $dateDEP = isset($input['dateDEP']) ? $input['dateDEP'] : $fixedAssetMaster->dateDEP;
+                            if (empty($dateDEP)) {
+                                return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+                            }
+                        }
+                        // In Use → Not in Use - Allow only if depreciation not generated
+                        elseif ($oldStatus == self::ASSET_STATUS_IN_USE && $newStatus == self::ASSET_STATUS_NOT_IN_USE) {
+                            $hasDepreciation = \App\Models\FixedAssetDepreciationPeriod::where('faID', $id)
+                                ->whereHas('master_by', function($q) {
+                                    $q->where('approved', -1);
+                                })
+                                ->exists();
+                            if ($hasDepreciation) {
+                                return $this->sendError(trans('custom.cannot_change_to_not_in_use_when_depreciation_generated'), 500);
+                            }
+                        }
+                        // Not in Use → Idle (not allowed)
+                        elseif ($oldStatus == self::ASSET_STATUS_NOT_IN_USE && $newStatus == self::ASSET_STATUS_IDLE) {
+                            return $this->sendError(trans('custom.cannot_change_from_not_in_use_to_idle'), 500);
+                        }
+                    }
+                }
+            }
 
             if($fixedAssetMaster->approved != -1){
                 if ($validator->fails()) {
@@ -963,7 +1109,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             unset($input['itemPicture']);
 
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
-                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo']);
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo','assetStatus']);
 
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
             } else {
@@ -976,8 +1122,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $employee = Helper::getEmployeeInfo();
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
 
-                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
-                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
+                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus']);
+                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus']);
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if(isset($modified_array[$key]) && $old != $modified_array[$key]){

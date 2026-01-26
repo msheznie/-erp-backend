@@ -550,6 +550,7 @@ class FixedAssetMaster extends Model
         'postToGLYN',
         'postToGLCodeSystemID',
         'postToGLCode',
+        'assetStatus',
         'deleteComment',
         'timestamp',
         'accumulated_depreciation_amount_rpt',
@@ -660,6 +661,7 @@ class FixedAssetMaster extends Model
         'selectedforJobYN' => 'integer',
         'postToGLYN' => 'integer',
         'postToGLCodeSystemID' => 'integer',
+        'assetStatus' => 'integer',
         'deleteComment' => 'string',
         'postToGLCode' => 'string',
         'empID' => 'integer',
@@ -780,6 +782,14 @@ class FixedAssetMaster extends Model
     public function scopeAssetType($query,$assetType)
     {
         return $query->where('assetType',  $assetType);
+    }
+
+    public function scopeEligibleForDepreciation($query)
+    {
+        return $query->where(function($q) {
+            $q->whereIn('assetStatus', [2, 3])
+            ->orWhereNull('assetStatus');
+        });
     }
 
     public function attributeValues()
