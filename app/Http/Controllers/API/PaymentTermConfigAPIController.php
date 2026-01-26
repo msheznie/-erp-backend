@@ -320,6 +320,10 @@ class PaymentTermConfigAPIController extends AppBaseController
 
         $paymentTermTemplateConfigs =  PaymentTermConfig::where('templateId', $input['templateId']);
 
+        $maxSortOrder = PaymentTermConfig::where('templateId', $input['templateId'])->max('sortOrder') ?? 0;
+        $nextSortOrder = $maxSortOrder + 1;
+
+
         return \DataTables::of($paymentTermTemplateConfigs)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -330,6 +334,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('nextSortOrder', $nextSortOrder)
             ->make(true);
     }
 
