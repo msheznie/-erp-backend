@@ -115,6 +115,7 @@ class EmployeeTaskingNotificationService
             if ($val['applicableCategoryID'] == 7) { //Requesting employees(hr_tasking_request_master.emp_id) reporting manager
                 $applicableCatDesc = 'Reporting manager';
                 $manageInfo = $this->getReportingManagerInfo();
+                $this->insertToLogTb(['Manager Info' => $manageInfo, 'Message' => $msg], 'error');
                 if (empty($manageInfo)) {
                     $msg = 'Manager details not found for employee tasking notification';
                     $this->insertToLogTb(['Employee' =>  $manageInfo['ECode'],
@@ -122,9 +123,10 @@ class EmployeeTaskingNotificationService
                 }
                 else
                 {
+                    $this->insertToLogTb(['Manager Info' => $manageInfo, 'Message' => 'Manager details found for employee tasking notification'], 'info');
                     $empCode = $manageInfo['ECode'];
                     $isEmailVerified = $this->checkIsEmailVerified($manageInfo['empID']);
-
+                    $this->insertToLogTb(['Is Email Verified' => $isEmailVerified, 'Message' => 'Is email verified for employee tasking notification'], 'info');
                     $mailTo = $manageInfo['EEmail'];
                     $name = $manageInfo['Ename2'];
                 }
