@@ -21,7 +21,7 @@ class DocumentMasterRequest extends FormRequest
     {
         return [
             'document_name' => 'required|string|max:255',
-            'document_area' => 'required|integer',
+            'document_area' => 'required|integer|min:1',
 
             'default_to_tender' => 'required|integer|in:0,1',
             'default_to_rfx' => 'required|integer|in:0,1',
