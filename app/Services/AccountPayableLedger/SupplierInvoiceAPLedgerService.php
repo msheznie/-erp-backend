@@ -196,11 +196,14 @@ class SupplierInvoiceAPLedgerService
                             $excemptVATAmount = $vatDetails['exemptVAT'];
                             $excemptVATAmountLocal = $vatDetails['exemptVATLocal'];
                             $excemptVATAmountRpt = $vatDetails['exemptVATRpt'];
+                            $standardExemptVATAmount = $vatDetails['standardExemptVAT'];
+                            $standardExemptVATAmountLocal = $vatDetails['standardExemptVATLocal'];
+                            $standardExemptVATAmountRpt = $vatDetails['standardExemptVATRpt'];
 
-                            $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - ($totalVATAmount - $excemptVATAmount)) * ($retentionPercentage / 100);
-                            $retentionTrans = ($data['supplierDefaultAmount'] - ($totalVATAmount - $excemptVATAmount)) * ($retentionPercentage / 100);
-                            $retentionLocal = ($data['localAmount'] - ($totalVATAmountLocal - $excemptVATAmountLocal)) * ($retentionPercentage / 100);
-                            $retentionRpt = ($data['comRptAmount'] - ($totalVATAmountRpt - $excemptVATAmountRpt)) * ($retentionPercentage / 100);
+                            $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - ($totalVATAmount - ($excemptVATAmount - $standardExemptVATAmount))) * ($retentionPercentage / 100);
+                            $retentionTrans = ($data['supplierDefaultAmount'] - ($totalVATAmount - ($excemptVATAmount - $standardExemptVATAmount))) * ($retentionPercentage / 100);
+                            $retentionLocal = ($data['localAmount'] - ($totalVATAmountLocal - ($excemptVATAmountLocal - $standardExemptVATAmountLocal))) * ($retentionPercentage / 100);
+                            $retentionRpt = ($data['comRptAmount'] - ($totalVATAmountRpt - ($excemptVATAmountRpt - $standardExemptVATAmountRpt))) * ($retentionPercentage / 100);
 
 
                             $data['supplierInvoiceAmount'] = $data['supplierInvoiceAmount'] * (1 - ($retentionPercentage / 100));

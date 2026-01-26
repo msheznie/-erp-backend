@@ -294,10 +294,13 @@ class SupplierInvoiceGlService
                         $excemptVATAmount = $vatDetails['exemptVAT'];
                         $excemptVATAmountLocal = $vatDetails['exemptVATLocal'];
                         $excemptVATAmountRpt = $vatDetails['exemptVATRpt'];
+                        $standardExemptVATAmount = $vatDetails['standardExemptVAT'];
+                        $standardExemptVATAmountLocal = $vatDetails['standardExemptVATLocal'];
+                        $standardExemptVATAmountRpt = $vatDetails['standardExemptVATRpt'];
                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
-                            $retentionTransWithoutVat = ($data['documentTransAmount'] + (ABS($totalVATAmount) - $excemptVATAmount)) * ($retentionPercentage / 100);
-                            $retentionLocalWithoutVat = ($data['documentLocalAmount'] + (ABS($totalVATAmountLocal) - $excemptVATAmountLocal)) * ($retentionPercentage / 100);
-                            $retentionRptWithoutVat = ($data['documentRptAmount'] + (ABS($totalVATAmountRpt) - $excemptVATAmountRpt)) * ($retentionPercentage / 100);
+                            $retentionTransWithoutVat = ($data['documentTransAmount'] + (ABS($totalVATAmount) - ($excemptVATAmount - $standardExemptVATAmount))) * ($retentionPercentage / 100);
+                            $retentionLocalWithoutVat = ($data['documentLocalAmount'] + (ABS($totalVATAmountLocal) - ($excemptVATAmountLocal - $standardExemptVATAmountLocal))) * ($retentionPercentage / 100);
+                            $retentionRptWithoutVat = ($data['documentRptAmount'] + (ABS($totalVATAmountRpt) - ($excemptVATAmountRpt - $standardExemptVATAmountRpt))) * ($retentionPercentage / 100);
                         } else {
                             $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage / 100);
                             $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage / 100);
