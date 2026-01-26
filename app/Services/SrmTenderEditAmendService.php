@@ -19,6 +19,7 @@ use App\Models\PurchaseRequest;
 use App\Models\ScheduleBidFormatDetailsLog;
 use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SrmTenderAwardingMemberEditLog;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SrmTenderMasterEditLog;
 use App\Models\SrmTenderUserAccessEditLog;
@@ -74,7 +75,8 @@ class SrmTenderEditAmendService
                     'commercial_weightage' => trans('srm_tender_rfx.commercial_weightage'),
                     'technical_weightage' => trans('srm_tender_rfx.technical_weightage'),
                     'is_active_go_no_go' => trans('srm_tender_rfx.go_no_go_enable'),
-                    'min_approval_bid_opening' => trans('srm_tender_rfx.min_no_of_approval_for_bid_opening')
+                    'min_approval_bid_opening' => trans('srm_tender_rfx.min_no_of_approval_for_bid_opening'),
+                    'min_approval_awarding' => trans('srm_tender_rfx.min_approval_for_awarding')
                 ],
                 'fieldMappings' => [
                     'envelop_type_id' => [
@@ -147,6 +149,21 @@ class SrmTenderEditAmendService
                     ]
                 ]
             ],
+            trans('srm_tender_rfx.awarding_members') => [
+                'sectionId' => '1.5',
+                'modelName' => SrmTenderAwardingMemberEditLog::class,
+                'skippedFields' => ['amd_id', 'id', 'version_id', 'level_no', 'tender_id', 'status', 'awarding_remarks',
+                    'created_by', 'updated_by', 'deleted_by', 'is_deleted', 'created_at', 'updated_at', 'deleted_at'
+                ],
+                'fieldDescriptions' => ['user_id' => trans('srm_tender_rfx.employee')],
+                'fieldMappings' => [
+                    'user_id' => [
+                        'model' => Employee::class,
+                        'attribute' => 'empName',
+                        'colName' => 'employeeSystemID'
+                    ]
+                ]
+            ],
             trans('srm_tender_rfx.general_information') => [
                 'sectionId' => '2',
                 'modelName' => SrmTenderMasterEditLog::class,
@@ -163,7 +180,7 @@ class SrmTenderEditAmendService
                     'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
                     'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
                     'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
-                    'technical_eval_status', 'timesReferred'
+                    'technical_eval_status', 'timesReferred', 'min_approval_awarding'
                 ],
                 'fieldDescriptions' => [
                     'title' => trans('srm_tender_rfx.title'),
@@ -572,7 +589,7 @@ class SrmTenderEditAmendService
             })->when(in_array($sectionId, ['1.1', '3', '3.1', '3.3']), function ($q) use ($versionID, $tenderID) {
                 $q->where('tender_edit_version_id', $versionID)
                     ->where('tender_id', $tenderID);
-            })->when(in_array($sectionId, ['1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '6']), function ($q) use ($versionID, $tenderID, $sectionId) {
+            })->when(in_array($sectionId, ['1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '6']), function ($q) use ($versionID, $tenderID, $sectionId) {
                 $q->where('version_id', $versionID)
                     ->where('tender_id', $tenderID);
                 if ($sectionId === '1.2') {
@@ -605,7 +622,7 @@ class SrmTenderEditAmendService
     public function getPreviousRecords($modelName, $tenderID, $currentRecord, $sectionId, $versionID)
     {
         $currentID = $currentRecord->id ?? 0;
-        $sectionArr = ['1.1', '1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.3', '4', '5', '6'];
+        $sectionArr = ['1.1', '1.2', '1.3', '1.4', '1.5', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.3', '4', '5', '6'];
         return $modelName::where('level_no', '<', $currentRecord->level_no)
             ->where(function ($q) use ($tenderID, $sectionId, $currentID, $versionID, $sectionArr) {
                 $q->when(in_array($sectionId, ['1', '2']), function ($q) use ($tenderID) {
@@ -671,7 +688,7 @@ class SrmTenderEditAmendService
             return DB::transaction(function () use ($tenderMasterID, $versionID) {
                 $sections = $this->sectionConfig();
                 $allSectionIDs = [
-                    '1', '1.1', '1.2', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '4', '5', '5.1', '6',
+                    '1', '1.1', '1.2', '1.5', '2', '2.1', '2.2', '2.3', '2.4', '3', '3.1', '3.2', '3.3', '4', '5', '5.1', '6',
                     '6.1', '7'
                 ];
 
@@ -680,7 +697,7 @@ class SrmTenderEditAmendService
                     $sectionId = $section['sectionId'] ?? '';
 
                     if ($model && class_exists($model) && in_array($sectionId, $allSectionIDs)) {
-                        $model::when(in_array($sectionId, ['1', '2', '1.2', '2.1', '2.2', '2.3', '2.4', '5.1', '6', '6.1', '7']), function ($q) use ($versionID){
+                        $model::when(in_array($sectionId, ['1', '2', '1.2', '1.5', '2.1', '2.2', '2.3', '2.4', '5.1', '6', '6.1', '7']), function ($q) use ($versionID){
                             $q->where('version_id', $versionID);
                         })->when(in_array($sectionId, ['1.1', '3', '3.1', '3.2', '3.3']), function ($q) use ($versionID){
                             $q->where('tender_edit_version_id', $versionID);

@@ -288,6 +288,7 @@ class TenderMaster extends Model
         'commercial_passing_weightage',
         'technical_passing_weightage',
         'min_approval_bid_opening',
+        'min_approval_awarding',
         'bid_opening_date',
         'bid_opening_end_date',
         'technical_bid_opening_date',
@@ -397,6 +398,7 @@ class TenderMaster extends Model
         'commercial_passing_weightage'=> 'integer',
         'technical_passing_weightage'=> 'integer',
         'min_approval_bid_opening' => 'integer',
+        'min_approval_awarding' => 'integer',
         'bid_opening_date'  => 'datetime',
         'bid_opening_end_date'  => 'datetime',
         'technical_bid_opening_date'  => 'datetime',
@@ -689,6 +691,11 @@ class TenderMaster extends Model
     public function tenderBidMinimumApproval()
     {
         return $this->hasMany('App\Models\SrmTenderBidEmployeeDetails', 'tender_id', 'id');
+    }
+
+    public function tenderAwardingMembers()
+    {
+        return $this->hasMany('App\Models\SrmTenderAwardingMember', 'tender_id', 'id');
     }
     public static function getTenderDidOpeningDates($tenderId, $companyId)
     {

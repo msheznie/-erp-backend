@@ -259,8 +259,8 @@
                 <td><strong>Bid Opening Date:</strong></td>
                 <td>-</td>
             @endif
-            <td><strong>Committee Minimum Approval:</strong></td>
-            <td>{{ $tenderMaster->min_approval_bid_opening }}</td>
+            <td><strong>Awarding Committee Minimum Approval:</strong></td>
+            <td>{{ $tenderMaster->min_approval_awarding }}</td>
         </tr>
         <tr>
             <td><strong>Tender Awarded Supplier Name:</strong></td>
@@ -273,16 +273,17 @@
     <br/>
     <table style="width:100%; font-size: 12px;">
         <tr>
-            <td style="text-align: center;"><strong>Committee Members</strong></td>
+            <td style="text-align: center;"><strong>Awarding Committee Members</strong></td>
             <td style="text-align: center;"><strong>Approved Date & Time</strong></td>
             <td style="text-align: center;"><strong>Approved Status</strong></td>
         </tr>
         <tbody>
         @foreach ($employeeDetails as $item)
+            @if($item->employee)
             <tr>
                 <td>{{ $item->employee->empID }} | {{$item->employee->empName}}</td>
                 <td style="text-align: center;">
-                    @if ($item->tender_award_commite_mem_status != 0)
+                    @if ($item->tender_award_commite_mem_status != 0 && $item->updated_at)
                     {{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y h:i A') }}
                     @else
                         {{'-'}}
@@ -300,6 +301,7 @@
                     @endif
                 </td>
             </tr>
+            @endif
         @endforeach
         </tbody>
     </table>
