@@ -63,6 +63,7 @@ use App\Models\TenderPurchaseRequestEditLog;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SrmTenderAwardingMember;
 use App\Models\YesNoSelection;
 use App\Models\SrmTenderMasterEditLog;
 use App\Repositories\TenderMasterRepository;
@@ -726,6 +727,13 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!$checkMinApprovalBidOpening['success']) {
             return ['status' => false, 'message' => $checkMinApprovalBidOpening['message']];
+        }
+
+        // Check awarding members validation
+        $checkMinApprovalAwarding = $this->tenderMasterRepository->checkTenderAwardingMembersAdded($input['id'], $editOrAmend, $amdID, $versionID);
+
+        if (!$checkMinApprovalAwarding['success']) {
+            return ['status' => false, 'message' => $checkMinApprovalAwarding['message']];
         }
 
         if ($input['addCalendarDates'] === 0) {
@@ -2800,22 +2808,32 @@ class TenderMasterAPIController extends AppBaseController
                 $data['commercial_eval_status'] = $val;
                 $data['commercial_eval_remarks'] = $comments;
             } else if ($type == 3) {
-                $data['tender_award_commite_mem_status'] = $val;
-                $data['tender_award_commite_mem_comment'] = $comments;
+                $awardingMember = SrmTenderAwardingMember::getAwardingMember($tender_id, $emp_id);
+                
+                if ($awardingMember) {
+                    // Update in new table
+                    $awardingMember->status = $val;
+                    $awardingMember->awarding_remarks = $comments;
+                    $awardingMember->save();
+                }
             }
 
-            $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
-
+            if($type != 3){
+                $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
+            }
 
             if ($type == 3) {
-                $min_Approval = $input['min_approval'];
+                $tender = TenderMaster::find($tender_id);
+                $minApprovalForAwarding = $tender->min_approval_awarding ?? 1;
 
-                $results = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 1)->count();
-                $pending = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 0)->count();
+                $results = SrmTenderAwardingMember::getApprovedAwardingMembers($tender_id);
+                $pending = SrmTenderAwardingMember::where('tender_id', $tender_id)
+                    ->where('status', 0)
+                    ->count();
 
-                $need = $min_Approval - $results;
+                $need = $minApprovalForAwarding - $results;
                 $status = 0;
-                if ($min_Approval <= $results) {
+                if ($minApprovalForAwarding <= $results) {
                     $status = 1;
                 } else if ($need > $pending) {
                     $status = 2;
@@ -4183,6 +4201,11 @@ class TenderMasterAPIController extends AppBaseController
                 }
             ]);
         }])->first();
+        
+        // Add min_approval_awarding to response
+        if ($tender) {
+            $tender->min_approval_awarding = $tender->min_approval_awarding ?? 1;
+        }
 
         return $this->sendResponse($tender, 'data retrieved successfully');
     }
@@ -4196,7 +4219,18 @@ class TenderMasterAPIController extends AppBaseController
             $tenderId = $request['tender_id'];
             $status = $request['final_tender_comment_status'];
             $comment = $request['final_tender_award_comment'];
-            $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+            // Get awarding members from new table, fallback to old table
+            $awardingMembers = SrmTenderAwardingMember::getAwardingMembers($tenderId);
+
+            // Transform to format expected by email sending
+            $emails = $awardingMembers->map(function ($member) {
+                return (object) [
+                    'employee' => $member->employee ?? null,
+                ];
+            })->filter(function ($member) {
+                return $member->employee !== null;
+            });
 
             $redirectUrl =  $this->checkDomain($tenderId);
 
