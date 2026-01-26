@@ -62,6 +62,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\CreateCreditNote;
 use App\Models\DocumentSystemMapping;
+use App\Models\PayCreditNoteDetail;
 use App\Services\API\CreditNoteAPIService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
@@ -1839,6 +1840,15 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_credit_note_i'));
+        }
+
+        if ($masterData->type == 3) {
+            $exists = PayCreditNoteDetail::where('creditNoteAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->exists();
+            if ($exists) {
+                return $this->sendError(trans('custom.credit_note_pulled_into_payment_voucher_cannot_be_amended'));
+            }
         }
 
         // checking document matched in receive payment

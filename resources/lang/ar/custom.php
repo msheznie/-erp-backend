@@ -7917,6 +7917,7 @@ return
     'bank_account_not_linked_to_gl_account' => 'الحساب البنكي غير مرتبط بحساب الأستاذ العام',
     'total_amount_should_be_equal_or_greater_than_zero' => 'يجب أن يكون المبلغ الإجمالي مساوياً أو أكبر من الصفر',
     'every_item_should_have_a_payment_amount' => 'يجب أن يحتوي كل بند على مبلغ دفع',
+    'credit_note_payment_amount_cannot_be_zero' => 'لا يمكن أن يكون مبلغ دفع مذكرة الائتمان صفراً',
     'PDC_cheque_amount_should_equal_to_PV_total_amount' => 'يجب أن يساوي مبلغ الشيك المؤجل إجمالي مبلغ سند الدفع',
     'please_configure' => 'يرجى إعداد حساب الدفع المؤجل لسند الدفع',
     'please_assign_exchange' => 'يرجى تعيين حساب أرباح/خسائر الصرف لهذه المؤسسة',
@@ -9808,5 +9809,7 @@ return
     'getAll_must_be_a_boolean_value_true_or_false' => 'يجب أن يكون getAll إما true أو false',
     'getAll_is_required' => 'Get all مطلوب',
     'pos_type_must_be_an_integer' => 'نوع الموقع يجب أن يكون رقمًا صحيحًا',
-    'cannot_deactivate_policy_documents_with_segment_selection' => 'هناك بعض المستندات التي استخدمت اختيار قطاع عنصر السطر. لا يمكن السماح بإلغاء التفعيل حتى يتم إكمال المستندات',
+    'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'تم سحب مذكرة الإئتمان إلى فاتورة الدفع; لذلك، لا يمكن تعديل هذا المستند.',
+    'credit_note_link_to_pv_cannot_be_selected' => 'تم ربط مذكرة الإئتمان بفاتورة الدفع في حالة مسودة أو قيد المراجعة ولا يمكن تحديدها.',
+    'cannot_deactivate_policy_documents_with_segment_selection' => 'هناك بعض المستندات التي استخدمت اختيار قطاع عنصر السطر. لا يمكن السماح بإلغاء التفعيل حتى يتم إكمال المستندات'
 ];

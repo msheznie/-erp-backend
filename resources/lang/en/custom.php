@@ -8017,6 +8017,7 @@ return
     'bank_account_not_linked_to_gl_account' => 'Bank account is not linked to GL account',
     'total_amount_should_be_equal_or_greater_than_zero' => 'Total Amount should be equal or greater than zero',
     'every_item_should_have_a_payment_amount' => 'Every item should have a payment amount',
+    'credit_note_payment_amount_cannot_be_zero' => 'Credit note payment amount cannot be zero',
     'PDC_cheque_amount_should_equal_to_PV_total_amount' => 'PDC Cheque amount should equal to PV total amount',
     'please_configure' => 'Please configure PDC Payable account for payment voucher',
     'please_assign_exchange' => 'Please assign Exchange Gain/Loss account for this company',
@@ -9921,5 +9922,7 @@ return
     'getAll_must_be_a_boolean_value_true_or_false' => 'Get all must be a boolean value (true or false)',
     'getAll_is_required' => 'Get all is required',
     'pos_type_must_be_an_integer' => 'POS type must be an integer',
-    'cannot_deactivate_policy_documents_with_segment_selection' => 'There are some documents that have used line item segment selection. We cannot allow to deactivate until the documents have been completed',
+    'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'The selected credit note has been pulled into a payment voucher; therefore, this document cannot be amended.',
+    'credit_note_link_to_pv_cannot_be_selected' => 'This credit note is already linked to a payment voucher in Draft or Pending Approval status and cannot be selected.',
+    'cannot_deactivate_policy_documents_with_segment_selection' => 'There are some documents that have used line item segment selection. We cannot allow to deactivate until the documents have been completed'
 ];

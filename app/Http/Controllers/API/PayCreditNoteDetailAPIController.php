@@ -367,12 +367,13 @@ class PayCreditNoteDetailAPIController extends AppBaseController
                 'erp_creditnote.creditNoteAutoID', 
                 'erp_creditnote.creditNoteCode', 
                 'erp_creditnote.creditNoteDate', 
-                'erp_creditnote.customerCurrencyID'
+                'erp_creditnote.customerCurrencyID',
+                'erp_creditnote.creditAmountTrans'
             )
             ->selectRaw($decimalPlaces . ' as DecimalPlaces')
-            ->selectRaw('IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0) as creditNoteAmount')
+            ->selectRaw('IFNULL(erp_creditnote.creditAmountTrans, 0) as creditNoteAmount')
             ->selectRaw('IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) as totalPaidAmount')
-            ->selectRaw('(IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0) - IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0)) as paymentBalancedAmount')
+            ->selectRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0)) as paymentBalancedAmount')
             ->selectRaw('GROUP_CONCAT(DISTINCT erp_customerreceivepayment.custPaymentReceiveCode SEPARATOR "|") as receiptVoucherCode')
             ->selectRaw('(SELECT COUNT(*) > 0 FROM erp_paycreditnotedetails pcd 
                          INNER JOIN erp_paysupplierinvoicemaster pvm ON pcd.PayMasterAutoId = pvm.PayMasterAutoId 
@@ -407,7 +408,7 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             ->where('erp_creditnote.customerID', $paymentVoucher->BPVcustomerID)
             ->where('erp_creditnote.customerCurrencyID', $paymentVoucher->supplierTransCurrencyID)
             ->groupBy('erp_creditnote.creditNoteAutoID')
-            ->havingRaw('(IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0) - IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0)) > 0')
+            ->havingRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0)) > 0')
             ->orderBy('erp_creditnote.creditNoteAutoID', 'desc')
             ->get();
 

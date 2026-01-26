@@ -344,17 +344,26 @@ class CreditNoteReceiptAPIController extends AppBaseController
         $search = $request->input('search.value');
         
         $receiptVouchers = CustomerReceivePayment::with('currency')->select('erp_customerreceivepayment.*')
-            ->selectRaw('IFNULL(SUM(erp_bankledger.payAmountBank), 0) as totalPayAmountBank')
-            ->selectRaw('IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0) as usedRefundAmount')
-            ->selectRaw('(IFNULL(SUM(erp_bankledger.payAmountBank), 0) - IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0)) as balanceAmount')
-            ->leftJoin('erp_bankledger', function($join) use ($companySystemID) {
-                $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID')
-                     ->where('erp_bankledger.documentSystemID', 21)
-                     ->where('erp_bankledger.companySystemID', $companySystemID);
+            ->selectRaw('ROUND(IFNULL(bank_sum.totalPayAmountBank, 0), IFNULL(currencymaster.DecimalPlaces, 2)) as totalPayAmountBank')
+            ->selectRaw('ROUND(IFNULL(refund_sum.usedRefundAmount, 0), IFNULL(currencymaster.DecimalPlaces, 2)) as usedRefundAmount')
+            ->selectRaw('ROUND((IFNULL(bank_sum.totalPayAmountBank, 0) - IFNULL(refund_sum.usedRefundAmount, 0)), IFNULL(currencymaster.DecimalPlaces, 2)) as balanceAmount')
+            ->leftJoin('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerreceivepayment.custTransactionCurrencyID')
+            ->leftJoin(DB::raw('(SELECT 
+                erp_bankledger.documentSystemCode,
+                ABS(SUM(erp_bankledger.payAmountBank)) as totalPayAmountBank
+                FROM erp_bankledger
+                WHERE erp_bankledger.documentSystemID = 21
+                AND erp_bankledger.companySystemID = ' . $companySystemID . '
+                GROUP BY erp_bankledger.documentSystemCode) as bank_sum'), function($join) {
+                $join->on('bank_sum.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
             })
-            ->leftJoin('erp_creditnote_receipts', function($join) use ($companySystemID) {
-                $join->on('erp_creditnote_receipts.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID')
-                     ->where('erp_creditnote_receipts.companySystemID', $companySystemID);
+            ->leftJoin(DB::raw('(SELECT 
+                erp_creditnote_receipts.custReceivePaymentAutoID,
+                ABS(SUM(erp_creditnote_receipts.refundAmount)) as usedRefundAmount
+                FROM erp_creditnote_receipts
+                WHERE erp_creditnote_receipts.companySystemID = ' . $companySystemID . '
+                GROUP BY erp_creditnote_receipts.custReceivePaymentAutoID) as refund_sum'), function($join) {
+                $join->on('refund_sum.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
             })
             ->where('erp_customerreceivepayment.companySystemID', $companySystemID)
             ->where('erp_customerreceivepayment.customerID', $customerID)
@@ -371,7 +380,7 @@ class CreditNoteReceiptAPIController extends AppBaseController
         
         $receiptVouchers = $receiptVouchers
             ->groupBy('erp_customerreceivepayment.custReceivePaymentAutoID')
-            ->havingRaw('(IFNULL(SUM(erp_bankledger.payAmountBank), 0) - IFNULL(SUM(erp_creditnote_receipts.refundAmount), 0)) > 0')
+            ->havingRaw('balanceAmount != 0')
             ->orderBy('erp_customerreceivepayment.custReceivePaymentAutoID', 'desc')
             ->get();
 

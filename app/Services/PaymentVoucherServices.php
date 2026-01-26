@@ -1805,6 +1805,7 @@ class PaymentVoucherServices
 
             }
 
+            // refund type payment voucher
             if ($paySupplierInvoiceMaster->invoiceType == 8) {
                 $payCreditNoteDetailExist = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->get();
 
@@ -1852,6 +1853,14 @@ class PaymentVoucherServices
             }
             else if ($paySupplierInvoiceMaster->invoiceType == 8) {
                 $amountForApproval = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->sum('creditNotePaymentAmount');
+                if ($amountForApproval == 0) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.credit_note_payment_amount_cannot_be_zero'),
+                        'code' => 500,
+                        'type' => ['type' => 'confirm']
+                    ];
+                }
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
