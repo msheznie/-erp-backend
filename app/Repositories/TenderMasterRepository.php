@@ -1920,12 +1920,12 @@ class TenderMasterRepository extends BaseRepository
     {
         try {
             return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
-                if (empty($tenderPurchaseRequestData)) {
+              /*  if (empty($tenderPurchaseRequestData)) {
                     return [
                         'success' => true,
                         'message' => trans('srm_tender_rfx.no_purchase_request_to_update')
                     ];
-                }
+                }*/
 
                 $newPRIds = collect($tenderPurchaseRequestData)->pluck('id')->unique()->toArray();
                 $existingRecords = $editOrAmend
@@ -1935,6 +1935,10 @@ class TenderMasterRepository extends BaseRepository
                 $existingPRIds = $existingRecords->pluck('purchase_request_id')->toArray();
                 $toInsert = array_diff($newPRIds, $existingPRIds);
                 $toDelete = array_diff($existingPRIds, $newPRIds);
+
+
+                Log::info($toInsert);
+                Log::info($toDelete);
 
                 if (!empty($toDelete)) {
                     if ($editOrAmend) {
