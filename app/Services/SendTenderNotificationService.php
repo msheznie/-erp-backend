@@ -13,7 +13,7 @@ class SendTenderNotificationService
 {
     public static function tenderNotificationScenarioBased()
     {
-        $now = Carbon::now();
+        $now = Carbon::now()->startOfMinute();
         $notificationScenarios = NotificationCompanyScenario::getCompanyScenario();
         foreach ($notificationScenarios as $scenario) {
             $companyID = $scenario['companyID'] ?? 0;
@@ -22,14 +22,20 @@ class SendTenderNotificationService
 
             foreach ($scenarioDaySetups as $daySetup) {
                 $beforeAfterType = $daySetup['beforeAfter'] ?? 0;
-                $frequency = $daySetup['frequency'] ?? 0;
+                $frequency = $daySetup['frequency'] ?? null;
 
-                $tenderList = TenderMaster::getTenderList($companyID, $scenarioID);
+                if ($beforeAfterType == 0 && $frequency !== null) {
+                    continue;
+                }
+                if ($beforeAfterType != 0 && $frequency === null) {
+                    continue;
+                }
+
+                $tenderList = TenderMaster::getTenderList($companyID, $scenarioID, $now, $beforeAfterType, $frequency);
 
                 foreach ($tenderList as $tender) {
-                    $dateField = self::getRelevantDateField($scenarioID, $tender->stage, $beforeAfterType);
-
-                    if (!$dateField || !isset($tender->$dateField)) {
+                    $dateField = self::getRelevantDateField($scenarioID, $tender->stage);
+                    if (!$dateField || !isset($tender->$dateField) || !$tender->$dateField) {
                         continue;
                     }
 
@@ -38,47 +44,57 @@ class SendTenderNotificationService
                         self::sendReminder($tender, $scenarioID, $tender->stage);
                     }
                 }
-
             }
         }
     }
 
-    private static function getRelevantDateField($scenarioID, $stage, $beforeAfterType)
+    private static function getRelevantDateField($scenarioID, $stage)
     {
         $dateFields = [
             45 => [
-                1 => [1 => 'bid_opening_date'],
-                2 => [1 => 'technical_bid_opening_date'],
+                1 => 'bid_opening_date',
+                2 => 'technical_bid_opening_date'
             ],
             46 => [
-                1 => [2 => 'bid_opening_date'],
-                2 => [2 => 'commerical_bid_opening_date'],
+                1 => 'bid_opening_date',
+                2 => 'commerical_bid_opening_date',
             ],
         ];
 
-        return $dateFields[$scenarioID][$stage][$beforeAfterType] ?? null;
+        return $dateFields[$scenarioID][$stage] ?? null;
     }
 
     public static function checkNotificationCondition($beforeAfterType, $frequency, $tenderDate, $currentDate) {
+        if ($beforeAfterType == 0 && $frequency === null) {
+            return $tenderDate->isSameMinute($currentDate);
+        }
+
+        if ($beforeAfterType == 0 || $frequency === null) {
+            return false;
+        }
+
         $timeDifference = null;
 
         switch ($frequency) {
             case 1:
-                $timeDifference = ['method' => 'subHours', 'value' => 3];
+                $timeDifference = ['method' => 'subHours', 'value' => 1];
                 break;
             case 2:
-                $timeDifference = ['method' => 'subDays', 'value' => 1];
+                $timeDifference = ['method' => 'subHours', 'value' => 3];
                 break;
             case 3:
-                $timeDifference = ['method' => 'subDays', 'value' => 3];
+                $timeDifference = ['method' => 'subDays', 'value' => 1];
                 break;
             case 4:
-                $timeDifference = ['method' => 'subWeeks', 'value' => 1];
+                $timeDifference = ['method' => 'subDays', 'value' => 3];
                 break;
             case 5:
-                $timeDifference = ['method' => 'subWeeks', 'value' => 2];
+                $timeDifference = ['method' => 'subWeeks', 'value' => 1];
                 break;
             case 6:
+                $timeDifference = ['method' => 'subWeeks', 'value' => 2];
+                break;
+            case 7:
                 $timeDifference = ['method' => 'subMonths', 'value' => 1];
                 break;
             default:
@@ -88,11 +104,18 @@ class SendTenderNotificationService
         $notificationTime = $tenderDate->copy();
         if ($beforeAfterType == 1) {
             $notificationTime->{$timeDifference['method']}($timeDifference['value']);
-        } else {
+        } else if ($beforeAfterType == 2) {
             $addMethod = str_replace('sub', 'add', $timeDifference['method']);
             $notificationTime->{$addMethod}($timeDifference['value']);
+        } else {
+            return false;
         }
-        return $beforeAfterType != 0 ? $notificationTime->equalTo($currentDate) : $tenderDate->equalTo($currentDate);
+
+        if (in_array($frequency, [1, 2])) {
+            return $notificationTime->format('Y-m-d H') == $currentDate->format('Y-m-d H');
+        } else {
+            return $notificationTime->isSameDay($currentDate);
+        }
     }
 
     public static function sendReminder($tender, $scenarioID, $stage)
