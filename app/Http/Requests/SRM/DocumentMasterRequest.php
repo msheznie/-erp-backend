@@ -4,6 +4,8 @@ namespace App\Http\Requests\SRM;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+
 class DocumentMasterRequest extends FormRequest
 {
     /**
@@ -20,7 +22,16 @@ class DocumentMasterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'document_name' => 'required|string|max:255',
+            'document_name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('srm_document_master', 'document_name')
+                    ->where(function ($query) {
+                        $query->where('document_area', $this->document_area);
+                    })
+                    ->ignore($this->uuid, 'uuid') // ignore current record on edit
+            ],
             'document_area' => 'required|integer|min:1',
 
             'default_to_tender' => 'required|integer|in:0,1',
