@@ -55,6 +55,7 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\QuotationMaster;
 use App\Models\QuotationStatus;
+use App\Models\CompanyPolicyMaster;
 use Carbon\Carbon;
 use function foo\func;
 use Illuminate\Http\Request;
@@ -261,6 +262,11 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $companySystemID = $request->companySystemID;
                 $currencyID = $request->currency;
 
+                $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isYesNO', 1)
+                    ->exists();
+
                 $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                     $query->with(['master']);
                 },'reporting_currency','item_by'=>
@@ -286,7 +292,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                             });
 
                         }
-                    ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                    ])
+                    ->when($isSegmentPolicyOn, function($query) {
+                        $query->with(['sales_quotation_detail' => function($q) {
+                            $q->with(['segment' => function($segQ) {
+                                $segQ->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                            }, 'master' => function($masterQ) {
+                                $masterQ->select('quotationMasterID','salesType');
+                            }])->select('quotationDetailsID','quotationMasterID','serviceLineSystemID');
+                        }]);
+                    })
+                    ->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
                         $q->where('approved', "-1");
                         $q->where('canceledYN', "0");
                         $q->where('createdDateAndTime', '>=', $fromDate);
@@ -344,6 +360,10 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
+                $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isYesNO', 1)
+                    ->exists();
 
                 $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details','item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
@@ -368,14 +388,24 @@ class SalesMarketingReportAPIController extends AppBaseController
                                 });
 
                         }
-                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
-                    $q->where('approved', "-1");
-                    $q->where('canceledYN', "0");
-                    $q->where('createdDateAndTime', '>=', $fromDate);
-                    $q->where('createdDateAndTime', '<=', $toDate);
-                    $q->where('companySystemID',$companySystemID);
-                }
-                )->get();
+                    ])
+                    ->when($isSegmentPolicyOn, function($query) {
+                        $query->with(['sales_quotation_detail' => function($q) {
+                            $q->with(['segment' => function($segQ) {
+                                $segQ->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                            }, 'master' => function($masterQ) {
+                                $masterQ->select('quotationMasterID','salesType');
+                            }])->select('quotationDetailsID','quotationMasterID','serviceLineSystemID');
+                        }]);
+                    })
+                    ->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                        $q->where('approved', "-1");
+                        $q->where('canceledYN', "0");
+                        $q->where('createdDateAndTime', '>=', $fromDate);
+                        $q->where('createdDateAndTime', '<=', $toDate);
+                        $q->where('companySystemID',$companySystemID);
+                    }
+                    )->get();
 
                 $yes = 0;
                 foreach ($invoiceDetails as $item1){
@@ -925,7 +955,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $data[] = array(
                             trans('custom.document_code') => $val['quotationCode'],
                             trans('custom.document_date') => Helper::dateFormat($val['documentDate']),
-                            trans('custom.segment') => $val['serviceLine'],
+                            trans('custom.segments') => $val['serviceLine'],
                             trans('custom.ref_no') => $val['referenceNo'],
                             trans('custom.customer') => $val['customer'],
                             trans('custom.currency') => $val['currency'],
@@ -1830,6 +1860,11 @@ class SalesMarketingReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+            ->where('companySystemID', $request->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
+
         $approved_status = isset($request->approved_status)?$request->approved_status:null;
         $invoice_status = isset($request->invoice_status)?$request->invoice_status:null;
         $delivery_status = isset($request->delivery_status)?$request->delivery_status:null;
@@ -1876,7 +1911,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             })
             ->with(['segment' => function($query){
                 $query->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
-            },'detail'=> function($query){
+            },'detail'=> function($query) use ($isSegmentPolicyOn){
 
                 $query->with([
                     'invoice_detail' => function($q1){
@@ -1908,10 +1943,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->select('deliveryOrderDetailID','quotationDetailsID');
 
                     }
-                ])
-                    ->select('quotationDetailsID','quotationMasterID','transactionAmount', 'VATAmount', 'requestedQty');
+                ]);
+                
+                if($isSegmentPolicyOn) {
+                    $query->with(['segment' => function($q) {
+                        $q->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                    }]);
+                }
+                
+                $query->select('quotationDetailsID','quotationMasterID','transactionAmount', 'VATAmount', 'requestedQty', 'serviceLineSystemID');
             }])
-            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN','is_return')
+            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN','is_return','salesType')
             ->get()
             ->toArray();
 
@@ -1919,139 +1961,140 @@ class SalesMarketingReportAPIController extends AppBaseController
         $x = 0;
         if(!empty($details) && $details != []){
             foreach ($details as $data){
-                $output[$x]['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
-                $output[$x]['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
-                $output[$x]['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
-                $output[$x]['serviceLine'] = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
-                $output[$x]['referenceNo'] = isset($data['referenceNo'])?$data['referenceNo']:'';
-                $output[$x]['customer'] = isset($data['customerName'])?$data['customerName']:'';
-                $output[$x]['currency'] = isset($data['transactionCurrency'])?$data['transactionCurrency']:'';
-                $output[$x]['dp'] = isset($data['transactionCurrencyDecimalPlaces'])?$data['transactionCurrencyDecimalPlaces']:'';
-                $output[$x]['documentExpDate'] = isset($data['documentExpDate'])?$data['documentExpDate']:'';
-                $output[$x]['confirmedYN'] = isset($data['confirmedYN'])?$data['confirmedYN']:null;
-                $output[$x]['approvedYN'] = isset($data['approvedYN'])?$data['approvedYN']:null;
-                $output[$x]['refferedBackYN'] = isset($data['refferedBackYN'])?$data['refferedBackYN']:null;
-                $output[$x]['customer_status'] = isset($data['quotationMasterID'])?QuotationStatus::getLastStatus($data['quotationMasterID']):'';
-                $output[$x]['document_amount'] = 0;
-                $output[$x]['invoice_amount'] = 0;
-                $output[$x]['paid_amount'] = 0;
-                $output[$x]['is_return'] = isset($data['is_return'])?$data['is_return']:0;
-                $paid1 = 0;
-                $paid2 = 0;
-                $invoiceArray = [];
-                if(isset($data['detail']) && count($data['detail'])> 0){
+                $headerSegment = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
+                $headerSegmentID = isset($data['serviceLineSystemID'])?$data['serviceLineSystemID']:null;
+                
+                $useDetailSegments = $isSegmentPolicyOn && isset($data['salesType']) && $data['salesType'] == 2;
+                
+                if($useDetailSegments && isset($data['detail']) && count($data['detail'])> 0){
+                    $segmentGroups = [];
+                    $detailsWithoutSegment = [];
+                    
                     foreach ($data['detail'] as $qdetail){
-                        $vatAmount = isset($qdetail['VATAmount']) ? ($qdetail['VATAmount'] * $qdetail['requestedQty']) : 0;
-                        $output[$x]['document_amount'] += isset($qdetail['transactionAmount'])?($qdetail['transactionAmount']+$vatAmount):0;
-
-                        // quotation -> delovery order -> invoice
-
-                        if(isset($qdetail['delivery_order_detail']) && count($qdetail['delivery_order_detail'])> 0){
-
-                            foreach ($qdetail['delivery_order_detail'] as $deliverydetail){
-
-                                if(isset($deliverydetail['invoice_detail']) && count($deliverydetail['invoice_detail'])> 0){
-
-                                    foreach ($deliverydetail['invoice_detail'] as $invoiceDetails){
-                                        $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                        $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
-                                        $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])? ($invoiceDetails['sellingTotal']+ $vatAmount):0;
-
-                                        if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
-                                            $paid1 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
-                                        }
-
-                                        /*$paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                            ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                            ->where('matchingDocID', 0)
-                                            ->groupBy('custReceivePaymentAutoID')
-                                            ->first();
-                                        if(!empty($paymentsInvoice)){
-                                            $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                                        }
-
-                                        $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                            ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                            ->where('matchingDocID','>', 0)
-                                            ->groupBy('custReceivePaymentAutoID')
-                                            ->first();
-                                        if(!empty($paymentsInvoiceMatch)){
-                                            $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                                        }*/
-
-                                    }
-                                }
-
+                        $detailSegmentID = isset($qdetail['serviceLineSystemID'])?$qdetail['serviceLineSystemID']:null;
+                        $detailSegmentDes = isset($qdetail['segment']['ServiceLineDes'])?$qdetail['segment']['ServiceLineDes']:'';
+                        
+                        if(empty($detailSegmentID) || empty($detailSegmentDes)){
+                            $detailsWithoutSegment[] = $qdetail;
+                        } else {
+                            if(!isset($segmentGroups[$detailSegmentID])){
+                                $segmentGroups[$detailSegmentID] = [
+                                    'segmentID' => $detailSegmentID,
+                                    'segmentDes' => $detailSegmentDes,
+                                    'details' => []
+                                ];
                             }
+                            $segmentGroups[$detailSegmentID]['details'][] = $qdetail;
                         }
-
-                        // quotation -> invoice
-                        if(isset($qdetail['invoice_detail']) && count($qdetail['invoice_detail'])> 0){
-
-                            foreach ($qdetail['invoice_detail'] as $invoiceDetails){
-                                $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
-                                $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?($invoiceDetails['sellingTotal']+$vatAmount):0;
-                                if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
-                                    $paid2 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
-                                }
-
-                                /*$paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                    ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                    ->where('matchingDocID', 0)
-                                    ->groupBy('custReceivePaymentAutoID')
-                                    ->first();
-                                if(!empty($paymentsInvoice)){
-                                    $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                                }
-
-                                $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                    ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                    ->where('matchingDocID','>', 0)
-                                    ->groupBy('custReceivePaymentAutoID')
-                                    ->first();
-                                if(!empty($paymentsInvoiceMatch)){
-                                    $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                                }*/
-
-                            }
-                        }
-
                     }
-                }
-
-                // get paid amount
-                $invoiceArray = array_unique($invoiceArray);
-                if(!empty($invoiceArray) && count($invoiceArray)>0){
-                    foreach ($invoiceArray as $invoice){
-                        if($invoice > 0){
-                            $paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                ->where('bookingInvCodeSystem', $invoice)
-                                ->where('matchingDocID', 0)
-                                ->groupBy('custReceivePaymentAutoID')
-                                ->first();
-                            if(!empty($paymentsInvoice)){
-                                $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                            }
-
-                            $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                ->where('bookingInvCodeSystem', $invoice)
-                                ->where('matchingDocID','>', 0)
-                                ->groupBy('custReceivePaymentAutoID')
-                                ->first();
-                            if(!empty($paymentsInvoiceMatch)){
-                                $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                            }
-                        }
-
+                    
+                    foreach($segmentGroups as $segmentGroup){
+                        $output[$x] = $this->processDocumentDetails($data, $segmentGroup['details'], $segmentGroup['segmentDes']);
+                        $x++;
                     }
+                    
+                    if(count($detailsWithoutSegment) > 0){
+                        $output[$x] = $this->processDocumentDetails($data, $detailsWithoutSegment, $headerSegment);
+                        $x++;
+                    }
+                    
+                    if(count($segmentGroups) == 0 && count($detailsWithoutSegment) == 0){
+                        $output[$x] = $this->processDocumentDetails($data, [], $headerSegment);
+                        $x++;
+                    }
+                } else {
+                    $output[$x] = $this->processDocumentDetails($data, isset($data['detail'])?$data['detail']:[], $headerSegment);
+                    $x++;
                 }
-                $output[$x]['deliveryStatus'] = isset($data['deliveryStatus'])?$data['deliveryStatus']:0;
-                $x++;
             }
         }
         return $output;
 
+    }
+
+    /**
+     * Process document details and calculate amounts
+     * @param array $data Document master data
+     * @param array $details Array of detail items to process
+     * @param string $serviceLine Segment description
+     * @return array Output row data
+     */
+    private function processDocumentDetails($data, $details, $serviceLine = '')
+    {
+        $output = [];
+        $output['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
+        $output['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
+        $output['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
+        $output['serviceLine'] = $serviceLine;
+        $output['referenceNo'] = isset($data['referenceNo'])?$data['referenceNo']:'';
+        $output['customer'] = isset($data['customerName'])?$data['customerName']:'';
+        $output['currency'] = isset($data['transactionCurrency'])?$data['transactionCurrency']:'';
+        $output['dp'] = isset($data['transactionCurrencyDecimalPlaces'])?$data['transactionCurrencyDecimalPlaces']:'';
+        $output['documentExpDate'] = isset($data['documentExpDate'])?$data['documentExpDate']:'';
+        $output['confirmedYN'] = isset($data['confirmedYN'])?$data['confirmedYN']:null;
+        $output['approvedYN'] = isset($data['approvedYN'])?$data['approvedYN']:null;
+        $output['refferedBackYN'] = isset($data['refferedBackYN'])?$data['refferedBackYN']:null;
+        $output['customer_status'] = isset($data['quotationMasterID'])?QuotationStatus::getLastStatus($data['quotationMasterID']):'';
+        $output['document_amount'] = 0;
+        $output['invoice_amount'] = 0;
+        $output['paid_amount'] = 0;
+        $output['is_return'] = isset($data['is_return'])?$data['is_return']:0;
+        $invoiceArray = [];
+        
+        if(!empty($details) && count($details) > 0){
+            foreach ($details as $qdetail){
+                $vatAmount = isset($qdetail['VATAmount']) ? ($qdetail['VATAmount'] * $qdetail['requestedQty']) : 0;
+                $output['document_amount'] += isset($qdetail['transactionAmount'])?($qdetail['transactionAmount']+$vatAmount):0;
+
+                if(isset($qdetail['delivery_order_detail']) && count($qdetail['delivery_order_detail'])> 0){
+                    foreach ($qdetail['delivery_order_detail'] as $deliverydetail){
+                        if(isset($deliverydetail['invoice_detail']) && count($deliverydetail['invoice_detail'])> 0){
+                            foreach ($deliverydetail['invoice_detail'] as $invoiceDetails){
+                                $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
+                                $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                                $output['invoice_amount'] += isset($invoiceDetails['sellingTotal'])? ($invoiceDetails['sellingTotal']+ $vatAmount):0;
+                            }
+                        }
+                    }
+                }
+
+                if(isset($qdetail['invoice_detail']) && count($qdetail['invoice_detail'])> 0){
+                    foreach ($qdetail['invoice_detail'] as $invoiceDetails){
+                        $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
+                        $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                        $output['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?($invoiceDetails['sellingTotal']+$vatAmount):0;
+                    }
+                }
+            }
+        }
+
+        $invoiceArray = array_unique($invoiceArray);
+        if(!empty($invoiceArray) && count($invoiceArray)>0){
+            foreach ($invoiceArray as $invoice){
+                if($invoice > 0){
+                    $paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
+                        ->where('bookingInvCodeSystem', $invoice)
+                        ->where('matchingDocID', 0)
+                        ->groupBy('custReceivePaymentAutoID')
+                        ->first();
+                    if(!empty($paymentsInvoice)){
+                        $output['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
+                    }
+
+                    $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
+                        ->where('bookingInvCodeSystem', $invoice)
+                        ->where('matchingDocID','>', 0)
+                        ->groupBy('custReceivePaymentAutoID')
+                        ->first();
+                    if(!empty($paymentsInvoiceMatch)){
+                        $output['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
+                    }
+                }
+            }
+        }
+        $output['deliveryStatus'] = isset($data['deliveryStatus'])?$data['deliveryStatus']:0;
+        
+        return $output;
     }
 
 

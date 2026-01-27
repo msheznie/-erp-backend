@@ -351,11 +351,10 @@ class CreateExcel
 
                     });
 
-                    // Format second header row if it exists (for reports with grouped headers)                    
+                    $isSecondHeaderRow = false;
                     if (!empty($data) && count($data) >= 2) {
                         $firstRow = $data[0];
                         $secondRow = $data[1];
-                        $isSecondHeaderRow = false;
                         if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
                             $nonEmptyCount = 0;
                             $hasTranslationKeys = false;
@@ -367,7 +366,7 @@ class CreateExcel
                                     }
                                 }
                             }
-                            if ($nonEmptyCount >= 3 && ($hasTranslationKeys || $nonEmptyCount >= 5)) {
+                            if ($nonEmptyCount >= 3 && $hasTranslationKeys) {
                                 $isSecondHeaderRow = true;
                             }
                         }
@@ -382,6 +381,28 @@ class CreateExcel
                                     'bold'       =>  true
                                 ));
                             });
+                        }
+                    }
+                    
+                    $dataStartRow = $isSecondHeaderRow ? $i + 2 : $i + 1;
+                    $lastRow = $sheet->getHighestRow();
+                    if ($lastRow >= $dataStartRow) {
+                        $lastColumn = $sheet->getHighestColumn();
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A' . $dataStartRow . ':' . $lastColumn . $lastRow)->getFont()->setBold(false);
+                        } catch (\Exception $e) {
+                            // Fallback: format row by row
+                            for ($rowNum = $dataStartRow; $rowNum <= $lastRow; $rowNum++) {
+                                $sheet->row($rowNum, function($row) use ($fontFamily) {
+                                    $row->setFont(array(
+                                        'family'     => $fontFamily,
+                                        'size'       => '11',
+                                        'bold'       => false
+                                    ));
+                                });
+                            }
                         }
                     }
 
