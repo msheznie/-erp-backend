@@ -934,8 +934,7 @@ class ReportAPIController extends AppBaseController
                     }
 
                     $data[$x] = array(
-                        trans('custom.contract_reference_number') => '-',
-                        trans('custom.contract_name') => '-',
+                        trans('custom.contract_name') => isset($val->contractDescription) ? $val->contractDescription : '',
                         trans('custom.item_name') => isset($val->itemDescription) ? $val->itemDescription : '',
                         trans('custom.item_code') => isset($val->itemPrimaryCode) ? $val->itemPrimaryCode : '',
                         trans('custom.received_quantity') => isset($val->noQty) ? number_format($val->noQty, 2) : '',
