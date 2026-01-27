@@ -2229,7 +2229,8 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['companySystemID'] = $request->input('company_id');
             $dataEmail['alertMessage'] = "Registration Link";
             $dataEmail['empEmail'] = $email;
-            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br />";
+            $body .= \Helper::getSupplierEmailFooter($request->input('company_id'));
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = Email::sendEmailErp($dataEmail);
 
@@ -4394,13 +4395,14 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
                 $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
-                    <br><br> Regards,<br>$company.";
+                    <br>";
             }
+            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
@@ -4429,9 +4431,9 @@ class TenderMasterAPIController extends AppBaseController
             if (sizeof($supplierDetails) > 0 && $tender->document_type === 0) {
                 foreach ($supplierDetails as $bid) {
                     $name = $bid->name;
-                    $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
+                    $body .= \Helper::getSupplierEmailFooter($tender->company_id);
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
