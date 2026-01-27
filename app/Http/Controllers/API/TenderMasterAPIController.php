@@ -614,13 +614,14 @@ class TenderMasterAPIController extends AppBaseController
             $params = ['masterData' => true, 'docSystemId' => $document_system_id];
             $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
             $result = TenderMaster::create($data);
-
             if ($result) {
                 DB::commit();
                 if (!empty( $getDocumentMasterData)) {
                     foreach ($getDocumentMasterData as $doc) {
                         $documentAttachment = [
                             'companySystemID'      => $data['company_id'],
+                            'isAutoCreateDocument'      => 1,
+                            'documentParentID'      => $doc['id'],
                             'documentSystemCode'   => $result->id,
                             'companyID'            => $company->CompanyID,
                             'documentSystemID'     => $document_system_id,

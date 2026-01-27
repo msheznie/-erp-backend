@@ -65,7 +65,8 @@ class DocumentAttachments extends Model
         'parent_id',
         'envelopType',
         'order_number',
-        'isAutoCreateDocument'
+        'isAutoCreateDocument',
+        'documentParentID'
     ];
 
     /**
@@ -76,6 +77,7 @@ class DocumentAttachments extends Model
     protected $casts = [
         'attachmentID' => 'integer',
         'companySystemID' => 'integer',
+        'documentParentID' => 'integer',
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
@@ -524,5 +526,13 @@ class DocumentAttachments extends Model
             ->where('attachmentType',0)
             ->where('envelopType', $envelopType)
             ->where('parent_id',$parentId);
+    }
+
+    public static function getAttachmentData($params)
+    {
+        return  self::select('documentParentID', 'documentSystemID','documentSystemCode')
+                 ->where('documentSystemID',$params['docSystemId'])
+                 ->where('documentSystemCode',$params['tenderId'])
+                 ->get();
     }
 }
