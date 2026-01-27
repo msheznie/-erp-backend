@@ -100,6 +100,10 @@ class ReceiptAPIController extends AppBaseController
             '*.chequeDate.required_if' => 'Cheque date is required'
         ];
 
+        if (!isset($input['data'])) {
+            return $this->sendAPIError("Validation Failed", 422, ['data' => ['The data field is required.']]);
+        }
+
         $validator = \Validator::make($input['data'], $rules,$messages);
 
 
