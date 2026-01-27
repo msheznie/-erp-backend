@@ -15,9 +15,9 @@ class EmployeeAuditReportService
     ): Collection {
 
         $allowedEvents = [
-            'LOGIN', 'LOGOUT', 'NAVIGATION',
-            'CREATE', 'UPDATE', 'DELETE',
-            'APPROVE', 'REJECT', 'SYSTEM EVENT'
+            'login', 'logout', 'login_failed',
+            'navigation-read', 'navigation-create', 'navigation-edit',
+            'audit-create', 'audit-update', 'audit-delete'
         ];
 
         $combined = [];
@@ -54,11 +54,11 @@ class EmployeeAuditReportService
             $eventType = $this->resolveEventType($log, $combined[$sid]);
 
             if (!in_array($eventType, $allowedEvents)) {
-                $eventType = 'SYSTEM EVENT';
+                $eventType = 'login_failed';
             }
             
-            if (($log['channel'] ?? '') === 'navigation' && !empty($log['screenAccessed'])) {
-                $combined[$sid]['screenAccessed'][] = $log['screenAccessed'];
+            if (($log['channel'] ?? '') === 'navigation' && !empty($log['navigationPath'])) {
+                $combined[$sid]['screenAccessed'][] = $log['navigationPath'];
             }
 
             $combined[$sid]['eventType'][] = $eventType;
@@ -131,26 +131,32 @@ class EmployeeAuditReportService
         $channel = strtolower($log['channel'] ?? '');
 
         if ($channel === 'auth') {
-            $event = strtoupper($log['event'] ?? 'SYSTEM EVENT');
+            $event = strtolower($log['event'] ?? '');
 
-            if ($event === 'LOGIN') {
+            if ($event === 'login') {
                 $session['loginTs'] = $log['date_time'] ?? null;
                 $session['loginStatus'] = ucfirst($log['status'] ?? 'success');
+                return 'login';
             }
 
-            if ($event === 'LOGOUT') {
+            if ($event === 'logout') {
                 $session['logoutTs'] = $log['date_time'] ?? null;
+                return 'logout';
             }
 
-            return $event;
+            if ($event === 'login_failed') {
+                return 'login_failed';
+            }
+
+            return 'login_failed';
         }
 
-           if ($channel === 'audit') {
+        if ($channel === 'audit') {
             return [
-                'C' => 'CREATE',
-                'U' => 'UPDATE',
-                'D' => 'DELETE',
-            ][$log['crudType'] ?? ''] ?? 'SYSTEM EVENT';
+                'C' => 'audit-create',
+                'U' => 'audit-update',
+                'D' => 'audit-delete',
+            ][$log['crudType'] ?? ''] ?? 'audit-delete';
         }
 
 
@@ -158,10 +164,17 @@ class EmployeeAuditReportService
             if (!empty($log['company']) && $session['company'] === null) {
                 $session['company'] = $log['company'];
             }
-            return 'NAVIGATION';
+            $accessType = strtolower($log['accessType'] ?? $log['access_type'] ?? 'read');
+            $accessMap = [
+                'read' => 'navigation-read',
+                'create' => 'navigation-create',
+                'edit' => 'navigation-edit',
+                'update' => 'navigation-edit',
+            ];
+            return $accessMap[$accessType] ?? 'navigation-read';
         }
 
-        return 'SYSTEM EVENT';
+        return 'login_failed';
     }
 
     private function applyFilters(Collection $rows, array $filters): Collection
@@ -178,11 +191,9 @@ class EmployeeAuditReportService
             
             if (!empty($filters['eventTypes'])) {
 
-                $sessionEvents = collect($row['eventType'])->map(function ($value) {
-                    return strtoupper($value);
-                });
+                $sessionEvents = collect($row['eventType']);
 
-                $filterEvents = array_map('strtoupper', $filters['eventTypes']);
+                $filterEvents = $filters['eventTypes'];
 
                 if (!$sessionEvents->intersect($filterEvents)->count()) {
                     return false;
@@ -207,4 +218,5 @@ class EmployeeAuditReportService
             $target[] = $value;
         }
     }
+
 }

@@ -926,33 +926,10 @@ class AuditTrailAPIController extends AppBaseController
 
     public function auditReportFilters(Request $request)
     {
-        
-        $navigationController = app(CompanyNavigationMenusAPIController::class);
-
-       
-        $response = $navigationController->getCompanyNavigation($request);
-
-        
-        $tree = json_decode(json_encode($response->original['data']), true);
-
-        
-        $flattenDescriptions = function ($nodes) use (&$flattenDescriptions) {
-            $result = [];
-            foreach ($nodes as $node) {
-                if (isset($node['description'])) {
-                    $result[] = $node['description'];
-                }
-                if (!empty($node['children'])) {
-                    $result = array_merge($result, $flattenDescriptions($node['children']));
-                }
-            }
-            return $result;
-        };
-
-        $descriptions = $flattenDescriptions($tree);
-
-        return $this->sendResponse($descriptions, 'Descriptions fetched successfully');
+        return app(CompanyNavigationMenusAPIController::class)
+            ->getCompanyNavigation($request);
     }
+
 
     /**
      * Helper method to fetch user audit logs for employee activity report
@@ -963,7 +940,7 @@ class AuditTrailAPIController extends AppBaseController
     protected function fetchUserAuditLogs(Request $request)
     {
         $input = $request->all();
-        $locale = app()->getLocale() ?: 'en';
+        $locale = $request->get('locale', app()->getLocale()) ?: 'en';
         $tenantUuid = $input['tenant_uuid'] ?? 'local';
         
         $params = [
@@ -989,7 +966,7 @@ class AuditTrailAPIController extends AppBaseController
     protected function fetchNavigationAccessLogs(Request $request)
     {
         $input = $request->all();
-        $locale = app()->getLocale() ?: 'en';
+        $locale = $request->get('locale', app()->getLocale()) ?: 'en';
         $tenantUuid = $input['tenant_uuid'] ?? 'local';
         
         $params = [
@@ -1023,8 +1000,14 @@ class AuditTrailAPIController extends AppBaseController
         $selectedColumns = $request->selectedColumns ?? [];
 
         
-        $authLogs = $this->fetchUserAuditLogs($request);
-        $navLogs = $this->fetchNavigationAccessLogs($request);
+        $previousLocale = app()->getLocale();
+        app()->setLocale('en');
+        try {
+            $authLogs = $this->fetchUserAuditLogs($request);
+            $navLogs = $this->fetchNavigationAccessLogs($request);
+        } finally {
+            app()->setLocale($previousLocale);
+        }
 
         $auditLogs = $this->auditLogs(
             $request->merge(['isExport' => true, 'isFromTracking' => true])
