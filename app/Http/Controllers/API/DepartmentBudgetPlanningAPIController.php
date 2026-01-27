@@ -199,7 +199,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         //     return $this->sendError(trans('custom.department_budget_planning_not_found'));
         // }
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
+        return $this->sendResponse($departmentBudgetPlanning, trans('custom.department_budget_planning_retrieved_successfully'));
     }
 
     /**
