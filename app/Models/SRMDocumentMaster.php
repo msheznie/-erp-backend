@@ -178,7 +178,7 @@ class SRMDocumentMaster extends Model
         }
 
         if (!empty($params['masterData']) && $params['masterData'] === true) {
-            $columns = array_merge($columns, ['path', 'original_file_name', 'my_file_name', 'size_in_kbs']);
+            $columns = array_merge($columns, ['path', 'original_file_name', 'my_file_name', 'size_in_kbs','id']);
         }
 
         $query = self::select($columns);
@@ -201,6 +201,12 @@ class SRMDocumentMaster extends Model
                     $q->where('default_to_rfx', 1);
                 }
             });
+
+            if(isset($params['ids']) && !empty($params['uuid']))
+            {
+                $query->whereNotIn('id', $params['ids']);
+            }
+
         }
 
 
