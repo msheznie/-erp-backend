@@ -791,19 +791,71 @@ class TenderMaster extends Model
     public static function getTenderMasterData($tenderID){
         return self::where('id', $tenderID)->first();
     }
-    public static function getTenderList($companyID, $scenarioID){
-        $endDates = $scenarioID == 45 ?  'technical_bid_closing_date' : 'commerical_bid_closing_date';
+    public static function getTenderList($companyID, $scenarioID, $time, $beforeAfterType = null, $frequency = null) {
+        $openingDateFields = [
+            45 => [
+                1 => 'bid_opening_date',
+                2 => 'technical_bid_opening_date',
+            ],
+            46 => [
+                1 => 'bid_opening_date',
+                2 => 'commerical_bid_opening_date',
+            ],
+        ];
 
-        return TenderMaster::select(
-            'id', 'title', 'description', 'stage', 'bid_opening_date', 'bid_opening_end_date',
-            'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date',
-            'commerical_bid_closing_date', 'tender_code', 'company_id'
-        )
-            ->where('company_id', $companyID)
-            ->where(function ($query) use ($endDates) {
-                $query->whereDate($endDates, '>=', Carbon::now())
-                    ->orWhere('bid_opening_date', '>=', Carbon::now());
-            })
+        $timeDifference = ($beforeAfterType != 0 && $frequency !== null)
+            ? self::getTimeDifferenceForFrequency($frequency)
+            : null;
+
+        $dateFrom = $time->copy()->subMonth();
+        $dateTo   = $time->copy()->addMonth();
+
+        $query = TenderMaster::select('id', 'title', 'description', 'stage', 'bid_opening_date',
+            'bid_opening_end_date', 'technical_bid_opening_date', 'technical_bid_closing_date',
+            'commerical_bid_opening_date', 'commerical_bid_closing_date', 'tender_code', 'company_id'
+        )->where('company_id', $companyID);
+
+        if (isset($openingDateFields[$scenarioID])) {
+            $query->where(function ($q) use ($openingDateFields, $scenarioID, $beforeAfterType, $frequency,
+                $time, $timeDifference, $dateFrom, $dateTo) {
+                foreach ($openingDateFields[$scenarioID] as $dateField) {
+                    $q->orWhere(function ($subQ) use ($dateField, $beforeAfterType, $frequency, $time,
+                        $timeDifference, $dateFrom, $dateTo) {
+                        $subQ->whereNotNull($dateField);
+
+                        if ($beforeAfterType == 0 && $frequency === null) {
+                            $subQ->whereDate($dateField, $time->toDateString());
+                            return;
+                        }
+
+                        if ($timeDifference) {
+                            $targetTenderDate = clone $time;
+
+                            if ($beforeAfterType == 1) {
+                                $addMethod = str_replace('sub', 'add', $timeDifference['method']);
+                                $targetTenderDate->{$addMethod}($timeDifference['value']);
+                            } elseif ($beforeAfterType == 2) {
+                                $targetTenderDate->{$timeDifference['method']}($timeDifference['value']);
+                            }
+
+                            if (in_array($frequency, [1, 2])) {
+                                $subQ->whereDate($dateField, $targetTenderDate->toDateString())
+                                    ->whereRaw(
+                                        'HOUR(' . $dateField . ') = ?',
+                                        [$targetTenderDate->hour]
+                                    );
+                            } else {
+                                $subQ->whereDate($dateField, $targetTenderDate->toDateString());
+                            }
+                            return;
+                        }
+                        $subQ->whereBetween($dateField, [$dateFrom, $dateTo]);
+                    });
+                }
+            });
+        }
+
+        return $query
             ->with([
                 'tenderBidMinimumApproval' => function ($q) {
                     $q->select('id', 'emp_id', 'tender_id')
@@ -816,6 +868,29 @@ class TenderMaster extends Model
             ])
             ->get();
     }
+
+    private static function getTimeDifferenceForFrequency($frequency)
+    {
+        switch ($frequency) {
+            case 1:
+                return ['method' => 'subHours', 'value' => 1];
+            case 2:
+                return ['method' => 'subHours', 'value' => 3];
+            case 3:
+                return ['method' => 'subDays', 'value' => 1];
+            case 4:
+                return ['method' => 'subDays', 'value' => 3];
+            case 5:
+                return ['method' => 'subWeeks', 'value' => 1];
+            case 6:
+                return ['method' => 'subWeeks', 'value' => 2];
+            case 7:
+                return ['method' => 'subMonths', 'value' => 1];
+            default:
+                return null;
+        }
+    }
+
 
     public function all_approvals()
     {
