@@ -1053,7 +1053,7 @@ class FinancialReportAPIController extends AppBaseController
                 $recordOwner->isSetOpeningBalance = false;
             }
 
-            if (($da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
+            if (($da->type == 11 || $da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
                 // update each employee table total
                 $recordOwner->totalSumLocal += $da->amountLocal * -1;
                 $recordOwner->totalSumRpt += $da->amountRpt * -1;
