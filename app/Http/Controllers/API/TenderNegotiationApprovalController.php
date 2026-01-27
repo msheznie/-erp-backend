@@ -196,6 +196,7 @@ class TenderNegotiationApprovalController extends AppBaseController
     }
 
     public function sendEmailToSuppliers($input, $code, $title) {
+        $tender = TenderMaster::select('id', 'company_id')->find($input['srm_tender_master_id']);
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
         $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('suppliermaster_id','bidSubmissionCode')->get();
         if($srmTenderBidEmployeeDetails) {
@@ -210,19 +211,19 @@ class TenderNegotiationApprovalController extends AppBaseController
                     }
 
                     $dataEmail['empEmail'] = $employee->email;
-                    $dataEmail['companySystemID'] = $employee->company_id;
+                    $dataEmail['companySystemID'] = $tender ? $tender->company_id : $employee->company_id;
                     $loginUrl = env('SRM_LINK');
                     $url = trim($loginUrl,"/register");
                     $redirectUrl= $url."/tender-management/tenders/1";
-                    $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
                     $dataEmail['ccEmail'] = [];
                     $dataEmail['attachmentList'] = [];
                     if ($tenderCustomEmail) {
-                        $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . $companyName . '</p>';
+                        $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . '</p>';
                         $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
                     } else {
-                        $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/><br/><p>Kind Regards,</p><p>' . $companyName . '</p>';
+                        $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/>';
                     }
+                    $emailBody .= \Helper::getSupplierEmailFooter($dataEmail['companySystemID']);
 
                     $dataEmail['alertMessage'] = "Tender Negotiation Invitation";
                     $dataEmail['emailAlertMessage'] = $emailBody;

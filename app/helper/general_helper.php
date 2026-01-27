@@ -10069,6 +10069,14 @@ class Helper
         return $attachments;
     }
 
+    public static function getSupplierEmailFooter($companySystemID)
+    {
+        $company = Company::getCompanyData($companySystemID);
+        $companyName = $company ? $company->CompanyName : '';
+        
+        return view('email.supplier_email_footer', ['companyName' => $companyName])->render();
+    }
+
     public static function sendCircularEmailToSuppliers(
         $supplierList, $circular, $companySystemID,
         $attachments, $companyName, $tenderObj
@@ -10093,8 +10101,8 @@ class Helper
             $emailMessage = "Dear Supplier,<br /><br />
             Please find published <span style='text-transform: lowercase;'>{$documentName}</span> circular details below.<br /><br />
             <b>Circular Name : </b>{$circular['circular_name']}<br /><br />
-            {$descriptionHtml}{$companyName}<br /><br />
-            Thank You<br /><br /><b>";
+            {$descriptionHtml}Thank You<br />";
+            $emailMessage .= \Helper::getSupplierEmailFooter($companySystemID);
 
             $dataEmail = [
                 'empEmail' => $email,

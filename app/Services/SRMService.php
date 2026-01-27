@@ -6597,6 +6597,7 @@ class SRMService
     public function sendSupplierNotification($params)
     {
         $body = "Dear Supplier,"."<br /><br />"." Document successfully attached. The document is under review. Access to the Tender will be provided shortly. Please wait.";
+        $body .= \Helper::getSupplierEmailFooter($params['company']);
         $dataEmail = [
             'companySystemID' => $params['company'],
             'alertMessage' => trans('email.payment_proof_attachment'),
