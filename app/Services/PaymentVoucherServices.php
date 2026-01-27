@@ -347,7 +347,11 @@ class PaymentVoucherServices
         }
 
         $input['payment_mode'] = $input['paymentMode'];
-        $input['refundType'] = $input['refundType'];
+
+        if(isset($input['refundType'])) {
+            $input['refundType'] = $input['refundType'];
+        }
+
         unset($input['paymentMode'], $input['noOfCheques'], $input['totalAmount']);
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);

@@ -547,7 +547,7 @@ class CreditNoteAPIController extends AppBaseController
                 }
 
                 if ($hasVAT) {
-                    if ($creditNote->isVATApplicable == 0) {
+                    if (isset($input['isVATApplicable']) && $input['isVATApplicable'] == 0) {
                         $message = trans('custom.refund_receipt_voucher_invoice_has_vat_credit_note_not');
                     }
                 }
