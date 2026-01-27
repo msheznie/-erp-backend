@@ -49,6 +49,7 @@ use App\Models\ScheduleBidFormatDetails;
 use App\Models\ScheduleBidFormatDetailsLog;
 use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SRMDocumentMaster;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SrmTenderAwardingMember;
@@ -2735,6 +2736,40 @@ class TenderMasterRepository extends BaseRepository
                     'clone_master_id' => $tenderMaster['id'],
                 ]);
 
+
+                $paramsAttachData = ['docSystemId' => $documentSystemID, 'tenderId' => $tenderMaster['id']];
+                $existingAttachments = DocumentAttachments::getAttachmentData($paramsAttachData);
+                $existingParentIds = $existingAttachments
+                    ->pluck('documentParentID')
+                    ->unique()
+                    ->toArray();
+                $params = ['masterData' => true, 'docSystemId' => $documentSystemID, 'ids' => $existingParentIds];
+                $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
+                Log::info($getDocumentMasterData);
+
+                if (!empty( $getDocumentMasterData)) {
+                    foreach ($getDocumentMasterData as $doc) {
+                        $documentAttachment = [
+                            'companySystemID' => $companySystemID,
+                            'isAutoCreateDocument' => 1,
+                            'documentParentID' => $doc['id'],
+                            'documentSystemCode' => $newTender->id,
+                            'companyID' => $companySystemID,
+                            'documentSystemID' => $tenderMaster['document_system_id'],
+                            'documentID' => $tenderMaster['document_id'],
+                            'attachmentDescription' => $doc['document_name'],
+                            'path' => $doc['path'],
+                            'originalFileName' => $doc['original_file_name'],
+                            'myFileName' => $doc['my_file_name'],
+                            'attachmentType' => $doc['document_area'],
+                            'sizeInKbs' => $doc['size_in_kbs'],
+                            'isUploaded' => 1,
+                            'envelopType' => $doc['envelope_type']
+                        ];
+
+                        DocumentAttachments::create($documentAttachment);
+                    }
+                }
             });
 
             return [
