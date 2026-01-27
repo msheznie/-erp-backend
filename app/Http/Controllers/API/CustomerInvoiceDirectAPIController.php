@@ -451,7 +451,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
         $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        $previousLocalER = $customerInvoiceDirect->localCurrencyER;
+        $previousReportingER = $customerInvoiceDirect->companyReportingER;
         if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+            $customerInvoiceDirect->update([
+                'localCurrencyER' => $previousLocalER,
+                'companyReportingER' => $previousReportingER
+            ]);
+            $customerInvoiceDirect = $customerInvoiceDirect->refresh();
             $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
         }
 
@@ -633,9 +640,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['custTransactionCurrencyER'] = 1;
 
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                if ($checkErChange) {
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                } else {
+                    $_post['companyReportingER'] = $previousReportingER;
+                    $_post['localCurrencyER'] = $previousLocalER;
+                }
 
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
@@ -662,9 +674,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
 
+            if ($checkErChange) {
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-
+            } else {
+                $_post['companyReportingER'] = $previousReportingER;
+                $_post['localCurrencyER'] = $previousLocalER;
+            }
         }
 
 
