@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\ConsoleJVMaster;
 use App\Models\CreditNote;
 use App\Models\CurrencyConversionDetail;
+use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\DebitNote;
@@ -20,6 +21,8 @@ use App\Models\PurchaseReturn;
 use App\Models\QuotationMaster;
 use App\Models\RecurringVoucherSetup;
 use App\Models\SalesReturn;
+use App\Models\SupplierMaster;
+use App\Models\SupplierCurrency;
 
 class CurrencyDeletionValidationService
 {
@@ -40,6 +43,21 @@ class CurrencyDeletionValidationService
             return [
                 'success' => false,
                 'message' => trans('custom.currency_linked_with_conversions')
+            ];
+        }
+
+        if (CustomerCurrency::where('currencyID', $currencyId)->exists()) {
+            return [
+                'success' => false,
+                'message' => trans('custom.currency_assigned_to_customer')
+            ];
+        }
+
+        if (SupplierMaster::where('currency', $currencyId)->exists() ||
+            SupplierCurrency::where('currencyID', $currencyId)->exists()) {
+            return [
+                'success' => false,
+                'message' => trans('custom.currency_assigned_to_supplier')
             ];
         }
 

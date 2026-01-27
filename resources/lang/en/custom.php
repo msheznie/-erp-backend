@@ -1264,6 +1264,8 @@ return
     'currency_has_transaction_entries' => 'The selected currency already has transaction entries in finance. You cannot delete it.',
     'cannot_delete_local_or_reporting_currency' => 'This currency is configured as the local or reporting currency and cannot be deleted.',
     'currency_linked_with_conversions' => 'The selected currency is linked with other currency conversions. You cannot delete it.',
+    'currency_assigned_to_customer' => 'The selected currency is assigned to one or more customers. You cannot delete it.',
+    'currency_assigned_to_supplier' => 'The selected currency is assigned to one or more suppliers. You cannot delete it.',
     'currency_master_not_found' => 'Currency Master not found',
     'currency_master_retrieved_successfully' => 'Currency Master retrieved successfully',
     'currency_master_saved_successfully' => 'Currency Master saved successfully',

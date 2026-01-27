@@ -1249,6 +1249,8 @@ return
     'currency_has_transaction_entries' => 'العملة المحددة لديها بالفعل إدخالات معاملات في المالية. لا يمكنك حذفها.',
     'cannot_delete_local_or_reporting_currency' => 'هذه العملة مُكوّنة كعملة محلية أو عملة تقارير ولا يمكن حذفها.',
     'currency_linked_with_conversions' => 'العملة المحددة مرتبطة بتحويلات عملة أخرى. لا يمكنك حذفها.',
+    'currency_assigned_to_customer' => 'العملة المحددة مخصصة لواحد أو أكثر من العملاء. لا يمكنك حذفها.',
+    'currency_assigned_to_supplier' => 'العملة المحددة مخصصة لواحد أو أكثر من الموردين. لا يمكنك حذفها.',
     'currency_master_not_found' => 'السجل الرئيسي للعملة غير موجود',
     'currency_master_retrieved_successfully' => 'تم استرداد السجل الرئيسي للعملة بنجاح',
     'currency_master_saved_successfully' => 'تم حفظ السجل الرئيسي للعملة بنجاح',
