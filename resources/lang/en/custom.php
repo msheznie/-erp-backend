@@ -4320,6 +4320,7 @@ return
     'purchasereturnmasterrefferedback_updated_successfu' => 'PurchaseReturnMasterRefferedBack updated successfully',
     'pv_document_cannot_confirm_without_details' => 'PV document cannot confirm without details',
     'qty' => 'QTY',
+    'not_capitalized_quantity' => 'Not Capitalized Quantity',
     'qty_cannot_be_less_than_or_equal_to_zero' => 'QTY cannot be less than or equal to zero',
     'qty_cannot_be_zero' => 'Qty cannot be zero',
     'quantity_cannot_be_greater_than_total_materiel_req' => 'Quantity cannot be greater than total materiel request quantity',
