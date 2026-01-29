@@ -561,7 +561,7 @@ class AssetCapitalizationAPIController extends AppBaseController
     public function getAllCapitalizationByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'allocationTypeID','createdBy'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'allocationTypeID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -618,8 +618,17 @@ class AssetCapitalizationAPIController extends AppBaseController
 
         if (array_key_exists('createdBy', $input)) {
             if ($input['createdBy'] && !is_null($input['createdBy'])) {
-
-                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+                $createdByInput = $input['createdBy'];
+                if (is_object($createdByInput)) {
+                    $createdBy = array_filter([data_get($createdByInput, 'id')]);
+                } elseif (is_array($createdByInput)) {
+                    $createdBy = collect($createdByInput)->pluck('id')->filter()->toArray();
+                    if (empty($createdBy)) {
+                        $createdBy = collect($createdByInput)->filter()->toArray();
+                    }
+                } else {
+                    $createdBy = array_filter([$createdByInput]);
+                }
 
                 if (!empty($createdBy)) {
                     $assetCapitalization->whereIn('createdUserSystemID', $createdBy);

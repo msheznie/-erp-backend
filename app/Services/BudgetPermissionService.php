@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BudgetControl;
 use App\Models\BudgetDelegateAccess;
 use App\Models\BudgetDelegateAccessRecord;
+use App\Models\ApprovalLevel;
 use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
@@ -67,7 +68,9 @@ class BudgetPermissionService
         ->where('isActive', 1)
         ->where('removedYN', 0);
 
-        if($checkUserHasApprovalAccess->exists()) {
+        $approvalLevelActive = ApprovalLevel::where('isActive', -1)->where('companySystemID', $companyId)->where('documentSystemID', 133)->exists();
+
+        if($checkUserHasApprovalAccess->exists() && $approvalLevelActive) {
             $userPermissions['financeApprovalUser']['status'] = true;
 
             return [

@@ -190,7 +190,7 @@ class BudgetNotificationService
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
             'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">' . $linkUrl . '</a>'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
 
         $emails[] = array(

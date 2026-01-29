@@ -326,11 +326,16 @@ class PaymentVoucherServices
             $input['chequePaymentYN'] = 0;
         }
 
-        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-            $input['chequePaymentYN'] = 0;
-            $input['BPVchequeDate'] = null;
-        } else {
+        // Force pdcChequeYN to 0 when invoiceType is 8 (refund)
+        if (isset($input['invoiceType']) && $input['invoiceType'] == 8) {
             $input['pdcChequeYN'] = 0;
+        } else {
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
         }
 
         $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
@@ -347,11 +352,9 @@ class PaymentVoucherServices
         }
 
         $input['payment_mode'] = $input['paymentMode'];
-
-        if(isset($input['refundType'])) {
+        if (isset($input['refundType']) && $input['refundType'] != 0) {
             $input['refundType'] = $input['refundType'];
         }
-
         unset($input['paymentMode'], $input['noOfCheques'], $input['totalAmount']);
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);
@@ -624,6 +627,12 @@ class PaymentVoucherServices
         } else {
             $input['employeeAdvanceAccount'] = null;
             $input['employeeAdvanceAccountSystemID'] = null;
+            if (isset($input['refundType']) && $input['refundType'] != 0) {
+                $input['refundType'] = $input['refundType'];
+            }
+            else {
+                $input['refundType'] = null;
+            }
         }
 
         if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
@@ -781,21 +790,26 @@ class PaymentVoucherServices
             $input['chequePaymentYN'] = 0;
         }
 
-        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-            $input['BPVchequeDate'] = null;
-            $input['BPVchequeNo'] = null;
-            $input['expenseClaimOrPettyCash'] = null;
-
-            if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
-                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
-                    ->where('document_master_id', $input['documentSystemID'])
-                    ->where('company_id', $companySystemID)
-                    ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
-                    ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
-            }
-
-        } else {
+        // Force pdcChequeYN to 0 when invoiceType is 8 (refund)
+        if (isset($input['invoiceType']) && $input['invoiceType'] == 8) {
             $input['pdcChequeYN'] = 0;
+        } else {
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['BPVchequeDate'] = null;
+                $input['BPVchequeNo'] = null;
+                $input['expenseClaimOrPettyCash'] = null;
+
+                if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
+                        ->where('document_master_id', $input['documentSystemID'])
+                        ->where('company_id', $companySystemID)
+                        ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
+                        ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                }
+
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
         }
 
         if ((isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) || $input['paymentMode'] != 2 ) {

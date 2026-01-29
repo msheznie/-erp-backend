@@ -436,7 +436,7 @@ class ItemMasterAPIController extends AppBaseController
     {
 
         $input = $request;
-        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN','createdBy'));
+        $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($companyId);
@@ -483,7 +483,17 @@ class ItemMasterAPIController extends AppBaseController
         if (array_key_exists('createdBy', $input)) {
             if ($input['createdBy'] && !is_null($input['createdBy'])) {
 
-                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+                $createdByInput = $input['createdBy'];
+                if (is_object($createdByInput)) {
+                    $createdBy = array_filter([data_get($createdByInput, 'id')]);
+                } elseif (is_array($createdByInput)) {
+                    $createdBy = collect($createdByInput)->pluck('id')->filter()->toArray();
+                    if (empty($createdBy)) {
+                        $createdBy = collect($createdByInput)->filter()->toArray();
+                    }
+                } else {
+                    $createdBy = array_filter([$createdByInput]);
+                }
 
                 if (!empty($createdBy)) {
                     $itemMasters->whereIn('createdUserSystemID', $createdBy);

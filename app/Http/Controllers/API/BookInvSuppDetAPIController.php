@@ -1145,6 +1145,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         $itemsArray = $items->map(function($item) {
             $itemArray = $item->toArray();
             $itemArray['vatAmountSum'] = $item->getSupplierInvoiceItemDetailsVATAmountSum();
+            $itemArray['vatAmountSumWithoutExemptVAT'] = $item->getVATAmountSumWithoutExemptVAT();
             return $itemArray;
         })->toArray();
 

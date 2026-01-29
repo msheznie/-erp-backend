@@ -257,10 +257,34 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
 
-            if (!isset($input['assetStatus']) || empty($input['assetStatus'])) {
+            // Check for assetStatus at top level first (asset costing scenario)
+            if (isset($input['assetStatus']) && $input['assetStatus'] !== '' && $input['assetStatus'] !== null) {
+                // Asset costing: use top-level assetStatus
+                // Validation will continue below
+            } 
+            // Check nested in assetSerialNo array (asset allocation scenario)
+            else if (isset($input['assetSerialNo']) && is_array($input['assetSerialNo']) && count($input['assetSerialNo']) > 0) {
+                // Extract from first serial number item
+                $firstSerialNo = $input['assetSerialNo'][0];
+                if (isset($firstSerialNo['assetStatus']) && $firstSerialNo['assetStatus'] !== '' && $firstSerialNo['assetStatus'] !== null) {
+                    // Validate that all serial numbers have assetStatus
+                    foreach ($input['assetSerialNo'] as $index => $assetSN) {
+                        if (!isset($assetSN['assetStatus']) || $assetSN['assetStatus'] === '' || $assetSN['assetStatus'] === null) {
+                            return $this->sendError(trans('custom.asset_status_is_required') . ' for serial number ' . ($index + 1), 500);
+                        }
+                    }
+                    // Set at top level for consistent processing
+                    $input['assetStatus'] = $firstSerialNo['assetStatus'];
+                } else {
+                    return $this->sendError(trans('custom.asset_status_is_required'), 500);
+                }
+            } 
+            else {
+                // No assetStatus found anywhere - return error
                 return $this->sendError(trans('custom.asset_status_is_required'), 500);
             }
 
+            // Normalize assetStatus (handle both string and integer values)
             if (is_string($input['assetStatus'])) {
                 $statusId = $this->getAssetStatusId($input['assetStatus']);
                 if ($statusId === null) {
@@ -466,44 +490,70 @@ class FixedAssetMasterAPIController extends AppBaseController
                         GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty, 'assetAllocationDoneYN' => -1]);
                     } else {
 
-                        $ceil_qty = ceil($grvDetails->noQty);
-
-                        $qtyRange = range(1, $ceil_qty-$grvDetails->assetAllocatedQty);
-
-                  
+                        // Use capitalizedQuantity if provided, otherwise fall back to old calculation
+                        $capitalizedQty = isset($input['capitalizedQuantity']) && $input['capitalizedQuantity'] > 0 
+                            ? intval($input['capitalizedQuantity']) 
+                            : (ceil($grvDetails->noQty) - $grvDetails->assetAllocatedQty);
+                        
+                        // Use assetSerialNo array count as the actual quantity to process
+                        // Only process assets that have serial numbers
                         $assetAllocatedQty = $grvDetails->assetAllocatedQty;
-                        if ($qtyRange) {
-                            foreach ($qtyRange as $key => $qty) {
-                                // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                        if ($assetSerialNoCount > 0 && isset($input['assetSerialNo']) && is_array($input['assetSerialNo'])) {
+                            // Loop through the assetSerialNo array directly
+                            foreach ($input['assetSerialNo'] as $key => $serialNoData) {
+                                // Skip if no serial number
+                                if (!isset($serialNoData['faUnitSerialNo']) || !$serialNoData['faUnitSerialNo']) {
+                                    continue;
+                                }
 
-                                if ($qty <= $assetSerialNoCount) {
-                                    if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
-                                        $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
-                                        $assetSerialNoInput = $this->convertArrayToValue($input['assetSerialNo'][$key]);
-                                        $segmentAsset = SegmentMaster::find($assetSerialNoInput['serviceLineSerialNo']);
-                                        $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
-                                        $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
-                                        if ($segmentAsset) {
-                                            $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
-
-                                            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID,$input['faCatID'],$input['faSubCatID']);
-
-                                            if ($documentCodeData['status']) {
-                                                $documentCode = $documentCodeData['documentCode'];
-                                                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
-                                                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
-                                                    ->first();
-
-                                                if ($checkForDuplicateCode) {
-                                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
-                                                }
-
-                                            } else {
-                                                return $this->sendError(trans('custom.asset_code_not_configured'), 500);
-                                            }
+                                $input["faUnitSerialNo"] = $serialNoData['faUnitSerialNo'];
+                                $assetSerialNoInput = $this->convertArrayToValue($serialNoData);
+                                $segmentAsset = SegmentMaster::find($assetSerialNoInput['serviceLineSerialNo']);
+                                
+                                if (!$segmentAsset) {
+                                    return $this->sendError(trans('custom.segment_not_found'), 500);
+                                }
+                                
+                                $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
+                                $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
+                                $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
+                                
+                                // Extract assetStatus from this serial number if it exists
+                                if (isset($assetSerialNoInput['assetStatus']) && $assetSerialNoInput['assetStatus'] !== '' && $assetSerialNoInput['assetStatus'] !== null) {
+                                    $serialAssetStatus = $assetSerialNoInput['assetStatus'];
+                                    // Normalize assetStatus (handle both string and integer values)
+                                    if (is_string($serialAssetStatus)) {
+                                        $statusId = $this->getAssetStatusId($serialAssetStatus);
+                                        if ($statusId === null) {
+                                            return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
                                         }
+                                        $input['assetStatus'] = $statusId;
+                                    } else {
+                                        $input['assetStatus'] = (int)$serialAssetStatus;
+                                    }
+                                    
+                                    // Validate the status
+                                    $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+                                    if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
                                     }
                                 }
+                                
+                                // Generate asset code - this will increment the serial number properly
+                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID, $input['faCatID'], $input['faSubCatID']);
+
+                                if (!$documentCodeData['status']) {
+                                    return $this->sendError(trans('custom.asset_code_not_configured'), 500);
+                                }
+
+                                $documentCode = $documentCodeData['documentCode'];
+                                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)->first();
+
+                                if ($checkForDuplicateCode) {
+                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
+                                }
+
                                 $input["serialNo"] = $lastSerialNumber;
                                 $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
                                 $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
@@ -564,6 +614,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         }
 
                         $allocate_qty = $assetAllocatedQty;
+                        $ceil_qty = ceil($grvDetails->noQty);
                         if($ceil_qty > $assetAllocatedQty)
                         {
                             $allocate_qty = $ceil_qty;
@@ -1358,6 +1409,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         $assetAllocation = $this->fixedAssetMasterRepository->fixedAssetMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($assetAllocation)
+            ->addColumn('not_capitalized_qty', function ($row) {
+                $receivedQty = $row->noQty ?? 0;
+                $balanceQty = $row->assetAllocatedQty ?? 0;
+                $notCapitalizedQty = $receivedQty - $balanceQty;
+                // Ensure non-negative and integer
+                return max(0, (int)$notCapitalizedQty);
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -1507,7 +1565,10 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
         $code = $input['documentSystemCode'];
-        $asset = FixedAssetMaster::find($code);
+        $asset = null;
+        if ($code) {
+            $asset = FixedAssetMaster::find($code);
+        }
 
         $erpAttributes = ErpAttributes::withTrashed()->with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
             $query->where('document_master_id', $code)->orWhere('document_master_id', null);
@@ -1523,20 +1584,32 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
-            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+            if ($code) {
+                $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+            } else {
+                $query->where('document_master_id', null);
+            }
         });
 
         $erpAttributes = $erpAttributes->get();
 
             foreach ($erpAttributes as $index => $erpAttribute) {
                 if($erpAttribute->document_master_id == null) {
-                    if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
-                        if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
-                            unset($erpAttributes[$index]);
+                    // Only check asset status if asset exists
+                    if ($asset) {
+                        if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
+                            if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
+                                unset($erpAttributes[$index]);
+                            }
                         }
-                    }
-                    if ($asset->approved == -1) {
-                        if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                        if ($asset->approved == -1) {
+                            if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                                unset($erpAttributes[$index]);
+                            }
+                        }
+                    } else {
+                        // If no asset, show only active attributes
+                        if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
                             unset($erpAttributes[$index]);
                         }
                     }
@@ -2891,33 +2964,27 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetDetails(Request $request) {
         $input = $request->all();
 
-        // Check if both parameters are provided
-        if (isset($input['asset_codes']) && isset($input['audit_categories'])) {
+        // Check if both parameters are provided and non-empty
+        $hasAssetCodes = isset($input['asset_codes']) && is_array($input['asset_codes']) && !empty($input['asset_codes']);
+        $hasAuditCategories = isset($input['audit_categories']) && is_array($input['audit_categories']) && !empty($input['audit_categories']);
+        
+        if ($hasAssetCodes && $hasAuditCategories) {
             return $this->sendError('You can only provide either asset_codes or audit_categories, not both', 422);
         }
 
-        // Check if neither parameter is provided
-        if (!isset($input['asset_codes']) && !isset($input['audit_categories'])) {
-            return $this->sendError('Either asset_codes or audit_categories is required', 422);
-        }
-
         $validator = \Validator::make($input, [
-            'asset_codes' => 'sometimes|required_without:audit_categories|array|min:1',
-            'audit_categories' => 'sometimes|required_without:asset_codes|array|min:1',
+            'asset_codes' => 'sometimes|array',
+            'audit_categories' => 'sometimes|array',
             'page' => 'sometimes|integer|min:1',
-            'per_page' => 'sometimes|integer|min:1|max:5',
+            'per_page' => 'sometimes|integer|min:1|max:50',
         ], [
-            'asset_codes.required_without' => 'asset_codes is required when audit_categories is not provided',
             'asset_codes.array' => 'asset_codes must be an array',
-            'asset_codes.min' => 'At least one asset code is required',
-            'audit_categories.required_without' => 'audit_categories is required when asset_codes is not provided',
             'audit_categories.array' => 'audit_categories must be an array',
-            'audit_categories.min' => 'At least one audit category is required',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
             'per_page.integer' => 'per_page must be an integer',
             'per_page.min' => 'per_page must be at least 1',
-            'per_page.max' => 'per_page cannot exceed 5',
+            'per_page.max' => 'per_page cannot exceed 50',
         ]);
 
         if ($validator->fails()) {
@@ -2926,8 +2993,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companySystemID = $input['company_id'];
-        $searchByAssetCodes = isset($input['asset_codes']);
-        $searchByAuditCategory = isset($input['audit_categories']);
+        $searchByAssetCodes = $hasAssetCodes;
+        $searchByAuditCategory = $hasAuditCategories;
 
         $assetCodes = [];
         $auditCategories = [];
@@ -2993,7 +3060,90 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             // Get pagination parameters
             $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 5);
+            $perPage = $request->get('per_page', 10);
+
+            // Build the query based on search type
+            $query = FixedAssetMaster::ofCompany([$companySystemID]);
+            
+            if ($searchByAssetCodes) {
+                // Filter by asset codes
+                $query->whereIn('faCode', $assetCodes);
+            } 
+            elseif ($searchByAuditCategory) {
+                // Filter by audit categories
+                $query->whereHas('finance_category', function($subQ) use ($auditCategories) {
+                    $subQ->where(function($qq) use ($auditCategories) {
+                        foreach ($auditCategories as $index => $auditCategory) {
+                            if ($index == 0) {
+                                $qq->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            } else {
+                                $qq->orWhere('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Apply common filters for all queries (only approved and not disposed assets)
+            $query->where('approved', -1)
+                  ->where('DIPOSED', '!=', -1);
+            
+            $query->with([
+                'departmentMaster' => function($query) {
+                    $query->select('departmentSystemID', 'DepartmentID');
+                },
+                'department' => function($query) {
+                    $query->select('serviceLineSystemID', 'ServiceLineCode');
+                },
+                'location' => function($query) {
+                    $query->select('locationID', 'locationName');
+                },
+                'asset_type' => function($query) {
+                    $query->select('typeID', 'typeDes');
+                },
+                'category_by' => function($query) {
+                    $query->select('faCatID', 'catDescription');
+                },
+                'sub_category_by' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by2' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by3' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'finance_category' => function($query) {
+                    $query->select('faFinanceCatID', 'financeCatDescription');
+                },
+                'posttogl_by' => function($query) {
+                    $query->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+                'depperiod_by' => function($query) use ($today) {
+                    $query->whereHas('master_by', function ($q) use ($today) {
+                        $q->where('approved', -1)
+                        ->where('depDate', '<', $today);
+                    })
+                    ->selectRaw('faID, SUM(depAmountLocal) as totalDepAmountLocal, SUM(depAmountRpt) as totalDepAmountRpt')
+                    ->groupBy('faID');
+                },
+                'group_all_to' => function($query) {
+                    $query->where('approved', -1);
+                },
+                'insurance_detail' => function($query) {
+                    $query->with([
+                        'policy_by' => function($q) {
+                            $q->select('insurancePolicyTypesID', 'policyDescription');
+                        },
+                        'location_by' => function($q) {
+                            $q->select('locationID', 'locationName');
+                        }
+                    ]);
+                },
+                'warranty_detail' => function($query) {
+                    $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
+                }
+            ]);
 
 
             $query->orderBy('faID', 'asc');

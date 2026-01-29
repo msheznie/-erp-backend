@@ -4266,6 +4266,7 @@ return
     'purchasereturnmasterrefferedback_updated_successfu' => 'تم تحديث إرجاع السجل الرئيسي لمرتجع المشتريات بنجاح',
     'pv_document_cannot_confirm_without_details' => 'لا يمكن تأكيد مستند إيصال الدفع بدون تفاصيل',
     'qty' => 'الكمية',
+    'not_capitalized_quantity' => 'الكمية غير الممولة',
     'qty_cannot_be_less_than_or_equal_to_zero' => 'لا يمكن أن تكون الكمية أقل من أو تساوي صفرًا',
     'qty_cannot_be_zero' => 'لا يمكن أن تكون الكمية صفرًا',
     'quantity_cannot_be_greater_than_total_materiel_req' => 'لا يمكن أن تكون الكمية أكبر من إجمالي كمية طلب المواد',
