@@ -270,6 +270,8 @@ class CompanyFinanceYear extends Model
         return self::where('companySystemID', $companySystemID)
             ->whereDate('bigginingDate', '<=', $date)
             ->whereDate('endingDate', '>=', $date)
+            ->where('isCurrent', -1)
+            ->where('isActive', -1)
             ->first();
     }
 
