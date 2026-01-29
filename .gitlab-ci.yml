@@ -1,0 +1,4 @@
+include:
+  - project: 'php/cicd/devops/ci-template/templates'
+    ref: 'main'
+    file: 'pipeline.yml'
