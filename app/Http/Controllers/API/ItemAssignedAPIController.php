@@ -437,7 +437,9 @@ class ItemAssignedAPIController extends AppBaseController
             if($input['createdBy'] && !is_null($input['createdBy']))
             {
                 $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
-                $itemMasters->whereIn('createdUserSystemID', $createdBy);
+                $itemMasters->whereHas('item_master', function ($q) use ($createdBy) {
+                    $q->whereIn('createdUserSystemID', $createdBy);
+                });
             }
 
         }
