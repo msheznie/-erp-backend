@@ -202,7 +202,7 @@ class SRMDocumentMaster extends Model
                 }
             });
 
-            if(isset($params['ids']) && !empty($params['uuid']))
+            if(isset($params['ids']))
             {
                 $query->whereNotIn('id', $params['ids']);
             }

@@ -2758,8 +2758,7 @@ class TenderMasterRepository extends BaseRepository
                     ->toArray();
                 $params = ['masterData' => true, 'docSystemId' => $documentSystemID, 'ids' => $existingParentIds];
                 $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
-                Log::info($getDocumentMasterData);
-
+ 
                 if (!empty( $getDocumentMasterData)) {
                     foreach ($getDocumentMasterData as $doc) {
                         $documentAttachment = [
