@@ -5481,7 +5481,7 @@ class Helper
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
                                     $loginLink = rtrim(config('srm.url.loginLink'), '/register/');
-                                    $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]) . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
+                                    $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]) . Helper::getSupplierEmailFooter($docApproved->companySystemID);
                                     $dataEmail['alertMessage'] = trans('email.registration_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -5502,7 +5502,7 @@ class Helper
                                     <strong>{$tenderCode}</strong>, <strong>{$tenderTitle}</strong>.</p>
                                     <p><strong>Comment:</strong><br />{$comment}</p>
                                     <p>Kindly submit the bid before the bid submission closing date.</p>
-                                    <p>Thank you,</p> <br />" . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
+                                    <p>Thank you,</p> <br />" . Helper::getSupplierEmailFooter($docApproved->companySystemID);;
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
@@ -5520,7 +5520,7 @@ class Helper
                                 if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = trans('email.appointment_approved_body') . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
+                                    $temp = trans('email.appointment_approved_body') . Helper::getSupplierEmailFooter($docApproved->companySystemID);;
                                     $dataEmail['alertMessage'] = trans('email.appointment_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
