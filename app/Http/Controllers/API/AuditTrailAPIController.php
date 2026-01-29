@@ -29,6 +29,7 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
 use App\Services\AuditLog\EmployeeAuditReportService;
+use Illuminate\Support\Facades\DB;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -926,8 +927,92 @@ class AuditTrailAPIController extends AppBaseController
 
     public function auditReportFilters(Request $request)
     {
-        return app(CompanyNavigationMenusAPIController::class)
-            ->getCompanyNavigation($request);
+        $companyID = $request->get('companyID');
+        $languageCode = app()->getLocale() ?? 'en';
+        $isArabic = ($languageCode === 'ar');
+        
+        // Get navigation menus filtered by isPortalYN = 0
+        $navigationMenus = DB::table('srp_erp_navigationmenus')
+            ->select(DB::raw('srp_erp_navigationmenus.*, srp_erp_navigationmenus_languages.description as secondaryLanguageDescription'))
+            ->leftJoin('srp_erp_navigationmenus_languages', function ($join) use ($languageCode) {
+                $join->on('srp_erp_navigationmenus.navigationMenuID', '=', 'srp_erp_navigationmenus_languages.navigationMenuID')
+                    ->where('srp_erp_navigationmenus_languages.languageCode', '=', $languageCode);
+            })
+            ->where('srp_erp_navigationmenus.isPortalYN', '=', 0)
+            ->orderBy('srp_erp_navigationmenus.sortOrder')
+            ->get();
+
+        // Build navigation map for quick lookup
+        $navMap = [];
+        foreach ($navigationMenus as $nav) {
+            $navMap[$nav->navigationMenuID] = $nav;
+        }
+
+        // Build tree paths for leaf nodes (nodes without children)
+        $leafNodes = [];
+        foreach ($navigationMenus as $nav) {
+            // Check if this is a leaf node (no children)
+            $hasChildren = false;
+            foreach ($navigationMenus as $child) {
+                if ($child->masterID == $nav->navigationMenuID) {
+                    $hasChildren = true;
+                    break;
+                }
+            }
+            
+            if (!$hasChildren) {
+                $leafNodes[] = $nav;
+            }
+        }
+
+        // Build paths for each leaf node
+        $paths = [];
+        foreach ($leafNodes as $leaf) {
+            $path = [];
+            $current = $leaf;
+            
+            // Traverse up the tree to build the path
+            while ($current) {
+                // Use description for English, secondaryLanguageDescription for Arabic/other languages
+                if ($languageCode === 'en') {
+                    $label = $current->description;
+                } else {
+                    // For Arabic and other languages, prefer secondaryLanguageDescription, fallback to description
+                    $label = $current->secondaryLanguageDescription ?: $current->description;
+                }
+                
+                if ($label) {
+                    $path[] = $label;
+                }
+                
+                // Move to parent
+                if ($current->masterID && isset($navMap[$current->masterID])) {
+                    $current = $navMap[$current->masterID];
+                } else {
+                    $current = null;
+                }
+            }
+            
+            // Reverse path to get root-to-leaf order
+            $path = array_reverse($path);
+            
+            if (!empty($path)) {
+                // Join with arrow separator (RTL-aware for Arabic)
+                $separator = $isArabic ? ' ← ' : ' → ';
+                $pathString = implode($separator, $path);
+                
+                $paths[] = [
+                    'navigationMenuID' => $leaf->navigationMenuID,
+                    'description' => $pathString,
+                ];
+            }
+        }
+
+        usort($paths, function($a, $b) {
+            return strcmp($a['description'], $b['description']);
+        });
+
+        return $this->sendResponse($paths, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 
@@ -948,7 +1033,7 @@ class AuditTrailAPIController extends AppBaseController
             'locale' => $locale,
             'fromDate' => $input['fromDate'] ?? null,
             'toDate' => $input['toDate'] ?? null,
-            'employeeId' => null,
+            'employeeId' => $input['employeeId'] ?? null,
             'event' => null,
             'search' => [],
         ];
@@ -974,7 +1059,7 @@ class AuditTrailAPIController extends AppBaseController
             'locale' => $locale,
             'fromDate' => $input['fromDate'] ?? null,
             'toDate' => $input['toDate'] ?? null,
-            'employeeId' => null, // Fetch all employees
+            'employeeId' => $input['employeeId'] ?? null,
             'accessType' => null, // Fetch all access types
             'search' => [],
         ];
@@ -984,91 +1069,222 @@ class AuditTrailAPIController extends AppBaseController
         return $result['data'] ?? [];
     }
 
-    public function employeeActivityAuditReport(Request $request,EmployeeAuditReportService $reportService)
+    public function employeeActivityAuditReport(Request $request, EmployeeAuditReportService $reportService)
     {
-
-        $screens = $request->screensAccessed ?? [];
-        $eventTypes = $request->eventTypes ?? [];
-        $employees = is_array($request->employees) ? $request->employees : [$request->employees];
-        $fromDate = $request->fromDate
-            ? Carbon::parse($request->fromDate)
-            : Carbon::parse(env('LOKI_START_DATE'));
-        $toDate = $request->toDate
-            ? Carbon::parse($request->toDate)
-            : Carbon::now();
-
-        $selectedColumns = $request->selectedColumns ?? [];
-
+        $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
         
-        $previousLocale = app()->getLocale();
-        app()->setLocale('en');
+        if (isset($result['error'])) {
+            return $result['error'];
+        }
+
+        return $this->sendResponse($result['data'], 'Filtered data fetched successfully');
+    }
+
+    /**
+     * Fetch and process employee activity audit data
+     * 
+     * @param Request $request
+     * @param EmployeeAuditReportService $reportService
+     * @return array Returns ['data' => [...]] on success or ['error' => Response] on validation error
+     */
+    private function fetchEmployeeActivityAuditData(Request $request, EmployeeAuditReportService $reportService): array
+    {
+        // Validate all required fields
+        $validator = \Validator::make($request->all(), [
+            'screensAccessed' => 'required|array|min:1',
+            'eventTypes' => 'required|array|min:1',
+            'employees' => 'required',
+            'fromDate' => 'required|date_format:Y-m-d H:i:s',
+            'toDate' => 'required|date_format:Y-m-d H:i:s',
+            'selectedColumns' => 'required|array|min:1',
+        ], [
+            'screensAccessed.required' => trans('custom.screens_accessed_required') ?: 'Screens accessed is required',
+            'screensAccessed.array' => trans('custom.screens_accessed_must_be_array') ?: 'Screens accessed must be an array',
+            'screensAccessed.min' => trans('custom.screens_accessed_min_one') ?: 'At least one screen must be selected',
+            'eventTypes.required' => trans('custom.event_types_required') ?: 'Event types is required',
+            'eventTypes.array' => trans('custom.event_types_must_be_array') ?: 'Event types must be an array',
+            'eventTypes.min' => trans('custom.event_types_min_one') ?: 'At least one event type must be selected',
+            'employees.required' => trans('custom.employees_required') ?: 'Employees is required',
+            'fromDate.required' => trans('custom.from_date_required') ?: 'From date is required',
+            'fromDate.date_format' => trans('custom.from_date_format') ?: 'From date must be in format Y-m-d H:i:s',
+            'toDate.required' => trans('custom.to_date_required') ?: 'To date is required',
+            'toDate.date_format' => trans('custom.to_date_format') ?: 'To date must be in format Y-m-d H:i:s',
+            'selectedColumns.required' => trans('custom.selected_columns_required') ?: 'Selected columns is required',
+            'selectedColumns.array' => trans('custom.selected_columns_must_be_array') ?: 'Selected columns must be an array',
+            'selectedColumns.min' => trans('custom.selected_columns_min_one') ?: 'At least one column must be selected'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.validation_failed') ?: 'Validation failed',
+                    $validator->errors(),
+                    422
+                )
+            ];
+        }
+
+        // Parse and validate dates
         try {
-            $authLogs = $this->fetchUserAuditLogs($request);
-            $navLogs = $this->fetchNavigationAccessLogs($request);
-        } finally {
-            app()->setLocale($previousLocale);
+            $fromDate = Carbon::parse($request->fromDate);
+            $toDate = Carbon::parse($request->toDate);
+        } catch (\Exception $e) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.invalid_date_format') ?: 'Invalid date format',
+                    ['error' => $e->getMessage()],
+                    422
+                )
+            ];
         }
 
-        $auditLogs = $this->auditLogs(
-            $request->merge(['isExport' => true, 'isFromTracking' => true])
-        );
-
-        if (is_object($auditLogs) && method_exists($auditLogs, 'getData')) {
-            $auditLogs = $auditLogs->getData(true)['data'] ?? [];
+        // Validate date range
+        if ($fromDate->gt($toDate)) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.from_date_cannot_be_greater_than_to_date') ?: 'From date cannot be greater than to date',
+                    [],
+                    422
+                )
+            ];
         }
 
+        $input = $request->all();
+
+        $employeeIds = collect($input['employees'])->pluck('id')->toArray();
+        $screenAccessedIds = collect($input['screensAccessed'])->pluck('id')->toArray();
+        $eventTypeIds = collect($input['eventTypes'])->pluck('id')->toArray();
+
+        $authLogs = [];
+        $navLogs = [];
+        $auditLogs = [];
+
+        if (in_array('login', $eventTypeIds) || in_array('logout', $eventTypeIds) || in_array('login_failed', $eventTypeIds)) {
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
+
+            if (in_array('login', $eventTypeIds)) {
+                $params['event'] = 1;
+                $resultLoginLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            } else if (in_array('logout', $eventTypeIds)) {
+                $params['event'] = 2;
+                $resultLogoutLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            } else if (in_array('login_failed', $eventTypeIds)) {
+                $params['event'] = 3;
+                $resultLoginFailedLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            }
+
+            $authLogs = array_merge($resultLoginLogs['data'] ?? [], $resultLogoutLogs['data'] ?? [], $resultLoginFailedLogs['data'] ?? []);
+        }
+
+        if (in_array('navigation-read', $eventTypeIds) || in_array('navigation-create', $eventTypeIds) || in_array('navigation-edit', $eventTypeIds)) {
         
-        $filtered = $reportService->generate(
-            $authLogs,
-            $navLogs,
-            $auditLogs,
-            [
-                'employees' => $employees,
-                'eventTypes' => $eventTypes,
-                'screens' => $screens,
-                'fromDate' => $fromDate,
-                'toDate' => $toDate,
-            ]
-        );
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
 
-        $companyName = collect($filtered)
-            ->pluck('company')
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+            if (in_array('navigation-read', $eventTypeIds)) {
+                $params['accessType'] = '1';
+                $resultNavigationReadLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            } else if (in_array('navigation-create', $eventTypeIds)) {
+                $params['accessType'] = '2';
+                $resultNavigationCreateLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            } else if (in_array('navigation-edit', $eventTypeIds)) {
+                $params['accessType'] = '3';
+                $resultNavigationEditLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            }
 
-        if (!empty($selectedColumns)) {
-            $filtered = $filtered->map(function ($row) use ($selectedColumns) {
-                return collect($row)->only($selectedColumns)->all();
+            $navLogs = array_merge($resultNavigationReadLogs['data'] ?? [], $resultNavigationCreateLogs['data'] ?? [], $resultNavigationEditLogs['data'] ?? []);
+            
+        }
+
+        if (in_array('audit-create', $eventTypeIds) || in_array('audit-update', $eventTypeIds) || in_array('audit-delete', $eventTypeIds)) {
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'companyId' => $input['companyId'] ?? null,
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+                'isFromTracking' => true,
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'accessType' => $input['accessType'] ?? null,
+            ];
+            
+            if (in_array('audit-create', $eventTypeIds)) {
+                $params['action'] = '1';
+                $resultAuditCreateLogs = $this->victoriaLogsService->getAuditLogs($params);
+            } else if (in_array('audit-update', $eventTypeIds)) {
+                $params['action'] = '2';
+                $resultAuditUpdateLogs = $this->victoriaLogsService->getAuditLogs($params);
+            } else if (in_array('audit-delete', $eventTypeIds)) {
+                $params['action'] = '3';
+                $resultAuditDeleteLogs = $this->victoriaLogsService->getAuditLogs($params);
+            }
+
+            $auditLogs = array_merge($resultAuditCreateLogs['data'] ?? [], $resultAuditUpdateLogs['data'] ?? [], $resultAuditDeleteLogs['data'] ?? []);
+        }
+
+        $data = array_merge($authLogs, $navLogs, $auditLogs);
+
+        if (count($employeeIds) > 1) {
+            $data = array_filter($data, function($item) use ($employeeIds) {
+                return in_array($item['employeeId'] ?? $item['employee_id'] ?? null, $employeeIds);
             });
         }
 
-        $data = [
-            'data' => empty($filtered->values()->all()) ? [] : $filtered->values()->all(),
-            'companyName' => empty($companyName) ? [] : $companyName,
-            'input' => ['employees' => empty($employees) ? [] : $employees],
-        ];
+        // Map data to selected column format
+        $selectedColumns = $request->selectedColumns ?? [];
+        $mappedData = $reportService->mapToSelectedColumns($data, $selectedColumns);
 
+        // Sort by amendedDateTime descending
+        usort($mappedData, function($a, $b) {
+            $dateA = $a['amendedDateTime'] ?? $a['date_time'] ?? '';
+            $dateB = $b['amendedDateTime'] ?? $b['date_time'] ?? '';
+            return strcmp($dateB, $dateA); // Descending order
+        });
 
-        return $this->sendResponse($data, 'Filtered data fetched successfully');
+        return ['data' => $mappedData];
     }
 
     public function exportEmployeeActivityAuditReport(Request $request)
     {
         try {
-            $response = $this->employeeActivityAuditReport($request, app(EmployeeAuditReportService::class));
+            $reportService = app(EmployeeAuditReportService::class);
+            $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
+            
+            if (isset($result['error'])) {
+                return $result['error'];
+            }
 
-            $responseData = $response->getData(true);
+            $mappedData = $result['data'];
 
-            // Check if response is successful and has data
-            if (empty($responseData['success']) || empty($responseData['data']['data'])) {
+            // Check if response has data
+            if (empty($mappedData)) {
                 return $this->sendError(trans('custom.no_employee_activity_logs_found'), 404);
             }
 
             $reportData = [
-                'data' => $responseData['data']['data'] ?? [],
-                'companyName' => $responseData['data']['companyName'] ?? [],
+                'data' => $mappedData,
+                'companyName' => [],
                 'fromDate' => $request->fromDate ?? null,
                 'toDate' => $request->toDate ?? null,
                 'selectedColumns' => $request->selectedColumns ?? [],

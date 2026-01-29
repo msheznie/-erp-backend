@@ -82,25 +82,53 @@
                                 $defaultValue = in_array($fieldName, ['employee', 'sessionId']) ? '' : ($fieldName === 'loginTs' || $fieldName === 'logoutTs' ? 'N/A' : '-');
                                 $fieldValue = $record[$fieldName] ?? null;
 
-                                if (is_array($fieldValue)) {
-                                    $filteredValues = array_filter(array_map('strval', $fieldValue), function($val) {
-                                        return trim($val) !== '' && trim($val) !== '-' && trim($val) !== '[]';
+                                // Handle objects (currentValue, previousValue)
+                                if (is_object($fieldValue) || (is_array($fieldValue) && !empty($fieldValue) && !isset($fieldValue[0]))) {
+                                    // Convert object/associative array to formatted string
+                                    $formatted = [];
+                                    foreach ((array)$fieldValue as $key => $val) {
+                                        if ($val !== null && $val !== '' && $val !== '[]') {
+                                            if (is_object($val) || (is_array($val) && !isset($val[0]))) {
+                                                $formatted[] = $key . ': ' . json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                            } else {
+                                                $formatted[] = $key . ': ' . (is_array($val) ? implode(', ', array_filter($val)) : $val);
+                                            }
+                                        }
+                                    }
+                                    
+                                    if (!empty($formatted)) {
+                                        if (in_array($fieldName, $columnsMultiLine)) {
+                                            $fieldValue = implode('<br>', $formatted);
+                                        } else {
+                                            $fieldValue = implode('; ', $formatted);
+                                        }
+                                    } else {
+                                        $fieldValue = $defaultValue;
+                                    }
+                                } elseif (is_array($fieldValue)) {
+                                    // Handle indexed arrays
+                                    $filteredValues = array_filter(array_map(function($val) {
+                                        if (is_object($val) || (is_array($val) && !isset($val[0]))) {
+                                            return json_encode($val, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                                        }
+                                        return strval($val);
+                                    }, $fieldValue), function($val) {
+                                        return trim($val) !== '' && trim($val) !== '-' && trim($val) !== '[]' && trim($val) !== 'null';
                                     });
 
                                     if (!empty($filteredValues)) {
                                         if (in_array($fieldName, $columnsMultiLine)) {
-                                            
                                             $fieldValue = implode('<br>', $filteredValues);
                                         } else {
-                                            
                                             $fieldValue = implode(', ', $filteredValues);
                                         }
                                     } else {
                                         $fieldValue = $defaultValue;
                                     }
                                 } else {
+                                    // Handle scalar values
                                     $fieldValue = (string)($fieldValue ?? $defaultValue);
-                                    if (trim($fieldValue) === '' || trim($fieldValue) === '[]' || trim($fieldValue) === 'null') {
+                                    if (trim($fieldValue) === '' || trim($fieldValue) === '[]' || trim($fieldValue) === 'null' || trim($fieldValue) === 'undefined') {
                                         $fieldValue = $defaultValue;
                                     }
                                 }

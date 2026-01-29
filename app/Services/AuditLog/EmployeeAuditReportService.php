@@ -7,216 +7,202 @@ use Illuminate\Support\Collection;
 
 class EmployeeAuditReportService
 {
-    public function generate(
-        array $authLogs,
-        array $navLogs,
-        array $auditLogs,
-        array $filters
-    ): Collection {
+     /**
+     * Map merged audit log data to selected column format
+     *
+     * @param array $data Merged data from auth, navigation, and audit logs
+     * @param array $selectedColumns Array of selected column keys
+     * @return array Mapped data with standardized column names
+     */
+    public function mapToSelectedColumns(array $data, array $selectedColumns): array
+    {
+        if (empty($selectedColumns)) {
+            // If no columns selected, return all available columns
+            $selectedColumns = [
+                'employeeName', 'eventType', 'actionDescription', 'recordId',
+                'loginStatus', 'loginTs', 'logoutTs', 'status', 'sessionId',
+                'amendedDateTime', 'currentValue', 'device', 'navigationPath',
+                'previousValue', 'ipAddress'
+            ];
+        }
 
-        $allowedEvents = [
-            'login', 'logout', 'login_failed',
-            'navigation-read', 'navigation-create', 'navigation-edit',
-            'audit-create', 'audit-update', 'audit-delete'
-        ];
+        $mappedData = [];
+        $sessionData = []; // Store session-level data for reference
 
-        $combined = [];
-
-        foreach (array_merge($authLogs, $navLogs, $auditLogs) as $log) {
-               
-            $sid = $log['session_id'] ?? 'NO_SESSION';
+        foreach ($data as $log) {
+            $channel = strtolower($log['channel'] ?? '');
+            $sessionId = $log['session_id'] ?? $log['sessionId'] ?? 'NO_SESSION';
             
-
-            if (!isset($combined[$sid])) {
-                $combined[$sid] = [
-                    'company' => null,
-                    'employeeId' => $log['employeeId'] ?? null,
-                    'employeeName' => $log['employeeName'] ?? null,
-                    'sessionId' => $sid,
+            // Initialize session data if not exists
+            if (!isset($sessionData[$sessionId])) {
+                $sessionData[$sessionId] = [
                     'loginTs' => null,
                     'logoutTs' => null,
                     'loginStatus' => null,
-                    'eventType' => [],
-                    'actionDescription' => [],
-                    'recordId' => [],
-                    'navigationPath' => [],
-                    'screenAccessed' => [],
-                    'previousValue' => [],
-                    'currentValue' => [],
-                    'status' => 'Success',
-                    'ipAddress' => $log['ipAddress'] ?? $log['ip_address'] ?? null,
-                    'device' => $log['deviceInfo'] ?? $log['device'] ?? null,
-                    'amendedDateTime' => $log['amended_at'] ?? $log['date_time'] ?? null,
+                    'ipAddress' => null,
+                    'device' => null,
                 ];
             }
-            
 
-            $eventType = $this->resolveEventType($log, $combined[$sid]);
+            // Extract employee information
+            $employeeName = $log['employeeName'] ?? $log['user_name'] ?? $log['employee_name'] ?? '-';
+            $employeeId = $log['employeeId'] ?? $log['employee_id'] ?? $log['user_id'] ?? null;
 
-            if (!in_array($eventType, $allowedEvents)) {
-                $eventType = 'login_failed';
+            // Determine event type based on channel
+            $eventType = $this->determineEventType($log, $channel);
+
+            // Update session data for auth logs
+            if ($channel === 'auth' || $channel === 'auth_audit') {
+                $event = strtolower($log['event'] ?? '');
+                if ($event === 'login') {
+                    $sessionData[$sessionId]['loginTs'] = $log['date_time'] ?? null;
+                    $sessionData[$sessionId]['loginStatus'] = ucfirst($log['status'] ?? 'success');
+                } elseif ($event === 'logout') {
+                    $sessionData[$sessionId]['logoutTs'] = $log['date_time'] ?? null;
+                }
+                $sessionData[$sessionId]['ipAddress'] = $log['ipAddress'] ?? $log['ip_address'] ?? null;
+                $sessionData[$sessionId]['device'] = $log['deviceInfo'] ?? $log['device'] ?? $log['user_agent'] ?? null;
             }
-            
-            if (($log['channel'] ?? '') === 'navigation' && !empty($log['navigationPath'])) {
-                $combined[$sid]['screenAccessed'][] = $log['navigationPath'];
-            }
 
-            $combined[$sid]['eventType'][] = $eventType;
+            // Build mapped row
+            $mappedRow = [];
 
-            if (($log['channel'] ?? '') === 'audit') {
+            foreach ($selectedColumns as $column) {
+                switch ($column) {
+                    case 'employeeName':
+                        $mappedRow['employeeName'] = $employeeName;
+                        break;
 
-                $this->push(
-                    $combined[$sid]['actionDescription'],
-                    $log['narration'] ?? null
-                );
+                    case 'eventType':
+                        $mappedRow['eventType'] = $eventType;
+                        break;
 
-                $this->push(
-                    $combined[$sid]['recordId'],
-                    $log['doc_code'] ?? null
-                );
+                    case 'actionDescription':
+                        if ($channel === 'audit' || $channel === 'audit_audit') {
+                            $mappedRow['actionDescription'] = $log['narration'] ?? $log['message'] ?? '-';
+                        } elseif ($channel === 'navigation' || $channel === 'navigation_access') {
+                            $mappedRow['actionDescription'] = $log['screenAccessed'] ?? $log['navigationPath'] ?? $log['description'] ?? '-';
+                        } else {
+                            $mappedRow['actionDescription'] = $log['event'] ?? $log['message'] ?? '-';
+                        }
+                        break;
 
-                foreach ($log['data'] ?? [] as $change) {
-                    $this->push(
-                        $combined[$sid]['previousValue'],
-                        $change->previous_value ?? null
-                    );
+                    case 'recordId':
+                        $mappedRow['recordId'] = $log['doc_code'] ?? $log['transaction_id'] ?? '-';
+                        break;
 
-                    $this->push(
-                        $combined[$sid]['currentValue'],
-                        $change->new_value ?? null
-                    );
+                    case 'loginStatus':
+                        $mappedRow['loginStatus'] = $sessionData[$sessionId]['loginStatus'] ?? ($log['status'] ?? 'Success');
+                        break;
+
+                    case 'loginTs':
+                        $mappedRow['loginTs'] = $sessionData[$sessionId]['loginTs'] ?? '-';
+                        break;
+
+                    case 'logoutTs':
+                        $mappedRow['logoutTs'] = $sessionData[$sessionId]['logoutTs'] ?? '-';
+                        break;
+
+                    case 'status':
+                        $mappedRow['status'] = $log['status'] ?? 'Success';
+                        break;
+
+                    case 'sessionId':
+                        $mappedRow['sessionId'] = $sessionId !== 'NO_SESSION' ? $sessionId : '-';
+                        break;
+
+                    case 'amendedDateTime':
+                        $mappedRow['amendedDateTime'] = $log['date_time'] ?? $log['amended_at'] ?? '-';
+                        break;
+
+                    case 'currentValue':
+                        if ($channel === 'audit' || $channel === 'audit_audit') {
+                            $dataField = is_string($log['data'] ?? null) ? json_decode($log['data'], true) : ($log['data'] ?? null);
+                            $mappedRow['currentValue'] = $dataField ?? '-';
+                        } else {
+                            $mappedRow['currentValue'] = '-';
+                        }
+                        break;
+
+                    case 'previousValue':
+                        if ($channel === 'audit' || $channel === 'audit_audit') {
+                            $dataField = is_string($log['data'] ?? null) ? json_decode($log['data'], true) : ($log['data'] ?? null);
+                            $mappedRow['previousValue'] = $dataField ?? '-';
+                        } else {
+                            $mappedRow['previousValue'] = '-';
+                        }
+                        break;
+
+                    case 'device':
+                        $mappedRow['device'] = $sessionData[$sessionId]['device'] ?? $log['deviceInfo'] ?? $log['device'] ?? $log['user_agent'] ?? '-';
+                        break;
+
+                    case 'navigationPath':
+                        $mappedRow['navigationPath'] = $log['navigationPath'] ?? $log['screenAccessed'] ?? '-';
+                        break;
+
+                    case 'ipAddress':
+                        $mappedRow['ipAddress'] = $sessionData[$sessionId]['ipAddress'] ?? $log['ipAddress'] ?? $log['ip_address'] ?? '-';
+                        break;
+
+                    default:
+                        // For any other column, try to get from log directly
+                        $mappedRow[$column] = $log[$column] ?? $log[lcfirst($column)] ?? '-';
+                        break;
                 }
             }
 
-
-            $this->push($combined[$sid]['navigationPath'], $log['navigationPath'] ?? null);
-
-
-            if (($log['status'] ?? null) === 'Failure') {
-                $combined[$sid]['status'] = 'Failure';
-            } elseif (($log['status'] ?? null) === 'Warning'
-                && $combined[$sid]['status'] !== 'Failure') {
-                $combined[$sid]['status'] = 'Warning';
-            }
-            
+            $mappedData[] = $mappedRow;
         }
-        
 
-        $filtered = $this->applyFilters(collect($combined), $filters);
-
-        $filtered = $filtered->map(function ($row) {
-            if (!empty($row['screenAccessed'])) {
-                foreach ($row['screenAccessed'] as $screen) {
-                    $row['actionDescription'][] = $screen;
-                }
-            }
-            return $row;
-        });
-
-        
-        if (!empty($filters['selectedColumns'])) {
-            $filtered = $filtered->map(function ($row) use ($filters) {
-                return collect($row)
-                    ->only($filters['selectedColumns'])
-                    ->all();
-            });
-        }
-        
-
-        return $filtered->values();
+        return $mappedData;
     }
 
-    private function resolveEventType(array $log, array &$session): string
+    /**
+     * Determine event type from log data
+     *
+     * @param array $log Log entry
+     * @param string $channel Log channel (auth, navigation, audit)
+     * @return string Event type
+     */
+    private function determineEventType(array $log, string $channel): string
     {
-        $channel = strtolower($log['channel'] ?? '');
-
-        if ($channel === 'auth') {
+        if ($channel === 'auth' || $channel === 'auth_audit') {
             $event = strtolower($log['event'] ?? '');
-
             if ($event === 'login') {
-                $session['loginTs'] = $log['date_time'] ?? null;
-                $session['loginStatus'] = ucfirst($log['status'] ?? 'success');
                 return 'login';
-            }
-
-            if ($event === 'logout') {
-                $session['logoutTs'] = $log['date_time'] ?? null;
+            } elseif ($event === 'logout') {
                 return 'logout';
-            }
-
-            if ($event === 'login_failed') {
+            } elseif ($event === 'login_failed') {
                 return 'login_failed';
             }
-
             return 'login_failed';
         }
 
-        if ($channel === 'audit') {
-            return [
-                'C' => 'audit-create',
-                'U' => 'audit-update',
-                'D' => 'audit-delete',
-            ][$log['crudType'] ?? ''] ?? 'audit-delete';
+        if ($channel === 'audit' || $channel === 'audit_audit') {
+            $crudType = strtoupper($log['crudType'] ?? '');
+            if ($crudType === 'C') {
+                return 'audit-create';
+            } elseif ($crudType === 'U') {
+                return 'audit-update';
+            } elseif ($crudType === 'D') {
+                return 'audit-delete';
+            }
+            return 'audit-update';
         }
 
-
-        if ($channel === 'navigation') {
-            if (!empty($log['company']) && $session['company'] === null) {
-                $session['company'] = $log['company'];
-            }
+        if ($channel === 'navigation' || $channel === 'navigation_access') {
             $accessType = strtolower($log['accessType'] ?? $log['access_type'] ?? 'read');
-            $accessMap = [
-                'read' => 'navigation-read',
-                'create' => 'navigation-create',
-                'edit' => 'navigation-edit',
-                'update' => 'navigation-edit',
-            ];
-            return $accessMap[$accessType] ?? 'navigation-read';
+            if ($accessType === 'read' || $accessType === '1') {
+                return 'navigation-read';
+            } elseif ($accessType === 'create' || $accessType === '2') {
+                return 'navigation-create';
+            } elseif ($accessType === 'edit' || $accessType === 'update' || $accessType === '3') {
+                return 'navigation-edit';
+            }
+            return 'navigation-read';
         }
 
-        return 'login_failed';
-    }
-
-    private function applyFilters(Collection $rows, array $filters): Collection
-    {   
-        
-        return $rows->filter(function ($row) use ($filters) {
-            
-           
-            if (!empty($filters['employees']) &&
-                !in_array($row['employeeId'], $filters['employees'])) {
-                return false;
-            }
-
-            
-            if (!empty($filters['eventTypes'])) {
-
-                $sessionEvents = collect($row['eventType']);
-
-                $filterEvents = $filters['eventTypes'];
-
-                if (!$sessionEvents->intersect($filterEvents)->count()) {
-                    return false;
-                }
-            }
-
-            if (!empty($filters['screens']) && !empty($row['screenAccessed'])) {
-                if (!collect($row['screenAccessed'])
-                    ->intersect($filters['screens'])
-                    ->count()) {
-                    return false;
-                }
-            }
-            
-            return true;
-        });
-    }
-
-    private function push(array &$target, $value): void
-    {
-        if (!empty($value)) {
-            $target[] = $value;
-        }
-    }
-
+        return 'unknown';
+    }    
 }
