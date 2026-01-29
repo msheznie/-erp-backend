@@ -486,22 +486,33 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $cost['rptAmount'] = $grvDetails->landingCost_RptCur * $grvDetails->noQty;
                         $this->fixedAssetCostRepository->create($cost);
 
-                        // maintain assetAllocatedQty
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty, 'assetAllocationDoneYN' => -1]);
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty' => 0, 'assetAllocationDoneYN' => -1]);
                     } else {
 
-                        // Use capitalizedQuantity if provided, otherwise fall back to old calculation
-                        $capitalizedQty = isset($input['capitalizedQuantity']) && $input['capitalizedQuantity'] > 0 
-                            ? intval($input['capitalizedQuantity']) 
-                            : (ceil($grvDetails->noQty) - $grvDetails->assetAllocatedQty);
-                        
-                        // Use assetSerialNo array count as the actual quantity to process
-                        // Only process assets that have serial numbers
-                        $assetAllocatedQty = $grvDetails->assetAllocatedQty;
+                        $capitalizedQty = isset($input['capitalizedQuantity']) && $input['capitalizedQuantity'] !== '' && $input['capitalizedQuantity'] !== null
+                            ? (int) $input['capitalizedQuantity']
+                            : 0;
+                        if ($capitalizedQty < 1) {
+                            return $this->sendError(trans('custom.capitalized_quantity_is_required_and_must_be_positive'), 422);
+                        }
+
+                        $currentBalance = ($grvDetails->assetAllocatedQty !== null && $grvDetails->assetAllocatedQty !== '')
+                            ? (float) $grvDetails->assetAllocatedQty
+                            : (float) $grvDetails->noQty;
+                        if ($currentBalance == 0) {
+                            $currentBalance = (float) $grvDetails->noQty;
+                        }
+                        if ($capitalizedQty > $currentBalance) {
+                            return $this->sendError(
+                                ['capitalizedQuantity' => [trans('custom.capitalized_quantity_exceeds_balance')]],
+                                422
+                            );
+                        }
+
+                        $newBalance = max(0, $currentBalance - $capitalizedQty);
+
                         if ($assetSerialNoCount > 0 && isset($input['assetSerialNo']) && is_array($input['assetSerialNo'])) {
-                            // Loop through the assetSerialNo array directly
                             foreach ($input['assetSerialNo'] as $key => $serialNoData) {
-                                // Skip if no serial number
                                 if (!isset($serialNoData['faUnitSerialNo']) || !$serialNoData['faUnitSerialNo']) {
                                     continue;
                                 }
@@ -517,11 +528,9 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
                                 $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
                                 $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
-                                
-                                // Extract assetStatus from this serial number if it exists
+
                                 if (isset($assetSerialNoInput['assetStatus']) && $assetSerialNoInput['assetStatus'] !== '' && $assetSerialNoInput['assetStatus'] !== null) {
                                     $serialAssetStatus = $assetSerialNoInput['assetStatus'];
-                                    // Normalize assetStatus (handle both string and integer values)
                                     if (is_string($serialAssetStatus)) {
                                         $statusId = $this->getAssetStatusId($serialAssetStatus);
                                         if ($statusId === null) {
@@ -531,15 +540,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                                     } else {
                                         $input['assetStatus'] = (int)$serialAssetStatus;
                                     }
-                                    
-                                    // Validate the status
+
                                     $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
                                     if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
                                         return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
                                     }
                                 }
-                                
-                                // Generate asset code - this will increment the serial number properly
+
                                 $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID, $input['faCatID'], $input['faSubCatID']);
 
                                 if (!$documentCodeData['status']) {
@@ -609,19 +616,16 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                                 $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
                                 $this->fixedAssetCostRepository->create($cost);
-                                $assetAllocatedQty++;
                             }
                         }
 
-                        $allocate_qty = $assetAllocatedQty;
-                        $ceil_qty = ceil($grvDetails->noQty);
-                        if($ceil_qty > $assetAllocatedQty)
-                        {
-                            $allocate_qty = $ceil_qty;
+                        $grvUpdate = ['assetAllocatedQty' => $newBalance];
+                        if ($newBalance == 0) {
+                            $grvUpdate['assetAllocationDoneYN'] = -1;
+                        } else {
+                            $grvUpdate['assetAllocationDoneYN'] = 0;
                         }
-       
-
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$allocate_qty]);
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update($grvUpdate);
                     }
                    
                     DB::commit();
@@ -1411,10 +1415,9 @@ class FixedAssetMasterAPIController extends AppBaseController
         return \DataTables::eloquent($assetAllocation)
             ->addColumn('not_capitalized_qty', function ($row) {
                 $receivedQty = $row->noQty ?? 0;
-                $balanceQty = $row->assetAllocatedQty ?? 0;
-                $notCapitalizedQty = $receivedQty - $balanceQty;
-                // Ensure non-negative and integer
-                return max(0, (int)$notCapitalizedQty);
+                $assetAllocatedQty = $row->assetAllocatedQty ?? 0;
+                $notCapitalizedQty = $assetAllocatedQty;
+                return max(0, (int) $notCapitalizedQty);
             })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -2769,10 +2772,9 @@ class FixedAssetMasterAPIController extends AppBaseController
         // soft delete
         $fixedAssetMaster->delete();
 
-        // update grv details assetAllocationDoneYN,assetAllocatedQty
         if($fixedAssetMasterOld->docOriginDetailID){
             $grvDetails = GRVDetails::find($fixedAssetMasterOld->docOriginDetailID);
-            $grvDetails->assetAllocatedQty = $grvDetails->assetAllocatedQty-1;
+            $grvDetails->assetAllocatedQty = $grvDetails->assetAllocatedQty + 1;
             $grvDetails->assetAllocationDoneYN = 0;
             $grvDetails->save();
         }

@@ -4321,6 +4321,8 @@ return
     'pv_document_cannot_confirm_without_details' => 'PV document cannot confirm without details',
     'qty' => 'QTY',
     'not_capitalized_quantity' => 'Not Capitalized Quantity',
+    'capitalized_quantity_is_required_and_must_be_positive' => 'Capitalized quantity is required and must be a positive whole number.',
+    'capitalized_quantity_exceeds_balance' => 'Capitalized quantity cannot exceed the balance quantity.',
     'qty_cannot_be_less_than_or_equal_to_zero' => 'QTY cannot be less than or equal to zero',
     'qty_cannot_be_zero' => 'Qty cannot be zero',
     'quantity_cannot_be_greater_than_total_materiel_req' => 'Quantity cannot be greater than total materiel request quantity',
