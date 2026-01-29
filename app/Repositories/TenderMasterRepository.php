@@ -2666,7 +2666,7 @@ class TenderMasterRepository extends BaseRepository
                 $this->cloneDepartments($tenderMaster['id'], $newTender->id);
                 $this->cloneProcurements($tenderMaster['id'], $newTender->id);
                 $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
-                $this->clonePurchaseRequests($tenderMaster['id'], $newTender->id);
+                /*$this->clonePurchaseRequests($tenderMaster['id'], $newTender->id);*/
                 $this->clonePricingSchedules($tenderMaster['id'], $newTender->id);
                 $criteriaIdMap = $this->cloneEvaluationCriteria($tenderMaster['id'], $newTender->id);
                 $this->cloneEvaluationCriteriaScoreConfig($tenderMaster['id'], $criteriaIdMap);
