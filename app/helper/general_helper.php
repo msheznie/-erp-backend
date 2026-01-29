@@ -5481,7 +5481,7 @@ class Helper
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
                                     $loginLink = rtrim(config('srm.url.loginLink'), '/register/');
-                                    $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]);
+                                    $temp = trans('email.kyc_approved_body', ['loginLink' => $loginLink]) . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
                                     $dataEmail['alertMessage'] = trans('email.registration_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -5502,7 +5502,7 @@ class Helper
                                     <strong>{$tenderCode}</strong>, <strong>{$tenderTitle}</strong>.</p>
                                     <p><strong>Comment:</strong><br />{$comment}</p>
                                     <p>Kindly submit the bid before the bid submission closing date.</p>
-                                    <p>Regards,</p>";
+                                    <p>Thank you,</p> <br />" . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
 
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
@@ -5520,7 +5520,7 @@ class Helper
                                 if (isset($docApproved->reference_email) && !empty($docApproved->reference_email)) {
                                     $dataEmail['empEmail'] = $docApproved->reference_email;
                                     $dataEmail['companySystemID'] = $docApproved->companySystemID;
-                                    $temp = trans('email.appointment_approved_body');
+                                    $temp = trans('email.appointment_approved_body') . Helper::getSupplierEmailFooter($currentApproved->companySystemID);;
                                     $dataEmail['alertMessage'] = trans('email.appointment_approved');
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -6767,7 +6767,7 @@ class Helper
                                             'rejectedComments' => $input["rejectedComments"],
                                             'loginLink' => $loginLink
                                         ]);
-
+                                        $sub .= Helper::getSupplierEmailFooter($currentApproved->companySystemID);
                                         $msg = trans('email.registration_referred_back');
                                     }
                                     else if($input["documentSystemID"] == 106)
@@ -6776,6 +6776,7 @@ class Helper
                                             'empName' => $empInfo->empName,
                                             'rejectedComments' => $input["rejectedComments"]
                                         ]);
+                                        $sub .= Helper::getSupplierEmailFooter($currentApproved->companySystemID);
                                         $msg = trans('email.delivery_appointment_rejected');
                                     }
 
@@ -6792,7 +6793,7 @@ class Helper
                                         <p><b>Comment:</b></p>
                                         <p>$comment</p>
                                         <p>Kindly review the comments and attach the updated or corresponding document.</p>
-                                        <p>Regards,</p>";
+                                        <p>Thank you,</p> <br />" . Helper::getSupplierEmailFooter($currentApproved->companySystemID);
 
                                         $msg = " Tender Payment Attachment Proof Rejected";
                                     }
