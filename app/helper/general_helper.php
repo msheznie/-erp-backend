@@ -545,19 +545,19 @@ class Helper
 
 
         $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
-                    ->where('documentSystemID', $input["documentSystemID"])
-                    ->first();
+            ->where('documentSystemID', $input["documentSystemID"])
+            ->first();
 
         if (empty($companyDocument)) {
             return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
         }
 
         $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
-                                ->where('companySystemID', $docApprove->companySystemID)
-                                ->where('employeeSystemID', $empInfo->employeeSystemID)
-                                ->where('documentSystemID', $input["documentSystemID"])
-                                ->where('isActive', 1)
-                                ->where('removedYN', 0);
+            ->where('companySystemID', $docApprove->companySystemID)
+            ->where('employeeSystemID', $empInfo->employeeSystemID)
+            ->where('documentSystemID', $input["documentSystemID"])
+            ->where('isActive', 1)
+            ->where('removedYN', 0);
 
         if ($companyDocument['isServiceLineApproval'] == -1) {
             $checkUserHasApprovalAccess = $checkUserHasApprovalAccess->where('ServiceLineSystemID', $docApprove->serviceLineSystemID);
@@ -3104,7 +3104,7 @@ class Helper
 
     public static function getFileUrlFromS3($key, $minutes ='+60 minutes')
     {
-        if($key) {            
+        if($key) {
             //return Storage::disk('s3')->url($key);
 
             $s3 = Storage::disk('s3');
@@ -3128,11 +3128,11 @@ class Helper
     public static function formatNumberWithPrecision($value) { // this method check the number and if it is less than 1 then it will return the value with 7 decimal places and its comma separated and solve scienfivic notation issue
 
         $numericValue = (float) str_replace(',', '', $value);
-    
+
         if ($numericValue >= 1) {
             return number_format($numericValue, 7, '.', '');
         }
-    
+
         return number_format($value, 7, '.', '');
     }
 
@@ -4018,12 +4018,11 @@ class Helper
         }
         return $attachments;
     }
-
     public static function getSupplierEmailFooter($companySystemID)
     {
         $company = Company::getCompanyData($companySystemID);
         $companyName = $company ? $company->CompanyName : '';
-        
+
         return view('email.supplier_email_footer', ['companyName' => $companyName])->render();
     }
 
@@ -4052,7 +4051,7 @@ class Helper
             Please find published <span style='text-transform: lowercase;'>{$documentName}</span> circular details below.<br /><br />
             <b>Circular Name : </b>{$circular['circular_name']}<br /><br />
             {$descriptionHtml}Thank You<br />";
-            $emailMessage .= \Helper::getSupplierEmailFooter($companySystemID);
+            $emailMessage .= Helper::getSupplierEmailFooter($companySystemID);
 
             $dataEmail = [
                 'empEmail' => $email,
@@ -4065,8 +4064,6 @@ class Helper
             Email::sendEmailErp($dataEmail);
         }
     }
-
-
     public static function updateSupplierWhtAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
     {
 
@@ -4224,7 +4221,7 @@ class Helper
                 $isWHTApplicableSupplier = false;
             }
 
-          
+
 
             $whtTotalAmountDirect = 0;
 
@@ -4354,7 +4351,7 @@ class Helper
                 // $bookInvSuppMaster->whtApplicable = $whtTrue;
                 // $bookInvSuppMaster->whtEdited = false;
                 $invmaster->save();
-            }    
+            }
         }
 
     }
