@@ -1,3 +1,106 @@
+## 0.0.1 - 2026-01-29
+
+- chore: add migration files
+- Merge pull request #9652 from pbsgears/release-please--branches--master
+- chore(master): release 10.101.0
+- Merge pull request #9651 from pbsgears/hr-sprint-74-master
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9633)
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9618)
+- chore(Designation): check email process [GHR-8941] (#9602)
+- chore(Designation): check email process [GHR-8941] (#9601)
+- feat(Tasking Request): Portal | EA | Task assignment approval following job procedure setup [GHR-9581] (#9569)
+- chore: rebase conflict resolved
+- chore(master): release 10.100.1 (#9649)
+- fix(system admin): Error While Assigning Employee to Warehouse [GCP-19165] (#9643)
+- chore(master): release 10.100.0 (#9636)
+- chore: release 10.100.0 (#9637)
+- Erp sprint 061 (#9635)
+- fix: resource control for mobile api (#9581) (#9634)
+- chore(accounts payable): Fix hardcoded supplier code and include cents in cheque amount in words [GCP-19471] (#9607)
+- chore(accounts payable): Cheque template changes [GCP-19435] (#9592)
+- chore(treasury management): b2b check status job path changes (#9590)
+- chore(accounts receivable): Fixed iissue CI pull from Quotation & SO [GCP-19404] (#9579)
+- chore(accounts payable): WHT organization bear scenario incorrect values in APL [GCP-19417] (#9578)
+- Merge pull request #9574 from pbsgears/erp-sprint-060-budget
+- bug fixes (#9573)
+- chore(navigation): Fixed user group create issue in uat [GCP-19380] (#9571)
+- chore(master): release 10.99.1 (#9568)
+- fix: fix the doc transaltion of all approval [GCP-19288]
+- Merge pull request #9566 from pbsgears/release-please--branches--master
+- chore(master): release 10.99.0
+- Merge pull request #9565 from pbsgears/srm-sprint-54
+- Merge branch 'erp-sprint-061' of github.com:pbsgears/Gears_BackEnd into erp-sprint-061
+- chore: fix the matching refrence
+- Merge pull request #9564 from pbsgears/erp-sprint-060-budget
+- chore(budget planning): order changes of different from last year and current year [GCP-19149] (#9563)
+- fix(Pricing Schedule): Pricing Schedule Sorting Issue [GSUP-4939] (#9560)
+- chore(system admin): Added company assign behavior when approval process in customer master bulk upload [GCP-19343] (#9559)
+- chore(accounts payable): PV GL issues in bank charges [GCP-19314] (#9558)
+- chore(accounts payable): PV GL issues in bank charges [GCP-19314] (#9556)
+- chore(system admin): Added new column to customer master bulk upload [GCP-19335] (#9557)
+- Update AuditTrailAPIController.php
+- chore(system admin): replace line comment with BPVNarration and line-item amount with totalAmount [GCP-19306] (#9555)
+- Merge pull request #9552 from pbsgears/erp-sprint-060-budget-5
+- chore(system admin): Fixed customer master bulk upload issue [GCP-19315] (#9554)
+- chore(srm): UI fixes in procurement lifecycle report [GSUP-4913] (#9548)
+- chore(srm): Columns of the report are not showing in the proper order [GSUP-4910] (#9545)
+- chore(srm): Records are not loading into the procurement life cycle report [GSUP-4893] (#9543)
+- chore(srm): Price Bid format Excel Upload [GSUP-4688] (#9542)
+- feat(srm): Price Bid format Excel Upload [GSUP-4688] (#9531)
+- chore(srm): Description not displays correctly when cloning a tender or RFX [GSUP-4876] (#9536)
+- feat(srm): Supplier Selection During Tender & RFX Creation [GSUP-4690] (#9517)
+- chore(srm): missing Declaration in Erp [GSUP-4846] (#9516)
+- chore: add migration files
+- Merge pull request #9652 from pbsgears/release-please--branches--master
+- chore(master): release 10.101.0
+- Merge pull request #9651 from pbsgears/hr-sprint-74-master
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9633)
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9618)
+- chore(Designation): check email process [GHR-8941] (#9602)
+- chore(Designation): check email process [GHR-8941] (#9601)
+- feat(Tasking Request): Portal | EA | Task assignment approval following job procedure setup [GHR-9581] (#9569)
+- chore: rebase conflict resolved
+- chore(master): release 10.100.1 (#9649)
+- fix(system admin): Error While Assigning Employee to Warehouse [GCP-19165] (#9643)
+- chore(master): release 10.100.0 (#9636)
+- chore: release 10.100.0 (#9637)
+- Erp sprint 061 (#9635)
+- fix: resource control for mobile api (#9581) (#9634)
+- chore(accounts payable): Fix hardcoded supplier code and include cents in cheque amount in words [GCP-19471] (#9607)
+- chore(accounts payable): Cheque template changes [GCP-19435] (#9592)
+- chore(treasury management): b2b check status job path changes (#9590)
+- chore(accounts receivable): Fixed iissue CI pull from Quotation & SO [GCP-19404] (#9579)
+- chore(accounts payable): WHT organization bear scenario incorrect values in APL [GCP-19417] (#9578)
+- Merge pull request #9574 from pbsgears/erp-sprint-060-budget
+- bug fixes (#9573)
+- chore(navigation): Fixed user group create issue in uat [GCP-19380] (#9571)
+- chore(master): release 10.99.1 (#9568)
+- fix: fix the doc transaltion of all approval [GCP-19288]
+- Merge pull request #9566 from pbsgears/release-please--branches--master
+- chore(master): release 10.99.0
+- Merge pull request #9565 from pbsgears/srm-sprint-54
+- Merge branch 'erp-sprint-061' of github.com:pbsgears/Gears_BackEnd into erp-sprint-061
+- chore: fix the matching refrence
+- Merge pull request #9564 from pbsgears/erp-sprint-060-budget
+- chore(budget planning): order changes of different from last year and current year [GCP-19149] (#9563)
+- fix(Pricing Schedule): Pricing Schedule Sorting Issue [GSUP-4939] (#9560)
+- chore(system admin): Added company assign behavior when approval process in customer master bulk upload [GCP-19343] (#9559)
+- chore(accounts payable): PV GL issues in bank charges [GCP-19314] (#9558)
+- chore(accounts payable): PV GL issues in bank charges [GCP-19314] (#9556)
+- chore(system admin): Added new column to customer master bulk upload [GCP-19335] (#9557)
+- Update AuditTrailAPIController.php
+- chore(system admin): replace line comment with BPVNarration and line-item amount with totalAmount [GCP-19306] (#9555)
+- Merge pull request #9552 from pbsgears/erp-sprint-060-budget-5
+- chore(system admin): Fixed customer master bulk upload issue [GCP-19315] (#9554)
+- chore(srm): UI fixes in procurement lifecycle report [GSUP-4913] (#9548)
+- chore(srm): Columns of the report are not showing in the proper order [GSUP-4910] (#9545)
+- chore(srm): Records are not loading into the procurement life cycle report [GSUP-4893] (#9543)
+- chore(srm): Price Bid format Excel Upload [GSUP-4688] (#9542)
+- feat(srm): Price Bid format Excel Upload [GSUP-4688] (#9531)
+- chore(srm): Description not displays correctly when cloning a tender or RFX [GSUP-4876] (#9536)
+- feat(srm): Supplier Selection During Tender & RFX Creation [GSUP-4690] (#9517)
+- chore(srm): missing Declaration in Erp [GSUP-4846] (#9516)
+
 # Changelog
 
 
