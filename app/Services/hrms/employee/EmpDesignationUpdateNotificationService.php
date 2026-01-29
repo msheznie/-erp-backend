@@ -113,16 +113,18 @@ class EmpDesignationUpdateNotificationService
             if ($val['applicableCategoryID'] == 7) { //Reporting manager
                 $applicableCatDesc = 'Reporting manager';
                 $manageInfo = $this->getReportingManagerInfo();
-                $empCode = $manageInfo['ECode'];
-                $isEmailVerified = $this->checkIsEmailVerified($manageInfo['empID']);
-
                 if (empty($manageInfo)) {
                     $msg = 'Manager details not found for designation update notification';
                     $this->insertToLogTb(['Employee' =>  $this->masterDet['employeeCode'],
                         'Message' => $msg], 'error');
                 }
-                $mailTo = $manageInfo['EEmail'];
-                $name = $manageInfo['Ename2'];
+                else
+                {
+                    $empCode = $manageInfo['ECode'];
+                    $isEmailVerified = $this->checkIsEmailVerified($manageInfo['EIdNo']);
+                    $mailTo = $manageInfo['EEmail'];
+                    $name = $manageInfo['Ename2'];
+                }
 
             } else if ($val['applicableCategoryID'] == 9) {  // Applicable Employee
                 $applicableCatDesc = 'Applicable Employee';
@@ -139,8 +141,16 @@ class EmpDesignationUpdateNotificationService
                 $empCode = $val['employee']['empID'];
             }
 
-            if ((!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) || ($isEmailVerified == 0)) {
-                $inValidEmails[] = $empCode;
+            if (!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) {
+                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Invalid email format)';
+            } elseif ($isEmailVerified === null) {
+                $this->insertToLogTb([
+                    'Employee Code' => $this->masterDet['employeeCode'],
+                    'Message' => "Email verification status unknown (null) for {$applicableCatDesc} {$name} ({$mailTo}) - Employee record may not exist"
+                ], 'warning');
+
+            } elseif ($isEmailVerified == 0) {
+                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Email not verified)';
             } else {
                 $mailBody = "Dear {$name},<br/><br/>";
                 $mailBody .= $this->emailBody();
@@ -172,7 +182,7 @@ class EmpDesignationUpdateNotificationService
             $this->insertToLogTb(
                 [
                     'message' => 'Employees who have invalid/unverified email address',
-                    'Employee Code' => $inValidEmails
+                    'Employee code' => $inValidEmails
                 ],
                 'data'
             );
@@ -182,19 +192,24 @@ class EmpDesignationUpdateNotificationService
     public function getReportingManagerInfo()
     {
         $manager = HrmsEmployeeManager::selectRaw('empID,managerID')
-            ->where('active', 1)
-            ->where('empID', $this->masterDet['empId'])
+            ->where([
+                'active' => 1,
+                'empID' => $this->masterDet['empId']
+            ])
             ->whereHas('info')
             ->with('info:EIdNo,Ename2,EEmail,ECode')
             ->first();
-        return $manager['info'];
+        return !empty($manager) ? $manager['info'] : [];
     }
 
     public function checkIsEmailVerified($empId)
     {
-        return Employee::select('isEmailVerified')
-                ->where('employeeSystemID', $empId)
-                ->first();
+        if (empty($empId)) {
+            return null;
+        }
+        
+        $employee = Employee::where('employeeSystemID', $empId)->first();
+        return $employee ? $employee->isEmailVerified : null;
     }
 
     public function emailBody()
