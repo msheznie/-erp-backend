@@ -2124,13 +2124,11 @@ class SalesMarketingReportAPIController extends AppBaseController
                 return $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);
             })
             ->addColumn('soTotalComRptCurrency', function ($row) use ($currencyType) {
-                return $this->getConvertedAmountByType(
-                    (float)$row->transactionAmount,
-                    $row->companySystemID,
-                    $row->transactionCurrencyID,
+               return $this->selectAmountByType(
                     $currencyType,
-                    $row->companyLocalAmount,
-                    $row->companyReportingAmount
+                    (float)$row['transactionAmount'],
+                    (float)$row['companyLocalAmount'],
+                    (float)$row['companyReportingAmount']
                 );
             })
             ->make(true);
@@ -2217,37 +2215,30 @@ class SalesMarketingReportAPIController extends AppBaseController
                 }])
                 ->groupBy('custReceivePaymentAutoID')
                 ->get();
-
-            $invoiceTransactionAmount = (float)$invoice->transAmount;
-            if (!empty($invoice->master) && $invoice->master->bookingAmountTrans !== null) {
-                $invoiceTransactionAmount = (float)$invoice->master->bookingAmountTrans;
-            }
-
-            $invoice->rptAmount = $this->getConvertedAmountByType(
-                $invoiceTransactionAmount,
-                $invoice->master ? $invoice->master->companySystemID : null,
-                $invoice->master ? $invoice->master->custTransactionCurrencyID : null,
+ 
+            $invoice->rptAmount = $this->selectAmountByType(
                 $currencyType,
-                $invoice->localAmount,
-                $invoice->rptAmount
+                (float)$invoice->master->bookingAmountTrans,
+                (float)$invoice->master->bookingAmountLocal,
+                (float)$invoice->master->bookingAmountRpt
             );
 
+ 
             foreach ($recieptVouchers as $payment) {
-                $paymentTransactionAmount = (float)$payment->transAmount;
-                $payment->rptAmount = $this->getConvertedAmountByType(
-                    $paymentTransactionAmount,
-                    $payment->master ? $payment->master->companySystemID : null,
-                    $payment->master ? $payment->master->custTransactionCurrencyID : null,
+                $payment->rptAmount = $this->selectAmountByType(
                     $currencyType,
-                    $payment->localAmount,
-                    $payment->rptAmount
+                    (float)abs($payment->master->receivedAmount),
+                    (float)abs($payment->master->localAmount),
+                    (float)abs($payment->master->companyRptAmount)
                 );
             }
 
+ 
             $invoice->payments = $recieptVouchers->toArray();
         }
 
         return $invoices;
+
     }
 
     public function getSOtoReceiptChainViaDeliveryOrder($row, $currencyType)
@@ -2293,7 +2284,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 (float)$do->rptAmount
             );
 
-            $do->invoices = $invoices->toArray();
+            $do->invoices = ($invoices) ? $invoices->toArray() : [];
         }
 
         return $deliveryOrders->toArray();
@@ -2315,7 +2306,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
         $invoices = $this->applyInvoicePaymentsCurrency($invoices, $currencyType);
 
-        return $invoices->toArray();
+        return ($invoices) ? $invoices->toArray() : [];
     }
 
 
