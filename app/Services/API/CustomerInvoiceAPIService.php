@@ -1231,9 +1231,14 @@ class CustomerInvoiceAPIService extends AppBaseController
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
             $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
-            if(($policy == false || $input['isPerforma'] != 0) && $checkErChange) {
-                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            if(($policy == false || $input['isPerforma'] != 0)) {
+                if ($checkErChange && $customerInvoiceDirect->confirmedYN == 1) {
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                } else {
+                    $_post['companyReportingER'] = $customerInvoiceDirect->companyReportingER;
+                    $_post['localCurrencyER'] = $customerInvoiceDirect->localCurrencyER;
+                }
             }
         }
 
