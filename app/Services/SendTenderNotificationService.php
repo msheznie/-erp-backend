@@ -111,11 +111,7 @@ class SendTenderNotificationService
             return false;
         }
 
-        if (in_array($frequency, [1, 2])) {
-            return $notificationTime->format('Y-m-d H') == $currentDate->format('Y-m-d H');
-        } else {
-            return $notificationTime->isSameDay($currentDate);
-        }
+        return $notificationTime->isSameMinute($currentDate);
     }
 
     public static function sendReminder($tender, $scenarioID, $stage)
