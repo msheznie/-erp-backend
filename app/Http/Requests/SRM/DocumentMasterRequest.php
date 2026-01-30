@@ -22,7 +22,7 @@ class DocumentMasterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'document_name' => [
+            'document_names' => [
                 'required',
                 'string',
                 'max:255',
