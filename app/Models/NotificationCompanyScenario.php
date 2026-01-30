@@ -123,9 +123,16 @@ class NotificationCompanyScenario extends Model
                 'notification_day_setup' => function ($q) {
                     $q->select('id', 'companyScenarionID', 'beforeAfter', 'days', 'isActive', 'frequency')
                         ->where('isActive', 1);
+                },
+                'user' => function ($q) {
+                    $q->select('id', 'empID', 'companyScenarionID', 'applicableCategoryID', 'isActive')
+                        ->where('isActive', 1);
                 }
             ])
             ->whereHas('notification_day_setup', function ($q) {
+                $q->where('isActive', 1);
+            })
+            ->whereHas('user', function ($q) {
                 $q->where('isActive', 1);
             })
             ->get();
