@@ -397,9 +397,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
         $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
-        if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
-            $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
-        }
 
         $customerInvoiceDirect = $customerInvoiceDirect->refresh();
 
@@ -414,6 +411,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
 
         if($customerInvoiceUpdate['status']){
+            if ($customerInvoiceDirect->confirmedYN == 0 && ($isPerforma == 0 || $isPerforma == 2)) {
+                $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+            }
             return $this->sendReponseWithDetails($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message'],1,$customerInvoiceUpdate['detail'] ?? null);
         }
         else{
