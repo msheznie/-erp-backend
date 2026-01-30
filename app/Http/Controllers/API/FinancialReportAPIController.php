@@ -13036,7 +13036,9 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         6 IN (' . $typeIDs . ') AND
                         erp_generalledger.companySystemID IN ('.$companyID.') AND
                         erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
-                        erp_generalledger.matchDocumentMasterAutoID <> 0
+                        erp_generalledger.matchDocumentMasterAutoID <> 0 AND
+                        (erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID
+                            OR erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID)
                         UNION ALL
                         SELECT
                         erp_bookinvsuppmaster.bookingDate AS documentDate,
@@ -13140,8 +13142,14 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_debitnote.debitNoteCode AS documentCode,
                         erp_generalledger.documentNarration AS description,
                         erp_debitnote.empID AS employeeID,
-                        erp_generalledger.documentLocalAmount * -1 AS amountLocal,
-                        erp_generalledger.documentRptAmount * -1 AS amountRpt,
+                        CASE
+                            WHEN ref_gl.documentRptAmount > 0 THEN erp_generalledger.documentLocalAmount * -1
+                            ELSE ABS(erp_generalledger.documentLocalAmount)
+                        END AS amountLocal,
+                        CASE
+                            WHEN ref_gl.documentRptAmount > 0 THEN erp_generalledger.documentRptAmount * -1
+                            ELSE ABS(erp_generalledger.documentRptAmount)
+                        END AS amountRpt,
                         erp_debitnote.invoiceNumber AS referenceDoc,
                         erp_debitnote.postedDate AS referenceDocDate,
                         erp_debitnote.debitNoteAutoID AS masterID,
@@ -13154,15 +13162,19 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
                         LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
                         LEFT JOIN erp_matchdocumentmaster ON erp_generalledger.matchDocumentMasterAutoID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+                        LEFT JOIN erp_generalledger AS ref_gl ON ref_gl.documentSystemCode = erp_debitnote.debitNoteAutoID
+                            AND ref_gl.documentSystemID = 15
+                            AND ref_gl.chartOfAccountSystemID = erp_debitnote.empControlAccount
+                            AND ref_gl.matchDocumentMasterAutoID = 0
                     WHERE
                         erp_generalledger.documentSystemID = 15 AND 
                         erp_debitnote.type = 2 AND
+                        erp_generalledger.chartOfAccountSystemID != erp_debitnote.empControlAccount AND
                         DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
                         erp_debitnote.approved = -1 AND
                         erp_generalledger.companySystemID IN ('.$companyID.') AND
                         erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
                         erp_generalledger.matchDocumentMasterAutoID <> 0
-                        AND erp_generalledger.glAccountType = "BS"
                         UNION ALL
                         SELECT
                         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
