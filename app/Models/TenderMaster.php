@@ -838,15 +838,9 @@ class TenderMaster extends Model
                                 $targetTenderDate->{$timeDifference['method']}($timeDifference['value']);
                             }
 
-                            if (in_array($frequency, [1, 2])) {
-                                $subQ->whereDate($dateField, $targetTenderDate->toDateString())
-                                    ->whereRaw(
-                                        'HOUR(' . $dateField . ') = ?',
-                                        [$targetTenderDate->hour]
-                                    );
-                            } else {
-                                $subQ->whereDate($dateField, $targetTenderDate->toDateString());
-                            }
+                            $subQ->whereDate($dateField, $targetTenderDate->toDateString())
+                                ->whereRaw('HOUR(' . $dateField . ') = ?', [$targetTenderDate->hour])
+                                ->whereRaw('MINUTE(' . $dateField . ') = ?', [$targetTenderDate->minute]);
                             return;
                         }
                         $subQ->whereBetween($dateField, [$dateFrom, $dateTo]);
