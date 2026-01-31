@@ -1055,12 +1055,12 @@ class FinancialReportAPIController extends AppBaseController
 
             if (($da->type == 11 || $da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
                 // update each employee table total
-                $recordOwner->totalSumLocal += $da->amountLocal * -1;
-                $recordOwner->totalSumRpt += $da->amountRpt * -1;
+                $recordOwner->totalSumLocal += $da->type == 11 && $da->docType == 3 ? $da->amountLocal : $da->amountLocal * -1;
+                $recordOwner->totalSumRpt += $da->type == 11 && $da->docType == 3 ? $da->amountRpt : $da->amountRpt * -1;
 
                 // calculate grand sum
-                $grandSumArray['grandSumLocal'] += $da->amountLocal * -1;
-                $grandSumArray['grandSumRpt'] += $da->amountRpt * -1;
+                $grandSumArray['grandSumLocal'] += $da->type == 11 && $da->docType == 3 ? $da->amountLocal : $da->amountLocal * -1;
+                $grandSumArray['grandSumRpt'] += $da->type == 11 && $da->docType == 3 ? $da->amountRpt : $da->amountRpt * -1;
 
                 if ($da->refType == 1) {
                     // update each employee table total
@@ -12937,7 +12937,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        4 AS type
+                        4 AS type,
+                        1 As docType
                     FROM
                         erp_bookinvsuppmaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -12962,7 +12963,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        5 AS type
+                        5 AS type,
+                        2 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -12987,7 +12989,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        6 AS type
+                        6 AS type,
+                        3 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -13020,7 +13023,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        11 AS type
+                        11 AS type,
+                        3 As docType
                     FROM
                         erp_generalledger
                         LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
@@ -13052,7 +13056,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        1 AS type
+                        1 AS type,
+                        4 As docType
                     FROM
                         erp_bookinvsuppmaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -13079,7 +13084,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        2 AS type
+                        2 AS type,
+                        5 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -13104,7 +13110,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_ioubookingmaster.bookingMasterID AS masterID,
                         srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
                         srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
-                        3 AS type
+                        3 AS type,
+                        6 As docType
                     FROM
                         srp_erp_iouvouchers
                         LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
@@ -13126,7 +13133,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_debitnote.debitNoteAutoID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-                        7 AS type
+                        7 AS type,
+                        7 As docType
                     FROM
                     erp_debitnote
                         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
@@ -13155,7 +13163,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_debitnote.debitNoteAutoID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-                        11 AS type
+                        11 AS type,
+                        7 As docType
                     FROM
                         erp_generalledger
                         LEFT JOIN erp_debitnote ON erp_debitnote.debitNoteAutoID = erp_generalledger.documentSystemCode
@@ -13188,7 +13197,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        5 AS type
+                        5 AS type,
+                        8 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
