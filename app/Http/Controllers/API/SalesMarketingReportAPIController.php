@@ -2187,7 +2187,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $reportingAmount = $fallbackReporting;
 
         if (!empty($companySystemID) && !empty($transactionCurrencyID)) {
-            $conversion = \Helper::currencyConversion(
+            $conversion = Helper::currencyConversion(
                 $companySystemID,
                 $transactionCurrencyID,
                 $transactionCurrencyID,

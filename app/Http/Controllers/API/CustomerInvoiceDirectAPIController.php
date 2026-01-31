@@ -1337,21 +1337,21 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             // Get local currency exchange rate
             $localCurrency = Company::find($companyId)->localCurrencyID;
-            $localER = \Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localER = Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $localCurrency, 0, null, true);
             $localERValue = $localER['trasToLocER'] ?? 1;
 
             // Get reporting currency exchange rate
             $reportingCurrency = Company::find($companyId)->reportingCurrency;
-            $reportingER = \Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingER = Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $reportingCurrency, 0, null, true);
             $reportingERValue = $reportingER['trasToRptER'] ?? 1;
 
             // Recalculate local currency amounts
-            $bookingAmountLocal = \Helper::roundValue($customerInvoice->bookingAmountTrans / $localERValue);
-            $VATAmountLocal = \Helper::roundValue($customerInvoice->VATAmount / $localERValue);
+            $bookingAmountLocal = Helper::roundValue($customerInvoice->bookingAmountTrans / $localERValue);
+            $VATAmountLocal = Helper::roundValue($customerInvoice->VATAmount / $localERValue);
 
             // Recalculate reporting currency amounts
-            $bookingAmountRpt = \Helper::roundValue($customerInvoice->bookingAmountTrans / $reportingERValue);
-            $VATAmountRpt = \Helper::roundValue($customerInvoice->VATAmount / $reportingERValue);
+            $bookingAmountRpt = Helper::roundValue($customerInvoice->bookingAmountTrans / $reportingERValue);
+            $VATAmountRpt = Helper::roundValue($customerInvoice->VATAmount / $reportingERValue);
 
             // Update customer invoice with new exchange rates and recalculated amounts
             $customerInvoiceArray = array(

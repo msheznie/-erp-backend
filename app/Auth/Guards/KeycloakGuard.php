@@ -59,7 +59,7 @@ class KeycloakGuard implements Guard
             $userIdentifier = $decodedToken->claims()->get($principalAttribute);
 
             if (!$userIdentifier) {
-                Log::warning('Keycloak token missing principal attribute: ' . $principalAttribute);
+                Log::channel('keycloak')->warning('Keycloak token missing principal attribute: ' . $principalAttribute);
                 return null;
             }
 
@@ -100,7 +100,7 @@ class KeycloakGuard implements Guard
             return $this->user;
 
         } catch (\Exception $e) {
-            Log::error('Keycloak authentication error: ' . $e->getMessage());
+            Log::channel('keycloak')->error('Keycloak authentication error: ' . $e->getMessage());
             return null;
         }
     }
@@ -149,7 +149,7 @@ class KeycloakGuard implements Guard
             $realmPublicKey = config('keycloak.realm_public_key');
 
             if (empty($realmPublicKey)) {
-                Log::error('Keycloak realm public key not configured');
+                Log::channel('keycloak')->error('Keycloak realm public key not configured');
                 return null;
             }
 
@@ -175,23 +175,23 @@ class KeycloakGuard implements Guard
             $constraints = $configuration->validationConstraints();
 
             if (!$configuration->validator()->validate($parsedToken, ...$constraints)) {
-                Log::warning('Keycloak token validation failed');
+                Log::channel('keycloak')->warning('Keycloak token validation failed');
                 return null;
             }
 
             // Check if token is expired
             if ($parsedToken->isExpired(new \DateTimeImmutable())) {
-                Log::warning('Keycloak token is expired');
+                Log::channel('keycloak')->warning('Keycloak token is expired');
                 return null;
             }
 
             return $parsedToken;
 
         } catch (RequiredConstraintsViolated $e) {
-            Log::warning('Keycloak token constraints violated: ' . $e->getMessage());
+            Log::channel('keycloak')->warning('Keycloak token constraints violated: ' . $e->getMessage());
             return null;
         } catch (\Exception $e) {
-            Log::error('Keycloak token validation error: ' . $e->getMessage());
+            Log::channel('keycloak')->error('Keycloak token validation error: ' . $e->getMessage());
             return null;
         }
     }

@@ -2258,10 +2258,10 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['company_id']);
+        $isGroup = Helper::checkIsCompanyGroup($input['company_id']);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($input['company_id']);
+            $subCompanies = Helper::getGroupCompany($input['company_id']);
         }
         else {
             $subCompanies = [$input['company_id']];

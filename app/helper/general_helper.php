@@ -2568,7 +2568,7 @@ class Helper
             DB::rollback();
             //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
             //RollBackApproval::dispatch($data);
-            Log::error($e->getMessage());
+            Log::channel('document_approval')->error($e->getMessage());
 
 
             $msg = 'Error Occurred';
@@ -5925,8 +5925,8 @@ class Helper
             DB::rollback();
             //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
             //RollBackApproval::dispatch($data);
-            Log::error($e->getMessage());
-            Log::error($e->getFile());
+            Log::channel('document_approval')->error($e->getMessage());
+            Log::channel('document_approval')->error($e->getFile());
 
 
             $msg = 'Error Occurred';

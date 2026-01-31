@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
 use App\helper\Helper;
 use Carbon\Carbon;
-use App\helper\Helper;
 use App\helper\email as Email;
 
 /**

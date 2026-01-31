@@ -594,8 +594,31 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'expired_tokens' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/expired-tokens.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
 
-
+        'keycloak' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/keycloak.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+        'db_switch' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/db-switch.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+        'document_approval' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/document-approval.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
     ],
 
 ];

@@ -82,7 +82,6 @@ use App\Jobs\TaxLedgerInsert;
 use App\Models\PayCreditNoteDetail;
 use App\Services\GeneralLedger\GlPostedDateService;
 use ExchangeSetupConfig;
-use App\helper\Helper;
 
 class PaymentVoucherGlService
 {
@@ -1105,7 +1104,7 @@ class PaymentVoucherGlService
                         $data['documentLocalAmount'] = Helper::roundValue($masterLocal) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? \Helper::roundValue(($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount) /$masterData->companyRptCurrencyER) * -1:\Helper::roundValue($masterRpt) * -1;
+                        $data['documentRptAmount'] = $masterData->expenseClaimOrPettyCash == 1? Helper::roundValue(($dpTotal->transAmount + $bankChargeDetailsSum->dpAmount) /$masterData->companyRptCurrencyER) * -1: Helper::roundValue($masterRpt) * -1;
                         $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
 
@@ -1200,14 +1199,14 @@ class PaymentVoucherGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($bankChargeDetail->dpAmount);
+                        $data['documentTransAmount'] = Helper::roundValue($bankChargeDetail->dpAmount);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentLocalAmount'] = $bankChargeDetail->localAmount;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                         $data['documentRptAmount'] = $bankChargeDetail->comRptAmount;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }
@@ -1322,14 +1321,14 @@ class PaymentVoucherGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($bankChargeDetail->dpAmount);
+                        $data['documentTransAmount'] = Helper::roundValue($bankChargeDetail->dpAmount);
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                         $data['documentLocalAmount'] = $bankChargeDetail->localAmount;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                         $data['documentRptAmount'] = $bankChargeDetail->comRptAmount;
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }
@@ -1368,7 +1367,7 @@ class PaymentVoucherGlService
                 if($masterData->expenseClaimOrPettyCash == 1)
                 {
                     $masterRpt1 =  Helper::roundValue($dpTotal->transAmount/$masterData->companyRptCurrencyER);
-                    $diffRptAmount = Helper::roundValue($convertedRpt + $bankChargeDetailsSum->comRptAmount) - \Helper::roundValue($masterRpt1);
+                    $diffRptAmount = Helper::roundValue($convertedRpt + $bankChargeDetailsSum->comRptAmount) - Helper::roundValue($masterRpt1);
                     $tolerance = 1e-6; 
                         if (abs($diffRptAmount) < $tolerance) {
                             $diffRptAmount = 0;
@@ -1463,19 +1462,19 @@ class PaymentVoucherGlService
                 $data['glCode'] = $masterData->bank->glCodeLinked;
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
 
                 $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
                 $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
-                $data['documentTransAmount'] = \Helper::roundValue($masterData->payAmountSuppTrans) * -1;
+                $data['documentTransAmount'] = Helper::roundValue($masterData->payAmountSuppTrans) * -1;
 
                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                $data['documentLocalAmount'] = \Helper::roundValue($masterData->payAmountCompLocal) * -1;
+                $data['documentLocalAmount'] = Helper::roundValue($masterData->payAmountCompLocal) * -1;
 
                 $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                 $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                $data['documentRptAmount'] = \Helper::roundValue($masterData->payAmountCompRpt) * -1;
+                $data['documentRptAmount'] = Helper::roundValue($masterData->payAmountCompRpt) * -1;
                 array_push($finalData, $data);
 
                 // debit to customer account
@@ -1487,21 +1486,21 @@ class PaymentVoucherGlService
                         $data['glCode'] = $customer->custGLaccount;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
 
                         if ($payCreditNoteDetail->creditnote) {
                             $creditNote = $payCreditNoteDetail->creditnote;
                             $data['documentTransCurrencyID'] = $creditNote->customerCurrencyID;
                             $data['documentTransCurrencyER'] = $creditNote->customerCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount);
+                            $data['documentTransAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount);
 
                             $data['documentLocalCurrencyID'] = $creditNote->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $creditNote->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->localCurrencyER);
+                            $data['documentLocalAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->localCurrencyER);
 
                             $data['documentRptCurrencyID'] = $creditNote->companyReportingCurrencyID;
                             $data['documentRptCurrencyER'] = $creditNote->companyReportingER;
-                            $data['documentRptAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->companyReportingER);
+                            $data['documentRptAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->companyReportingER);
                             array_push($finalData, $data);
                         }
                     }
@@ -1526,11 +1525,11 @@ class PaymentVoucherGlService
 
                     $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                     $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
 
                     $data['documentTransAmount'] = 0;
-                    $data['documentLocalAmount'] = \Helper::roundValue($localAmountSum);
-                    $data['documentRptAmount'] = \Helper::roundValue($rptAmountSum);
+                    $data['documentLocalAmount'] = Helper::roundValue($localAmountSum);
+                    $data['documentRptAmount'] = Helper::roundValue($rptAmountSum);
 
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';

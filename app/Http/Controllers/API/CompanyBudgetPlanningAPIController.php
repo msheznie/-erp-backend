@@ -380,7 +380,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -456,7 +456,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = Helper::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -2108,7 +2108,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError(trans('custom.cannot_return_back_to_amend_budget_planning_fully_approved'), 400);
             }
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             // Store confirmed_by_emp_system_id before clearing it for email notification
             $confirmedByEmpSystemID = $companyBudgetPlanning->confirmed_by_emp_system_id;

@@ -1292,7 +1292,7 @@ class AuditTrailAPIController extends AppBaseController
             ];
 
             $fileName = trans('custom.employee_activity_audit_report');
-            $fontFamily = \Helper::getExcelFontFamily(app()->getLocale());
+            $fontFamily = Helper::getExcelFontFamily(app()->getLocale());
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {

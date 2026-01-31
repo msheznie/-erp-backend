@@ -299,7 +299,6 @@ class CreateAccumulatedDepreciation
         FixedAssetDepreciationPeriod::insert($data);
 
         $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMaster->depMasterAutoID)->first();
-        // Log::info('Depreciation processing');
         if($depDetail) {
             //$fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMaster->depMasterAutoID);
 

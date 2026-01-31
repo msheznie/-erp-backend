@@ -45,7 +45,7 @@ class RemoveExpiredUserGroupAccess extends Command
      */
     public function handle()
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('user_group_access'));
+        Log::channel('user_group_access')->info('Remove expired user group access command started');
 
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {

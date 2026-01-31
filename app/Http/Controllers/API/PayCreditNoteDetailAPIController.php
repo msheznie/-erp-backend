@@ -13,7 +13,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\helper\Helper;
 use App\Models\CreditNoteReceipt;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

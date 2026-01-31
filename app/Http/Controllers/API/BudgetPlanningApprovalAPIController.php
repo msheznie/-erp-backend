@@ -10,6 +10,7 @@ use App\Models\EmployeesDepartment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BudgetPlanningApprovalAPIController
@@ -60,7 +61,7 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
         $documentId = 133; // Budget Planning Document ID
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -142,7 +143,7 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $budgets = [];
@@ -199,7 +200,7 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
         $documentId = isset($input['documentId']) ? $input['documentId'] : 1044; // Budget Planning Document ID
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -303,7 +304,7 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
     public function rejectBudgetPlanning(Request $request)
     {
 
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } else {

@@ -32,8 +32,6 @@ return [
     Yajra\DataTables\DataTablesServiceProvider::class,
     Maatwebsite\Excel\ExcelServiceProvider::class,
     Barryvdh\DomPDF\ServiceProvider::class,
-    Seguce92\DomPDF\ServiceProvider::class,
-
     /*
      * Application Service Providers...
      */
@@ -44,11 +42,8 @@ return [
     Collective\Html\HtmlServiceProvider::class,
     Laracasts\Flash\FlashServiceProvider::class,
     Prettus\Repository\Providers\RepositoryServiceProvider::class,
-    \InfyOm\Generator\InfyOmGeneratorServiceProvider::class,
-    \InfyOm\AdminLTETemplates\AdminLTETemplatesServiceProvider::class,
     App\Providers\HelperServiceProvider::class,
     Sichikawa\LaravelSendgridDriver\MailServiceProvider::class,
     Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
-    LaravelFCM\FCMServiceProvider::class,
-    Barryvdh\Debugbar\ServiceProvider::class,
+    // Barryvdh\Debugbar\ServiceProvider::class,
 ];

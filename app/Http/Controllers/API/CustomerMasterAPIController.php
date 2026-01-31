@@ -56,7 +56,7 @@ use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
@@ -152,10 +152,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -212,15 +212,15 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $values = implode(',', array_map(function($value)
         {
             return trim($value, ',');
@@ -255,7 +255,7 @@ class CustomerMasterAPIController extends AppBaseController
         GROUP BY customerCodeSystem ORDER BY documentApprovedID 
         ";
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         $customerMasters = DB::select($sql);
         if ($isEmployeeDischarched == 'true') {
@@ -284,11 +284,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
             //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
             $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         } else {
@@ -421,10 +421,10 @@ class CustomerMasterAPIController extends AppBaseController
                                                             ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
                                                                 $companyId = $input['companySystemIDFilter'];
 
-                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                                                                $isGroup = Helper::checkIsCompanyGroup($companyId);
 
                                                                 if ($isGroup) {
-                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                    $childCompanies = Helper::getGroupCompany($companyId);
                                                                 } else {
                                                                     $childCompanies = [$companyId];
                                                                 }
@@ -450,10 +450,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customerId = $request['customerId'];
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -684,7 +684,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function approveCustomer(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = Helper::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -695,7 +695,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function rejectCustomer(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = Helper::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -716,10 +716,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -747,10 +747,10 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -776,10 +776,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -1157,7 +1157,7 @@ class CustomerMasterAPIController extends AppBaseController
 
             switch ($document_id) {
                 case self::DOCUMENT_ID_CUSTOMER:
-                    $employee = \Helper::getEmployeeInfo();
+                    $employee = Helper::getEmployeeInfo();
                     $input['companySystemID'] = $companySystemID;
                     $result = CustomerMasterBulkUploadService::processBulkUpload($formatChk, $input, $employee);
 
@@ -1165,7 +1165,7 @@ class CustomerMasterAPIController extends AppBaseController
                     return $this->sendResponse($result, trans('custom.added_successfully'));
                     break;
                 case self::DOCUMENT_ID_SUPPLIER:
-                    $employee = \Helper::getEmployeeInfo();
+                    $employee = Helper::getEmployeeInfo();
                     $input['companySystemID'] = $companySystemID;
                     $result = SupplierMasterBulkUploadService::processBulkUpload($formatChk, $input, $employee);
                     
@@ -1180,7 +1180,7 @@ class CustomerMasterAPIController extends AppBaseController
                         $item_data = [];
                         $company_group_msg = '';
 
-                        $employee = \Helper::getEmployeeInfo();
+                        $employee = Helper::getEmployeeInfo();
                         $count++;
                            
                                 if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
@@ -1240,7 +1240,7 @@ class CustomerMasterAPIController extends AppBaseController
                              
                                 if(isset($company))
                                 {
-                                    $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+                                    $validatorResult = Helper::checkCompanyForMasters($company->companySystemID);
 
                                     if (!$validatorResult['success']) {
                                             $groupOfComapnyFalse = true;
