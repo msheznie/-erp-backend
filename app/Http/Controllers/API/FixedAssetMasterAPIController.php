@@ -358,6 +358,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $grvDetails = GRVDetails::with(['grv_master'])->find($grvDetailsID);
             if ($grvDetails) {
 
+                $createdFaIds = [];
+
                 $assetSerialNoCount = count($input['assetSerialNo']);
 
                 $input['serviceLineSystemID'] = $grvDetails->grv_master->serviceLineSystemID;
@@ -487,6 +489,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                         $cost['rptAmount'] = $grvDetails->landingCost_RptCur * $grvDetails->noQty;
                         $this->fixedAssetCostRepository->create($cost);
+
+                        $createdFaIds[] = $fixedAssetMasters['faID'];
 
                         GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty' => 0, 'assetAllocationDoneYN' => -1]);
                     } else {
@@ -618,6 +622,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                                 $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
                                 $this->fixedAssetCostRepository->create($cost);
+
+                                $createdFaIds[] = $fixedAssetMasters['faID'];
                             }
                         }
 
@@ -629,7 +635,89 @@ class FixedAssetMasterAPIController extends AppBaseController
                         }
                         GRVDetails::where('grvDetailsID', $grvDetailsID)->update($grvUpdate);
                     }
-                   
+
+                    if (isset($input['confirmedYN']) && $input['confirmedYN'] == 1 && !empty($createdFaIds)) {
+                        $documentDate = isset($input['documentDate']) ? $input['documentDate'] : (isset($input['dateAQ']) ? $input['dateAQ'] : null);
+                        if ($documentDate && !($documentDate instanceof \DateTimeInterface)) {
+                            $documentDate = new Carbon($documentDate);
+                        }
+                        $companySystemID = $input['companySystemID'];
+
+                        foreach ($createdFaIds as $faId) {
+                            $fixedAssetMaster = FixedAssetMaster::find($faId);
+                            if (!$fixedAssetMaster) {
+                                continue;
+                            }
+
+                            $erpAttributes = ErpAttributes::withTrashed()
+                                ->where('document_id', 'ASSETCOST')
+                                ->where('is_active', 1)
+                                ->get();
+
+                            $valueRows = ErpAttributeValues::whereIn('attribute_id', $erpAttributes->pluck('id'))
+                                ->where(function ($q) use ($faId) {
+                                    $q->where('document_master_id', $faId)->orWhereNull('document_master_id');
+                                })
+                                ->get()
+                                ->groupBy('attribute_id');
+
+                            foreach ($erpAttributes as $erpAttr) {
+                                $rows = $valueRows->get($erpAttr->id, collect());
+                                $attrVal = $rows->firstWhere('document_master_id', $faId) ?? $rows->where('document_master_id', null)->first() ?? $rows->first();
+                                $value = $attrVal ? ($attrVal->value ?? null) : null;
+
+                                if ($erpAttr->is_mendatory) {
+                                    if ($rows->isNotEmpty() && ($value === null || $value === '')) {
+                                        DB::rollBack();
+                                        return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
+                                    }
+                                }
+                            }
+
+                            if ($documentDate) {
+                                $documentDateYearActive = CompanyFinanceYear::active_finance_year($companySystemID, $documentDate->format('Y-m-d'));
+                                if ($documentDateYearActive) {
+                                    $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($companySystemID, 9, $documentDate->format('Y-m-d'));
+                                    if (!$documentDateMonthActive) {
+                                        DB::rollBack();
+                                        return $this->sendError(trans('custom.document_date_not_within_active_financial_period'), 500);
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return $this->sendError(trans('custom.document_date_not_within_active_financial_period'), 500);
+                                }
+                            }
+
+                            $accumulatedDepreciationDate = $fixedAssetMaster->accumulated_depreciation_date ?? null;
+                            if ($accumulatedDepreciationDate) {
+                                if (!($accumulatedDepreciationDate instanceof \DateTimeInterface)) {
+                                    $accumulatedDepreciationDate = new Carbon($accumulatedDepreciationDate);
+                                }
+                                $accumulatedDateYearActive = CompanyFinanceYear::active_finance_year($companySystemID, $accumulatedDepreciationDate->format('Y-m-d'));
+                                if ($accumulatedDateYearActive) {
+                                    $accumulatedMonthActive = CompanyFinancePeriod::activeFinancePeriod($companySystemID, 9, $accumulatedDepreciationDate->format('Y-m-d'));
+                                    if (!$accumulatedMonthActive) {
+                                        DB::rollBack();
+                                        return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'), 500);
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'), 500);
+                                }
+                            }
+
+                            $empInfo = \Helper::getEmployeeInfo();
+                            $this->fixedAssetMasterRepository->update([
+                                'confirmedYN' => 1,
+                                'confirmedByEmpSystemID' => $empInfo->employeeSystemID,
+                                'confirmedByEmpID' => $empInfo->empID,
+                                'confirmedDate' => now(),
+                                'RollLevForApp_curr' => 1,
+                                'refferedBackYN' => 0,
+                            ], $faId);
+                        }
+                    }
+
                     DB::commit();
                 }
             }
@@ -1166,7 +1254,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             unset($input['itemPicture']);
 
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
-                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo','assetStatus']);
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo','assetStatus','dateDEP']);
 
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
             } else {
@@ -1179,8 +1267,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $employee = Helper::getEmployeeInfo();
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
 
-                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus']);
-                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus']);
+                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus','dateDEP']);
+                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus','dateDEP']);
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if(isset($modified_array[$key]) && $old != $modified_array[$key]){
