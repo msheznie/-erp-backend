@@ -10,7 +10,7 @@ return [
     'unable_to_send' => 'Unable to send the email',
     
     // Email Body Messages
-    'kyc_approved_body' => '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. </p>',
+    'kyc_approved_body' => '<p>Dear Supplier, <br /></p><p>Please be informed that your KYC has been approved. <br><br> Thank You. <br><br> <b>Supplier Portal Login:</b> <br><p><a href=":loginLink">:loginLink</a></p></p>',
     'appointment_approved_body' => '<p>Dear Supplier, <br /></p><p>Please be informed that your appointment has been approved. <br><br> Thank You. </p>',
     'kyc_referred_back_body' => '<p>Dear Supplier,</p><p>Please be informed that your KYC form has been referred back by :empName, for the following reason.</p><p>Reason : <b>:rejectedComments</b></p><p>Please click on the "Amend" button to do the changes into KYC and resubmit for approval.</p><p><a href=":loginLink">Supplier Portal Login</a></p><p>Click the above link to login to system. Thank You.</p>',
     'delivery_appointment_rejected_body' => '<p>Dear Supplier,</p><p>Please be informed that your delivery appointment has been rejected for below reason by :empName.<br><br> :rejectedComments.<br><br> Thank You.</p>',

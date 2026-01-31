@@ -20,4 +20,18 @@ class SrmTenderPo extends Model
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'po_id', 'purchaseOrderID');
     }
+
+    /**
+     * Get active tender PO IDs for a company
+     *
+     * @param int $companyId
+     * @return array
+     */
+    public static function getActiveTenderPOIds($companyId)
+    {
+        return self::where('company_id', $companyId)
+            ->where('status', 1)
+            ->pluck('po_id')
+            ->toArray();
+    }
 }

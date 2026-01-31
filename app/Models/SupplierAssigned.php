@@ -253,6 +253,14 @@ class SupplierAssigned extends Model
         return $this->hasOne('App\Models\TenderSupplierAssigneeEditLog', 'supplier_assigned_id','supplierAssignedID');
 
     }
+
+    public function subBusinessCategoryAssigned(){
+        return $this->hasOne('App\Models\SupplierSubCategoryAssign', 'supplierID','supplierCodeSytem');
+    }
+
+    public function supplierGroup(){
+        return $this->hasOne('App\Models\SupplierGroup', 'supplierID','supplierCodeSytem');
+    }
     public static function tenderAssignSuppliersForCreation($tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID){
         $supplierAssigned = self::when(!$editOrAmend, function ($q) use ($tenderId){
             $q->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
@@ -272,12 +280,23 @@ class SupplierAssigned extends Model
             ->where('registrationNumber', '!=', null);
         return collect($supplierAssigned->get())->pluck('supplierAssignedID')->toArray();
     }
-    public static function getTenderAssignedSupplierQry($selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $editOrAmend, $versionID){
+    public static function getTenderAssignedSupplierQry($selectedCategoryIds, $tenderMasterId, $selectedCompanyId,
+                                   $editOrAmend, $versionID, $selectedSubCategoryIds, $selectedSupplierGroupId
+    ){
         return self::with(['businessCategoryAssigned' => function ($query) use ($selectedCategoryIds) {
             if (sizeof($selectedCategoryIds) != 0) {
                 $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
             }
-        }])->when(!$editOrAmend, function ($q) use ($tenderMasterId){
+        }, 'subBusinessCategoryAssigned' => function ($query) use ($selectedSubCategoryIds) {
+            if (sizeof($selectedSubCategoryIds) != 0) {
+                $query->whereIn('supSubCategoryID', $selectedSubCategoryIds);
+            }
+        }, 'master' => function ($query) use ($selectedSupplierGroupId) {
+            if (sizeof($selectedSupplierGroupId) != 0) {
+                $query->whereIn('supplier_group_id', $selectedSupplierGroupId);
+            }
+        }
+            ])->when(!$editOrAmend, function ($q) use ($tenderMasterId){
             $q->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderMasterId) {
                 $query->where('tender_master_id', $tenderMasterId);
             });

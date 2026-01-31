@@ -954,6 +954,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
             Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
             Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
+            Route::get('downloadFileSRMTemplate', 'DocumentAttachmentsAPIController@downloadFileSRMTemplate');
         });
 
         Route::group(['middleware' => 'max_memory_limit'], function () {

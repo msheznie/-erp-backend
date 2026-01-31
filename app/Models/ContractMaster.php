@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Support\Facades\DB;
 
 class ContractMaster extends Model
 {
@@ -173,6 +174,120 @@ class ContractMaster extends Model
     {
         return $this->hasMany(ContractStatusHistory::class, 'contract_id','id');
     }
+    public static function getStandaloneContractsForReport($companyId, $linkedContractIds, $dateFrom = null, $dateTo = null)
+    {
+        return self::query()
+            ->where('companySystemID', $companyId)
+            ->where('approved_yn', 1)
+            ->where('refferedBackYN', 0)
+            ->when(!empty($linkedContractIds), function ($q) use ($linkedContractIds) {
+                return $q->whereNotIn('id', $linkedContractIds);
+            })
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                return $q->whereDate('created_at', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                return $q->whereDate('created_at', '<=', $dateTo);
+            })
+            ->select([
+                'id',
+                'contractCode',
+                'startDate',
+                'endDate',
+                'agreementSignDate',
+                'created_at'
+            ])
+            ->orderByDesc('created_at');
+    }
+    public static function loadContractRelationshipsForReport(array $contractIds): array
+    {
+        if (empty($contractIds)) {
+            return [];
+        }
 
+        $contracts = DB::table('cm_contract_master')
+            ->whereIn('id', $contractIds)
+            ->select('id', 'contractCode', 'startDate', 'endDate', 'agreementSignDate')
+            ->get()
+            ->keyBy('id');
 
+        $statuses = DB::table('cm_contract_status_history')
+            ->whereIn('contract_id', $contractIds)
+            ->whereIn('status', [1, 2, 3, 4, 5, 6])
+            ->select('contract_id', 'status')
+            ->get()
+            ->groupBy('contract_id');
+
+        return $contracts->mapWithKeys(function ($contract, $contractId) use ($statuses) {
+            return [
+                $contractId => [
+                    'contract' => $contract,
+                    'statuses' => $statuses->get($contractId, collect()),
+                ]
+            ];
+        })->toArray();
+    }
+    
+    public function contractOwners()
+    {
+        return $this->belongsTo(ContractUsers::class, 'contractOwner', 'id');
+    }
+
+    public function confirmedBy()
+    {
+        return $this->belongsTo(Employee::class, 'confirm_by', 'employeeSystemID');
+    }
+
+    public function tenderMaster()
+    {
+        return $this->belongsTo(TenderMaster::class, 'tender_id', 'id');
+    }
+    public function counterParties()
+    {
+        return $this->belongsTo(ContractCounterPartyMaster::class, 'counterParty', 'cmCounterParty_id');
+    }
+
+    public static function getContractMasterById($uuid)
+    {
+        return self::select('id', 'uuid', 'contractCode', 'title', 'description', 'contractType',
+            'counterParty', 'counterPartyName', 'referenceCode', 'contractOwner', 'contractAmount', 'startDate',
+            'endDate', 'agreementSignDate', 'contractTermPeriod', 'contractRenewalDate', 'companySystemID',
+            'contractExtensionDate', 'contractTerminateDate', 'contractRevisionDate', 'primaryCounterParty',
+            'primaryEmail', 'primaryPhoneNumber', 'secondaryCounterParty', 'secondaryEmail', 'secondaryPhoneNumber',
+            'tender_id', 'effective_date', 'confirmed_yn', 'confirmed_date', 'confirm_by'
+        )
+            ->with([
+                'contractTypes' => function ($q)
+                {
+                    $q->select('contract_typeId', 'cm_type_name');
+                }, 'contractOwners' => function ($q)
+                {
+                    $q->select('id', 'contractUserCode', 'contractUserName');
+                }, 'counterParties' => function ($q)
+                {
+                    $q->select('cmCounterParty_id', 'cmCounterParty_name');
+                }, 'contractUsers' => function ($q)
+                {
+                    $q->select('id', 'contractUserCode', 'contractUserName');
+                }, 'tenderMaster' => function ($q)
+                {
+                    $q->select('id', 'title');
+                }, 'confirmedBy' => function ($q1)
+                {
+                    $q1->select('employeeSystemID', 'empName');
+                }
+            ])
+            ->where('uuid', $uuid)
+            ->first();
+    }
+
+    public static function getConfirmationData($uuid)
+    {
+        return self::select('confirmed_yn', 'confirmed_date', 'confirm_by')
+            ->with(['confirmedBy' => function ($q1)
+            {
+                $q1->select('employeeSystemID', 'empName');
+            }])
+            ->where('uuid', $uuid)->first();
+    }
 }

@@ -56,6 +56,7 @@ use App\Models\SrmTenderDepartment;
 use App\Models\SrmTenderMasterEditLog;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
+use App\Models\SRMTenderUserAccess;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierAssigned;
 use App\Models\TenderBoqItems;
@@ -2374,12 +2375,22 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierList(Request $request){
         $input = $request->all();
         $selectedCategoryIds = array();
+        $selectedSubCategoryIds = array();
+        $selectedSupplierGroupId = array();
         $selectedCompanyId = $input['companyId'];
         $tenderMasterId = $input['tenderMasterId'];
-        $selectedCategories = $input['selectedCategories'];
+        $selectedCategories = $input['selectedCategories'] ?? [];
+        $selectedSubCategories = $input['selectedSubCategories'] ?? [];
+        $selectedSupplierGroups = $input['selectedSupplierGroups'] ?? [];
 
         foreach ($selectedCategories as $selectedCategory) {
             $selectedCategoryIds[] = $selectedCategory['id'];
+        }
+        foreach ($selectedSubCategories as $selectedSubCategory) {
+            $selectedSubCategoryIds[] = $selectedSubCategory['id'];
+        }
+        foreach ($selectedSupplierGroups as $selectedSupplierGroup) {
+            $selectedSupplierGroupId[] = $selectedSupplierGroup['id'];
         }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -2390,12 +2401,25 @@ class TenderMasterRepository extends BaseRepository
 
         $requestData = $this->srmDocumentModifyService->checkForEditOrAmendRequest($tenderMasterId);
         $qry = SupplierAssigned::getTenderAssignedSupplierQry(
-            $selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $requestData['enableRequestChange'], $requestData['versionID']
+            $selectedCategoryIds, $tenderMasterId, $selectedCompanyId, $requestData['enableRequestChange'],
+            $requestData['versionID'], $selectedSubCategoryIds, $selectedSupplierGroupId
         );
 
-        if(sizeof($selectedCategoryIds) != 0) {
+        if(!empty($selectedCategoryIds)) {
             $qry = $qry->whereHas('businessCategoryAssigned', function ($query) use ($selectedCategoryIds) {
                 $query->whereIn('supCategoryMasterID', $selectedCategoryIds);
+            });
+        }
+
+        if(!empty($selectedSubCategoryIds)) {
+            $qry = $qry->whereHas('subBusinessCategoryAssigned', function ($query) use ($selectedSubCategoryIds) {
+                $query->whereIn('supSubCategoryID', $selectedSubCategoryIds);
+            });
+        }
+
+        if(!empty($selectedSupplierGroupId)) {
+            $qry = $qry->whereHas('master', function ($query) use ($selectedSupplierGroupId) {
+                $query->whereIn('supplier_group_id', $selectedSupplierGroupId);
             });
         }
 
@@ -2600,4 +2624,481 @@ class TenderMasterRepository extends BaseRepository
             ];
         }
     }
+
+    public function cloneTender($request){
+        try {
+        $input = $request->all();
+        $tenderMasterUuid = $input['uuid'];
+        $companySystemID = $input['companySystemId'];
+        $isTender = $input['isTender'];
+        $documentSystemID = isset ($isTender) && $isTender ? 108 : 113;
+        $editOrAmendRequest = false;
+        $documentName = isset ($isTender) && $isTender ? 'Tender' : 'RFX';
+
+        $tenderMaster = TenderMaster::getTenderByUuid($tenderMasterUuid);
+            if(empty($tenderMaster)) {
+                return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
+            }
+
+        $documentModify = DocumentModifyRequest::getTenderModifyRequest($tenderMaster['id']);
+            if(!empty($documentModify) && $documentModify->status == 1){
+                if($documentModify->approved ==0 && $documentModify->confirmation_approved == 0){
+                    $editOrAmendRequest = true;
+                }
+            }
+            if($editOrAmendRequest === true){
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.doc_is_requested_for_edit_or_amend_kindly_approve_the_request', ['doc' => $documentName]),
+                ];
+            }
+
+            DB::transaction(function () use ($tenderMaster, $documentSystemID, $companySystemID) {
+
+                $newTender = $this->cloneTenderMaster($tenderMaster, $companySystemID, $documentSystemID);
+                $this->cloneUserAccess($tenderMaster['id'], $newTender->id);
+                $this->cloneDepartments($tenderMaster['id'], $newTender->id);
+                $this->cloneProcurements($tenderMaster['id'], $newTender->id);
+                $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
+                $this->clonePurchaseRequests($tenderMaster['id'], $newTender->id);
+                $this->clonePricingSchedules($tenderMaster['id'], $newTender->id);
+                $this->cloneEvaluationCriteria($tenderMaster['id'], $newTender->id);
+                $this->cloneAttachments($tenderMaster['id'], $newTender->id, $documentSystemID);
+                $this->cloneCalendarDates($tenderMaster['id'], $newTender->id);
+                if($tenderMaster['tender_type_id'] !== 1){
+                    $this->cloneSuppliers($tenderMaster['id'], $newTender->id);
+                }
+
+                $cloneCount = (int) $tenderMaster['is_clone'];
+                $nextCloneCount   = $cloneCount > 0 ? $cloneCount + 1 : 1;
+                $tenderMaster->update([
+                    'is_clone' => $nextCloneCount,
+                ]);
+                $newTender->update([
+                    'clone_master_id' => $tenderMaster['id'],
+                ]);
+
+            });
+
+            return [
+                'success' => true,
+                'message' => trans('srm_tender_rfx.successfully_cloned'),
+            ];
+
+        } catch(\Exception $exception){
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])
+            ];
+        }
+    }
+
+    private function cloneTenderMaster($tenderMaster, $companySystemID, $documentSystemID)
+    {
+        $company = Company::getComanyCode($companySystemID);
+        $documentMaster = DocumentMaster::getDocumentData($documentSystemID);
+        $lastSerial = TenderMaster::getLastSerialNumber($companySystemID, $documentSystemID);
+        $lastSerialNumber = $lastSerial ? intval($lastSerial->serial_number) + 1 : 1;
+
+        $tenderCode = ($company . '/' .
+            $documentMaster['documentID'] .
+            str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+        $cloneCount = (int) $tenderMaster['is_clone'];
+        if ($cloneCount > 0) {
+            $count = $cloneCount + 1;
+            $tenderTitle = 'Clone ' . $count . ' - ' . $tenderMaster->title;
+            $description = 'Clone ' . $count . ' - ' . $tenderMaster->description;
+            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
+        } else {
+            $cloneCount = 1;
+            $tenderTitle = 'Clone - ' . $tenderMaster->title;
+            $description = 'Clone - ' . $tenderMaster->description;
+            $tenderDescription = (isset($tenderMaster->description)) ? $description : null;
+        }
+
+        $newTender = $tenderMaster->replicate([
+            'id',
+            'uuid',
+            'tender_code',
+            'serial_number',
+            'title',
+            'description',
+            'created_at',
+            'updated_at'
+        ]);
+
+        $newTender->uuid = Helper::generateSRMUuid(16);
+        $newTender->title = $tenderTitle;
+        $newTender->description = $tenderDescription;
+        $newTender->tender_code = $tenderCode;
+        $newTender->serial_number = $lastSerialNumber;
+        $newTender->is_clone = 0;
+
+        $newTender->fill([
+            'confirmed_yn' => 0,
+            'confirmed_by_emp_system_id' => null,
+            'confirmed_date' => null,
+
+            'approved' => 0,
+            'approved_date' => null,
+            'approved_by_user_system_id' => null,
+            'approval_remarks' => null,
+
+            'refferedBackYN' => 0,
+            'timesReferred' => 0,
+            'RollLevForApp_curr' => 1,
+            'approved_by_emp_name' => null,
+
+            'published_yn' => 0,
+            'published_at' => null,
+            'closed_yn' => 0,
+
+            'technical_eval_status' => 0,
+            'go_no_go_status' => 0,
+
+            'commercial_verify_status' => 0,
+            'commercial_verify_at' => null,
+            'commercial_verify_by' => null,
+
+            'commercial_ranking_line_item_status' => 0,
+            'combined_ranking_status' => 0,
+
+            'commercial_line_item_status' => 0,
+            'commercial_ranking_comment' => null,
+
+            'is_awarded' => 0,
+            'award_comment' => null,
+
+            'final_tender_awarded' => 0,
+            'final_tender_award_comment' => null,
+            'final_tender_award_email' => 0,
+
+            'award_commite_mem_status' => 0,
+            'final_tender_comment_status' => 0,
+
+            'tender_edit_version_id' => null,
+            'tender_edit_confirm_id' => null,
+
+            'is_negotiation_started' => 0,
+            'negotiation_published' => 0,
+            'negotiation_serial_no' => null,
+            'negotiation_code' => null,
+            'is_negotiation_closed' => 0,
+
+            'negotiation_commercial_ranking_line_item_status' => null,
+            'negotiation_commercial_ranking_comment' => null,
+            'negotiation_combined_ranking_status' => null,
+
+            'negotiation_is_awarded' => null,
+            'negotiation_award_comment' => null,
+
+            'negotiation_doc_verify_status' => null,
+            'negotiation_doc_verify_comment' => null,
+
+            'show_technical_criteriav' => 0,
+        ]);
+        $newTender->save();
+        return $newTender;
+    }
+    private function cloneUserAccess($oldTenderId, $newTenderId)
+    {
+        $bidEmployees = SrmTenderBidEmployeeDetails::getTenderBidEmployees($oldTenderId);
+        if (!empty($bidEmployees)) {
+            foreach ($bidEmployees as $employee) {
+                $newEmployee = $employee->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newEmployee->tender_id = $newTenderId;
+                $newEmployee->tender_award_commite_mem_status = 0;
+                $newEmployee->tender_award_commite_mem_comment = null;
+
+                $newEmployee->save();
+            }
+        }
+
+        $tenderUserAccess = SRMTenderUserAccess::getTenderUserAccessForAmd($oldTenderId);
+        if (!empty($tenderUserAccess)) {
+            foreach ($tenderUserAccess as $user) {
+                $newUser = $user->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newUser->tender_id = $newTenderId;
+                $newUser->save();
+            }
+        }
+    }
+    private function cloneDepartments($oldTenderId, $newTenderId)
+    {
+        $tenderDepartments = SrmTenderDepartment::getTenderDepartmentEditLog($oldTenderId);
+        if (!empty($tenderDepartments)) {
+            foreach ($tenderDepartments as $department) {
+                $newDepartment = $department->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newDepartment->tender_id = $newTenderId;
+                $newDepartment->save();
+            }
+        }
+    }
+    private function cloneProcurements($oldTenderId, $newTenderId)
+    {
+        $tenderProcuments = ProcumentActivity::getProcumentActivityForAmd($oldTenderId);
+        if (!empty($tenderProcuments)) {
+            foreach ($tenderProcuments as $procument) {
+                $newProcument = $procument->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newProcument->tender_id = $newTenderId;
+                $newProcument->save();
+            }
+        }
+    }
+    private function cloneBudgetItems($oldTenderId, $newTenderId)
+    {
+        $tenderBudgetItems = SrmTenderBudgetItem::getTenderBudgetItemForAmd($oldTenderId);
+        if (!empty($tenderBudgetItems)) {
+            foreach ($tenderBudgetItems as $budgetItem) {
+                $newBudgetItem = $budgetItem->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newBudgetItem->tender_id = $newTenderId;
+                $newBudgetItem->save();
+            }
+        }
+    }
+    private function clonePurchaseRequests($oldTenderId, $newTenderId)
+    {
+        $tenderPR = TenderPurchaseRequest::getTenderPurchaseRequestForAmd($oldTenderId);
+        if (!empty($tenderPR)) {
+            foreach ($tenderPR as $purchaseRequest) {
+                $newPR = $purchaseRequest->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newPR->tender_id = $newTenderId;
+                $newPR->save();
+            }
+        }
+    }
+    private function clonePricingSchedules($oldTenderId, $newTenderId)
+    {
+        $pricingScheduleMaster = PricingScheduleMaster::getPricingScheduleMasterForAmd($oldTenderId);
+        if (!empty($pricingScheduleMaster)) {
+            foreach ($pricingScheduleMaster as $pricingSchedule) {
+
+                $newPricingScheduleMaster = $pricingSchedule->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newPricingScheduleMaster->tender_id = $newTenderId;
+                $newPricingScheduleMaster->save();
+
+                $pricingScheduleDetail = PricingScheduleDetail::getPricingScheduleDetailForAmd(
+                    $oldTenderId, $pricingSchedule->id);
+                if (!empty($pricingScheduleDetail)) {
+                    foreach ($pricingScheduleDetail as $scheduleDetail) {
+
+                        $newPricingScheduleDetail = $scheduleDetail->replicate([
+                            'id',
+                            'tender_id',
+                            'pricing_schedule_master_id',
+                            'created_at'
+                        ]);
+
+                        $newPricingScheduleDetail->tender_id = $newTenderId;
+                        $newPricingScheduleDetail->pricing_schedule_master_id = $newPricingScheduleMaster->id;
+                        $newPricingScheduleDetail->tender_ranking_line_item = null;
+                        $newPricingScheduleDetail->save();
+
+                        if ((int) $scheduleDetail->is_disabled === 1) {
+
+                            $bidFormatDetailId = $scheduleDetail->id;
+                            $newBidFormatDetailId = $newPricingScheduleDetail->id;
+
+                            $scheduleBidFormatData = ScheduleBidFormatDetails::getScheduleBidFormatForAmd(
+                                $pricingSchedule->id,
+                                $bidFormatDetailId
+                            );
+
+                            if (!empty($scheduleBidFormatData)) {
+                                foreach ($scheduleBidFormatData as $bidFormat) {
+
+                                    $newBidFormat = $bidFormat->replicate([
+                                        'id',
+                                        'schedule_id',
+                                        'bid_format_detail_id',
+                                        'created_at',
+                                    ]);
+
+                                    $newBidFormat->schedule_id = $newPricingScheduleMaster->id;
+                                    $newBidFormat->bid_format_detail_id = $newBidFormatDetailId;
+                                    $newBidFormat->save();
+                                }
+                            }
+                        }
+
+                        if ((int) $scheduleDetail->boq_applicable === 1) {
+
+                            $mainWorkID = $scheduleDetail->id;
+                            $newMainWorkID = $newPricingScheduleDetail->id;
+
+                            $tenderBoqItems = TenderBoqItems::getTenderBoqItemsAmd(
+                                $oldTenderId, $mainWorkID);
+
+                            if (!empty($tenderBoqItems)) {
+                                foreach ($tenderBoqItems as $boqItem) {
+
+                                    $newBoqItems = $boqItem->replicate([
+                                        'id',
+                                        'main_work_id',
+                                        'tender_id',
+                                        'created_at'
+                                    ]);
+
+                                    $newBoqItems->main_work_id = $newMainWorkID;
+                                    $newBoqItems->tender_id = $newTenderId;
+                                    $newBoqItems->tender_ranking_line_item = null;
+                                    $newBoqItems->save();
+                                }
+                            }
+                        }
+
+                    }
+                }
+
+            }
+        }
+    }
+    private function cloneEvaluationCriteria($oldTenderId, $newTenderId)
+    {
+        $evaluationCriteriaDetails = EvaluationCriteriaDetails::getEvaluationCriteriaDetailForAmd(
+            $oldTenderId
+        );
+        if (!empty($evaluationCriteriaDetails)) {
+
+            $levelOneIdMap = [];
+
+            foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
+
+                if ((int) $evaluationCriteria->level !== 1) {
+                    continue;
+                }
+
+                $newCriteria = $evaluationCriteria->replicate([
+                    'id',
+                    'tender_id',
+                    'parent_id',
+                    'created_at',
+                ]);
+
+                $newCriteria->tender_id = $newTenderId;
+                $newCriteria->parent_id = 0;
+                $newCriteria->save();
+
+                $levelOneIdMap[$evaluationCriteria->id] = $newCriteria->id;
+            }
+
+            foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
+
+                if ((int) $evaluationCriteria->level === 1) {
+                    continue;
+                }
+
+                $newCriteria = $evaluationCriteria->replicate([
+                    'id',
+                    'tender_id',
+                    'parent_id',
+                    'created_at',
+                ]);
+
+                $newCriteria->tender_id = $newTenderId;
+                $newCriteria->parent_id = $levelOneIdMap[$evaluationCriteria->parent_id] ?? null;
+                $newCriteria->evaluation_criteria_master_id=$evaluationCriteria->evaluation_criteria_master_id;
+                $newCriteria->save();
+            }
+        }
+    }
+    private function cloneAttachments($oldTenderId, $newTenderId, $documentSystemID)
+    {
+        $tenderAttachments = DocumentAttachments::getTenderAttachments($oldTenderId, $documentSystemID);
+        if (!empty($tenderAttachments)) {
+            foreach ($tenderAttachments as $attachment) {
+                $newTenderAttachments = $attachment->replicate([
+                    'id',
+                    'documentSystemCode'
+                ]);
+
+                $newTenderAttachments->documentSystemCode = $newTenderId;
+                $newTenderAttachments->save();
+            }
+        }
+
+        $tenderDocumentAssign = TenderDocumentTypeAssign::getTenderDocumentTypeForAmd($oldTenderId);
+        if (!empty($tenderDocumentAssign)) {
+            foreach ($tenderDocumentAssign as $documentType) {
+                $newTenderDocumentAssign = $documentType->replicate([
+                    'id',
+                    'tender_id'
+                ]);
+
+                $newTenderDocumentAssign->tender_id = $newTenderId;
+                $newTenderDocumentAssign->save();
+            }
+        }
+    }
+    private function cloneCalendarDates($oldTenderId, $newTenderId)
+    {
+        $calendarDateData = CalendarDatesDetail::getTenderCalendarDateDetailsAmd($oldTenderId);
+        if (!empty($calendarDateData)) {
+            foreach ($calendarDateData as $calendarDate) {
+                $newCalendarDates = $calendarDate->replicate([
+                    'id',
+                    'tender_id',
+                    'created_at'
+                ]);
+
+                $newCalendarDates->tender_id = $newTenderId;
+                $newCalendarDates->save();
+            }
+        }
+    }
+    private function cloneSuppliers($oldTenderId, $newTenderId)
+    {
+        $assignSuppliers = TenderSupplierAssignee::getTenderSupplierAssignForAmd($oldTenderId);
+        if (!empty($assignSuppliers)) {
+            foreach ($assignSuppliers as $suppliers) {
+                $newAssignSuppliers = $suppliers->replicate([
+                    'id',
+                    'tender_master_id',
+                    'created_at'
+                ]);
+
+                $newAssignSuppliers->tender_master_id = $newTenderId;
+                $newAssignSuppliers->mail_sent = 0;
+                $newAssignSuppliers->registration_link_id = 0;
+                $newAssignSuppliers->save();
+            }
+        }
+    }
+
 }

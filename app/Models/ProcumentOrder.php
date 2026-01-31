@@ -17,6 +17,7 @@ use App\helper\TaxService;
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Awobaz\Compoships\Compoships;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ProcumentOrder
@@ -803,5 +804,72 @@ class ProcumentOrder extends Model
     public function all_approvals()
     {
         return $this->hasMany('App\Models\DocumentApproved', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
+    }
+
+    /**
+     * Get standalone POs for report
+     */
+    public static function getStandalonePOsForReport(
+        int $companyId,
+        array $linkedPOIds = [],
+        $dateFrom = null,
+        $dateTo = null
+    ) {
+        return self::query()
+            ->where('companySystemID', $companyId)
+            ->when(!empty($linkedPOIds), function ($q) use ($linkedPOIds) {
+                return $q->whereNotIn('purchaseOrderID', $linkedPOIds);
+            })
+            ->when($dateFrom, function ($q) use ($dateFrom) {
+                return $q->where('createdDateTime', '>=', $dateFrom);
+            })
+            ->when($dateTo, function ($q) use ($dateTo) {
+                return $q->where('createdDateTime', '<=', $dateTo);
+            })
+            ->select('purchaseOrderID', 'purchaseOrderCode', 'createdDateTime')
+            ->orderByDesc('createdDateTime');
+    }
+
+    /**
+     * Load PO relationships for report
+     */
+    public static function loadPORelationshipsForReport(array $poIds, int $companyId): array
+    {
+        if (empty($poIds)) {
+            return [];
+        }
+
+        $pos = DB::table('erp_purchaseordermaster')
+            ->whereIn('purchaseOrderID', $poIds)
+            ->select('purchaseOrderID', 'purchaseOrderCode', 'documentSystemID')
+            ->get()
+            ->keyBy('purchaseOrderID');
+
+        $approvals = DB::table('erp_documentapproved as da')
+            ->join('erp_purchaseordermaster as po', function ($join) {
+                $join->on('da.documentSystemCode', '=', 'po.purchaseOrderID')
+                    ->on('da.documentSystemID', '=', 'po.documentSystemID');
+            })
+            ->leftJoin('employees as e', 'da.employeeSystemID', '=', 'e.employeeSystemID')
+            ->whereIn('po.purchaseOrderID', $poIds)
+            ->where('da.approvedYN', -1)
+            ->where('da.companySystemID', $companyId)
+            ->select(
+                'po.purchaseOrderID',
+                'da.rollLevelOrder',
+                'e.empName',
+                'da.approvedDate'
+            )
+            ->get()
+            ->groupBy('purchaseOrderID');
+
+        return $pos->mapWithKeys(function ($po, $poId) use ($approvals) {
+            return [
+                $poId => [
+                    'poCode'     => $po->purchaseOrderCode ?? '',
+                    'approvals'  => $approvals->get($poId, collect()),
+                ]
+            ];
+        })->toArray();
     }
 }

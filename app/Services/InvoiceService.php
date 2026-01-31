@@ -27,7 +27,8 @@ class InvoiceService
         $search = $request->input('search.value');
         $search = $request->input('search.value');
         $filters = $request->input('extra');
-        $query = $this->buildInvoiceQuery($supplierID, $search, $filters);
+        $deliveryAppoinmentID = $request->input('extra.deliveryAppoinmentID') ?? null;
+        $query = $this->buildInvoiceQuery($supplierID, $search, $filters, $deliveryAppoinmentID);
         return DataTables::eloquent($query)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -204,7 +205,7 @@ class InvoiceService
             ->first();
     }
 
-    public function buildInvoiceQuery($supplierID, $search = null, $filters = null)
+    public function buildInvoiceQuery($supplierID, $search = null, $filters = null, $deliveryAppoinmentID = null)
     {
         $query = BookInvSuppMaster::select([
             'bookingSuppMasInvAutoID',
@@ -225,7 +226,8 @@ class InvoiceService
             'refferedBackYN',
             'confirmedYN',
             'documentType',
-            'approved'
+            'approved',
+            'deliveryAppoinmentID'
         ])
             ->with([
                 'created_by:employeeSystemID,empID,empName,empFullName',
@@ -242,9 +244,17 @@ class InvoiceService
                     }
                 ])
             ->where('supplierID', $supplierID)
-            ->where('confirmedYN', 1)
             ->where('cancelYN', 0)
             ->whereIn('documentType', [0,1,2,3])
+            ->when(
+                is_null($deliveryAppoinmentID),
+                function ($q) {
+                    $q->where('confirmedYN', 1);
+                },
+                function ($q) use ($deliveryAppoinmentID) {
+                    $q->where('deliveryAppoinmentID', $deliveryAppoinmentID);
+                }
+            )
             ->orderBy('bookingSuppMasInvAutoID', 'desc');
 
         if($filters)

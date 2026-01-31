@@ -416,4 +416,11 @@ class Company extends Model
         return Company::select('companySystemID', 'CompanyID', 'CompanyName')
             ->whereIN("companySystemID", $companyIDs)->get();
     }
+
+    public static function getLocalCurrencyID($companySystemID)
+    {
+        $company = Company::find($companySystemID);
+
+        return $company ? $company->localCurrencyID : "";
+    }
 }

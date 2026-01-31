@@ -1,6 +1,57 @@
 # Changelog
 
 
+## [10.101.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.100.1...v10.101.0) (2026-01-21)
+
+
+### Features
+
+* **Tasking Request:** Portal | EA | Task assignment approval following job procedure setup [GHR-9581] ([#9569](https://github.com/pbsgears/Gears_BackEnd/issues/9569)) ([847cc21](https://github.com/pbsgears/Gears_BackEnd/commit/847cc21327270ff80c2679298859df6802bb61c3))
+
+## [10.100.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.100.0...v10.100.1) (2026-01-20)
+
+
+### Bug Fixes
+
+* **system admin:** Error While Assigning Employee to Warehouse [GCP-19165] ([#9643](https://github.com/pbsgears/Gears_BackEnd/issues/9643)) ([eff2ce3](https://github.com/pbsgears/Gears_BackEnd/commit/eff2ce3ff9eaa46321f588bbf30e000fed77cf27))
+
+## [10.100.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.1...v10.100.0) (2026-01-19)
+
+
+### Bug Fixes
+
+* resource control for mobile api ([#9581](https://github.com/pbsgears/Gears_BackEnd/issues/9581)) ([#9634](https://github.com/pbsgears/Gears_BackEnd/issues/9634)) ([90cd461](https://github.com/pbsgears/Gears_BackEnd/commit/90cd46119e21feaa8bd1c322f4e15c2c22b9e91d))
+
+
+### Miscellaneous Chores
+
+* release 10.100.0 ([#9637](https://github.com/pbsgears/Gears_BackEnd/issues/9637)) ([e20c767](https://github.com/pbsgears/Gears_BackEnd/commit/e20c767b8048b7fec4a1583e74c340b2284818c8))
+
+## [10.99.1](https://github.com/pbsgears/Gears_BackEnd/compare/v10.99.0...v10.99.1) (2026-01-08)
+
+
+### Bug Fixes
+
+* fix the doc transaltion of all approval [GCP-19288]  ([17c5c78](https://github.com/pbsgears/Gears_BackEnd/commit/17c5c78d9898a1c0452a6180d0888b2c76d1b86e))
+
+## [10.99.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.98.0...v10.99.0) (2026-01-08)
+
+
+### Features
+
+* **srm:** Change Supplier Invoice creation navigation from Supplier portal [GSUP-2234] ([#9509](https://github.com/pbsgears/Gears_BackEnd/issues/9509)) ([71e8632](https://github.com/pbsgears/Gears_BackEnd/commit/71e8632c29d4ed01f54c51ddb825dfda30902934))
+* **srm:** Contract View Option in Supplier Portal [GSUP-4075] ([#9492](https://github.com/pbsgears/Gears_BackEnd/issues/9492)) ([a067e88](https://github.com/pbsgears/Gears_BackEnd/commit/a067e88a035bcfc88bef7236a6246165ae2ca95f))
+* **srm:** Price Bid format Excel Upload [GSUP-4688] ([#9531](https://github.com/pbsgears/Gears_BackEnd/issues/9531)) ([258e692](https://github.com/pbsgears/Gears_BackEnd/commit/258e692c9bdfbe79405dbade6888ef496d69295f))
+* **srm:** Procurement Lifecycle Report – Enhancement [GSUP-4694] ([#9493](https://github.com/pbsgears/Gears_BackEnd/issues/9493)) ([b912b98](https://github.com/pbsgears/Gears_BackEnd/commit/b912b98b69305ad799e59a37837f91c5be4823e0))
+* **srm:** Supplier Registration | Email notification enhancement [GSUP-4656] ([#9452](https://github.com/pbsgears/Gears_BackEnd/issues/9452)) ([879849a](https://github.com/pbsgears/Gears_BackEnd/commit/879849a5106d39ce5f8332b42e9064c1a3f23e9e))
+* **srm:** Supplier Selection During Tender & RFX Creation [GSUP-4690] ([#9517](https://github.com/pbsgears/Gears_BackEnd/issues/9517)) ([af5a967](https://github.com/pbsgears/Gears_BackEnd/commit/af5a9675cc863bdb0fdb97b4989681d8c9378582))
+* **srm:** Tender Cloning [GSUP-4659] ([#9494](https://github.com/pbsgears/Gears_BackEnd/issues/9494)) ([0f6d63c](https://github.com/pbsgears/Gears_BackEnd/commit/0f6d63cb9de5cb4b139f8461ae997e99c992cdbd))
+
+
+### Bug Fixes
+
+* **Pricing Schedule:** Pricing Schedule Sorting Issue [GSUP-4939] ([#9560](https://github.com/pbsgears/Gears_BackEnd/issues/9560)) ([8d64f18](https://github.com/pbsgears/Gears_BackEnd/commit/8d64f189603b1302e2e541b8184512748c0ee47c))
+
 ## [10.98.0](https://github.com/pbsgears/Gears_BackEnd/compare/v10.97.2...v10.98.0) (2026-01-05)
 
 

@@ -964,7 +964,9 @@ class SrmTenderMasterEditLog extends Model
         'show_technical_criteria',
         'isDelegation',
         'contract_id',
-        'is_deleted'
+        'is_deleted',
+        'is_clone',
+        'clone_master_id'
     ];
 
     /**
@@ -1078,7 +1080,9 @@ class SrmTenderMasterEditLog extends Model
         'show_technical_criteria' => 'integer',
         'isDelegation' => 'boolean',
         'contract_id' => 'integer',
-        'is_deleted' => 'integer'
+        'is_deleted' => 'integer',
+        'is_clone' => 'integer',
+        'clone_master_id' => 'integer'
     ];
 
     /**

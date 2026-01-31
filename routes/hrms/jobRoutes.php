@@ -15,3 +15,5 @@ Route::get('leaveAccrualJobCallDebug', 'HRJobInvokeAPIController@leaveAccrualJob
 Route::get('delegationJobCallDebug', 'HRJobInvokeAPIController@delegationJobCallDebug');
 Route::get('empDesignationUpdateNotification', 'HRJobInvokeAPIController@sendEmpDesignationUpdateNotification');
 Route::post('unconfirmed-attendance-pull', 'HRJobInvokeAPIController@unConfirmedAttendancePull');
+Route::get('designation-create-update-notification', 'HRJobInvokeAPIController@designationCreateUpdateNotification');
+Route::get('employee-tasking-notification', 'HRJobInvokeAPIController@sendEmployeeTaskingNotifications');

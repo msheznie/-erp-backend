@@ -132,4 +132,11 @@ class TenderBidFormatDetail extends Model
             ->select('id','field_type','tender_id','label','is_disabled','boq_applicable','formula_string')
             ->get();
     }
+
+    public static function checkItemExists($price_bid_format_id, $item)
+    {
+        return self::where('label', $item)
+            ->where('tender_id', $price_bid_format_id)
+            ->exists();
+    }
 }
