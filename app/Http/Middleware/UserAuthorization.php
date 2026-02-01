@@ -25,11 +25,17 @@ class UserAuthorization
 
         $routeName = $request->route()->getName();
 
-        $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
+        $exceptionRoutes = $this->getExceptionRoutes();
 
-        if (!$checkRouteName) {
+        if (in_array($request->route()->uri, $exceptionRoutes)) {
             return $next($request);
         }
+
+        $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
+
+        // if (!$checkRouteName) {
+        //     return $next($request);
+        // }
 
         $employeeSystemID = Helper::getEmployeeSystemID();
 
@@ -45,8 +51,32 @@ class UserAuthorization
         if ($checkRoleRoute) {
             return $next($request);
         } else {
+
+            $navigationID = $request->header('X-nav-ID') ?? 0;
+            $accessType = $request->header('X-Access-Type') ?? 'None';
+
+            \Log::channel('authorization')->info(json_encode([
+                'navigationID' => $navigationID,
+                'routeName' => $routeName,
+                'accessType' => $accessType
+            ]));
+
+
             return errorMsgs("Unauthorized Access");
         }
+    }
+
+    private function getExceptionRoutes()
+    {
+        return [
+            'api/v1/getCurrentUserInfo',
+            'api/v1/checkUserGroupAccessRights',
+            'api/v1/getUserMenu',
+            'api/v1/user/companies',
+            'api/v1/getNotifications',
+            'api/v1/erp_language_master',
+            'api/v1/user/menu',
+        ];
     }
 }
 
