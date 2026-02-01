@@ -722,7 +722,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         }
     }
 
-    public function check_validation($id = 0, $input)
+    public function check_validation($id = 0, $input = null)
     {
 
         $check_valid = ContingencyBudgetPlan::where(['companyFinanceYearID' => $input['companyFinanceYearID'], 'templateMasterID' => $input['templateMasterID'], 'budgetID' => $input['budgetID']])

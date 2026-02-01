@@ -90,7 +90,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return MatchDocumentMaster::class;
     }
 
-    public function matchDocumentListQuery($request, $input, $search = '', $supplierID) {
+    public function matchDocumentListQuery($request, $input, $search = '', $supplierID = null) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [4, 15]);
@@ -195,7 +195,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return $data;
     }
 
-    public function receiptVoucherMatchingListQuery($request, $input, $search = '', $customerID) {
+    public function receiptVoucherMatchingListQuery($request, $input, $search = '', $customerID = null) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [19, 21]);

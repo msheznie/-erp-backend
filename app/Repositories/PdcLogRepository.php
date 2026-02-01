@@ -43,7 +43,7 @@ class PdcLogRepository extends BaseRepository
         return PdcLog::class;
     }
 
-    public function pdcIssuedListQuery($request, $input, $search = '', $bankmasterAutoID) {
+    public function pdcIssuedListQuery($request, $input, $search = '', $bankmasterAutoID = null) {
         
         $companyId = $request['companyId'];
 

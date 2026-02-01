@@ -89,7 +89,7 @@ class MaterielRequestRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function materialrequestsListQuery($request, $input, $search = '', $serviceLineSystemID) {
+    public function materialrequestsListQuery($request, $input, $search = '', $serviceLineSystemID = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

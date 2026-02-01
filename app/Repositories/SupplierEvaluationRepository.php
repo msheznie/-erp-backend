@@ -36,7 +36,7 @@ class SupplierEvaluationRepository extends BaseRepository
     {
         return SupplierEvaluation::class;
     }
-    public function supplierEvaluationListQuery($request, $input, $search = '', $supplier, $evaluationTemplate)
+    public function supplierEvaluationListQuery($request, $input, $search = '', $supplier = null, $evaluationTemplate = null)
     {
         $supplierEvaluation = SupplierEvaluation::with(['createdBy', 'templateMaster'])->where('companySystemID',$input['companyID']);
 

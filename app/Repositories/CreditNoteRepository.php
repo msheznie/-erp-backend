@@ -101,7 +101,7 @@ class CreditNoteRepository extends BaseRepository
 
     }
 
-    public function creditNoteListQuery($request, $input, $search = '', $customerID, $projectID) {
+    public function creditNoteListQuery($request, $input, $search = '', $customerID = null, $projectID = null) {
 
         $master = DB::table('erp_creditnote')
             ->leftjoin('currencymaster', 'customerCurrencyID', '=', 'currencyID')

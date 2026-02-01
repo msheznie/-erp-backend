@@ -74,7 +74,7 @@ class BankReconciliationRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankReconciliationListQuery($request, $input, $search = '' ,$bankmasterAutoID) {
+    public function bankReconciliationListQuery($request, $input, $search = '' ,$bankmasterAutoID = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

@@ -10631,7 +10631,7 @@ GROUP BY
      * @param $type
      * @return string
      */
-    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type)
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type = null)
     {
         global $globalFormula;
         $finalFormula = '';

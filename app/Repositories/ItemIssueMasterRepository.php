@@ -110,7 +110,7 @@ class ItemIssueMasterRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function itemIssueListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
+    public function itemIssueListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

@@ -84,7 +84,7 @@ class StockReceiveRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function stockReceiveListQuery($request, $input, $search = '',$serviceLineSystemID) {
+    public function stockReceiveListQuery($request, $input, $search = '',$serviceLineSystemID = null) {
 
         $stockReceive = StockReceive::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])

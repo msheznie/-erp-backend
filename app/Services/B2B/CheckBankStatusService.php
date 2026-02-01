@@ -42,7 +42,7 @@ class CheckBankStatusService
         $this->storage = \Storage::disk('sftp');
     }
 
-    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
+    private function updateStatusFromPath(string $path, int $portalStatus, ?int $submittedStatus = null)
     {
         try {
             $paymentTransfers = PaymentBankTransfer::whereNotNull('batchReference')

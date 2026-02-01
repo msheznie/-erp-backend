@@ -31,7 +31,7 @@ class BankTransferService
     }
 
 
-    public function generateBatchNo($companyID, $documentCode = null, $documentDate, $field, $bankTransferID)
+    public function generateBatchNo($companyID, $documentCode = null, $documentDate = null, $field = null, $bankTransferID = null)
     {
         if (!isset($bankTransferID))
             return new \Exception("Cannot generate Doc Code");

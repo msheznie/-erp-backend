@@ -98,7 +98,7 @@ class StockCountRepository extends BaseRepository
         return StockCount::class;
     }
 
-    public function stockCountListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID)
+    public function stockCountListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null)
     {
 
         $selectedCompanyId = $request['companyId'];

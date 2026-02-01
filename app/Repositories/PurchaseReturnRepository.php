@@ -92,7 +92,7 @@ class PurchaseReturnRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function purchaseReturnListQuery($request, $input, $search = '', $serviceLineSystemID, $grvLocation) {
+    public function purchaseReturnListQuery($request, $input, $search = '', $serviceLineSystemID = null, $grvLocation = null) {
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])

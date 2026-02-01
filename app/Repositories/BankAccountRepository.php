@@ -78,7 +78,7 @@ class BankAccountRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankAccountListQuery($request, $input, $search = '', $bankmasterAutoID) {
+    public function bankAccountListQuery($request, $input, $search = '', $bankmasterAutoID = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

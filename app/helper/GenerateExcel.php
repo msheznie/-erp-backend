@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Storage;
 
 class GenerateExcel
 {
-    public static function process($data,$type,$fileName = 'payment_suppliers_by_year',$path_dir,$array=NULL)
+    public static function process($data,$type,$fileName = 'payment_suppliers_by_year',$path_dir = null,$array=NULL)
     {
         
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;

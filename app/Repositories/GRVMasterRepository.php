@@ -334,7 +334,7 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID, $projectID) {
+    public function grvListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);

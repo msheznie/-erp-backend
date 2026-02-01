@@ -90,7 +90,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         return BookInvSuppMaster::class;
     }
 
-    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID, $projectID) {
+    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID = null, $projectID = null) {
 
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);

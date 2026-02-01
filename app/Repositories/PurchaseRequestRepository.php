@@ -122,7 +122,7 @@ class PurchaseRequestRepository extends BaseRepository
         return PurchaseRequest::class;
     }
 
-    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID, $buyerEmpSystemId) {
+    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID = null, $buyerEmpSystemId = null) {
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
 

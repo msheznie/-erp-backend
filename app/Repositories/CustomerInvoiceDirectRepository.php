@@ -226,7 +226,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $customerInvoiceDirect;
     }
 
-    public function customerInvoiceListQuery($request, $input, $search = '', $customerID) {
+    public function customerInvoiceListQuery($request, $input, $search = '', $customerID = null) {
 
         $invMaster = DB::table('erp_custinvoicedirect')
         ->leftJoin('currencymaster as TransactionCurrency', 'erp_custinvoicedirect.custTransactionCurrencyID', '=', 'TransactionCurrency.currencyID')

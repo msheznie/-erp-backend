@@ -75,7 +75,7 @@ class StockTransferRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function stockTransferListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
+    public function stockTransferListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null) {
 
         $stockTransferMaster = StockTransfer::where('companySystemID', $input['companyId']);
         $stockTransferMaster->where('documentSystemID', $input['documentId']);

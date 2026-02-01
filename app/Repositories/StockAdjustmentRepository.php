@@ -74,7 +74,7 @@ class StockAdjustmentRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function stockAdjustmentListQuery($request, $input, $search = '',$grvLocation, $serviceLineSystemID,$reasons) {
+    public function stockAdjustmentListQuery($request, $input, $search = '',$grvLocation = null, $serviceLineSystemID = null,$reasons = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

@@ -59,7 +59,7 @@ class PaymentBankTransferRepository extends BaseRepository
         return PaymentBankTransfer::class;
     }
 
-    public function paymentBankTransferListQuery($request, $input, $search = '', $bankmasterAutoID, $approved = 0) {
+    public function paymentBankTransferListQuery($request, $input, $search = '', $bankmasterAutoID = null, $approved = 0) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);

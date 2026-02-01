@@ -82,7 +82,7 @@ class ItemReturnMasterRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function itemReturnListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
+    public function itemReturnListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null) {
 
         $selectedCompanyId = $request['companyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
