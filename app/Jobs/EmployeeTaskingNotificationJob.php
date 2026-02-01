@@ -49,10 +49,8 @@ class EmployeeTaskingNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('employee-tasking-notification') );
-
         if (empty($this->dbName)) {
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('employee_tasking_notification')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         } else {
             CommonJobService::db_switch($this->dbName);

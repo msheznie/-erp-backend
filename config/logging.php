@@ -433,6 +433,13 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'employee_tasking_notification' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/employee-tasking-notification.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
         'leave_carry_forward_service' => [
             'driver' => 'single',
             'path' => storage_path('logs/leave-carry-forward-service.log'),

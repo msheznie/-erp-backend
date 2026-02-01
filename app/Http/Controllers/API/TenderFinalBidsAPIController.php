@@ -12,8 +12,10 @@ use App\Models\Employee;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
+use App\Models\TenderConfirmationDetail;
 use App\Models\TenderNegotiation;
 use App\Repositories\TenderFinalBidsRepository;
+use App\Services\TenderConfirmationService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -564,6 +566,22 @@ class TenderFinalBidsAPIController extends AppBaseController
             }
 
             TenderMaster::where('id',$tenderId)->update($update);
+
+            $tenderNegotiationId = null;
+            if ($isNegotiation == 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                if ($latestNegotiation) {
+                    $tenderNegotiationId = $latestNegotiation->id;
+                }
+            }
+            TenderConfirmationService::saveConfirmationDetails(
+                $tenderId,
+                $tenderId,
+                TenderConfirmationDetail::MODULE_COMBINED_RANKING,
+                null,
+                $comment,
+                $tenderNegotiationId
+            );
 
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];

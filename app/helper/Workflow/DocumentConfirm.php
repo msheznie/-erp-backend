@@ -678,7 +678,7 @@ class DocumentConfirm
                 }
 
                 //validate currency
-                if (in_array($params["document"], App\helper\Helper::documentListForValidateCurrency())) {
+                if (in_array($params["document"], Helper::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
                     if (!$currencyValidate['status']) {
                         return ['success' => false, 'message' => $currencyValidate['message']];
@@ -686,8 +686,8 @@ class DocumentConfirm
                 }
 
                 //validate supplier blocked status
-                if (in_array($params["document"], App\helper\Helper::documentListForValidateSupplierBlockedStatus())) {
-                    $supplierValidate = App\helper\Helper::validateSupplierBlockedStatus($params["document"], $masterRec);
+                if (in_array($params["document"], Helper::documentListForValidateSupplierBlockedStatus())) {
+                    $supplierValidate = Helper::validateSupplierBlockedStatus($params["document"], $masterRec);
 
                     if ($supplierValidate) {
                         return ['success' => false, 'message' => trans('custom.supplier_blocked_cannot_confirm')];

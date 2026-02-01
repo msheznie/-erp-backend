@@ -2738,7 +2738,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                             }
 
                             if (!empty($prEmails)) {
-                                $prSendEmail = \Email::sendEmail($prEmails);
+                                $prSendEmail = Email::sendEmail($prEmails);
                                 if (!$prSendEmail["success"]) {
                                     // Log error but don't fail the transaction
                                     Log::error('Failed to send PR cancellation emails for PR ID: ' . $prId . ' - ' . $prSendEmail["message"]);

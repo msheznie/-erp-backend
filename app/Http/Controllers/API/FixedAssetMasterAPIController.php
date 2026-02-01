@@ -707,7 +707,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 }
                             }
 
-                            $empInfo = \Helper::getEmployeeInfo();
+                            $empInfo = Helper::getEmployeeInfo();
                             $this->fixedAssetMasterRepository->update([
                                 'confirmedYN' => 1,
                                 'confirmedByEmpSystemID' => $empInfo->employeeSystemID,

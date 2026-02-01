@@ -284,4 +284,9 @@ class SegmentMaster extends Model
     {
         return $this->hasMany('App\Models\SegmentAssigned', 'serviceLineSystemID', 'serviceLineSystemID');
     }
+
+    public static function findByServiceLineSystemID($serviceLineSystemID)
+    {
+        return self::where('serviceLineSystemID', $serviceLineSystemID)->first();
+    }
 }

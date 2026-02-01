@@ -40,6 +40,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
 use App\helper\Workflow\DocumentConfirm;
+use App\helper\email as Email;
 
 /**
  * Class CompanyBudgetPlanningController
@@ -2165,7 +2166,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
 
             if (!empty($emails)) {
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     DB::rollBack();
                     return $this->sendError($sendEmail["message"], 500);
