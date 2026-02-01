@@ -87,6 +87,9 @@ use Carbon\Carbon;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class CustomerReceivePaymentController
@@ -1285,7 +1288,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'amount' => $input['receivedAmount']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -2206,7 +2209,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'amount' => $input['receivedAmount']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -3042,7 +3045,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     public function approveReceiptVoucher(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -3053,7 +3056,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     public function rejectReceiptVoucher(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

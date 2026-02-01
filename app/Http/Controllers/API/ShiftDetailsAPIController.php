@@ -92,6 +92,9 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use DB;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ShiftDetailsController
@@ -1259,7 +1262,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -1271,7 +1274,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
                         $documentApproved["db"] = $db;
-                        $approve = Helper::approveDocument($documentApproved);
+                        $approve = DocumentApprove::approveDocument($documentApproved);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
@@ -1662,7 +1665,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -1674,7 +1677,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
                         $documentApproved["db"] = $db;
-                        $approve = Helper::approveDocument($documentApproved);
+                        $approve = DocumentApprove::approveDocument($documentApproved);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
@@ -2241,7 +2244,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -2262,7 +2265,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
                         $documentApproval["db"] = $db;
                         
-                        $approve = Helper::approveDocument($documentApproval);
+                        $approve = DocumentApprove::approveDocument($documentApproval);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }

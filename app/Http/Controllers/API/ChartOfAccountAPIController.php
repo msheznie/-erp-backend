@@ -53,6 +53,9 @@ use App\Traits\AuditLogsTrait;
 use App\Models\ReportTemplate;
 use App\Models\CashFlowTemplateDetail;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ChartOfAccountController
@@ -410,7 +413,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
 
                     $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"]);
                     }
@@ -897,7 +900,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function approveChartOfAccount(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -908,7 +911,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function rejectChartOfAccount(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

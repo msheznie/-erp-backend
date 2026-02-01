@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreateCreditNote implements ShouldQueue
 {
@@ -243,7 +244,7 @@ class CreateCreditNote implements ShouldQueue
                                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemID'],$confirmDataSet['creditNoteAutoID']);
                                 $autoApproveParams['db'] = $this->db;
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();

@@ -60,6 +60,9 @@ use App\Models\StockCount;
 use App\Models\StockAdjustment;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class DeliveryOrderController
@@ -691,7 +694,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
             $update = Arr::except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
@@ -1103,7 +1106,7 @@ WHERE
 
     public function approveDeliveryOrder(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1114,7 +1117,7 @@ WHERE
 
     public function rejectDeliveryOrder(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

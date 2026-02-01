@@ -82,6 +82,9 @@ use Carbon\Carbon;
 use Response;
 use App\Jobs\DocumentAttachments\SoSentToCustomerJob;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class QuotationMasterController
@@ -720,7 +723,7 @@ class QuotationMasterAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['transactionAmount']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1101,7 +1104,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function approveSalesQuotation(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1112,7 +1115,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function rejectSalesQuotation(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

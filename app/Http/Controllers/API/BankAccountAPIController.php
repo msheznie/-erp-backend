@@ -45,6 +45,7 @@ use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class BankAccountController
@@ -340,7 +341,7 @@ class BankAccountAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

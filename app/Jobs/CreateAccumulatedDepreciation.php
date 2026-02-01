@@ -24,6 +24,9 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\GeneralLedger;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
+
 class CreateAccumulatedDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -270,7 +273,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
 
 
 
-                                $confirm = Helper::confirmDocument($params);
+                                $confirm = DocumentConfirm::confirmDocument($params);
                                 if (!$confirm["success"]) {
                                     Log::error($confirm['message']);
                                 }
@@ -282,7 +285,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     if($this->isDocumentUpload == true){
                                         $documentApproved["isDocumentUpload"] = true;
                                     }
-                                    $approve = Helper::approveDocument($documentApproved);
+                                    $approve = DocumentApprove::approveDocument($documentApproved);
                                     if (!$approve["success"]) {
                                         Log::error($approve['message']);
                                     }

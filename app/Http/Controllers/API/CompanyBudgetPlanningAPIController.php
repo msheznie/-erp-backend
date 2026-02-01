@@ -39,6 +39,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class CompanyBudgetPlanningController
@@ -380,7 +381,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -456,7 +457,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);

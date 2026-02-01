@@ -13,6 +13,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class ProcessReceiptVoucherBatch implements ShouldQueue
 {
@@ -80,7 +82,7 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                     'fromUpload' => true
                 );
                 
-                $confirmation = Helper::confirmDocument($params);
+                $confirmation = DocumentConfirm::confirmDocument($params);
                 
                 if(!$confirmation['success']) {
                     Log::channel('receipt_voucher_api_confirmation_logs')->error('Document confirmation failed ('.$receipt->custPaymentReceiveCode.') : ' . ($confirmation['message'] ?? 'Unknown error'));
@@ -104,7 +106,7 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                     $documentApproved['isCheckPrivilages'] = false;
                     $documentApproved['isAutoCreateDocument'] = true;
                     
-                    $approval = Helper::approveDocument($documentApproved);
+                    $approval = DocumentApprove::approveDocument($documentApproved);
                     
                     if(!$approval['success']) {
                         Log::channel('receipt_voucher_api_confirmation_logs')->error('Document approval failed ('.$receipt->custPaymentReceiveCode.') : ' . ($approval['message'] ?? 'Unknown error'));

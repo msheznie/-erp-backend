@@ -110,8 +110,10 @@ use PHPExcel_IOFactory;
 use Exception;
 use App\Models\CurrencyConversion;
 use Illuminate\Support\Arr;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -1037,7 +1039,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         );
 
                         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-                        $confirm = Helper::confirmDocument($params);
+                        $confirm = DocumentConfirm::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return $this->sendError($confirm["message"], 500);
                         } else {
@@ -1149,7 +1151,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'amount' => ''
                                 );
                                 $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-                                $confirm = Helper::confirmDocument($params);
+                                $confirm = DocumentConfirm::confirmDocument($params);
                                 if (!$confirm["success"]) {
 
                                     return $this->sendError($confirm["message"], 500);
@@ -4133,7 +4135,7 @@ WHERE
 
     public function approveCustomerInvoice(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -4144,7 +4146,7 @@ WHERE
 
     public function rejectCustomerInvoice(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

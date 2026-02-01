@@ -72,6 +72,8 @@ use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class JvMasterController
@@ -1003,7 +1005,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $approve = Helper::approveDocument($input);
+        $approve = DocumentApprove::approveDocument($input);
 
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -1031,7 +1033,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function rejectJournalVoucher(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

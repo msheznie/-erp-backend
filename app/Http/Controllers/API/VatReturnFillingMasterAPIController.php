@@ -32,6 +32,7 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class VatReturnFillingMasterController
@@ -339,7 +340,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

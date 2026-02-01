@@ -81,6 +81,7 @@ use PHPExcel_IOFactory;
 use DateTime;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class FixedAssetMasterController
@@ -1240,7 +1241,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }

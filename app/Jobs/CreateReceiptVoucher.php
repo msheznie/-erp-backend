@@ -21,6 +21,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 class CreateReceiptVoucher implements ShouldQueue
 {
@@ -155,7 +156,7 @@ class CreateReceiptVoucher implements ShouldQueue
                             }
 
                             $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
-                            $confirm = Helper::confirmDocument($params);
+                            $confirm = DocumentConfirm::confirmDocument($params);
                         }
                     } else {
                         $dpdetails = $dpdetail->findWhere(['directPaymentAutoID' => $pvMaster->PayMasterAutoId, 'glCodeIsBank' => 1]);

@@ -91,6 +91,10 @@ use App\Http\Requests\RequestSubmitKycRequest;
 use App\helper\CheckPendingDoc;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1178,7 +1182,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1430,7 +1434,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function approveSupplier(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1441,7 +1445,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function rejectSupplier(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -2149,7 +2153,7 @@ class SupplierMasterAPIController extends AppBaseController
 
             if ($supplierConfirmedYN == 1) {
                 $params = array('autoID' => $input['id'], 'company' => $companySystemID, 'document' => 86);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
                 }
@@ -2273,7 +2277,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function approveRegisteredSupplier(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -2284,7 +2288,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function rejectRegisteredSupplier(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

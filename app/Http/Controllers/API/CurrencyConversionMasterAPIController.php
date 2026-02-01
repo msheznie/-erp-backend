@@ -17,7 +17,9 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
 use App\helper\ReopenDocument;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class CurrencyConversionMasterController
  * @package App\Http\Controllers\API
@@ -280,7 +282,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
         if ($input['confirmedYN'] == 1 && $currencyConversionMaster->confirmedYN == 0) {
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => 96);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if(!$confirm["success"]){
                 return $this->sendError($confirm["message"]);
             }
@@ -515,7 +517,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
     }
 
     public function approveCurrencyConversion(Request $request){
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if(!$approve["success"]){
             return $this->sendError($approve["message"]);
         }else{
@@ -525,7 +527,7 @@ class CurrencyConversionMasterAPIController extends AppBaseController
     }
 
     public function rejectCurrencyConversion(Request $request){
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if(!$reject["success"]){
             return $this->sendError($reject["message"]);
         }else{

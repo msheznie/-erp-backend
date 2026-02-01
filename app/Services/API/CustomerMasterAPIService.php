@@ -30,6 +30,8 @@ use App\Models\CustomerContactDetails;
 use App\Models\SupplierContactType;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class CustomerMasterAPIService
 {
@@ -331,7 +333,7 @@ class CustomerMasterAPIService
                 'isAutoCreateDocument' => $input['isAutoCreateDocument']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,
@@ -462,7 +464,7 @@ class CustomerMasterAPIService
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
                 $autoApproveParams['db'] = $db;
 
-                $approveDocument = Helper::approveDocument($autoApproveParams);
+                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if (!$approveDocument["success"]) {
                     DB::rollBack();
                     return [
@@ -610,7 +612,7 @@ class CustomerMasterAPIService
         $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
         $autoApproveParams['db'] = $db;
 
-        $approveDocument = Helper::approveDocument($autoApproveParams);
+        $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
         if (!$approveDocument["success"]) {
             if ($manageTransaction) {
                 DB::rollBack();

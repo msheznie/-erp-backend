@@ -45,6 +45,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class AssetCapitalizationController
@@ -429,7 +430,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }

@@ -92,6 +92,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use App\Services\SrmDocumentModifyService;
 use mysql_xdevapi\Exception;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class TenderMasterRepository
@@ -415,7 +417,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['approvedComments']);
         $data['approvedComments'] = ($input['approvedComments']) ?? null;
 
-        $approve = Helper::approveDocument($data);
+        $approve = DocumentApprove::approveDocument($data);
 
         if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
             $this->purchaseTender($request);
@@ -447,7 +449,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['rejectedComments']);
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
-        $approve = Helper::rejectDocument($data);
+        $approve = DocumentApprove::rejectDocument($data);
 
         if($approve['success'])
         {

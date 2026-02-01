@@ -45,6 +45,8 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use DateTime;
 use Illuminate\Support\Facades\DB;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class CustomerInvoiceAPIService extends AppBaseController
 {
@@ -1758,7 +1760,7 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                         $customerInvoiceDirect = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();
                         $customerInvoiceDirect->update($_post);
-                        $confirm = Helper::confirmDocument($params);
+                        $confirm = DocumentConfirm::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return [
                                 'status' => false,
@@ -1898,7 +1900,7 @@ class CustomerInvoiceAPIService extends AppBaseController
 
                                 $customerInvoiceDirect = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();
                                 $customerInvoiceDirect->update($_post);
-                                $confirm = Helper::confirmDocument($params);
+                                $confirm = DocumentConfirm::confirmDocument($params);
                                 if (!$confirm["success"]) {
                                     return [
                                         'status' => false,
@@ -3871,7 +3873,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemiD'],$confirmDataSet['custInvoiceDirectAutoID']);
                             $autoApproveParams['db'] = $data['db'];
 
-                            $approveDocument = Helper::approveDocument($autoApproveParams);
+                            $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                             if ($approveDocument["success"]) {
                                 $returnData['status'] = true;
                                 $returnData['responseData'][] = [

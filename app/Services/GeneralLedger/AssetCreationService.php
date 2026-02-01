@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class AssetCreationService extends AppBaseController
 {
@@ -285,7 +287,7 @@ class AssetCreationService extends AppBaseController
             );
 
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
 
                 return $this->sendJsonResponse(false,$confirm['message']);
@@ -296,7 +298,7 @@ class AssetCreationService extends AppBaseController
                 $documentApproved["db"] = $db;
                 $documentApproved["isAutoCreateDocument"] = true;
                 $documentApproved["isDocumentUpload"] = true;
-                $approve = Helper::approveDocument($documentApproved);
+                $approve = DocumentApprove::approveDocument($documentApproved);
                 if (!$approve["success"]) {
 
                     return $this->sendJsonResponse(false,$approve['message']);

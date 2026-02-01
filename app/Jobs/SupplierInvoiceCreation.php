@@ -46,6 +46,8 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\DocumentSystemMappingTrait;
 use App\Jobs\InitiateWebhook;
 use Carbon\Carbon;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class SupplierInvoiceCreation implements ShouldQueue
 {
@@ -1147,7 +1149,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                 'amount' => '',
                 'isAutoCreateDocument' => 1
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 if($invAttachment['isAttachmentAvailable']) {
                     $attachment = DocumentAttachments::where('attachmentID', $supplierInvoiceAttachmentStoreData['data']['attachmentID'])->first();
@@ -1179,7 +1181,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($returnData['documentSystemID'],$returnData['bookingSuppMasInvAutoID']);
                 $autoApproveParams['db'] = $this->db;
                 $autoApproveParams['supplierPrimaryCode'] = $returnData['supplierID'];
-                $approveDocument = Helper::approveDocument($autoApproveParams);
+                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if ($approveDocument["success"]) {
                     $invId[] = $returnData['bookingSuppMasInvAutoID'];
                     $this->storeToDocumentSystemMapping(11,$invId,$this->authorization);

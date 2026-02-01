@@ -28,7 +28,9 @@ use App\Models\DocumentReferedHistory;
 use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class ContingencyBudgetPlanController
  * @package App\Http\Controllers\API
@@ -344,7 +346,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
                 'amount' => 0
             );
             //echo '<pre>';print_r($params);'</pre>';exit;
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -701,7 +703,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
 
     public function approve_contingency_budget(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -712,7 +714,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
     public function reject_contingency_budget(Request $request)
     {
         //echo '<pre>';print_r($request->all());'</pre>';exit;
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

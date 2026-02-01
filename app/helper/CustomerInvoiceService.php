@@ -49,6 +49,7 @@ use App\Models\ApprovalLevel;
 use App\Models\DocumentMaster;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 class CustomerInvoiceService
 {
@@ -686,7 +687,7 @@ class CustomerInvoiceService
                 //checking whether document approved table has a data for the same document
                 $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         $errorMsg = $confirm["message"];

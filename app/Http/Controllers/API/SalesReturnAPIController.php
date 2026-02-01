@@ -46,6 +46,9 @@ use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class SalesReturnController
@@ -642,7 +645,7 @@ class SalesReturnAPIController extends AppBaseController
                 );
                 $update = Arr::except($input,['confirmedYN']);
                 $salesReturn = $this->salesReturnRepository->update($update, $id);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 } else {
@@ -2028,7 +2031,7 @@ class SalesReturnAPIController extends AppBaseController
 
     public function approveSalesReturn(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -2039,7 +2042,7 @@ class SalesReturnAPIController extends AppBaseController
 
     public function rejectSalesReturn(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

@@ -70,6 +70,7 @@ use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
 use function Clue\StreamFilter\fun;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class MaterielRequestController
@@ -617,7 +618,7 @@ class MaterielRequestAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

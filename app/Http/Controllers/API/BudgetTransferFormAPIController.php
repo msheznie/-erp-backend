@@ -54,6 +54,7 @@ use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class BudgetTransferFormController
@@ -402,7 +403,7 @@ class BudgetTransferFormAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

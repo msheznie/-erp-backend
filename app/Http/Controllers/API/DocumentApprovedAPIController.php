@@ -45,6 +45,8 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\JobErrorLog;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class DocumentApprovedController
@@ -3863,7 +3865,7 @@ class DocumentApprovedAPIController extends AppBaseController
 		}else if($request->input('documentSystemID') && ($request->input('documentSystemID') == 108 || $request->input('documentSystemID') == 113)){
             $requestData['id'] = $request->input('documentSystemCode');
             $request->merge($requestData);
-            $approve = Helper::approveDocument($request);
+            $approve = DocumentApprove::approveDocument($request);
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
             } else {
@@ -3882,7 +3884,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $result = $controller->approveSupplierKYC($request);
             return $result;
         }else {
-			$approve = Helper::approveDocument($request);
+			$approve = DocumentApprove::approveDocument($request);
 			if (!$approve["success"]) {
 				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
 			} else {
@@ -4049,7 +4051,7 @@ class DocumentApprovedAPIController extends AppBaseController
 				'rejectedComments' => $input['rejectedComments'],
 				'document_system_id' => $result->documentSystemID,
 			);
-			$reject = Helper::rejectDocument($params);
+			$reject = DocumentReject::rejectDocument($params);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } 

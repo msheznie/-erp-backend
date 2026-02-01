@@ -24,6 +24,8 @@ use App\Models\UserToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\helper\Workflow\API\DocumentApproveApi;
+use App\helper\Workflow\DocumentConfirm;
 
 class HRMSAPIController extends AppBaseController
 {
@@ -345,7 +347,7 @@ class HRMSAPIController extends AppBaseController
             );
 
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
             }
@@ -355,7 +357,7 @@ class HRMSAPIController extends AppBaseController
                 foreach ($documentApproveds as $documentApproved) {
                     $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
                     $documentApproved["db"] = $db;
-                    Helper::approveDocumentForApi($documentApproved);
+                    DocumentApproveApi::approveDocumentForApi($documentApproved);
 
                 }
             }

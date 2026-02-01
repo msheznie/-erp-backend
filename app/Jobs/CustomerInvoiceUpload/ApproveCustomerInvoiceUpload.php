@@ -14,6 +14,7 @@ use App\Models\CustomerInvoiceUploadDetail;
 use App\helper\CommonJobService;
 use App\Models\LogUploadCustomerInvoice;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
 
 class ApproveCustomerInvoiceUpload implements ShouldQueue
 {
@@ -64,7 +65,7 @@ class ApproveCustomerInvoiceUpload implements ShouldQueue
                     $documentApproved["db"] = $db;
                     $documentApproved["fromUpload"] = true;
                     $documentApproved["approvedBy"] = $value->approvedByUserSystemID;
-                    $approve = Helper::approveDocument($documentApproved);
+                    $approve = DocumentApprove::approveDocument($documentApproved);
 
                     if (!$approve["success"]) {
                         $errorMsg = $approve['message'];

@@ -113,6 +113,9 @@ use App\Services\GeneralLedgerService;
 use App\Models\MolContribution;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class BookInvSuppMasterController
@@ -1484,7 +1487,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['bookingAmountTrans']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -2173,7 +2176,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['bookingAmountTrans']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -2924,7 +2927,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     public function approveSupplierInvoice(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -2935,7 +2938,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     public function rejectSupplierInvoice(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

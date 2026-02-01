@@ -48,6 +48,7 @@ use App\Models\AssetDisposalMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -545,7 +546,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         if ($fixedAssetDepreciationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $params = array('autoID' => $id, 'company' => $fixedAssetDepreciationMaster->companySystemID, 'document' => $fixedAssetDepreciationMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
             }

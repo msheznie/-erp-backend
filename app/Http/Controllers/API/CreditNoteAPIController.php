@@ -72,6 +72,7 @@ use Illuminate\Support\Facades\DB;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class CreditNoteController
@@ -670,7 +671,7 @@ class CreditNoteAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['creditAmountTrans']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -961,7 +962,7 @@ class CreditNoteAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['creditAmountTrans']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }

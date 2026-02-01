@@ -59,8 +59,11 @@ use App\Models\ItemMaster;
 use App\Models\UnitConversion;
 use App\Models\Unit;
 use Illuminate\Support\Arr;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class StockTransferController
  * @package App\Http\Controllers\API
@@ -724,7 +727,7 @@ class StockTransferAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1107,7 +1110,7 @@ class StockTransferAPIController extends AppBaseController
 
     public function approveStockTransfer(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1118,7 +1121,7 @@ class StockTransferAPIController extends AppBaseController
 
     public function rejectStockTransfer(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

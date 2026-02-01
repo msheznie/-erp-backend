@@ -24,6 +24,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\helper\Workflow\API\DocumentConfirmApi;
+use App\helper\Workflow\API\DocumentApproveApi;
 
 class CreateStageReceiptVoucher implements ShouldQueue
 {
@@ -252,13 +254,13 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 );
 
 
-                $confirm = Helper::confirmDocumentForApi($params);
+                $confirm = DocumentConfirmApi::confirmDocumentForApi($params);
 
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custReceivePaymentAutoID'])->where('documentSystemID', 21)->get();
                 foreach ($documentApproveds as $documentApproved) {
                     $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
                     $documentApproved["db"] = $this->dataBase;
-                    Helper::approveDocumentForApi($documentApproved);
+                    DocumentApproveApi::approveDocumentForApi($documentApproved);
                 }
             }
 

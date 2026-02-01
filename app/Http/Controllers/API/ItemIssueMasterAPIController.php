@@ -84,6 +84,7 @@ use App\Services\Excel\ExportReportToExcelService;
 use App\Exports\Inventory\MaterialIssueRegister;
 
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -768,7 +769,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-             $confirm = Helper::confirmDocument($params);
+             $confirm = DocumentConfirm::confirmDocument($params);
              if (!$confirm["success"]) {
                  return $this->sendError($confirm["message"], 500);
              }

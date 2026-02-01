@@ -47,6 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentConfirm;
 
 class PaymentVoucherServices
 {
@@ -1905,7 +1906,7 @@ class PaymentVoucherServices
                 'amount' => $amountForApproval,
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,

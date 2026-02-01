@@ -39,6 +39,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ErpBudgetAdditionController
@@ -354,7 +355,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => 0
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

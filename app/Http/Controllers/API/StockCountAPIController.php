@@ -49,6 +49,7 @@ use Illuminate\Support\Arr;
 use App\helper\Helper;
 
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class StockCountController
  * @package App\Http\Controllers\API
@@ -540,7 +541,7 @@ class StockCountAPIController extends AppBaseController
                     'amount' => 0
                 );
 
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }

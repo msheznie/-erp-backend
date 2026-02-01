@@ -103,6 +103,7 @@ use App\Models\SupplierBlock;
 use App\Services\ValidateDocumentAmend;
 use App\Services\GeneralLedgerService;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -1096,7 +1097,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }

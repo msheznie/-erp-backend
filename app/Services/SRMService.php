@@ -125,6 +125,7 @@ use Illuminate\Support\Facades\Config;
 use App\Services\WebPushNotificationService;
 
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 class SRMService
 {
     private $POService = null;
@@ -690,7 +691,7 @@ class SRMService
     public function confirmSupplierAppointment(Request $request)
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
-        $confirm = Helper::confirmDocument($params);
+        $confirm = DocumentConfirm::confirmDocument($params);
 
         return [
             'success' => $confirm['success'],
@@ -6520,7 +6521,7 @@ class SRMService
                 'email' => $paymentProofData['srmSupplier']['email']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             /*  if($confirm['success'])
               {
                   $this->sendSupplierNotification($params);

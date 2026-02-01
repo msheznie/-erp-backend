@@ -87,6 +87,8 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Services\API\CustomerMasterBulkUploadService;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class CustomerMasterController
@@ -684,7 +686,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function approveCustomer(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -695,7 +697,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function rejectCustomer(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

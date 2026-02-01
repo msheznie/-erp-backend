@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreateJournalVoucher implements ShouldQueue
 {
@@ -181,7 +182,7 @@ class CreateJournalVoucher implements ShouldQueue
                                 $autoApproveParams['db'] = $this->db;
                                 $autoApproveParams['supplierPrimaryCode'] = $confirmDataSet['JVcode'];
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();

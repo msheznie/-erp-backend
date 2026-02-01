@@ -40,6 +40,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class MonthlyAdditionsMasterController
@@ -373,7 +374,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

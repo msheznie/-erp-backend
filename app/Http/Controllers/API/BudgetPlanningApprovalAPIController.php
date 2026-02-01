@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\Helper;
-
+use App\helper\Workflow\DocumentReject;
 /**
  * Class BudgetPlanningApprovalAPIController
  * @package App\Http\Controllers\API
@@ -304,7 +304,7 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
     public function rejectBudgetPlanning(Request $request)
     {
 
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } else {

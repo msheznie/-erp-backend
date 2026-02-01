@@ -102,6 +102,10 @@ use App\Services\DocumentCodeConfigurationService;
 use App\Jobs\ExportDetailedORList;
 use App\helper\SME;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -2156,7 +2160,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'prType' => $input['prType']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             $datas =  PulledItemFromMR::where('purcahseRequestID',$id)->where('pr_qnty',0)->get();
 
             if(isset($datas)) {
@@ -2233,7 +2237,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $result = $controller->approveEditDocument($request);
             return $result;
         }else { 
-            $approve = Helper::approveDocument($request);
+            $approve = DocumentApprove::approveDocument($request);
             if (!$approve["success"]) {
                 return $this->sendError($approve["message"]);
             } else {
@@ -2269,7 +2273,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $result = $controllerApprovalStatus->rejectSupplierKYC($request);
             return $result;
         }else {
-            $reject = Helper::rejectDocument($request);
+            $reject = DocumentReject::rejectDocument($request);
             if (!$reject["success"]) {
                 return $this->sendError($reject["message"]);
             } else {
@@ -3301,7 +3305,7 @@ class PurchaseRequestAPIController extends AppBaseController
             'amount' => $input['amount'],
         );
 
-        $approve = Helper::confirmDocument($params);
+        $approve = DocumentConfirm::confirmDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

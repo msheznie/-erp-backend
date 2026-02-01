@@ -34,6 +34,8 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class ReceiptAPIService
 {
@@ -124,7 +126,7 @@ class ReceiptAPIService
 
                     $receipt = self::setTaxDetails($saveReceipt);
 
-                    $confirmation = Helper::confirmDocument($params);
+                    $confirmation = DocumentConfirm::confirmDocument($params);
                     if(!$confirmation['success'])
                     {
                         throw new \Exception('Document confirmation failed: ' . ($confirmation['message'] ?? 'Unknown error'));
@@ -143,7 +145,7 @@ class ReceiptAPIService
                         $documentApproved['sendNotication'] = false;
                         $documentApproved['isCheckPrivilages'] = false;
                         $documentApproved['isAutoCreateDocument'] = true;
-                        $approval = Helper::approveDocument($documentApproved);
+                        $approval = DocumentApprove::approveDocument($documentApproved);
                         
                         if(!$approval['success'])
                         {

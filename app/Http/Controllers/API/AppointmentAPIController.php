@@ -21,6 +21,8 @@ use App\Models\ApprovalLevel;
 use App\Jobs\DeliveryAppoinmentGRV;
 use App\Models\AppointmentDetails;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class AppointmentController
@@ -432,7 +434,7 @@ class AppointmentAPIController extends AppBaseController
         );
 
 
-        $approve = Helper::approveDocument($params);
+        $approve = DocumentApprove::approveDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -453,7 +455,7 @@ class AppointmentAPIController extends AppBaseController
             'rejectedComments' => $input['rejectedComments']
         );
 
-        $approve = Helper::rejectDocument($params);
+        $approve = DocumentReject::rejectDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

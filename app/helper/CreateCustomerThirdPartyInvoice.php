@@ -55,6 +55,9 @@ use App\Services\UserTypeService;
 use App\Http\Controllers\API\CustomerInvoiceDirectAPIController;
 use Illuminate\Http\Request;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
+
 class CreateCustomerThirdPartyInvoice
 {
     /** @var  CustomerInvoiceDirectRepository */
@@ -368,7 +371,7 @@ class CreateCustomerThirdPartyInvoice
                                 'isAutoCreateDocument' => true
                             );
 
-                            $returnData = Helper::confirmDocument($params);
+                            $returnData = DocumentConfirm::confirmDocument($params);
 
                             if($returnData['success']){
 
@@ -392,7 +395,7 @@ class CreateCustomerThirdPartyInvoice
                                     $dataset['db'] = $db;
 
 
-                                    $approveDocument = Helper::approveDocument($dataset);
+                                    $approveDocument = DocumentApprove::approveDocument($dataset);
 
                                     if ($approveDocument["success"]) {
                                         DB::commit();

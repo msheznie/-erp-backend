@@ -31,6 +31,8 @@ use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
 use Illuminate\Http\Request;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class DocumentModifyRequestRepository
@@ -210,7 +212,7 @@ class DocumentModifyRequestRepository extends BaseRepository
                     'amount' => $tenderMaster->estimated_value,
                     'tenderTypeId' => $tenderMaster->tender_type_id
                 ];
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 $title = $tenderMaster['document_system_id'] == 108
                     ? trans('srm_tender_rfx.tender')
                     : trans('srm_tender_rfx.rfx');
@@ -243,7 +245,7 @@ class DocumentModifyRequestRepository extends BaseRepository
             }
 
             return DB::transaction(function () use ($input, $reference_document_id, $tenderMaster) {
-                $approve = Helper::approveDocument($input);
+                $approve = DocumentApprove::approveDocument($input);
                 if (!$approve["success"]){
                     return ['success' => false, 'message' => $approve["message"]];
                 }

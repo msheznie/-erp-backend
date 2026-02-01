@@ -21,6 +21,7 @@ use App\Models\Taxdetail;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\helper\Workflow\DocumentConfirm;
 
 class CreditNoteAPIService extends AppBaseController
 {
@@ -638,7 +639,7 @@ class CreditNoteAPIService extends AppBaseController
                 'amount' => $input['creditAmountTrans'],
                 'isAutoCreateDocument' => $input['isAutoCreateDocument']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,

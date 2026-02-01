@@ -29,6 +29,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentConfirm;
 
 class JournalVoucherService
 {
@@ -521,7 +522,7 @@ class JournalVoucherService
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     "status" => false,

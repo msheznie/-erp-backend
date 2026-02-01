@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\CustomerMaster;
 use App\Models\CustomerAssigned;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -315,7 +316,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                 $autoApproveParams['createMonthlyDeduction'] = $confirmDataSet['createMonthlyDeduction'];
                                 $autoApproveParams['db'] = $this->db;
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();

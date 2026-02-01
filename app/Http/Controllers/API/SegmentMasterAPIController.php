@@ -68,6 +68,8 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class SegmentMasterController
@@ -164,7 +166,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
                 $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
@@ -994,7 +996,7 @@ class SegmentMasterAPIController extends AppBaseController
                 'document' => 132,
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']
             );
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
@@ -1235,7 +1237,7 @@ class SegmentMasterAPIController extends AppBaseController
 
     public function rejectSegmentMaster(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

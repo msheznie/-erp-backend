@@ -77,6 +77,9 @@ use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
 use App\Models\WarehouseItems;
 use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ItemMasterController
@@ -231,7 +234,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
-                    $confirm = Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"], 500);
                     }
@@ -1269,7 +1272,7 @@ class ItemMasterAPIController extends AppBaseController
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1577,7 +1580,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function approveItem(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1588,7 +1591,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function rejectItem(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

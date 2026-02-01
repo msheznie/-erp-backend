@@ -63,6 +63,7 @@ use App\helper\TaxService;
 use App\helper\ItemTracking;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class PurchaseReturnController
@@ -626,7 +627,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }

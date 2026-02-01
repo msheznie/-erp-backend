@@ -177,6 +177,9 @@ use App\Models\SupplierBlock;
 use App\Services\DocumentCodeConfigurationService;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ProcumentOrderController
@@ -1285,7 +1288,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             if ($isAmendAccess != 1) {
                 $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $procumentOrderUpdate->poTotalLocalCurrency);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
                 } else {
@@ -2184,7 +2187,7 @@ class ProcumentOrderAPIController extends AppBaseController
     public function approveProcurementOrder(Request $request)
     {
 
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
 
         if (!$approve["success"]) {
 
@@ -2197,7 +2200,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
     public function rejectProcurementOrder(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

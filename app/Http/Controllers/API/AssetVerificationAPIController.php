@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class AssetVerificationController
@@ -359,7 +360,7 @@ class AssetVerificationAPIController extends AppBaseController
                 'document' => $assetVerification->documentSystemID
             ];
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);

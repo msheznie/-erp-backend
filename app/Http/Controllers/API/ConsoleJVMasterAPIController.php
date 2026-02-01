@@ -40,6 +40,9 @@ use Response;
 use App\Traits\AuditTrial;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ConsoleJVMasterController
@@ -427,7 +430,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
                 'amount' => $jvDetail->debitAmount
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -740,7 +743,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
     public function approveConsoleJV(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -751,7 +754,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
     public function rejectConsoleJV(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

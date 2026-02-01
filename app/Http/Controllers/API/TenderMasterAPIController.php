@@ -101,6 +101,9 @@ use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
 use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class TenderMasterController
@@ -1297,7 +1300,7 @@ class TenderMasterAPIController extends AppBaseController
                         }
 
 
-                        $confirm = Helper::confirmDocument($params);
+                        $confirm = DocumentConfirm::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];
                         } else {
@@ -1835,7 +1838,7 @@ class TenderMasterAPIController extends AppBaseController
     public function approveTender(Request $request)
     {
 
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
 
         if (!$approve["success"]) {
 
@@ -1848,7 +1851,7 @@ class TenderMasterAPIController extends AppBaseController
 
     public function rejectTender(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

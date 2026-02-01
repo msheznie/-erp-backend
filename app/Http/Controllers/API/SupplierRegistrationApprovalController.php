@@ -33,7 +33,8 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Models\SystemGlCodeScenario;
 use App\Models\ChartOfAccount;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 // supplier KYC status
 define('PENDING', 0);
@@ -188,7 +189,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
         $supplierMasterId = $this->isSupplierMasterCreated($request['id']);
 
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
 
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
@@ -258,7 +259,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
      */
     public function rejectSupplierKYC($request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
 
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);

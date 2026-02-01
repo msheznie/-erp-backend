@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use App\helper\Helper;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 use Illuminate\Support\Facades\Log;
+use App\helper\Workflow\DocumentConfirm;
 
 class SupplierService
 {
@@ -88,7 +88,7 @@ class SupplierService
             'email'  => $data['email']
         ];
 
-        $confirm = Helper::confirmDocument($params);
+        $confirm = DocumentConfirm::confirmDocument($params);
         //  throw_unless($confirm && $confirm['success'], $confirm['message']);
 
         return [
