@@ -219,12 +219,10 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                     $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
 
                     if ($fileMoved) {
-                        Log::info("ZIP file uploaded to S3 successfully: {$zipPath}");
                         // Delete the local ZIP file from public directory
                         if (file_exists($zipFullPath)) {
                             $fileDeleted = @unlink($zipFullPath);
                             if ($fileDeleted) {
-                                Log::info("Local ZIP file deleted: {$zipFileName}");
                             } else {
                                 Log::warning("Failed to delete local ZIP file: {$zipFullPath}");
                             }
@@ -244,12 +242,9 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                 ];
 
                 $notificationResult = WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds, $db);
-                Log::info("Send report to user id: " . json_encode((array) $this->userIds));
                 if (Storage::disk('local_public')->exists($rootPaths)) {
                     Storage::disk('local_public')->deleteDirectory($rootPaths);
-                    Log::info("Temporary folder deleted: $rootPaths");
                 }
-                Log::info("Report sent");
             } else {
                 Log::error("ZIP file does not exist after creation: {$zipFullPath}");
             }

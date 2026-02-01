@@ -46,7 +46,6 @@ class TenderObserver
                         $result = DocumentModifyRequestDetail::insert($data);
                         if($result)
                         {
-                            Log::info('updated succesfully');
                         }
                     }
                 }

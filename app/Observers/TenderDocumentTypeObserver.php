@@ -25,7 +25,6 @@ class TenderDocumentTypeObserver
 
         if($result)
         {
-            Log::info('Document type created successfully');
         }
     }
 
@@ -44,7 +43,6 @@ class TenderDocumentTypeObserver
 
         if($result)
         {
-            Log::info('Document type Deleted successfully');
         }
     
     }

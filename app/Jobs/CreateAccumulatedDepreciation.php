@@ -269,7 +269,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     'isAutoCreateDocument' => true
                                 );
 
-                                Log::info("on confirm depreciation");
 
 
 

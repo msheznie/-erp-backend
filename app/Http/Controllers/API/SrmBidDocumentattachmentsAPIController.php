@@ -400,7 +400,6 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
                 $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
                 DB::commit();
-                Log::info(app()->getLocale());
                 return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
             }
 

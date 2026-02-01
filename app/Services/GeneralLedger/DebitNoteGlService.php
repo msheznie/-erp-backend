@@ -212,12 +212,8 @@ class DebitNoteGlService
 
                         $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                     } else {
-                        Log::info('Debit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Debit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Input Vat GL Account not configured' . date('H:i:s'));
                 }
             }
 

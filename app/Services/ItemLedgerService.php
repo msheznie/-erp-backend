@@ -456,7 +456,6 @@ class ItemLedgerService
                                     } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
                                         if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
                                             $data[$i][$column] = 1;
-                                            Log::info('qty is' . $data[$i][$column]);
                                         } else {
                                             $data[$i][$column] = $detail[$value];
                                         }
@@ -469,7 +468,6 @@ class ItemLedgerService
 
                                         if ($masterRec['stockCountType'] == 2) {       // cost count
                                             $data[$i][$column] = 1;
-                                            Log::info('qty is' . $data[$i][$column]);
                                         } else {
                                             $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                         }
@@ -534,7 +532,6 @@ class ItemLedgerService
                 }
                 else{
                     foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
-                        Log::info($detail . date('H:i:s'));
 
                         foreach ($detailColumnArray as $column => $value) {
                             if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
@@ -551,7 +548,6 @@ class ItemLedgerService
                                 } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
                                     if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
                                         $data[$i][$column] = 1;
-                                        Log::info('qty is' . $data[$i][$column]);
                                     } else {
                                         $data[$i][$column] = $detail[$value];
                                     }
@@ -564,7 +560,6 @@ class ItemLedgerService
 
                                     if ($masterRec['stockCountType'] == 2) {       // cost count
                                         $data[$i][$column] = 1;
-                                        Log::info('qty is' . $data[$i][$column]);
                                     } else {
                                         $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                     }
@@ -696,11 +691,9 @@ class ItemLedgerService
 
                 }
                 if($data){
-                    Log::info($data);
                     $items = collect($data)->pluck("itemSystemCode")->toArray();
                     $itemLedgerInsert = ErpItemLedger::insert($data);
                     if($items) {
-                        Log::info($items);
                         $masterModel["items"] = $items;
                         $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
                     }

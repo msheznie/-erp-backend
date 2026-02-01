@@ -107,7 +107,6 @@ class PricingScheduleDetailObserver
                         
                                         if($result1)
                                         {
-                                            Log::info('updated succefully');
                         
                                         }
                         
@@ -165,7 +164,6 @@ class PricingScheduleDetailObserver
                 if($result1)
                 {
                    
-                    Log::info('creted succesfully');
                 }
     
          

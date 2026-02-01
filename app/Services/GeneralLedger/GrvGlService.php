@@ -141,8 +141,6 @@ class GrvGlService
         $unbilledGRVVATAddVatOnPO = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"]);
         $vatDetails = TaxService::processGrvVAT($masterModel["autoID"]);
 
-        Log::info('Total Logistic VAT');
-        Log::info($unbilledGRVVATAddVatOnPO);
 
         if ($masterData) {
             $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
@@ -224,7 +222,6 @@ class GrvGlService
                 }
             }
             if ((($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])))) {
-                Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
                 if ($vatDetails['masterVATTrans'] > 0) {
@@ -248,14 +245,9 @@ class GrvGlService
 
                             $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
-                            Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         } else {
-                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
 
@@ -304,7 +296,6 @@ class GrvGlService
                     if(TaxService::isGRVRCMActivation($masterModel["autoID"])){
 
                         $taxDataOutputTransfer = TaxService::getOutputVATTransferGLAccount($masterData->companySystemID);
-                        Log::info('Inside the Vat Entry OutputVATTransferGLAccoun Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         if (!empty($taxDataOutputTransfer) && ($rcmActivated && $transVATAmount > 0)) {
                             $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxDataOutputTransfer->outputVatTransferGLAccountAutoID)
                                 ->where('companySystemID', $masterData->companySystemID)
@@ -323,14 +314,9 @@ class GrvGlService
                                 array_push($finalData, $data);
 
                                 $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                Log::info('Inside the Vat Entry OutVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                             } else {
-                                Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Output Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                             }
                         } else {
-                            Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
                         }
                     }
                 }
@@ -413,10 +399,6 @@ class GrvGlService
                     $vatData = TaxService::poLogisticForLineWise($val);
                     //$vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$val->supplierID);
 
-                    Log::info('$unbilledGRV item');
-                    Log::info($val);
-                    Log::info('$unbilledGRV, VAtT');
-                    Log::info($vatData);
 
                     $data['documentTransCurrencyID'] = $val->currencyID;
                     $data['documentTransCurrencyID'] = 1;

@@ -34,7 +34,6 @@ class TenderCircularsObserver
 
             if($result)
             {
-                Log::info('tender circular created successfully');
             }
         }
 
@@ -70,7 +69,6 @@ class TenderCircularsObserver
 
            if($result)
            {    
-            Log::info('tender circular updated successfully');
            }
 
         }
@@ -96,7 +94,6 @@ class TenderCircularsObserver
 
             if($result)
             {
-                Log::info('tender circular deleted successfully');
             }
         }
     }

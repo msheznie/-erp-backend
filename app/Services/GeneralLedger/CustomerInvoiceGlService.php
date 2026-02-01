@@ -314,12 +314,8 @@ class CustomerInvoiceGlService
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
                     } else {
-                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
             }
 
@@ -525,12 +521,8 @@ class CustomerInvoiceGlService
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
                     } else {
-                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
 
 
@@ -570,12 +562,8 @@ class CustomerInvoiceGlService
                             $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
                     } else {
-                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
             }
 
@@ -782,12 +770,8 @@ class CustomerInvoiceGlService
                             }
                         }
                     } else {
-                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
             }
         }

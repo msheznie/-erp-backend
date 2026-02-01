@@ -43,7 +43,6 @@ class SentCustomerLedger implements ShouldQueue
     {
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::info('Starting sendCustomerLedger Job');
         $input = $this->input;
         $customers = $input['customers'];
         $errorMessage = [];
@@ -56,9 +55,7 @@ class SentCustomerLedger implements ShouldQueue
             SentCustomerLedgerSubJob::dispatch($db, $input, $languageCode);
         }
         if (count($errorMessage) > 0) {
-            Log::info($errorMessage);
         } else {
-            Log::info('Customer ledger report sent');
         }
     }
 }

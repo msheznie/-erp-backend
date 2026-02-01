@@ -53,7 +53,6 @@ class SentCustomerLedgerSubJob implements ShouldQueue
     {
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::info('customer ledger sub job started');
 
         $input = $this->input;
         $customerCodeSystem = $input['customers'][0]['customerCodeSystem'];

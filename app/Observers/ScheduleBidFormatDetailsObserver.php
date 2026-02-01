@@ -75,7 +75,6 @@ class ScheduleBidFormatDetailsObserver
 
                 if($output)
                 {
-                    Log::info('created succefully');
                 }
             }
             else
@@ -91,7 +90,6 @@ class ScheduleBidFormatDetailsObserver
                     $result =  $this->process($tender);
                     if($result)
                     {
-                        Log::info('boq items created succsfully');
                     }
                 }   
                 else    

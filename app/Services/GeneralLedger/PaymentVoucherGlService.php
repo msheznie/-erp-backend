@@ -360,10 +360,6 @@ class PaymentVoucherGlService
                     $diffTrans = $transAmountTotal - $masterTransAmountTotal;
                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
-                    Log::info('Payment Voucher xxxx' . date('H:i:s'));
-                    Log::info('Tras' . $diffTrans);
-                    Log::info('Local' . $diffLocal);
-                    Log::info('Rpt' . $diffRpt);
 
                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
                         $company = Company::find($masterData->companySystemID);
@@ -372,11 +368,8 @@ class PaymentVoucherGlService
                             ->where('isPublic', 1)
                             ->where('isActive', 1)
                             ->first();
-                        Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
-                        Log::info($exchangeGainServiceLine);
 
                         if (!empty($exchangeGainServiceLine)) {
-                            Log::info('Payment Voucher ---- GL ----- Exist' . date('H:i:s'));
                             $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
                             $data['serviceLineCode'] = $exchangeGainServiceLine->ServiceLineCode;
                         } else {
@@ -384,7 +377,6 @@ class PaymentVoucherGlService
                             $data['serviceLineCode'] = 'X';
                         }
 
-                        Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
@@ -443,12 +435,8 @@ class PaymentVoucherGlService
                                     $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                                 } else {
-                                    Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                    Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                                 }
                             } else {
-                                Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                             }
                         }
 
@@ -490,12 +478,8 @@ class PaymentVoucherGlService
                                     $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                                 } else {
-                                    Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                    Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                                 }
                             } else {
-                                Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                             }
                         }
                     }
@@ -1398,11 +1382,8 @@ class PaymentVoucherGlService
                         ->where('isPublic', 1)
                         ->where('isActive', 1)
                         ->first();
-                    Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
-                    Log::info($exchangeGainServiceLine);
 
                     if (!empty($exchangeGainServiceLine)) {
-                        Log::info('Payment Voucher ---- GL ----- Exist' . date('H:i:s'));
                         $data['serviceLineSystemID'] = $exchangeGainServiceLine->serviceLineSystemID;
                         $data['serviceLineCode'] = $exchangeGainServiceLine->ServiceLineCode;
                     } else {
@@ -1410,7 +1391,6 @@ class PaymentVoucherGlService
                         $data['serviceLineCode'] = 'X';
                     }
 
-                    Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
                     $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
                     $data['glCode'] =  SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");

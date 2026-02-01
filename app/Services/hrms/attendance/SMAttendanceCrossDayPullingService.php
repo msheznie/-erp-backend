@@ -37,7 +37,6 @@ class SMAttendanceCrossDayPullingService{
             $this->mapEachEmpData();
 
             DB::commit();
-            Log::info('Data cross day shifts pulled successfully'.$this->log_suffix(__LINE__));
             return true;
 
         } catch (Exception $ex) {

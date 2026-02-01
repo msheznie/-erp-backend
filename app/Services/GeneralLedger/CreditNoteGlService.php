@@ -185,12 +185,8 @@ class CreditNoteGlService
 
                             $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            Log::info('Credit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Credit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                     }
                     $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                     $data['serviceLineCode'] = $detail->serviceLineCode;

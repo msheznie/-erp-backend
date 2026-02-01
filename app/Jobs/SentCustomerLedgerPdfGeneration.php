@@ -50,7 +50,6 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
         ini_set('memory_limit', -1);
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::info('Customer ledger PDF generation started');
         $dataArray = $this->dataArray;
         $input = $dataArray['input'];
         $reportCount = $dataArray['reportCount'];

@@ -28,7 +28,6 @@ class TenderBoqItemsObserver
     public function created(TenderBoqItems $tender)
     {
 
-        Log::info('test');
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
@@ -62,7 +61,6 @@ class TenderBoqItemsObserver
                $result =  $this->process($tender);
                 if($result)
                 {
-                    Log::info('boq items created succsfully');
                 }
                
             }   
@@ -134,7 +132,6 @@ class TenderBoqItemsObserver
     
             if($result)
             {
-                Log::info('boq items deleted succsfully');
             }
         }
 
@@ -189,7 +186,6 @@ class TenderBoqItemsObserver
                 $result = TenderBoqItemsEditLog::create($data);
                 if($result)
                 {
-                    Log::info('boq items updated succsfully');
                 }
     
             }
@@ -198,7 +194,6 @@ class TenderBoqItemsObserver
                $result =  $this->process($tender);
                 if($result)
                 {
-                    Log::info('boq items updated succsfully');
                 }
                
             } 

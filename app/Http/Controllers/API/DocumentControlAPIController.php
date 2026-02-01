@@ -188,7 +188,6 @@ class DocumentControlAPIController extends AppBaseController
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    //Log::info('Document ID Not Found' . date('H:i:s'));
             }
 
             if($documentArray['documentExist'] == 1) {

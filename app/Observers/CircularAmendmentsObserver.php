@@ -41,7 +41,6 @@ class CircularAmendmentsObserver
 
             if($result)
             {
-                Log::info('tender circular created successfully');
             }
         }
 
@@ -71,7 +70,6 @@ class CircularAmendmentsObserver
             
             if($result)
             {
-                Log::info('tender circular deleted successfully');
             }
         }
 

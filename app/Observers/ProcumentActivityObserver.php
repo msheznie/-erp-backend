@@ -33,7 +33,6 @@ class ProcumentActivityObserver
                 $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($output)
                 {
-                    Log::info('created succesfully 2');
                 }
 
                
@@ -59,7 +58,6 @@ class ProcumentActivityObserver
                 $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($output)
                 {
-                    Log::info('created succesfully 2');
                 }
 
                

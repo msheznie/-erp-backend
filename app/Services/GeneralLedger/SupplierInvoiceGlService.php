@@ -865,12 +865,8 @@ class SupplierInvoiceGlService
                             $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
 
 
@@ -903,12 +899,8 @@ class SupplierInvoiceGlService
 
                             $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
                 
@@ -939,12 +931,8 @@ class SupplierInvoiceGlService
 
                             $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat transfer GL Account not configured' . date('H:i:s'));
                     }
 
                     //output vat entry
@@ -973,17 +961,12 @@ class SupplierInvoiceGlService
 
                             $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                     }
                 }
             } else if ($masterData->documentType == 3 && $masterData->item_details && count($masterData->item_details) > 0 && $masterData->item_details[0]->totalVATAmount > 0 && $directItemVatDetails['masterVATTrans']) {
 
-                Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                 $taxData = TaxService::getInputVATGLAccount($masterData->companySystemID);
 
                 if ($directItemVatDetails['masterVATTrans'] > 0) {
@@ -1012,14 +995,9 @@ class SupplierInvoiceGlService
 
                             $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
-                            Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         } else {
-                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
 
                     if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
@@ -1050,14 +1028,9 @@ class SupplierInvoiceGlService
 
                                     $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
-                                    Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                 } else {
-                                    Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                    Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                                 }
                             } else {
-                                Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                             }
                         }
                     }
@@ -1093,12 +1066,8 @@ class SupplierInvoiceGlService
 
                         $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Input Vat GL Account not configured' . date('H:i:s'));
                 }
 
                 if (TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
@@ -1128,12 +1097,8 @@ class SupplierInvoiceGlService
 
                                 $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                             } else {
-                                Log::info('Supplier Invoice VAT Transfer GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                             }
                         } else {
-                            Log::info('Supplier Invoice VAT Transfer GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                         }
                     }
                 }
@@ -1168,12 +1133,8 @@ class SupplierInvoiceGlService
 
                                 $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                             } else {
-                                Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Input Vat transfer GL Account not assigned to company' . date('H:i:s'));
                             }
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat transfer GL Account not configured' . date('H:i:s'));
                         }
 
                         // output vat transfer entry
@@ -1202,12 +1163,8 @@ class SupplierInvoiceGlService
 
                                 $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                             } else {
-                                Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Output Vat transfer GL Account not assigned to company' . date('H:i:s'));
                             }
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat transfer GL Account not configured' . date('H:i:s'));
                         }
                     }
 
@@ -1247,12 +1204,8 @@ class SupplierInvoiceGlService
 
                             $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
                         } else {
-                            Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                     }
 
                 }

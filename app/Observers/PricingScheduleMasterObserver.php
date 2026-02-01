@@ -35,7 +35,6 @@ class PricingScheduleMasterObserver
                         $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),1);
                         if($output)
                         {
-                            Log::info('created succesfully 2');
                         }
                     
             }
@@ -127,7 +126,6 @@ class PricingScheduleMasterObserver
     
                     if($result1)
                     {
-                        Log::info('deleted succesfully');
                     }
                 }
     
@@ -162,7 +160,6 @@ class PricingScheduleMasterObserver
                         $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),2);
                         if($output)
                         {
-                            Log::info('updated succesfully');
                         }
 
         }
@@ -226,7 +223,6 @@ class PricingScheduleMasterObserver
                         if($result1)
                         {
                            
-                            Log::info('deleted ccccccccccccccc');
                         }
         
                     }

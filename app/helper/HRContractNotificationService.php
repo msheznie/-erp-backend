@@ -73,7 +73,6 @@ class HRContractNotificationService
 
         $this->expired_docs = $data->toArray();
 
-        Log::info( count($this->expired_docs)." expired contracts found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
         if(count($users_setup) == 0){
@@ -109,7 +108,6 @@ class HRContractNotificationService
         }
 
 
-        Log::info( $this->sent_mail_count. " expired employee contract mails send \t on file: " . __CLASS__ ." \tline no :".__LINE__ );
 
         return true;
     }

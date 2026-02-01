@@ -1165,9 +1165,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
 
-                            Log::info('Cheque No:' . $input['BPVchequeNo']);
-                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-                            Log::info('-------------------------------------------------------');
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -1285,9 +1282,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input['modifiedUser'] = Helper::getEmployeeID();
             $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
-            Log::info('Cheque No:' . $input['BPVchequeNo']);
-            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-            Log::info('beforeUpdate______________________________________________________');
 
 
             if(isset($input['BPVAccount']))
@@ -1319,10 +1313,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['paymentMode']);
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($input, $id);
 
-            Log::info('Cheque No:' . $input['BPVchequeNo']);
-            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-            Log::info($paySupplierInvoiceMaster);
-            Log::info('afterUpdate______________________________________________________');
 
             if ($input['payeeType'] == 1) {
                 $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)

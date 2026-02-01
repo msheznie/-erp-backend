@@ -115,7 +115,6 @@ class SendTenderNotificationService
                     $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         $errorMessage  = $sendEmail["message"];
-                        Log::info("Error: $errorMessage");
                     }
                 }
             }

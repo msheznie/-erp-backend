@@ -242,7 +242,6 @@ class EmployeeLedgerService
                 EmployeeLedger::create($data);
             }
 
-            Log::info('Successfully inserted to AP table ' . date('H:i:s'));
         }
 
         return ['status' => true];

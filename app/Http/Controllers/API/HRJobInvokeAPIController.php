@@ -200,7 +200,6 @@ class HRJobInvokeAPIController extends AppBaseController
         }
 
         $msg = "{$dispatchDb} DB added to the queue for attendance day end pulling initiate ({$attDate}).";
-        Log::info("$msg \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         AttendanceDayEndPulling::dispatch($dispatchDb, $companyId, $attDate);
         return $this->sendResponse(true, 'clock out pulling job added to queue');
@@ -351,7 +350,6 @@ class HRJobInvokeAPIController extends AppBaseController
         }
 
         $msg = "{$dispatchDb} DB added to the queue for attendance cross day pulling initiate ({$attDate}).";
-        Log::info("$msg \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         AttendanceCrossDayPulling::dispatch($dispatchDb, $companyId, $attDate);
         return $this->sendResponse(true, 'cross day clock out pulling job added to queue1');
@@ -364,11 +362,7 @@ class HRJobInvokeAPIController extends AppBaseController
 
         $tdb = CommonJobService::get_tenant_db($tenantId);
         if(empty($tdb)){
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
-
-        Log::info("{$tdb} DB added to queue for leave accrual initiate 
-        . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         LeaveAccrualInitiate::dispatch($tdb, $debugDate, $debug);
         return $this->sendResponse(true, 'Leave accrual schedule job added to queue');
@@ -379,11 +373,8 @@ class HRJobInvokeAPIController extends AppBaseController
        
         $tdb = CommonJobService::get_tenant_db($tenantId);
         if(empty($tdb)){
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
 
-        Log::info("{$tdb} DB added to queue for delegation
-        . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         DelegationActivation::dispatch($tdb);
         return $this->sendResponse(true, 'Delegation job added to queue');

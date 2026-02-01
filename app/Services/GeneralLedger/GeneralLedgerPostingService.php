@@ -273,7 +273,6 @@ class GeneralLedgerPostingService
                 $updateVATLedger = TaxLedgerInsert::dispatch($masterModel, $taxLedgerData, $dataBase);
             }
             
-            Log::info('---- GL End Successfully -----' . date('H:i:s'));
             return ['status' => true];
         }
 	}

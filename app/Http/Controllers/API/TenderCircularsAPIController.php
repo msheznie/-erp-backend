@@ -524,7 +524,6 @@ class TenderCircularsAPIController extends AppBaseController
                 $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
             }
 
-            Log::info($file);
 
             $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 

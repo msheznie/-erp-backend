@@ -77,7 +77,6 @@ class UpdateUsersLoginTypeJob implements ShouldQueue
                 }
             }, 'id'); // Specify the column for chunkById
             
-            Log::info("Successfully updated login type for {$processedCount} users in tenant: {$this->tenantDb}" . ($errorCount > 0 ? " (Errors: {$errorCount})" : ""));
             
         } catch (\Exception $e) {
             Log::error("Error updating users login type for tenant: {$this->tenantDb} - " . $e->getMessage());

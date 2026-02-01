@@ -299,7 +299,6 @@ class PurchaseReturnGlService
 
                 if($rcmActivated && ($exemptVATTransAmount > 0 || $vatDetails['masterVATTrans'] > 0)){
                     $taxDataOutputTransfer = TaxService::getOutputVATTransferGLAccount($masterData->companySystemID);
-                    Log::info('Inside the Vat Entry OutputVATTransferGLAccoun Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                     if (!empty($taxDataOutputTransfer)) {
                         $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxDataOutputTransfer->outputVatTransferGLAccountAutoID)
                             ->where('companySystemID', $masterData->companySystemID)

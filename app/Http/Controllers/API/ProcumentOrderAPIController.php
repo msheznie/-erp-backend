@@ -3728,14 +3728,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                 $html = view('print.purchase_order_print_pdf', $order);
             }
         }catch(\Exception $e) {
-            Log::debug('=============== START PRINT TEMPLATE ERROR ==============');
-            Log::info([
-                'function' => 'getProcumentOrderPrintPDF->getDefaultTemplateSource',
-                'request' => $request->all(),
-                'data' => $order
-            ]);
             Log::error($e);
-            Log::debug('=============== END PRINT TEMPLATE ERROR ==============');
 
             // if failed to show dynamically created template then show static template
             $html = view('print.purchase_order_print_pdf', $order);

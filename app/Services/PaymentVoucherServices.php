@@ -367,13 +367,10 @@ class PaymentVoucherServices
             $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
                 ->where('company_id',$input['companySystemID'])
                 ->first();
-            Log::info($checkRegisterDetails);
             if($checkRegisterDetails) {
 
                 $cheque_no = $checkRegisterDetails->cheque_no;
 
-                Log::info('$cheque_no');
-                Log::info($cheque_no);
 
                 /*update cheque detail table */
                 $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
@@ -382,7 +379,6 @@ class PaymentVoucherServices
                 $checkRegisterDetails->save();
 
 
-                Log::info($checkRegisterDetails->cheque_no);
 
                 PaySupplierInvoiceMaster::find($paySupplierInvoiceMasters->PayMasterAutoId)->update([
                     'BPVchequeNo' => $checkRegisterDetails->cheque_no
@@ -1987,9 +1983,6 @@ class PaymentVoucherServices
                             $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
 
-                            Log::info('Cheque No:' . $input['BPVchequeNo']);
-                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-                            Log::info('-------------------------------------------------------');
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -2163,9 +2156,6 @@ class PaymentVoucherServices
             $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         }
 
-        Log::info('Cheque No:' . $input['BPVchequeNo']);
-        Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-        Log::info('beforeUpdate______________________________________________________');
 
 
         if(isset($input['BPVAccount']))
@@ -2206,10 +2196,6 @@ class PaymentVoucherServices
         $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($id);
         $paySupplierInvoiceMaster->update($input);
 
-        Log::info('Cheque No:' . $input['BPVchequeNo']);
-        Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-        Log::info($paySupplierInvoiceMaster);
-        Log::info('afterUpdate______________________________________________________');
 
         if ($input['payeeType'] == 1) {
             $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)->delete();

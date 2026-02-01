@@ -52,7 +52,6 @@ class RecieptVoucherTaxLedgerService
 	public static function processEntry($taxLedgerData, $masterModel)
 	{
 
-        Log::info('---- first step.. -----' . date('H:i:s'));
         $finalData = [];
         $finalDetailData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
@@ -250,9 +249,7 @@ class RecieptVoucherTaxLedgerService
                 ->groupBy('vatSubCategoryID')
                 ->get();
         
-                Log::info('---- second step.. -----' . date('H:i:s'));
                     foreach ($details as $key => $value) {
-                        Log::info('---- third step.. -----' . date('H:i:s'));
         
                         $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
         
@@ -297,7 +294,6 @@ class RecieptVoucherTaxLedgerService
         
                     foreach ($detailData as $key => $value) {
         
-                        Log::info('---- fourth step.. -----' . date('H:i:s'));
                         
                         $ledgerDetailsData['documentDetailID'] = $value->directReceiptAutoID;
                         $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;

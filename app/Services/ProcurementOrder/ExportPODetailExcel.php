@@ -72,7 +72,6 @@ class ExportPODetailExcel {
         $this->output = $this->getMasterData();
         $this->processExportData();
         $basePath = CreateExcel::processDetailExport($this->data, $this->companyCode);
-        Log::info('Export completed', ['result' => $basePath]);
         $this->sendNotification($basePath);
 
         if($basePath == '') {

@@ -37,7 +37,6 @@ class EvaluationCriteriaDetailsObserver
             $master_id = $tender->getAttribute('id');
             $result = $this->process($tenderObj, $tender, $empId, 2, null, $parentId, $master_id);
             if ($result) {
-                Log::info('created succesfully 123');
             }
         }
     }

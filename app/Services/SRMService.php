@@ -2390,7 +2390,6 @@ class SRMService
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info($e);
             return ['success' => false, 'message' => $e];
         }
     }
@@ -2431,7 +2430,6 @@ class SRMService
                 $att['isUploaded'] = 1;
                 DocumentAttachments::create($att);
             } else {
-                Log::info("NO ATTACHMENT");
             }
         }
     }
@@ -2485,7 +2483,6 @@ class SRMService
                     return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
-                Log::info("NO ATTACHMENT");
             }
         } catch (\Exception $e) {
             return [
@@ -2708,8 +2705,7 @@ class SRMService
             ];
         }
 
-
-        /* Log::info($supplierTender);
+        /*
          if (
 
              (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1)
@@ -5622,7 +5618,6 @@ class SRMService
                     return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
-                Log::info("NO ATTACHMENT");
             }
         } catch (\Exception $e) {
             return [

@@ -34,7 +34,6 @@ class TenderBidEmployeeObserver
                 $result = $this->eveluate($empId,$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($result)
                 {
-                    Log::info('deleted succesfully');
                 }
             }
 
@@ -52,7 +51,6 @@ class TenderBidEmployeeObserver
                 $result = $this->eveluate($empId,0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
                 if($result)
                 {
-                    Log::info('created succesfully');
                 }
 
             }

@@ -489,10 +489,6 @@ class CustomerMasterAPIService
             ];
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error File: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
             return [
                 'status' => false,
                 'message' => $e->getMessage(),

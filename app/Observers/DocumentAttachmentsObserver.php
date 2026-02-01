@@ -47,7 +47,6 @@ class DocumentAttachmentsObserver
            
            if($result)
            {
-            Log::info('created successfullu');
            }
 
         }
@@ -100,7 +99,6 @@ class DocumentAttachmentsObserver
             }
             if($result)
             {
-              Log::info('updated successfully');
             }
         }
         
@@ -123,7 +121,6 @@ class DocumentAttachmentsObserver
             $result = $this->process($tender,$tenderObj,$reflogId,1);
             if($result)
             {
-             Log::info('deleted successfully');
             }
 
         }

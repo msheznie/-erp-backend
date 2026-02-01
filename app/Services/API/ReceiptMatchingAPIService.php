@@ -1206,12 +1206,8 @@ class ReceiptMatchingAPIService extends AppBaseController
                                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                                         $taxLedgerData['outputVatGLAccountID'] = $data['chartOfAccountSystemID'];
                                     } else {
-                                        Log::info('Receipt voucher VAT GL Entry Issues Id :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
-                                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                                     }
                                 } else {
-                                    Log::info('Receipt voucher VAT GL Entry IssuesId :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
-                                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                                 }
 
                                 $data['clientContractID'] = 'X';
@@ -1262,12 +1258,8 @@ class ReceiptMatchingAPIService extends AppBaseController
             
                                         $taxLedgerData['outputVatTransferGLAccountID'] = $data['chartOfAccountSystemID'];
                                     } else {
-                                        Log::info('Receipt voucher VAT GL Entry Issues Id :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
-                                        Log::info('Output Vat transfer GL Account not assigned to company' . date('H:i:s'));
                                     }
                                 } else {
-                                    Log::info('Receipt voucher VAT GL Entry IssuesId :' . $input["PayMasterAutoId"] . ', date :' . date('H:i:s'));
-                                    Log::info('Output VAT transfer GL Account not configured' . date('H:i:s'));
                                 }
                                 foreach ($customerMatchingDetails as $key => $value) {
                                     $data['documentTransAmount'] = Helper::roundValue(ABS($value->VATAmount)) * -1;

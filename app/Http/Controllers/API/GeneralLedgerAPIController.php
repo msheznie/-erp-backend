@@ -415,7 +415,6 @@ class GeneralLedgerAPIController extends AppBaseController
                 ->get();
 
             foreach ($data as $dt){
-                Log::info($dt->PayMasterAutoId);
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
                     'autoID' => $dt->PayMasterAutoId,
                     'companySystemID' => $dt->companySystemID,
