@@ -49,9 +49,6 @@ class ProcessTenantReceiptVouchers implements ShouldQueue
      */
     public function handle()
     {
-        
-        Log::channel('receipt_voucher_api_confirmation_logs')->info('Processing receipt vouchers for tenant: ' . $this->tenantDb);
-        
         // Switch to tenant database
         CommonJobService::db_switch($this->tenantDb);
         

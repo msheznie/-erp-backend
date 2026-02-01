@@ -51,7 +51,5 @@ class BudgetSubmissionDeadlineReachedNotification extends Command
             $tenant_database = $tenant->database;
             BudgetSubmissionDeadlineReachedNotificationJob::dispatch($tenant_database);
         }
-
-        $this->info('Budget submission deadline reached notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }

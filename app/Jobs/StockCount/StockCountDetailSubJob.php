@@ -61,9 +61,6 @@ class StockCountDetailSubJob implements ShouldQueue
 
         CommonJobService::db_switch($db);
 
-
-        Log::channel('stock_count_job')->info("Starting Sub Job". $db);
-
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
 

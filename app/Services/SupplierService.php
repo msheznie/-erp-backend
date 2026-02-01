@@ -69,7 +69,6 @@ class SupplierService
             'email' => $email,
         ];
 
-        LOG::info($token);
         return DB::table('srm_supplier_registration_link')->where('token', $token)->update($data);
     }
 

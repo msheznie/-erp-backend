@@ -24,11 +24,9 @@ class BudgetCutOffNotificationService
     {
         $scenarios = NotificationService::getCompanyScenarioConfiguration(18);
         if (count($scenarios) == 0) {
-            Log::channel('budget_cutoff_po')->info('Notification Company Scenario not exist in '.$dataBase);
+            Log::channel('budget_cutoff_po')->error('Notification Company Scenario not exist in '.$dataBase);
         } else {
             $scenario_des = $scenarios[0]->notification_scenario->scenarioDescription;
-
-            Log::channel('budget_cutoff_po')->info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
             $scenarios = $scenarios->toArray();
             foreach ($scenarios as $compAssignScenario) {
                 CompanyWiseCutOffNotificationJob::dispatch($dataBase, $compAssignScenario);

@@ -51,7 +51,6 @@ class BankStatementMatch implements ShouldQueue
         $db = $this->db;
         $statementId = $this->statementId;
         CommonJobService::db_switch($db);
-        Log::channel('bank_statement_match')->info("Payment Voucher Match");
         PaymentVoucherMatch::dispatch($db, $statementId);
     }
 }

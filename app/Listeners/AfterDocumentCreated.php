@@ -151,7 +151,7 @@ class AfterDocumentCreated
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    Log::channel('after_document_created')->info('Document ID Not Found' . date('H:i:s'));
+                    Log::channel('after_document_created')->error('Document ID Not Found' . date('H:i:s'));
             }
 
 
@@ -225,7 +225,7 @@ class AfterDocumentCreated
             }
 
         } else {
-            Log::channel('after_document_created')->info('Document Not Found' . date('H:i:s'));
+            Log::channel('after_document_created')->error('Document Not Found' . date('H:i:s'));
         }
     }
 

@@ -93,11 +93,6 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
             DB::commit();
 
-            Log::channel('department_budget_planning_details_process')->info('Department Budget Planning Details processed successfully', [
-                'department_planning_id' => $this->departmentBudgetPlanningId,
-                'user_id' => $this->userId
-            ]);
-
         } catch (\Exception $e) {
             Log::channel('department_budget_planning_details_process')->warning($e->getMessage());
             DB::rollBack();

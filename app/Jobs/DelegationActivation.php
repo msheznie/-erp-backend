@@ -56,7 +56,6 @@ class DelegationActivation implements ShouldQueue
         $deligate->update(['is_active' => 0]);
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_expire_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 0,'removedYN' => 1]);
         
-        Log::channel('delegation')->info('Deactivate'. $dlegations_expire_ids);
         $this->updateHrmsApprovalUserStatus($dlegations_expire_ids, 0);
 
         $groupInfo = UserGroup::whereIn('delegation_id',$dlegations_expire_ids);
@@ -81,7 +80,6 @@ class DelegationActivation implements ShouldQueue
         $dlegations_ids = $dlegationPeriod->pluck('id');
         EmployeesDepartment::whereIn('approvalDeligated',$dlegations_ids)->where('employeeSystemID','!=',null)->update(['isActive' => 1]);
 
-        Log::channel('delegation')->info('Activate'. $dlegations_ids);
         $this->updateHrmsApprovalUserStatus($dlegations_ids, 1);
 
         $activeGroup = UserGroup::whereIn('delegation_id',$dlegations_ids);
@@ -92,7 +90,6 @@ class DelegationActivation implements ShouldQueue
             UserGroupAssign::whereIn('userGroupID', $activeGroupIds)->update(['isActive' => 1]);
 
         }
-        Log::channel('delegation')->info('done');
     }
 
     function updateHrmsApprovalUserStatus($idList, $status){

@@ -67,7 +67,6 @@ class mrBulkUploadItem implements ShouldQueue
 
         $validateItem = self::validateItemUpload($record, $mrRequest, $this->authID);
 
-        Log::channel('mr_bulk_item')->info('Add Multiple Items End');
         $materialRequest = MaterielRequest::find($mrRequest['RequestID']);
         $materialRequest->isBulkItemJobRun = 0;
         $materialRequest->successDetailsCount = $validateItem['successCount'];

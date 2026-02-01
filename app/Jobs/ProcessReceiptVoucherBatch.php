@@ -57,8 +57,6 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
     public function handle()
     {
         
-        Log::channel('receipt_voucher_api_confirmation_logs')->info('Processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
-        
         // Switch to tenant database
         CommonJobService::db_switch($this->tenantDb);
         
@@ -121,15 +119,11 @@ class ProcessReceiptVoucherBatch implements ShouldQueue
                     $this->header
                 );
                 
-                Log::channel('receipt_voucher_api_confirmation_logs')->info('Successfully processed receipt voucher: ' . $receipt->custPaymentReceiveCode);
-                
             } catch (\Exception $e) {
                 Log::channel('receipt_voucher_api_confirmation_logs')->error('Error processing receipt voucher ('.$receipt->custPaymentReceiveCode.') : ' . $e->getMessage());
                 continue;
             }
         }
-        
-        Log::channel('receipt_voucher_api_confirmation_logs')->info('Completed processing batch of ' . count($this->receiptIds) . ' receipt vouchers for tenant: ' . $this->tenantDb);
     }
 }
 
