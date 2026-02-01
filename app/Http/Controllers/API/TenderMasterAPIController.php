@@ -95,13 +95,16 @@ use App\Models\BidBoq;
 use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
+use App\Models\TenderConfirmationDetail;
 use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
+use App\Services\TenderConfirmationService;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\helper\email;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Class TenderMasterController
@@ -3791,6 +3794,25 @@ class TenderMasterAPIController extends AppBaseController
                     TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
                 }
             }
+
+            if ($status == 1) {
+                $tenderNegotiationId = null;
+                if ($isNegotiation == 1) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                    if ($latestNegotiation) {
+                        $tenderNegotiationId = $latestNegotiation->id;
+                    }
+                }
+                TenderConfirmationService::saveConfirmationDetails(
+                    $tenderId,
+                    $tenderId,
+                    TenderConfirmationDetail::MODULE_LINE_ITEM,
+                    null,
+                    null,
+                    $tenderNegotiationId
+                );
+            }
+
             DB::commit();
             return ['success' => true, 'message' => 'Line items Successfully updated', 'data' => $results];
         } catch (\Exception $e) {
@@ -3864,6 +3886,22 @@ class TenderMasterAPIController extends AppBaseController
                     TenderFinalBids::where('id', $record->id)->update(['combined_ranking' => $record->ranking]);
                 }
             }
+            $tenderNegotiationId = null;
+            if ($isNegotiation == 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                if ($latestNegotiation) {
+                    $tenderNegotiationId = $latestNegotiation->id;
+                }
+            }
+            TenderConfirmationService::saveConfirmationDetails(
+                $tenderId,
+                $tenderId,
+                TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
+                null,
+                $comment,
+                $tenderNegotiationId
+            );
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
         } catch (\Exception $e) {
@@ -4123,6 +4161,15 @@ class TenderMasterAPIController extends AppBaseController
             $tender->final_tender_award_comment = $comment;
             $tender->final_tender_comment_status = $status;
             $tender->save();
+            if ($status == 1) {
+                TenderConfirmationService::saveConfirmationDetails(
+                    $tenderId,
+                    $tenderId,
+                    TenderConfirmationDetail::MODULE_AWARDING,
+                    null,
+                    $comment
+                );
+            }
 
             foreach ($emails as $mail) {
                 if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
@@ -4144,6 +4191,65 @@ class TenderMasterAPIController extends AppBaseController
             return $this->sendError($e->getMessage());
         }
     }
+
+    public function getTenderConfirmationDetails(Request $request)
+    {
+        try {
+
+            $validator = Validator::make(
+                $request->all(),
+                [
+                    'tender_id'    => 'required',
+                    'module'       => 'required',
+                    'reference_id' => 'nullable|integer',
+                    'isNegotiation' => 'nullable|integer',
+                ],
+                [
+                    'tender_id.required'     => trans('srm_tender_rfx.tender_master_id_required'),
+                    'module.required'        => trans('srm_tender_rfx.module_required'),
+                    'reference_id.integer'   => trans('srm_tender_rfx.reference_id_invalid'),
+                ]
+            );
+
+            if ($validator->fails()) {
+                return $this->sendError(
+                    implode(' ', $validator->errors()->all()),
+                    422
+                );
+            }
+
+            $referenceId = $request->reference_id;
+            $isNegotiation = $request->isNegotiation ?? 0;
+            if ($isNegotiation == 1 && in_array($request->module, [
+                TenderConfirmationDetail::MODULE_LINE_ITEM,
+                TenderConfirmationDetail::MODULE_COMMERCIAL_RANKING,
+                TenderConfirmationDetail::MODULE_COMBINED_RANKING
+            ])) {
+                if ($referenceId == $request->tender_id) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($request->tender_id);
+                    if ($latestNegotiation) {
+                        $referenceId = $latestNegotiation->id;
+                    }
+                }
+            }
+
+            $data = $this->tenderMasterRepository->getConfirmationDetails(
+                $request->tender_id,
+                $request->module,
+                $referenceId
+            );
+
+            if ($data) {
+                return $this->sendResponse($data, 'Confirmation details retrieved successfully');
+            }
+
+            return $this->sendResponse(null, 'No confirmation details found');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
+    }
+
 
     public static function checkDomain($id)
     {

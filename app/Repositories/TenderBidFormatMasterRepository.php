@@ -59,9 +59,52 @@ class TenderBidFormatMasterRepository extends BaseRepository
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
             $originalFileName = $excelUpload[0]['filename'];
+
+            $fileNameWithoutExt = pathinfo($originalFileName, PATHINFO_FILENAME);
+            if (strtolower($fileNameWithoutExt) !== 'price_bid_format_template') {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.invalid_file_name', ['expected' => 'Price_Bid_Format_Template'])
+                ];
+            }
+
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
             $sheetData = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->path($originalFileName))->get()->toArray();
+
+            if (empty($sheetData)) {
+                if (Storage::disk($disk)->exists($originalFileName)) {
+                    Storage::disk($disk)->delete($originalFileName);
+                }
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.excel_file_empty_or_invalid')
+                ];
+            }
+
+            $firstRow = reset($sheetData);
+            $requiredColumns = ['price_bid_item', 'field_type', 'is_enabled', 'is_boq_applicable'];
+            $missingColumns = [];
+
+            foreach ($requiredColumns as $column) {
+                if (!array_key_exists($column, $firstRow)) {
+                    $missingColumns[] = $column;
+                }
+            }
+
+            if (!empty($missingColumns)) {
+                if (Storage::disk($disk)->exists($originalFileName)) {
+                    Storage::disk($disk)->delete($originalFileName);
+                }
+                return [
+                    'success' => false,
+                    'message' => trans(
+                        'srm_tender_rfx.excel_missing_columns',
+                        ['columns' => implode(', ', $missingColumns)]
+                    )
+                ];
+            }
+
             $uniqueData = array_filter(collect($sheetData)->toArray());
             foreach ($uniqueData as $key => $value) {
 
@@ -70,7 +113,24 @@ class TenderBidFormatMasterRepository extends BaseRepository
 
                 if(empty($priceBidItem) || empty($fieldType))
                 {
+                    if (Storage::disk($disk)->exists($originalFileName)) {
+                        Storage::disk($disk)->delete($originalFileName);
+                    }
                     return ['success' => false, 'message' => trans('srm_tender_rfx.items_null_values')];
+                }
+                
+                $isEnabled = isset($value['is_enabled']) ? strtolower(trim($value['is_enabled'])) : '';
+                $isBoqApplicable = isset($value['is_boq_applicable']) ? strtolower(trim($value['is_boq_applicable'])) : '';
+
+                if ($isEnabled === 'yes' && $isBoqApplicable === 'yes') {
+                    if (Storage::disk($disk)->exists($originalFileName)) {
+                        Storage::disk($disk)->delete($originalFileName);
+                    }
+                    $errorMessage = $priceBidItem . ' - ' . trans('srm_tender_rfx.both_fields_cannot_be_yes');
+                    return [
+                        'success' => false,
+                        'message' => $errorMessage
+                    ];
                 }
             }
 
@@ -87,6 +147,9 @@ class TenderBidFormatMasterRepository extends BaseRepository
                 $items = array_column($record, 'price_bid_item');
                 $duplicates = array_diff_assoc($items, array_unique($items));
                 if (!empty($duplicates)) {
+                    if (Storage::disk($disk)->exists($originalFileName)) {
+                        Storage::disk($disk)->delete($originalFileName);
+                    }
                     return [
                         'success' => false,
                         'message' => trans(
@@ -120,6 +183,9 @@ class TenderBidFormatMasterRepository extends BaseRepository
                     }else{
                         array_push($duplicateEntries,$vl);
                         if (!empty($duplicateEntries)) {
+                            if (Storage::disk($disk)->exists($originalFileName)) {
+                                Storage::disk($disk)->delete($originalFileName);
+                            }
                             foreach ($duplicateEntries as $key => $dupl) {
                                 return ['success' => false, 'message' => trans('srm_tender_rfx.item_already_exist', ['item' => $dupl['price_bid_item']])];
                             }
@@ -127,6 +193,9 @@ class TenderBidFormatMasterRepository extends BaseRepository
                     }
                 }
             } else {
+                if (Storage::disk($disk)->exists($originalFileName)) {
+                    Storage::disk($disk)->delete($originalFileName);
+                }
                 return ['success' => false, 'message' => trans('srm_tender_rfx.no_records_found')];
             }
             DB::commit();
@@ -141,6 +210,9 @@ class TenderBidFormatMasterRepository extends BaseRepository
             ];
         } catch (\Exception $exception) {
             DB::rollBack();
+            if (isset($disk) && isset($originalFileName) && Storage::disk($disk)->exists($originalFileName)) {
+                Storage::disk($disk)->delete($originalFileName);
+            }
             return [
                 'success' => false,
                 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])

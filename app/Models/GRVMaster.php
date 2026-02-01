@@ -436,4 +436,8 @@ class GRVMaster extends Model
     {
         return $this->belongsTo('App\Models\SupplierEvaluation', 'grvAutoID', 'documentId');
     }
+    public function UnbilledGrvGroupBy()
+    {
+        return $this->hasOne(UnbilledGrvGroupBy::class, 'grvAutoID', 'grvAutoID');
+    }
 }

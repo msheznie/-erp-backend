@@ -239,4 +239,14 @@ class CompanyFinancePeriod extends Model
             ->first();
     }
 
+    public static function getFinancePeriodByDate($companySystemID, $departmentSystemID, $companyFinanceYearID, $date)
+    {
+        return self::where('companySystemID', $companySystemID)
+            ->where('departmentSystemID', $departmentSystemID)
+            ->where('companyFinanceYearID', $companyFinanceYearID)
+            ->whereDate('dateFrom', '<=', $date)
+            ->whereDate('dateTo', '>=', $date)
+            ->first();
+    }
+
 }
