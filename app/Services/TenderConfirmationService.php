@@ -19,7 +19,7 @@ class TenderConfirmationService
      * @param int|null $tenderNegotiationId Optional negotiation ID for negotiation-related confirmations (modules 4-6)
      * @return TenderConfirmationDetail
      */
-    public static function saveConfirmationDetails($tenderId, $referenceId = null, $module, $employeeId = null, $comment = null, $tenderNegotiationId = null)
+    public static function saveConfirmationDetails($tenderId, $referenceId = null, $module = null, $employeeId = null, $comment = null, $tenderNegotiationId = null)
     {
         if ($employeeId === null) {
             $employeeId = Helper::getEmployeeSystemID();
