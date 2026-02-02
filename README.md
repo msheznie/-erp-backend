@@ -5,7 +5,7 @@
 
 ## Requirements
 
-- PHP ^7.2
+- PHP ^7.2 # 8.2
 - PHP extensions: pdo, openssl, tokenizer, xml, mbstring, curl, ldap, intl, pdo_mysql, zip, gd, ctype, date, dom, exif, ftp, gettext, hash, libxml, pcre
 - Composer - ^1.10.1
 - Node - ^14
