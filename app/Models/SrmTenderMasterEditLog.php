@@ -966,7 +966,8 @@ class SrmTenderMasterEditLog extends Model
         'contract_id',
         'is_deleted',
         'is_clone',
-        'clone_master_id'
+        'clone_master_id',
+        'min_approval_awarding'
     ];
 
     /**
@@ -1068,7 +1069,8 @@ class SrmTenderMasterEditLog extends Model
         'contract_id' => 'integer',
         'is_deleted' => 'integer',
         'is_clone' => 'integer',
-        'clone_master_id' => 'integer'
+        'clone_master_id' => 'integer',
+        'min_approval_awarding' => 'integer'
     ];
 
     /**
