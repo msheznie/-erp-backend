@@ -168,14 +168,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('command:removeExpiredUserGroupAccess')->daily()->withoutOverlapping();
 
         $schedule->command('pull-attendance')
-            ->timezone('Asia/Muscat')
-            ->dailyAt('00:30')
-            ->withoutOverlapping();
+        ->timezone('Asia/Muscat')
+        ->dailyAt('00:30')
+        ->withoutOverlapping();
 
         $schedule->command('pull-cross-day-attendance')
-            ->timezone('Asia/Muscat')
-            ->dailyAt('12:30')
-            ->withoutOverlapping();
+        ->timezone('Asia/Muscat')
+        ->dailyAt('12:30')
+        ->withoutOverlapping();
 
         $schedule->command('command:forgotToPunchIn')
             ->timezone('Asia/Muscat')
@@ -201,7 +201,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('command:birthday_wish_schedule')
             ->timezone('Asia/Muscat')
             ->dailyAt('02:00')
-            ->withoutOverlapping();
+            ->withoutOverlapping(); 
 
         $schedule->command('command:leaveCarryForwardComputationSchedule')
             ->timezone('Asia/Muscat')
@@ -212,7 +212,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->timezone('Asia/Muscat')
             ->hourly()
             ->between('12:00', '23:59')
-            ->withoutOverlapping();
+            ->withoutOverlapping();    
 
         $schedule->command('command:AbsentNotificationCrossDay')
             ->timezone('Asia/Muscat')
