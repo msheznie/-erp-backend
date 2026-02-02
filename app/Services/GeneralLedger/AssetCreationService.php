@@ -115,6 +115,10 @@ class AssetCreationService extends AppBaseController
         // }
         $input = $this->convertArrayToValue($input);
 
+        if (isset($input['assetCostingUploadID']) && $input['assetCostingUploadID']) {
+            $input['assetStatus'] = 2;
+        }
+
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
         $response = ValidateAssetCreation::validationsForAssetCreation($input);
