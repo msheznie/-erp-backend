@@ -1185,7 +1185,7 @@ class PaymentVoucherServices
             }
 
             if(isset($input['payeeType'])){
-                if($input['payeeType'] == 1 && $input['invoiceType'] != 6 && $input['invoiceType'] != 7){
+                if($input['payeeType'] == 1 && $input['invoiceType'] != 6 && $input['invoiceType'] != 7 && $input['invoiceType'] != 8){
                     $validator = \Validator::make($input, [
                         'BPVsupplierID' => 'required|numeric|min:1'
                     ]);
