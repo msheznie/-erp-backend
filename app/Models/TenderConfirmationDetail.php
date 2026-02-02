@@ -72,4 +72,5 @@ class TenderConfirmationDetail extends Model
     const MODULE_COMBINED_RANKING = 6;
     const MODULE_NEGOTIATION = 7;
     const MODULE_AWARDING = 8;
+    const MODULE_AWARDED = 9;
 }
