@@ -341,6 +341,17 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster = $this->tenderMasterRepository->update($input, $id);
 
+        if (!empty($input['final_tender_awarded']) && (int) $input['final_tender_awarded'] === 1) {
+            $comment = $input['final_tender_award_comment'] ?? null;
+            TenderConfirmationService::saveConfirmationDetails(
+                (int) $id,
+                (int) $id,
+                TenderConfirmationDetail::MODULE_AWARDED,
+                null,
+                $comment
+            );
+        }
+
         return $this->sendResponse($tenderMaster->toArray(), 'TenderMaster updated successfully');
     }
 
