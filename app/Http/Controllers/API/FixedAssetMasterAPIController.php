@@ -411,6 +411,27 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
                 $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
+
+                if ($confirmRequested) {
+                    $mandatoryAttributes = ErpAttributes::where('document_id', 'ASSETCOST')
+                        ->whereNull('document_master_id')
+                        ->where('is_active', 1)
+                        ->where('is_mendatory', 1)
+                        ->get();
+                    foreach ($mandatoryAttributes as $erpAttr) {
+                        $attrValueRow = ErpAttributeValues::whereNull('document_master_id')
+                            ->where('doc_origin_detail_id', $grvDetailsID)
+                            ->where('attribute_id', $erpAttr->id)
+                            ->first();
+                        $value = $attrValueRow ? ($attrValueRow->value ?? null) : null;
+                        $isEmpty = $value === null || $value === '' || (is_string($value) && trim((string) $value) === '');
+                        if ($isEmpty) {
+                            DB::rollBack();
+                            return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
+                        }
+                    }
+                }
+
                 if ($grvDetails["noQty"]) {
                     if ($grvDetails->noQty < 1) {
                         // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -669,31 +690,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                             $fixedAssetMaster = FixedAssetMaster::find($faId);
                             if (!$fixedAssetMaster) {
                                 continue;
-                            }
-
-                            $erpAttributes = ErpAttributes::withTrashed()
-                                ->where('document_id', 'ASSETCOST')
-                                ->where('is_active', 1)
-                                ->get();
-
-                            $valueRows = ErpAttributeValues::whereIn('attribute_id', $erpAttributes->pluck('id'))
-                                ->where(function ($q) use ($faId) {
-                                    $q->where('document_master_id', $faId);
-                                })
-                                ->get()
-                                ->groupBy('attribute_id');
-
-                            foreach ($erpAttributes as $erpAttr) {
-                                $rows = $valueRows->get($erpAttr->id, collect());
-                                $attrVal = $rows->firstWhere('document_master_id', $faId) ?? $rows->where('document_master_id', null)->first() ?? $rows->first();
-                                $value = $attrVal ? ($attrVal->value ?? null) : null;
-
-                                if ($erpAttr->is_mendatory) {
-                                    if ($rows->isNotEmpty() && ($value === null || $value === '')) {
-                                        DB::rollBack();
-                                        return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
-                                    }
-                                }
                             }
 
                             if ($documentDate) {
