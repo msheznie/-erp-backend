@@ -18,6 +18,7 @@ class ErpAttributeValues extends Model
     public $fillable = [
         'attribute_id',
         'document_master_id',
+        'doc_origin_detail_id',
         'is_active',
         'value',
         'color',
@@ -36,6 +37,7 @@ class ErpAttributeValues extends Model
         'document_id' => 'string',
         'value' => 'string',
         'document_master_id' => 'integer',
+        'doc_origin_detail_id' => 'integer',
         'is_mendatory' => 'boolean',
         'is_active' => 'boolean',
         'created_by' => 'integer',
