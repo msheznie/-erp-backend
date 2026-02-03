@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 class AssetCreationService extends AppBaseController
 {
     use JsonResponseTrait;
+    private $fixedAssetMasterRepository;
 
     public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo)
     {
@@ -114,6 +115,8 @@ class AssetCreationService extends AppBaseController
 
         // }
         $input = $this->convertArrayToValue($input);
+
+        $input['assetStatus'] = $input['assetStatus'] ?? 2;
 
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
@@ -242,7 +245,7 @@ class AssetCreationService extends AppBaseController
             unset($input['itemPicture']);
 
 
-
+            Log::info('Input data: ', $input);
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {

@@ -37,6 +37,7 @@ use App\Models\ERPLanguageMaster;
 use Illuminate\Support\Str;
 use App\Services\AuditLog\UserGroupAuditService;
 use App\Services\AuditLog\EmployeeNavigationAssignAuditService;
+use App\Jobs\AuditLog\StoreAuditLogJob;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -204,8 +205,7 @@ class AuditLogJob implements ShouldQueue
                 'companySystemIdColumn'
             );
 
-            Log::useFiles(storage_path() . '/logs/audit.log');
-            
+            // Victoria Logs Migration: Send logs directly to VictoriaLogs instead of file
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
                     $narrationVariables,  
@@ -237,7 +237,7 @@ class AuditLogJob implements ShouldQueue
                     'log_uuid' => bin2hex(random_bytes(16)),
                 ];
                 
-                Log::info('data:', $logData);
+                StoreAuditLogJob::dispatch($logData)->onQueue('audit-logs');
             }
         }
     }

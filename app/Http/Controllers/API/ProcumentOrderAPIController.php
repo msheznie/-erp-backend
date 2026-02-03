@@ -1612,6 +1612,15 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $procumentOrders->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         $procumentOrders = $procumentOrders->select(
             [
                 'erp_purchaseordermaster.purchaseOrderID',
@@ -2330,6 +2339,15 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $procumentOrders->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
 
         if (array_key_exists('sentToSupplier', $input)) {
             if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
@@ -2374,6 +2392,7 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
                 'erp_purchaseordermaster.documentSystemID',
                 'erp_purchaseordermaster.sentToSupplier',
                 'erp_purchaseordermaster.poType_N',
+                'erp_purchaseordermaster.poTypeID',
                 'erp_purchaseordermaster.partiallyGRVAllowed',
                 'erp_purchaseordermaster.logisticsAvailable'
             ]
@@ -2477,6 +2496,51 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         return $this->sendResponse($purchaseOrderID, trans('custom.details_retrieved_successfully'));
     }
 
+    public function procumentOrderCancelPreCheck(Request $request)
+    {
+        $input = $request->all();
+        $purchaseOrderID = $input['purchaseOrderID'];
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : null;
+
+        $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->first();
+
+        if (empty($purchaseOrder)) {
+            return $this->sendError(trans('custom.purchase_order_not_found'), 500);
+        }
+
+        if ($purchaseOrder->poCancelledYN == -1) {
+            return $this->sendError(trans('custom.purchase_order_already_cancelled'), 500);
+        }
+
+        // Check if GRV exists
+        $detailExistGRV = GRVDetails::where('purchaseOrderMastertID', $purchaseOrderID)->first();
+        if (!empty($detailExistGRV)) {
+            $fullyRetuned = false;
+            if ($purchaseOrder->grvRecieved == 2) {
+                $puchaseReturnDetails = PurchaseReturnDetails::where('grvAutoID', $detailExistGRV->grvAutoID)->get();
+                foreach ($puchaseReturnDetails as $puchaseReturnDetail) {
+                    $fullyRetuned = ($puchaseReturnDetail->GRVQty == $puchaseReturnDetail->noQty) ? true : false;
+                }
+                if (!$fullyRetuned) {
+                    return $this->sendError(trans('custom.cannot_cancel_grv_created'), 500);
+                }
+            } else if ($purchaseOrder->grvRecieved == 0) {
+                $fullyRetuned = true;
+            }
+            if (!$fullyRetuned) {
+                return $this->sendError(trans('custom.cannot_cancel_grv_created'), 500);
+            }
+        }
+
+        // Check if advance payment exists
+        $detailExistAPD = AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)->first();
+        if (!empty($detailExistAPD)) {
+            return $this->sendError(trans('custom.cannot_advance_payment_created') . ' cancel. ' . trans('custom.advance_payment_created_for_po'), 404, ['advancePaymentError' => true]);
+        }
+
+        return $this->sendResponse([], 'Purchase Order eligible for cancellation');
+    }
+
     public function procumentOrderCancel(Request $request)
     {
         $input = $request->all();
@@ -2484,12 +2548,41 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $purchaseOrderID = $input['purchaseOrderID'];
         $employee = \Helper::getEmployeeInfo();
 
+        // Validate cancellation comment is mandatory
+        if (empty($input['cancelComments']) || trim($input['cancelComments']) === '') {
+            return $this->sendError(trans('custom.cancel_comment_is_required'));
+        }
+
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
         if (empty($purchaseOrder)) {
             return $this->sendError(trans('custom.purchase_order_not_found'));
         }
 
+        $cancelMethod = isset($input['cancelMethod']) ? $input['cancelMethod'] : 0;
+
+        if ($cancelMethod == 2) {
+            $linkedPRIds = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->whereNotNull('purchaseRequestID')
+                ->distinct()
+                ->pluck('purchaseRequestID')
+                ->toArray();
+
+            if (!empty($linkedPRIds)) {
+                foreach ($linkedPRIds as $prId) {
+                    $otherPOsCount = PurchaseOrderDetails::where('purchaseRequestID', $prId)
+                        ->where('purchaseOrderMasterID', '!=', $purchaseOrderID)
+                        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'erp_purchaseorderdetails.purchaseOrderMasterID')
+                        ->where('erp_purchaseordermaster.poCancelledYN', '!=', -1)
+                        ->distinct()
+                        ->count('erp_purchaseorderdetails.purchaseOrderMasterID');
+
+                    if ($otherPOsCount > 0) {
+                        return $this->sendError(trans('custom.order_cannot_cancelled_multiple_pos'));
+                    }
+                }
+            }
+        }
         $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
             ->update([
                 'poCancelledYN' => -1,
@@ -2578,6 +2671,86 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         }
 
         CancelDocument::sendEmail($input);
+
+        if ($cancelMethod == 2) {
+            // Cancel both PO and PR
+            $linkedPRIds = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                ->whereNotNull('purchaseRequestID')
+                ->distinct()
+                ->pluck('purchaseRequestID')
+                ->toArray();
+
+            if (!empty($linkedPRIds)) {
+                foreach ($linkedPRIds as $prId) {
+                    $purchaseRequest = PurchaseRequest::find($prId);
+                    if ($purchaseRequest && $purchaseRequest->cancelledYN != -1 && $purchaseRequest->manuallyClosed != 1) {
+                        $purchaseRequest->cancelledYN = -1;
+                        $purchaseRequest->cancelledByEmpSystemID = $employee->employeeSystemID;
+                        $purchaseRequest->cancelledByEmpID = $employee->empID;
+                        $purchaseRequest->cancelledByEmpName = $employee->empName;
+                        $purchaseRequest->cancelledComments = $input['cancelComments'] . ' (Cancelled along with PO)';
+                        $purchaseRequest->cancelledDate = now();
+                        $purchaseRequest->save();
+
+                        AuditTrial::createAuditTrial($purchaseRequest->documentSystemID, $prId, $input['cancelComments'] . ' (Cancelled along with PO)', 'cancelled');
+
+                        $prEmails = array();
+                        $prDocument = DocumentMaster::where('documentSystemID', $purchaseRequest->documentSystemID)->first();
+
+                        if ($prDocument) {
+                            $prCancelDocNameBody = $prDocument->documentDescription . ' <b>' . $purchaseRequest->purchaseRequestCode . '</b>';
+                            $prCancelDocNameSubject = $prDocument->documentDescription . ' ' . $purchaseRequest->purchaseRequestCode;
+
+                            $prBody = '<p>' . $prCancelDocNameBody . ' is cancelled by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['cancelComments'] . ' (Cancelled along with PO)</p>';
+                            $prSubject = $prCancelDocNameSubject . ' is cancelled';
+
+                            if ($purchaseRequest->PRConfirmedYN == 1) {
+                                $prEmails[] = array(
+                                    'empSystemID' => $purchaseRequest->PRConfirmedBySystemID,
+                                    'companySystemID' => $purchaseRequest->companySystemID,
+                                    'docSystemID' => $purchaseRequest->documentSystemID,
+                                    'alertMessage' => $prSubject,
+                                    'emailAlertMessage' => $prBody,
+                                    'docSystemCode' => $purchaseRequest->purchaseRequestID
+                                );
+                            }
+
+                            $prDocumentApproval = DocumentApproved::where('companySystemID', $purchaseRequest->companySystemID)
+                                ->where('documentSystemCode', $purchaseRequest->purchaseRequestID)
+                                ->where('documentSystemID', $purchaseRequest->documentSystemID)
+                                ->where('approvedYN', -1)
+                                ->get();
+
+                            foreach ($prDocumentApproval as $da) {
+                                $prEmails[] = array(
+                                    'empSystemID' => $da->employeeSystemID,
+                                    'companySystemID' => $purchaseRequest->companySystemID,
+                                    'docSystemID' => $purchaseRequest->documentSystemID,
+                                    'alertMessage' => $prSubject,
+                                    'emailAlertMessage' => $prBody,
+                                    'docSystemCode' => $purchaseRequest->purchaseRequestID
+                                );
+                            }
+
+                            if (!empty($prEmails)) {
+                                $prSendEmail = \Email::sendEmail($prEmails);
+                                if (!$prSendEmail["success"]) {
+                                    // Log error but don't fail the transaction
+                                    Log::error('Failed to send PR cancellation emails for PR ID: ' . $prId . ' - ' . $prSendEmail["message"]);
+                                }
+                            }
+
+                            $prCancelInput = [
+                                'purchaseRequestID' => $prId,
+                                'documentSystemID' => $purchaseRequest->documentSystemID,
+                                'cancelledComments' => $input['cancelComments'] . ' (Cancelled along with PO)'
+                            ];
+                            CancelDocument::sendEmail($prCancelInput);
+                        }
+                    }
+                }
+            }
+        }
 
         return $this->sendResponse($purchaseOrderID, trans('custom.order_canceled_successfully'));
     }
@@ -5834,6 +6007,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                         sum(noQty*landingCost_RptCur) as rptAmount,
                                         purchaseOrderMastertID,grvAutoID')
             ->where('purchaseOrderMastertID', $row->purchaseOrderID)
+            ->whereHas('grv_master', function ($query) {
+                $query->where('grvCancelledYN', '!=', -1);
+            })
             ->with(['grv_master' => function ($query) {
                 $query->with(['currency_by']);
             }])
@@ -5974,6 +6150,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if(empty($data))
         {
             $poToPaymentReportHeader = new PoToPaymentReport();
+            array_push($data, collect($poToPaymentReportHeader->getGroupedHeader())->toArray());
             array_push($data, collect($poToPaymentReportHeader->getHeader())->toArray());
         }
 
@@ -5984,16 +6161,41 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $category = ($value->fcategory) ? $value->fcategory->categoryDescription : '';
                 $supplierCode = ($value->supplier) ? $value->supplier->primarySupplierCode : '';
                 $supplierName = ($value->supplier) ? $value->supplier->supplierName : '';
+                
+                $poStatus = '';
+                $grvStatus = '';
+                $manuallyClosedStatus = '';
+                
+                if ($value->grvRecieved == 0) {
+                    $grvStatus = trans('custom.not_received');
+                } elseif ($value->grvRecieved == 1) {
+                    $grvStatus = trans('custom.partial_received');
+                } elseif ($value->grvRecieved == 2) {
+                    $grvStatus = trans('custom.fully_received');
+                }
+                
+                if ($value->manuallyClosed == 1) {
+                    $manuallyClosedStatus = trans('custom.manually_closed');
+                }
+                
+                if (!empty($manuallyClosedStatus) && !empty($grvStatus)) {
+                    $poStatus = $manuallyClosedStatus . ', ' . $grvStatus;
+                } elseif (!empty($manuallyClosedStatus)) {
+                    $poStatus = $manuallyClosedStatus;
+                } elseif (!empty($grvStatus)) {
+                    $poStatus = $grvStatus;
+                }
+                
                 $poToPaymentReport = new PoToPaymentReport();
                 $poToPaymentReport->setCompanyID($value->companyID);
+                $poToPaymentReport->setSupplierCode($supplierCode);
+                $poToPaymentReport->setSupplierName($supplierName);
                 $poToPaymentReport->setPoNumber($value->purchaseOrderCode);
                 $poToPaymentReport->setCategory($category);
                 $poToPaymentReport->setPoApprovedDate($value->approvedDate);
                 $poToPaymentReport->setNarration($value->narration);
-                $poToPaymentReport->setSupplierCode($supplierCode);
-                $poToPaymentReport->setSupplierName($supplierName);
                 $poToPaymentReport->setPoAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->poTotalComRptCurrency, 2)));
-                $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
+                $poToPaymentReport->setPoStatus($poStatus);                
 
                 if (count($value->grvMasters) > 0) {
                     $grvMasterCount = 0;
@@ -6002,20 +6204,26 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                             $x++;
                             $poToPaymentReport = new PoToPaymentReport();
                             $poToPaymentReport->setCompanyID("");
+                            $poToPaymentReport->setSupplierCode("");
+                            $poToPaymentReport->setSupplierName("");
                             $poToPaymentReport->setPoNumber("");
                             $poToPaymentReport->setCategory("");
                             $poToPaymentReport->setPoApprovedDate("");
                             $poToPaymentReport->setNarration("");
-                            $poToPaymentReport->setSupplierCode("");
-                            $poToPaymentReport->setSupplierName("");
                             $poToPaymentReport->setPoAmount("");
-                            $poToPaymentReport->setLogisticAmount("");
+                            $poToPaymentReport->setPoStatus("");
                         }
 
                         ($grv['grv_master']) ? $poToPaymentReport->setGrvCode($grv['grv_master']['grvPrimaryCode']) : $poToPaymentReport->setGrvCode("");
                         ($grv['grv_master']) ? $poToPaymentReport->setGrvDate($grv['grv_master']['grvDate']) : $poToPaymentReport->setGrvDate("");
 
                         $poToPaymentReport->setGrvAmount(CurrencyService::convertNumberFormatToNumber(number_format($grv['rptAmount'], 2)));
+                        
+                        if ($grvMasterCount == 0) {
+                            $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
+                        } else {
+                            $poToPaymentReport->setLogisticAmount("");
+                        }
 
                         if (count($grv['invoices']) > 0) {
                             $invoicesCount = 0;
@@ -6024,17 +6232,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     $x++;
                                     $poToPaymentReport = new PoToPaymentReport();
                                     $poToPaymentReport->setCompanyID("");
+                                    $poToPaymentReport->setSupplierCode("");
+                                    $poToPaymentReport->setSupplierName("");
                                     $poToPaymentReport->setPoNumber("");
                                     $poToPaymentReport->setCategory("");
                                     $poToPaymentReport->setPoApprovedDate("");
                                     $poToPaymentReport->setNarration("");
-                                    $poToPaymentReport->setSupplierCode("");
-                                    $poToPaymentReport->setSupplierName("");
                                     $poToPaymentReport->setPoAmount("");
-                                    $poToPaymentReport->setLogisticAmount("");
+                                    $poToPaymentReport->setPoStatus("");
                                     $poToPaymentReport->setGrvCode("");
                                     $poToPaymentReport->setGrvDate("");
                                     $poToPaymentReport->setGrvAmount("");
+                                    $poToPaymentReport->setLogisticAmount("");                              
                                 }
 
                                 ($invoice['suppinvmaster']) ? $poToPaymentReport->setInvoiceCode($invoice['suppinvmaster']['bookingInvCode']) : $poToPaymentReport->setInvoiceCode(null);
@@ -6048,17 +6257,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                             $x++;
                                             $poToPaymentReport = new PoToPaymentReport();
                                             $poToPaymentReport->setCompanyID("");
+                                            $poToPaymentReport->setSupplierCode("");
+                                            $poToPaymentReport->setSupplierName("");
                                             $poToPaymentReport->setPoNumber("");
                                             $poToPaymentReport->setCategory("");
                                             $poToPaymentReport->setPoApprovedDate("");
                                             $poToPaymentReport->setNarration("");
-                                            $poToPaymentReport->setSupplierCode("");
-                                            $poToPaymentReport->setSupplierName("");
                                             $poToPaymentReport->setPoAmount("");
-                                            $poToPaymentReport->setLogisticAmount("");
+                                            $poToPaymentReport->setPoStatus("");
                                             $poToPaymentReport->setGrvCode("");
                                             $poToPaymentReport->setGrvDate("");
                                             $poToPaymentReport->setGrvAmount("");
+                                            $poToPaymentReport->setLogisticAmount("");
                                             $poToPaymentReport->setInvoiceCode("");
                                             $poToPaymentReport->setInvoiceDate("");
                                             $poToPaymentReport->setInvoiceAmount("");
@@ -6121,6 +6331,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $poToPaymentReport->setGrvCode("");
                     $poToPaymentReport->setGrvDate("");
                     $poToPaymentReport->setGrvAmount("");
+                    $poToPaymentReport->setLogisticAmount(CurrencyService::convertNumberFormatToNumber(number_format($value->logisticTotal, 2)));
                     $poToPaymentReport->setInvoiceCode("");
                     $poToPaymentReport->setInvoiceDate("");
                     $poToPaymentReport->setInvoiceAmount("");
@@ -7241,7 +7452,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
+        $currencyCode = ($purchaseRequest->currency_by) ? $purchaseRequest->currency_by->CurrencyCode : "";
+        $decimalPlaces = ($purchaseRequest->currency_by) ? $purchaseRequest->currency_by->DecimalPlaces : 2;
+        $tracingData['title'] = "{" . trans('custom.doc_code') . " :} " . $purchaseRequest->purchaseRequestCode . " -- {" . trans('custom.doc_date') . " :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {" . trans('custom.currency') . " :} " . $currencyCode . " -- {" . trans('custom.amount') . " :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $decimalPlaces) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {

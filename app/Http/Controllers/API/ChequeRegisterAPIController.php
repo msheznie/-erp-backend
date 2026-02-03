@@ -528,6 +528,20 @@ class ChequeRegisterAPIController extends AppBaseController
             }
         }
 
+        if (!empty($input['createdBy'])) {
+
+            $createdBy = collect($input['createdBy'])
+                ->pluck('id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (!empty($createdBy)) {
+                $chequeRegister->whereIn('created_by', $createdBy); 
+            }
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $chequeRegister = $chequeRegister->where(function ($query) use ($search) {

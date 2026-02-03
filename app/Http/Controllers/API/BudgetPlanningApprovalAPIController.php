@@ -93,6 +93,10 @@ class BudgetPlanningApprovalAPIController extends AppBaseController
                     ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.removedYN', 0);
             })
+            ->join('erp_approvallevel',function($query) use ($empID) {
+                $query->on('erp_documentapproved.approvalLevelID', '=', 'erp_approvallevel.approvalLevelID')
+                      ->where('erp_approvallevel.isActive', -1);
+            })
             ->join('company_budget_plannings', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', DB::raw('CAST(company_budget_plannings.id AS CHAR)'))
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')

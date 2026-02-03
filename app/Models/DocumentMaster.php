@@ -84,6 +84,10 @@ class DocumentMaster extends Model
         if (!$languageCode) {
             $languageCode = app()->getLocale() ?: 'en';
         }
+
+        if ($this->relationLoaded('translations')) {
+            return $this->translations->where('languageCode', $languageCode)->first();
+        }
         
         return $this->translations()->where('languageCode', $languageCode)->first();
     }

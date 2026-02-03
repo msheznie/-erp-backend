@@ -108,6 +108,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'selectedforJobYN',
         'timestamp',
         'empID',
+        'assetStatus',
         'assetCostingUploadID'
     ];
 
@@ -194,6 +195,8 @@ class FixedAssetMasterRepository extends BaseRepository
                 $data[$x][trans('custom.doc_description')] = $val->itemDescription;
                 $data[$x][trans('custom.doc_date')] = $val->grv_master? (\Helper::dateFormat($val->grv_master->approvedDate)) : '';
                 $data[$x][trans('custom.qty')] = $val->noQty;
+                $notCapitalizedQty = max(0, (int)($val->noQty - ($val->assetAllocatedQty ?? 0)));
+                $data[$x][trans('custom.not_capitalized_quantity')] = number_format($notCapitalizedQty, 0, ".", ",");
                 $data[$x][trans('custom.amount_unit_local')] = number_format($val->landingCost_LocalCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
                 $data[$x][trans('custom.amount_unit_reporting')] = number_format($val->landingCost_RptCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
 

@@ -23,6 +23,7 @@ use App\Models\BankMemoSupplierMaster;
 use App\Models\BankMemoTypes;
 use App\Models\CurrencyMaster;
 use App\Models\Company;
+use App\Services\CurrencyDeletionValidationService;
 use App\Repositories\CurrencyConversionRepository;
 use App\Repositories\CurrencyMasterRepository;
 use Illuminate\Http\Request;
@@ -392,6 +393,13 @@ class CurrencyMasterAPIController extends AppBaseController
 
         if (empty($currencyMaster)) {
             return $this->sendError(trans('custom.currency_master_not_found'));
+        }
+
+        $validationService = new CurrencyDeletionValidationService();
+        $validationResult = $validationService->validate($id);
+        
+        if (!$validationResult['success']) {
+            return $this->sendError($validationResult['message'], 422);
         }
 
         $currencyMaster->delete();

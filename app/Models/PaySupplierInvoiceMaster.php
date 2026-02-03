@@ -573,6 +573,7 @@ class PaySupplierInvoiceMaster extends Model
         'approvedByUserSystemID',
         'postedDate',
         'invoiceType',
+        'refundType',
         'matchInvoice',
         'trsCollectedYN',
         'trsCollectedByEmpSystemID',
@@ -715,6 +716,7 @@ class PaySupplierInvoiceMaster extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'invoiceType' => 'integer',
+        'refundType' => 'integer',
         'matchInvoice' => 'integer',
         'trsCollectedYN' => 'integer',
         'trsCollectedByEmpSystemID' => 'integer',
@@ -829,6 +831,11 @@ class PaySupplierInvoiceMaster extends Model
     public function directdetail()
     {
         return $this->hasMany('App\Models\DirectPaymentDetails', 'directPaymentAutoID', 'PayMasterAutoId');
+    }
+
+    public function creditnotedetail()
+    {
+        return $this->hasMany('App\Models\PayCreditNoteDetail', 'PayMasterAutoId', 'PayMasterAutoId');
     }
 
     public function localcurrency()

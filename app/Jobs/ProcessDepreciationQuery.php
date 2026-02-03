@@ -93,6 +93,7 @@ class ProcessDepreciationQuery implements ShouldQueue
                             ->ofCompany([$depMaster->companySystemID])
                             ->isApproved()
                             ->assetType(1)
+                            ->eligibleForDepreciation()
                             ->orderBy('faID', 'desc')
                             ->skip(($page - 1) * $perPage) // Skip the items on previous pages
                             ->take($perPage) 

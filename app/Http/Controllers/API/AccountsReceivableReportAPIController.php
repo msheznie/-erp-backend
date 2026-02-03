@@ -388,7 +388,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
                     return array('reportData' => $outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'invoiceAmountTotal' => $invoiceAmountTotal);
-                } else {
+                } 
+                else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerAgingSummaryQRY($request);
@@ -4832,6 +4833,9 @@ SELECT
     customermaster.CustomerName,
     CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
     CASE
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     THEN
+        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0) / erp_generalledger.documentLocalCurrencyER
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
         -(erp_generalledger.documentLocalAmount)
@@ -4887,6 +4891,9 @@ SELECT
         END
     END AS receivedAmountLocal,
     CASE
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     THEN
+        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0) / erp_generalledger.documentRptCurrencyER
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
          -(erp_generalledger.documentRptAmount)
@@ -4927,6 +4934,9 @@ SELECT
         END 
     END AS receivedAmountRpt,
     CASE
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     THEN
+        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"  
      THEN
         -(erp_generalledger.documentTransAmount)
@@ -4977,8 +4987,79 @@ LEFT JOIN erp_custinvoicedirect ON
     erp_generalledger.documentSystemCode = erp_custinvoicedirect.custInvoiceDirectAutoID AND 
     erp_generalledger.documentSystemID = erp_custinvoicedirect.documentSystemiD AND 
     erp_generalledger.companySystemID = erp_custinvoicedirect.companySystemID
+LEFT JOIN erp_creditnote ON erp_generalledger.documentSystemID = 19 
+    AND erp_generalledger.documentSystemCode = erp_creditnote.creditNoteAutoID
+    AND erp_generalledger.companySystemID = erp_creditnote.companySystemID
+LEFT JOIN erp_paycreditnotedetails ON erp_creditnote.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
+    AND erp_creditnote.type = 3
+    AND erp_creditnote.companySystemID = erp_paycreditnotedetails.companySystemID
+LEFT JOIN erp_paysupplierinvoicemaster pv_refund ON erp_paycreditnotedetails.PayMasterAutoId = pv_refund.PayMasterAutoId
+    AND pv_refund.invoiceType = 8
+    AND pv_refund.refundType = 3
+    AND pv_refund.companySystemID = erp_paycreditnotedetails.companySystemID
 WHERE
     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
+    AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+    AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+    AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
+    UNION ALL
+    SELECT
+    erp_generalledger.companySystemID,
+    erp_generalledger.companyID,
+    companymaster.CompanyName,
+    erp_generalledger.serviceLineSystemID,
+    erp_generalledger.serviceLineCode,
+    erp_generalledger.documentSystemID,
+    erp_generalledger.documentID,
+    erp_generalledger.documentSystemCode,
+    erp_generalledger.documentCode,
+    erp_generalledger.documentDate,
+    DATE_FORMAT(erp_generalledger.documentDate, "%d/%m/%Y") AS documentDateFilter,
+    erp_generalledger.documentYear,
+    erp_generalledger.documentMonth,
+    erp_generalledger.chequeNumber,
+    erp_generalledger.invoiceNumber,
+    erp_generalledger.invoiceDate,
+    erp_generalledger.chartOfAccountSystemID AS chartOfAccountSystemID,
+    erp_generalledger.glCode,
+    erp_generalledger.documentNarration,
+    erp_generalledger.clientContractID,
+    erp_generalledger.supplierCodeSystem,
+    erp_generalledger.documentTransCurrencyID,
+    currTrans.CurrencyCode AS documentTransCurrency,
+    currTrans.DecimalPlaces AS documentTransDecimalPlaces,
+    erp_generalledger.documentTransAmount,
+    erp_generalledger.documentLocalCurrencyID,
+    currLocal.CurrencyCode AS documentLocalCurrency,
+    currLocal.DecimalPlaces AS documentLocalDecimalPlaces,
+    erp_generalledger.documentLocalAmount,
+    erp_generalledger.documentRptCurrencyID,
+    currRpt.CurrencyCode AS documentRptCurrency,
+    currRpt.DecimalPlaces AS documentRptDecimalPlaces,
+    erp_generalledger.documentRptAmount,
+    erp_generalledger.documentType,
+    NULL AS PONumber,
+    customermaster.CutomerCode,
+    customermaster.CustomerName,
+    CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
+    -(erp_generalledger.documentLocalAmount) AS receivedAmountLocal,
+    -(erp_generalledger.documentRptAmount) AS receivedAmountRpt,
+    -(erp_generalledger.documentTransAmount) AS receivedAmountTrans
+FROM
+    erp_generalledger
+    INNER JOIN erp_paysupplierinvoicemaster ON erp_generalledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId 
+        AND erp_generalledger.documentSystemID = 4
+        AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
+        AND erp_paysupplierinvoicemaster.invoiceType = 8
+        AND erp_paysupplierinvoicemaster.refundType = 3
+LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+LEFT JOIN customermaster ON erp_generalledger.supplierCodeSystem = customermaster.customerCodeSystem
+LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+WHERE
+    erp_generalledger.documentSystemID = 4
     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
@@ -5500,6 +5581,47 @@ WHERE
                 ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_generalledger.documentSystemCode AND erp_generalledger.documentSystemID = 20
                 WHERE
                     (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
+                    AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
+                    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                    AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
+                    AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+                UNION ALL
+                SELECT
+                    erp_generalledger.companySystemID,
+                    erp_generalledger.companyID,
+                    erp_generalledger.documentID,
+                    erp_generalledger.documentSystemID,
+                    erp_generalledger.documentSystemCode,
+                    erp_generalledger.documentCode,
+                    erp_generalledger.documentDate,
+                    erp_generalledger.glCode,
+                    erp_generalledger.supplierCodeSystem,
+                    customermaster.CutomerCode,
+                    customermaster.CustomerName,
+                    erp_generalledger.documentLocalCurrencyID,
+                    erp_generalledger.documentLocalAmount,
+                    erp_generalledger.documentRptCurrencyID,
+                    erp_generalledger.documentRptAmount,
+                    currLocal.CurrencyCode as documentLocalCurrency,
+                    currRpt.CurrencyCode as documentRptCurrency,
+                    companymaster.CompanyName,
+                    0 AS sumReturnLocalAmount,
+                    0 AS sumReturnRptAmount,
+                    0 AS sumReturnDEOLocalAmount,
+                    0 AS sumReturnDEORptAmount
+                FROM
+                    erp_generalledger
+                    INNER JOIN erp_paysupplierinvoicemaster ON erp_generalledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId 
+                        AND erp_generalledger.documentSystemID = 4
+                        AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
+                        AND erp_paysupplierinvoicemaster.invoiceType = 8
+                        AND erp_paysupplierinvoicemaster.refundType = 3
+                    INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+                    INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+                    LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+                    LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+                WHERE
+                    erp_generalledger.documentSystemID = 4
                     AND ( erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . '))
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"

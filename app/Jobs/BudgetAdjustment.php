@@ -276,6 +276,8 @@ class BudgetAdjustment implements ShouldQueue
                     }
 
                     if ($toAdjustment) {
+                        $toAdjustment['serviceLineSystemID'] = $item['toServiceLineSystemID'];
+                        $toAdjustment['serviceLine'] = $item['toServiceLineCode'];
                         $toAdjustment['adjustedGLCodeSystemID'] = $item['toChartOfAccountSystemID'];
                         $toAdjustment['budgetMasterID'] = ($toValueBudget) ? $toValueBudget->budgetmasterID : null;
                         $toAdjustment['adjustedGLCode'] = $item['toGLCode'];

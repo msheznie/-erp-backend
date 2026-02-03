@@ -508,6 +508,27 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
+       if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+
+                    if ($request['type'] == 'all') {
+                        
+                        $supplierMasters->whereIn('createdUserSystemID', $createdBy);
+                    } else {
+                        
+                        $supplierMasters->whereHas('master', function ($q) use ($createdBy) {
+                            $q->whereIn('createdUserSystemID', $createdBy);
+                        });
+                    }
+                }
+            }
+        }
+
+
         if ($search) {
             $supplierMasters = $supplierMasters->where(function ($query) use ($search) {
                 $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
@@ -1505,11 +1526,14 @@ class SupplierMasterAPIController extends AppBaseController
             ->groupBy('itemCodeSystem')
             ->get();
 
+        $contractEnablePolicy = Helper::checkPolicy($companyId, 93);    
+
         $output = array(
             'suppliers' => $supplierMaster,
             'items' => $items,
             'companyName' => $companyName,
-            'currencyName' => $currencyName
+            'currencyName' => $currencyName,
+            'contractEnablePolicy' => $contractEnablePolicy
         );
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }

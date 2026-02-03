@@ -90,12 +90,17 @@ Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getA
 Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');
 
 Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");
+Route::post('auditLogsExternal', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");
 Route::post('createAuditLog', 'AuditTrailAPIController@createAuditLog')->name("Create audit log");
 Route::post('userAuditLogs', 'AuditTrailAPIController@userAuditLogs')->name("Get user audit logs");
 Route::post('exportUserAuditLogs', 'AuditTrailAPIController@exportUserAuditLogs')->name("Export user audit logs");
 Route::post('navigationAccessLogs', 'AuditTrailAPIController@navigationAccessLogs')->name("Get navigation access logs");
 Route::post('exportNavigationAccessLogs', 'AuditTrailAPIController@exportNavigationAccessLogs')->name("Export navigation access logs");
 Route::post('exportEventTrackingLogs', 'AuditTrailAPIController@exportEventTrackingLogs')->name("Export event tracking logs");
+Route::get('auditReportFilters', 'AuditTrailAPIController@auditReportFilters')->name("Get audit report filter options");
+Route::post('employee-activity-audit-report', 'AuditTrailAPIController@employeeActivityAuditReport')->name("Get employee activity audit report");
+Route::post('export-employee-activity-audit-report', 'AuditTrailAPIController@exportEmployeeActivityAuditReport')->name("Export employee activity audit report");
+
 
 Route::get('getSearchCustomers', 'CustomerMasterAPIController@getSearchCustomers')->name("Get Search Customers");
 Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");

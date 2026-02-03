@@ -231,6 +231,7 @@ class VerifyCsrfTokenForApi
             'api/v1/getTemplateDetailFormData',
             'api/v1/budget_template_comments_by_detail/{budgetDetailId}',
             'api/v1/auditLogs',
+            'api/v1/auditLogsExternal',
             'api/v1/getBudgetTemplateColumns/{templateId}',
             'api/v1/getDelegateAccessRecords',
             'api/v1/generateTimeExtensionRequestCode',
@@ -265,6 +266,7 @@ class VerifyCsrfTokenForApi
             'api/v1/department-budget-detail-comments/resolve',
             'api/v1/department-budget-detail-comments',
             'api/v1/company_budget_plannings/{company_budget_planning}',
+            'api/v1/company_budget_plannings/{id}',
             'api/v1/getRevisionsByCompanyBudget',
             'api/v1/getTimeExtensionRequestsByCompanyBudget',
             'api/v1/getDepartmentBudgetPlanningStatusesByCompany',
@@ -279,7 +281,12 @@ class VerifyCsrfTokenForApi
             'api/v1/department-budget-detail-comments/delete',
             'api/v1/printAssetDepreciation',
             'api/v1/getDocumentTracingData',
-            'api/v1/createAuditLog'
+            'api/v1/createAuditLog',
+            'api/v1/requestBudgetPlanningReopen',
+            'api/v1/returnBudgetPlanningPreCheck',
+            'api/v1/returnBudgetPlanningToAmend',
+            'api/v1/createAuditLog',
+            'api/v1/getThirdPartyApiLogDetail'
         ];
 
     }

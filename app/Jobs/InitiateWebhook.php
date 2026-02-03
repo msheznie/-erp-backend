@@ -191,7 +191,7 @@ class InitiateWebhook implements ShouldQueue
                 $isFailed,
                 $errorMessage,
                 $this->logId
-            );
+            )->onQueue('audit-logs');
         }
     }
 

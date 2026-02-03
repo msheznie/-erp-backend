@@ -351,6 +351,61 @@ class CreateExcel
 
                     });
 
+                    $isSecondHeaderRow = false;
+                    if (!empty($data) && count($data) >= 2) {
+                        $firstRow = $data[0];
+                        $secondRow = $data[1];
+                        if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
+                            $nonEmptyCount = 0;
+                            $hasTranslationKeys = false;
+                            foreach ($secondRow as $cell) {
+                                if (!empty($cell) && is_string($cell)) {
+                                    $nonEmptyCount++;
+                                    if (preg_match('/^(custom\.|supplier|po_|grv|invoice|payment|logistic|company|amount|date|code|status)/i', $cell)) {
+                                        $hasTranslationKeys = true;
+                                    }
+                                }
+                            }
+                            if ($nonEmptyCount >= 3 && $hasTranslationKeys) {
+                                $isSecondHeaderRow = true;
+                            }
+                        }
+                        
+                        if ($isSecondHeaderRow) {
+                            $sheet->row($i + 1, function($row) use ($fontFamily) {
+                                $row->setAlignment('left');
+                                $row->setFontColor('#000000');
+                                $row->setFont(array(
+                                    'family'     => $fontFamily,
+                                    'size'       => '12',
+                                    'bold'       =>  true
+                                ));
+                            });
+                        }
+                    }
+                    
+                    $dataStartRow = $isSecondHeaderRow ? $i + 2 : $i + 1;
+                    $lastRow = $sheet->getHighestRow();
+                    if ($lastRow >= $dataStartRow) {
+                        $lastColumn = $sheet->getHighestColumn();
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A' . $dataStartRow . ':' . $lastColumn . $lastRow)->getFont()->setBold(false);
+                        } catch (\Exception $e) {
+                            // Fallback: format row by row
+                            for ($rowNum = $dataStartRow; $rowNum <= $lastRow; $rowNum++) {
+                                $sheet->row($rowNum, function($row) use ($fontFamily) {
+                                    $row->setFont(array(
+                                        'family'     => $fontFamily,
+                                        'size'       => '11',
+                                        'bold'       => false
+                                    ));
+                                });
+                            }
+                        }
+                    }
+
                     if (app()->getLocale() == 'ar') {
                         // Set right-to-left for the entire sheet
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);

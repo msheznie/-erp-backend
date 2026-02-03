@@ -1086,7 +1086,7 @@ class DebitNoteAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'supplier', 'transactioncurrency',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','employee', 'localcurrency', 'rptcurrency']);
 
         $input = $this->convertArrayToValue($input);
 
@@ -2736,6 +2736,15 @@ UNION ALL
             if ($input['year'] && !is_null($input['year'])) {
                 $debitNotes = $debitNotes->whereYear('debitNoteDate', '=', $input['year']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $debitNotes->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
 

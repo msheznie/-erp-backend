@@ -1182,8 +1182,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['contractUID'] = 159;
                             $data['supplierCodeSystem'] = $DebitNoteMasterExData->supplierID;
 
-                            $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->liabilityAccountSysemID;
-                            $data['glCode'] = $DebitNoteMasterExData->liabilityAccount;
+                            $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->type == 2 ? $DebitNoteMasterExData->empControlAccount : $DebitNoteMasterExData->liabilityAccountSysemID;
+                            $data['glCode'] = $DebitNoteMasterExData->type == 2 ? ChartOfAccount::getGlAccountCode($data['chartOfAccountSystemID']) : $DebitNoteMasterExData->liabilityAccount;
                             $data['glAccountType'] = 'BS';
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                             $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;
@@ -3323,7 +3323,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                    1
                                                ) > 0
                                            )");
-        } elseif ($input['matchType'] == 2) {
+        } 
+        elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select("SELECT
                                             erp_creditnotedetails.creditNoteDetailsID AS masterAutoID,
                                             erp_creditnote.documentSystemID,
@@ -3336,13 +3337,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             currency.DecimalPlaces,
                                             SUM(erp_creditnotedetails.creditAmount) AS SumOfreceiveAmountTrans,
                                             erp_creditnotedetails.serviceLineCode AS serviceLineCode,
-                                            (
-                                                SUM(erp_creditnotedetails.creditAmount) - (
-                                                    (IFNULL(
-                                                        receipt.SumOfreceiptAmount,
-                                                        0
-                                                    )* -1) + IFNULL(advd.SumOfmatchingAmount, 0)
-                                                )
+                                            SUM(erp_creditnotedetails.creditAmount) - (
+                                                (IFNULL(
+                                                    receipt.SumOfreceiptAmount,
+                                                    0
+                                                )* -1) + IFNULL(advd.SumOfmatchingAmount, 0) + 
+                                                CASE
+                                                    WHEN erp_creditnote.type = 3 THEN IFNULL(payCreditNote.creditNotePaymentAmount, 0)
+                                                    ELSE 0
+                                                END
                                             ) AS BalanceAmt
                                         FROM
                                             erp_creditnotedetails
@@ -3398,6 +3401,21 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             AND erp_creditnote.documentSystemiD = advd.documentSystemID
                                             AND erp_creditnote.companySystemID = advd.companySystemID
                                             AND erp_creditnotedetails.serviceLineSystemID = advd.serviceLineSystemID
+                                        )
+                                        LEFT JOIN (
+                                            SELECT
+                                                creditNoteAutoID,
+                                                companySystemID,
+                                                SUM(creditNotePaymentAmount) AS creditNotePaymentAmount
+                                            FROM
+                                                erp_paycreditnotedetails
+                                            GROUP BY
+                                                creditNoteAutoID,
+                                                companySystemID
+                                        ) AS payCreditNote ON (
+                                            erp_creditnote.creditNoteAutoID = payCreditNote.creditNoteAutoID
+                                            AND erp_creditnote.companySystemID = payCreditNote.companySystemID
+                                            AND erp_creditnote.type = 3
                                         )
                                         WHERE
                                             erp_creditnote.companySystemID = " . $input['companySystemID'] . "

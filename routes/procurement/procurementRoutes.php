@@ -134,6 +134,7 @@ Route::group([], function() {
     Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview')->name('Amend procurement sub work order review');
     Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend')->name('Po expected delivery date amend');
     Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments')->name('Get procurement order all amendments');
+    Route::get('procumentOrderCancelPreCheck', 'ProcumentOrderAPIController@procumentOrderCancelPreCheck')->name('Procurement order cancel pre check');
     Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel')->name('Procurement order cancel');
     Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack')->name('Procurement order return back');
     Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder')->name('Manual close procurement order');

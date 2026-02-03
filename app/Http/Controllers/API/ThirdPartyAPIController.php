@@ -9,6 +9,7 @@ use App\Models\ThirdPartyIntegrationKeys;
 use App\Models\ThirdPartySystems;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ThirdPartyAPIController extends AppBaseController
 {
@@ -30,7 +31,11 @@ class ThirdPartyAPIController extends AppBaseController
                     try {
                         $client = new Client();
 
-                        $url = $thirdPartyIntegrationKey->api_external_url.'/get_contract_data?supplierId='.$data['supplierId'];
+                        $url = $thirdPartyIntegrationKey->api_external_url.'/get_contract_data';
+                        $supplierId = $data['supplierId'] ?? null;
+                        if(!empty($supplierId)){
+                            $url .= '?supplierId='.$supplierId;
+                        }
 
                         $response = $client->request('GET', $url, [
                             'headers' => [

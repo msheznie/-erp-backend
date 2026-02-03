@@ -365,7 +365,83 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                         'type' => 'warning',
                         'departments' => isset($validationResult['departments']) ? $validationResult['departments'] : []
                     ];
-                    return $this->sendError($validationResult['message'], 422, $errorType);
+                    return $this->sendAPIError($validationResult['message'], 422, $errorType);
+                }
+                return $this->sendError($validationResult['message']);
+            }
+
+            
+            $params = array('autoID' => $companyBudgetPlanning->id,
+                'company' => $companyBudgetPlanning->companySystemID,
+                'document' => 133,
+                'segment' => null,
+                'category' => null,
+                'amount' => null
+            );
+
+            $confirm = \Helper::confirmDocument($params);
+
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500);
+            } 
+
+            $companyBudgetPlanning->departmentBudgetPlannings;
+            $input['confirmed_yn'] = 1;
+            $input['confirmed_by_name'] = Auth::user()->name;
+            $input['confirmed_by_emp_id'] = Auth::user()->id;
+            $input['confirmed_by_emp_system_id'] =  Auth::user()->employee_id;
+            $input['confirmed_at'] = Carbon::now();
+        }
+
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
+
+        return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
+    }
+
+    /**
+     * Update company budget planning via POST
+     *
+     * @param int $id
+     * @param UpdateCompanyBudgetPlanningAPIRequest $request
+     * @return Response
+     */
+    public function updateCompanyBudgetPlanning($id, UpdateCompanyBudgetPlanningAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var CompanyBudgetPlanning $companyBudgetPlanning */
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings.department')->findWithoutFail($id);
+
+        if (empty($companyBudgetPlanning)) {
+            return $this->sendError(trans('custom.company_budget_planning_not_found'));
+        }
+
+
+        if($input['confirmed_yn'] == 1) {
+
+            // check user have confirtmation permission
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+
+            if($userPermission['data']['financeUser']['status'] == false || $userPermission['data']['financeUser']['isActive'] == false || $userPermission['data']['financeUser']['access']['initiate_budget_planning'] == false) {
+                return $this->sendError("You don't have access to proceed with the budget confirmation");
+            }
+
+            // Validate department budget planning statuses before allowing confirmation
+            $validationResult = $this->validateDepartmentBudgetPlanningStatuses($companyBudgetPlanning);
+            
+            if (!$validationResult['valid']) {
+                // If it's a warning type, include departments list in the response
+                if (isset($validationResult['type']) && $validationResult['type'] === 'warning') {
+                    $errorType = [
+                        'type' => 'warning',
+                        'departments' => isset($validationResult['departments']) ? $validationResult['departments'] : []
+                    ];
+                    return $this->sendAPIError($validationResult['message'], 422, $errorType);
                 }
                 return $this->sendError($validationResult['message']);
             }
@@ -748,7 +824,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess','masterBudgetPlannings'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -766,7 +842,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 //                            ->where('status',1)
                             ->get()->pluck('budgetPlanningDetail.departmentBudgetPlanning.id')->unique();
 
-                        $data = DepartmentBudgetPlanning::with(['revisions','department.hod.employee','financeYear','delegateAccess','confirmedBy'])
+                        $data = DepartmentBudgetPlanning::with(['revisions','department.hod.employee','financeYear','delegateAccess','confirmedBy','masterBudgetPlannings'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereIn('id', $uniqueIds)
                             ->orderBy('id', $sort);
@@ -833,9 +909,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
 
+
         return \DataTables::of($data)
             ->addColumn('Actions', 'Actions', "Actions")
             ->addIndexColumn()
+            ->addColumn('companyConfirmedStatus', function ($row) {
+                return $row->masterBudgetPlannings->confirmed_yn ?? 0;
+            })
+            ->addColumn('companyApprovedStatus', function ($row) {
+                return $row->masterBudgetPlannings->approved_yn ?? 0;
+            })
             ->with('orderCondition', $sort)
             ->make(true);
     }
@@ -852,12 +935,326 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
     }
 
+    /**
+     * Get Budget Generate Details - Load all department budget plannings grouped by segments
+     * 
+     * @param Request $request
+     * @return Response
+     */
+    public function getBudgetGenerateDetails(Request $request)
+    {
+        $input = $request->all();
+        
+        // Validate required fields
+        if (!isset($input['budgetPlanningId']) || empty($input['budgetPlanningId'])) {
+            return $this->sendError('Budget Planning ID is required');
+        }
+
+        $budgetPlanningId = $input['budgetPlanningId'];
+        
+        // Get company budget planning
+        $companyBudgetPlanning = CompanyBudgetPlanning::find($budgetPlanningId);
+        
+        if (!$companyBudgetPlanning) {
+            return $this->sendError('Company Budget Planning not found');
+        }
+
+        // Load all department budget plannings with relationships
+        $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
+            'department.companyDepartmentSegments.segment',
+            'financeYear',
+            'masterBudgetPlannings.workflow'
+        ])
+        ->where('companyBudgetPlanningID', $budgetPlanningId)
+        ->where('confirmed_yn', 1) // Only confirmed budgets
+        ->get();
+
+        // Build flat list with segment info included in each departmentBudgetPlanning
+        $result = [];
+        
+        foreach ($departmentBudgetPlannings as $deptBudgetPlanning) {
+            $department = $deptBudgetPlanning->department;
+            
+            if (!$department) {
+                continue;
+            }
+            
+            // Get all segments for this department
+            $departmentSegments = $department->companyDepartmentSegments;
+            
+            if ($departmentSegments && $departmentSegments->count() > 0) {
+                // If department has multiple segments, create one record per segment
+                foreach ($departmentSegments as $deptSegment) {
+                    $segment = $deptSegment->segment;
+                    
+                    if (!$segment) {
+                        continue;
+                    }
+                    
+                    // Format segment display
+                    $segmentDisplay = '-';
+                    $segmentCode = $segment->ServiceLineCode ?? '';
+                    $segmentDes = $segment->ServiceLineDes ?? '';
+                    if ($segmentCode && $segmentDes) {
+                        $segmentDisplay = $segmentCode . ' - ' . $segmentDes;
+                    } else if ($segmentDes) {
+                        $segmentDisplay = $segmentDes;
+                    } else if ($segmentCode) {
+                        $segmentDisplay = $segmentCode;
+                    }
+
+                    // Format finance year display
+                    $financeYearDisplay = '-';
+                    if ($deptBudgetPlanning->financeYear) {
+                        $startDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->bigginingDate)->format('d/m/Y');
+                        $endDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->endingDate)->format('d/m/Y');
+                        $financeYearDisplay = $startDate . ' | ' . $endDate;
+                    }
+
+                    // Get budget type label
+                    $budgetType = $this->getBudgetType($deptBudgetPlanning->typeID);
+
+                    // Get master budget planning data
+                    $masterBudgetPlanning = $deptBudgetPlanning->masterBudgetPlannings;
+                    $masterBudgetPlanningData = null;
+                    if ($masterBudgetPlanning) {
+                        $masterBudgetPlanningData = [
+                            'id' => $masterBudgetPlanning->id,
+                            'planningCode' => $masterBudgetPlanning->planningCode,
+                            'companySystemID' => $masterBudgetPlanning->companySystemID,
+                            'yearID' => $masterBudgetPlanning->yearID,
+                            'typeID' => $masterBudgetPlanning->typeID,
+                            'status' => $masterBudgetPlanning->status,
+                            'confirmed_yn' => $masterBudgetPlanning->confirmed_yn,
+                            'approved_yn' => $masterBudgetPlanning->approved_yn,
+                            'rejected_yn' => $masterBudgetPlanning->rejected_yn,
+                            'initiatedDate' => $masterBudgetPlanning->initiatedDate,
+                            'submissionDate' => $masterBudgetPlanning->submissionDate,
+                            'workflowID' => $masterBudgetPlanning->workflowID,
+                        ];
+                        
+                        // Include workflow if available
+                        if ($masterBudgetPlanning->workflow) {
+                            $masterBudgetPlanningData['workflow'] = [
+                                'id' => $masterBudgetPlanning->workflow->id,
+                                'method' => $masterBudgetPlanning->workflow->method,
+                            ];
+                        }
+                    }
+
+                    $result[] = [
+                        'id' => $deptBudgetPlanning->id,
+                        'DT_Row_Index' => $deptBudgetPlanning->id,
+                        'planningCode' => $deptBudgetPlanning->planningCode,
+                        'templateDescription' => $deptBudgetPlanning->planningCode ?? '-',
+                        'departmentID' => $deptBudgetPlanning->departmentID,
+                        'department' => [
+                            'departmentSystemID' => $department->departmentSystemID,
+                            'departmentCode' => $department->departmentCode,
+                            'departmentDescription' => $department->departmentDescription,
+                        ],
+                        'segment' => $segmentDisplay,
+                        'segmentInfo' => [
+                            'serviceLineSystemID' => $segment->serviceLineSystemID,
+                            'ServiceLineCode' => $segmentCode,
+                            'ServiceLineDes' => $segmentDes,
+                        ],
+                        'financeYear' => $deptBudgetPlanning->financeYear ? [
+                            'companyFinanceYearID' => $deptBudgetPlanning->financeYear->companyFinanceYearID,
+                            'bigginingDate' => $deptBudgetPlanning->financeYear->bigginingDate,
+                            'endingDate' => $deptBudgetPlanning->financeYear->endingDate,
+                        ] : null,
+                        'financeYearDisplay' => $financeYearDisplay,
+                        'yearID' => $deptBudgetPlanning->yearID,
+                        'typeID' => $deptBudgetPlanning->typeID,
+                        'budgetType' => $budgetType,
+                        'status' => $deptBudgetPlanning->status,
+                        'confirmed_yn' => $deptBudgetPlanning->confirmed_yn,
+                        'approved_yn' => $deptBudgetPlanning->approved_yn,
+                        'rejected_yn' => $deptBudgetPlanning->rejected_yn,
+                        'initiatedDate' => $deptBudgetPlanning->initiatedDate,
+                        'submissionDate' => $deptBudgetPlanning->submissionDate,
+                        'master_budget_plannings' => $masterBudgetPlanningData,
+                    ];
+                }
+            } else {
+                // If department has no segments, add with null segment
+                // Format finance year display
+                $financeYearDisplay = '-';
+                if ($deptBudgetPlanning->financeYear) {
+                    $startDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->bigginingDate)->format('d/m/Y');
+                    $endDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->endingDate)->format('d/m/Y');
+                    $financeYearDisplay = $startDate . ' | ' . $endDate;
+                }
+
+                // Get budget type label
+                $budgetType = $this->getBudgetType($deptBudgetPlanning->typeID);
+
+                // Get master budget planning data
+                $masterBudgetPlanning = $deptBudgetPlanning->masterBudgetPlannings;
+                $masterBudgetPlanningData = null;
+                if ($masterBudgetPlanning) {
+                    $masterBudgetPlanningData = [
+                        'id' => $masterBudgetPlanning->id,
+                        'planningCode' => $masterBudgetPlanning->planningCode,
+                        'companySystemID' => $masterBudgetPlanning->companySystemID,
+                        'yearID' => $masterBudgetPlanning->yearID,
+                        'typeID' => $masterBudgetPlanning->typeID,
+                        'status' => $masterBudgetPlanning->status,
+                        'confirmed_yn' => $masterBudgetPlanning->confirmed_yn,
+                        'approved_yn' => $masterBudgetPlanning->approved_yn,
+                        'rejected_yn' => $masterBudgetPlanning->rejected_yn,
+                        'initiatedDate' => $masterBudgetPlanning->initiatedDate,
+                        'submissionDate' => $masterBudgetPlanning->submissionDate,
+                        'workflowID' => $masterBudgetPlanning->workflowID,
+                    ];
+                    
+                    // Include workflow if available
+                    if ($masterBudgetPlanning->workflow) {
+                        $masterBudgetPlanningData['workflow'] = [
+                            'id' => $masterBudgetPlanning->workflow->id,
+                            'method' => $masterBudgetPlanning->workflow->method,
+                        ];
+                    }
+                }
+
+                $result[] = [
+                    'id' => $deptBudgetPlanning->id,
+                    'DT_Row_Index' => $deptBudgetPlanning->id,
+                    'planningCode' => $deptBudgetPlanning->planningCode,
+                    'templateDescription' => $deptBudgetPlanning->planningCode ?? '-',
+                    'departmentID' => $deptBudgetPlanning->departmentID,
+                    'department' => [
+                        'departmentSystemID' => $department->departmentSystemID,
+                        'departmentCode' => $department->departmentCode,
+                        'departmentDescription' => $department->departmentDescription,
+                    ],
+                    'segment' => 'No Segment',
+                    'segmentInfo' => [
+                        'serviceLineSystemID' => null,
+                        'ServiceLineCode' => '',
+                        'ServiceLineDes' => 'No Segment',
+                    ],
+                    'financeYear' => $deptBudgetPlanning->financeYear ? [
+                        'companyFinanceYearID' => $deptBudgetPlanning->financeYear->companyFinanceYearID,
+                        'bigginingDate' => $deptBudgetPlanning->financeYear->bigginingDate,
+                        'endingDate' => $deptBudgetPlanning->financeYear->endingDate,
+                    ] : null,
+                    'financeYearDisplay' => $financeYearDisplay,
+                    'yearID' => $deptBudgetPlanning->yearID,
+                    'typeID' => $deptBudgetPlanning->typeID,
+                    'budgetType' => $budgetType,
+                    'status' => $deptBudgetPlanning->status,
+                    'confirmed_yn' => $deptBudgetPlanning->confirmed_yn,
+                    'approved_yn' => $deptBudgetPlanning->approved_yn,
+                    'rejected_yn' => $deptBudgetPlanning->rejected_yn,
+                    'initiatedDate' => $deptBudgetPlanning->initiatedDate,
+                    'submissionDate' => $deptBudgetPlanning->submissionDate,
+                    'master_budget_plannings' => $masterBudgetPlanningData,
+                ];
+            }
+        }
+        
+        return $this->sendResponse($result, 'Budget generate details retrieved successfully');
+    }
+
     public function getBudgetType($id) {
         switch ($id) {
             case 1: return 'OPEX';
             case 2: return 'CAPEX';
             case 3: return 'Common';
             default: return '';
+        }
+    }
+
+    /**
+     * Get work status label based on workStatus and revisions
+     * 
+     * @param DepartmentBudgetPlanning $departmentBudgetPlanning
+     * @return string
+     */
+    private function getWorkStatusLabel($departmentBudgetPlanning)
+    {
+        $workStatus = $departmentBudgetPlanning->workStatus ?? null;
+        $hasRevisions = $departmentBudgetPlanning->revisions && $departmentBudgetPlanning->revisions->count() > 0;
+        
+        switch ($workStatus) {
+            case "1":
+                return $hasRevisions ? trans('custom.work_status_revision_not_started') : trans('custom.work_status_not_started');
+            case "2":
+                return $hasRevisions ? trans('custom.work_status_revision_in_progress') : trans('custom.work_status_in_progress');
+            case "3":
+                return $hasRevisions ? trans('custom.work_status_revision_submit_to_finance') : trans('custom.work_status_submit_to_finance');
+            default:
+                return trans('custom.status_unknown');
+        }
+    }
+
+    /**
+     * Get finance team status label based on financeTeamStatus
+     * 
+     * @param DepartmentBudgetPlanning $departmentBudgetPlanning
+     * @return string
+     */
+    private function getFinanceTeamStatusLabel($departmentBudgetPlanning)
+    {
+        $financeTeamStatus = $departmentBudgetPlanning->financeTeamStatus ?? null;
+        
+        switch ($financeTeamStatus) {
+            case 1:
+                return trans('custom.finance_status_open');
+            case 2:
+                return trans('custom.finance_status_under_review');
+            case 3:
+                return trans('custom.finance_status_sent_back_for_revision');
+            case 4:
+                return trans('custom.finance_status_completed');
+            default:
+                return trans('custom.status_unknown');
+        }
+    }
+
+    /**
+     * Get formatted status combining work status and finance status separated by comma
+     * 
+     * @param DepartmentBudgetPlanning|CompanyBudgetPlanning $budgetPlanning
+     * @return string
+     */
+    private function getFormattedStatus($budgetPlanning)
+    {
+        // Check if it's DepartmentBudgetPlanning (has workStatus and financeTeamStatus)
+        if ($budgetPlanning instanceof DepartmentBudgetPlanning || 
+            (isset($budgetPlanning->workStatus) || isset($budgetPlanning->financeTeamStatus))) {
+            $workStatus = $this->getWorkStatusLabel($budgetPlanning);
+            $financeStatus = $this->getFinanceTeamStatusLabel($budgetPlanning);
+            return $workStatus . ', ' . $financeStatus;
+        }
+        
+        // For CompanyBudgetPlanning, use status and financeStatus
+        $workStatus = ($budgetPlanning->status == 1) ? trans('custom.work_status_in_progress') : trans('custom.work_status_open');
+        $financeStatus = $this->getCompanyFinanceStatusLabel($budgetPlanning->financeStatus ?? null);
+        return $workStatus . ', ' . $financeStatus;
+    }
+
+    /**
+     * Get finance status label for CompanyBudgetPlanning
+     * 
+     * @param int|null $financeStatus
+     * @return string
+     */
+    private function getCompanyFinanceStatusLabel($financeStatus)
+    {
+        switch ($financeStatus) {
+            case 1:
+                return trans('custom.finance_status_open');
+            case 2:
+                return trans('custom.finance_status_under_review');
+            case 3:
+                return trans('custom.finance_status_sent_back_for_revision');
+            case 4:
+                return trans('custom.finance_status_completed');
+            default:
+                return trans('custom.status_unknown');
         }
     }
 
@@ -870,6 +1267,13 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+
+        $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $input['companyId'],
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
+
+
 
         if ($input['type'] == 'company') {
             $data = CompanyBudgetPlanning::with(['financeYear'])->where('companySystemID', $input['companyId']);
@@ -927,6 +1331,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 $employeeID = \Helper::getEmployeeSystemID();
 
                 $isFinanceUser = false;
+
+                if ($userPermission['data']['financeApprovalUser']['status']) {
+                    $isFinanceUser = true;
+                }
+
                 $financeDepartment = CompanyDepartment::with(['employees'])
                     ->where('isFinance', 1)
                     ->where('companySystemID', $input['companyId'])
@@ -941,7 +1350,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
 
                 if ($isFinanceUser) {
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear','revisions'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
                 } else {
@@ -962,7 +1371,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                     $childDepartmentIds = array_unique($childDepartmentIds);
 
-                    $data = DepartmentBudgetPlanning::with(['department','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department','financeYear','revisions'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->whereHas('department', function($query) use ($childDepartmentIds) {
                             $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -1040,7 +1449,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data[$x]['Budget Year'] = $val->financeYear ? \Illuminate\Support\Carbon::parse($val->financeYear->bigginingDate)->format('d/m/Y') . "|" . \Illuminate\Support\Carbon::parse($val->financeYear->endingDate)->format('d/m/Y') : '';
             $data[$x]['Budget Type'] = $val->typeID ? $this->getbudgetType($val->typeID) : '';
             $data[$x]['Date of Submission'] = $val->submissionDate ? $val->submissionDate->format('d/m/Y') : '';
-            $data[$x]['Status'] = ($val->status == 1) ? 'In Progress' : 'Open';
+            $data[$x]['Status'] = $this->getFormattedStatus($val);
         }
 
         $companyMaster = Company::find(isset($request->companyId) ? $request->companyId : null);
@@ -1058,6 +1467,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $path = 'system/department_budget_planning/excel/';
         }
         $type = 'xls';
+        $data = array_values($data);
         $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
         if ($basePath == '') {
@@ -1542,6 +1952,15 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             DB::beginTransaction();
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($input['companyBudgetPlanningID']);
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
+                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_reopen_budget_planning'));
+            }
             
             if (!$companyBudgetPlanning) {
                 return $this->sendError(trans('custom.budget_planning_not_found'), 404);
@@ -1568,15 +1987,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $companyBudgetPlanning->confirmed_by_name = null;
     
 
+            $companyBudgetPlanning->save();
 
-            $delete = DocumentApproved::where('document_system_id', 133)->where('documentSystemCode', $companyBudgetPlanning->id)->delete();
+            $delete = DocumentApproved::where('documentSystemID', 133)->where('documentSystemCode', $companyBudgetPlanning->id)->delete();
 
             // TODO: Add email notification logic here if needed
             // Similar to ReopenDocument helper
 
             DB::commit();
 
-            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_reopened_successfully'));
+            return $this->sendResponse($companyBudgetPlanning, trans('custom.budget_planning_reopened_successfully'));
         } catch (\Exception $e) {
             DB::rollBack();
             return $this->sendError(trans('custom.error_occurred'), 500);
@@ -1632,7 +2052,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendAPIError(trans('custom.cannot_return_back_to_amend'), 400, ['data' => $errors]);
             }
 
-            return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_can_be_returned_to_amend'));
+            return $this->sendResponse($companyBudgetPlanning, trans('custom.budget_planning_can_be_returned_to_amend'));
         } catch (\Exception $e) {
             return $this->sendError(trans('custom.error_occurred') . ': ' . $e->getMessage(), 500);
         }
@@ -1654,6 +2074,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             'ammendComments' => 'required|string|min:10'
         ]);
 
+
         if ($validator->fails()) {
             return $this->sendAPIError(trans('custom.validation_error'), 422, $validator->errors()->toArray());
         }
@@ -1662,7 +2083,16 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             DB::beginTransaction();
 
             $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($input['companyBudgetPlanningID']);
-            
+                    $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $companyBudgetPlanning->companySystemID,
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
+
+
+            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
+                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning'));
+            }
+
             if (!$companyBudgetPlanning) {
                 return $this->sendError(trans('custom.budget_planning_not_found'), 404);
             }

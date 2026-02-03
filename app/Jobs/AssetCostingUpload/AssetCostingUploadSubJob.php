@@ -288,6 +288,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "groupTO" => null,
                     "postToGLYN" => $postToGL,
                     "postToGLCodeSystemID" => $postToGLCodeSystemID,
+                    "assetStatus" => 2,
                     "salvage_value_rpt" => $residualRpt,
                     "salvage_value" => $residualLocal,
                     "companySystemID" => $uploadedCompany,
@@ -296,6 +297,7 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "assetCostingUploadID" => $logUploadAssetCosting->assetCostingUploadID
                 ];
 
+                Log::info('asset sub jobs');
                 $assetCreate = app(AssetCreationService::class)->assetCreation($assetUpload);
 
                 if ($assetCreate['status'] === false) {

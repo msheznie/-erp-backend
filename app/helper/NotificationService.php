@@ -54,19 +54,13 @@ class NotificationService
 
 
         if (count($com_assign_scenarios) == 0) {
-            Log::info('Notification Company Scenario not exist');
             return true;
         }
 
         $scenario_des = $com_assign_scenarios[0]->notification_scenario->scenarioDescription;
 
-        Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
-
         foreach ($com_assign_scenarios as $compAssignScenario) {
-            Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
-
             if (count($compAssignScenario->notification_day_setup) == 0) {
-                Log::info('Notification day setup not exist');
                 continue;
             }
 
@@ -158,13 +152,11 @@ class NotificationService
                 }
 
                 if (count($details) == 0) {
-                    Log::info("No records found for scenario {$scenario_des} ");
                     continue;
                 }
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info("User setup not found for scenario {$scenario_des}");
                     continue;
                 }
 
@@ -204,8 +196,6 @@ class NotificationService
             }
 
         }
-
-        Log::info('------------ Successfully end ' . $scenario_des . ' Service ' . date('H:i:s') . ' ------------');
 
         return true;
     }

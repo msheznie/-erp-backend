@@ -75,7 +75,6 @@ class BudgetNotificationService
 
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
-
            if (!$budgetNotifications) {
                return [
                    'success' => false,
@@ -187,12 +186,11 @@ class BudgetNotificationService
         $parsedUrl = parse_url($baseurl);
         $domain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
         $linkUrl = $domain . '/#/budget-planning/planning';
-        
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
             'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">' . $linkUrl . '</a>'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
 
         $emails[] = array(
@@ -524,7 +522,7 @@ class BudgetNotificationService
         // Get all department users with their employee details eager loaded
         $financeUsers = CompanyDepartmentEmployee::with('employee')
                         ->whereHas('department', function ($query) {
-                        $query->where('isFinance', 1)->where('isActive', 1);
+                        $query->where('isFinance', 1)->where('isActive', 1)->where('companySystemID', $budgetPlanning->masterBudgetPlannings->companySystemID);
                         })
                         ->where('isActive', 1)
                         ->get();

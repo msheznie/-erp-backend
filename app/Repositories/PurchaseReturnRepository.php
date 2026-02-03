@@ -133,6 +133,15 @@ class PurchaseReturnRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseReturn->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         $purchaseReturn = $purchaseReturn->select(
             ['purhaseReturnAutoID',
                 'purchaseReturnCode',

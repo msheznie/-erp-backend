@@ -236,6 +236,7 @@ class CustomerAssignedAPIController extends AppBaseController
     public function getAllCustomersByCompany(Request $request){
 
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -252,10 +253,20 @@ class CustomerAssignedAPIController extends AppBaseController
         }else{
             $childCompanies = [$companyId];
         }
-        $customerMasters = CustomerAssigned::with(['country'])
+        $customerMasters = CustomerAssigned::with(['country','master'])
                                         ->whereIn('companySystemID',$childCompanies)
                                             ->where('isAssigned',-1);
 
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+            if (!empty($createdBy)) {
+                $customerMasters->whereHas('master', function ($q) use ($createdBy) {
+                    $q->whereIn('createdUserSystemID', $createdBy);
+                });
+            }
+        }
+        
         $search = $request->input('search.value');
         if($search){
             $customerMasters =   $customerMasters->where(function ($query) use($search) {

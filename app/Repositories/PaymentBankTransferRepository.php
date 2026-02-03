@@ -106,6 +106,19 @@ class PaymentBankTransferRepository extends BaseRepository
             $bankTransfer = $bankTransfer->where('approvedYN', -1);
         }
 
+        if (!empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])
+                ->pluck('id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (!empty($createdBy)) {
+                $bankTransfer->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $bankTransfer = $bankTransfer->where(function ($query) use ($search) {

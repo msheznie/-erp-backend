@@ -55,7 +55,8 @@ class DepBudgetPlDetEmpColumn extends Model
     public $fillable = [
         'companySystemID',
         'empID',
-        'columnID'
+        'columnID',
+        'source'
     ];
 
     /**
@@ -67,7 +68,8 @@ class DepBudgetPlDetEmpColumn extends Model
         'id' => 'integer',
         'companySystemID' => 'integer',
         'empID' => 'integer',
-        'columnID' => 'integer'
+        'columnID' => 'integer',
+        'source' => 'integer'
     ];
 
     /**

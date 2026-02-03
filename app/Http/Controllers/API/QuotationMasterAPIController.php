@@ -58,6 +58,7 @@ use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
 use App\Models\SegmentMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SoPaymentTerms;
 use App\Models\YesNoSelection;
 use App\Models\Company;
@@ -373,7 +374,15 @@ class QuotationMasterAPIController extends AppBaseController
         if (empty($quotationMaster)) {
             return $this->sendError(trans('custom.quotation_master_not_found'));
         }
-
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $quotationMaster->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $quotationMaster->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $quotationMaster->isSegmentPolicyOn = false;
+        }
         return $this->sendResponse($quotationMaster->toArray(), trans('custom.quotation_master_retrieved_successfully'));
     }
 
@@ -623,6 +632,20 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
                 if ($checkAmount > 0) {
                     return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
+                }
+            }
+
+            $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isYesNO', 1)
+                ->exists();
+
+            if($quotationMaster->salesType == 2 && $isSegmentPolicyOn){
+                $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
+                    ->whereNull('serviceLineSystemID')
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError(trans('custom.please_select_segment_for_each_line_item'), 500);
                 }
             }
 
@@ -1102,9 +1125,21 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
             $query->with(['term_description']);
         }])->first();
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
+        }
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -1123,7 +1158,9 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID', [67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
@@ -1138,6 +1175,16 @@ class QuotationMasterAPIController extends AppBaseController
             foreach ($soPaymentTerms as $val) {
                 $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val->paymentTemDes.' '.$val['inDays'] . trans('custom.in_days') . ', ';
             }
+        }
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
         }
 
         $order = array(
@@ -1996,11 +2043,31 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function downloadQuotationItemUploadTemplate(Request $request) {
         $input = $request->all();
+
+        if(isset($input['salesType']) && $input['salesType'] != null){
+            $salesType = $input['salesType'];
+        }else {
+            $salesType = null;
+        }
+
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
-        if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
-            return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
+        $companyPolicy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                        ->where('companyPolicyCategoryID', 106)
+                        ->where('isYesNO', 1)
+                        ->exists();
+
+        if($companyPolicy && $salesType == 2){
+            if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template_with_segment.xlsx')) {
+                return Storage::disk($disk)->download('quotation_template/quotation_template_with_segment.xlsx', 'template.xlsx');
+            } else {
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
+            }
         } else {
-            return $this->sendError(trans('custom.attachments_not_found'), 500);
+            if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
+                return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
+            } else {
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
+            }
         }
     }
 
@@ -2025,6 +2092,10 @@ class QuotationMasterAPIController extends AppBaseController
                 return $this->sendError(trans('custom.quotation_not_found'), 500);
             }
 
+            $companyPolicy = CompanyPolicyMaster::where('companySystemID', $masterData->companySystemID)
+                ->where('companyPolicyCategoryID', 106)
+                ->where('isYesNO', 1)
+                ->exists();
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -2052,6 +2123,7 @@ class QuotationMasterAPIController extends AppBaseController
             $validateHeaderQty = false;
             $validateHeaderPrice = false;
             $validateVat = false;
+            $validateHeaderSegment = false;
             $totalItemCount = 0;
 
             $allowItemToTypePolicy = false;
@@ -2069,6 +2141,18 @@ class QuotationMasterAPIController extends AppBaseController
                 
                 if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
                      return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
+                }
+
+                if($companyPolicy && $masterData->salesType == 2){
+                    if(isset($value['segment']) && $value['segment'] != null){
+                        $validateHeaderSegment = true;
+                    }
+                } else {
+                    if(isset($value['segment']) && $value['segment'] != null){
+                        return $this->sendError(trans('custom.segment_is_not_allowed_for_this_upload'), 500);
+                    } else {
+                        $validateHeaderSegment = true;
+                    }
                 }
 
                 if (isset($value['item_code'])) {
@@ -2097,7 +2181,7 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
-            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat || !$validateHeaderSegment) {
                 return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
@@ -2131,6 +2215,30 @@ class QuotationMasterAPIController extends AppBaseController
                             if($salesType == 2){
                                 if($itemMasterData->financeCategoryMaster != 2){
                                     return $this->sendError(trans('custom.only_service_items_can_add_to_quotations_for_sales_type_subscription'), 500);
+                                }
+                                if($companyPolicy){
+                                    if(isset($finalRecords['segment']) && $finalRecords['segment'] != null){
+                                        $segment = SegmentMaster::where('ServiceLineCode', $finalRecords['segment'])
+                                            ->where('isActive', 1)
+                                            ->where('isDeleted', 0)
+                                            ->first();
+                                        if(!$segment){
+                                            return $this->sendError(trans('custom.segment_code_is_invalid'), 500);
+                                        }
+
+                                        if(isset($masterData->companySystemID)){
+                                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID', $segment->serviceLineSystemID)
+                                                ->where('companySystemID', $masterData->companySystemID)
+                                                ->where('isAssigned', 1)
+                                                ->where('isActive', 1)
+                                                ->first();
+                                            if(!$segmentAssigned){
+                                                return $this->sendError(trans('custom.segment_not_assigned_to_company'), 500);
+                                            }
+                                        }
+                                    } else {
+                                        return $this->sendError(trans('custom.please_select_segment_for_each_line_item'), 500);
+                                    }
                                 }
                             }
                         }

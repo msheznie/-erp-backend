@@ -15,6 +15,7 @@ class AssetRegisterDetail
     public $groupedYN;
     public $serialNumber;
     public $assetDescription;
+    public $location;
     public $category;
     public $depPercentage;
     public $dateAcquired;
@@ -36,6 +37,7 @@ class AssetRegisterDetail
             trans('custom.grouped_yn'),
             trans('custom.serial_number'),
             trans('custom.asset_description'),
+            trans('custom.location'),
             trans('custom.category'),
             trans('custom.dep_percentage'),
             trans('custom.date_acquired'),
@@ -134,6 +136,14 @@ class AssetRegisterDetail
     public function setAssetDescription($assetDescription): void
     {
         $this->assetDescription = $assetDescription;
+    }
+
+    /**
+     * @param mixed $location
+     */
+    public function setLocation($location): void
+    {
+        $this->location = $location;
     }
 
     /**

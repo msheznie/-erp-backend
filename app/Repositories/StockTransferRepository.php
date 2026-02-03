@@ -124,6 +124,15 @@ class StockTransferRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $stockTransferMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         $stockTransferMaster = $stockTransferMaster->select(
             ['erp_stocktransfer.stockTransferAutoID',
                 'erp_stocktransfer.stockTransferCode',

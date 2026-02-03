@@ -413,9 +413,6 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
         }
 
-        Log::error($returnData);
-
-
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(

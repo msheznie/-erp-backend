@@ -132,6 +132,15 @@ class ItemReturnMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $itemReturnMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
 
         $itemReturnMaster = $itemReturnMaster->select(
             ['itemReturnAutoID',

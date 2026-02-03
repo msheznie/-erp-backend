@@ -53,12 +53,7 @@ class DeliveryOrderAddMutipleItemsService
     }
 
     public static function  addMultipleItems($records,$deliveryOrder,$db,$authID) {
-
-
         DeliveryOrderDetail::insert($records);
-
-        Log::info($records);
-
     }
 
 

@@ -3479,7 +3479,8 @@ IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
         WHEN CAST('$asOfDate' AS DATE) < accumulated_depreciation_date 
             THEN 0
         ELSE IFNULL(costUnitRpt, 0) - IFNULL(depAmountRpt, 0)
-    END AS rptnbv
+    END AS rptnbv,
+    erp_location.locationName
 FROM
 	erp_fa_asset_master
 	LEFT JOIN (
@@ -3499,6 +3500,7 @@ FROM
 	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
 	INNER JOIN serviceline ON serviceline.serviceLineSystemID = erp_fa_asset_master.serviceLineSystemID
+    LEFT JOIN erp_location ON erp_location.locationID = erp_fa_asset_master.LOCATION
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 (

@@ -291,10 +291,16 @@ class SupplierInvoiceGlService
                         $totalVATAmount = $vatDetails['totalVAT'];
                         $totalVATAmountLocal = $vatDetails['totalVATLocal'];
                         $totalVATAmountRpt = $vatDetails['totalVATRpt'];
+                        $excemptVATAmount = $vatDetails['exemptVAT'];
+                        $excemptVATAmountLocal = $vatDetails['exemptVATLocal'];
+                        $excemptVATAmountRpt = $vatDetails['exemptVATRpt'];
+                        $standardExemptVATAmount = $vatDetails['standardExemptVAT'];
+                        $standardExemptVATAmountLocal = $vatDetails['standardExemptVATLocal'];
+                        $standardExemptVATAmountRpt = $vatDetails['standardExemptVATRpt'];
                         if (!TaxService::isSupplierInvoiceRcmActivated($masterModel["autoID"])) {
-                            $retentionTransWithoutVat = ($data['documentTransAmount'] + ABS($totalVATAmount)) * ($retentionPercentage / 100);
-                            $retentionLocalWithoutVat = ($data['documentLocalAmount'] + ABS($totalVATAmountLocal)) * ($retentionPercentage / 100);
-                            $retentionRptWithoutVat = ($data['documentRptAmount'] + ABS($totalVATAmountRpt)) * ($retentionPercentage / 100);
+                            $retentionTransWithoutVat = ($data['documentTransAmount'] + (ABS($totalVATAmount) - ($excemptVATAmount - $standardExemptVATAmount))) * ($retentionPercentage / 100);
+                            $retentionLocalWithoutVat = ($data['documentLocalAmount'] + (ABS($totalVATAmountLocal) - ($excemptVATAmountLocal - $standardExemptVATAmountLocal))) * ($retentionPercentage / 100);
+                            $retentionRptWithoutVat = ($data['documentRptAmount'] + (ABS($totalVATAmountRpt) - ($excemptVATAmountRpt - $standardExemptVATAmountRpt))) * ($retentionPercentage / 100);
                         } else {
                             $retentionTrans = $data['documentTransAmount'] * ($retentionPercentage / 100);
                             $retentionLocal = $data['documentLocalAmount'] * ($retentionPercentage / 100);

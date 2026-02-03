@@ -62,11 +62,8 @@ class CleanExpiredSignedPdfUrls implements ShouldQueue
                     break;
             }
 
-            Log::info("Signed PDF URL cache cleanup completed. Cleaned up {$cleanupCount} expired entries.");
-
         } catch (\Exception $e) {
             Log::error('Signed PDF URL cache cleanup failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
         }
     }
 
@@ -117,7 +114,6 @@ class CleanExpiredSignedPdfUrls implements ShouldQueue
         // But we still need to clean up the active tokens list
         $this->cleanupActiveTokensList($currentTime);
         
-        Log::info('Memcached cleanup: Relying on TTL for automatic cleanup, cleaned active tokens list');
         return 0;
     }
 
@@ -149,7 +145,6 @@ class CleanExpiredSignedPdfUrls implements ShouldQueue
         // Update the active tokens list or remove it if empty
         if (empty($activeTokens)) {
             Cache::forget('signed_pdf_active_tokens');
-            Log::info('Removed empty active tokens list from cache');
         } else {
             Cache::put('signed_pdf_active_tokens', array_values($activeTokens), 60 * 24); // 24 hours
         }
@@ -191,10 +186,8 @@ class CleanExpiredSignedPdfUrls implements ShouldQueue
             // Update or remove the active tokens list
             if (empty($validTokens)) {
                 Cache::forget('signed_pdf_active_tokens');
-                Log::info("Removed empty active tokens list after cleaning {$cleanedCount} expired tokens");
             } else if ($cleanedCount > 0) {
                 Cache::put('signed_pdf_active_tokens', $validTokens, 60 * 24); // 24 hours
-                Log::info("Cleaned {$cleanedCount} expired tokens from active tokens list, " . count($validTokens) . " remaining");
             }
 
         } catch (\Exception $e) {

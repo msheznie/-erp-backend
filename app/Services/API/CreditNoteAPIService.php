@@ -91,6 +91,7 @@ class CreditNoteAPIService extends AppBaseController
         $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['documentType'] = 12;
+        $input['type'] = 2;
 
         $documentDate = $input['creditNoteDate'];
         $monthBegin = $input['FYPeriodDateFrom'];

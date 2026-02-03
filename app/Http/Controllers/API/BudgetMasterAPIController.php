@@ -496,7 +496,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'serviceLineSystemID', 'approvedYN', 'Year', 'templateMasterID', 'Year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'serviceLineSystemID', 'approvedYN', 'Year', 'templateMasterID', 'Year','createdBy'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -551,6 +551,18 @@ class BudgetMasterAPIController extends AppBaseController
                                  ->when(($isServiceLineAccess == true && (!request('serviceLineSystemID') || is_null($input['serviceLineSystemID']))), function ($q) use ($accessibleSegments) {
                                     return $q->whereIn('serviceLineSystemID', $accessibleSegments);
                                 });
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $budgets->whereIn('createdUserSystemID', $createdBy); 
+                }
+            }
+        }
+
 
         $search = $request->input('search.value');
         if ($search) {

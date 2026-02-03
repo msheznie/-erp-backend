@@ -22,15 +22,18 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Services\VictoriaLogsService;
 use App\Services\LokiService;
-use App\Jobs\AuditLog\MigrateAuditLogsJob;
 use DataTables;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
+use App\Services\AuditLog\EmployeeAuditReportService;
+use Illuminate\Support\Facades\DB;
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
+ * 
  */
 
 class AuditTrailAPIController extends AppBaseController
@@ -38,11 +41,13 @@ class AuditTrailAPIController extends AppBaseController
     use AuditLogsTrait;
     /** @var  AuditTrailRepository */
     private $auditTrailRepository;
+    private $victoriaLogsService;
     private $lokiService;
 
-    public function __construct(AuditTrailRepository $auditTrailRepo, LokiService $lokiService)
+    public function __construct(AuditTrailRepository $auditTrailRepo, VictoriaLogsService $victoriaLogsService, LokiService $lokiService)
     {
         $this->auditTrailRepository = $auditTrailRepo;
+        $this->victoriaLogsService = $victoriaLogsService;
         $this->lokiService = $lokiService;
     }
 
@@ -298,307 +303,125 @@ class AuditTrailAPIController extends AppBaseController
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.audit_trails')]));
     }
 
+    /**
+     * 
+     * 
+     * Supports two modes:
+     * 1. Transaction-specific logs (id + module) - for shared/audit-logs component
+     * 2. Action tracking logs (isFromTracking) - for action-tracking-logs component
+     * 
+     * @param Request $request
+     * @return mixed
+     */
     public function auditLogs(Request $request){
-        ini_set('max_execution_time', 2160000);
         $input = $request->all();
+        
         try {
-            $env = env("LOKI_ENV");
-
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
             $locale = app()->getLocale() ?: 'en';
-            $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
-
-            if(isset($input['isFromTracking']) && $input['isFromTracking']){
-                
-                $requestFromDate = $request->input('fromDate');
-                $requestToDate = $request->input('toDate');
-                
-                $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-                $toDate = Carbon::now();
-                $diff = $toDate->diffInDays($fromDate) + 1;
-
-                // Build line filter for crudType
-                $crudTypeFilter = '';
-                if(isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != ''){
-                    $eventMap = [
-                        '1' => 'C',
-                        '2' => 'U',
-                        '3' => 'D',
-                    ];
-                    
-                    $crudType = $eventMap[$input['accessType']] ?? $input['accessType'];
-                    $crudTypeFilter = ' |= `\"crudType\":\"'.$crudType.'\"`';
-                }
-
-                // Build line filter for employeeId
-                $employeeIdFilter = '';
-                if(isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != ''){
-                    $employeeIdFilter = ' |= `\"employeeId\":\"'.$input['employeeId'].'\"`';
-                }
-
-                // Build line filter for companyId
-                $companyIdFilter = '';
-                if(isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
-                    $companySystemId = $input['companyId'];
-                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
-                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
-                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
-                }
-
-                // Build line filter for search
-                $searchFilter = '';
-                $searchValue = $request->input('search.value');
-                if (!empty($searchValue)) {
-                    $escapedSearch = preg_quote($searchValue, '/');
-                    $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
-                }
-                
-                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$crudTypeFilter.$employeeIdFilter.$companyIdFilter.$searchFilter.' | json ['.(int)$diff.'d])';
-                $params = 'query?query='.$params;
-                $data = $this->lokiService->getAuditLogs($params);
-                $data2 = [];
-            } else {
-                $id = $input['id'];
-                $module = $input['module'];
-                $table = $this->lokiService->getAuditTables($module);
-
-                // Check if request is from Portal (Portal requests have 'From-Portal' header set to 1)
-                $isFromPortal = $request->hasHeader('From-Portal') && $request->header('From-Portal') == 1;
-                $companyIdFilter = '';
-
-                // Only apply company filtering for Gears_FrontEnd requests (NOT from Portal)
-                if (!$isFromPortal && isset($input['companyId']) && $input['companyId'] !== null && $input['companyId'] !== '' && $input['companyId'] !== 'null'){
-                    $companySystemId = $input['companyId'];
-                    $escapedCompanySystemId = preg_quote($companySystemId, '/');
-                    // Match escaped JSON format in log line: \"company_system_id\":1 (numeric), \"company_system_id\":\"1\" (string), null or empty string
-                    $companyIdFilter = ' |~ `\\\\\"company_system_id\\\\\"\\s*:\\s*(null|\\\\\"\\\\\"|'.$escapedCompanySystemId.'|\\\\\"'.$escapedCompanySystemId.'\\\\\")`';
-                }
-
-                // If id is 0, only filter by table (show all logs for this module)
-                // Otherwise, filter by both transaction_id and table
-                if ($id == 0 || $id == '0' || $id === '0') {
-                    // Only filter by table when id is 0, but still filter by company (if not from Portal)
-                    $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
-                    $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$tableFilter.$companyIdFilter.' | json ['.$diff.'d])';
-                    $params = 'query?query='.$params;
-                    $data = $this->lokiService->getAuditLogs($params);
-                    $data2 = []; // No parent logs when showing all logs
-                } else {
-                // Build line filters for transaction_id and table
-                $transactionIdFilter = ' |= `\"transaction_id\":\"'.$id.'\"`';
-                $tableFilter = ' |= `\"table\":\"'.$table.'\"`';
-                
-                $params = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$transactionIdFilter.$tableFilter.' | json ['.$diff.'d])';
-                $params = 'query?query='.$params;
-                $data = $this->lokiService->getAuditLogs($params);
-
-                // Build line filters for parent_id and parent_table
-                $parentIdFilter = ' |= `\"parent_id\":\"'.$id.'\"`';
-                $parentTableFilter = ' |= `\"parent_table\":\"'.$table.'\"`';
-                
-                $params2 = 'rate({env="'.$env.'"}|= `\"channel\":\"audit\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$locale.'\"`'.$parentIdFilter.$parentTableFilter.' | json ['.$diff.'d])';
-                $params2 = 'query?query='.$params2;
-                $data2 = $this->lokiService->getAuditLogs($params2);
-                }
-            }
-
-            // Check if $data is an error response
-            if (is_object($data) && method_exists($data, 'getStatusCode')) {
-                return $data;
-            }
-
-            // Check if $data2 is an error response
-            if (is_object($data2) && method_exists($data2, 'getStatusCode')) {
-                return $data2;
-            }
-
-            $formatedData = [];
-
-            foreach ($data as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
-
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
-
-                    $formatedData[] = $lineData;
-                }
-            }
-
-            foreach ($data2 as $key => $value) {
-                if (isset($value['metric']['log']['data'])) {
-                    $lineData = $value['metric']['log'];
-
-                    $lineData['data'] = isset($value['metric']['log']['data']) ? json_decode($value['metric']['log']['data']) : [];
-
-                    $formatedData[] = $lineData;
-                }
-            }
-
-
-            if(isset($input['isFromTracking']) && $input['isFromTracking']){
-                        // Sort by date_time
-                $formatedData = collect($formatedData)->sortByDesc('date_time')->values()->all();
-
-                $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
-                    return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
-                })->values()->all();
-            } else {
-                $formatedData = collect($formatedData)->sortByDesc('date_time');
-            }
-
-            //make the formatedData unique by log_uuid
-            $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
             
-            // Get current locale for arrow conversion
-            $locale = app()->getLocale() ?: 'en';
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'companyId' => $input['companyId'] ?? null,
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
             
-            // Format date_time for each item and convert navigation path arrows
-            $formatedData = collect($formatedData)->map(function ($item) use ($locale) {
+            if (!empty($input['module'])) {
+                $params['id'] = $input['id'];
+                $params['module'] = $this->lokiService->getAuditTables($input['module']);
+                $params['fromDate'] = $input['fromDate'] ?? null;
+                $params['toDate'] = $input['toDate'] ?? null;
+            }
+            
+            if (!empty($input['isFromTracking'])) {
+                $params['isFromTracking'] = true;
+                $params['fromDate'] = $input['fromDate'] ?? null;
+                $params['toDate'] = $input['toDate'] ?? null;
+                $params['employeeId'] = $input['employeeId'] ?? null;
+                $params['accessType'] = $input['accessType'] ?? null;
+            }
+            
+            $result = $this->victoriaLogsService->getAuditLogs($params);
+            
+            $formatedData = collect($result['data'] ?? [])->map(function ($item) use ($locale) {
                 if (isset($item['date_time'])) {
                     $item['date_time'] = $this->formatDateTime($item['date_time']);
                 }
-                // Convert navigation path arrows based on locale
                 if (isset($item['navigationPath'])) {
                     $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
                 }
+                if (isset($item['data']) && is_string($item['data'])) {
+                    $item['data'] = json_decode($item['data']);
+                }
                 return $item;
-            })->all();
+            })->values()->all();
             
-            if(isset($input['isExport']) && $input['isExport']){
+            if (!empty($input['isExport'])) {
                 return $formatedData;
             }
-
-            if(isset($input['isFromTracking']) && $input['isFromTracking']){
-                return DataTables::of($formatedData)
-                    ->filter(function ($query) use ($request) {
-                    })
-                    ->addIndexColumn()
-                    ->make(true);
-            } else {
-
-                return DataTables::of($formatedData)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
+            
+            return \DataTables::of($formatedData)
+                ->filter(function() {
+                })
+                ->addIndexColumn()
+                ->make(true);
             
         } catch (\Exception $exception) {
+            Log::error('Error in auditLogs', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
             return $this->sendError($exception->getMessage());
         }
     }
 
     /**
-     * Fetch and format user audit logs from Loki
-     * 
-     * @param Request $request
-     * @return array
-     */
-    private function fetchUserAuditLogs(Request $request)
-    {
-        $input = $request->all();
-        $env = env("LOKI_ENV");
-        
-        // Get date range from request
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
-        
-        // Use request dates if provided, otherwise fallback to defaults
-        $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = Carbon::now();
-        $diff = $toDate->diffInDays($fromDate) + 1;
-        
-        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
-        $localeValue = app()->getLocale() ?: 'en';
-        
-        // Build line filters for event
-        $eventFilter = '';
-        if (isset($input['event']) && $input['event'] != null && $input['event'] != '') {
-            $eventMap = [
-                '1' => trans('audit.login'),
-                '2' => trans('audit.logout'),
-                '3' => trans('audit.login_failed'),
-                '4' => trans('audit.session_expired'),
-            ];
-            
-            $eventValue = $eventMap[$input['event']] ?? $input['event'];
-            $eventFilter = ' |= `\"event\":\"'.$eventValue.'\"`';
-        }
-
-        // Build line filter for employeeId
-        $employeeIdFilter = '';
-        if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
-            $empIdValue = $input['employeeId'];
-            $employeeIdFilter = ' |= `\"employeeId\":\"'.$empIdValue.'\"`';
-        }
-
-        // Build line filter for search
-        $searchFilter = '';
-        $searchValue = $request->input('search.value');
-        if (!empty($searchValue)) {
-            $escapedSearch = preg_quote($searchValue, '/');
-            $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
-        }
-        
-        // $query = 'rate({env="'.$env.'",channel="auth",tenant="'.$uuid.'"} ['.(int)$diff.'d] | json';
-        $query = 'rate({env="'.$env.'"}|= `\"channel\":\"auth\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$localeValue.'\"`'.$eventFilter.$employeeIdFilter.$searchFilter.' | json ['.(int)$diff.'d])';
-        $params = 'query?query='.$query;
-        
-        $data = $this->lokiService->getAuditLogs($params);
-
-        // Check if $data is an error response
-        if (is_object($data) && method_exists($data, 'getStatusCode')) {
-            throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
-        }
-
-        $formatedData = [];
-
-        foreach ($data as $key => $value) {
-            if (isset($value['metric']['log'])) {
-                $lineData = $value['metric']['log'];
-
-                $formatedData[] = $lineData;
-            }
-        }
-
-        $formatedData = collect($formatedData)->sortByDesc('date_time');
-
-        $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
-            return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
-        })->values()->all();
-
-        //make the formatedData unique by log_uuid
-        $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
-        
-        // Format date_time for each item
-        $formatedData = collect($formatedData)->map(function ($item) {
-            if (isset($item['date_time'])) {
-                $item['date_time'] = $this->formatDateTime($item['date_time']);
-            }
-            return $item;
-        })->all();
-        
-        return $formatedData;
-    }
-
-    /**
      * Get user audit logs (login, logout, session events)
-     * Fetches logs where logType = 'user_audit' from Loki
      *
      * @param Request $request
      * @return Response
      */
     public function userAuditLogs(Request $request){
         try {
-            // Use shared method to fetch data with all filters applied
-            $formatedData = $this->fetchUserAuditLogs($request);
+            $input = $request->all();
+            $locale = app()->getLocale() ?: 'en';
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
             
-            return DataTables::of($formatedData)
-            ->filter(function ($query) use ($request) {
-            })
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => $input['employeeId'] ?? null,
+                'event' => $input['event'] ?? null,
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
+            
+            $result = $this->victoriaLogsService->getUserAuditLogs($params);
+            
+            $formatedData = collect($result['data'] ?? [])->map(function ($item) {
+                if (isset($item['date_time'])) {
+                    $item['date_time'] = $this->formatDateTime($item['date_time']);
+                }
+                return $item;
+            })->values()->all();
+            
+            return \DataTables::of($formatedData)
+                ->filter(function() {
+                })
                 ->addIndexColumn()
                 ->make(true);
+            
         } catch (\Exception $exception) {
+            Log::error('Error in userAuditLogs', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
             return $this->sendError($exception->getMessage());
         }
     }
@@ -612,19 +435,39 @@ class AuditTrailAPIController extends AppBaseController
     public function exportUserAuditLogs(Request $request)
     {
         try {
-            // Use shared method to fetch data with all filters applied
-            $formatedData = $this->fetchUserAuditLogs($request);
+            $input = $request->all();
+            $locale = app()->getLocale() ?: 'en';
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
             
-            // Check if there's no data to export
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => $input['employeeId'] ?? null,
+                'event' => $input['event'] ?? null,
+                'start' => 0,
+                'length' => 10000,
+                'search' => $input['search'] ?? [],
+            ];
+            
+            $result = $this->victoriaLogsService->getUserAuditLogs($params);
+            $formatedData = $result['data'] ?? [];
+            
             if (empty($formatedData)) {
                 return $this->sendError(trans('custom.no_user_audit_logs_found'), 404);
             }
             
-            // Get date range filters for displaying in Excel
+            $formatedData = collect($formatedData)->map(function ($item) {
+                if (isset($item['date_time'])) {
+                    $item['date_time'] = $this->formatDateTime($item['date_time']);
+                }
+                return $item;
+            })->all();
+            
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
-            // Convert date_time to RTL format for Arabic locale
             if (app()->getLocale() == 'ar') {
                 $formatedData = collect($formatedData)->map(function ($item) {
                     if (isset($item['date_time'])) {
@@ -634,14 +477,12 @@ class AuditTrailAPIController extends AppBaseController
                 })->all();
             }
             
-            // Prepare report data for Blade template
             $reportData = [
                 'data' => $formatedData,
                 'fromDate' => $requestFromDate,
                 'toDate' => $requestToDate,
             ];
 
-            // Generate Excel file using Blade template
             $fileName = trans('custom.user_audit_logs');
 
             $lang = app()->getLocale();
@@ -649,7 +490,6 @@ class AuditTrailAPIController extends AppBaseController
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    // Set default font for entire sheet
                     $sheet->setStyle([
                         'font' => [
                             'name' => $fontFamily,
@@ -669,7 +509,6 @@ class AuditTrailAPIController extends AppBaseController
                             $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                         }
                     }
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -691,27 +530,21 @@ class AuditTrailAPIController extends AppBaseController
     public function exportEventTrackingLogs(Request $request)
     {
         try {
-            // Add isExport flag to request and call auditLogs function
             $request->merge(['isExport' => true, 'isFromTracking' => true]);
             
-            // Call auditLogs function which will return formatted data when isExport is true
             $formatedData = $this->auditLogs($request);
             
-            // Check if response is an error
             if (is_object($formatedData) && method_exists($formatedData, 'getStatusCode')) {
                 return $formatedData;
             }
             
-            // Check if there's no data to export
             if (empty($formatedData)) {
                 return $this->sendError(trans('custom.no_event_tracking_logs_found'), 404);
             }
             
-            // Get date range filters for displaying in Excel
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
-            // Convert date_time to RTL format for Arabic locale
             if (app()->getLocale() == 'ar') {
                 $formatedData = collect($formatedData)->map(function ($item) {
                     if (isset($item['date_time'])) {
@@ -721,14 +554,12 @@ class AuditTrailAPIController extends AppBaseController
                 })->all();
             }
             
-            // Prepare report data for Blade template
             $reportData = [
                 'data' => $formatedData,
                 'fromDate' => $requestFromDate,
                 'toDate' => $requestToDate,
             ];
 
-            // Generate Excel file using Blade template
             $fileName = trans('custom.event_tracking_logs');
 
             $lang = app()->getLocale();
@@ -736,7 +567,6 @@ class AuditTrailAPIController extends AppBaseController
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    // Set default font for entire sheet
                     $sheet->setStyle([
                         'font' => [
                             'name' => $fontFamily,
@@ -757,7 +587,6 @@ class AuditTrailAPIController extends AppBaseController
                         }
                     }
                     
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -777,106 +606,6 @@ class AuditTrailAPIController extends AppBaseController
      * @param Request $request
      * @return array
      */
-    private function fetchNavigationAccessLogs(Request $request)
-    {
-        $input = $request->all();
-        $env = env("LOKI_ENV");
-        
-        // Get date range from request
-        $requestFromDate = $request->input('fromDate');
-        $requestToDate = $request->input('toDate');
-        
-        // Use request dates if provided, otherwise fallback to defaults
-        $fromDate = !empty($requestFromDate) ? Carbon::parse($requestFromDate) : Carbon::parse(env("LOKI_START_DATE"));
-        $toDate = Carbon::now();
-        $diff = $toDate->diffInDays($fromDate) + 1;
-        
-        $uuid = isset($input['tenant_uuid']) ? $input['tenant_uuid']: 'local';
-        
-        $localeValue = app()->getLocale() ?: 'en';
-        
-        // Build line filter for employeeId
-        $employeeIdFilter = '';
-        if (isset($input['employeeId']) && $input['employeeId'] != null && $input['employeeId'] != '') {
-            $empIdValue = $input['employeeId'];
-            $employeeIdFilter = ' |= `\"employeeId\":\"'.$empIdValue.'\"`';
-        }
-
-        // Build line filter for companyId
-        $companyIdFilter = '';
-        if (isset($input['companyId']) && $input['companyId'] != null && $input['companyId'] != '') {
-            $companyIdValue = $input['companyId'];
-            $companyIdFilter = ' |= `\"companyID\":\"'.$companyIdValue.'\"`';
-        }
-        
-        // Build line filter for accessType
-        $accessTypeFilter = '';
-        if (isset($input['accessType']) && $input['accessType'] != null && $input['accessType'] != '') {
-            $accessTypeValue = $input['accessType'];
-            if (is_numeric($accessTypeValue)) {
-                switch ((int)$accessTypeValue) {
-                    case 1: $accessTypeValue = trans('audit.read', [], $localeValue); break;
-                    case 2: $accessTypeValue = trans('audit.create', [], $localeValue); break;
-                    case 3: $accessTypeValue = trans('audit.edit', [], $localeValue); break;
-                    case 4: $accessTypeValue = trans('audit.delete', [], $localeValue); break;
-                    default: $accessTypeValue = trans('audit.read', [], $localeValue);
-                }
-            }
-            $accessTypeFilter = ' |= `\"accessType\":\"'.$accessTypeValue.'\"`';
-        }
-
-        // Build line filter for search
-        $searchFilter = '';
-        $searchValue = $request->input('search.value');
-        if (!empty($searchValue)) {
-            // Escape special regex characters for Loki
-            $escapedSearch = preg_quote($searchValue, '/');
-            $searchFilter = ' |~ `(?i)'.$escapedSearch.'`';
-        }
-        
-        $query = 'rate({env="'.$env.'"}|= `\"channel\":\"navigation\"` |= `\"tenant_uuid\":\"'.$uuid.'\"` |= `\"locale\":\"'.$localeValue.'\"`'.$employeeIdFilter.$companyIdFilter.$accessTypeFilter.$searchFilter.' | json ['.(int)$diff.'d])';
-        $params = 'query?query='.$query;
-        
-        $data = $this->lokiService->getAuditLogs($params);
-        
-        if (is_object($data) && method_exists($data, 'getStatusCode')) {
-            throw new \Exception('Failed to fetch data from Loki: HTTP ' . $data->getStatusCode());
-        }
-
-        $formatedData = [];
-
-        foreach ($data as $key => $value) {
-            if (isset($value['metric']['log'])) {
-                $lineData = $value['metric']['log'];
-
-                $formatedData[] = $lineData;
-            }
-        }
-
-        $formatedData = collect($formatedData)->sortByDesc('date_time');
-
-        $formatedData = collect($formatedData)->filter(function ($item) use ($fromDate,$toDate) {
-            return $item['date_time'] >= $fromDate && $item['date_time'] <= $toDate;
-        })->values()->all();
-
-        //make the formatedData unique by log_uuid
-        $formatedData = collect($formatedData)->unique('log_uuid')->values()->all();
-        
-        // Format date_time for each item and convert navigation path arrows
-        $formatedData = collect($formatedData)->map(function ($item) use ($localeValue) {
-            if (isset($item['date_time'])) {
-                $item['date_time'] = $this->formatDateTime($item['date_time']);
-            }
-            // Convert navigation path arrows based on locale
-            if (isset($item['navigationPath'])) {
-                $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $localeValue                          );
-            }
-            return $item;
-        })->all();
-        
-        return $formatedData;
-    }
-
     /**
      * Format date_time to match frontend format: dd/MM/yyyy HH:mm AM/PM
      * 
@@ -891,18 +620,14 @@ class AuditTrailAPIController extends AppBaseController
         }
         
         try {
-            // Parse the date_time (could be string or Carbon instance)
             $carbon = $dateTime instanceof Carbon ? $dateTime : Carbon::parse($dateTime);
             
-            // Format date as dd/MM/yyyy
             $date = $carbon->format('d/m/Y');
             
-            // Format time as 12-hour with AM/PM
             $hour = (int)$carbon->format('H');
             $minute = $carbon->format('i');
             $second = $carbon->format('s');
             
-            // Convert 24-hour to 12-hour format
             $hour12 = $hour % 12;
             if ($hour12 == 0) {
                 $hour12 = 12;
@@ -910,14 +635,11 @@ class AuditTrailAPIController extends AppBaseController
             $ampm = $hour < 12 ? 'AM' : 'PM';
             
             if ($rtl) {
-                // RTL format: AM/PM HH:mm:ss dd/MM/yyyy (for Arabic)
                 return $ampm . ' ' . str_pad($hour12, 2, '0', STR_PAD_LEFT) . ':' . $minute . ':' . $second . ' ' . $date;
             } else {
-                // LTR format: dd/MM/yyyy HH:mm:ss AM/PM
                 return $date . ' ' . str_pad($hour12, 2, '0', STR_PAD_LEFT) . ':' . $minute . ':' . $second . ' ' . $ampm;
             }
         } catch (\Exception $e) {
-            // Return original value if parsing fails
             return $dateTime;
         }
     }
@@ -935,14 +657,10 @@ class AuditTrailAPIController extends AppBaseController
             return '';
         }
         
-        // Pattern: "dd/MM/yyyy HH:mm:ss AM/PM"
-        // Extract parts using regex
         if (preg_match('/^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2}:\d{2})\s+(AM|PM)$/i', $formattedDateTime, $matches)) {
-            // Reorder: AM/PM HH:mm:ss dd/MM/yyyy
             return $matches[3] . ' ' . $matches[2] . ' ' . $matches[1];
         }
         
-        // If pattern doesn't match, try to parse and reformat
         try {
             $carbon = Carbon::parse($formattedDateTime);
             return $this->formatDateTime($carbon, true);
@@ -967,13 +685,10 @@ class AuditTrailAPIController extends AppBaseController
         
         $isRTL = $this->isRTL($locale);
         
-        // Replace arrows based on language direction
         if ($isRTL) {
-            // Convert right arrows (→) to left arrows (←) for RTL languages
             $navigationPath = str_replace(' → ', ' ← ', $navigationPath);
             $navigationPath = str_replace('→', '←', $navigationPath);
         } else {
-            // Convert left arrows (←) to right arrows (→) for LTR languages
             $navigationPath = str_replace(' ← ', ' → ', $navigationPath);
             $navigationPath = str_replace('←', '→', $navigationPath);
         }
@@ -989,8 +704,7 @@ class AuditTrailAPIController extends AppBaseController
      */
     private function isRTL($languageCode)
     {
-        // List of RTL language codes
-        $rtlLanguages = ['ar', 'he', 'fa', 'ur']; // Arabic, Hebrew, Persian, Urdu
+        $rtlLanguages = ['ar', 'he', 'fa', 'ur'];
         
         return in_array(strtolower($languageCode), $rtlLanguages);
     }
@@ -1002,17 +716,54 @@ class AuditTrailAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
+    /**
+     * Get navigation access logs
+     *
+     * @param Request $request
+     * @return Response
+     */
     public function navigationAccessLogs(Request $request){
         try {
-            // Use shared method to fetch data with all filters applied
-            $formatedData = $this->fetchNavigationAccessLogs($request);
+            $input = $request->all();
+            $locale = app()->getLocale() ?: 'en';
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
             
-            return DataTables::of($formatedData)
-                ->filter(function ($query) use ($request) {
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => $input['employeeId'] ?? null,
+                'accessType' => $input['accessType'] ?? null,
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
+            
+            $result = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            
+            $formatedData = collect($result['data'] ?? [])->map(function ($item) use ($locale) {
+                if (isset($item['date_time'])) {
+                    $item['date_time'] = $this->formatDateTime($item['date_time']);
+                }
+                if (isset($item['navigationPath'])) {
+                    $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
+                }
+                return $item;
+            })->values()->all();
+            
+            return \DataTables::of($formatedData)
+                ->filter(function() {
                 })
                 ->addIndexColumn()
                 ->make(true);
+            
         } catch (\Exception $exception) {
+            Log::error('Error in navigationAccessLogs', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
             return $this->sendError($exception->getMessage());
         }
     }
@@ -1026,19 +777,43 @@ class AuditTrailAPIController extends AppBaseController
     public function exportNavigationAccessLogs(Request $request)
     {
         try {
-            // Use shared method to fetch data with all filters applied
-            $formatedData = $this->fetchNavigationAccessLogs($request);
+            $input = $request->all();
+            $locale = app()->getLocale() ?: 'en';
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
             
-            // Check if there's no data to export
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => $input['employeeId'] ?? null,
+                'accessType' => $input['accessType'] ?? null,
+                'start' => 0,
+                'length' => 10000,
+                'search' => $input['search'] ?? [],
+            ];
+            
+            $result = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            $formatedData = $result['data'] ?? [];
+            
             if (empty($formatedData)) {
                 return $this->sendError(trans('custom.no_navigation_access_logs_found'), 404);
             }
             
-            // Get date range filters for displaying in Excel
+            $formatedData = collect($formatedData)->map(function ($item) use ($locale) {
+                if (isset($item['date_time'])) {
+                    $item['date_time'] = $this->formatDateTime($item['date_time']);
+                }
+                if (isset($item['navigationPath'])) {
+                    $item['navigationPath'] = $this->convertNavigationPathArrows($item['navigationPath'], $locale);
+                }
+                return $item;
+            })->all();
+            
             $requestFromDate = $request->input('fromDate');
             $requestToDate = $request->input('toDate');
             
-            // Convert date_time to RTL format for Arabic locale
             if (app()->getLocale() == 'ar') {
                 $formatedData = collect($formatedData)->map(function ($item) {
                     if (isset($item['date_time'])) {
@@ -1048,14 +823,12 @@ class AuditTrailAPIController extends AppBaseController
                 })->all();
             }
 
-            // Prepare report data for Blade template
             $reportData = [
                 'data' => $formatedData,
                 'fromDate' => $requestFromDate,
                 'toDate' => $requestToDate,
             ];
 
-            // Generate Excel file using Blade template
             $fileName = trans('custom.navigation_access_logs');
 
             $lang = app()->getLocale();
@@ -1063,7 +836,6 @@ class AuditTrailAPIController extends AppBaseController
 
             return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    // Set default font for entire sheet
                     $sheet->setStyle([
                         'font' => [
                             'name' => $fontFamily,
@@ -1072,7 +844,6 @@ class AuditTrailAPIController extends AppBaseController
                     ]);
                     $sheet->loadView('export_report.navigation_access_logs', $reportData);
 
-                    // Apply font to all cells after loading view
                     $lastRow = $sheet->getHighestRow();
                     $lastColumn = $sheet->getHighestColumn();
                     if ($lastRow > 0 && $lastColumn) {
@@ -1085,7 +856,6 @@ class AuditTrailAPIController extends AppBaseController
                         }
                     }
                     
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -1098,70 +868,6 @@ class AuditTrailAPIController extends AppBaseController
         }
     }
 
-    /**
-     * Migrate old audit logs to new format with proper labels
-     * Dispatches separate jobs for each table to fetch logs from Loki and re-log them
-     *
-     * @param Request $request
-     * @return Response
-     * 
-     * Request parameters:
-     * - table (optional): specific table name to migrate, or "all" to migrate all tables
-     *   If not provided, defaults to migrating all tables
-     */
-    public function migrateAuditLogs(Request $request)
-    {
-        $input = $request->all();
-
-        try {
-            $env = env("LOKI_ENV");
-            $fromDate = Carbon::parse(env("LOKI_START_DATE"));
-            $toDate = Carbon::now();
-            $diff = $toDate->diffInDays($fromDate);
-            
-            // Determine which tables to migrate
-            $requestedTable = $input['table'] ?? 'all';
-            
-            if ($requestedTable === 'all' || empty($requestedTable)) {
-                $tables = $this->lokiService->getAllAuditTables();
-            } else {
-                $tables = [$requestedTable];
-            }
-
-            // Generate unique batch ID for tracking all related jobs
-            $batchId = 'batch_' . uniqid() . '_' . time();
-            
-            $dispatchedJobs = [];
-
-            // Dispatch a separate job for each table
-            foreach ($tables as $table) {
-                
-                $tenants = Tenant::where('is_active', 1)->get();
-                
-                foreach ($tenants as $tenant) {
-                    $tenantUuid = $tenant->uuid;
-                    $jobId = $batchId . '_' . $table . '_' . $tenantUuid;
-                    MigrateAuditLogsJob::dispatch($table, $env, $diff, $jobId, $batchId, $tenantUuid)->onQueue('single');
-                    $dispatchedJobs[] = [
-                        'job_id' => $jobId,
-                        'table' => $table,
-                        'tenant_uuid' => $tenantUuid
-                    ];
-                }
-            }
-
-            return $this->sendResponse([
-                'batch_id' => $batchId,
-                'jobs_dispatched' => count($dispatchedJobs),
-                'jobs' => $dispatchedJobs,
-                'status' => 'queued',
-                'message' => "Dispatched " . count($dispatchedJobs) . " migration job(s), one for each table. Check the logs at storage/logs/audit_migration.log for progress and results."
-            ], 'Migration jobs dispatched successfully');
-
-        } catch (\Exception $exception) {
-            return $this->sendError($exception->getMessage());
-        }
-    }
 
     /**
      * Create an audit log entry
@@ -1175,7 +881,6 @@ class AuditTrailAPIController extends AppBaseController
         try {
             $input = $request->all();
 
-            // Validate required fields
             $requiredFields = ['dataBase', 'transactionID', 'tenant_uuid', 'table', 'narration', 'crudType'];
             foreach ($requiredFields as $field) {
                 if (!isset($input[$field])) {
@@ -1184,7 +889,6 @@ class AuditTrailAPIController extends AppBaseController
                 }
             }
 
-            // Extract parameters
             $dataBase = $input['dataBase'];
             $transactionID = $input['transactionID'];
             $tenant_uuid = $input['tenant_uuid'];
@@ -1197,7 +901,6 @@ class AuditTrailAPIController extends AppBaseController
             $parentTable = $input['parentTable'] ?? null;
             $empID = $input['empID'] ?? null;
 
-            // Use AuditLogsTrait to create the audit log
             $this->auditLog(
                 $dataBase,
                 $transactionID,
@@ -1217,6 +920,488 @@ class AuditTrailAPIController extends AppBaseController
             \Log::error('createAuditLog exception', [
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString()
+            ]);
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function auditReportFilters(Request $request)
+    {
+        $companyID = $request->get('companyID');
+        $languageCode = app()->getLocale() ?? 'en';
+        $isArabic = ($languageCode === 'ar');
+        
+        // Get navigation menus filtered by isPortalYN = 0
+        $navigationMenus = DB::table('srp_erp_navigationmenus')
+            ->select(DB::raw('srp_erp_navigationmenus.*, srp_erp_navigationmenus_languages.description as secondaryLanguageDescription'))
+            ->leftJoin('srp_erp_navigationmenus_languages', function ($join) use ($languageCode) {
+                $join->on('srp_erp_navigationmenus.navigationMenuID', '=', 'srp_erp_navigationmenus_languages.navigationMenuID')
+                    ->where('srp_erp_navigationmenus_languages.languageCode', '=', $languageCode);
+            })
+            ->where('srp_erp_navigationmenus.isPortalYN', '=', 0)
+            ->orderBy('srp_erp_navigationmenus.sortOrder')
+            ->get();
+
+        // Build navigation map for quick lookup
+        $navMap = [];
+        foreach ($navigationMenus as $nav) {
+            $navMap[$nav->navigationMenuID] = $nav;
+        }
+
+        // Build tree paths for leaf nodes (nodes without children)
+        $leafNodes = [];
+        foreach ($navigationMenus as $nav) {
+            // Check if this is a leaf node (no children)
+            $hasChildren = false;
+            foreach ($navigationMenus as $child) {
+                if ($child->masterID == $nav->navigationMenuID) {
+                    $hasChildren = true;
+                    break;
+                }
+            }
+            
+            if (!$hasChildren) {
+                $leafNodes[] = $nav;
+            }
+        }
+
+        // Build paths for each leaf node
+        $paths = [];
+        foreach ($leafNodes as $leaf) {
+            $path = [];
+            $current = $leaf;
+            
+            // Traverse up the tree to build the path
+            while ($current) {
+                // Use description for English, secondaryLanguageDescription for Arabic/other languages
+                if ($languageCode === 'en') {
+                    $label = $current->description;
+                } else {
+                    // For Arabic and other languages, prefer secondaryLanguageDescription, fallback to description
+                    $label = $current->secondaryLanguageDescription ?: $current->description;
+                }
+                
+                if ($label) {
+                    $path[] = $label;
+                }
+                
+                // Move to parent
+                if ($current->masterID && isset($navMap[$current->masterID])) {
+                    $current = $navMap[$current->masterID];
+                } else {
+                    $current = null;
+                }
+            }
+            
+            // Reverse path to get root-to-leaf order
+            $path = array_reverse($path);
+            
+            if (!empty($path)) {
+                // Join with arrow separator (RTL-aware for Arabic)
+                $separator = $isArabic ? ' ← ' : ' → ';
+                $pathString = implode($separator, $path);
+                
+                $paths[] = [
+                    'navigationMenuID' => $leaf->navigationMenuID,
+                    'description' => $pathString,
+                ];
+            }
+        }
+
+        usort($paths, function($a, $b) {
+            return strcmp($a['description'], $b['description']);
+        });
+
+        return $this->sendResponse($paths, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+    }
+
+
+    /**
+     * Helper method to fetch user audit logs for employee activity report
+     *
+     * @param Request $request
+     * @return array
+     */
+    protected function fetchUserAuditLogs(Request $request)
+    {
+        $input = $request->all();
+        $locale = $request->get('locale', app()->getLocale()) ?: 'en';
+        $tenantUuid = $input['tenant_uuid'] ?? 'local';
+        
+        $params = [
+            'tenant_uuid' => $tenantUuid,
+            'locale' => $locale,
+            'fromDate' => $input['fromDate'] ?? null,
+            'toDate' => $input['toDate'] ?? null,
+            'employeeId' => $input['employeeId'] ?? null,
+            'event' => null,
+            'search' => [],
+        ];
+        
+        $result = $this->victoriaLogsService->getUserAuditLogs($params);
+        return $result['data'] ?? [];
+    }
+
+    /**
+     * Helper method to fetch navigation access logs for employee activity report
+     *
+     * @param Request $request
+     * @return array
+     */
+    protected function fetchNavigationAccessLogs(Request $request)
+    {
+        $input = $request->all();
+        $locale = $request->get('locale', app()->getLocale()) ?: 'en';
+        $tenantUuid = $input['tenant_uuid'] ?? 'local';
+        
+        $params = [
+            'tenant_uuid' => $tenantUuid,
+            'locale' => $locale,
+            'fromDate' => $input['fromDate'] ?? null,
+            'toDate' => $input['toDate'] ?? null,
+            'employeeId' => $input['employeeId'] ?? null,
+            'accessType' => null, // Fetch all access types
+            'search' => [],
+        ];
+        
+        // Limit is configured in config/victorialogs.php
+        $result = $this->victoriaLogsService->getNavigationAccessLogs($params);
+        return $result['data'] ?? [];
+    }
+
+    public function employeeActivityAuditReport(Request $request, EmployeeAuditReportService $reportService)
+    {
+        $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
+        
+        if (isset($result['error'])) {
+            return $result['error'];
+        }
+
+        return $this->sendResponse($result['data'], 'Filtered data fetched successfully');
+    }
+
+    /**
+     * Fetch and process employee activity audit data
+     * 
+     * @param Request $request
+     * @param EmployeeAuditReportService $reportService
+     * @return array Returns ['data' => [...]] on success or ['error' => Response] on validation error
+     */
+    private function fetchEmployeeActivityAuditData(Request $request, EmployeeAuditReportService $reportService): array
+    {
+        // Validate all required fields
+        $validator = \Validator::make($request->all(), [
+            'screensAccessed' => 'required|array|min:1',
+            'eventTypes' => 'required|array|min:1',
+            'employees' => 'required',
+            'fromDate' => 'required|date_format:Y-m-d H:i:s',
+            'toDate' => 'required|date_format:Y-m-d H:i:s',
+            'selectedColumns' => 'required|array|min:1',
+        ], [
+            'screensAccessed.required' => trans('custom.screens_accessed_required') ?: 'Screens accessed is required',
+            'screensAccessed.array' => trans('custom.screens_accessed_must_be_array') ?: 'Screens accessed must be an array',
+            'screensAccessed.min' => trans('custom.screens_accessed_min_one') ?: 'At least one screen must be selected',
+            'eventTypes.required' => trans('custom.event_types_required') ?: 'Event types is required',
+            'eventTypes.array' => trans('custom.event_types_must_be_array') ?: 'Event types must be an array',
+            'eventTypes.min' => trans('custom.event_types_min_one') ?: 'At least one event type must be selected',
+            'employees.required' => trans('custom.employees_required') ?: 'Employees is required',
+            'fromDate.required' => trans('custom.from_date_required') ?: 'From date is required',
+            'fromDate.date_format' => trans('custom.from_date_format') ?: 'From date must be in format Y-m-d H:i:s',
+            'toDate.required' => trans('custom.to_date_required') ?: 'To date is required',
+            'toDate.date_format' => trans('custom.to_date_format') ?: 'To date must be in format Y-m-d H:i:s',
+            'selectedColumns.required' => trans('custom.selected_columns_required') ?: 'Selected columns is required',
+            'selectedColumns.array' => trans('custom.selected_columns_must_be_array') ?: 'Selected columns must be an array',
+            'selectedColumns.min' => trans('custom.selected_columns_min_one') ?: 'At least one column must be selected'
+        ]);
+
+        if ($validator->fails()) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.validation_failed') ?: 'Validation failed',
+                    $validator->errors(),
+                    422
+                )
+            ];
+        }
+
+        // Parse and validate dates
+        try {
+            $fromDate = Carbon::parse($request->fromDate);
+            $toDate = Carbon::parse($request->toDate);
+        } catch (\Exception $e) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.invalid_date_format') ?: 'Invalid date format',
+                    ['error' => $e->getMessage()],
+                    422
+                )
+            ];
+        }
+
+        // Validate date range
+        if ($fromDate->gt($toDate)) {
+            return [
+                'error' => $this->sendError(
+                    trans('custom.from_date_cannot_be_greater_than_to_date') ?: 'From date cannot be greater than to date',
+                    [],
+                    422
+                )
+            ];
+        }
+
+        $input = $request->all();
+
+        $employeeIds = collect($input['employees'])->pluck('id')->toArray();
+        $screenAccessedIds = collect($input['screensAccessed'])->pluck('id')->toArray();
+        $eventTypeIds = collect($input['eventTypes'])->pluck('id')->toArray();
+
+        $authLogs = [];
+        $navLogs = [];
+        $auditLogs = [];
+
+        if (in_array('login', $eventTypeIds) || in_array('logout', $eventTypeIds) || in_array('login_failed', $eventTypeIds)) {
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
+
+            if (in_array('login', $eventTypeIds)) {
+                $params['event'] = 1;
+                $resultLoginLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            } else if (in_array('logout', $eventTypeIds)) {
+                $params['event'] = 2;
+                $resultLogoutLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            } else if (in_array('login_failed', $eventTypeIds)) {
+                $params['event'] = 3;
+                $resultLoginFailedLogs = $this->victoriaLogsService->getUserAuditLogs($params);
+            }
+
+            $authLogs = array_merge($resultLoginLogs['data'] ?? [], $resultLogoutLogs['data'] ?? [], $resultLoginFailedLogs['data'] ?? []);
+        }
+
+        if (in_array('navigation-read', $eventTypeIds) || in_array('navigation-create', $eventTypeIds) || in_array('navigation-edit', $eventTypeIds)) {
+        
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'fromDate' => $input['fromDate'] ?? null,
+                'companyId' => $input['companyId'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+            ];
+
+            if (in_array('navigation-read', $eventTypeIds)) {
+                $params['accessType'] = '1';
+                $resultNavigationReadLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            } else if (in_array('navigation-create', $eventTypeIds)) {
+                $params['accessType'] = '2';
+                $resultNavigationCreateLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            } else if (in_array('navigation-edit', $eventTypeIds)) {
+                $params['accessType'] = '3';
+                $resultNavigationEditLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
+            }
+
+            $navLogs = array_merge($resultNavigationReadLogs['data'] ?? [], $resultNavigationCreateLogs['data'] ?? [], $resultNavigationEditLogs['data'] ?? []);
+            
+        }
+
+        if (in_array('audit-create', $eventTypeIds) || in_array('audit-update', $eventTypeIds) || in_array('audit-delete', $eventTypeIds)) {
+            $params = [
+                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
+                'locale' => app()->getLocale() ?? 'en',
+                'companyId' => $input['companyId'] ?? null,
+                'start' => $input['start'] ?? 0,
+                'length' => $input['length'] ?? 15,
+                'search' => $input['search'] ?? [],
+                'isFromTracking' => true,
+                'fromDate' => $input['fromDate'] ?? null,
+                'toDate' => $input['toDate'] ?? null,
+                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
+                'accessType' => $input['accessType'] ?? null,
+            ];
+            
+            if (in_array('audit-create', $eventTypeIds)) {
+                $params['action'] = '1';
+                $resultAuditCreateLogs = $this->victoriaLogsService->getAuditLogs($params);
+            } else if (in_array('audit-update', $eventTypeIds)) {
+                $params['action'] = '2';
+                $resultAuditUpdateLogs = $this->victoriaLogsService->getAuditLogs($params);
+            } else if (in_array('audit-delete', $eventTypeIds)) {
+                $params['action'] = '3';
+                $resultAuditDeleteLogs = $this->victoriaLogsService->getAuditLogs($params);
+            }
+
+            $auditLogs = array_merge($resultAuditCreateLogs['data'] ?? [], $resultAuditUpdateLogs['data'] ?? [], $resultAuditDeleteLogs['data'] ?? []);
+        }
+
+        $data = array_merge($authLogs, $navLogs, $auditLogs);
+
+        if (count($employeeIds) > 1) {
+            $data = array_filter($data, function($item) use ($employeeIds) {
+                return in_array($item['employeeId'] ?? $item['employee_id'] ?? null, $employeeIds);
+            });
+        }
+
+        // Map data to selected column format
+        $selectedColumns = $request->selectedColumns ?? [];
+        $mappedData = $reportService->mapToSelectedColumns($data, $selectedColumns);
+
+        // Sort by amendedDateTime descending
+        usort($mappedData, function($a, $b) {
+            $dateA = $a['amendedDateTime'] ?? $a['date_time'] ?? '';
+            $dateB = $b['amendedDateTime'] ?? $b['date_time'] ?? '';
+            return strcmp($dateB, $dateA); // Descending order
+        });
+
+        return ['data' => $mappedData];
+    }
+
+    public function exportEmployeeActivityAuditReport(Request $request)
+    {
+        try {
+            $reportService = app(EmployeeAuditReportService::class);
+            $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
+            
+            if (isset($result['error'])) {
+                return $result['error'];
+            }
+
+            $mappedData = $result['data'];
+
+            // Check if response has data
+            if (empty($mappedData)) {
+                return $this->sendError(trans('custom.no_employee_activity_logs_found'), 404);
+            }
+
+            $reportData = [
+                'data' => $mappedData,
+                'companyName' => [],
+                'fromDate' => $request->fromDate ?? null,
+                'toDate' => $request->toDate ?? null,
+                'selectedColumns' => $request->selectedColumns ?? [],
+            ];
+
+            $fileName = trans('custom.employee_activity_audit_report');
+            $fontFamily = \Helper::getExcelFontFamily(app()->getLocale());
+
+            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
+                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 10,
+                        ]
+                    ]);
+
+                    $sheet->loadView('export_report.employee_activity_audit_report', $reportData);
+
+                    if (app()->getLocale() === 'ar') {
+                        $sheet->setRightToLeft(true);
+                        $sheet->getStyle('A1:Z1000')
+                            ->getAlignment()
+                            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    }
+                });
+            })->download('xlsx');
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get third-party API log detail by external reference
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function getThirdPartyApiLogDetail(Request $request)
+    {
+        $input = $request->all();
+
+        try {
+            $externalReference = $input['external_reference'] ?? null;
+            $logId = $input['logId'] ?? null;
+            $tenantUuid = $input['tenant_uuid'] ?? 'local';
+            $isWebhook = (string) ($input['is_webhook'] ?? '0');
+            $locale = app()->getLocale() ?: 'en';
+
+            if (!$externalReference) {
+                return $this->sendError('External reference is required');
+            }
+
+            $params = [
+                'tenant_uuid' => $tenantUuid,
+                'locale' => $locale,
+                'external_reference' => $externalReference,
+                'logId' => $logId,
+                'is_webhook' => $isWebhook,
+            ];
+
+            $result = $this->victoriaLogsService->getThirdPartyApiLogs($params);
+            $logs = $result['data'] ?? [];
+
+            if (empty($logs)) {
+                return $this->sendError('No logs found for the given criteria');
+            }
+
+            $formatedData = [];
+
+            foreach ($logs as $log) {
+                $lineData = $log;
+                $lineData['raw_data'] = isset($log['data']) ? $log['data'] : '';
+                $parsedData = isset($log['data']) ? (is_string($log['data']) ? json_decode($log['data'], true) : $log['data']) : [];
+                
+                // Normalize webhook log structure to match regular API log structure
+                if (isset($parsedData['request_payload']['webhook']) && $parsedData['request_payload']['webhook'] === true) {
+                    // This is a webhook log - normalize the structure
+                    $normalizedPayload = $parsedData;
+                    
+                    // Convert webhook payload.payload to body for frontend compatibility
+                    if (isset($parsedData['request_payload']['payload'])) {
+                        $normalizedPayload['request_payload']['body'] = $parsedData['request_payload']['payload'];
+                    }
+                    
+                    // Add missing fields that frontend expects (with webhook-appropriate values)
+                    if (!isset($normalizedPayload['request_payload']['ip'])) {
+                        $normalizedPayload['request_payload']['ip'] = 'N/A (Webhook)';
+                    }
+                    if (!isset($normalizedPayload['request_payload']['user_agent'])) {
+                        $normalizedPayload['request_payload']['user_agent'] = 'ERP-Webhook-Service/1.0';
+                    }
+                    
+                    // Add webhook-specific metadata for display
+                    $normalizedPayload['is_webhook'] = true;
+                    $normalizedPayload['original_external_reference'] = $parsedData['request_payload']['original_external_reference'] ?? null;
+                    
+                    $lineData['parsed_data'] = $normalizedPayload;
+                } else {
+                    // Regular API log - use as is
+                    $lineData['parsed_data'] = $parsedData;
+                }
+                
+                $formatedData[] = $lineData;
+            }
+
+            // Sort by date_time descending and return the most recent
+            $formatedData = collect($formatedData)->sortByDesc(function ($item) {
+                return $item['date_time'] ?? $item['_time'] ?? '';
+            });
+
+            return $this->sendResponse($formatedData->first(), 'Detailed log retrieved successfully');
+        } catch (\Exception $exception) {
+            Log::error('Error in getThirdPartyApiLogDetail', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
             ]);
             return $this->sendError($exception->getMessage());
         }

@@ -8,17 +8,18 @@ class PoToPaymentReport
 {
 
     public $companyID;
+    public $supplierCode;
+    public $supplierName;
     public $poNumber;
     public $category;
     public $poApprovedDate;
     public $narration;
-    public $supplierCode;
-    public $supplierName;
     public $poAmount;
-    public $logisticAmount;
+    public $poStatus;
     public $grvCode;
     public $grvDate;
     public $grvAmount;
+    public $logisticAmount;
     public $invoiceCode;
     public $invoiceDate;
     public $invoiceAmount;
@@ -29,37 +30,61 @@ class PoToPaymentReport
 
     public function getColumnFormat() {
         return [
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'R' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
             'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'R' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'S' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+        ];
+    }
+
+    public function getGroupedHeader() {
+        return [
+            '',
+            __('custom.supplier_details'),
+            '',
+            __('custom.po_details'),
+            '',
+            '',
+            '',
+            '',
+            '',
+            __('custom.grv_details'),
+            '',
+            '',
+            '',
+            __('custom.invoice_details'),
+            '',
+            '',
+            __('custom.payment_details'),
+            '',
+            '',
+            ''
         ];
     }
 
     public function getHeader() {
         return [
             __('custom.company_id'),
+            __('custom.supplier_code'),
+            __('custom.supplier_name'),
             __('custom.po_number'),
             __('custom.category'),
             __('custom.po_approved_date'),
             __('custom.narration'),
-            __('custom.supplier_code'),
-            __('custom.supplier_name'),
             __('custom.po_amount'),
-            __('custom.logistic_amount'),
+            __('custom.po_status'),
             __('custom.grv_code'),
             __('custom.grv_date'),
             __('custom.grv_amount'),
+            __('custom.logistic_amount'),
             __('custom.invoice_code'),
-            __('custom.invoice_date'),
+            __('custom.invoice_date'),   
             __('custom.invoice_amount'),
             __('custom.payment_code'),
             __('custom.payment_date'),
@@ -131,6 +156,14 @@ class PoToPaymentReport
     public function setPoAmount($poAmount): void
     {
         $this->poAmount = $poAmount;
+    }
+
+    /**
+     * @param mixed $poStatus
+     */
+    public function setPoStatus($poStatus): void
+    {
+        $this->poStatus = $poStatus;
     }
 
     /**

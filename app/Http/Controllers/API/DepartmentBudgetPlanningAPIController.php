@@ -186,14 +186,20 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy','revisions'])->findWithoutFail($id);
 
-        $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
 
-        $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
-        if (empty($departmentBudgetPlanning)) {
-            return $this->sendError(trans('custom.department_budget_planning_not_found'));
+        if($departmentBudgetPlanning)
+        {
+
+            $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
+
+            $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
         }
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
+        // if (empty($departmentBudgetPlanning)) {
+        //     return $this->sendError(trans('custom.department_budget_planning_not_found'));
+        // }
+
+        return $this->sendResponse($departmentBudgetPlanning, trans('custom.department_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -388,9 +394,21 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             if($input['confirmed_yn'] == 0) {
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->confirmed_yn == 1){
+                    return $this->sendError('Company Budget Planning is already confirmed, you cannot reopen department budget planning');
+                }
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->approved_yn == 1){
+                    return $this->sendError('Company Budget Planning is already approved, you cannot reopen department budget planning');
+                }
+
+
                 $departmentBudgetPlanning->confirmed_yn = 0;
                 $departmentBudgetPlanning->confirmed_by = null;
                 $departmentBudgetPlanning->confirmed_at = null;
+                $departmentBudgetPlanning->workStatus = 2;
+                $departmentBudgetPlanning->financeTeamStatus = 1;
                 $departmentBudgetPlanning->save();
                 return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning reopened successfully');
             }

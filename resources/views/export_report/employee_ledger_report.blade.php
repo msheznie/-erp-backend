@@ -24,6 +24,9 @@
         {
           $modNum = $num * -1;
         }
+        else if($type == 11) {
+          $modNum = $num;
+        } 
         else {
           $modNum = ($num < 0) ? $num * -1 : $num;
         }
