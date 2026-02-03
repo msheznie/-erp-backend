@@ -42,10 +42,8 @@ class DocumentCodeGenerate
 
 					switch ($financeCategoryData->serializationBasedOn) {
 						case 1: //Company Level
-							// Use lockForUpdate() to prevent race conditions in serial number generation
 							$checkLastSerail = FinanceCategorySerial::where('companyLevel', $companySystemID)
 								->where('companySystemID', $companySystemID)
-								->lockForUpdate()
 								->first();
 
 							if ($checkLastSerail) {
@@ -64,10 +62,8 @@ class DocumentCodeGenerate
 							}
 							break;
 						case 2: //Department
-							// Use lockForUpdate() to prevent race conditions in serial number generation
 							$checkLastSerail = FinanceCategorySerial::where('departmentID', $serviceLineSystemID)
 								->where('companySystemID', $companySystemID)
-								->lockForUpdate()
 								->first();
 
 							if ($checkLastSerail) {
@@ -86,10 +82,8 @@ class DocumentCodeGenerate
 							}
 							break;
 						case 3: //Finance Category
-							// Use lockForUpdate() to prevent race conditions in serial number generation
 							$checkLastSerail = FinanceCategorySerial::where('faFinanceCatID', $auditCategory)
 								->where('companySystemID', $companySystemID)
-								->lockForUpdate()
 								->first();
 							if ($checkLastSerail) {
 								$currentSerialNo = $checkLastSerail->lastSerialNo + 1;
@@ -107,10 +101,8 @@ class DocumentCodeGenerate
 							}
 							break;
 						case 4: //Asset Category
-							// Use lockForUpdate() to prevent race conditions in serial number generation
 							$checkLastSerail = FinanceCategorySerial::where('faCategoryID', $faCatID)
 								->where('companySystemID', $companySystemID)
-								->lockForUpdate()
 								->first();
 
 							if ($checkLastSerail) {
@@ -130,10 +122,8 @@ class DocumentCodeGenerate
 							break;
 
 						case 5: //Sub Category
-							// Use lockForUpdate() to prevent race conditions in serial number generation
 							$checkLastSerail = FinanceCategorySerial::where('faSubCategoryID', $faSubCatID)
 								->where('companySystemID', $companySystemID)
-								->lockForUpdate()
 								->first();
 
 							if ($checkLastSerail) {
