@@ -113,9 +113,26 @@ class AssetCreationService extends AppBaseController
         //     }
 
         // }
+
+        // Preserve critical integer/boolean fields before convertArrayToValue
+        // to prevent them from being converted to null if they're empty arrays
+        $criticalFields = [
+            'assetStatus' => $input['assetStatus'] ?? 2,
+            'assetType' => $input['assetType'] ?? null,
+            'postToGLYN' => $input['postToGLYN'] ?? 0,
+            'companySystemID' => $input['companySystemID'] ?? null,
+            'documentSystemID' => $input['documentSystemID'] ?? null,
+            'serviceLineSystemID' => $input['serviceLineSystemID'] ?? null,
+        ];
+
         $input = $this->convertArrayToValue($input);
 
-        $input['assetStatus'] = $input['assetStatus'] ?? 2;
+        // Restore critical fields after conversion
+        foreach ($criticalFields as $field => $value) {
+            if ($value !== null) {
+                $input[$field] = $value;
+            }
+        }
 
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
@@ -207,7 +224,9 @@ class AssetCreationService extends AppBaseController
             if ($documentCodeData['status']) {
                 $documentCode = $documentCodeData['documentCode'];
                 $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                // Double-check for duplicates with lockForUpdate() to prevent race conditions
                 $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
+                    ->lockForUpdate()
                     ->first();
 
                 if ($checkForDuplicateCode) {
@@ -243,9 +262,31 @@ class AssetCreationService extends AppBaseController
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-
+            // Debug logging to trace assetStatus
             Log::info('Input data: ', $input);
+            Log::info('assetStatus before create: ' . ($input['assetStatus'] ?? 'NULL'));
+
+            // Ensure assetStatus is set and is an integer (force cast to prevent any type issues)
+            if (!isset($input['assetStatus']) || $input['assetStatus'] === null || $input['assetStatus'] === '') {
+                Log::warning('assetStatus is null/empty before create, forcing to 2');
+                $input['assetStatus'] = 2;
+            }
+
+            // Force cast to integer to ensure type consistency
+            $input['assetStatus'] = (int) $input['assetStatus'];
+
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
+
+            // Log what was actually created
+            Log::info('Created asset with faID: ' . ($fixedAssetMasters['faID'] ?? 'unknown') . ', assetStatus from DB: ' . ($fixedAssetMasters['assetStatus'] ?? 'NULL'));
+
+            // SAFETY FALLBACK: If assetStatus is null after creation, update it immediately
+            if (isset($fixedAssetMasters['faID']) && (!isset($fixedAssetMasters['assetStatus']) || $fixedAssetMasters['assetStatus'] === null)) {
+                Log::error('CRITICAL: assetStatus is NULL after insert for faID: ' . $fixedAssetMasters['faID'] . '. Updating directly...');
+                FixedAssetMaster::where('faID', $fixedAssetMasters['faID'])->update(['assetStatus' => 2]);
+                $fixedAssetMasters['assetStatus'] = 2;
+                Log::info('assetStatus corrected to 2 for faID: ' . $fixedAssetMasters['faID']);
+            }
 
             if ($itemPicture) {
                 $decodeFile = base64_decode($itemImgaeArr[0]['file']);
