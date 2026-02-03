@@ -108,6 +108,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'selectedforJobYN',
         'timestamp',
         'empID',
+        'assetStatus',
         'assetCostingUploadID'
     ];
 
