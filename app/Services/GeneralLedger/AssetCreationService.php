@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 class AssetCreationService extends AppBaseController
 {
     use JsonResponseTrait;
+    private $fixedAssetMasterRepository;
 
     public function __construct(FixedAssetMasterRepository $fixedAssetMasterRepo)
     {
