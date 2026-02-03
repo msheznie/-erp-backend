@@ -678,7 +678,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                             $valueRows = ErpAttributeValues::whereIn('attribute_id', $erpAttributes->pluck('id'))
                                 ->where(function ($q) use ($faId) {
-                                    $q->where('document_master_id', $faId)->orWhereNull('document_master_id');
+                                    $q->where('document_master_id', $faId);
                                 })
                                 ->get()
                                 ->groupBy('attribute_id');
@@ -1698,7 +1698,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $query->whereNull('document_master_id')->where('doc_origin_detail_id', $docOriginDetailID);
             } else {
                 $query->where(function ($q) use ($code) {
-                    $q->where('document_master_id', $code)->orWhereNull('document_master_id');
+                    $q->where('document_master_id', $code);
                 });
             }
         }])->where('document_id', "ASSETCOST");
