@@ -58,6 +58,7 @@ class UserAuthorization
             \Log::channel('authorization')->info(json_encode([
                 'navigationID' => $navigationID,
                 'routeName' => $routeName,
+                'routeURI' => $request->route()->uri,
                 'accessType' => $accessType
             ]));
 
@@ -76,6 +77,10 @@ class UserAuthorization
             'api/v1/getNotifications',
             'api/v1/erp_language_master',
             'api/v1/user/menu',
+            'api/v1/getDashboardDepartment',
+            'api/v1/getDashboardWidget',
+            'api/v1/getAllDocumentApproval',
+            'api/v1/getCustomWidgetGraphData',
         ];
     }
 }
