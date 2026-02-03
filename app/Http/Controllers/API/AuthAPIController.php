@@ -179,7 +179,6 @@ class AuthAPIController extends PassportAccessTokenController
 
     public function authWithToken(ServerRequestInterface $request, Request $request2)
     {
-        \Log::info('AuthAPIController::auth');
         $input = $request2->all();
         $validator = Validator::make($input, [
             'token' => 'required'
