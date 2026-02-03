@@ -70,5 +70,10 @@ return [
     'approval_failed_please_check_the_below_details' => 'Approval failed,please check the below details.',
     'the_item_from_purchase_order_has_planned_quantity_is_greater_than_balance_quantity' => 'The item :code1 from  purchase order :code2 has planned quantity(:code3) is greater than balance quantity(:code4).',
     'grv_qty_can_not_exceed_validation' => "GRV quantity can not exceed the PO quantity, Check PO and Received quantities",
-    'item_appointment_quantity_exceeds_available_quantity' => 'Item :itemCode: Appointment quantity (:appointmentQty) exceeds available quantity (:availableQty). PO quantity: :poQty, Already received: :receivedQty'
+    'item_appointment_quantity_exceeds_available_quantity' => 'Item :itemCode: Appointment quantity (:appointmentQty) exceeds available quantity (:availableQty). PO quantity: :poQty, Already received: :receivedQty',
+    'company_finance_year_not_found' => 'Company Finance Year not found',
+    'company_finance_period_not_found' => 'Company Finance Period not found',
+    'segment_required' => 'Segment is required',
+    'segment_not_found' => 'Segment not found',
+
 ];

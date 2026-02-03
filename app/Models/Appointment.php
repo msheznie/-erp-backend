@@ -185,7 +185,7 @@ class Appointment extends Model
 
     public function invoice()
     {
-        return $this->hasOne('App\Models\BookInvSuppMaster', 'deliveryAppoinmentID', 'id');
+        return $this->hasMany('App\Models\BookInvSuppMaster', 'deliveryAppoinmentID', 'id');
     }
 
     public function getDeliveryAppointmentDetails($appointmentId)

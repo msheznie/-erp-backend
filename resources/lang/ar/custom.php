@@ -9656,6 +9656,7 @@ return
     'shift_data_required' => 'بيانات الوردية مطلوبة',
     'error_in_shift_schedule_unconfirmed_attendance_pulling' => 'خطأ في سحب حضور الوردية غير المؤكد',
     'no_dates_found_for_shift_schedule_pulling' => 'لم يتم العثور على تواريخ للمتابعة في سحب حضور الوردية غير المؤكد',
+  
     'failed_to_process_attendance_for_date' => 'فشل في معالجة الحضور للتاريخ :date مع الموظفين [:employees]',
     'no_temp_data_found' => 'لم يتم العثور على بيانات مؤقتة',
     'data_pulled_successfully' => 'تم سحب البيانات بنجاح',
@@ -9855,4 +9856,5 @@ return
     'column_must_be_string' => 'يجب أن يكون اسم كل عمود نص',
     'column_max_length' => 'لا يمكن أن يتجاوز اسم العمود 100 حرف',
     'invalid_date_format' => 'تنسيق تاريخ غير صالح',
-];
+    'pr_type_parameter_missing' => 'معرف نوع طلب الشراء مطلوب لأن الموافقة تعتمد على نوع طلب الشراء.'
+  ];

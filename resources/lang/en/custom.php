@@ -9970,4 +9970,5 @@ return
     'column_must_be_string' => 'Each column name must be a string',
     'column_max_length' => 'Column name cannot exceed 100 characters',
     'invalid_date_format' => 'Invalid date format',
-];
+    'pr_type_parameter_missing' => 'PR Type parameter is missing because approval is enabled based on the PR Type.'
+  ];
