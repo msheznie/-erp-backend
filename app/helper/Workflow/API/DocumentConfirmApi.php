@@ -3,7 +3,14 @@
 namespace App\helper\Workflow\API;
 
 use Illuminate\Support\Facades\DB;
-use App\Models;
+use App\Models\CompanyPolicyMaster;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\Employee;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentAttachments;
+use App\Models\ApprovalLevel;
+use App\Models\EmployeesDepartment;
 use App\helper\BlockInvoice;
 use App\helper\CurrencyValidation;
 use App\helper\IvmsDeliveryOrderService;
@@ -566,7 +573,7 @@ class DocumentConfirmApi
             $masterRec = $namespacedModel::find($params["autoID"]);
             if ($masterRec) {
                 if (in_array($params["document"], [20, 71])) {
-                    $invoiceBlockPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
+                    $invoiceBlockPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 45)
                         ->where('companySystemID', $params['company'])
                         ->where('isYesNO', 1)
                         ->first();
@@ -598,22 +605,22 @@ class DocumentConfirmApi
                 }
 
                 //checking whether document approved table has a data for the same document
-                $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
                     // check document is available in document master table
-                    $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
+                    $document = DocumentMaster::where('documentSystemID', $params["document"])->first();
                     if ($document) {
                         //check document is already confirmed
                         $isConfirm = $namespacedModel::where($docInforArr["primarykey"], $params["autoID"])->where($docInforArr["confirmColumnName"], 1)->first();
                         if (!$isConfirm) {
                             if(isset($masterRec->confirmedByEmpSystemID) && $masterRec->documentSystemID == 21) {
-                                $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                $empInfo = Employee::with(['profilepic', 'user_data' => function($query) {
                                     $query->select('uuid', 'employee_id');
                                 }])->find($masterRec->confirmedByEmpSystemID);
                             }else {
                                 // get current employee detail.
                                 if (!in_array($params['document'], $empInfoSkip)) {
-                                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                    $empInfo = Employee::with(['profilepic', 'user_data' => function($query) {
                                         $query->select('uuid', 'employee_id');
                                     }])->find(11);
                                 } else {
@@ -628,7 +635,7 @@ class DocumentConfirmApi
                             }
 
                             //get the policy
-                            $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
+                            $policy = CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
                             if ($policy) {
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
@@ -636,7 +643,7 @@ class DocumentConfirmApi
                                 $isAttachment = $policy->isAttachmentYN;
                                 //check for attachment is uploaded if attachment policy is set to must
                                 if ($isAttachment == -1) {
-                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                                    $docAttachment = DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
                                         return ['success' => false, 'message' => trans('custom.no_attachments_attached')];
                                     }
@@ -646,7 +653,7 @@ class DocumentConfirmApi
                             }
 
                             // get approval rolls
-                            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+                            $approvalLevel = ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
                             if ($isSegmentWise) {
                                 if (array_key_exists('segment', $params)) {
@@ -698,7 +705,7 @@ class DocumentConfirmApi
                             if (empty($output)) {
 
                                 if ($isCategoryWise) {
-                                    $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+                                    $approvalLevel = ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
                                     if ($isSegmentWise) {
                                         if (array_key_exists('segment', $params)) {
                                             if ($params["segment"]) {
@@ -761,16 +768,16 @@ class DocumentConfirmApi
                                     }
                                 }
                                 // insert rolls to document approved table
-                                Models\DocumentApproved::insert($documentApproved);
+                                DocumentApproved::insert($documentApproved);
 
-                                $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
+                                $documentApproved = DocumentApproved::where("documentSystemID", $params["document"])
                                     ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
                                     ->where("rollLevelOrder", 1)
                                     ->first();
                                 if ($documentApproved) {
 
                                     if ($documentApproved->approvedYN == 0) {
-                                        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
+                                        $companyDocument = CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
                                             ->where('documentSystemID', $documentApproved->documentSystemID)
                                             ->first();
 
@@ -778,7 +785,7 @@ class DocumentConfirmApi
                                             return ['success' => false, 'message' => trans('custom.policy_not_found')];
                                         }
 
-                                        $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
+                                        $approvalList = EmployeesDepartment::where('employeeGroupID', $documentApproved->approvalGroupID)
                                             ->whereHas('employee', function ($q) {
                                                 $q->where('discharegedYN', 0);
                                             })
@@ -799,7 +806,7 @@ class DocumentConfirmApi
                                         $emails = array();
                                         $pushNotificationUserIds = [];
                                         $pushNotificationArray = [];
-                                        $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+                                        $document = DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
@@ -820,7 +827,7 @@ class DocumentConfirmApi
 
 
                                         if (in_array($params["document"], [71])) {
-                                            $ivmsPolicy = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 47)
+                                            $ivmsPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 47)
                                                 ->where('companySystemID', $params['company'])
                                                 ->where('isYesNO', 1)
                                                 ->first();

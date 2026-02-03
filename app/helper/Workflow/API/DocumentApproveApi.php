@@ -4,7 +4,34 @@ namespace App\helper\Workflow\API;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\ApprovalLevel;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\EmployeesDepartment;
+use App\Models\ApprovalGroups;
+use App\Models\CompanyFinancePeriod;
+use App\Models\AssetDisposalMaster;
+use App\Models\Company;
+use App\Models\Tax;
+use App\Models\GeneralLedger;
+use App\Models\EliminationLedger;
+use App\Models\InventoryReclassificationDetail;
+use App\Models\AssetDisposalDetail;
+use App\Models\ItemAssigned;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerReceivePayment;
+use App\Models\ERPAssetTransferDetail;
+use App\Models\PaymentTermTemplateAssigned;
+use App\Models\PaymentTermTemplate;
+use App\Models\TenderMaster;
+use App\Models\DocumentModifyRequest;
+use App\Models\TenderCircularsEditLog;
+use App\Models\CircularAmendmentsEditLog;
+use App\Models\SRMSupplierValues;
+use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\GRVMaster;
 use App\Models\BookInvSuppMaster;
@@ -635,7 +662,7 @@ class DocumentApproveApi
             $userMessage = trans('custom.successfully_approved_the_document');
             $more_data = [];
             $userMessageE = '';
-            $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+            $docApproved = DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
 
                 if(isset($input['empID'])) {
@@ -659,24 +686,24 @@ class DocumentApproveApi
                 $policyConfirmedUserToApprove = '';
 
                 if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
-                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                    $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                         ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
                         ->first();
                 } else {
-                    $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                    $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                         ->where('companySystemID', $isConfirmed['companySystemID'])
                         ->first();
                 }
 
 
-                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
                     ->where('documentSystemID', $input["documentSystemID"])
                     ->first();
                 if (empty($companyDocument)) {
                     return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
                 }
 
-                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
+                $checkUserHasApprovalAccess = EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
                     ->where('companySystemID', $docApproved->companySystemID)
                     ->where('employeeSystemID', $empInfo->employeeSystemID)
                     ->where('documentSystemID', $input["documentSystemID"])
@@ -717,12 +744,12 @@ class DocumentApproveApi
 
                 if ($docApproved->rejectedYN == -1) {
                     return ['success' => false, 'message' => trans('custom.level_already_rejected')];
-                }
+            }
 
-                //check document is already approved
-                $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
-                if (!$isApproved) {
-                    $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+            //check document is already approved
+            $isApproved = DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
+            if (!$isApproved) {
+                $approvalLevel = ApprovalLevel::find($input["approvalLevelID"]);
 
                     if ($approvalLevel) {
                         //Budget check on the 1st level approval for PR/DR/WR

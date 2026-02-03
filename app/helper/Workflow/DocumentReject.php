@@ -3,7 +3,13 @@
 namespace App\helper\Workflow;
 
 use Illuminate\Support\Facades\DB;
-use App\Models;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\ApprovalLevel;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\EmployeesDepartment;
+use App\Models\ApprovalGroups;
 use App\Models\Employee;
 use App\Models\PaymentTermTemplateAssigned;
 use App\Models\PaymentTermTemplate;
@@ -389,7 +395,7 @@ class DocumentReject
                     return ['success' => false, 'message' => trans('custom.document_id_not_set')];
             }
             //check document exist
-            $docApprove = Models\DocumentApproved::find($input["documentApprovedID"]);
+            $docApprove = DocumentApproved::find($input["documentApprovedID"]);
 
             if ($docApprove) {
 
@@ -414,7 +420,7 @@ class DocumentReject
 
                 $policyConfirmedUserToApprove = '';
 
-                $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                     ->when(in_array($input["documentSystemID"], [56, 57, 58, 59]), function($query) use ($docModal){
                         $query->where('companySystemID', $docModal['primaryCompanySystemID']);
                     })
@@ -426,7 +432,7 @@ class DocumentReject
 
 
 
-                $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
+                $companyDocument = CompanyDocumentAttachment::where('companySystemID', $docApprove->companySystemID)
                     ->where('documentSystemID', $reference_document_id)
                     ->first();
 
@@ -435,7 +441,7 @@ class DocumentReject
                 }
 
 
-                $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
+                $checkUserHasApprovalAccess = EmployeesDepartment::where('employeeGroupID', $docApprove->approvalGroupID)
                     ->where('companySystemID', $docApprove->companySystemID)
                     ->where('employeeSystemID', $empInfo->employeeSystemID)
                     ->where('documentSystemID', $reference_document_id)
@@ -467,9 +473,9 @@ class DocumentReject
                 }
 
                 //check document is already rejected
-                $isRejected = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
+                $isRejected = DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('rejectedYN', -1)->first();
                 if (!$isRejected) {
-                    $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
+                    $approvalLevel = ApprovalLevel::find($input["approvalLevelID"]);
 
                     if ($approvalLevel) {
                         // get current employee detail
@@ -509,10 +515,10 @@ class DocumentReject
 
                         if (!empty($sourceModel)) {
 
-                            $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
-                            $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                            $currentApproved = DocumentApproved::find($input["documentApprovedID"]);
+                            $document = DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $confirmedUser = $currentApproved->docConfirmedByEmpSystemID;
-                            // $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                            // $companyDocument = CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
                             //     ->where('documentSystemID', $currentApproved->documentSystemID)
                             //     ->first();
 

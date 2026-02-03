@@ -4,7 +4,22 @@ namespace App\helper\Workflow;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\ApprovalLevel;
+use App\Models\CompanyDocumentAttachment;
+use App\Models\EmployeesDepartment;
+use App\Models\ApprovalGroups;
+use App\Models\CompanyFinancePeriod;
+use App\Models\AssetDisposalMaster;
+use App\Models\Tax;
+use App\Models\GeneralLedger;
+use App\Models\EliminationLedger;
+use App\Models\InventoryReclassificationDetail;
+use App\Models\AssetDisposalDetail;
+use App\Models\ItemAssigned;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ProcumentOrder;
 use App\Models\GRVMaster;
@@ -725,7 +740,7 @@ class DocumentApprove
             $userMessage = trans('custom.successfully_approved_the_document');
             $more_data = [];
             $userMessageE = '';
-            $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+            $docApproved = DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
 
                 $reference_document_id = $input['documentSystemID'];
@@ -761,24 +776,24 @@ class DocumentApprove
                     $policyConfirmedUserToApprove = '';
 
                     if (in_array($input["documentSystemID"], [56, 57, 58, 59])) {
-                        $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                             ->where('companySystemID', $isConfirmed['primaryCompanySystemID'])
                             ->first();
                     } else {
-                        $policyConfirmedUserToApprove = Models\CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
+                        $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 31)
                             ->where('companySystemID', $isConfirmed['companySystemID'])
                             ->first();
                     }
 
 
-                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
+                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
                         ->where('documentSystemID', $reference_document_id)
                         ->first();
                     if (empty($companyDocument)) {
                         return ['success' => false, 'message' => trans('custom.policy_not_found_general')];
                     }
 
-                    $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
+                    $checkUserHasApprovalAccess = EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
                         ->where('companySystemID', $docApproved->companySystemID)
                         ->where('employeeSystemID', $empInfo->employeeSystemID)
                         ->where('documentSystemID', $reference_document_id)
@@ -796,7 +811,7 @@ class DocumentApprove
                         ->groupBy('employeeSystemID')
                         ->exists();
 
-                    $approvalGroup = Models\ApprovalGroups::find($docApproved->approvalGroupID);
+                    $approvalGroup = ApprovalGroups::find($docApproved->approvalGroupID);
 
                     if (!$checkUserHasApprovalAccess && ($approvalGroup && $approvalGroup->isReportingManager != 1)) {
                         if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
@@ -817,12 +832,12 @@ class DocumentApprove
 
                     if($input['disposalType'] == 1){
                         $month = explode('-',$input['FYPeriodDateFrom']);
-                        $financePeriodCheck = Models\CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
+                        $financePeriodCheck = CompanyFinancePeriod::where('departmentSystemID',4)->where('companyFinanceYearID',$input['companyFinanceYearID'])->whereMonth('dateFrom', $month[1])->first();
                         if ($financePeriodCheck->isActive == 0) {
                             return ['success' => false, 'message' => trans('custom.finance_period_not_activated_ar')];
                         }
 
-                        $checkApprovalAccess = Models\EmployeesDepartment::where('employeeSystemID', $empInfo->employeeSystemID)
+                        $checkApprovalAccess = EmployeesDepartment::where('employeeSystemID', $empInfo->employeeSystemID)
                             ->where('companySystemID', $docApproved->companySystemID)
                             ->where('departmentSystemID', 4)
                             ->where('documentSystemID', 20)
@@ -834,7 +849,7 @@ class DocumentApprove
                             return ['success' => false, 'message' => trans('custom.user_no_approval_access_customer_invoice')];
                         }
 
-                        $assetDisposalMaster = Models\AssetDisposalMaster::find($input["documentSystemCode"]);
+                        $assetDisposalMaster = AssetDisposalMaster::find($input["documentSystemCode"]);
 
                         if(!empty($assetDisposalMaster)) {
                             $toCompany = Company::find($assetDisposalMaster->toCompanySystemID);
@@ -844,7 +859,7 @@ class DocumentApprove
                             }
 
                             if ($assetDisposalMaster->vatRegisteredYN == 1 && $toCompany->vatRegisteredYN == 1) {
-                                $vatSubCategories = Models\Tax::where('companySystemID', $assetDisposalMaster->toCompanySystemID)->whereHas('vat_categories', function ($q) {
+                                $vatSubCategories = Tax::where('companySystemID', $assetDisposalMaster->toCompanySystemID)->whereHas('vat_categories', function ($q) {
                                     $q->where('isActive', 1);
                                 })->where('isActive', 1)->first();
                                 if (empty($vatSubCategories)) {
@@ -866,9 +881,9 @@ class DocumentApprove
                 }
 
                 //check document is already approved
-                $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
+                $isApproved = DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
-                    $approvalLevel = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? null : Models\ApprovalLevel::find($input["approvalLevelID"]);
+                    $approvalLevel = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? null : ApprovalLevel::find($input["approvalLevelID"]);
 
                     if ($approvalLevel || (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument'])) {
                         //Budget check on the 1st level approval for PR/DR/WR
@@ -1134,7 +1149,7 @@ class DocumentApprove
                             }
 
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
-                                $outputGL = Models\GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                $outputGL = GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputGL) {
                                     return ['success' => false, 'message' => trans('custom.gl_entries_already_passed')];
                                 }
@@ -1214,7 +1229,7 @@ class DocumentApprove
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
                                 $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
-                                $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
+                                $itemAssign = ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
@@ -1259,7 +1274,7 @@ class DocumentApprove
 
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
-                                $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
+                                $chartOfAccountAssign = ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
                                 $assignResp = ChartOfAccountDependency::assignToReports($input["documentSystemCode"]);
                                 if (!$assignResp['status']) {
                                     DB::rollback();
@@ -1324,7 +1339,7 @@ class DocumentApprove
 
 
                             if ($input["documentSystemID"] == 69) {
-                                $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                $outputEL = EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputEL) {
                                     return ['success' => false, 'message' => trans('custom.elimination_ledger_entries_already_passed')];
                                 }
@@ -1395,11 +1410,11 @@ class DocumentApprove
                             }
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
-                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $fixeAssetDetail = InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
                                 $qtyRangeArr = [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
+                                    $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -1437,7 +1452,7 @@ class DocumentApprove
                                             }
                                         }
                                     }
-                                    $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                    $fixedAsset = FixedAssetMaster::insert($qtyRangeArr);
                                 }
                             }
 
@@ -1455,10 +1470,10 @@ class DocumentApprove
                                         return ['success' => false, 'message' => $message['message']];
                                     }
                                 }
-                                $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
+                                $updateDisposed = AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
                                     foreach ($updateDisposed as $val) {
-                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                        $faMaster = FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
                             }
@@ -1499,7 +1514,7 @@ class DocumentApprove
 
                                 $docApproved->reference_email = $updatedUserEmail['user_name'];
 
-                                Models\DocumentApproved::where('documentSystemID',107)
+                                DocumentApproved::where('documentSystemID',107)
                                     ->where('documentSystemCode',$docApproved->documentSystemCode)
                                     ->update(['reference_email' => $docApproved->reference_email]);
 
@@ -1706,12 +1721,12 @@ class DocumentApprove
                                 $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
                             }
 
-                            $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+                            $currentApproved = DocumentApproved::find($input["documentApprovedID"]);
                             $emails = array();
                             $pushNotificationUserIds = [];
                             $pushNotificationArray = [];
                             if (!empty($sourceModel)) {
-                                $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                                $document = DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
 
 
                                 if($input["documentSystemID"] == 117 )
@@ -1763,7 +1778,7 @@ class DocumentApprove
                                         $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                     } else {
 
-                                        $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                                        $companyDocument = CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
                                             ->where('documentSystemID', $reference_document_id)
                                             ->first();
 
@@ -1773,13 +1788,13 @@ class DocumentApprove
 
                                         $nextLevel = $currentApproved->rollLevelOrder + 1;
 
-                                        $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
+                                        $nextApproval = DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
                                             ->where('documentSystemID', $currentApproved->documentSystemID)
                                             ->where('documentSystemCode', $currentApproved->documentSystemCode)
                                             ->where('rollLevelOrder', $nextLevel)
                                             ->first();
 
-                                        $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
+                                        $approvalList = EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
                                             ->whereHas('employee', function ($q) {
                                                 $q->where('discharegedYN', 0);
                                             })

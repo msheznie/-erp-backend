@@ -171,7 +171,7 @@ class AuthAPIController extends Controller
                 'event' => 'login_failure',
                 'username' => '-',
                 'reason' => 'Token validation failed',
-                'request' => $request2
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
             ]);
             return Response::json(ResponseUtil::makeError($validator->messages(), array('type' => '')), 422);
         }
@@ -181,7 +181,7 @@ class AuthAPIController extends Controller
                 'event' => 'login_failure',
                 'username' => '-',
                 'reason' => 'Invalid or expired login token',
-                'request' => $request2
+                'request' => \App\Services\AuditLog\AuthAuditService::extractRequestData($request2)
             ]);
             return Response::json(ResponseUtil::makeError(trans('custom.token_expired'), array('type' => '')), 500);
         }
