@@ -15,7 +15,7 @@ use App\Models\DocumentModifyRequest;
 use App\Models\DocumentAttachments;
 use App\helper\BlockInvoice;
 use App\helper\CurrencyValidation;
-use App\helper\Email;
+use App\helper\email as Email;
 use App\helper\Helper;
 use App\helper\IvmsDeliveryOrderService;
 use App\Services\UserTypeService;

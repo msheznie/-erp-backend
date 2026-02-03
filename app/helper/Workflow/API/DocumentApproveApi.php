@@ -58,20 +58,20 @@ use App\Jobs\EliminationLedgerInsert;
 use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Jobs\PushNotification;
-use App\Services\BudgetConsumptionService;
+use App\helper\BudgetConsumptionService;
 use App\Services\GeneralLedger\GlPostedDateService;
-use App\Services\BudgetReviewService;
-use App\Services\BudgetHistoryService;
-use App\Services\AssetTransferService;
-use App\Services\HrMonthlyDeductionService;
-use App\Services\AssignedServices\SupplierAssignService;
-use App\Services\AssignedServices\CustomerAssignService;
-use App\Services\CurrencyConversionService;
-use App\Services\ChartOfAccountDependency;
-use App\Services\CreateCustomerThirdPartyInvoice;
+use App\helper\BudgetReviewService;
+use App\helper\BudgetHistoryService;
+use App\helper\AssetTransferService;
+use App\helper\HrMonthlyDeductionService;
+use App\helper\SupplierAssignService;
+use App\helper\CustomerAssignService;
+use App\helper\CurrencyConversionService;
+use App\helper\ChartOfAccountDependency;
+use App\helper\CreateCustomerThirdPartyInvoice;
 use App\helper\SupplierRegister;
 use App\helper\Helper;
-use App\helper\Email;
+use App\helper\email as Email;
 use App\helper\SendEmailForDocument;
 
 class DocumentApproveApi
@@ -667,12 +667,12 @@ class DocumentApproveApi
 
                 if(isset($input['empID'])) {
                     // get current employee detail
-                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                    $empInfo = Employee::with(['profilepic', 'user_data' => function($query) {
                         $query->select('uuid', 'employee_id');
                     }])->find($input['empID']);
                 }else {
                     // get current employee detail
-                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                    $empInfo = Employee::with(['profilepic', 'user_data' => function($query) {
                         $query->select('uuid', 'employee_id');
                     }])->find(11);
                 }
@@ -891,7 +891,7 @@ class DocumentApproveApi
                             }
 
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) { // already GL entry passed Check
-                                $outputGL = Models\GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                $outputGL = GeneralLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputGL) {
                                     return ['success' => false, 'message' => trans('custom.gl_entries_already_passed')];
                                 }
@@ -919,7 +919,7 @@ class DocumentApproveApi
 
                             if ($input["documentSystemID"] == 57) { //Auto assign item to itemassign table
                                 $itemMaster = DB::table('itemmaster')->selectRaw('itemCodeSystem,primaryCode as itemPrimaryCode,secondaryItemCode,barcode,itemDescription,unit as itemUnitOfMeasure,itemUrl,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,financeCategoryMaster,financeCategorySub, -1 as isAssigned,companymaster.localCurrencyID as wacValueLocalCurrencyID,companymaster.reportingCurrency as wacValueReportingCurrencyID,NOW() as timeStamp, faFinanceCatID')->join('companymaster', 'companySystemID', '=', 'primaryCompanySystemID')->where('itemCodeSystem', $input["documentSystemCode"])->first();
-                                $itemAssign = Models\ItemAssigned::insert(collect($itemMaster)->toArray());
+                                $itemAssign = ItemAssigned::insert(collect($itemMaster)->toArray());
                             }
 
                             if ($input["documentSystemID"] == 56) { //Auto assign item to supplier table
@@ -956,7 +956,7 @@ class DocumentApproveApi
 
                             if ($input["documentSystemID"] == 59) { //Auto assign item to Chart Of Account
                                 $chartOfAccount = $namespacedModel::selectRaw('primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,chartOfAccountSystemID,AccountCode,AccountDescription,masterAccount,catogaryBLorPLID,catogaryBLorPL,controllAccountYN,controlAccountsSystemID,controlAccounts,isActive,isBank,AllocationID,relatedPartyYN,-1 as isAssigned,NOW() as timeStamp')->find($input["documentSystemCode"]);
-                                $chartOfAccountAssign = Models\ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
+                                $chartOfAccountAssign = ChartOfAccountsAssigned::insert($chartOfAccount->toArray());
                                 $assignResp = ChartOfAccountDependency::assignToReports($input["documentSystemCode"]);
                                 if (!$assignResp['status']) {
                                     DB::rollback();
@@ -1065,7 +1065,7 @@ class DocumentApproveApi
                             }
 
                             if ($input["documentSystemID"] == 69) {
-                                $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
+                                $outputEL = EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
                                 if ($outputEL) {
                                     return ['success' => false, 'message' => trans('custom.elimination_ledger_entries_already_passed')];
                                 }
@@ -1136,11 +1136,11 @@ class DocumentApproveApi
                             }
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
-                                $fixeAssetDetail = Models\InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
+                                $fixeAssetDetail = InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
                                 $qtyRangeArr = [];
                                 if ($fixeAssetDetail) {
                                     $lastSerialNumber = 1;
-                                    $lastSerial = Models\FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
+                                    $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
@@ -1178,7 +1178,7 @@ class DocumentApproveApi
                                             }
                                         }
                                     }
-                                    $fixedAsset = Models\FixedAssetMaster::insert($qtyRangeArr);
+                                    $fixedAsset = FixedAssetMaster::insert($qtyRangeArr);
                                 }
                             }
 
@@ -1195,10 +1195,10 @@ class DocumentApproveApi
                                         return ['success' => false, 'message' => $message['message']];
                                     }
                                 }
-                                $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
+                                $updateDisposed = AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
                                     foreach ($updateDisposed as $val) {
-                                        $faMaster = Models\FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
+                                        $faMaster = FixedAssetMaster::find($val->faID)->update(['DIPOSED' => -1, 'disposedDate' => $sourceModel->disposalDocumentDate, 'assetdisposalMasterAutoID' => $input["documentSystemCode"]]);
                                     }
                                 }
                             }
@@ -1275,12 +1275,12 @@ class DocumentApproveApi
                         }
 
                         $sourceModel = $namespacedModel::find($input["documentSystemCode"]);
-                        $currentApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
+                        $currentApproved = DocumentApproved::find($input["documentApprovedID"]);
                         $emails = array();
                         $pushNotificationUserIds = [];
                         $pushNotificationArray = [];
                         if (!empty($sourceModel)) {
-                            $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                            $document = DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
@@ -1293,7 +1293,7 @@ class DocumentApproveApi
                                     $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
 
-                                    $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
+                                    $companyDocument = CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
                                         ->where('documentSystemID', $currentApproved->documentSystemID)
                                         ->first();
 
@@ -1303,13 +1303,13 @@ class DocumentApproveApi
 
                                     $nextLevel = $currentApproved->rollLevelOrder + 1;
 
-                                    $nextApproval = Models\DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
+                                    $nextApproval = DocumentApproved::where('companySystemID', $currentApproved->companySystemID)
                                         ->where('documentSystemID', $currentApproved->documentSystemID)
                                         ->where('documentSystemCode', $currentApproved->documentSystemCode)
                                         ->where('rollLevelOrder', $nextLevel)
                                         ->first();
 
-                                    $approvalList = Models\EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
+                                    $approvalList = EmployeesDepartment::where('employeeGroupID', $nextApproval->approvalGroupID)
                                         ->whereHas('employee', function ($q) {
                                             $q->where('discharegedYN', 0);
                                         })

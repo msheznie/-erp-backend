@@ -14,7 +14,7 @@ use App\Models\Employee;
 use App\Models\PaymentTermTemplateAssigned;
 use App\Models\PaymentTermTemplate;
 use App\Traits\ApproveRejectTransaction;
-use App\helper\Email;
+use App\helper\email as Email;
 use App\helper\Helper;
 
 class DocumentReject
