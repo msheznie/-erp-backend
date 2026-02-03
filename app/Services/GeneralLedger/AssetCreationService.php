@@ -244,7 +244,7 @@ class AssetCreationService extends AppBaseController
             unset($input['itemPicture']);
 
 
-
+            Log::info('Input data: ', $input);
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {
