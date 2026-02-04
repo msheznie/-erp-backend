@@ -13,6 +13,10 @@ trait AuditLogsTrait
 {
     public static function auditLog($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $empID = null)
     {
+        if(!config('victorialogs.store_logs')){
+            return;
+        }
+
         $authEmploeeId = Auth::user() ? Auth::user()->employee_id : null;
 
         $user = !is_null($empID) ? $empID : $authEmploeeId;
@@ -25,6 +29,10 @@ trait AuditLogsTrait
 
     public static function log($type, $parameters)
     {
+        if(!config('victorialogs.store_logs')){
+            return;
+        }
+        
         switch ($type) {
             case 'auth':
                 AuthAuditLogJob::dispatch($parameters)->onQueue('audit-logs');
