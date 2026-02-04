@@ -41,10 +41,16 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
      */
     public function __construct($dispatch_db, $depMasterAutoID, $reportCount, $userId, $outputData, $outputChunkData, $rootPath, $languageCode, $totalRecords, $grandTotalDepAmountLocal = null, $grandTotalDepAmountRpt = null)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->depMasterAutoID = $depMasterAutoID;
