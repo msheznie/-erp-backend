@@ -86,7 +86,7 @@ return [
     */
     'store_failed_logs' => env('VICTORIA_LOGS_STORE_FAILED_LOGS', false),
 
-    'store_logs' => env('STORE_LOGS', false),
+    'store_logs' => env('STORE_LOGS', !empty(env('VICTORIA_LOG_URL'))),
 
     /*
     |--------------------------------------------------------------------------
