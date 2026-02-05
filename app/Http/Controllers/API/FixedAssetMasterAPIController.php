@@ -3500,8 +3500,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $result[] = $assetData;
             }
-
-            // Transform the paginated collection with our result data
+            
             $transformedItems = collect($result);
             
             // Create a new paginator with transformed data, preserving pagination metadata
