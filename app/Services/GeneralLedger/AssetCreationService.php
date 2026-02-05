@@ -244,8 +244,6 @@ class AssetCreationService extends AppBaseController
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-
-            Log::info('Input data: ', $input);
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {

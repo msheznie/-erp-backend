@@ -297,7 +297,6 @@ class AssetCostingUploadSubJob implements ShouldQueue
                     "assetCostingUploadID" => $logUploadAssetCosting->assetCostingUploadID
                 ];
 
-                Log::info('asset sub jobs');
                 $assetCreate = app(AssetCreationService::class)->assetCreation($assetUpload);
 
                 if ($assetCreate['status'] === false) {
