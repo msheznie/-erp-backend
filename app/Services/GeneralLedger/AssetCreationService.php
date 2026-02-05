@@ -103,17 +103,7 @@ class AssetCreationService extends AppBaseController
         $itemPicture = $input['itemPicture'];
         $input = array_except($input, 'itemImage');
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
-
-        // if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
-        // {
-        //     $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-        //     if($is_pending_job_exist > 0)
-        //     {
-        //         return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
-
-        //     }
-
-        // }
+        
         $input = $this->convertArrayToValue($input);
 
         $input['assetStatus'] = $input['assetStatus'] ?? 2;
@@ -244,8 +234,6 @@ class AssetCreationService extends AppBaseController
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-
-            Log::info('Input data: ', $input);
             $fixedAssetMasters = $this->fixedAssetMasterRepository->create($input);
 
             if ($itemPicture) {
