@@ -2510,9 +2510,6 @@ class FixedAssetMasterAPIController extends AppBaseController
                     ];
                 }
 
-                 \Log::info('FixedAssetMasterAPIController::assetCostingUpload', ['uploadData' => $uploadData]);
-                \Log::info('FixedAssetMasterAPIController::assetCostingUpload', ['db' => $db]);
-
                 AssetCostingUpload::dispatch($db, $uploadData);
 
 
