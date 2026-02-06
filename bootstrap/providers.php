@@ -1,18 +1,24 @@
 <?php
 
 return [
-    /*
-     * Laravel Framework Service Providers...
-     */
+    App\Providers\AppServiceProvider::class,
+    App\Providers\AuthServiceProvider::class,
+    App\Providers\EventServiceProvider::class,
+    App\Providers\HelperServiceProvider::class,
+    App\Providers\HorizonServiceProvider::class,
+    App\Providers\RouteServiceProvider::class,
+    Barryvdh\DomPDF\ServiceProvider::class,
+    Collective\Html\HtmlServiceProvider::class,
     Illuminate\Auth\AuthServiceProvider::class,
+    Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
     Illuminate\Broadcasting\BroadcastServiceProvider::class,
     Illuminate\Bus\BusServiceProvider::class,
     Illuminate\Cache\CacheServiceProvider::class,
-    Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
     Illuminate\Cookie\CookieServiceProvider::class,
     Illuminate\Database\DatabaseServiceProvider::class,
     Illuminate\Encryption\EncryptionServiceProvider::class,
     Illuminate\Filesystem\FilesystemServiceProvider::class,
+    Illuminate\Foundation\Providers\ConsoleSupportServiceProvider::class,
     Illuminate\Foundation\Providers\FoundationServiceProvider::class,
     Illuminate\Hashing\HashServiceProvider::class,
     Illuminate\Notifications\NotificationServiceProvider::class,
@@ -20,30 +26,14 @@ return [
     Illuminate\Pipeline\PipelineServiceProvider::class,
     Illuminate\Queue\QueueServiceProvider::class,
     Illuminate\Redis\RedisServiceProvider::class,
-    Illuminate\Auth\Passwords\PasswordResetServiceProvider::class,
     Illuminate\Session\SessionServiceProvider::class,
     Illuminate\Translation\TranslationServiceProvider::class,
     Illuminate\Validation\ValidationServiceProvider::class,
     Illuminate\View\ViewServiceProvider::class,
-
-    /*
-     * Package Service Providers...
-     */
-    Yajra\DataTables\DataTablesServiceProvider::class,
-    Maatwebsite\Excel\ExcelServiceProvider::class,
-    Barryvdh\DomPDF\ServiceProvider::class,
-    /*
-     * Application Service Providers...
-     */
-    App\Providers\AppServiceProvider::class,
-    App\Providers\AuthServiceProvider::class,
-    App\Providers\EventServiceProvider::class,
-    App\Providers\RouteServiceProvider::class,
-    Collective\Html\HtmlServiceProvider::class,
     Laracasts\Flash\FlashServiceProvider::class,
+    Maatwebsite\Excel\ExcelServiceProvider::class,
     Prettus\Repository\Providers\RepositoryServiceProvider::class,
-    App\Providers\HelperServiceProvider::class,
-    Sichikawa\LaravelSendgridDriver\MailServiceProvider::class,
     Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
-    // Barryvdh\Debugbar\ServiceProvider::class,
+    Sichikawa\LaravelSendgridDriver\MailServiceProvider::class,
+    Yajra\DataTables\DataTablesServiceProvider::class,
 ];

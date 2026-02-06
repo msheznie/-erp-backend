@@ -15,6 +15,7 @@
         "guzzlehttp/guzzle": "^7.10",
         "laminas/laminas-diactoros": "^3.8",
         "laravel/framework": "^12.0",
+        "laravel/horizon": "^5.43",
         "laravel/passport": "^13.4",
         "laravel/tinker": "^2.11",
         "lcobucci/jwt": "^5.6",

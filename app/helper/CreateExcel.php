@@ -428,12 +428,14 @@ class CreateExcel
         $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
         $path = $companyCode.'/'.$path_dir.$full_name;
         $result = Storage::disk($disk)->put($path, $excel_content);
+        \Log::info('path: '.$result.' '.$path);
         $basePath = '';
         if($result)
         {
             if (Storage::disk($disk)->exists($path))
             {
                 $basePath = Helper::getFileUrlFromS3($path);
+                \Log::info('basePath: '.$basePath);
             }
         }
 
