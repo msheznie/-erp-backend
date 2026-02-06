@@ -16,6 +16,7 @@ use Response;
  * Class SRMScenarioMasterController
  * @package App\Http\Controllers\API
  */
+
 class SRMScenarioMasterAPIController extends AppBaseController
 {
     /** @var  SRMScenarioMasterRepository */
@@ -289,10 +290,12 @@ class SRMScenarioMasterAPIController extends AppBaseController
         if (empty($sRMScenarioMaster)) {
             return $this->sendError('S R M Scenario Master not found');
         }
+
         $sRMScenarioMaster->delete();
 
         return $this->sendSuccess('S R M Scenario Master deleted successfully');
     }
+
 
     public function getAllEmailMaster(Request $request)
     {

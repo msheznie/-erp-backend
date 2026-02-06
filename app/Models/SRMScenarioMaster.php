@@ -64,6 +64,7 @@ class SRMScenarioMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
+
     public $fillable = [
         'document_id',
         'email_scenario_code',
@@ -104,5 +105,6 @@ class SRMScenarioMaster extends Model
 
         return $query;
     }
+
 
 }
