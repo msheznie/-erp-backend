@@ -160,7 +160,6 @@ class AuthAPIController extends Controller
 
     public function authWithToken(ServerRequestInterface $request, Request $request2)
     {
-
         $input = $request2->all();
         $validator = Validator::make($input, [
             'token' => 'required'

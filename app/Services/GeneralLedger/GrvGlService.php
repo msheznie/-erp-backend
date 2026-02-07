@@ -338,6 +338,7 @@ class GrvGlService
                     $data['glCode'] = $val->financeGLcodebBS;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
@@ -371,6 +372,7 @@ class GrvGlService
                     $data['glCode'] = $val->financeGLcodePL;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
