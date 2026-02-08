@@ -108,6 +108,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Exception types that should not be reported
         $exceptions->dontReport([
             \League\OAuth2\Server\Exception\OAuthServerException::class,
+            \App\Exceptions\UnauthorizedException::class,
         ]);
 
         // Inputs that should never be flashed for validation exceptions
