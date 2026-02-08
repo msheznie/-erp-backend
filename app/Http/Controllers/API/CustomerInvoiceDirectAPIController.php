@@ -114,6 +114,7 @@ use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentConfirm;
+use App\helper\inventory as Inventory;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -926,7 +927,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
                                 'itemCodeSystem' => $updateItem->itemCodeSystem,
                                 'wareHouseId' => $customerInvoiceDirect->wareHouseSystemCode);
-                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                             $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                             $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                             $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];

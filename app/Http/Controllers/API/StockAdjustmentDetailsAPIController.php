@@ -31,6 +31,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class StockAdjustmentDetailsController
@@ -218,7 +219,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['currentWacLocalCurrencyID'] = $item->wacValueLocalCurrencyID;
         $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         if ($stockAdjustment->stockAdjustmentType == 2) {
             $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -416,7 +417,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemCodeSystem'],
             'wareHouseId' => $stockAdjustment->location);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         $currenStockQty = ($stockAdjustment->stockAdjustmentType == 2) ? $itemCurrentCostAndQty['currentStockQty'] : $itemCurrentCostAndQty['currentWareHouseStockQty'];
 

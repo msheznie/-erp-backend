@@ -18,6 +18,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class StockCountDetailController
@@ -306,7 +307,7 @@ class StockCountDetailAPIController extends AppBaseController
                         'itemCodeSystem' => $input['itemCodeSystem'],
                         'wareHouseId' => $stockCount->location);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $input['systemQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
             $input['adjustedQty'] = $input['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
 

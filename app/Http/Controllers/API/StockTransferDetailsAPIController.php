@@ -39,6 +39,7 @@ use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
 use App\helper\ItemTracking;
+use App\helper\inventory as Inventory;
 use App\Models\ItemMaster;
 use App\Models\UnitConversion;
 use Illuminate\Support\Arr;
@@ -374,7 +375,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemCode'],
             'wareHouseId' => $stockTransferMaster->locationFrom);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
         $input['warehouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 

@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use App\helper\ItemTracking;
 use App\Models\PurchaseReturnLogistic;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -270,7 +271,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $data = array('companySystemID' => $purchaseReturn->companySystemID,
             'itemCodeSystem' => $purchaseReturnDetails->itemCode,
             'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
@@ -555,7 +556,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $data = array('companySystemID' => $purchaseReturn->companySystemID,
                     'itemCodeSystem' => $new['itemCode'],
                     'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
                     array_push($finalError['currentStockQty_zero'], $new['itemPrimaryCode']);

@@ -551,7 +551,7 @@ class PurchaseReturnAPIController extends AppBaseController
                 $data = array('companySystemID' => $purchaseReturn->companySystemID,
                     'itemCodeSystem' => $updateItem->itemCode,
                     'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
                     array_push($finalError['currentStockQty_zero'], $item['itemPrimaryCode']);

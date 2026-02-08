@@ -30,6 +30,7 @@ use App\Models\ItemMaster;
 use App\Models\ItemSerial;
 use App\Models\ErpItemLedger;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class WarehouseItemsController
@@ -442,7 +443,7 @@ class WarehouseItemsAPIController extends AppBaseController
                 $data1 = array('companySystemID' => $value->companySystemID,
                     'itemCodeSystem' => $value->itemSystemCode,
                     'wareHouseId' => $value->warehouseSystemCode);
-                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);                
+                 $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data1);                
 
                  $data[$x][trans('custom.stock_qty')] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
                  $data[$x][trans('custom.wac_local')] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
@@ -537,7 +538,7 @@ class WarehouseItemsAPIController extends AppBaseController
             'itemCodeSystem' => $row->itemSystemCode,
             'wareHouseId' => $row->warehouseSystemCode,
             'itemReport' => true);
-            $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+            $itemBinLocation = Inventory::itemCurrentCostAndQty($data);
             
             $row['binLocation'] =$itemBinLocation['binLocation'] ?? [];
             $row['isTrack'] =$itemBinLocation['isTrackable'] ?? [];

@@ -82,7 +82,7 @@ use GuzzleHttp\Client;
 use App\Models\ErpItemLedger;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Exports\Inventory\MaterialIssueRegister;
-
+use App\helper\inventory as Inventory;
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentConfirm;
 /**
@@ -706,7 +706,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $data = array('companySystemID' => $itemIssueMaster->companySystemID,
                     'itemCodeSystem' => $updateItem->itemCodeSystem,
                     'wareHouseId' => $itemIssueMaster->wareHouseFrom);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                 $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                 $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
@@ -1649,7 +1649,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'itemCodeSystem' => $issueDetail->itemCodeSystem,
                     'wareHouseId' => $location);
 
-                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                     $issueDetail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                     $issueDetail['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -2061,7 +2061,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $data = array('companySystemID' => $companySystemID,
                 'itemCodeSystem' => $detail['itemCodeSystem'],
                 'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
             $detail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];

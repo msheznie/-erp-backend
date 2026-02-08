@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\helper\inventory as Inventory;
 use App\Models\ItemAssigned;
 use App\Models\ThirdPartyIntegrationKeys;
 use GuzzleHttp\Client;
@@ -68,7 +69,7 @@ class ItemWACTriggerJob implements ShouldQueue
                     'itemCodeSystem' => $item->itemCodeSystem,
                     'wareHouseId' => null);
 
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 return [
                     'itemAutoID' => $item->itemCodeSystem,
                     'wacAmount' => $itemCurrentCostAndQty['wacValueLocal'],

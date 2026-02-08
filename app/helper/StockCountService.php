@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\StockCountDetail;
 use App\Models\ItemAssigned;
 use App\Models\StockCount;
+use App\helper\inventory as Inventory;
 
 class StockCountService
 {
@@ -24,7 +25,7 @@ class StockCountService
                         'itemCodeSystem' => $value->itemCodeSystem,
                         'wareHouseId' => $stockCount->location);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
             $updateData = [

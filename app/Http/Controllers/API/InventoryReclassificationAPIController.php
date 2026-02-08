@@ -42,6 +42,7 @@ use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\inventory as Inventory;
 use App\helper\Workflow\DocumentConfirm;
 
 /**
@@ -435,7 +436,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                     $data = array('companySystemID' => $inventoryReclassification->companySystemID,
                         'itemCodeSystem' => $updateItem->itemSystemCode,
                         'wareHouseId' => $inventoryReclassification->wareHouseSystemCode);
-                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                     $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                     $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                     $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];

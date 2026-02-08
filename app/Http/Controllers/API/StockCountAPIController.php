@@ -47,6 +47,7 @@ use App\Jobs\StockCount\StockCountDetailJob;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentConfirm;
@@ -574,7 +575,7 @@ class StockCountAPIController extends AppBaseController
                         'itemCodeSystem' => $value->itemCodeSystem,
                         'wareHouseId' => $stockCount->location);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
             $updateData = [
                 'currenctStockQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],

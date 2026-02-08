@@ -60,7 +60,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use Illuminate\Support\Arr;
-
+use App\helper\inventory as Inventory;
 /**
  * Class ItemIssueDetailsController
  * @package App\Http\Controllers\API
@@ -373,7 +373,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 'itemCodeSystem' => $input['itemCodeSystem'],
                 'wareHouseId' => $input['wareHouseFrom']);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
             $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -414,7 +414,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemCodeSystem'],
             'wareHouseId' => $itemIssue->wareHouseFrom);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
             $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];

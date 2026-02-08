@@ -38,6 +38,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
+use App\helper\inventory as Inventory;
 
 /**
  * Class MaterielRequestDetailsController
@@ -710,7 +711,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $data = array('companySystemID' => $companyId,
             'itemCodeSystem' => $item->itemCodeSystem,
             'wareHouseId' => $location);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $item['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
         }
 
@@ -726,7 +727,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $data = array('companySystemID' => $companyId,
             'itemCodeSystem' => $input['itemCode'],
             'wareHouseId' => $location);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
        
         return $this->sendResponse($itemCurrentCostAndQty, trans('custom.data_retrieved_successfully'));
 

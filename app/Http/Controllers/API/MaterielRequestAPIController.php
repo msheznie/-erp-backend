@@ -17,7 +17,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
-use App\helper\inventory;
+use App\helper\inventory as Inventory;
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Jobs\mrBulkUploadItem;
@@ -1678,7 +1678,7 @@ class MaterielRequestAPIController extends AppBaseController
         $data = array('companySystemID' => $input['companyId'],
             'itemCodeSystem' => $input['itemSystemCode'],
             'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
         $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
         $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
         if(!$itemCurrentCostAndQty)

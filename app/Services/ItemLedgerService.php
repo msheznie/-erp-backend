@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 use App\Models\Employee;
 use Exception;
 use App\Models\ErpItemLedger;
@@ -464,7 +465,7 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                         if ($masterRec['stockCountType'] == 2) {       // cost count
                                             $data[$i][$column] = 1;
@@ -485,7 +486,7 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                         $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
@@ -504,7 +505,7 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                         $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
                                     } else {
@@ -556,7 +557,7 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     if ($masterRec['stockCountType'] == 2) {       // cost count
                                         $data[$i][$column] = 1;
@@ -588,7 +589,7 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
@@ -613,7 +614,7 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
                                 } 

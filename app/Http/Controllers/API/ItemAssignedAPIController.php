@@ -28,6 +28,7 @@ use Response;
 use App\helper\CreateExcel;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 /**
  * Class ItemAssignedController
  * @package App\Http\Controllers\API
@@ -263,7 +264,7 @@ class ItemAssignedAPIController extends AppBaseController
                 $data = array('companySystemID' => $row->companySystemID,
                     'itemCodeSystem' => $row->itemCodeSystem,
                     'wareHouseId' => null);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 $array = array('local' => $itemCurrentCostAndQty['wacValueLocal'],
                     'rpt' => $itemCurrentCostAndQty['wacValueReporting'],
@@ -379,7 +380,7 @@ class ItemAssignedAPIController extends AppBaseController
             $data = array('companySystemID' => $item->companySystemID,
                 'itemCodeSystem' => $item->itemCodeSystem,
                 'wareHouseId' => null);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $item->totalQty = $itemCurrentCostAndQty['currentStockQty'];
             $item->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
             $item->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];

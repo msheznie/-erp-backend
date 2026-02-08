@@ -3,7 +3,7 @@
 namespace App\Services\API;
 
 use App\helper\Helper;
-use App\helper\inventory;
+use App\helper\inventory as Inventory;
 use App\helper\ItemTracking;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -1604,7 +1604,7 @@ class CustomerInvoiceAPIService extends AppBaseController
                             $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
                                 'itemCodeSystem' => $updateItem->itemCodeSystem,
                                 'wareHouseId' => $customerInvoiceDirect->wareHouseSystemCode);
-                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                             $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                             $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                             $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];

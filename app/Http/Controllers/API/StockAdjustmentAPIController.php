@@ -50,6 +50,7 @@ use Response;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
 use App\helper\email as Email;
+use App\helper\inventory as Inventory;
 use App\helper\Workflow\DocumentConfirm;
 
 /**
@@ -492,7 +493,7 @@ class StockAdjustmentAPIController extends AppBaseController
                     'itemCodeSystem' => $value->itemCodeSystem,
                     'wareHouseId' => $stockAdjustment->location);
 
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 $currenStockQty = ($stockAdjustment->stockAdjustmentType == 2) ? $itemCurrentCostAndQty['currentStockQty'] : $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
