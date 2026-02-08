@@ -23,7 +23,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\Formula;
 /**
  * Class TaxFormulaDetailController
  * @package App\Http\Controllers\API
@@ -185,7 +185,7 @@ class TaxFormulaDetailAPIController extends AppBaseController
     }
 
     public function test(){
-        $result = \Formula::taxFormulaDecode(15,1000);
+        $result = Formula::taxFormulaDecode(15,1000);
         return $this->sendResponse($result, trans('custom.tax_formula_detail_deleted_successfully'));
     }
 }

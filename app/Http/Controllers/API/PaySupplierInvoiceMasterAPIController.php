@@ -26,7 +26,7 @@ use App\Models\Tax;
 use App\Models\TaxVatCategories;
 use App\Services\PaymentVoucherServices;
 use App\Traits\DocumentSystemMappingTrait;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;

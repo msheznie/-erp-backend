@@ -135,7 +135,7 @@ use App\Models\DocumentAttachments;
 use App\Models\SRMSupplierValues;
 use App\Models\SupplierBlock;
 use App\Models\TenderSupplierAssignee;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 use App\Services\AssignedServices\SegmentAssignedService;
 use App\helper\Helper;
 

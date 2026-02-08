@@ -81,7 +81,7 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Models\PayCreditNoteDetail;
 use App\Services\GeneralLedger\GlPostedDateService;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 
 class PaymentVoucherGlService
 {

@@ -9,7 +9,7 @@ use App\Models\ExchangeSetupConfiguration;
 use App\Models\ExchangeSetupDocument;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Services\ExchangeSetup\CrossExchangeRateService;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 use phpDocumentor\Reflection\Types\Collection;
 
 class PaymentVoucherDocumentExchangeSetupConfig implements DocumentExchangeSetupConfigInterface

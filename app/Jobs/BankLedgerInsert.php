@@ -25,7 +25,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 use App\helper\Helper;
 
 class BankLedgerInsert implements ShouldQueue
