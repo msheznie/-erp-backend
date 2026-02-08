@@ -1056,6 +1056,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('updateUsersLoginType', 'EmployeeAPIController@updateUsersLoginType');
+        Route::get('updateRoleRoutes', 'RouteAPIController@updateRoleRoutes');
         Route::get('runCronJob/{cron}', function ($cron) {
             Artisan::call($cron);
             return 'CRON Job run successfully';

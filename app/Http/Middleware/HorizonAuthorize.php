@@ -25,25 +25,13 @@ class HorizonAuthorize
             return $next($request);
         }
 
-        // Method 1: Check for Basic Auth credentials
         if ($this->attemptBasicAuth($request)) {
             return $next($request);
         }
 
-        // Method 2: Check for Bearer token in Authorization header
-        if ($this->attemptTokenAuth($request)) {
-            return $next($request);
-        }
-
-        // Method 3: Check for token in query parameter (for direct links)
-        if ($this->attemptQueryTokenAuth($request)) {
-            return $next($request);
-        }
-
-        // Method 4: Check IP whitelist
-        if ($this->isWhitelistedIp($request)) {
-            return $next($request);
-        }
+        // if ($this->isWhitelistedIp($request)) {
+        //     return $next($request);
+        // }
 
         // Deny access - return 401 with Basic Auth challenge
         return response('Unauthorized', 401, [
@@ -69,106 +57,6 @@ class HorizonAuthorize
 
         if ($horizonUsername && $horizonPassword) {
             if ($username === $horizonUsername && $password === $horizonPassword) {
-                return true;
-            }
-        }
-
-        // Try to authenticate against database users
-        $user = User::where('email', $username)->first();
-
-        if ($user && \Hash::check($password, $user->password)) {
-            return $this->isAuthorizedUser($user);
-        }
-
-        return false;
-    }
-
-    /**
-     * Attempt to authenticate using Bearer token from Authorization header
-     */
-    protected function attemptTokenAuth(Request $request): bool
-    {
-        $token = $request->bearerToken();
-
-        if (! $token) {
-            return false;
-        }
-
-        return $this->validateToken($token);
-    }
-
-    /**
-     * Attempt to authenticate using token from query parameter
-     */
-    protected function attemptQueryTokenAuth(Request $request): bool
-    {
-        $token = $request->query('token');
-
-        if (! $token) {
-            return false;
-        }
-
-        return $this->validateToken($token);
-    }
-
-    /**
-     * Validate an API token and check user authorization
-     */
-    protected function validateToken(string $token): bool
-    {
-        // Find the token in passport tokens
-        $accessToken = Token::where('id', $token)
-            ->where('revoked', 0)
-            ->where(function ($query) {
-                $query->whereNull('expires_at')
-                    ->orWhere('expires_at', '>', now());
-            })
-            ->first();
-
-        if (! $accessToken) {
-            return false;
-        }
-
-        // Get the user associated with the token
-        $user = User::find($accessToken->user_id);
-
-        if (! $user) {
-            return false;
-        }
-
-        return $this->isAuthorizedUser($user);
-    }
-
-    /**
-     * Check if user is authorized to access Horizon
-     */
-    protected function isAuthorizedUser(User $user): bool
-    {
-        // Check if user email is in super admin list
-        $superAdminEmails = explode(',', env('HORIZON_SUPER_ADMINS', ''));
-        $superAdminEmails = array_filter(array_map('trim', $superAdminEmails));
-
-        if (in_array($user->email, $superAdminEmails, true)) {
-            return true;
-        }
-
-        // Check if user has super admin user type
-        if ($user->user_type && $user->user_type->isProductSuperAdmin) {
-            return true;
-        }
-
-        // Check if user has specific permission via user groups
-        $employeeSystemID = $user->employee_id;
-        if ($employeeSystemID) {
-            $hasHorizonAccess = EmployeeNavigation::where('employeeSystemID', $employeeSystemID)
-                ->whereHas('usergroup', function ($query) {
-                    $query->where('userGroupName', 'System Administrator')
-                        ->orWhere('userGroupName', 'Super Admin')
-                        ->orWhere('slug', 'system-admin');
-                })
-                ->exists();
-
-            if ($hasHorizonAccess) {
                 return true;
             }
         }

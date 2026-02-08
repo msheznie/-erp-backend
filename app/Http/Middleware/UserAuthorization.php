@@ -81,6 +81,8 @@ class UserAuthorization
             'api/v1/getDashboardWidget',
             'api/v1/getAllDocumentApproval',
             'api/v1/getCustomWidgetGraphData',
+            'api/v1/getAllApprovalDocuments',
+            'api/v1/getAllcompaniesByDepartment',
         ];
     }
 }
