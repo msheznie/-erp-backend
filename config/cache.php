@@ -17,7 +17,7 @@ return [
     |
     */
 
-    'default' => env('CACHE_STORE', 'redis'),
+    'default' => env('CACHE_STORE', 'file'),
 
     /*
     |--------------------------------------------------------------------------
