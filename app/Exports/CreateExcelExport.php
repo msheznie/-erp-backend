@@ -113,9 +113,42 @@ class SheetWrapper
         $this->worksheet = $worksheet;
     }
 
-    public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $calculateCellValues = true)
+    public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $hasHeaderRow = true)
     {
-        $this->worksheet->fromArray($source, $nullValue, $startCell, $strictNullComparison, $calculateCellValues);
+        // PhpSpreadsheet's fromArray only accepts 4 parameters
+        // The 5th parameter in old Laravel Excel indicated whether to extract keys as headers
+        
+        if (empty($source)) {
+            return;
+        }
+        
+        // Check if this is an associative array (has string keys)
+        $firstRow = reset($source);
+        $isAssociative = is_array($firstRow) && !isset($firstRow[0]);
+        
+        if ($hasHeaderRow && $isAssociative) {
+            // Extract headers from array keys and insert them first
+            $headers = array_keys($firstRow);
+            
+            // Convert values to indexed arrays
+            $dataRows = [];
+            foreach ($source as $row) {
+                $dataRows[] = array_values($row);
+            }
+            
+            // Insert headers first, then data
+            $this->worksheet->fromArray([$headers], $nullValue, $startCell, $strictNullComparison);
+            
+            // Calculate next row for data
+            $coordinates = Coordinate::coordinateFromString($startCell);
+            $dataStartRow = $coordinates[1] + 1;
+            $dataStartCell = $coordinates[0] . $dataStartRow;
+            
+            $this->worksheet->fromArray($dataRows, $nullValue, $dataStartCell, $strictNullComparison);
+        } else {
+            // Regular indexed array, insert as-is
+            $this->worksheet->fromArray($source, $nullValue, $startCell, $strictNullComparison);
+        }
     }
 
     public function setAutoSize($columns = true)

@@ -85,6 +85,7 @@ class UserAuthorization
             'api/v1/getAllcompaniesByDepartment',
             'api/v1/getAllNotifications',
             'api/v1/logoutApiUser',
+            'api/v1/updateNotification',
         ];
     }
 }

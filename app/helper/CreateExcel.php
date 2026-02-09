@@ -360,17 +360,23 @@ class CreateExcel
                         $firstRow = $data[0];
                         $secondRow = $data[1];
                         if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
-                            $nonEmptyCount = 0;
-                            $hasTranslationKeys = false;
+                            $translationKeyCount = 0;
+                            $totalNonEmpty = 0;
+                            
+                            // Check if second row contains actual translation keys (not just data values)
+                            // Translation keys should start with 'custom.' or similar patterns and be untranslated
                             foreach ($secondRow as $cell) {
                                 if (!empty($cell) && is_string($cell)) {
-                                    $nonEmptyCount++;
-                                    if (preg_match('/^(custom\.|supplier|po_|grv|invoice|payment|logistic|company|amount|date|code|status)/i', $cell)) {
-                                        $hasTranslationKeys = true;
+                                    $totalNonEmpty++;
+                                    // More strict check: must START with translation prefix and contain a dot
+                                    if (preg_match('/^(custom\.|trans\.|lang\.)[a-z_]+$/i', $cell)) {
+                                        $translationKeyCount++;
                                     }
                                 }
                             }
-                            if ($nonEmptyCount >= 3 && $hasTranslationKeys) {
+                            
+                            // Only mark as second header if majority of cells are actual translation keys
+                            if ($totalNonEmpty >= 3 && $translationKeyCount >= ($totalNonEmpty * 0.7)) {
                                 $isSecondHeaderRow = true;
                             }
                         }
