@@ -1,3 +1,106 @@
+## 0.0.1 - 2026-02-09
+
+- Merge branch 'hr-sprint-75-main1' into 'main'
+- chore: version upgrade from 10.102.0 to 10.102.1
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9690)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9687)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9681)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9672)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9669)
+- Merge pull request #9665 from pbsgears/GHR-10544
+- Merge branch 'srm-sprint-55' into 'main'
+- Merging SRM Sprint 55 into the main branch
+- chore(Document Master): Default documents do not load to cloned Tenders and RFXs [GSUP-5116]
+- chore(srm): issue in cloning tender pr [GSUP-5081] (#9716)
+- chore(srm): document confirmation negotiation history [GSUP-5035] (#9654)
+- chore(srm): document confirmation negotiation history [GSUP-5035] (#9648)
+- feat(srm): Sourcing Management | Document Confirmation Detail Enhancement [GSUP-4824] (#9630)
+- fix(srm): Tender and rfx cloning issue [GSUP-5033] (#9632)
+- fix(srm): Tender cloning issue [GSUP-5028] (#9615)
+- chore(srm): commercial and technical evalution backend validation issue [GSUP-5027]
+- chore(srm): commercial evaluation validation backend failed [GSUP-5027]
+- chore(srm): commercial evaluation validation backend failed [GSUP-5027]
+- chore(srm): Cannot complete the Commercial Evaluation of a two-stage tender [GSUP-5027] (#9606)
+- chore(srm): Cannot complete the Technical Evaluation of a tender [GSUP-5002] (#9599)
+- feat(srm): SRM GRV & Invoice Creation Validations [GSUP-4992] (#9593)
+- chore(srm): issue when creating the PO appointment [GSUP-4941] (#9588)
+- feat(srm): Tender/RFX Negotiation Enhancement [GSUP-4894] (#9576)
+- chore(srm): Delivery Appointment invoice enhancement [GSUP-4941] (#9580)
+- feat(Delivery Appointment): Supplier Invoice Generation Validation from Supplier Portal [GSUP-4940] (#9575)
+- feat(srm): Invoice Creation from Supplier Portal Enhancement [GSUP-4919] (#9572)
+- fix(Price Bid Format): Price Bid Excel Upload allows both Is Enabled … (#9570)
+- chore: add migration files
+- Merge pull request #9652 from pbsgears/release-please--branches--master
+- chore(master): release 10.101.0
+- Merge pull request #9651 from pbsgears/hr-sprint-74-master
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9633)
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9618)
+- chore(Designation): check email process [GHR-8941] (#9602)
+- chore(Designation): check email process [GHR-8941] (#9601)
+- feat(Tasking Request): Portal | EA | Task assignment approval following job procedure setup [GHR-9581] (#9569)
+- chore: rebase conflict resolved
+- chore(master): release 10.100.1 (#9649)
+- fix(system admin): Error While Assigning Employee to Warehouse [GCP-19165] (#9643)
+- chore(master): release 10.100.0 (#9636)
+- chore: release 10.100.0 (#9637)
+- Erp sprint 061 (#9635)
+- fix: resource control for mobile api (#9581) (#9634)
+- chore(accounts payable): Fix hardcoded supplier code and include cents in cheque amount in words [GCP-19471] (#9607)
+- chore(accounts payable): Cheque template changes [GCP-19435] (#9592)
+- chore(treasury management): b2b check status job path changes (#9590)
+- chore(accounts receivable): Fixed iissue CI pull from Quotation & SO [GCP-19404] (#9579)
+- chore(accounts payable): WHT organization bear scenario incorrect values in APL [GCP-19417] (#9578)
+- Merge branch 'hr-sprint-75-main1' into 'main'
+- chore: version upgrade from 10.102.0 to 10.102.1
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9690)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9687)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9681)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9672)
+- chore(Tasking Request): Employee tasking created email is not sending and missing content in email [GHR-10539] (#9669)
+- Merge pull request #9665 from pbsgears/GHR-10544
+- Merge branch 'srm-sprint-55' into 'main'
+- Merging SRM Sprint 55 into the main branch
+- chore(Document Master): Default documents do not load to cloned Tenders and RFXs [GSUP-5116]
+- chore(srm): issue in cloning tender pr [GSUP-5081] (#9716)
+- chore(srm): document confirmation negotiation history [GSUP-5035] (#9654)
+- chore(srm): document confirmation negotiation history [GSUP-5035] (#9648)
+- feat(srm): Sourcing Management | Document Confirmation Detail Enhancement [GSUP-4824] (#9630)
+- fix(srm): Tender and rfx cloning issue [GSUP-5033] (#9632)
+- fix(srm): Tender cloning issue [GSUP-5028] (#9615)
+- chore(srm): commercial and technical evalution backend validation issue [GSUP-5027]
+- chore(srm): commercial evaluation validation backend failed [GSUP-5027]
+- chore(srm): commercial evaluation validation backend failed [GSUP-5027]
+- chore(srm): Cannot complete the Commercial Evaluation of a two-stage tender [GSUP-5027] (#9606)
+- chore(srm): Cannot complete the Technical Evaluation of a tender [GSUP-5002] (#9599)
+- feat(srm): SRM GRV & Invoice Creation Validations [GSUP-4992] (#9593)
+- chore(srm): issue when creating the PO appointment [GSUP-4941] (#9588)
+- feat(srm): Tender/RFX Negotiation Enhancement [GSUP-4894] (#9576)
+- chore(srm): Delivery Appointment invoice enhancement [GSUP-4941] (#9580)
+- feat(Delivery Appointment): Supplier Invoice Generation Validation from Supplier Portal [GSUP-4940] (#9575)
+- feat(srm): Invoice Creation from Supplier Portal Enhancement [GSUP-4919] (#9572)
+- fix(Price Bid Format): Price Bid Excel Upload allows both Is Enabled … (#9570)
+- chore: add migration files
+- Merge pull request #9652 from pbsgears/release-please--branches--master
+- chore(master): release 10.101.0
+- Merge pull request #9651 from pbsgears/hr-sprint-74-master
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9633)
+- chore(Tasking Request): Employee Tasking Approval page | Approved Employee Tasking Request are not displaying in Approved tab [GHR-9581] (#9618)
+- chore(Designation): check email process [GHR-8941] (#9602)
+- chore(Designation): check email process [GHR-8941] (#9601)
+- feat(Tasking Request): Portal | EA | Task assignment approval following job procedure setup [GHR-9581] (#9569)
+- chore: rebase conflict resolved
+- chore(master): release 10.100.1 (#9649)
+- fix(system admin): Error While Assigning Employee to Warehouse [GCP-19165] (#9643)
+- chore(master): release 10.100.0 (#9636)
+- chore: release 10.100.0 (#9637)
+- Erp sprint 061 (#9635)
+- fix: resource control for mobile api (#9581) (#9634)
+- chore(accounts payable): Fix hardcoded supplier code and include cents in cheque amount in words [GCP-19471] (#9607)
+- chore(accounts payable): Cheque template changes [GCP-19435] (#9592)
+- chore(treasury management): b2b check status job path changes (#9590)
+- chore(accounts receivable): Fixed iissue CI pull from Quotation & SO [GCP-19404] (#9579)
+- chore(accounts payable): WHT organization bear scenario incorrect values in APL [GCP-19417] (#9578)
+
 # Changelog
 
 
