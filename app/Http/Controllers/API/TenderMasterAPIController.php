@@ -98,6 +98,7 @@ use App\Models\BidBoq;
 use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
+use App\Models\SrmItemWiseTenderAwarding;
 use App\Models\TenderConfirmationDetail;
 use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
@@ -337,6 +338,47 @@ class TenderMasterAPIController extends AppBaseController
             return $this->sendError('Tender Master not found');
         }
 
+        $isItemWise = (int) $tenderMaster->evaluation_type_id === 1;
+        $isNegotiation = ($tenderMaster->negotiation_code != '' && $tenderMaster->negotiation_code !== null) ? 1 : 0;
+
+        if (!empty($input['final_tender_awarded']) && (int) $input['final_tender_awarded'] === 1 && $isItemWise && !empty($input['item_wise_selections'])) {
+            DB::beginTransaction();
+            try {
+                SrmItemWiseTenderAwarding::where('tender_id', $id)->where('is_negotiation', $isNegotiation)->update(['award' => 0]);
+                $systemPickMap = $this->getItemWiseSystemPickBidMap($id, $isNegotiation);
+                $userId = $request->user()->id ?? null;
+                foreach ($input['item_wise_selections'] as $sel) {
+                    $bidFormatDetailId = isset($sel['bid_format_detail_id']) ? (int) $sel['bid_format_detail_id'] : null;
+                    $boqItemId = isset($sel['boq_item_id']) ? (int) $sel['boq_item_id'] : null;
+                    $bidId = (int) ($sel['bid_id'] ?? 0);
+                    $supplierId = (int) ($sel['supplier_id'] ?? 0);
+                    $bidAmount = $sel['bid_amount'] ?? null;
+                    if (!$bidId || !$supplierId) continue;
+                    if ($bidFormatDetailId === 0) $bidFormatDetailId = null;
+                    if ($boqItemId === 0) $boqItemId = null;
+                    $key = $boqItemId ? 'boq_' . $boqItemId : 'main_' . $bidFormatDetailId;
+                    $isSystemPick = isset($systemPickMap[$key]) && (int) $systemPickMap[$key] === $bidId;
+                    SrmItemWiseTenderAwarding::updateOrCreate(
+                        ['tender_id' => $id, 'bid_format_detail_id' => $bidFormatDetailId, 'boq_item_id' => $boqItemId, 'bid_id' => $bidId],
+                        [
+                            'supplier_id' => $supplierId,
+                            'bid_amount' => $bidAmount,
+                            'award' => 1,
+                            'system_pick' => $isSystemPick ? 1 : 0,
+                            'is_negotiation' => $isNegotiation,
+                            'updated_by' => $userId,
+                        ]
+                    );
+                }
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return $this->sendError($e->getMessage());
+            }
+        }
+
+        unset($input['item_wise_selections']);
         $tenderMaster = $this->tenderMasterRepository->update($input, $id);
 
         if (!empty($input['final_tender_awarded']) && (int) $input['final_tender_awarded'] === 1) {
@@ -3647,6 +3689,276 @@ class TenderMasterAPIController extends AppBaseController
         $data['items']  = $items;
         return $this->sendResponse($data, 'data retrieved successfully');
     }
+    // GSUP 1200
+    /**
+     * Build item-wise awarding data array (for evaluation_type_id = 1).
+     * @return array
+     */
+    /*private function buildItemWiseAwardingData($tenderId, $isNegotiation)
+    {
+        $isNegotiation = (int) $isNegotiation;
+        $bidMasterId = $this->getCommercialBids($tenderId, $isNegotiation);
+        if (empty($bidMasterId) || !is_array($bidMasterId)) {
+            $bidMasterId = $bidMasterId ? $bidMasterId->toArray() : [];
+        }
+        if (empty($bidMasterId)) {
+            return [
+                'bid_submissions' => [],
+                'items' => [],
+                'evaluation_type_id' => 1,
+                'item_wise_awarding' => [],
+            ];
+        }
+
+        $items = $this->getPricingItems($bidMasterId, $tenderId);
+        $bidSubmissions = BidSubmissionMaster::with(['SupplierRegistrationLink' => function ($q) {
+            $q->with(['supplier' => function ($sq) {
+                $sq->select('supplierCodeSystem', 'approvedYN', 'supplierConfirmedYN', 'isActive');
+            }]);
+        }])->whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
+
+        $existing = SrmItemWiseTenderAwarding::where('tender_id', $tenderId)
+            ->where('is_negotiation', $isNegotiation)
+            ->get();
+        $awardMap = [];
+        foreach ($existing as $row) {
+            $key = ($row->boq_item_id ? 'boq_' . $row->boq_item_id : 'main_' . $row->bid_format_detail_id);
+            if ($row->award) {
+                $awardMap[$key] = ['bid_id' => $row->bid_id, 'supplier_id' => $row->supplier_id];
+            }
+        }
+
+        foreach ($items as $scheduleMaster) {
+            foreach ($scheduleMaster->pricing_shedule_details ?? [] as $detail) {
+                $works = $detail->bid_main_works ?? [];
+                // When this detail has no BOQ items and no main works: use ranking_items.value as price (show for all line items including disabled)
+                if (count($works) === 0 && (!isset($detail->tender_boq_items) || count($detail->tender_boq_items ?? []) === 0)) {
+                    $lineValue = isset($detail->ranking_items->value) ? (float) $detail->ranking_items->value : 0;
+                    $works = [];
+                    foreach ($bidSubmissions as $bid) {
+                        $works[] = (object) [
+                            'bid_master_id' => $bid->id,
+                            'total_amount' => $lineValue,
+                            'amount' => $lineValue,
+                            'system_pick' => false,
+                            'award' => false,
+                        ];
+                    }
+                    $detail->setRelation('bid_main_works', collect($works));
+                }
+                $works = $detail->bid_main_works ?? [];
+                if (count($works) > 0) {
+                    $minAmount = null;
+                    $minBidId = null;
+                    foreach ($works as $w) {
+                        $amt = isset($w->total_amount) ? (float) $w->total_amount : (float) ($w->amount ?? 0);
+                        if ($minAmount === null || $amt < $minAmount) {
+                            $minAmount = $amt;
+                            $minBidId = $w->bid_master_id;
+                        }
+                    }
+                    foreach ($works as $w) {
+                        $w->system_pick = ($w->bid_master_id == $minBidId);
+                        $key = 'main_' . $detail->id;
+                        $w->award = isset($awardMap[$key]) && (int) $awardMap[$key]['bid_id'] === (int) $w->bid_master_id;
+                    }
+                }
+                foreach ($detail->tender_boq_items ?? [] as $boqItem) {
+                    $boqs = $boqItem->bid_boqs ?? [];
+                    if (count($boqs) > 0) {
+                        $minAmount = null;
+                        $minBidId = null;
+                        foreach ($boqs as $bq) {
+                            $amt = (float) ($bq->total_amount ?? 0);
+                            if ($minAmount === null || $amt < $minAmount) {
+                                $minAmount = $amt;
+                                $minBidId = $bq->bid_master_id;
+                            }
+                        }
+                        foreach ($boqs as $bq) {
+                            $bq->system_pick = ($bq->bid_master_id == $minBidId);
+                            $key = 'boq_' . $boqItem->id;
+                            $bq->award = isset($awardMap[$key]) && (int) $awardMap[$key]['bid_id'] === (int) $bq->bid_master_id;
+                        }
+                    }
+                }
+            }
+        }
+
+        $tender = TenderMaster::where('id', $tenderId)->select('evaluation_type_id')->first();
+        return [
+            'bid_submissions' => $bidSubmissions,
+            'items' => $items,
+            'evaluation_type_id' => $tender ? (int) $tender->evaluation_type_id : 1,
+            'item_wise_awarding' => $existing->toArray(),
+        ];
+    }*/
+
+    /**
+     * Return map of line item key => bid_id that is system pick (lowest price) for that line.
+     * Used when saving to set system_pick.
+     */
+    /*private function getItemWiseSystemPickBidMap($tenderId, $isNegotiation)
+    {
+        $bidMasterId = $this->getCommercialBids($tenderId, $isNegotiation);
+        if (empty($bidMasterId) || !is_array($bidMasterId)) {
+            $bidMasterId = $bidMasterId ? $bidMasterId->toArray() : [];
+        }
+        if (empty($bidMasterId)) {
+            return [];
+        }
+        $items = $this->getPricingItems($bidMasterId, $tenderId);
+        $bidSubmissions = BidSubmissionMaster::whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
+        $map = [];
+        foreach ($items as $scheduleMaster) {
+            foreach ($scheduleMaster->pricing_shedule_details ?? [] as $detail) {
+                $works = $detail->bid_main_works ?? [];
+                if (count($works) === 0 && (!isset($detail->tender_boq_items) || count($detail->tender_boq_items ?? []) === 0)) {
+                    $lineValue = isset($detail->ranking_items->value) ? (float) $detail->ranking_items->value : 0;
+                    $works = [];
+                    foreach ($bidSubmissions as $bid) {
+                        $works[] = (object) ['bid_master_id' => $bid->id, 'total_amount' => $lineValue, 'amount' => $lineValue];
+                    }
+                }
+                if (count($works) > 0) {
+                    $minAmount = null;
+                    $minBidId = null;
+                    foreach ($works as $w) {
+                        $amt = isset($w->total_amount) ? (float) $w->total_amount : (float) ($w->amount ?? 0);
+                        if ($minAmount === null || $amt < $minAmount) {
+                            $minAmount = $amt;
+                            $minBidId = $w->bid_master_id;
+                        }
+                    }
+                    $map['main_' . $detail->id] = $minBidId;
+                }
+                foreach ($detail->tender_boq_items ?? [] as $boqItem) {
+                    $boqs = $boqItem->bid_boqs ?? [];
+                    if (count($boqs) > 0) {
+                        $minAmount = null;
+                        $minBidId = null;
+                        foreach ($boqs as $bq) {
+                            $amt = (float) ($bq->total_amount ?? 0);
+                            if ($minAmount === null || $amt < $minAmount) {
+                                $minAmount = $amt;
+                                $minBidId = $bq->bid_master_id;
+                            }
+                        }
+                        $map['boq_' . $boqItem->id] = $minBidId;
+                    }
+                }
+            }
+        }
+        return $map;
+    }*/
+
+    /**
+     * Item-wise awarding data for Combined Ranking (evaluation_type_id = 1).
+     */
+    /*public function getItemWiseAwardingData(Request $request)
+    {
+        $tenderId = $request['tenderMasterId'];
+        $isNegotiation = (int) ($request['isNegotiation'] ?? 0);
+        $data = $this->buildItemWiseAwardingData($tenderId, $isNegotiation);
+        return $this->sendResponse($data, 'data retrieved successfully');
+    }*/
+
+    /**
+     * Confirm item-wise combined ranking: save one supplier per item and set combined_ranking_status.
+     */
+    /*public function confirmItemWiseCombinedRanking(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['tenderMasterId'];
+            $isNegotiation = (int) ($request['isNegotiation'] ?? 0);
+            $comment = $request['comment'] ?? '';
+            $selections = $request['selections'] ?? [];
+
+            $bidMasterId = $this->getCommercialBids($tenderId, $isNegotiation);
+            if (empty($bidMasterId) || !is_array($bidMasterId)) {
+                $bidMasterId = $bidMasterId ? $bidMasterId->toArray() : [];
+            }
+            $bidSubmissions = BidSubmissionMaster::whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
+            $bidToSupplier = $bidSubmissions->keyBy('id')->pluck('supplier_registration_id', 'id')->toArray();
+
+            SrmItemWiseTenderAwarding::where('tender_id', $tenderId)->where('is_negotiation', $isNegotiation)->update(['award' => 0]);
+
+            $systemPickMap = $this->getItemWiseSystemPickBidMap($tenderId, $isNegotiation);
+            $userId = $request->user()->id ?? null;
+
+            foreach ($selections as $sel) {
+                $bidFormatDetailId = isset($sel['bid_format_detail_id']) ? (int) $sel['bid_format_detail_id'] : null;
+                $boqItemId = isset($sel['boq_item_id']) ? (int) $sel['boq_item_id'] : null;
+                $bidId = (int) ($sel['bid_id'] ?? 0);
+                $supplierId = (int) ($sel['supplier_id'] ?? 0);
+                $bidAmount = isset($sel['bid_amount']) ? $sel['bid_amount'] : null;
+                if (!$bidId || !$supplierId) {
+                    continue;
+                }
+                if ($bidFormatDetailId === 0) {
+                    $bidFormatDetailId = null;
+                }
+                if ($boqItemId === 0) {
+                    $boqItemId = null;
+                }
+                $key = $boqItemId ? 'boq_' . $boqItemId : 'main_' . $bidFormatDetailId;
+                $isSystemPick = isset($systemPickMap[$key]) && (int) $systemPickMap[$key] === $bidId;
+
+                SrmItemWiseTenderAwarding::updateOrCreate(
+                    [
+                        'tender_id' => $tenderId,
+                        'bid_format_detail_id' => $bidFormatDetailId,
+                        'boq_item_id' => $boqItemId,
+                        'bid_id' => $bidId,
+                    ],
+                    [
+                        'supplier_id' => $supplierId,
+                        'bid_amount' => $bidAmount,
+                        'award' => 1,
+                        'system_pick' => $isSystemPick ? 1 : 0,
+                        'is_negotiation' => $isNegotiation,
+                        'updated_by' => $userId,
+                    ]
+                );
+            }
+
+            if ($isNegotiation == 1) {
+                TenderMaster::where('id', $tenderId)->update([
+                    'negotiation_combined_ranking_status' => true,
+                    'negotiation_award_comment' => $comment,
+                    'negotiation_is_awarded' => true,
+                ]);
+            } else {
+                TenderMaster::where('id', $tenderId)->update([
+                    'combined_ranking_status' => true,
+                    'award_comment' => $comment,
+                    'is_awarded' => true,
+                ]);
+            }
+
+            $tenderNegotiationId = null;
+            if ($isNegotiation == 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+                $tenderNegotiationId = $latestNegotiation ? $latestNegotiation->id : null;
+            }
+            TenderConfirmationService::saveConfirmationDetails(
+                $tenderId,
+                $tenderId,
+                TenderConfirmationDetail::MODULE_COMBINED_RANKING,
+                null,
+                $comment,
+                $tenderNegotiationId
+            );
+
+            DB::commit();
+            return $this->sendResponse(['success' => true], trans('custom.successfully_updated'));
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }*/
 
     public function getPricingItems($bidMasterId, $tenderId)
     {
@@ -4181,10 +4493,11 @@ class TenderMasterAPIController extends AppBaseController
             $bidSubmissionMasterIds = [];
         }
 
-        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+        $getNegotiationCode = TenderMaster::select('negotiation_code', 'evaluation_type_id')->where('id', $tenderId)->first();
+        $isNegotiation = ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' && $getNegotiationCode->negotiation_code != null)) ? 1 : 0;
 
         $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
-            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+            if ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' || $getNegotiationCode->negotiation_code != null)) {
                 $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
             $q->where('award', 1)->with([
@@ -4197,10 +4510,14 @@ class TenderMasterAPIController extends AppBaseController
                 }
             ]);
         }])->first();
-        
-        // Add min_approval_awarding to response
+
         if ($tender) {
             $tender->min_approval_awarding = $tender->min_approval_awarding ?? 1;
+            // GSUP 1200
+            /*if ((int) $tender->evaluation_type_id === 1) {
+                $tender->item_wise_awarding_data = $this->buildItemWiseAwardingData($tenderId, $isNegotiation);
+                $tender->evaluation_type_id = (int) $tender->evaluation_type_id;
+            }*/
         }
 
         return $this->sendResponse($tender, 'data retrieved successfully');
@@ -4351,6 +4668,18 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $tenderId = $request['tender_id'];
 
+            /* GSUP 1200 $tender = TenderMaster::where('id', $tenderId)->with(['company', 'currency'])->first();
+            if (!$tender) {
+                DB::rollback();
+                return $this->sendError('Tender not found');
+            }
+
+            if ((int) $tender->evaluation_type_id === 1) {
+                $this->sendItemWiseTenderAwardEmails($tender);
+                DB::commit();
+                return $this->sendResponse($tender, 'Email Send successfully');
+            }*/
+
             // Get Negotiated Bid list
             $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
                 ->where('tender_id', $tenderId)
@@ -4446,6 +4775,88 @@ class TenderMasterAPIController extends AppBaseController
             return $this->sendError($e->getMessage());
         }
     }
+
+    /**
+     * GSUP 1200 Send one award email per supplier for item-wise tenders (evaluation_type_id = 1).
+     */
+    /*private function sendItemWiseTenderAwardEmails(TenderMaster $tender)
+    {
+        $tenderId = $tender->id;
+        $isNegotiation = ($tender->negotiation_code != '' && $tender->negotiation_code !== null) ? 1 : 0;
+        $rows = SrmItemWiseTenderAwarding::where('tender_id', $tenderId)->where('is_negotiation', $isNegotiation)->where('award', 1)->with('supplier')->get();
+        $bySupplier = $rows->groupBy('supplier_id');
+
+        $companyName = $tender->company ? $tender->company->CompanyName : '';
+        $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+        $documentType = $this->getDocumentType($tender->document_type);
+
+        foreach ($bySupplier as $supplierId => $supplierRows) {
+            $first = $supplierRows->first();
+            $supplier = $first->supplier;
+            if (!$supplier || !$supplier->email) continue;
+
+            $itemsHtml = '';
+            $n = 0;
+            foreach ($supplierRows as $row) {
+                $itemLabel = '';
+                if ($row->boq_item_id) {
+                    $boq = TenderBoqItems::find($row->boq_item_id);
+                    $itemLabel = $boq ? $boq->item_name : '';
+                } else {
+                    $detail = PricingScheduleDetail::find($row->bid_format_detail_id);
+                    $itemLabel = $detail ? $detail->label : '';
+                }
+                $n++;
+                $qty = isset($row->quantity) ? $row->quantity : '-';
+                $price = $row->bid_amount !== null ? number_format((float) $row->bid_amount, 3) : '-';
+                $itemsHtml .= "Item $n: $itemLabel, Quantity: $qty, Price: $price $currency<br>";
+            }
+
+            $name = $supplier->name;
+            $body = "Dear $name,<br><br>We are pleased to inform you that your bid for Tender Code $tender->tender_code titled \"$tender->title\" has been successfully awarded. Below are the details of the items awarded to your company:<br><br>";
+            $body .= "<strong>Tender Code:</strong> $tender->tender_code<br><strong>Tender Title:</strong> $tender->title<br><strong>Supplier Name:</strong> $name<br><br><strong>Items Awarded:</strong><br>$itemsHtml<br>";
+            $body .= "Please review the awarded items and prices. If there are any discrepancies or if you require further clarification, please do not hesitate to contact us.<br><br>";
+            $body .= "We expect delivery of the awarded items as per the terms and conditions outlined in the tender document. Kindly ensure that all contractual obligations are met within the stipulated timeframe.<br><br>";
+            $body .= "Once again, congratulations on winning the tender, and we look forward to a successful partnership.<br><br>Best regards,<br>Procurement Department.<br>$companyName";
+            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+
+            $dataEmail = [
+                'empEmail' => $supplier->email,
+                'companySystemID' => $tender->company_id,
+                'alertMessage' => "Letter of Awarding | $tender->tender_code | $tender->title",
+                'emailAlertMessage' => $body,
+                'ccEmail' => [],
+                'attachmentList' => [],
+            ];
+            \Email::sendEmailSRM($dataEmail);
+        }
+
+        $awardedSupplierIds = $bySupplier->keys()->toArray();
+        $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
+            ->where('tender_id', $tenderId)
+            ->whereNotIn('supplier_registration_id', $awardedSupplierIds)
+            ->groupBy('supplier_registration_id')
+            ->get()
+            ->pluck('supplier_registration_id')
+            ->toArray();
+        $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')->whereIn('id', $bidSubmittedSuppliers)->get();
+        foreach ($supplierDetails as $bid) {
+            $body = "Hi $bid->name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
+            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+            $dataEmail = [
+                'empEmail' => $bid->email,
+                'companySystemID' => $tender->company_id,
+                'alertMessage' => $documentType . ' Regret',
+                'emailAlertMessage' => $body,
+                'attachmentList' => [],
+                'ccEmail' => [],
+            ];
+            \Email::sendEmailErp($dataEmail);
+        }
+
+        $tender->final_tender_award_email = 1;
+        $tender->save();
+    }*/
 
     public function getTenderEditMasterApproval(Request $request)
     {
