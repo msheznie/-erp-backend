@@ -1596,7 +1596,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                     $title = trans('custom.asset_register_grouped_detail_report');
-                    $fileName = trans('custom.asset_register_grouped_detail_report');
+                    $fileName = trans('custom.asset_register_grouped_detail');
                     $path = 'asset_register/report/excel/';
 
                     $exportToExcel = $service

@@ -7083,6 +7083,7 @@ return
     'asset_register_detail2_report' => 'تقرير تفاصيل سجل الأصول 2',
     'asset_register_summary_report' => 'تقرير ملخص تسجيل الأصول',
     'asset_register_grouped_detail_report' => 'سجل الأصول المجمع',
+    'asset_register_grouped_detail' => 'سجل الأصول المجمع',
     "supplier_statment_details" => "تفاصيل كشف المورد",
 
     // Asset Management Report Column Headers
