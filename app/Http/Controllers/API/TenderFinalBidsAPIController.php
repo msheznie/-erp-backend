@@ -26,6 +26,9 @@ use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\TenderMaster;
+use App\Models\SrmItemWiseTenderAwarding;
+use App\Models\PricingScheduleDetail;
+use App\Models\TenderBoqItems;
 /**
  * Class TenderFinalBidsController
  * @package App\Http\Controllers\API
@@ -380,7 +383,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         $employeeID = $request->get('userID');
         $lang = $request->get('lang', 'en');
 
-        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')
+        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code', 'evaluation_type_id')
             ->where('id', $tenderId)
             ->first();
 
@@ -397,6 +400,30 @@ class TenderFinalBidsAPIController extends AppBaseController
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
         }
 
+        // gsup 1200
+        $itemWiseSummary = null;
+        if ($tenderMaster && (int) $tenderMaster->evaluation_type_id === 1) {
+            $isNegotiationForItemWise = ($tenderMaster->negotiation_code != null && $tenderMaster->negotiation_code != '') ? 1 : 0;
+            $itemWiseRows = SrmItemWiseTenderAwarding::where('tender_id', $tenderId)->where('is_negotiation', $isNegotiationForItemWise)->where('award', 1)->with('supplier')->get();
+            $itemWiseSummary = [];
+            foreach ($itemWiseRows as $row) {
+                $itemLabel = '';
+                if ($row->boq_item_id) {
+                    $boq = TenderBoqItems::find($row->boq_item_id);
+                    $itemLabel = $boq ? $boq->item_name : '';
+                } else {
+                    $detail = PricingScheduleDetail::find($row->bid_format_detail_id);
+                    $itemLabel = $detail ? $detail->label : '';
+                }
+                $itemWiseSummary[] = (object) [
+                    'item_description' => $itemLabel,
+                    'supplier_name' => $row->supplier ? $row->supplier->name : '',
+                    'bid_amount' => $row->bid_amount,
+                    'quantity' => null,
+                ];
+            }
+        }
+
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage,srm_tender_final_bids.tech_weightage,srm_tender_final_bids.total_weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total,srm_tender_final_bids.award, srm_tender_final_bids.combined_ranking')
             ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
@@ -411,11 +438,11 @@ class TenderFinalBidsAPIController extends AppBaseController
         }
 
         $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
-
-        $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
+        //gsup 1200
+        $awardSummary = $itemWiseSummary !== null ? collect() : $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
         $time = strtotime("now");
         $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
-        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData, 'lang' => $lang);
+        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData, 'lang' => $lang, 'itemWiseSummary' => $itemWiseSummary);
 
         // Check if Arabic language for RTL support
         $isRTL = ($lang === 'ar');
@@ -475,15 +502,37 @@ class TenderFinalBidsAPIController extends AppBaseController
             $bidSubmissionMasterIds = [];
         }
 
-        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+        $getNegotiationCode = TenderMaster::select('negotiation_code', 'evaluation_type_id')->where('id', $tenderId)->first();
 
         $tenderMaster = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
-            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+            if ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' || $getNegotiationCode->negotiation_code != null)) {
                 $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
             $q->where('award', 1)->with('supplier');
         }])->first();
 
+        $itemWiseSummary = null;
+        /*if gsup 1200 ($tenderMaster && (int) $tenderMaster->evaluation_type_id === 1) {
+            $isNegotiationForItemWise = ($getNegotiationCode && $getNegotiationCode->negotiation_code != null && $getNegotiationCode->negotiation_code != '') ? 1 : 0;
+            $itemWiseRows = SrmItemWiseTenderAwarding::where('tender_id', $tenderId)->where('is_negotiation', $isNegotiationForItemWise)->where('award', 1)->with('supplier')->get();
+            $itemWiseSummary = [];
+            foreach ($itemWiseRows as $row) {
+                $itemLabel = '';
+                if ($row->boq_item_id) {
+                    $boq = TenderBoqItems::find($row->boq_item_id);
+                    $itemLabel = $boq ? $boq->item_name : '';
+                } else {
+                    $detail = PricingScheduleDetail::find($row->bid_format_detail_id);
+                    $itemLabel = $detail ? $detail->label : '';
+                }
+                $itemWiseSummary[] = (object) [
+                    'item_description' => $itemLabel,
+                    'supplier_name' => $row->supplier ? $row->supplier->name : '',
+                    'bid_amount' => $row->bid_amount,
+                    'quantity' => null,
+                ];
+            }
+        }*/
 
         $awardingMembers = SrmTenderAwardingMember::getAwardingMembers($tenderId);
         
@@ -499,7 +548,7 @@ class TenderFinalBidsAPIController extends AppBaseController
 
         $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
-        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData,  'lang' => $lang);
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData,  'lang' => $lang, 'itemWiseSummary' => $itemWiseSummary);
         $time = strtotime("now");
         $fileName = 'supplier_ranking_summary' . $tenderId . '_' . $time . '.pdf';
 
