@@ -70,7 +70,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::group(['middleware' => ['auth.api.keycloak', 'csrf.api']], function () {
 
             Route::group(['middleware' => ['authorization:api','mobileAccess']], function () {
-                Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees');
+                Route::post('getAllCreatedByEmployees', 'FilterApiController@getAllCreatedByEmployees')->name("Get all created by employees");
 
                 require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
                 require __DIR__.'/../routes/general/generalRoutes.php';
@@ -130,7 +130,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 });
 
                 Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
-                Route::get('getCompanyCurrency', 'CurrencyMasterAPIController@getCompanyCurrency');
+                Route::get('getCompanyCurrency', 'CurrencyMasterAPIController@getCompanyCurrency')->name("Get company currency");
                 Route::resource('users', 'UserAPIController');
                 Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
@@ -386,9 +386,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
                 Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
                 Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
-
-                Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
-
 
                 Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
                 Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
