@@ -263,13 +263,37 @@
             <td>{{ $tenderMaster->min_approval_awarding }}</td>
         </tr>
         <tr>
+            @if (empty($itemWiseSummary))
             <td><strong>Tender Awarded Supplier Name:</strong></td>
-            <td>{{ $tenderMaster->ranking_supplier->supplier->name }}</td>
+            <td>{{ $tenderMaster->ranking_supplier && $tenderMaster->ranking_supplier->supplier ? $tenderMaster->ranking_supplier->supplier->name : '-' }}</td>
             <td><strong>Tender Awarding Comment:</strong></td>
             <td>{{ $tenderMaster->final_tender_award_comment }}</td>
+            @else
+            <td><strong>Item-wise Awarding (details below):</strong></td>
+            <td colspan="3">{{ $tenderMaster->final_tender_award_comment }}</td>
+            @endif
         </tr>
         </tbody>
     </table>
+    @if (!empty($itemWiseSummary))
+    <br/>
+    <table style="width:100%; font-size: 12px;" class="table-bordered">
+        <tr>
+            <td style="text-align: center;"><strong>Sr. No</strong></td>
+            <td style="text-align: center;"><strong>Item Description</strong></td>
+            <td style="text-align: center;"><strong>Supplier Name</strong></td>
+            <td style="text-align: center;"><strong>Price</strong></td>
+        </tr>
+        @foreach ($itemWiseSummary as $row)
+        <tr>
+            <td style="text-align: center;">{{ $loop->index+1 }}</td>
+            <td>{{ $row->item_description }}</td>
+            <td>{{ $row->supplier_name }}</td>
+            <td style="text-align: right;">{{ $row->bid_amount != null ? number_format($row->bid_amount, 3) : '-' }}</td>
+        </tr>
+        @endforeach
+    </table>
+    @endif
     <br/>
     <table style="width:100%; font-size: 12px;">
         <tr>
