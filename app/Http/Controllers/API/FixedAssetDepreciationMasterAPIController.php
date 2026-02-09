@@ -41,12 +41,14 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\AssetDisposalMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -305,7 +307,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                     return $this->sendError(trans('custom.depreciation_already_processed_for_the_selected_mo'), 500);
                 }
 
-                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                $companyFinanceYear = Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500);
                 } else {
@@ -315,7 +317,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     
                 $inputParam = $input;
                 $inputParam["departmentSystemID"] = 9;
-                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
                 if (!$companyFinancePeriod["success"]) {
                     return $this->sendError($companyFinancePeriod["message"], 500);
                 } else {
@@ -376,8 +378,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $input['depLocalCur'] = $company->localCurrencyID;
                 $input['depRptCur'] = $company->reportingCurrency;
                 $input['createdPCID'] = gethostname();
-                $input['createdUserID'] = \Helper::getEmployeeID();
-                $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $input['createdUserID'] = Helper::getEmployeeID();
+                $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
 
                 if ($fixedAssetDepreciationMasters) {
@@ -410,7 +412,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
     public function getAssests($date,$val,$companyId)
     {
-        return FixedAssetMaster::with(['depperiod_by' => function ($query) {
+        $query = FixedAssetMaster::with(['depperiod_by' => function ($query) {
             $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
             $query->whereHas('master_by', function ($query) {
                 $query->where('approved', -1);
@@ -421,7 +423,13 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         ->ofCompany([$companyId])
         ->assetType(1)
         ->where('approved',$val)
-        ->isDisposed()->get();
+            ->isDisposed();
+
+        if ($val == -1) {
+            $query->eligibleForDepreciation();
+        }
+
+        return $query->get();
 
     }
     /**
@@ -538,15 +546,15 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         if ($fixedAssetDepreciationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $params = array('autoID' => $id, 'company' => $fixedAssetDepreciationMaster->companySystemID, 'document' => $fixedAssetDepreciationMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
             }
         }
 
         /*$input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         $input["timestamp"] = date('Y-m-d H:i:s');*/
 
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->update($input, $id);
@@ -651,10 +659,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -667,9 +675,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $companyCurrency = \Helper::companyCurrency($companyId);
+        $companyCurrency = Helper::companyCurrency($companyId);
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId,1);
 
         $output = array(
             'financialYears' => $financialYears,
@@ -741,7 +749,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $this->fixedAssetDepreciationMasterRepository->update($updateInput, $id);
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetDep->documentSystemID)->first();
 
@@ -788,7 +796,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -824,7 +832,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -871,7 +879,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -904,7 +912,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -1019,7 +1027,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         
         $id = isset($input['id'])?$input['id']:0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
@@ -1127,7 +1135,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -1248,7 +1256,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         if (empty($assetDepreciation)) {
             return $this->sendError(trans('custom.fixed_asset_depreciation_master_not_found'));
         }
-        $employeeID = \Helper::getEmployeeSystemID();
+        $employeeID = Helper::getEmployeeSystemID();
 
         AssetDepreciationPdfJob::dispatch($dataBase, $id, [$employeeID], $languageCode)->onQueue('reporting');
 

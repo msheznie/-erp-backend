@@ -110,7 +110,7 @@ use Webpatser\Uuid\Uuid;
 use Yajra\DataTables\Facades\DataTables;
 use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
-use InfyOm\Generator\Utils\ResponseUtil;
+use App\Utils\ResponseUtil;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
@@ -125,6 +125,9 @@ use App\Models\SupplierInvoiceItemDetail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Config;
 use App\Services\WebPushNotificationService;
+
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 class SRMService
 {
     private $POService = null;
@@ -710,7 +713,7 @@ class SRMService
     public function confirmSupplierAppointment(Request $request)
     {
         $params = array('autoID' => $request->input('extra.data.id'), 'company' => $request->input('extra.data.company_id'), 'document' => $request->input('extra.data.document_system_id'), 'email' => $request->input('extra.email'),);
-        $confirm = \Helper::confirmDocument($params);
+        $confirm = DocumentConfirm::confirmDocument($params);
 
         return [
             'success' => $confirm['success'],
@@ -2242,7 +2245,7 @@ class SRMService
 
             $companyId = TenderMaster::select('company_id')->where('id', $extra['tenderId'])->first();
 
-            $raiseAsPrivate = \Helper::checkPolicy($companyId->company_id,87);
+            $raiseAsPrivate = Helper::checkPolicy($companyId->company_id,87);
 
             $data = [
                 'data' => $data,
@@ -2409,7 +2412,6 @@ class SRMService
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info($e);
             return ['success' => false, 'message' => $e];
         }
     }
@@ -2450,7 +2452,6 @@ class SRMService
                 $att['isUploaded'] = 1;
                 DocumentAttachments::create($att);
             } else {
-                Log::info("NO ATTACHMENT");
             }
         }
     }
@@ -2504,7 +2505,6 @@ class SRMService
                     return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
-                Log::info("NO ATTACHMENT");
             }
         } catch (\Exception $e) {
             return [
@@ -2727,8 +2727,7 @@ class SRMService
             ];
         }
 
-
-        /* Log::info($supplierTender);
+        /*
          if (
 
              (($tenderData['final_tender_awarded'] == 1 || $tenderData['negotiation_is_awarded'] == 1)
@@ -5641,7 +5640,6 @@ class SRMService
                     return ['success' => true, 'message' => 'Successfully uploaded', 'data' => []];
                 }
             } else {
-                Log::info("NO ATTACHMENT");
             }
         } catch (\Exception $e) {
             return [
@@ -6312,7 +6310,7 @@ class SRMService
     public function getPreBidClarificationPolicy($request){
 
         $companyId = $request->input('extra.companySystemId');
-        $raiseAsPrivate = \Helper::checkPolicy($companyId,87);
+        $raiseAsPrivate = Helper::checkPolicy($companyId,87);
 
         return [
             'success' => true,
@@ -6579,7 +6577,7 @@ class SRMService
                 'email' => $paymentProofData['srmSupplier']['email']
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             /*  if($confirm['success'])
               {
                   $this->sendSupplierNotification($params);
@@ -6605,7 +6603,7 @@ class SRMService
             'emailAlertMessage' => $body,
         ];
 
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
     }
 
     public static function reopenPaymentProof($paymentProofUuid)
@@ -7112,9 +7110,9 @@ class SRMService
 
         $supplierData =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'),true);
         $companyId = $supplierData->company_id;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -7347,7 +7345,7 @@ class SRMService
             'emailAlertMessage' => $emailBody,
         ];
         
-        \Email::sendEmailErp($dataEmail);
+        Email::sendEmailErp($dataEmail);
     }
 
     private function sendPoAcknowledgementNotification($purchaseOrder, $poCreator, $supplierName)

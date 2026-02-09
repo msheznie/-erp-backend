@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BudgetTemplate;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BudgetTemplateRepository
@@ -62,6 +62,13 @@ class BudgetTemplateRepository extends BaseRepository
         // Apply active status filter
         if (isset($input['isActive']) && $input['isActive'] !== null && $input['isActive'] !== '') {
             $query->where('isActive', $input['isActive']);
+        }
+
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $query->whereIn('createdUserSystemID', $createdBy);
+            }
         }
 
         // Apply search

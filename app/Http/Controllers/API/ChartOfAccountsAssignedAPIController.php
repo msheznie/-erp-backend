@@ -25,10 +25,12 @@ use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ChartOfAccountsAssignedController
@@ -79,7 +81,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
-        $input = array_except($input, ['final_approved_by','company']);
+        $input = Arr::except($input, ['final_approved_by','company']);
         $companies = $input['companySystemID'];
         $input = $this->convertArrayToValue($input);
         if (array_key_exists('chartOfAccountsAssignedID', $input)) {
@@ -147,7 +149,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             foreach($companies as $companie)
             {
                 
-                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['chartOfAccountSystemID'], 'chartofaccounts');
+                $validatorResult = Helper::checkCompanyForMasters($companie['id'], $input['chartOfAccountSystemID'], 'chartofaccounts');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }
@@ -224,7 +226,7 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
     public function update($id, UpdateChartOfAccountsAssignedAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['company']);
+        $input = Arr::except($input,['company']);
         /** @var ChartOfAccountsAssigned $chartOfAccountsAssigned */
         $chartOfAccountsAssigned = $this->chartOfAccountsAssignedRepository->findWithoutFail($id);
 

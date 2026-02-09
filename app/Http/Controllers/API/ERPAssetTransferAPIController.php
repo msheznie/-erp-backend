@@ -25,11 +25,16 @@ use App\Models\Location;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
 use Carbon\Carbon;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditTrial;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ERPAssetTransferController
@@ -207,7 +212,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $input['narration'] = $input['narration'];
             $input['location'] = (isset($input['location'])) ? $input['location'] : NULL;
             $input['company_id'] = $company_id;
-            $input['created_user_id'] = \Helper::getEmployeeSystemID();
+            $input['created_user_id'] = Helper::getEmployeeSystemID();
             $input['prBelongsYear'] = $input['prBelongsYear'];
             $input['budgetYear'] = $input['budgetYear'];
             $input['documentSystemID'] = 103;
@@ -215,7 +220,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             if ($company) {
                 $input['company_code'] = $company->CompanyID;
             }
-            $input['updated_user_id'] = \Helper::getEmployeeSystemID();
+            $input['updated_user_id'] = Helper::getEmployeeSystemID();
             $eRPAssetTransfer = $this->eRPAssetTransferRepository->create($input);
             DB::commit();
             return $this->sendResponse($eRPAssetTransfer->toArray(), trans('custom.asset_transfer_saved_successfully'));
@@ -400,7 +405,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data['reference_no'] = $input['reference_no'];
         $data['document_date'] = new Carbon($input['document_date']);
         $data['narration'] = $input['narration'];
-        $data['updated_user_id'] = \Helper::getEmployeeSystemID();
+        $data['updated_user_id'] = Helper::getEmployeeSystemID();
 
         if (isset($input['confirmed_yn']) == 1) {
             if ($eRPAssetTransfer->confirmed_yn == 0 && $input['confirmed_yn'] == 1) {
@@ -414,7 +419,7 @@ class ERPAssetTransferAPIController extends AppBaseController
                     'company' => $eRPAssetTransfer->company_id,
                     'document' => 103
                 );
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
@@ -532,7 +537,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $documentSystemID = 103;
         $assetTransfer = DB::table('erp_documentapproved')
             ->select(
@@ -594,7 +599,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     {
         $request['documentSystemID'] = 103;
         $request['documentSystemCode'] = $request['id'];
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -604,7 +609,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     public function approveAssetTransfer(Request $request)
     {
         $request['documentSystemID'] = 103;
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -680,7 +685,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $documentSystemID = 103;
         $assetTransfer = DB::table('erp_documentapproved')
             ->select(
@@ -778,7 +783,7 @@ class ERPAssetTransferAPIController extends AppBaseController
 
         $this->eRPAssetTransferRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', 103)->first();
 
@@ -827,7 +832,7 @@ class ERPAssetTransferAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

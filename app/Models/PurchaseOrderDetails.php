@@ -107,7 +107,6 @@ class PurchaseOrderDetails extends Model
     protected $primaryKey  = 'purchaseOrderDetailsID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -304,7 +303,8 @@ class PurchaseOrderDetails extends Model
         'altUnitValue'  => 'float',
         'detail_project_id' => 'integer',
         'contractID' => 'string',
-        'contractDescription' => 'string'
+        'contractDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

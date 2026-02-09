@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PerformaDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePerformaDetailsAPIRequest extends APIRequest
+class CreatePerformaDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

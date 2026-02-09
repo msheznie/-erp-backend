@@ -40,10 +40,16 @@ class PrBulkBulkItem implements ShouldQueue
     public $timeout = 500;
     public function __construct($input,$dispatch_db)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         
         $this->data = $input;
@@ -58,7 +64,6 @@ class PrBulkBulkItem implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
         CommonJobService::db_switch($db);
 
         $input = $this->data;
@@ -71,7 +76,7 @@ class PrBulkBulkItem implements ShouldQueue
                                           ->first();
 
         if (!$purchaseRequest) {
-            Log::error('PR not found');
+            Log::channel('pr_bulk_item')->error('PR not found');
             return;
         }
         $budgetYear = $purchaseRequest->budgetYear;

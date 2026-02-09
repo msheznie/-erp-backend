@@ -30,6 +30,7 @@ use App\Models\ItemMaster;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
 
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateQuotationMasterAPIRequest;
@@ -58,6 +59,7 @@ use App\Models\QuotationMasterVersion;
 use App\Models\QuotationVersionDetails;
 use App\Models\SalesPersonMaster;
 use App\Models\SegmentMaster;
+use App\Models\SegmentAssigned;
 use App\Models\SoPaymentTerms;
 use App\Models\YesNoSelection;
 use App\Models\Company;
@@ -71,7 +73,7 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerContactDetails;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
@@ -79,6 +81,10 @@ use App\Jobs\AddMultipleItemsToQuotation;
 use Carbon\Carbon;
 use Response;
 use App\Jobs\DocumentAttachments\SoSentToCustomerJob;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class QuotationMasterController
@@ -179,7 +185,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if (isset($input['documentDate'])) {
             if ($input['documentDate']) {
@@ -223,7 +229,7 @@ class QuotationMasterAPIController extends AppBaseController
             //$input['customerEmail'] = $customerData->CutomerCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $input['transactionCurrencyID'], 0);
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -284,7 +290,7 @@ class QuotationMasterAPIController extends AppBaseController
             $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
 
             //updating customer currency exchange rate
-            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+            $currencyConversionCustomerDefault = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
 
             if ($currencyConversionCustomerDefault) {
                 $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
@@ -373,7 +379,15 @@ class QuotationMasterAPIController extends AppBaseController
         if (empty($quotationMaster)) {
             return $this->sendError(trans('custom.quotation_master_not_found'));
         }
-
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $quotationMaster->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $quotationMaster->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $quotationMaster->isSegmentPolicyOn = false;
+        }
         return $this->sendResponse($quotationMaster->toArray(), trans('custom.quotation_master_retrieved_successfully'));
     }
 
@@ -426,10 +440,10 @@ class QuotationMasterAPIController extends AppBaseController
     public function update($id, UpdateQuotationMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','isVatEligible','customer','segment']);
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $tempName = '';
         if ($input['documentSystemID'] == 67) {
@@ -537,7 +551,7 @@ class QuotationMasterAPIController extends AppBaseController
             $input['customerCurrencyDecimalPlaces'] = $customerCurrencyMasterData->DecimalPlaces;
 
             //updating customer currency exchange rate
-            $currencyConversionCustomerDefault = \Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
+            $currencyConversionCustomerDefault = Helper::currencyConversion($input['companySystemID'], $input['transactionCurrencyID'], $customerCurrency->currencyID, 0);
 
             if ($currencyConversionCustomerDefault) {
                 $input['customerCurrencyExchangeRate'] = $currencyConversionCustomerDefault['transToDocER'];
@@ -567,19 +581,19 @@ class QuotationMasterAPIController extends AppBaseController
                             ->where('quotationMasterID', $id)->first();
         }
 
-        $input['transactionAmount'] = \Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
-        $input['companyLocalAmount'] = \Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
-        $input['companyReportingAmount'] = \Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
-        $input['customerCurrencyAmount'] = \Helper::roundValue($totalAmount->totalCustomerAmount);
+        $input['transactionAmount'] = Helper::roundValue($totalAmount->totalTransactionAmount + $totalAmount->totalVATAmount);
+        $input['companyLocalAmount'] = Helper::roundValue($totalAmount->totalLocalAmount + $totalAmount->totalVATAmountLocal);
+        $input['companyReportingAmount'] = Helper::roundValue($totalAmount->totalReportingAmount + $totalAmount->totalVATAmountRpt);
+        $input['customerCurrencyAmount'] = Helper::roundValue($totalAmount->totalCustomerAmount);
 
         if(!TaxService::checkPOVATEligible($input['customerVATEligible'],$input['vatRegisteredYN'])){
             $input['VATAmount'] = 0;
             $input['VATAmountLocal'] = 0;
             $input['VATAmountRpt'] = 0;
         }else{
-            $input['VATAmount'] = \Helper::roundValue($totalAmount->totalVATAmount);
-            $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->totalVATAmountLocal);
-            $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->totalVATAmountRpt);
+            $input['VATAmount'] = Helper::roundValue($totalAmount->totalVATAmount);
+            $input['VATAmountLocal'] = Helper::roundValue($totalAmount->totalVATAmountLocal);
+            $input['VATAmountRpt'] = Helper::roundValue($totalAmount->totalVATAmountRpt);
         }
 
         if ($quotationMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
@@ -623,6 +637,20 @@ class QuotationMasterAPIController extends AppBaseController
                     ->count();
                 if ($checkAmount > 0) {
                     return $this->sendError(trans('custom.amount_should_be_greater_than_zero'), 500);
+                }
+            }
+
+            $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                ->where('companySystemID', $input['companySystemID'])
+                ->where('isYesNO', 1)
+                ->exists();
+
+            if($quotationMaster->salesType == 2 && $isSegmentPolicyOn){
+                $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
+                    ->whereNull('serviceLineSystemID')
+                    ->count();
+                if ($checkQuantity > 0) {
+                    return $this->sendError(trans('custom.please_select_segment_for_each_line_item'), 500);
                 }
             }
 
@@ -695,7 +723,7 @@ class QuotationMasterAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['transactionAmount']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -767,10 +795,10 @@ class QuotationMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -929,7 +957,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companyID = $request->companyId;
         $documentSystemID = $request->documentSystemID;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'employeesdepartments.approvalDeligated',
@@ -1012,7 +1040,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $companyID = $request->companyId;
         $documentSystemID = $request->documentSystemID;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_quotationmaster.quotationMasterID',
@@ -1076,7 +1104,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function approveSalesQuotation(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1087,7 +1115,7 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function rejectSalesQuotation(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1102,9 +1130,21 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $input['quotationMasterID'])->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID',[67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person', 'paymentTerms_by' => function($query) {
             $query->with(['term_description']);
         }])->first();
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
+        }
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -1123,7 +1163,9 @@ class QuotationMasterAPIController extends AppBaseController
         $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
             $query->with('employee');
             $query->whereIn('documentSystemID', [67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
+        }, 'company', 'detail'=>function($query) {
+            $query->with('segment');
+        }, 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
 
         $netTotal = QuotationDetails::where('quotationMasterID', $id)
             ->sum('transactionAmount');
@@ -1138,6 +1180,16 @@ class QuotationMasterAPIController extends AppBaseController
             foreach ($soPaymentTerms as $val) {
                 $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val->paymentTemDes.' '.$val['inDays'] . trans('custom.in_days') . ', ';
             }
+        }
+
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
+            ->where('companyPolicyCategoryID', 106)
+            ->where('isYesNO', 1)
+            ->exists();
+        if($isSegmentPolicyOn){
+            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
+        } else {
+            $output->isSegmentPolicyOn = false;
         }
 
         $order = array(
@@ -1257,7 +1309,7 @@ class QuotationMasterAPIController extends AppBaseController
         $quotationMasterData->RollLevForApp_curr = 1;
         $quotationMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $quotationMasterData->documentSystemID)->first();
 
@@ -1313,7 +1365,7 @@ class QuotationMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1338,7 +1390,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotationMasterID = $input['quotationMasterID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
         $currentVersion = 0;
 
@@ -1366,7 +1418,7 @@ class QuotationMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.document_added_to_sales_order', ['type' => $quotOrSales]),500);
         }
 
-        $quotationMasterArray = array_except($quotationMasterData->toArray(),'isVatEligible');
+        $quotationMasterArray = Arr::except($quotationMasterData->toArray(),'isVatEligible');
 
         
         unset($quotationMasterArray['quotation_last_status']);
@@ -1415,7 +1467,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -1467,7 +1519,7 @@ class QuotationMasterAPIController extends AppBaseController
         }
 
         $salesQuotationArray = $quotationMasterData->toArray();
-        $salesQuotationArray = array_except($salesQuotationArray,['quotation_last_status', 'isVatEligible','assetID','isFrom']);
+        $salesQuotationArray = Arr::except($salesQuotationArray,['quotation_last_status', 'isVatEligible','assetID','isFrom']);
 
         $storeSalesQuotationHistory = QuotationMasterRefferedback::insert($salesQuotationArray);
 
@@ -1690,7 +1742,7 @@ class QuotationMasterAPIController extends AppBaseController
         $id = $input['quotationMasterID'];
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = QuotationMaster::find($id);
@@ -1770,7 +1822,7 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -1866,7 +1918,7 @@ class QuotationMasterAPIController extends AppBaseController
 
         $msg = $order_type . ' ' . trans('custom.successfully_cancelled');
         
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $quotationMaster->cancelledYN =-1;
         $quotationMaster->cancelledByEmpID = $employee->empID;
@@ -1946,7 +1998,7 @@ class QuotationMasterAPIController extends AppBaseController
         
   
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $quotationMaster->manuallyClosed =1;
         $quotationMaster->manuallyClosedByEmpID = $employee->empID;
@@ -1996,11 +2048,31 @@ class QuotationMasterAPIController extends AppBaseController
 
     public function downloadQuotationItemUploadTemplate(Request $request) {
         $input = $request->all();
+
+        if(isset($input['salesType']) && $input['salesType'] != null){
+            $salesType = $input['salesType'];
+        }else {
+            $salesType = null;
+        }
+
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
-        if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
-            return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
+        $companyPolicy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                        ->where('companyPolicyCategoryID', 106)
+                        ->where('isYesNO', 1)
+                        ->exists();
+
+        if($companyPolicy && $salesType == 2){
+            if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template_with_segment.xlsx')) {
+                return Storage::disk($disk)->download('quotation_template/quotation_template_with_segment.xlsx', 'template.xlsx');
+            } else {
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
+            }
         } else {
-            return $this->sendError(trans('custom.attachments_not_found'), 500);
+            if ($exists = Storage::disk($disk)->exists('quotation_template/quotation_template.xlsx')) {
+                return Storage::disk($disk)->download('quotation_template/quotation_template.xlsx', 'template.xlsx');
+            } else {
+                return $this->sendError(trans('custom.attachments_not_found'), 500);
+            }
         }
     }
 
@@ -2009,7 +2081,7 @@ class QuotationMasterAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -2025,6 +2097,10 @@ class QuotationMasterAPIController extends AppBaseController
                 return $this->sendError(trans('custom.quotation_not_found'), 500);
             }
 
+            $companyPolicy = CompanyPolicyMaster::where('companySystemID', $masterData->companySystemID)
+                ->where('companyPolicyCategoryID', 106)
+                ->where('isYesNO', 1)
+                ->exists();
 
             $allowedExtensions = ['xlsx','xls'];
 
@@ -2052,6 +2128,7 @@ class QuotationMasterAPIController extends AppBaseController
             $validateHeaderQty = false;
             $validateHeaderPrice = false;
             $validateVat = false;
+            $validateHeaderSegment = false;
             $totalItemCount = 0;
 
             $allowItemToTypePolicy = false;
@@ -2069,6 +2146,18 @@ class QuotationMasterAPIController extends AppBaseController
                 
                 if(!array_key_exists('vat',$value) || !array_key_exists('item_code',$value) || !array_key_exists('sales_price',$value)  || !array_key_exists('qty',$value)) {
                      return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
+                }
+
+                if($companyPolicy && $masterData->salesType == 2){
+                    if(isset($value['segment']) && $value['segment'] != null){
+                        $validateHeaderSegment = true;
+                    }
+                } else {
+                    if(isset($value['segment']) && $value['segment'] != null){
+                        return $this->sendError(trans('custom.segment_is_not_allowed_for_this_upload'), 500);
+                    } else {
+                        $validateHeaderSegment = true;
+                    }
                 }
 
                 if (isset($value['item_code'])) {
@@ -2097,7 +2186,7 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
-            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat) {
+            if (!$validateHeaderCode || !$validateHeaderCode || !$validateVat || !$validateHeaderSegment) {
                 return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
@@ -2131,6 +2220,30 @@ class QuotationMasterAPIController extends AppBaseController
                             if($salesType == 2){
                                 if($itemMasterData->financeCategoryMaster != 2){
                                     return $this->sendError(trans('custom.only_service_items_can_add_to_quotations_for_sales_type_subscription'), 500);
+                                }
+                                if($companyPolicy){
+                                    if(isset($finalRecords['segment']) && $finalRecords['segment'] != null){
+                                        $segment = SegmentMaster::where('ServiceLineCode', $finalRecords['segment'])
+                                            ->where('isActive', 1)
+                                            ->where('isDeleted', 0)
+                                            ->first();
+                                        if(!$segment){
+                                            return $this->sendError(trans('custom.segment_code_is_invalid'), 500);
+                                        }
+
+                                        if(isset($masterData->companySystemID)){
+                                            $segmentAssigned = SegmentAssigned::where('serviceLineSystemID', $segment->serviceLineSystemID)
+                                                ->where('companySystemID', $masterData->companySystemID)
+                                                ->where('isAssigned', 1)
+                                                ->where('isActive', 1)
+                                                ->first();
+                                            if(!$segmentAssigned){
+                                                return $this->sendError(trans('custom.segment_not_assigned_to_company'), 500);
+                                            }
+                                        }
+                                    } else {
+                                        return $this->sendError(trans('custom.please_select_segment_for_each_line_item'), 500);
+                                    }
                                 }
                             }
                         }

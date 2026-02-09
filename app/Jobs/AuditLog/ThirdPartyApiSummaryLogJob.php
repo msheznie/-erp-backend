@@ -11,6 +11,7 @@ use App\helper\CommonJobService;
 use App\Models\ThirdPartyApiLog;
 use Illuminate\Support\Facades\Log;
 use Exception;
+use App\Jobs\AuditLog\StoreAuditLogJob;
 
 class ThirdPartyApiSummaryLogJob implements ShouldQueue
 {
@@ -41,9 +42,9 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
     public function __construct(
         $dataBase, 
         $thirdPartyIntegrationKeyId = null, 
-        $tenant_uuid, 
-        $endpoint, 
-        $method, 
+        $tenant_uuid = null, 
+        $endpoint = null, 
+        $method = null, 
         $requestPayload = [], 
         $responsePayload = [], 
         $statusCode = null, 
@@ -127,7 +128,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
     }
 
     /**
-     * Log to file (existing functionality)
+     * Log to log storage via StoreAuditLogJob
      */
     private function logToFile($externalReference, $isWebhook)
     {
@@ -141,9 +142,7 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             'execution_time_ms' => $this->executionTime
         ];
 
-        Log::useFiles(storage_path() . '/logs/audit.log');
-
-        Log::info('third_party_api_log:', [
+        $logData = [
             'channel' => 'third_party_api',
             'external_reference' => $externalReference,
             'error_message' => $this->errorMessage,
@@ -156,7 +155,9 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
             'user_name' => $this->user,
             'date_time' => date('Y-m-d H:i:s'),
             'data' => json_encode($logData),
-        ]);
+        ];
+        
+        StoreAuditLogJob::dispatch($logData)->onQueue('audit-logs');
     }
 
     /**

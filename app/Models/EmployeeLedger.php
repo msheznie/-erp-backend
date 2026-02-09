@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use App\helper\Helper;
 
 /**
  * @SWG\Definition(
@@ -341,7 +342,7 @@ class EmployeeLedger extends Model
 
     public function setDocumentDateAttribute($value)
     {
-        $this->attributes['documentDate'] = \Helper::dateAddTime($value);
+        $this->attributes['documentDate'] = Helper::dateAddTime($value);
     }
 
     public function local_currency()

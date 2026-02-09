@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
+use App\helper\email as Email;
 
 class PoSentToSupplierJob implements ShouldQueue
 {
@@ -38,10 +39,16 @@ class PoSentToSupplierJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $poID, $empEmail)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->poID = $poID;
@@ -58,7 +65,6 @@ class PoSentToSupplierJob implements ShouldQueue
         $purchaseOrderID = $this->poID;
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/po_sent_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
@@ -202,7 +208,7 @@ class PoSentToSupplierJob implements ShouldQueue
                             'documentCode' => $procumentOrderUpdate->purchaseOrderCode
                         ]);
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
                             DB::rollback();
                             Log::error('Error');
@@ -244,7 +250,7 @@ class PoSentToSupplierJob implements ShouldQueue
                             'documentCode' => $procumentOrderUpdate->purchaseOrderCode
                         ]);
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
                             DB::rollback();
                             Log::error('Error');

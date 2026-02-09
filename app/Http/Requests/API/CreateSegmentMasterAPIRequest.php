@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SegmentMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSegmentMasterAPIRequest extends APIRequest
+class CreateSegmentMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -37,6 +37,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Models\CustomerMaster;
 use App\Models\CustomerAssigned;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -86,7 +88,6 @@ class CreatePaymentVoucher implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_payment_voucher.log');
 
         CommonJobService::db_switch($this->db);
 
@@ -155,9 +156,9 @@ class CreatePaymentVoucher implements ShouldQueue
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($pdcChequeData['errors']) && empty($fieldErrors)) {
-                $finalArray = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                $finalArray = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
                 if (!is_null($pdcChequeDetails)) {
-                    $finalArray = array_add($finalArray,'pdcChequeDetails',$pdcChequeDetailsDataSets[$masterIndex]);
+                    $finalArray = Arr::add($finalArray,'pdcChequeDetails',$pdcChequeDetailsDataSets[$masterIndex]);
                 }
                 $masterDatasets[] = $finalArray;
             }
@@ -315,7 +316,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                 $autoApproveParams['createMonthlyDeduction'] = $confirmDataSet['createMonthlyDeduction'];
                                 $autoApproveParams['db'] = $this->db;
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();
@@ -412,9 +413,6 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
-
-        Log::error($returnData);
-
 
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];

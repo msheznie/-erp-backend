@@ -16,12 +16,13 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\TenderBoqItems;
 use App\Services\SrmDocumentModifyService;
+use App\helper\Helper;
 
 /**
  * Class PricingScheduleMasterController
@@ -354,7 +355,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
             }
             $schedule = $scheduleResp['data'];
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $data['tender_id']=$input['tenderMasterId'];

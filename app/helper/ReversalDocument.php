@@ -70,6 +70,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Response;
 
+use App\helper\email as Email;
 class ReversalDocument
 {
 
@@ -140,7 +141,7 @@ class ReversalDocument
                         $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been reversed by '.$reversedBy.'</p>';
                         $dataEmail['alertMessage'] = $employee->documentID." Document Reversed";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
             }

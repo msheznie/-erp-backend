@@ -11,6 +11,7 @@ use App\Models\Employee;
 use App\helper\NotificationService;
 use Illuminate\Support\Facades\Log;
 
+use App\helper\email as Email;
 class SendEmailForDocument
 {
     public static function approvedDocument($input)
@@ -31,7 +32,6 @@ class SendEmailForDocument
                                     switch($notification_user->applicableCategoryID) {
                                         case 1 :
                                             // check notification user id is equal to approved user id
-                                                Log::info('Notified user id is equal to approved user id log'.$notification_user->empID.'approved user'. $procument_order_master->approvedByUserSystemID);
                                                 self::sendEmailToEmployeeCategory($procument_order_master,$notification_user);
                                         break;
                                     }
@@ -68,11 +68,8 @@ class SendEmailForDocument
                 $dataEmail['companySystemID'] = $purchaseOrder->companySystemID;
                 $dataEmail['alertMessage']  = $purchaseOrder->purchaseOrderCode . " is marked as logistics available ";
                 $dataEmail['emailAlertMessage'] = $body;
-                Log::info('Email stared to send to PO',$dataEmail);
-                $sendEmail = \Email::sendEmailErp($dataEmail);
-                Log::info('Email end here');
+                $sendEmail = Email::sendEmailErp($dataEmail);
             }
 
-            Log::info('sendEmailToEmployeeCategory function called - end');
     }
 }

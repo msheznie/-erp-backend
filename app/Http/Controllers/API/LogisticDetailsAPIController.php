@@ -24,9 +24,10 @@ use App\Repositories\LogisticDetailsRepository;
 use App\Repositories\LogisticRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class LogisticDetailsController
@@ -426,7 +427,7 @@ class LogisticDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $logistic = $this->logisticRepository->findWithoutFail($input['logisticMasterID']);
 

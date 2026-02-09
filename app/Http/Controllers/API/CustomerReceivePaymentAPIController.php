@@ -79,12 +79,17 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\PaymentType;
 use App\Services\GeneralLedgerService;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use App\Services\ValidateDocumentAmend;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class CustomerReceivePaymentController
@@ -188,7 +193,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID', 'employeeID'));
 
-            if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+            if (!Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
                 return $this->sendError(
                     trans('custom.currency_exchange_rate_required'),
                     500
@@ -320,9 +325,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'employeeID','companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee','bank_info']);
+        $input = Arr::except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee','bank_info']);
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_required'),
                 500
@@ -340,7 +345,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['projectID'] = null;
         }
 
-        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
+        $documentCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
 
         $input['payment_type_id'] = isset($input['paymentType'][0]) ?  $input['paymentType'][0]: $input['paymentType'];
 
@@ -357,14 +362,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 4;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -403,7 +408,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
         if ($company) {
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
@@ -470,8 +475,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyID'] = $currency->currencyID;
                     $myCurr = $currency->currencyID;
 
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    $companyCurrency = Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -509,7 +514,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMaster = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMaster) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                     }
@@ -521,8 +526,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError(trans('custom.invoice_details_exist_cannot_change_currency'), 500);
                 } else {
                     $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    $companyCurrency = Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -596,7 +601,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMasterBank = Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMasterBank) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
                     }                
@@ -608,7 +613,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMasterBank = Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMasterBank) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
                     }
@@ -644,9 +649,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
             $masterHeaderSumReport = abs($masterHeaderSumReport);
 
-            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
-            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
-            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+            $input['receivedAmount'] = (Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (Helper::roundValue($masterHeaderSumReport) * -1);
 
         }
         else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
@@ -676,9 +681,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
             $masterHeaderSumReport = abs($masterHeaderSumReport);
 
-            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
-            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
-            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+            $input['receivedAmount'] = (Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (Helper::roundValue($masterHeaderSumReport) * -1);
         }
 
         // calculating bank amount
@@ -690,10 +695,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['bankAmount'] = $input['companyRptAmount'];
             $input['bankCurrencyER'] = $input['companyRptCurrencyER'];
         } else {
-            $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
+            $bankCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
 
             if ($bankCurrencyConversion) {
-                $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
+                $input['bankAmount'] = (Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
                 $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
             }
         }
@@ -1283,7 +1288,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'amount' => $input['receivedAmount']
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1294,7 +1299,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['custChequeNo'] = null;
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -1353,9 +1358,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank','bank_info']);
+        $input = Arr::except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank','bank_info']);
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_required'),
                 500
@@ -1369,7 +1374,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError(trans('custom.receipt_voucher_not_found'));
         }
 
-        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
+        $documentCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
 
         $input['payment_type_id'] = isset($input['paymentType'][0]) ?  $input['paymentType'][0]: $input['paymentType'];
 
@@ -1386,14 +1391,14 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 4;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -1424,7 +1429,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
         if ($company) {
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
@@ -1455,8 +1460,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $input['custTransactionCurrencyID'] = $currency->currencyID;
                     $myCurr = $currency->currencyID;
 
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    $companyCurrency = Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -1494,7 +1499,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMaster = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMaster) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                     }
@@ -1506,8 +1511,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     return $this->sendError(trans('custom.invoice_details_exist_cannot_change_currency'), 500);
                 } else {
                     $myCurr = $input['custTransactionCurrencyID'];
-                    $companyCurrency = \Helper::companyCurrency($customerReceivePayment->companySystemID);
-                    $companyCurrencyConversion = \Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
+                    $companyCurrency = Helper::companyCurrency($customerReceivePayment->companySystemID);
+                    $companyCurrencyConversion = Helper::currencyConversion($customerReceivePayment->companySystemID, $myCurr, $myCurr, 0);
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = 1;
                     $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -1581,7 +1586,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if ($bankAccount) {
                     $input['bankAccount'] = $bankAccount->bankAccountAutoID;
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMasterBank = Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMasterBank) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
                     }
@@ -1593,7 +1598,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $bankAccount = BankAccount::find($input['bankAccount']);
                 if ($bankAccount) {
                     $input['bankCurrency'] = $bankAccount->accountCurrencyID;
-                    $currencyConversionDefaultMasterBank = \Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
+                    $currencyConversionDefaultMasterBank = Helper::currencyConversion($customerReceivePayment->companySystemID, $input['custTransactionCurrencyID'], $bankAccount->accountCurrencyID, 0);
                     if ($currencyConversionDefaultMasterBank) {
                         $input['bankCurrencyER'] = $currencyConversionDefaultMasterBank['transToDocER'];
                     }
@@ -1633,9 +1638,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
             $masterHeaderSumReport = abs($masterHeaderSumReport);
 
-            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
-            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
-            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+            $input['receivedAmount'] = (Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (Helper::roundValue($masterHeaderSumReport) * -1);
 
         }
         else if ($input['documentType'] == 14 || $input['documentType'] == 15) {
@@ -1665,9 +1670,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $masterHeaderSumLocal = abs($masterHeaderSumLocal);
             $masterHeaderSumReport = abs($masterHeaderSumReport);
 
-            $input['receivedAmount'] = (\Helper::roundValue($masterHeaderSumTrans) * -1);
-            $input['localAmount'] = (\Helper::roundValue($masterHeaderSumLocal) * -1);
-            $input['companyRptAmount'] = (\Helper::roundValue($masterHeaderSumReport) * -1);
+            $input['receivedAmount'] = (Helper::roundValue($masterHeaderSumTrans) * -1);
+            $input['localAmount'] = (Helper::roundValue($masterHeaderSumLocal) * -1);
+            $input['companyRptAmount'] = (Helper::roundValue($masterHeaderSumReport) * -1);
         }
 
         // calculating bank amount
@@ -1679,10 +1684,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['bankAmount'] = $input['companyRptAmount'];
             $input['bankCurrencyER'] = $input['companyRptCurrencyER'];
         } else {
-            $bankCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
+            $bankCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['custTransactionCurrencyID'], $input['bankCurrency'], $masterHeaderSumTrans);
 
             if ($bankCurrencyConversion) {
-                $input['bankAmount'] = (\Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
+                $input['bankAmount'] = (Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1);
                 $input['bankCurrencyER'] = $bankCurrencyConversion['transToDocER'];
             }
         }
@@ -2204,7 +2209,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 'amount' => $input['receivedAmount']
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -2215,7 +2220,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['custChequeNo'] = null;
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -2318,17 +2323,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
 
         $masterINVID = CustomerReceivePayment::findOrFail($id);
-            $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
-            $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
-            $localAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
+            $VATAmountLocal = Helper::roundValue($masterINVID->VATAmount/$value);
+            $netAmountLocal = Helper::roundValue($masterINVID->netAmount/$value);
+            $localAmount = Helper::roundValue($masterINVID->receivedAmount/$value);
 
             $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal, 'localAmount'=>$localAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $localAmount = \Helper::roundValue($item->DRAmount / $value);
-            $itemVATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
-            $itemNetAmountLocal = \Helper::roundValue($item->netAmount / $value);
+            $localAmount = Helper::roundValue($item->DRAmount / $value);
+            $itemVATAmountLocal = Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountLocal = Helper::roundValue($item->netAmount / $value);
             $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$itemVATAmountLocal, 'netAmountLocal'=>$itemNetAmountLocal);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -2354,18 +2359,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $details = DirectReceiptDetail::where('directReceiptAutoID',$id)->get();
 
         $masterINVID = CustomerReceivePayment::findOrFail($id);
-        $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
-        $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
-        $rptAmount = \Helper::roundValue($masterINVID->receivedAmount/$value);
+        $VATAmountRpt = Helper::roundValue($masterINVID->VATAmount/$value);
+        $netAmountRpt = Helper::roundValue($masterINVID->netAmount/$value);
+        $rptAmount = Helper::roundValue($masterINVID->receivedAmount/$value);
 
 
             $masterInvoiceArray = array('companyRptCurrencyER'=>$value, 'VATAmountRpt'=>$VATAmountRpt, 'netAmountRpt'=>$netAmountRpt, 'companyRptAmount'=>$rptAmount);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $reportingAmount = \Helper::roundValue($item->DRAmount / $value);
-            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
-            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $reportingAmount = Helper::roundValue($item->DRAmount / $value);
+            $itemVATAmountRpt = Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = Helper::roundValue($item->netAmount / $value);
             $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
             $updatedLocalER = DirectReceiptDetail::findOrFail($item->directReceiptDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -2432,7 +2437,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['invoiceType'] = array(array('value' => 13, 'label' => trans('custom.customer_invoice_receipt')),
@@ -2483,7 +2488,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
@@ -2552,7 +2557,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
@@ -2683,7 +2688,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $custReceivePaymentMaster->save();
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $custReceivePaymentMaster->documentSystemID)->first();
 
@@ -2739,7 +2744,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -2781,7 +2786,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError(trans('custom.customer_receive_payment_not_found'));
         }
 
-        $refernaceDoc = \Helper::getCompanyDocRefNo($customerReceivePaymentRecord->companySystemID, $customerReceivePaymentRecord->documentSystemID);
+        $refernaceDoc = Helper::getCompanyDocRefNo($customerReceivePaymentRecord->companySystemID, $customerReceivePaymentRecord->documentSystemID);
 
         $transDecimal = 2;
         $localDecimal = 3;
@@ -2866,7 +2871,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 21)
@@ -2937,7 +2942,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -2969,7 +2974,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_customerreceivepayment.custReceivePaymentAutoID',
@@ -3040,7 +3045,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     public function approveReceiptVoucher(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -3051,7 +3056,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     public function rejectReceiptVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -3188,12 +3193,12 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_cancel_this_receipt_voucher_invoice_det'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $customerReceivePaymentData->cancelYN = -1;
         $customerReceivePaymentData->cancelComment = $request['cancelComments'];
         $customerReceivePaymentData->cancelDate = NOW();
-        $customerReceivePaymentData->cancelledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $customerReceivePaymentData->cancelledByEmpSystemID = Helper::getEmployeeSystemID();
         $customerReceivePaymentData->canceledByEmpID = $employee->empID;
         $customerReceivePaymentData->canceledByEmpName = $employee->empFullName;
         $customerReceivePaymentData->save();
@@ -3206,7 +3211,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
     public function approvalPreCheckReceiptVoucher(Request $request)
     {
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
@@ -3221,7 +3226,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $id = $input['custReceivePaymentAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = $this->customerReceivePaymentRepository->findWithoutFail($id);
@@ -3349,7 +3354,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

@@ -41,6 +41,7 @@ use App\Models\ChartOfAccount;
 use App\Models\SalesReturnDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
+use App\helper\Helper;
 
 class SalesInvoiceTaxLedgerService
 {
@@ -59,10 +60,10 @@ class SalesInvoiceTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -337,8 +338,8 @@ class SalesInvoiceTaxLedgerService
                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                 $ledgerDetailsData['reportingER'] = $value->comRptCurrencyER;
                 $ledgerDetailsData['taxableAmount'] = ($masterData->isPerforma == 0) ? $totalAmount : $value->invoiceAmount;
-                $ledgerDetailsData['taxableAmountLocal'] = ($masterData->isPerforma == 0) ? \Helper::roundValue($MyLocalAmount) : $value->localAmount;
-                $ledgerDetailsData['taxableAmountReporting'] = ($masterData->isPerforma == 0) ? \Helper::roundValue($MyRptAmount) : $value->comRptAmount;
+                $ledgerDetailsData['taxableAmountLocal'] = ($masterData->isPerforma == 0) ? Helper::roundValue($MyLocalAmount) : $value->localAmount;
+                $ledgerDetailsData['taxableAmountReporting'] = ($masterData->isPerforma == 0) ? Helper::roundValue($MyRptAmount) : $value->comRptAmount;
                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal * $value->invoiceQty;
                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt * $value->invoiceQty;
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrency;

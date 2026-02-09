@@ -23,6 +23,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 
 class CustomerInvoiceARLedgerService
@@ -86,22 +87,22 @@ class CustomerInvoiceARLedgerService
             $data['documentType'] = $masterData->documentType;
             $data['selectedToPaymentInv'] = 0;
             $data['fullyInvoiced'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdPcID'] = gethostname();
-            $data['timeStamp'] = \Helper::currentDateTime();
+            $data['timeStamp'] = Helper::currentDateTime();
     
             if($masterData->isPerforma == 3|| $masterData->isPerforma == 4|| $masterData->isPerforma == 5){// item sales invoice
                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
+                $data['localAmount'] = Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
+                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
                 array_push($finalData, $data);
             }else if($masterData->isPerforma == 2) {
                 $processData = self::performDirectInvoiceDetails($masterModel,$data);
                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans+$processData['_documentTransAmount']);
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal+$processData['_documentLocalAmount']));
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt+$processData['_documentRptAmount']));
+                $data['localAmount'] = Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal+$processData['_documentLocalAmount']));
+                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt+$processData['_documentRptAmount']));
 
                 array_push($finalData, $data);
             }else if( $masterData->isPerforma == 1){
@@ -111,8 +112,8 @@ class CustomerInvoiceARLedgerService
                     $data['serviceLineCode'] = $item->serviceLineCode;
 
                     $data['custInvoiceAmount'] = ABS($item->invoiceAmount);
-                    $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount));
-                    $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount));
+                    $data['localAmount'] = Helper::roundValue(ABS($item->localAmount));
+                    $data['comRptAmount'] = Helper::roundValue(ABS($item->comRptAmount));
                     array_push($finalData, $data);
                 }
 
@@ -123,15 +124,15 @@ class CustomerInvoiceARLedgerService
                     $data['serviceLineCode'] = $item->serviceLineCode;
 
                     $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
-                    $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
-                    $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                    $data['localAmount'] = Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                    $data['comRptAmount'] = Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
                     array_push($finalData, $data);
                 }
 
             }else {
                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                $data['localAmount'] = Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
                 array_push($finalData, $data);
             }
 
@@ -154,8 +155,8 @@ class CustomerInvoiceARLedgerService
                         $data['serviceLineCode'] = $item->serviceLineCode;
                         
                         $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
-                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
-                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                        $data['localAmount'] = Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                        $data['comRptAmount'] = Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
                         $chart_Of_account = ChartOfAccount::where('chartOfAccountSystemID', $item->glSystemID)->first();
 
                         array_push($detailsArray, $data);

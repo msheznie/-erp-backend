@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSStagSalesReturnDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePOSStagSalesReturnDetailsAPIRequest extends APIRequest
+class UpdatePOSStagSalesReturnDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

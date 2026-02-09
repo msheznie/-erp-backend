@@ -40,7 +40,6 @@ class BudgetDeadlineNotification extends Command
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-deadline-notification.log');
 
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {
@@ -52,7 +51,5 @@ class BudgetDeadlineNotification extends Command
             $tenant_database = $tenant->database;
             BudgetDeadlineNotificationJob::dispatch($tenant_database);
         }
-
-        $this->info('Budget deadline notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }

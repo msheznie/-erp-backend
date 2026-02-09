@@ -15,6 +15,7 @@ use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\helper\email as Email;
 
 class PaymentReleasedToSupplierJob implements ShouldQueue
 {
@@ -34,10 +35,16 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $orderData, $mailData, $pdfName)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->orderData = $orderData;
@@ -56,7 +63,6 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
         $db = $this->dispatch_db;
         $dataEmail = $this->mailData;
 
-        Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
@@ -74,10 +80,10 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
 
         $dataEmail['attachmentFileName'] = realpath($path.$this->pdfName);
 
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
         if (!$sendEmail["success"]) {
-            Log::error('Error');
-            Log::error($sendEmail["message"]);
+            Log::channel('payment_released_to_supplier')->error('Error');
+            Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);
         }
     }
 }

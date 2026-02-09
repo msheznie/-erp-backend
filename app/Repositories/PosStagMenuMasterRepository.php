@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PosStagMenuMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PosStagMenuMasterRepository

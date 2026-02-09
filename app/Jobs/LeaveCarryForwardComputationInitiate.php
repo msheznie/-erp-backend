@@ -25,10 +25,16 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
      */
     public function __construct($dispatchDb)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatchDb = $dispatchDb;
@@ -43,7 +49,6 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
     {
 
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
-        Log::useFiles($path); 
         
         $db = $this->dispatchDb;
         $mainDb = DB::connection()->getDatabaseName();
@@ -55,7 +60,7 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
         $companyList = CommonJobService::company_list();
 
         if ($companyList->count() == 0) {
-            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+            Log::channel('notification_service')->error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
             return;
         }
 

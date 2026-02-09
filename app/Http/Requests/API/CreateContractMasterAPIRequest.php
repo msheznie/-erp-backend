@@ -4,9 +4,9 @@ namespace App\Http\Requests\API;
 
 use App\Models\ContractMaster;
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateContractMasterAPIRequest extends APIRequest
+class CreateContractMasterAPIRequest extends FormRequest
 {
     public function authorize()
     {

@@ -8,13 +8,14 @@ use App\Models\WarehouseRights;
 use App\Repositories\WarehouseRightsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use App\Models\EmployeeNavigation;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class WarehouseRightsController
@@ -383,10 +384,10 @@ class WarehouseRightsAPIController extends AppBaseController
                 $company = $companiesByGroup;
 
                 $globalCompanyID = (isset($input['globalCompanyID'])) ? $input['globalCompanyID'] : 0;
-                $isGroup = \Helper::checkIsCompanyGroup($globalCompanyID);
+                $isGroup = Helper::checkIsCompanyGroup($globalCompanyID);
 
                 if($isGroup){
-                    $company = \Helper::getGroupCompany($globalCompanyID);
+                    $company = Helper::getGroupCompany($globalCompanyID);
                 }else{
                     $company = [$globalCompanyID];
                 }

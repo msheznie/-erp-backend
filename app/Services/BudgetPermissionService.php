@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BudgetControl;
 use App\Models\BudgetDelegateAccess;
 use App\Models\BudgetDelegateAccessRecord;
+use App\Models\ApprovalLevel;
 use App\Models\CompanyDepartment;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\DepartmentBudgetPlanning;
@@ -14,6 +15,7 @@ use App\Models\EmployeesDepartment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use App\helper\Helper;
 
 class BudgetPermissionService
 {
@@ -35,7 +37,7 @@ class BudgetPermissionService
             ];
         }
 
-        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] : \Helper::getEmployeeSystemID();
+        $employeeID = isset($input['delegateUser']) ? $input['delegateUser'] : Helper::getEmployeeSystemID();
 
         $userPermissions = [
             'financeUser' => [
@@ -67,7 +69,9 @@ class BudgetPermissionService
         ->where('isActive', 1)
         ->where('removedYN', 0);
 
-        if($checkUserHasApprovalAccess->exists()) {
+        $approvalLevelActive = ApprovalLevel::where('isActive', -1)->where('companySystemID', $companyId)->where('documentSystemID', 133)->exists();
+
+        if($checkUserHasApprovalAccess->exists() && $approvalLevelActive) {
             $userPermissions['financeApprovalUser']['status'] = true;
 
             return [
@@ -242,7 +246,7 @@ class BudgetPermissionService
      */
     public function isFinanceUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -261,7 +265,7 @@ class BudgetPermissionService
      */
     public function isHODUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -281,7 +285,7 @@ class BudgetPermissionService
      */
     public function isDelegateUser(int $companyId, ?int $employeeId = null): bool
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         $assignDepartments = CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)
@@ -304,7 +308,7 @@ class BudgetPermissionService
      */
     public function getUserAssignedDepartments(int $companyId, ?int $employeeId = null)
     {
-        $employeeId = $employeeId ?? \Helper::getEmployeeSystemID();
+        $employeeId = $employeeId ?? Helper::getEmployeeSystemID();
         
         return CompanyDepartmentEmployee::where('employeeSystemID', $employeeId)
             ->where('isActive', 1)

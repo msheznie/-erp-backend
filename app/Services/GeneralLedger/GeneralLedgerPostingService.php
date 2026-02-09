@@ -249,8 +249,9 @@ class GeneralLedgerPostingService
                         $suppInvData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
                         if ($suppInvData->invoiceType == 6 || $suppInvData->invoiceType == 7) {
                             $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel, $dataBase);
-                        } else {
-                            if ($suppInvData->invoiceType != 3) {
+                        } 
+                        else {
+                            if ($suppInvData->invoiceType != 3 && $suppInvData->invoiceType != 8) {
                                 $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
                             }
                         }
@@ -272,7 +273,6 @@ class GeneralLedgerPostingService
                 $updateVATLedger = TaxLedgerInsert::dispatch($masterModel, $taxLedgerData, $dataBase);
             }
             
-            Log::info('---- GL End Successfully -----' . date('H:i:s'));
             return ['status' => true];
         }
 	}

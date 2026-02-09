@@ -60,7 +60,6 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
     public function handle()
     {
 
-        Log::useFiles(CommonJobService::get_specific_log_file('recurring-voucher'));
 
         CommonJobService::db_switch($this->dataBase);
         DB::beginTransaction();
@@ -105,13 +104,13 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
                     }
                 }
             } else {
-                Log::error("Recurring Voucher Setup not found");
+                Log::channel('recurring_voucher_service')->error("Recurring Voucher Setup not found");
             }
 
             DB::commit();
         }
         catch (\Exception $e) {
-            Log::error("Recurring Voucher Setup Schedule (Schedule create error) :- {$e->getMessage()}");
+            Log::channel('recurring_voucher_service')->error("Recurring Voucher Setup Schedule (Schedule create error) :- {$e->getMessage()}");
 
             DB::rollback();
         }

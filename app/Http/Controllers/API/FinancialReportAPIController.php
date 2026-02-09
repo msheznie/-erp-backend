@@ -81,9 +81,9 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -97,7 +97,7 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
-        $departments1 = collect(\Helper::getCompanyServicelineWithMaster($selectedCompanyId));
+        $departments1 = collect(Helper::getCompanyServicelineWithMaster($selectedCompanyId));
         $years = CompanyFinanceYear::selectRaw('isCurrent,DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $selectedCompanyId)->get();
 
 
@@ -239,9 +239,9 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -249,7 +249,7 @@ class FinancialReportAPIController extends AppBaseController
         $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup', 0)->get();
 
 
-        $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
+        $departments1 = collect(Helper::getCompanyServiceline($selectedCompanyId));
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
@@ -351,8 +351,8 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -831,7 +831,7 @@ class FinancialReportAPIController extends AppBaseController
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $getProjectAmountsCurrencyConvertion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
         $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
 
         if ($projectAmount > 0) {
@@ -872,9 +872,9 @@ class FinancialReportAPIController extends AppBaseController
         
         $companyID = $input['comapnyID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         } else {
             $childCompanies = [$companyID];
         }
@@ -886,7 +886,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         // Retrieve company currency information
-        $companyCurrency = \Helper::companyCurrency($companyID);
+        $companyCurrency = Helper::companyCurrency($companyID);
         $companyName =  $companyCurrency->CompanyName;
         $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
         $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
@@ -898,18 +898,25 @@ class FinancialReportAPIController extends AppBaseController
             $employeeDatas = Employee::leftJoin('erp_bookinvsuppmaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_bookinvsuppmaster.employeeID')
                      ->where('erp_bookinvsuppmaster.documentType', 4)
-                     ->where('erp_bookinvsuppmaster.approved', -1)
-                     ->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
+                     ->where('erp_bookinvsuppmaster.approved', -1);
+                     //->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
             })
             ->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
                      ->where('erp_paysupplierinvoicemaster.invoiceType', 7)
-                     ->where('erp_paysupplierinvoicemaster.approved', -1)
-                     ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+                     ->where('erp_paysupplierinvoicemaster.approved', -1);
+                     //->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+            })
+            ->leftJoin('erp_debitnote', function ($join) use ($childCompanies){
+                $join->on('employees.employeeSystemID', '=', 'erp_debitnote.empID')
+                     ->where('erp_debitnote.type', 2)
+                     ->where('erp_debitnote.approved', -1);
+                     //->whereIn('erp_debitnote.companySystemID', $childCompanies);
             })
             ->where(function ($query) {
                 $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
-                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID');
+                      ->orWhereNotNull('erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
+                      ->orWhereNotNull('erp_debitnote.empID');
             })
             ->groupBy('employees.employeeSystemID')->pluck('employees.employeeSystemID');
         }
@@ -1046,14 +1053,14 @@ class FinancialReportAPIController extends AppBaseController
                 $recordOwner->isSetOpeningBalance = false;
             }
 
-            if (($da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
+            if (($da->type == 11 || $da->type == 7 || $da->type == 5 || $da->type == 6 || $da->type == 3) && $da->type != 2){
                 // update each employee table total
-                $recordOwner->totalSumLocal += $da->amountLocal * -1;
-                $recordOwner->totalSumRpt += $da->amountRpt * -1;
+                $recordOwner->totalSumLocal += $da->type == 11 && $da->docType == 3 ? $da->amountLocal : $da->amountLocal * -1;
+                $recordOwner->totalSumRpt += $da->type == 11 && $da->docType == 3 ? $da->amountRpt : $da->amountRpt * -1;
 
                 // calculate grand sum
-                $grandSumArray['grandSumLocal'] += $da->amountLocal * -1;
-                $grandSumArray['grandSumRpt'] += $da->amountRpt * -1;
+                $grandSumArray['grandSumLocal'] += $da->type == 11 && $da->docType == 3 ? $da->amountLocal : $da->amountLocal * -1;
+                $grandSumArray['grandSumRpt'] += $da->type == 11 && $da->docType == 3 ? $da->amountRpt : $da->amountRpt * -1;
 
                 if ($da->refType == 1) {
                     // update each employee table total
@@ -1148,7 +1155,7 @@ class FinancialReportAPIController extends AppBaseController
             $templateName = "export_report.employee_ledger_report";
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
 
             return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
@@ -1219,8 +1226,8 @@ class FinancialReportAPIController extends AppBaseController
                         $data['glDescription'] = $val['AccountDescription'];
                         $data['companySystemID'] = $val['selectedCompanyID'];
                         $data['createdPCID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserID'] = Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data);
                     }
                 }
@@ -1231,7 +1238,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $companyArray = $request->companySystemID ?? [];
         $segmentArray = $request->serviceLineSystemID ?? [];
         $currency = $request->currency[0] ?? $request->currency;
@@ -1793,7 +1800,7 @@ class FinancialReportAPIController extends AppBaseController
                     $headers = $result['headers'];
                 }
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if($companyCurrency) {
                     $requestCurrencyLocal = $companyCurrency->localcurrency;
                     $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -2079,7 +2086,7 @@ class FinancialReportAPIController extends AppBaseController
                 $output = $this->getRTDReportQry($request);
 
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
 
                 if($request->currencyID == 1) {
@@ -2156,7 +2163,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2611,7 +2618,7 @@ class FinancialReportAPIController extends AppBaseController
         $headers = array();
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
         if ($request->dateType == 1) {
             $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
@@ -2898,7 +2905,7 @@ class FinancialReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
 
@@ -2907,7 +2914,7 @@ class FinancialReportAPIController extends AppBaseController
                         $companyID = "";
                         $checkIsGroup = Company::find($request->companySystemID);
                         if ($checkIsGroup->isGroup) {
-                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                            $companyID = Helper::getGroupCompany($request->companySystemID);
                         } else {
                             $companyID = (array)$request->companySystemID;
                         }
@@ -2933,7 +2940,7 @@ class FinancialReportAPIController extends AppBaseController
                     else {
                         $output = $this->getTrialBalance($request);
 
-                        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                        $companyCurrency = Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
                             $requestCurrencyLocal = $companyCurrency->localcurrency;
                             $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -3043,7 +3050,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalanceDetails($request);
                 $currencyIdLocal = 1;
@@ -3082,7 +3089,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
@@ -3103,7 +3110,7 @@ class FinancialReportAPIController extends AppBaseController
                 $reportSD = $request->reportSD;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
                 $output = $this->getGeneralLedger($request);
@@ -3172,7 +3179,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['tem_desc'] = $val->templateDetailDescription;
                                     $data[$x]['doc_type'] = $val->documentID;
                                     $data[$x]['doc_no'] = $val->documentCode;
-                                    $data[$x]['data'] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x]['data'] = Helper::dateFormat($val->documentDate);
                                     $data[$x]['doc_narration'] = $val->documentNarration;
                                     $data[$x]['documentSystemCode'] = $val->documentSystemCode;
                                     $data[$x]['documentSystemID'] = $val->documentSystemID;
@@ -3180,9 +3187,9 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['severice_line'] = $val->serviceLineCode;
                                     $data[$x]['contract'] = $val->clientContractID;
                                         $data[$x]['confirmed_by'] = $val->confirmedBy;
-                                        $data[$x]['confirmed_date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                                        $data[$x]['confirmed_date'] = Helper::dateFormat($val->documentConfirmedDate);
                                         $data[$x]['approved_by'] = $val->approvedBy;
-                                        $data[$x]['approved_date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                        $data[$x]['approved_date'] = Helper::dateFormat($val->documentFinalApprovedDate);
 
 
                                     $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
@@ -3295,7 +3302,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.template_description')] = $val->templateDetailDescription;
                             $data[$x][trans('custom.document_type')] = $val->documentID;
                             $data[$x][trans('custom.document_number')] = $val->documentCode;
-                            $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.date')] = Helper::dateFormat($val->documentDate);
                             $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                             $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                             $data[$x][trans('custom.contract')] = $val->clientContractID;
@@ -3305,7 +3312,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
@@ -3313,7 +3320,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                             }
 
                             if ($checkIsGroup->isGroup == 0) {
@@ -3337,7 +3344,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getTaxDetailQry($request);
@@ -3434,7 +3441,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Company ID'] = $val->companyID;
                         //$data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.year')] = $val->YEAR;
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
@@ -3449,9 +3456,9 @@ class FinancialReportAPIController extends AppBaseController
 
                         $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                         $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
-                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                         $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
@@ -3476,7 +3483,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -4009,7 +4016,7 @@ class FinancialReportAPIController extends AppBaseController
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $getProjectAmountsCurrencyConvertion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
         $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
 
         if ($projectAmount > 0) {
@@ -4046,7 +4053,7 @@ class FinancialReportAPIController extends AppBaseController
         );
 
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         return \Excel::create('upload_budget_template', function ($excel) use ($output, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output, $fontFamily) {
@@ -4092,7 +4099,7 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $currencyId =  $request->currencyID;
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
 
@@ -4101,7 +4108,7 @@ class FinancialReportAPIController extends AppBaseController
                         $companyID = "";
                         $checkIsGroup = Company::find($request->companySystemID);
                         if ($checkIsGroup->isGroup) {
-                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                            $companyID = Helper::getGroupCompany($request->companySystemID);
                         } else {
                             $companyID = (array)$request->companySystemID;
                         }
@@ -4132,7 +4139,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
                     else {
                         $output = $this->getTrialBalance($request);
-                        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                        $companyCurrency = Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
                             $requestCurrencyLocal = $companyCurrency->localcurrency;
                             $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -4444,7 +4451,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalanceDetails($request);
                 $currencyIdLocal = 1;
@@ -4500,7 +4507,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
@@ -4530,7 +4537,7 @@ class FinancialReportAPIController extends AppBaseController
             case 'FGL':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 if(isset($request->month)) {
                     $request->toDate = $request->month."".Carbon::parse($request->month)->endOfMonth()
@@ -4622,7 +4629,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getTaxDetailQry($request);
@@ -4725,7 +4732,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x][trans('custom.company_id')] = $val->companyID;
                         //$data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.year')] = $val->YEAR;
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
@@ -4741,9 +4748,9 @@ class FinancialReportAPIController extends AppBaseController
 
                         $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
                         $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                         $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
-                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                         $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
@@ -4769,7 +4776,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getRTDReportQry($request);
@@ -4783,7 +4790,7 @@ class FinancialReportAPIController extends AppBaseController
                 $toDate = (new Carbon($request->toDate))->format('Y-m-d');
 
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
 
                 if($request->currencyID == 1) {
@@ -4924,7 +4931,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
                         if (in_array('confi_date', $extraColumns)) {
-                            $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                            $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                         }
 
                         if (in_array('app_name', $extraColumns)) {
@@ -4932,7 +4939,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
                         if (in_array('app_date', $extraColumns)) {
-                            $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                            $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                         }
                         $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                         if ($checkIsGroup->isGroup == 0) {
@@ -5172,7 +5179,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                    $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                 }
 
                 if (in_array('app_name', $extraColumns)) {
@@ -5180,7 +5187,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                    $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                 }
 
                 if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
@@ -5277,7 +5284,7 @@ class FinancialReportAPIController extends AppBaseController
         ini_set('memory_limit', -1);
         $type = $request->type;
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $checkIsGroup = Company::find($request->companySystemID);
         $data = array();
 
@@ -5396,9 +5403,9 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.document_type')] = $val->documentID;
                             $data[$x][trans('custom.document_description')] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
                             $data[$x][trans('custom.document_code')] = $val->documentCode;
-                            $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                             $data[$x][trans('custom.document_narration')] = $val->documentNarration;
-                            $data[$x][trans('custom.gl_created_date')] = \Helper::dateFormat($val->createdDateTime);
+                            $data[$x][trans('custom.gl_created_date')] = Helper::dateFormat($val->createdDateTime);
                             $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                             $data[$x][trans('custom.contract')] = $val->clientContractID;
                             $data[$x][trans('custom.gl_code')] = $val->glCode;
@@ -5427,7 +5434,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
@@ -5435,7 +5442,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                             }
                             $data[$x][trans('custom.supplier_name_customer_name')] = $val->supplierOrCustomerName;
                             $data[$x][trans('custom.supplier_code_customer_code')] = $val->supplierOrCustomerCode;
@@ -5666,9 +5673,9 @@ class FinancialReportAPIController extends AppBaseController
                     $data[$x][trans('custom.document_type')] = $val->documentID;
                     $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
                     $data[$x]['Document Code'] = $val->documentCode;
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                     $data[$x][trans('custom.document_narration')] = $val->documentNarration;
-                    $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
+                    $data[$x]['GL created date'] = Helper::dateFormat($val->createdDateTime);
                     $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                     $data[$x][trans('custom.contract')] = $val->clientContractID;
                     $data[$x][trans('custom.gl_code')] = $val->glCode;
@@ -5702,7 +5709,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                     }
 
                     if (in_array('app_name', $extraColumns)) {
@@ -5710,7 +5717,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                     }
                     $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
                     $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
@@ -5884,7 +5891,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6314,7 +6321,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6766,7 +6773,7 @@ class FinancialReportAPIController extends AppBaseController
         $checkIsGroup = Company::find($request->companySystemID);
         $chartOfAccountID = $request->chartOfAccountSystemID;
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6828,7 +6835,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7003,7 +7010,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7293,7 +7300,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7475,7 +7482,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7648,7 +7655,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -8099,7 +8106,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
 
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -8925,7 +8932,7 @@ GROUP BY id
 
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -9358,7 +9365,7 @@ GROUP BY id
 
                 $db = isset($request->db) ? $request->db : "";
 
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
                 return $this->sendResponse([], trans('custom.general_ledger_pdf_report'));
@@ -9374,12 +9381,12 @@ GROUP BY id
 
                 $currencyId =  $request->currencyID;
 
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
 
                 $output = $this->getTrialBalance($request);
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if($companyCurrency) {
                     $requestCurrencyLocal = $companyCurrency->localcurrency;
                     $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -9423,8 +9430,8 @@ GROUP BY id
                 $lang = app()->getLocale();
                 $dataArr = array(   'output'=>$output,
                                     'employeeData'=>$employeeData,
-                                    'fromDate' => \Helper::dateFormat($request->fromDate),
-                                    'toDate' => \Helper::dateFormat($request->toDate),
+                                    'fromDate' => Helper::dateFormat($request->fromDate),
+                                    'toDate' => Helper::dateFormat($request->toDate),
                                     'companyLogo'=>$companyLogo,
                                     'companyName'=>$companyName,
                                     'totalOpeningBalanceRpt'=>$totalOpeningBalanceRpt,
@@ -9456,7 +9463,7 @@ GROUP BY id
             case 'FCT':
 
                 $companyName = $request->companySystemID[0]['CompanyName'];
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
                 $reportData = $this->generateFRReport($request);
@@ -10624,7 +10631,7 @@ GROUP BY
      * @param $type
      * @return string
      */
-    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type)
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type = null)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -11007,7 +11014,7 @@ GROUP BY
                 $tem = (array)$val;
 
                 $data[$x][trans('custom.document_number')] = $val->documentCode;
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->documentDate);
                 $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                 $data[$x]['Segment'] = $val->ServiceLineDes;
                 $data[$x][trans('custom.contract')] = $val->clientContractID;
@@ -11613,9 +11620,9 @@ GROUP BY
     {
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -12761,7 +12768,7 @@ GROUP BY
         $fileName = trans('custom.finance');
 
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
@@ -12930,7 +12937,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        4 AS type
+                        4 AS type,
+                        1 As docType
                     FROM
                         erp_bookinvsuppmaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -12955,7 +12963,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        5 AS type
+                        5 AS type,
+                        2 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -12980,7 +12989,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        6 AS type
+                        6 AS type,
+                        3 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -12994,6 +13004,47 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_paysupplierinvoicemaster.companySystemID IN ('.$companyID.')
                         UNION ALL
                         SELECT
+                        erp_matchdocumentmaster.matchingDocdate AS documentDate,
+                        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+                        erp_generalledger.documentNarration AS description,
+                        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+                        (CASE 
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID THEN ABS(erp_generalledger.documentLocalAmount)
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID THEN -ABS(erp_generalledger.documentLocalAmount)
+                            ELSE erp_generalledger.documentLocalAmount
+                        END) AS amountLocal,
+                        (CASE 
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID THEN ABS(erp_generalledger.documentRptAmount)
+                            WHEN erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID THEN -ABS(erp_generalledger.documentRptAmount)
+                            ELSE erp_generalledger.documentRptAmount
+                        END) AS amountRpt,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+                        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+                        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+                        11 AS type,
+                        3 As docType
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+                        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+                        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+                        LEFT JOIN erp_matchdocumentmaster ON erp_generalledger.matchDocumentMasterAutoID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+                    WHERE
+                        erp_generalledger.documentSystemID = 4 AND 
+                        erp_paysupplierinvoicemaster.invoiceType = 7 AND
+                        DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_paysupplierinvoicemaster.approved = -1 AND
+                        6 IN (' . $typeIDs . ') AND
+                        erp_generalledger.companySystemID IN ('.$companyID.') AND
+                        erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
+                        erp_generalledger.matchDocumentMasterAutoID <> 0 AND
+                        (erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.employeeAdvanceAccountSystemID
+                            OR erp_generalledger.chartOfAccountSystemID = erp_paysupplierinvoicemaster.advanceAccountSystemID)
+                        UNION ALL
+                        SELECT
                         erp_bookinvsuppmaster.bookingDate AS documentDate,
                         erp_bookinvsuppmaster.bookingInvCode AS documentCode,
                         erp_bookinvsuppmaster.comments AS description,
@@ -13005,7 +13056,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        1 AS type
+                        1 AS type,
+                        4 As docType
                     FROM
                         erp_bookinvsuppmaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -13032,7 +13084,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        2 AS type
+                        2 AS type,
+                        5 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -13057,7 +13110,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_ioubookingmaster.bookingMasterID AS masterID,
                         srp_erp_iouvouchers.companyLocalCurrencyDecimalPlaces AS localCurrencyDecimals,
                         srp_erp_iouvouchers.companyReportingCurrencyDecimalPlaces AS rptCurrencyDecimals,
-                        3 AS type
+                        3 AS type,
+                        6 As docType
                     FROM
                         srp_erp_iouvouchers
                         LEFT JOIN srp_erp_ioubookingmaster ON srp_erp_iouvouchers.voucherAutoID = srp_erp_ioubookingmaster.iouVoucherAutoID
@@ -13079,7 +13133,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         erp_debitnote.debitNoteAutoID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
-                        7 AS type
+                        7 AS type,
+                        7 As docType
                     FROM
                     erp_debitnote
                         LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
@@ -13089,6 +13144,46 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         7 IN (' . $typeIDs . ') AND
                         erp_debitnote.companySystemID IN ('.$companyID.') AND
                         erp_debitnote.approved = -1
+                        UNION ALL
+                        SELECT
+                        erp_matchdocumentmaster.matchingDocdate AS documentDate,
+                        erp_debitnote.debitNoteCode AS documentCode,
+                        erp_generalledger.documentNarration AS description,
+                        erp_debitnote.empID AS employeeID,
+                        CASE
+                            WHEN ref_gl.documentRptAmount > 0 THEN erp_generalledger.documentLocalAmount * -1
+                            ELSE ABS(erp_generalledger.documentLocalAmount)
+                        END AS amountLocal,
+                        CASE
+                            WHEN ref_gl.documentRptAmount > 0 THEN erp_generalledger.documentRptAmount * -1
+                            ELSE ABS(erp_generalledger.documentRptAmount)
+                        END AS amountRpt,
+                        erp_debitnote.invoiceNumber AS referenceDoc,
+                        erp_debitnote.postedDate AS referenceDocDate,
+                        erp_debitnote.debitNoteAutoID AS masterID,
+                        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+                        rptCurrency.DecimalPlaces AS rptCurrencyDecimals,
+                        11 AS type,
+                        7 As docType
+                    FROM
+                        erp_generalledger
+                        LEFT JOIN erp_debitnote ON erp_debitnote.debitNoteAutoID = erp_generalledger.documentSystemCode
+                        LEFT JOIN currencymaster ON erp_debitnote.localCurrencyID = currencymaster.currencyID
+                        LEFT JOIN currencymaster as rptCurrency ON erp_debitnote.companyReportingCurrencyID = rptCurrency.currencyID
+                        LEFT JOIN erp_matchdocumentmaster ON erp_generalledger.matchDocumentMasterAutoID = erp_matchdocumentmaster.matchDocumentMasterAutoID
+                        LEFT JOIN erp_generalledger AS ref_gl ON ref_gl.documentSystemCode = erp_debitnote.debitNoteAutoID
+                            AND ref_gl.documentSystemID = 15
+                            AND ref_gl.chartOfAccountSystemID = erp_debitnote.empControlAccount
+                            AND ref_gl.matchDocumentMasterAutoID = 0
+                    WHERE
+                        erp_generalledger.documentSystemID = 15 AND 
+                        erp_debitnote.type = 2 AND
+                        erp_generalledger.chartOfAccountSystemID != erp_debitnote.empControlAccount AND
+                        DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+                        erp_debitnote.approved = -1 AND
+                        erp_generalledger.companySystemID IN ('.$companyID.') AND
+                        erp_generalledger.matchDocumentMasterAutoID IS NOT NULL AND
+                        erp_generalledger.matchDocumentMasterAutoID <> 0
                         UNION ALL
                         SELECT
                         erp_paysupplierinvoicemaster.BPVdate AS documentDate,
@@ -13102,7 +13197,8 @@ SELECT SUM(amountLocal) AS amountLocal,SUM(amountRpt) AS amountRpt FROM (
                         srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
                         currencymaster.DecimalPlaces AS localCurrencyDecimals,
                         currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
-                        5 AS type
+                        5 AS type,
+                        8 As docType
                     FROM
                         erp_paysupplierinvoicemaster
                         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id

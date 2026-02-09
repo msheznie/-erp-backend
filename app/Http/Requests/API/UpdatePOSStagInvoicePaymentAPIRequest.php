@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSStagInvoicePayment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePOSStagInvoicePaymentAPIRequest extends APIRequest
+class UpdatePOSStagInvoicePaymentAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

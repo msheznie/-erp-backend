@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierBusinessCategoryAssign;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierBusinessCategoryAssignRepository

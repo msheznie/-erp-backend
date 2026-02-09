@@ -18,13 +18,14 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
 use App\Services\SrmDocumentModifyService;
+use Illuminate\Support\Arr;
 
 /**
  * Class TenderBoqItemsController
@@ -404,7 +405,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function updateTenderBoqItem(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array('item_id','uom'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(!isset($input['item_name']) || empty($input['item_name'])){
             return ['success' => false, 'message' => trans('srm_tender_rfx.item_required')];
@@ -525,7 +526,7 @@ class TenderBoqItemsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $validation = $this->tenderBoqItemsRepository->checkValidUploadRequestParams($input);
@@ -605,7 +606,7 @@ class TenderBoqItemsAPIController extends AppBaseController
                 $duplicateEntries = [];
                 $success = 0;
                 $skipRecords = [];
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 foreach ($excelUploadDataN as $vl){
                     $exist = $this->tenderBoqItemsRepository->checkItemExistsForUpload($input, $vl['item']);
 

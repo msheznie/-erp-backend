@@ -1,7 +1,7 @@
 <?php
 namespace App\Repositories;
 use App\Models\CompanyDepartmentSegment;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 class CompanyDepartmentSegmentRepository extends BaseRepository
 {

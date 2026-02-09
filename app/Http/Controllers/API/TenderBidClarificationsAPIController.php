@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderBidClarificationsAPIRequest;
 use App\Http\Requests\API\UpdateTenderBidClarificationsAPIRequest;
@@ -20,7 +19,7 @@ use App\Models\Employee;
 use App\Models\TenderMaster;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
@@ -28,6 +27,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 /**
  * Class TenderBidClarificationsController
@@ -626,7 +626,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br />" . Helper::getSupplierEmailFooter($companyId);
                 $dataEmail['emailAlertMessage'] = $body;
                 $dataEmail['attachmentList'] = $file;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
             }
         }
         return ['success' => true, 'message' => trans('srm_faq.emails_sent_successfully')];
@@ -637,7 +637,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-        $raiseAsPrivate = \Helper::checkPolicy($companySystemID,87);
+        $raiseAsPrivate = Helper::checkPolicy($companySystemID,87);
 
         return $this->sendResponse($raiseAsPrivate, 'PreBid Clarifications Policy retrieved successfully');
     }

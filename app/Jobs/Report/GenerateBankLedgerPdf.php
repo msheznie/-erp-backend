@@ -36,10 +36,16 @@ class GenerateBankLedgerPdf implements ShouldQueue
      */
     public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
@@ -111,8 +117,8 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'accBalanceShow' => (count($request->accounts) == 1) ? true : false,
             'currencyCode' => $currencyCode,
             'reportDate' => date('d/m/Y H:i:s A'),
-            'fromDate' => \Helper::dateFormat($request->fromDate),
-            'toDate' => \Helper::dateFormat($request->toDate),
+            'fromDate' => Helper::dateFormat($request->fromDate),
+            'toDate' => Helper::dateFormat($request->toDate),
             'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), $decimalPlace),
             'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), $decimalPlace),
             'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), $decimalPlace),

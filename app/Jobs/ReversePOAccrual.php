@@ -21,6 +21,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class ReversePOAccrual implements ShouldQueue
 {
@@ -233,7 +236,7 @@ class ReversePOAccrual implements ShouldQueue
                         'isAutoCreateDocument' => true
                     );
 
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
 
                     $documentApporved = DocumentApproved::where('documentSystemCode',$jvMasterRes->jvMasterAutoId)->where('departmentSystemID',5)->first();
                     // approve document
@@ -252,7 +255,7 @@ class ReversePOAccrual implements ShouldQueue
                         'db' => $this->tenantDb
                     ];
 
-                    $approval = \Helper::approveDocument($data);
+                    $approval = DocumentApprove::approveDocument($data);
 
                     JvMaster::whereDate('reversalDate',$currentDateAndTime)->where('isReverseAccYN',0)->where('confirmedYN',1)->where('approved',-1)->where('stopReversalJV', 0)->update(['reversedYN' => 1]);
                 }

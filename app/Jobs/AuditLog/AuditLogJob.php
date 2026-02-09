@@ -37,6 +37,7 @@ use App\Models\ERPLanguageMaster;
 use Illuminate\Support\Str;
 use App\Services\AuditLog\UserGroupAuditService;
 use App\Services\AuditLog\EmployeeNavigationAssignAuditService;
+use App\Jobs\AuditLog\StoreAuditLogJob;
 
 class AuditLogJob implements ShouldQueue
 {
@@ -59,7 +60,7 @@ class AuditLogJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user, $tokenId)
+    public function __construct($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $user = null, $tokenId = null)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -204,8 +205,6 @@ class AuditLogJob implements ShouldQueue
                 'companySystemIdColumn'
             );
 
-            Log::useFiles(storage_path() . '/logs/audit.log');
-            
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
                     $narrationVariables,  
@@ -237,7 +236,7 @@ class AuditLogJob implements ShouldQueue
                     'log_uuid' => bin2hex(random_bytes(16)),
                 ];
                 
-                Log::info('data:', $logData);
+                StoreAuditLogJob::dispatch($logData)->onQueue('audit-logs');
             }
         }
     }

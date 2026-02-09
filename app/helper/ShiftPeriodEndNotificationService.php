@@ -80,7 +80,6 @@ class ShiftPeriodEndNotificationService
             }
         
 
-        Log::info( $this->sent_mail_count. " Employee shift period end reminder mails send \t on file: " . __CLASS__ ." \tline no :".__LINE__ );
 
         return true;
     }

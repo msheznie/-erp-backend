@@ -73,7 +73,7 @@ class BankStatus implements ShouldQueue
         $this->updateStatusFromPath('failure_path', 0, 2);
     }
 
-    private function updateStatusFromPath(string $path, int $portalStatus, int $submittedStatus = null)
+    private function updateStatusFromPath(string $path, int $portalStatus, ?int $submittedStatus = null)
     {
         try {
             $getConfigDetails = BankConfig::where('slug', 'ahlibank')->first();

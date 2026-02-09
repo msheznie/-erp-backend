@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use InfyOm\Generator\Request\APIRequest;
+use App\Http\Requests\APIRequest;
 
 class CloneTenderAPIRequest extends APIRequest
 {

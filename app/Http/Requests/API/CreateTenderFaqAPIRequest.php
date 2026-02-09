@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderFaq;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateTenderFaqAPIRequest extends APIRequest
+class CreateTenderFaqAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

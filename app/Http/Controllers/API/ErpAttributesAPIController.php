@@ -11,10 +11,11 @@ use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpAttributesDropdown;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditLogsTrait;
+use App\helper\Helper;
 
 /**
  * Class ErpAttributesController
@@ -427,7 +428,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         if(isset($input['is_active']) && $input['is_active'] == false)
         {
-            $inactivatedAt = \Helper::currentDateTime();
+            $inactivatedAt = Helper::currentDateTime();
         } else {
             $inactivatedAt = null;
         }

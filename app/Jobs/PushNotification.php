@@ -60,7 +60,6 @@ class PushNotification implements ShouldQueue
             CommonJobService::db_switch($this->dataBase);
         }
 
-        Log::useFiles(storage_path() . '/logs/push_notification_created.log');
 
         if ($this->sendPushNotification) {
             $payLoadData = array();

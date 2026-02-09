@@ -256,7 +256,8 @@ class QuotationDetails extends Model
         'vatSubCategoryID',
         'VATApplicableOn',
         'userQty',
-        'totalSoBalanceQty'
+        'totalSoBalanceQty',
+        'serviceLineSystemID'
     ];
 
     /**
@@ -315,7 +316,8 @@ class QuotationDetails extends Model
         'VATAmountRpt' => 'float',
         'VATApplicableOn' => 'integer',
         'userQty' => 'float',
-        'totalSoBalanceQty' => 'float'
+        'totalSoBalanceQty' => 'float',
+        'serviceLineSystemID' => 'integer'
     ];
 
     /**
@@ -351,6 +353,10 @@ class QuotationDetails extends Model
     
     public function master(){
         return $this->belongsTo('App\Models\QuotationMaster','quotationMasterID','quotationMasterID');
+    }
+
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
     
 }

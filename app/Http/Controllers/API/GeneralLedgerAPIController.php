@@ -27,6 +27,7 @@ use App\Models\FixedAssetMaster;
 use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
+use App\Models\GRVDetails;
 use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnMaster;
@@ -52,7 +53,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ChartOfAccount;
@@ -354,7 +355,6 @@ class GeneralLedgerAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        Log::useFiles(storage_path() . '/logs/update_missing_docs.log');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
@@ -365,13 +365,13 @@ class GeneralLedgerAPIController extends AppBaseController
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
 
-            Log::info('checking the db : '.$tenantDb);
+            Log::channel('update_missing_docs')->info('checking the db : '.$tenantDb);
             CommonJobService::db_switch($tenantDb);
 
             $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger WHERE documentCode IS NOT NULL GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2024-01-01'");
 
             foreach ($data as $dt){
-                Log::info($dt->documentCode);
+                Log::channel('update_missing_docs')->info($dt->documentCode);
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
                                'autoID' => $dt->documentSystemCode,
                                'companySystemID' => $dt->companySystemID,
@@ -389,7 +389,6 @@ class GeneralLedgerAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        Log::useFiles(storage_path() . '/logs/update_missing_docs.log');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
@@ -400,7 +399,7 @@ class GeneralLedgerAPIController extends AppBaseController
         foreach ($tenants as $tenant){
             $tenantDb = $tenant->database;
 
-            Log::info('checking the db : '.$tenantDb);
+            Log::channel('update_missing_docs')->info('checking the db : '.$tenantDb);
             CommonJobService::db_switch($tenantDb);
 
             $data = DB::table('erp_paysupplierinvoicemaster')
@@ -416,7 +415,6 @@ class GeneralLedgerAPIController extends AppBaseController
                 ->get();
 
             foreach ($data as $dt){
-                Log::info($dt->PayMasterAutoId);
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
                     'autoID' => $dt->PayMasterAutoId,
                     'companySystemID' => $dt->companySystemID,
@@ -687,9 +685,9 @@ class GeneralLedgerAPIController extends AppBaseController
                                     ->get();
 
 
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $generalLedger = [
-                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID), 
+                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID),
                 'companyCurrency' => $companyCurrency,
                 'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
@@ -706,7 +704,7 @@ class GeneralLedgerAPIController extends AppBaseController
     {
         $company = Company::where('companySystemID', $companySystemID)->first();
         $masterModel = [
-            'employeeSystemID' => \Helper::getEmployeeSystemID(),
+            'employeeSystemID' => Helper::getEmployeeSystemID(),
             'autoID' => $autoID,
             'documentSystemID' => $documentSystemID,
             'companySystemID' => $companySystemID,
@@ -927,10 +925,10 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -949,6 +947,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
     public function getDocumentAmendFromGL(Request $request){
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
         $messages = [
             'companySystemID.required' => 'Company is required.',
             'documentSystemID.required' => 'Document is required.',
@@ -983,7 +982,14 @@ class GeneralLedgerAPIController extends AppBaseController
             ->where('documentSystemID',$input['documentSystemID'])
             ->where('documentYear',$input['yearID'])
             ->with(['confirm_by','final_approved_by']);
-
+        
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $glDocuments->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+        
         $search = $request->input('search.value');
 
         if ($search) {
@@ -1507,7 +1513,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $checkIsGroup = Company::find($company);
         
-        $companyCurrency = \Helper::companyCurrency($company);
+        $companyCurrency = Helper::companyCurrency($company);
  
 
         $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
@@ -1574,7 +1580,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
         $seg_info = SegmentMaster::where('companySystemID',$company)->pluck('serviceLineSystemID');
 
-        $companyCurrency = \Helper::companyCurrency($company);
+        $companyCurrency = Helper::companyCurrency($company);
         if($companyCurrency) {
             $requestCurrencyLocal = $companyCurrency->localcurrency;
             $requestCurrencyRpt = $companyCurrency->reportingcurrency;

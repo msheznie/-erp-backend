@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSStagMenuSalesPayment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSStagMenuSalesPaymentAPIRequest extends APIRequest
+class CreatePOSStagMenuSalesPaymentAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

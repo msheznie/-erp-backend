@@ -105,6 +105,7 @@ class TenantEnforce
             'api/v1/departmentBudgetTemplates/assign-gl',
             'api/v1/postNotPostedSchedule',
             'api/v1/generateAssetDepBulkPDF',
+            'api/v1/updateRouteAccess',
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {
@@ -134,6 +135,23 @@ class TenantEnforce
 
                     if (in_array($request->route()->uri, AuditRoutesTenantService::getTenantRoutes())) {
                         $request->request->add(['tenant_uuid' => $tenant->uuid]);
+                    }
+
+                    if (in_array($request->route()->uri, ['api/v1/getThirdPartyApiLogDetail', 'api/v1/auditLogsExternal', 'api/v1/createAuditLog'])) {
+                        $subDomainArray = explode('-', $subDomain);
+                        $partCount = count($subDomainArray);
+                        if ($partCount > 1) {
+                            $firstPart = $subDomainArray[0];
+                            $lastPart = end($subDomainArray);
+                            $erpDomain = $firstPart . '-erp-' . $lastPart;
+                        } else {
+                            $erpDomain = $subDomain . '-erp';
+                        }
+
+                        $erpTenant = Tenant::where('sub_domain', 'like', $erpDomain)->first();
+                        if (!empty($erpTenant)) {
+                            $request->request->add(['tenant_uuid' => $erpTenant->uuid]);
+                        }
                     }
 
                     $loginData = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();

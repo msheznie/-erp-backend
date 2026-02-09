@@ -33,7 +33,6 @@ class AccountsType extends Model
     protected $primaryKey  = 'accountsType';
     protected $appends = ['description'];
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -49,7 +48,8 @@ class AccountsType extends Model
     protected $casts = [
         'accountsType' => 'integer',
         'description' => 'string',
-        'code' => 'string'
+        'code' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

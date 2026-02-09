@@ -18,9 +18,10 @@ use App\Models\StockAdjustmentRefferedBack;
 use App\Repositories\StockAdjustmentRefferedBackRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class StockAdjustmentRefferedBackController
@@ -306,10 +307,10 @@ class StockAdjustmentRefferedBackAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         $id = array_key_exists('id', $input)?$input['id']:0;
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

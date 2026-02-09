@@ -33,7 +33,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
@@ -491,10 +491,10 @@ class ChequeRegisterAPIController extends AppBaseController
         $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
 
         $selectedCompanyId = $request['company_id'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -525,6 +525,20 @@ class ChequeRegisterAPIController extends AppBaseController
                 $chequeRegister->whereHas('details', function ($q) use ($input) {
                     return $q->where('status', $input['cheque_status_id']);
                 });
+            }
+        }
+
+        if (!empty($input['createdBy'])) {
+
+            $createdBy = collect($input['createdBy'])
+                ->pluck('id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (!empty($createdBy)) {
+                $chequeRegister->whereIn('created_by', $createdBy); 
             }
         }
 
@@ -601,10 +615,10 @@ class ChequeRegisterAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['company_id'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

@@ -31,7 +31,7 @@ use App\Repositories\CustomerReceivePaymentDetailRepository;
 use Exception;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +40,8 @@ use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\TaxVatCategories;
 use App\Models\CustomerInvoiceItemDetails;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CustomerReceivePaymentDetailController
@@ -457,7 +459,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $data['companyReportingER'] = $output->companyRptCurrencyER;
         $data['localCurrencyID'] = $output->localCurrencyID;
         $data['localCurrencyER'] = $output->localCurrencyER;
-        $currency = \Helper::convertAmountToLocalRpt($output->documentSystemID, $output->custReceivePaymentAutoID, $receiveAmountTrans);
+        $currency = Helper::convertAmountToLocalRpt($output->documentSystemID, $output->custReceivePaymentAutoID, $receiveAmountTrans);
         $data['bookingAmountTrans'] = $receiveAmountTrans;
         $data['bookingAmountLocal'] = $currency['localAmount'];
         $data['bookingAmountRpt'] = $currency['reportingAmount'];
@@ -589,9 +591,9 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             }
         }
 
-        $currency = \Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
-        $input['receiveAmountLocal'] = \Helper::roundValue($currency['localAmount']);
-        $input['receiveAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
+        $currency = Helper::convertAmountToLocalRpt(206, $input['arAutoID'], $input['receiveAmountTrans']);
+        $input['receiveAmountLocal'] = Helper::roundValue($currency['localAmount']);
+        $input['receiveAmountRpt'] = Helper::roundValue($currency['reportingAmount']);
 
 
         $customerReceivePaymentDetail = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
@@ -906,7 +908,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if (isset($input['ar_data'])) {
             unset($input['ar_data']);
         }
-        $input = array_except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType','exempt_vat_portion']);
+        $input = Arr::except($input, ['segment','updateKey','vatMasterCategoryAutoID','itemPrimaryCode','itemDescription','subCategoryArray','subCatgeoryType','exempt_vat_portion']);
         $input = $this->convertArrayToValue($input);
 
 
@@ -924,7 +926,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         if ($matchDocumentMasterData->matchingConfirmedYN) {
             return $this->sendError(trans('custom.you_cannot_update_detail_this_document_already_con'), 500);
         }
-        $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
+        $documentCurrencyDecimalPlace = Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
         if ($input['receiveAmountTrans'] == "") {
             $input['receiveAmountTrans'] = 0;
@@ -987,10 +989,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             }
         }
         
-        $conversionAmount = \Helper::convertAmountToLocalRpt(205, $input["custRecivePayDetAutoID"], ABS($input["receiveAmountTrans"]));
+        $conversionAmount = Helper::convertAmountToLocalRpt(205, $input["custRecivePayDetAutoID"], ABS($input["receiveAmountTrans"]));
         //$input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
-        $input["receiveAmountLocal"] = \Helper::roundValue($conversionAmount["localAmount"]);
-        $input["receiveAmountRpt"] = \Helper::roundValue($conversionAmount["reportingAmount"]);
+        $input["receiveAmountLocal"] = Helper::roundValue($conversionAmount["localAmount"]);
+        $input["receiveAmountRpt"] = Helper::roundValue($conversionAmount["reportingAmount"]);
 
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->update($input, $input['custRecivePayDetAutoID']);
         
@@ -1032,7 +1034,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
-        $detailUpdateBalance->custbalanceAmount = \Helper::roundValue($custbalanceAmount);
+        $detailUpdateBalance->custbalanceAmount = Helper::roundValue($custbalanceAmount);
 
 
         $vatAmount = round($input['receiveAmountTrans']*($input['VATPercentage']/(100+$input['VATPercentage'])),$documentCurrencyDecimalPlace);
@@ -1083,8 +1085,8 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $matchDocumentMasterData->matchingAmount = $detailAmountTotTran;
         $matchDocumentMasterData->matchedAmount = $detailAmountTotTran;
-        $matchDocumentMasterData->matchLocalAmount = \Helper::roundValue($detailAmountTotLoc);
-        $matchDocumentMasterData->matchRptAmount = \Helper::roundValue($detailAmountTotRpt);
+        $matchDocumentMasterData->matchLocalAmount = Helper::roundValue($detailAmountTotLoc);
+        $matchDocumentMasterData->matchRptAmount = Helper::roundValue($detailAmountTotRpt);
         $matchDocumentMasterData->save();
 
         return $this->sendResponse($receiptVoucherDetails->toArray(), trans('custom.detail_updated_successfully'));

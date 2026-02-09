@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CompanyValidateAPIRequest extends APIRequest
+class CompanyValidateAPIRequest extends FormRequest
 {
     public function authorize()
     {

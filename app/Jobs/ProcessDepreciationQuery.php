@@ -64,7 +64,6 @@ class ProcessDepreciationQuery implements ShouldQueue
         ini_set('memory_limit', -1);
 
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         $db = $this->dataBase;
         $depDate = $this->depDate;
 
@@ -93,6 +92,7 @@ class ProcessDepreciationQuery implements ShouldQueue
                             ->ofCompany([$depMaster->companySystemID])
                             ->isApproved()
                             ->assetType(1)
+                            ->eligibleForDepreciation()
                             ->orderBy('faID', 'desc')
                             ->skip(($page - 1) * $perPage) // Skip the items on previous pages
                             ->take($perPage) 

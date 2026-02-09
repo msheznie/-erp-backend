@@ -41,7 +41,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use PSpell\Config;
@@ -56,6 +56,8 @@ use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\HrPayrollDetails;
 use App\Models\HrPayrollMaster;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
 
 /**
  * Class EmployeeController
@@ -137,7 +139,7 @@ class EmployeeAPIController extends AppBaseController
     public function update($id, UpdateEmployeeAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['desi_master', 'manager', 'emp_company', 'hr_emp', 'manager_hrms']);
+        $input = Arr::except($input, ['desi_master', 'manager', 'emp_company', 'hr_emp', 'manager_hrms']);
         $input = $this->convertArrayToValue($input);
         /** @var Employee $employee */
         $employee = $this->employeeRepository->findWithoutFail($id);
@@ -225,9 +227,9 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -235,20 +237,20 @@ class EmployeeAPIController extends AppBaseController
         $output = Employee::leftJoin('erp_bookinvsuppmaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_bookinvsuppmaster.employeeID')
                      ->where('erp_bookinvsuppmaster.documentType', 4)
-                     ->where('erp_bookinvsuppmaster.approved', -1)
-                     ->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
+                     ->where('erp_bookinvsuppmaster.approved', -1);
+                     //->whereIn('erp_bookinvsuppmaster.companySystemID', $childCompanies);
             })
             ->leftJoin('erp_paysupplierinvoicemaster', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_paysupplierinvoicemaster.directPaymentPayeeEmpID')
                      ->where('erp_paysupplierinvoicemaster.invoiceType', 7)
-                     ->where('erp_paysupplierinvoicemaster.approved', -1)
-                     ->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
+                     ->where('erp_paysupplierinvoicemaster.approved', -1);
+                     //->whereIn('erp_paysupplierinvoicemaster.companySystemID', $childCompanies);
             })
             ->leftJoin('erp_debitnote', function ($join) use ($childCompanies){
                 $join->on('employees.employeeSystemID', '=', 'erp_debitnote.empID')
                      ->where('erp_debitnote.type', 2)
-                     ->where('erp_debitnote.approved', -1)
-                     ->whereIn('erp_debitnote.companySystemID', $childCompanies);
+                     ->where('erp_debitnote.approved', -1);
+                     //->whereIn('erp_debitnote.companySystemID', $childCompanies);
             })
             ->where(function ($query) {
                 $query->whereNotNull('erp_bookinvsuppmaster.employeeID')
@@ -307,14 +309,14 @@ class EmployeeAPIController extends AppBaseController
 
     public function getAllNotDishachargeEmployeesDropdown(Request $request) {
         $companyId = $request['empCompanySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
 
-        $child = \Helper::getSimilarGroupCompanies($companyId);
+        $child = Helper::getSimilarGroupCompanies($companyId);
 
         $srm_employees = SrmEmployees::where('company_id',$companyId)->pluck('emp_id')->toArray();
 
@@ -344,9 +346,9 @@ class EmployeeAPIController extends AppBaseController
 
 
         $companyId = $request['empCompanySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -517,7 +519,7 @@ class EmployeeAPIController extends AppBaseController
             $dataEmail['alertMessage'] = $subject;
             $dataEmail['emailAlertMessage'] = $body;
 
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            $sendEmail = Email::sendEmailErp($dataEmail);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -537,10 +539,10 @@ class EmployeeAPIController extends AppBaseController
     {
         $selectedCompanySystemID = $request['selectedCompanySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanySystemID);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanySystemID);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanySystemID);
+            $subCompanies = Helper::getGroupCompany($selectedCompanySystemID);
         } else {
             $subCompanies = [$selectedCompanySystemID];
         }

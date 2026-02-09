@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSSourceSalesReturn;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSSourceSalesReturnAPIRequest extends APIRequest
+class CreatePOSSourceSalesReturnAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

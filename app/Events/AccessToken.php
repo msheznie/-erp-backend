@@ -39,6 +39,6 @@ class AccessToken
     public function accessTokenCreated(AccessTokens $accessToken)
 
     {
-        Log::info("AaccessTokens Created Event Fire: ".$accessToken);
+
     }
 }

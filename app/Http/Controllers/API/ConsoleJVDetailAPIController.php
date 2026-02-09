@@ -23,9 +23,11 @@ use App\Models\SegmentMaster;
 use App\Repositories\ConsoleJVDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ConsoleJVDetailController
@@ -144,8 +146,8 @@ class ConsoleJVDetailAPIController extends AppBaseController
         $input['currencyID'] = $jvMaster->currencyID;
         $input['currencyER'] = $jvMaster->currencyER;
 
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $input['createdPcID'] = gethostname();
 
         $consoleJVDetails = $this->consoleJVDetailRepository->create($input);
@@ -252,7 +254,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
     public function update($id, UpdateConsoleJVDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['segment','company','segmentList','glOption']);
+        $input = Arr::except($request->all(), ['segment','company','segmentList','glOption']);
         $input = $this->convertArrayToValue($input);
 
         /** @var ConsoleJVDetail $consoleJVDetail */
@@ -279,7 +281,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         }
 
         if($input['debitAmount']){
-            $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input['debitAmount']);
+            $conversionAmount = Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input['debitAmount']);
             $input["localDebitAmount"] = $conversionAmount["localAmount"];
             $input["rptDebitAmount"] = $conversionAmount["reportingAmount"];
         }else{
@@ -287,7 +289,7 @@ class ConsoleJVDetailAPIController extends AppBaseController
         }
 
         if($input['creditAmount']){
-            $conversionAmount = \Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input["creditAmount"]);
+            $conversionAmount = Helper::convertAmountToLocalRpt(69, $input["consoleJvMasterAutoId"], $input["creditAmount"]);
             $input["localCreditAmount"] = $conversionAmount["localAmount"];
             $input["rptCreditAmount"] = $conversionAmount["reportingAmount"];
         }else{

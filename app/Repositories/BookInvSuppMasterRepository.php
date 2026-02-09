@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\BookInvSuppMaster;
 use App\Models\DirectInvoiceDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
@@ -90,7 +90,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         return BookInvSuppMaster::class;
     }
 
-    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID, $projectID) {
+    public function bookInvSuppListQuery($request, $input, $search = '', $supplierID = null, $projectID = null) {
 
         \DB::enableQueryLog();
         $invMaster = BookInvSuppMaster::where('companySystemID', $input['companySystemID']);
@@ -153,6 +153,7 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $invMaster->whereIn('projectID', $projectID);
             }
         }
+        
 
         $invMaster = $invMaster->select(
             ['erp_bookinvsuppmaster.bookingSuppMasInvAutoID',
@@ -248,12 +249,12 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $data[$x][trans('custom.type')] = $val->documentType === 0? trans('custom.supplier_po_invoice') : trans('custom.supplier_direct_invoice');
                 $data[$x][trans('custom.supplier')] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x][trans('custom.invoice_no')] = $val->supplierInvoiceNo;
-                $data[$x][trans('custom.booking_invoice_date')] = \Helper::dateFormat($val->bookingDate);
+                $data[$x][trans('custom.booking_invoice_date')] = Helper::dateFormat($val->bookingDate);
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateAndTime);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_on')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateAndTime);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_on')] = Helper::convertDateWithTime($val->approvedDate);
  
                 $data[$x][trans('custom.transaction_currency')] = $val->supplierTransactionCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';

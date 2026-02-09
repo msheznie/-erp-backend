@@ -24,6 +24,7 @@ use App\Models\Company;
 use App\Models\ChartOfAccount;
 use App\Models\SupplierCategory;
 use App\Models\SupplierGroup;
+use Illuminate\Support\Arr;
 
 use App\Models\CompanyPolicyMaster;
 use App\Models\CountryMaster;
@@ -50,7 +51,7 @@ use App\Repositories\CompanyDigitalStampRepository;
 use Exception;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
@@ -110,9 +111,9 @@ class CompanyAPIController extends AppBaseController
         /** all Company  Drop Down */
         $allCompanies = Company::where("isGroup",0)->get();
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if($isGroup){
-            $subCompanies  = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies  = Helper::getGroupCompany($selectedCompanyId);
             //$subCompanies  = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
             $companies = Company::whereIn("companySystemID",$subCompanies)->where("isGroup",0)->get();
@@ -604,7 +605,7 @@ class CompanyAPIController extends AppBaseController
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
 
-        $input = array_except($input, ['createdDateTime', 'timeStamp']); 
+        $input = Arr::except($input, ['createdDateTime', 'timeStamp']); 
 
         DB::beginTransaction();
         try {
@@ -663,10 +664,10 @@ class CompanyAPIController extends AppBaseController
 
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($companySystemID);
+        $isGroup = Helper::checkIsCompanyGroup($companySystemID);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companySystemID);
+            $childCompanies = Helper::getGroupCompany($companySystemID);
         } else {
             $childCompanies = [$companySystemID];
         }
@@ -724,9 +725,9 @@ class CompanyAPIController extends AppBaseController
 
         $selectedCompanyId  = isset($input['companySystemID']) ? $input['companySystemID'] : null;
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($selectedCompanyId);
+            $companies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companies = [$selectedCompanyId];
         }

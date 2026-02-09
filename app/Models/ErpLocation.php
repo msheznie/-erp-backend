@@ -31,7 +31,6 @@ class ErpLocation extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -48,7 +47,8 @@ class ErpLocation extends Model
     protected $casts = [
         'locationID' => 'integer',
         'locationName' => 'string',
-        'is_deleted' => 'integer'
+        'is_deleted' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

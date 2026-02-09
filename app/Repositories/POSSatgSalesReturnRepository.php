@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSSatgSalesReturn;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSSatgSalesReturnRepository

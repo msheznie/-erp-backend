@@ -32,6 +32,7 @@ use App\Models\PurchaseReturn;
 use App\Models\StockTransfer;
 use App\Models\WarehouseMaster;
 use App\Repositories\MaterielRequestDetailsRepository;
+use App\helper\inventory as Inventory;
 
 class MaterialRequestService
 {
@@ -275,7 +276,7 @@ class MaterialRequestService
         'itemCodeSystem' => $itemCode,
         'wareHouseId' => $itemIssue->wareHouseFrom);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -558,7 +559,7 @@ class MaterialRequestService
         'itemCodeSystem' => $itemCode,
         'wareHouseId' => $itemIssue->wareHouseFrom);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];

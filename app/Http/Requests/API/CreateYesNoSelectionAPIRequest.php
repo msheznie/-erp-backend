@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\YesNoSelection;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateYesNoSelectionAPIRequest extends APIRequest
+class CreateYesNoSelectionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

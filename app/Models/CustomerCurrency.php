@@ -39,7 +39,6 @@ class CustomerCurrency extends Model
     protected $primaryKey  = 'custCurrencyAutoID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -65,7 +64,8 @@ class CustomerCurrency extends Model
         'currencyID' => 'integer',
         'isDefault' => 'integer',
         'isAssigned' => 'integer',
-        'createdBy' => 'string'
+        'createdBy' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

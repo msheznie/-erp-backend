@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\JvMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateJvMasterAPIRequest extends APIRequest
+class CreateJvMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

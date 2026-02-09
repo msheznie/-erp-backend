@@ -16,9 +16,10 @@ use App\Repositories\CustomerReceivePaymentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class AdvanceReceiptDetailsController
@@ -222,13 +223,13 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                             $new["VATAmount"]  = ($advancePayment->VATAmount / $advancePayment->reqAmount) * $tempArray["paymentAmount"];
                         }
 
-                        $conversionVAT = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], $new["VATAmount"]);
+                        $conversionVAT = Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], $new["VATAmount"]);
                         $tempArray['VATAmountLocal'] = Helper::roundValue($conversionVAT['localAmount']);
                         $tempArray['VATAmountRpt'] = Helper::roundValue($conversionVAT['reportingAmount']);
                         $tempArray["VATAmount"] = Helper::roundValue($new["VATAmount"]);
 
 
-                        $companyCurrencyConversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], 0);
+                        $companyCurrencyConversion = Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], 0);
 
                         $company = Company::where('companySystemID', $new['companySystemID'])->first();
 
@@ -254,7 +255,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                         if ($tempArray) {
                             $advanceReceiptDetail = $this->advanceReceiptDetailsRepository->create($tempArray);
 
-                            $conversion = \Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], $new["BalanceAmount"]);
+                            $conversion = Helper::currencyConversion($new['companySystemID'], $new['currencyID'], $new['currencyID'], $new["BalanceAmount"]);
 
                             AdvanceReceiptDetails::where('advanceReceiptDetailAutoID', $advanceReceiptDetail->advanceReceiptDetailAutoID)
                                 ->update(['supplierDefaultAmount' => $new['BalanceAmount'],
@@ -378,7 +379,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $input = array_except($input, ['sales_order']);
+            $input = Arr::except($input, ['sales_order']);
             $input['custReceivePaymentAutoID'] = isset($input['custReceivePaymentAutoID']) ? $input['custReceivePaymentAutoID'] : 0;
             $input['soAdvPaymentID'] = isset($input['soAdvPaymentID']) ? $input['soAdvPaymentID'] : 0;
             $advanceReceiptDetails = $this->advanceReceiptDetailsRepository->findWithoutFail($id);
@@ -437,7 +438,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
             }
 
-            $conversion = \Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $input["paymentAmount"]);
+            $conversion = Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $input["paymentAmount"]);
             $input['supplierDefaultAmount'] = $input["paymentAmount"];
             $input['localAmount'] = $conversion['localAmount'];
             $input['comRptAmount'] = $conversion['reportingAmount'];
@@ -450,7 +451,7 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                 $vatAmount  = ($advancePayment->VATAmount / $advancePayment->reqAmount) * $input["paymentAmount"];
             }
 
-            $conversionVAT = \Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $vatAmount);
+            $conversionVAT = Helper::currencyConversion($receiptMaster->companySystemID, $receiptMaster->custTransactionCurrencyID, $receiptMaster->custTransactionCurrencyID, $vatAmount);
             $input['VATAmountLocal'] = $conversionVAT['localAmount'];
             $input['VATAmountRpt'] = $conversionVAT['reportingAmount'];
             $input['VATAmount'] = $vatAmount;

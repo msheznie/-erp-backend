@@ -22,11 +22,9 @@ class OpenPurchaseRequestNotificationService
     public function proceed()
     {
         $log_file = NotificationService::log_file();
-        Log::useFiles($log_file);
 
         // Check if today is the last day of the month
         if (!$this->isLastDayOfMonth()) {
-            // Log::info("Today is not the last day of the month. Skipping Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -42,7 +40,6 @@ class OpenPurchaseRequestNotificationService
         $companyScenarioConfig = NotificationService::getCompanyScenarioConfigurationForCompany(49, $this->companyID);
         
         if (empty($companyScenarioConfig)) {
-            Log::warning("No company scenario configuration found for Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -50,7 +47,6 @@ class OpenPurchaseRequestNotificationService
         $notificationUsers = NotificationUser::getUsers($companyScenarioConfig->id);
         
         if (count($notificationUsers) == 0) {
-            Log::warning("No notification users configured for Open PR notification for company ID: {$this->companyID}");
             return;
         }
 
@@ -69,7 +65,7 @@ class OpenPurchaseRequestNotificationService
                     ->first();
 
                 if (empty($employee)) {
-                    Log::error("Employee not found or not valid for Open PR notification. Employee ID: {$notificationUser->empID}");
+                    Log::channel('notification_service')->error("Employee not found or not valid for Open PR notification. Employee ID: {$notificationUser->empID}");
                     continue;
                 }
 
@@ -77,7 +73,6 @@ class OpenPurchaseRequestNotificationService
                 $empName = $employee->empFullName;
 
                 if (empty($empEmail)) {
-                    Log::warning("Email is missing for employee {$empName}");
                     continue;
                 }
 
@@ -92,7 +87,7 @@ class OpenPurchaseRequestNotificationService
                 );
 
                 if (!$sendEmail["success"]) {
-                    Log::error("Failed to send Open PR notification email: " . $sendEmail["message"]);
+                    Log::channel('notification_service')->error("Failed to send Open PR notification email: " . $sendEmail["message"]);
                 } 
             }
         }

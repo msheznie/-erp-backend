@@ -8,9 +8,10 @@ use App\Models\EliminationLedger;
 use App\Repositories\EliminationLedgerRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class EliminationLedgerController
@@ -289,7 +290,7 @@ class EliminationLedgerAPIController extends AppBaseController
         }
 
 
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
         $generalLedger = [
                 'outputData' => $generalLedger->toArray(), 

@@ -36,7 +36,6 @@ class SMAttendancePullingService{
     {
         $this->isFromShift = $isFromShift;
         if(!$this->isFromShift){
-            Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
         }
 
 
@@ -84,7 +83,6 @@ class SMAttendancePullingService{
 
             DB::commit();
             if(!$this->isFromShift){
-                Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
             }
 
             return true;
@@ -489,7 +487,6 @@ class SMAttendancePullingService{
                 'about to insert'=> array_column($this->data, 'empID')
             ]);
 
-            Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
         }
 
         unset($this->attData);
@@ -572,7 +569,6 @@ class SMAttendancePullingService{
         $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} 
                 (date : {$this->pullingDate})";
         if(!$this->isFromShift){
-            Log::info($msg.$this->log_suffix(__LINE__));
         }
 
     }

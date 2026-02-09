@@ -289,10 +289,28 @@ class BookInvSuppDet extends Model
 
     public function getSupplierInvoiceItemDetailsVATAmountSum()
     {
+        $rcmActivated = $this->suppinvmaster()->value('rcmActivated');
+        if ($rcmActivated == 1) {
+            return 0;
+        }
+        
         return $this->supplier_invoice_item_details()->sum('VATAmount');
     }
 
 
+    public function getVATAmountSumWithoutExemptVAT()
+    {
+        $rcmActivated = $this->suppinvmaster()->value('rcmActivated');
+        if ($rcmActivated == 1) {
+            return 0;
+        }
+        
+        return $vatAmountSum = $this->supplier_invoice_item_details()
+        ->whereHas('vat_sub_category', function($query) {
+            $query->where('subCatgeoryType', '!=',3);
+        })
+        ->sum('VATAmount');
+    }
 
 
 

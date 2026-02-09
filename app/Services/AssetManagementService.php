@@ -4,13 +4,14 @@ namespace App\Services;
 
 use App\Exports\AssetManagement\AssetRegister\AssetRegisterDetail;
 use App\Services\Currency\CurrencyService;
+use App\helper\Helper;
 
 class AssetManagementService
 {
 
     public function generateDataToExport($request,$output) {
         $data = [];
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
         $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
 
@@ -47,6 +48,7 @@ class AssetManagementService
                 $assetRegisterDetailObj->setGroupedYN($value->groupbydesc);
                 $assetRegisterDetailObj->setSerialNumber($value->faUnitSerialNo);
                 $assetRegisterDetailObj->setAssetDescription($value->assetDescription);
+                $assetRegisterDetailObj->setLocation($value->locationName);
                 $assetRegisterDetailObj->setCategory($value->financeCatDescription);
                 $assetRegisterDetailObj->setDepPercentage(round($value->DEPpercentage, 2));
                 $assetRegisterDetailObj->setDateAcquired($value->postedDate);

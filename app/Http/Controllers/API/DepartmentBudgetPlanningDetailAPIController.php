@@ -27,7 +27,7 @@ use App\Models\Unit;
 use App\Repositories\DepartmentBudgetPlanningDetailRepository;
 use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
-use App\User;
+use App\Models\User;
 use App\helper\CreateExcel;
 use App\Models\Company;
 use Carbon\Carbon;
@@ -36,6 +36,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class DepartmentBudgetPlanningDetailController
@@ -187,7 +188,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
-        $employeeID =  \Helper::getEmployeeSystemID();
+        $employeeID =  Helper::getEmployeeSystemID();
 
 //        $employeeID = 110;
         $newRequest = new Request();
@@ -217,7 +218,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            if($request->input('type') != 'company_budget_planning') {
+            // Execute query logic if type is not 'company_budget_planning' OR if isCompany is true
+            if($request->input('type') != 'company_budget_planning' || ($isCompany === true || $isCompany === 'true')) {
                 $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID',$employeeID)->pluck('departmentEmployeeSystemID')->toArray();
             $query = DepartmentBudgetPlanningDetail::with([
                 'departmentSegment.segment',
@@ -228,7 +230,8 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'departmentBudgetPlanning.department'
             ]);
 
-            if($userPermission['success'] && $userPermission['data']['delegateUser']['status'])
+            // Only apply delegate access filter if type is not 'company_budget_planning'
+            if($request->input('type') != 'company_budget_planning' && $userPermission['success'] && $userPermission['data']['delegateUser']['status'])
             {
                 $query ->whereHas('budgetDelegateAccessDetails' , function ($q)use ($delegateIDs) {
                     $q->whereIn('delegatee_id',$delegateIDs);
@@ -366,20 +369,147 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            // Check if GL-based grouping is requested
-            $isGLBased = $request->input('isGLBased', false);
+            // Get selected status for grouping/filtering
+            $selectedStatus = (int) $request->input('selectedStatus', 1);
             
-            if ($isGLBased) {
-                // Group by GL and aggregate amounts
+            // Check if GL-based grouping is requested (either from isGLBased or selectedStatus = 4)
+            $isGLBased = $request->input('isGLBased', false) || $selectedStatus == 4;
+            
+            // Get workflow method to check if segment-based grouping is allowed
+            $workflowMethod = null;
+            if ($isCompany === true || $isCompany === 'true') {
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($companyBudgetPlanning && $companyBudgetPlanning->workflow) {
+                    $workflowMethod = $companyBudgetPlanning->workflow->method;
+                }
+            } else {
+                $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($budgetPlanning && $budgetPlanning->workflow) {
+                    $workflowMethod = $budgetPlanning->workflow->method;
+                }
+            }
+            
+            if ($selectedStatus == 2) {
+                // Department-wise grouping: Group by department only and aggregate
+                // All items for the same department are aggregated into one row
+                $allData = $query->get();
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    $deptId = $item->departmentBudgetPlanning ? $item->departmentBudgetPlanning->departmentID : null;
+                    // Use department ID as key only
+                    $key = $deptId ?? 'unknown';
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove segment for department view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        // Preserve departmentBudgetPlanning relationship with department
+                        if ($item->departmentBudgetPlanning) {
+                            $groupedItem->setRelation('departmentBudgetPlanning', $item->departmentBudgetPlanning);
+                            // Ensure department relationship is loaded
+                            if (!$groupedItem->departmentBudgetPlanning->relationLoaded('department')) {
+                                $groupedItem->departmentBudgetPlanning->load('department');
+                            }
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                $groupedCollection = collect(array_values($groupedData));
+                $total = $groupedCollection->count();
+                $data = $groupedCollection->slice($offset, $pageSize)->values();
+            } elseif ($selectedStatus == 3 && $workflowMethod == 1) {
+                // Segment-wise grouping: Group by segment + category and aggregate (only if workflow method is 1)
+                // Group by actual segment ID (serviceLineSystemID) + category to combine same segments from different departments but show categories separately
+                $allData = $query->get();
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    // Get the actual segment ID from the relationship, not department_segment_id
+                    $segmentId = null;
+                    if ($item->departmentSegment && $item->departmentSegment->segment) {
+                        $segmentId = $item->departmentSegment->segment->serviceLineSystemID ?? 
+                                     $item->departmentSegment->segment->id ?? null;
+                    }
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: segment + category
+                    $key = ($segmentId ?? ($item->department_segment_id ?? 'unknown')) . '_' . ($categoryId ?? 'unknown');
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove department for segment view
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // Preserve segment relationship - use the first occurrence's segment
+                        if ($item->departmentSegment && $item->departmentSegment->segment) {
+                            $groupedItem->setRelation('departmentSegment', $item->departmentSegment);
+                            // Ensure segment relationship is loaded
+                            if (!$groupedItem->departmentSegment->relationLoaded('segment')) {
+                                $groupedItem->departmentSegment->load('segment');
+                            }
+                        }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                $groupedCollection = collect(array_values($groupedData));
+                $total = $groupedCollection->count();
+                $data = $groupedCollection->slice($offset, $pageSize)->values();
+            } elseif ($isGLBased || $selectedStatus == 4) {
+                // Group by GL + category and aggregate amounts
                 // Get all data for grouping (without pagination for grouping)
                 $allData = $query->get();
                 
-                // Group by budget_template_gl_id and aggregate
+                // Group by budget_template_gl_id + category and aggregate
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $glId = $item->budget_template_gl_id;
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: GL + category
+                    $key = ($glId ?? 'unknown') . '_' . ($categoryId ?? 'unknown');
                     
-                    if (!isset($groupedData[$glId])) {
+                    if (!isset($groupedData[$key])) {
                         // Use the first item as base and modify it
                         // Create a new model instance to preserve relationships and accessors
                         $groupedItem = $item->replicate();
@@ -393,9 +523,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
                         
-                        // Remove segment for GL-based view
+                        // Remove segment and department for GL-based view
                         $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
                         
                         // Ensure relationships are loaded
                         if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
@@ -404,25 +535,93 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         if (!$groupedItem->relationLoaded('responsiblePerson')) {
                             $groupedItem->load('responsiblePerson');
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         
-                        $groupedData[$glId] = $groupedItem;
+                        $groupedData[$key] = $groupedItem;
                     }
                     
                     // Sum up all amount fields
-                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
-                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
-                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
-                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
-                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
-                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
-                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
                 }
                 
                 // Convert to collection and apply pagination
                 $groupedCollection = collect(array_values($groupedData));
                 $total = $groupedCollection->count();
                 $data = $groupedCollection->slice($offset, $pageSize)->values();
+            } elseif ($selectedStatus == 5) {
+                // Category-wise grouping: Group by template category only and aggregate
+                // Regardless of department or segment, group by category only
+                // Ensure category relationship is loaded for all items
+                $allData = $query->get();
+                // Load category relationship if not already loaded
+                foreach ($allData as $item) {
+                    if (!$item->relationLoaded('budgetTemplateGl')) {
+                        $item->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && !$item->budgetTemplateGl->relationLoaded('chartOfAccount')) {
+                        $item->budgetTemplateGl->load('chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && !$item->budgetTemplateGl->chartOfAccount->relationLoaded('templateCategoryDetails')) {
+                        $item->budgetTemplateGl->chartOfAccount->load('templateCategoryDetails');
+                    }
+                }
+                
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    // Get category ID and description for unique key
+                    $categoryId = null;
+                    $categoryDescription = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                        $categoryDescription = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description ?? null;
+                    }
+                    // Use category ID as primary key (description as fallback for uniqueness)
+                    // This ensures each unique category gets its own row
+                    $key = $categoryId ?? ($categoryDescription ?? 'unknown');
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove segment, department, and GL for category view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        $groupedItem->setRelation('budgetTemplateGl', null);
+                        $groupedItem->budget_template_gl_id = null;
+                        // Keep only category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                
+                $groupedCollection = collect(array_values($groupedData));
+                $total = $groupedCollection->count();
+                $data = $groupedCollection->slice($offset, $pageSize)->values();
             } else {
+                // Status 1: Details (default - show all details, no grouping)
                 $total = $query->count();
                 $data = $query->skip($offset)->take($pageSize)->get();
             }
@@ -459,24 +658,34 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Handle workflow and revision logic based on isCompany
             if ($isCompany === true || $isCompany === 'true') {
                 // Get CompanyBudgetPlanning for workflow/revision checks
-                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow','departmentBudgetPlannings')->find($departmentPlanningId);
                 if ($companyBudgetPlanning) {
                     if ($companyBudgetPlanning->workflow) {
                         $workflowMethod = $companyBudgetPlanning->workflow->method;
                     }
-                    // Check for revisions in any of the related department budget plannings
-                    $revision = \App\Models\Revision::whereIn('budgetPlanningId', $departmentPlanningIds)
-                        ->whereIn('revisionStatus', [1, 2])
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                    
-                    if ($revision && $revision->selectedGlSections) {
-                        $selectedGlSections = json_decode($revision->selectedGlSections, true);
+
+                    // Collect revisions from all department budget plannings
+                    $allSelectedGlSections = [];
+                    foreach($companyBudgetPlanning->departmentBudgetPlannings as $departmentBudgetPlanning) {
+                        $revision = \App\Models\Revision::where('budgetPlanningId', $departmentBudgetPlanning->id)
+                            ->whereIn('revisionStatus', [1, 2])
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                            
+                        if ($revision && $revision->selectedGlSections) {
+                            $deptSelectedGlSections = json_decode($revision->selectedGlSections, true);
+                            if (is_array($deptSelectedGlSections)) {
+                                // Merge selectedGlSections from all department budget plannings
+                                $allSelectedGlSections = array_merge($allSelectedGlSections, $deptSelectedGlSections);
+                            }
+                        }
                     }
+                    // Remove duplicates and reindex array
+                    $selectedGlSections = array_values(array_unique($allSelectedGlSections));
                 }
             } else {
                 // Original logic for single department budget planning
-                $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                $budgetPlanning = DepartmentBudgetPlanning::with('workflow','masterBudgetPlannings')->find($departmentPlanningId);
                 if ($budgetPlanning) {
                     if ($budgetPlanning->workflow) {
                         $workflowMethod = $budgetPlanning->workflow->method;
@@ -491,25 +700,50 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     }
                 }
             }
-            
-            
-            $data->transform(function ($item) use ($budgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser) {
-                $isEnable = true;
-                
 
+            
+            $data->transform(function ($item) use ($budgetPlanning, $companyBudgetPlanning, $selectedGlSections, $workflowMethod, $isGLBased, $isFinanceApprovalUser, $isCompany) {
+                $isEnable = true;
+
+                
+                // Get the related department budget planning for this item
+                $itemDepartmentBudgetPlanning = $item->departmentBudgetPlanning ?? $item->department_budget_planning ?? null;
+                
                 if($isFinanceApprovalUser)
                 {
                     $isEnable = true;
                 }else {
-                    if ($budgetPlanning  && !empty($selectedGlSections)) {
+                    // Check selectedGlSections for both company and department budget planning
+                    if (!empty($selectedGlSections)) {
                         if ($workflowMethod == 1 && !$isGLBased) {
                             $isEnable = in_array($item->id, $selectedGlSections);
                         } else {
                             $isEnable = in_array($item->budget_template_gl_id, $selectedGlSections);
                         }
                     }
-                    if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
-                        $isEnable = false;
+                    
+                    // For department budget planning (single), check workStatus
+                    if (!$isCompany && $budgetPlanning) {
+                        if(is_null($budgetPlanning) || $budgetPlanning->workStatus == 3){
+                            $isEnable = false;
+                        }
+                        
+                        // Check confirmed status for department budget planning
+                        if($budgetPlanning->masterBudgetPlannings && ($budgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $budgetPlanning->confirmed_yn == 1)) {
+                           $isEnable = true;
+                        }
+                    }
+                    
+                    // For company budget planning, check workStatus of the item's related department budget planning
+                    if ($isCompany && $itemDepartmentBudgetPlanning) {
+                        if($itemDepartmentBudgetPlanning->workStatus == 3){
+                            $isEnable = false;
+                        }
+                        
+                        // Check confirmed status for the item's related department budget planning
+                        if($itemDepartmentBudgetPlanning->masterBudgetPlannings && ($itemDepartmentBudgetPlanning->masterBudgetPlannings->confirmed_yn == 1 || $itemDepartmentBudgetPlanning->confirmed_yn == 1)) {
+                           $isEnable = true;
+                        }
                     }
                 }
 
@@ -671,7 +905,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -893,7 +1127,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companyId'],
                 'departmentBudgetPlanningDetailID' => $input['id'],
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
 
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -915,7 +1149,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
                 if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']))
                 {
-                    $entries = $entries->where('created_by',\Helper::getEmployeeSystemID());
+                    $entries = $entries->where('created_by',Helper::getEmployeeSystemID());
                 }
 
                 $entries = $entries->where('budget_detail_id', $input['id'])
@@ -946,10 +1180,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'entryData' => [],
                     'unitItems' => [],
                     'edit' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
-                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        (($entry->created_by == Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['edit_input']) && $delegateUserAccess['access']['edit_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true,
                     'delete' => (isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status']) ?
-                        (($entry->created_by == \Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
+                        (($entry->created_by == Helper::getEmployeeSystemID() && $userPermission['data']['delegateUser']['isActive']) ? true : (isset($delegateUserAccess['access']['delete_input']) && $delegateUserAccess['access']['delete_input'] && $userPermission['data']['delegateUser']['isActive'] ? true : false)) :
                         true
                 ];
 
@@ -1059,7 +1293,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $newRequest->replace([
                 'companyId' => $input['companySystemID'],
                 'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  \Helper::getEmployeeSystemID()
+                'delegateUser' =>  Helper::getEmployeeSystemID()
             ]);
             $controller = app(CompanyBudgetPlanningAPIController::class);
             $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
@@ -1114,10 +1348,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $companyId = $request->input('companyId');
 
         $selectedCompanyId = $companyId;
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1173,7 +1407,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
     public function updateDepartmentBudgetPlanningDetailAmount(Request $request)
     {
-        $employeeID =  \Helper::getEmployeeSystemID();
+        $employeeID =  Helper::getEmployeeSystemID();
 
 //        $employeeID = 110;
         $newRequest = new Request();
@@ -1352,11 +1586,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $input = $request->all();
             $departmentPlanningId = $request->input('budgetPlanningId');
 
+
             if (!$departmentPlanningId) {
                 return $this->sendError(trans('custom.department_planning_id_is_required'));
             }
 
-            $employeeID = \Helper::getEmployeeSystemID();
+            $employeeID = Helper::getEmployeeSystemID();
             $newRequest = new Request();
             $newRequest->replace([
                 'companyId' => $request->input('companySystemID'),
@@ -1372,6 +1607,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'responsiblePerson'
             ]);
 
+
             if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
                 $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)->pluck('departmentEmployeeSystemID')->toArray();
                 $query->whereHas('budgetDelegateAccessDetails', function ($q) use ($delegateIDs) {
@@ -1379,12 +1615,39 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            $query->forDepartmentPlanning($departmentPlanningId);
+            // Check if source is from approval - if so, get all department budget planning details for the company budget planning
+            $source = $request->input('source', '');
+            if ($source === 'approval' || $source === 'from_approval') {
+                // When source is approval, budgetPlanningId is actually a CompanyBudgetPlanning ID
+                // Get CompanyBudgetPlanning directly and get all DepartmentBudgetPlanning from it
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')
+                    ->find($departmentPlanningId);
+                
+                if ($companyBudgetPlanning && $companyBudgetPlanning->departmentBudgetPlannings && $companyBudgetPlanning->departmentBudgetPlannings->count() > 0) {
+                    $allDepartmentPlanningIds = $companyBudgetPlanning->departmentBudgetPlannings->pluck('id')->filter()->toArray();
+                    
+                    // Only query if we have valid department planning IDs
+                    if (!empty($allDepartmentPlanningIds) && count($allDepartmentPlanningIds) > 0) {
+                        // Query all department budget planning details for all departments in this company budget planning
+                        $query->whereHas('departmentBudgetPlanning', function ($q) use ($allDepartmentPlanningIds) {
+                            $q->whereIn('id', $allDepartmentPlanningIds);
+                        });
+                    } else {
+                        // If no valid department planning IDs, return empty result
+                        $query->whereRaw('1 = 0'); // This will return no results
+                    }
+                } else {
+                    // Fallback to original query if company budget planning not found or has no departments
+                    $query->forDepartmentPlanning($departmentPlanningId);
+                }
+            } else {
+                $query->forDepartmentPlanning($departmentPlanningId);
+            }
 
             // Handle department filtering for company-level exports
             $isCompany = $request->input('isCompany', false);
             $departments = $request->input('departments');
-            if (!empty($departments) && is_array($departments) && ($isCompany === true || $isCompany === 'true')) {
+            if (!empty($departments) && is_array($departments) && count($departments) > 0 && ($isCompany === true || $isCompany === 'true')) {
                 if (isset($departments[0]) && is_array($departments[0]) && isset($departments[0]['id'])) {
                     $departmentIds = array_column($departments, 'id');
                 } else {
@@ -1420,7 +1683,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             // Handle segment filtering
             $segments = $request->input('segments');
-            if (!empty($segments) && is_array($segments)) {
+            if (!empty($segments) && is_array($segments) && count($segments) > 0) {
                 if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
                     $segmentIds = array_column($segments, 'id');
                 } else {
@@ -1473,12 +1736,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $q->whereHas('chartOfAccount', function ($q2) use ($glDescValues) {
                             $q2->where(function ($q3) use ($glDescValues) {
                                 foreach ($glDescValues as $glDesc) {
-                                    $parts = explode(' - ', $glDesc, 2);
-                                    if (count($parts) == 2) {
-                                        $q3->orWhere(function ($q4) use ($parts) {
-                                            $q4->where('AccountCode', $parts[0])
-                                               ->where('AccountDescription', $parts[1]);
-                                        });
+                                    if (is_string($glDesc) && !empty($glDesc)) {
+                                        $parts = explode(' - ', $glDesc, 2);
+                                        if (count($parts) == 2 && isset($parts[0]) && isset($parts[1])) {
+                                            $q3->orWhere(function ($q4) use ($parts) {
+                                                $q4->where('AccountCode', $parts[0])
+                                                   ->where('AccountDescription', $parts[1]);
+                                            });
+                                        }
                                     }
                                 }
                             });
@@ -1487,19 +1752,140 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            // Check if GL based export is requested
-            $isGLBased = $request->input('isGLBased', false);
+            // Get selected status for grouping/filtering
+            $selectedStatus = (int) $request->input('selectedStatus', 1);
+            
+            // Check if GL based export is requested (either from isGLBased or selectedStatus = 4)
+            $isGLBased = $request->input('isGLBased', false) || $selectedStatus == 4;
+            
+            // Get workflow method to check if segment-based grouping is allowed
+            $workflowMethod = null;
+            if ($isCompany === true || $isCompany === 'true') {
+                $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($companyBudgetPlanning && $companyBudgetPlanning->workflow) {
+                    $workflowMethod = $companyBudgetPlanning->workflow->method;
+                }
+            } else {
+                $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+                if ($budgetPlanning && $budgetPlanning->workflow) {
+                    $workflowMethod = $budgetPlanning->workflow->method;
+                }
+            }
             
             // If GL based, we need to group by GL and aggregate amounts
-            if ($isGLBased) {
+            if ($selectedStatus == 2) {
+                // Department-wise grouping: Group by department only and aggregate
+                // All items for the same department are aggregated into one row
+                $allData = $query->orderBy('id', 'desc')->get();
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    $deptId = $item->departmentBudgetPlanning ? $item->departmentBudgetPlanning->departmentID : null;
+                    // Use department ID as key only
+                    $key = $deptId ?? 'unknown';
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove segment for department view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        // Preserve departmentBudgetPlanning relationship with department
+                        if ($item->departmentBudgetPlanning) {
+                            $groupedItem->setRelation('departmentBudgetPlanning', $item->departmentBudgetPlanning);
+                            // Ensure department relationship is loaded
+                            if (!$groupedItem->departmentBudgetPlanning->relationLoaded('department')) {
+                                $groupedItem->departmentBudgetPlanning->load('department');
+                            }
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                $dataset = collect(array_values($groupedData));
+            } elseif ($selectedStatus == 3 && $workflowMethod == 1) {
+                // Segment-wise grouping: Group by segment + category and aggregate (only if workflow method is 1)
+                // Group by actual segment ID (serviceLineSystemID) + category to combine same segments from different departments but show categories separately
+                $allData = $query->orderBy('id', 'desc')->get();
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    // Get the actual segment ID from the relationship, not department_segment_id
+                    $segmentId = null;
+                    if ($item->departmentSegment && $item->departmentSegment->segment) {
+                        $segmentId = $item->departmentSegment->segment->serviceLineSystemID ?? 
+                                     $item->departmentSegment->segment->id ?? null;
+                    }
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: segment + category
+                    $key = ($segmentId ?? ($item->department_segment_id ?? 'unknown')) . '_' . ($categoryId ?? 'unknown');
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove department for segment view
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // Preserve segment relationship - use the first occurrence's segment
+                        if ($item->departmentSegment && $item->departmentSegment->segment) {
+                            $groupedItem->setRelation('departmentSegment', $item->departmentSegment);
+                            // Ensure segment relationship is loaded
+                            if (!$groupedItem->departmentSegment->relationLoaded('segment')) {
+                                $groupedItem->departmentSegment->load('segment');
+                            }
+                        }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                $dataset = collect(array_values($groupedData));
+            } elseif ($isGLBased || $selectedStatus == 4) {
                 $allData = $query->orderBy('id', 'desc')->get();
                 
-                // Group by budget_template_gl_id and aggregate
+                // Group by budget_template_gl_id + category and aggregate
                 $groupedData = [];
                 foreach ($allData as $item) {
                     $glId = $item->budget_template_gl_id;
+                    // Get category ID for composite key
+                    $categoryId = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                    }
+                    // Use composite key: GL + category
+                    $key = ($glId ?? 'unknown') . '_' . ($categoryId ?? 'unknown');
                     
-                    if (!isset($groupedData[$glId])) {
+                    if (!isset($groupedData[$key])) {
                         // Use the first item as base
                         $groupedItem = $item->replicate();
                         
@@ -1512,9 +1898,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
                         
-                        // Remove segment for GL-based view
+                        // Remove segment and department for GL-based view
                         $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
                         
                         // Ensure relationships are loaded
                         if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
@@ -1523,23 +1910,92 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         if (!$groupedItem->relationLoaded('responsiblePerson')) {
                             $groupedItem->load('responsiblePerson');
                         }
+                        // Preserve category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
                         
-                        $groupedData[$glId] = $groupedItem;
+                        $groupedData[$key] = $groupedItem;
                     }
                     
                     // Sum up all amount fields
-                    $groupedData[$glId]->request_amount += ($item->request_amount ?? 0);
-                    $groupedData[$glId]->previous_year_budget += ($item->previous_year_budget ?? 0);
-                    $groupedData[$glId]->current_year_budget += ($item->current_year_budget ?? 0);
-                    $groupedData[$glId]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
-                    $groupedData[$glId]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
-                    $groupedData[$glId]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
-                    $groupedData[$glId]->difference_current_request += ($item->difference_current_request ?? 0);
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
+                $dataset = collect(array_values($groupedData));
+            } elseif ($selectedStatus == 5) {
+                // Category-wise grouping: Group by template category only and aggregate
+                // Regardless of department or segment, group by category only
+                // Ensure category relationship is loaded for all items
+                $allData = $query->orderBy('id', 'desc')->get();
+                // Load category relationship if not already loaded
+                foreach ($allData as $item) {
+                    if (!$item->relationLoaded('budgetTemplateGl')) {
+                        $item->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && !$item->budgetTemplateGl->relationLoaded('chartOfAccount')) {
+                        $item->budgetTemplateGl->load('chartOfAccount.templateCategoryDetails');
+                    } elseif ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && !$item->budgetTemplateGl->chartOfAccount->relationLoaded('templateCategoryDetails')) {
+                        $item->budgetTemplateGl->chartOfAccount->load('templateCategoryDetails');
+                    }
                 }
                 
+                $groupedData = [];
+                foreach ($allData as $item) {
+                    // Get category ID and description for unique key
+                    $categoryId = null;
+                    $categoryDescription = null;
+                    if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                        $categoryId = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->id;
+                        $categoryDescription = $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description ?? null;
+                    }
+                    // Use category ID as primary key (description as fallback for uniqueness)
+                    // This ensures each unique category gets its own row
+                    $key = $categoryId ?? ($categoryDescription ?? 'unknown');
+                    
+                    if (!isset($groupedData[$key])) {
+                        $groupedItem = $item->replicate();
+                        $groupedItem->request_amount = 0;
+                        $groupedItem->previous_year_budget = 0;
+                        $groupedItem->current_year_budget = 0;
+                        $groupedItem->difference_last_current_year = 0;
+                        $groupedItem->amount_given_by_finance = 0;
+                        $groupedItem->amount_given_by_hod = 0;
+                        $groupedItem->difference_current_request = 0;
+                        // Remove segment, department, and GL for category view
+                        $groupedItem->setRelation('departmentSegment', null);
+                        $groupedItem->department_segment_id = null;
+                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        $groupedItem->setRelation('budgetTemplateGl', null);
+                        $groupedItem->budget_template_gl_id = null;
+                        // Keep only category relationship
+                        if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
+                            $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
+                        }
+                        $groupedData[$key] = $groupedItem;
+                    }
+                    
+                    $groupedData[$key]->request_amount += ($item->request_amount ?? 0);
+                    $groupedData[$key]->previous_year_budget += ($item->previous_year_budget ?? 0);
+                    $groupedData[$key]->current_year_budget += ($item->current_year_budget ?? 0);
+                    $groupedData[$key]->difference_last_current_year += ($item->difference_last_current_year ?? 0);
+                    $groupedData[$key]->amount_given_by_finance += ($item->amount_given_by_finance ?? 0);
+                    $groupedData[$key]->amount_given_by_hod += ($item->amount_given_by_hod ?? 0);
+                    $groupedData[$key]->difference_current_request += ($item->difference_current_request ?? 0);
+                }
                 $dataset = collect(array_values($groupedData));
             } else {
+                // Status 1: Details (default - show all details, no grouping)
                 $dataset = $query->orderBy('id', 'desc')->get();
+            }
+
+            // Ensure dataset is a collection
+            if (!$dataset instanceof \Illuminate\Support\Collection) {
+                $dataset = collect($dataset);
             }
 
             $data = array();
@@ -1548,22 +2004,52 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $x++;
                 $data[$x]['#'] = $x;
                 
-                // Only include Segment column if not GL based
-                if (!$isGLBased) {
+                // Include Segment column based on selectedStatus
+                // Status 1 (Details): Show segment column if not GL based
+                // Status 2 (Department): No segment column
+                // Status 3 (Segment): Show segment column
+                // Status 4 (GL Based): No segment column
+                // Status 5 (Category): No segment column
+                if (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3) {
                     $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
                         ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
                         : '';
                 }
                 
-                $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
-                    ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
-                    : '';
-                $data[$x]['Parent GL'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
-                    ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
-                    : '';
-                $data[$x]['GL Description'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
-                    ? ($val->budgetTemplateGl->chartOfAccount->AccountCode . ' - ' . $val->budgetTemplateGl->chartOfAccount->AccountDescription) 
-                    : '';
+                // Include Department column based on selectedStatus
+                // Status 1 (Details): Show department column if not GL based
+                // Status 2 (Department): Show department column
+                // Status 3 (Segment): No department column
+                // Status 4 (GL Based): No department column
+                // Status 5 (Category): No department column
+                if (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2) {
+                    $data[$x]['Department'] = $val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department 
+                        ? $val->departmentBudgetPlanning->department->departmentName 
+                        : '';
+                }
+                
+                // Include GL Type, Parent GL, and GL Description based on selectedStatus
+                // Status 5 (Category): No GL columns, show Category instead
+                // Other statuses: Show GL columns
+                if ($selectedStatus != 5) {
+                    $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
+                        ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
+                        : '';
+                    $data[$x]['Parent GL'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
+                        ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
+                        : '';
+                    $data[$x]['GL Description'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
+                        ? ($val->budgetTemplateGl->chartOfAccount->AccountCode . ' - ' . $val->budgetTemplateGl->chartOfAccount->AccountDescription) 
+                        : '';
+                } else {
+                    // Status 5: Show Category column instead
+                    $data[$x]['Category'] = $val->category 
+                        ? $val->category->description 
+                        : ($val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
+                            ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
+                            : '');
+                }
+                
                 $data[$x]['Responsible Person'] = $val->responsiblePerson 
                     ? $val->responsiblePerson->empName 
                     : '';
@@ -1574,8 +2060,16 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
                 $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
                 $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
-                $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
+                // $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
             }
+
+            // Ensure data array is not empty and has valid structure
+            if (empty($data) || !is_array($data)) {
+                return $this->sendError(trans('custom.no_data_to_export'));
+            }
+
+            // Re-index array to start from 0 (CreateExcel expects $data[0] to exist)
+            $data = array_values($data);
 
             $companyMaster = Company::find($request->input('companySystemID'));
             $companyCode = $companyMaster->CompanyID ?? 'common';

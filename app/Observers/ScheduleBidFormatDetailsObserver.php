@@ -15,6 +15,7 @@ use App\Models\TenderBidFormatDetail;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleDetailEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class ScheduleBidFormatDetailsObserver
 {
@@ -29,7 +30,7 @@ class ScheduleBidFormatDetailsObserver
 
         $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
         $tenderObj = TenderDetails::getTenderMasterData($shedule_master->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
       
         $versionId = $tenderObj->getOriginal('tender_edit_version_id');
         $obj = TenderDetails::validateTenderEdit($shedule_master->getAttribute('tender_id'));
@@ -74,7 +75,6 @@ class ScheduleBidFormatDetailsObserver
 
                 if($output)
                 {
-                    Log::info('created succefully');
                 }
             }
             else
@@ -90,7 +90,6 @@ class ScheduleBidFormatDetailsObserver
                     $result =  $this->process($tender);
                     if($result)
                     {
-                        Log::info('boq items created succsfully');
                     }
                 }   
                 else    
@@ -106,7 +105,7 @@ class ScheduleBidFormatDetailsObserver
 
     public function deleted(ScheduleBidFormatDetails $tender)
     {   
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(isset($employee))
         {
@@ -154,7 +153,7 @@ class ScheduleBidFormatDetailsObserver
         $result = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->first();
         $tenderObj = TenderMaster::where('id',$result->getAttribute('tender_id'))->select('tender_edit_version_id')->first();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
         $data1['tender_id'] = $result->getAttribute('tender_id');
         $data1['scheduler_name'] = $result->getAttribute('scheduler_name');

@@ -9,12 +9,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
 use App\Models\UserGroupAssign;
-use App\Models\NavigationRoute;
 use App\Models\RoleRoute;
 
 class UpdateRoleRouteJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    
     protected $dataBase;
     protected $userGroupID;
     
@@ -37,11 +37,11 @@ class UpdateRoleRouteJob implements ShouldQueue
 
         $this->dataBase = $dataBase;
         $this->userGroupID = $userGroupID;
-
     }
 
     /**
      * Execute the job.
+     * This job dispatches sub-jobs to process user group assignments in chunks
      *
      * @return void
      */
@@ -49,106 +49,18 @@ class UpdateRoleRouteJob implements ShouldQueue
     {
         CommonJobService::db_switch($this->dataBase);
 
+        // Delete existing role routes for this user group
         RoleRoute::where('userGroupID', $this->userGroupID)->delete();
 
-        $userGroupAssignedData = UserGroupAssign::where('userGroupID', $this->userGroupID)->get();
-
-        foreach ($userGroupAssignedData as $key => $value) {
-            if ($value->readonly == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 1)
-                                                     ->get();
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-
-            if ($value->create == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 2)
-                                                     ->get();
-
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-
-            if ($value->update == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 3)
-                                                     ->get();
-
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-
-            if ($value->delete == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 4)
-                                                     ->get();
-
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-            
-            if ($value->print == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 5)
-                                                     ->get();
-
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-
-            if ($value->export == 1) {
-                $navigationroutes = NavigationRoute::where('navigationID', $value->navigationMenuID)
-                                                     ->where('action', 6)
-                                                     ->get();
-
-                foreach ($navigationroutes as $k => $val) {
-                    $data = [
-                        'routeName' => $val->routeName,
-                        'userGroupID' => $this->userGroupID,
-                        'companySystemID' => $value->companyID
-                    ];
-
-                    RoleRoute::create($data);
-                }
-            }
-
-        }
+        // Process user group assignments in chunks of 50 and dispatch sub-jobs
+        UserGroupAssign::where('userGroupID', $this->userGroupID)
+            ->chunkById(50, function ($userGroupAssignments) {
+                // Dispatch sub-job for each chunk of 50 records
+                UpdateRoleRouteChunkJob::dispatch(
+                    $this->dataBase,
+                    $this->userGroupID,
+                    $userGroupAssignments->pluck('id')->toArray()
+                );
+            });
     }
 }

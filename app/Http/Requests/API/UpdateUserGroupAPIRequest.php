@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\UserGroup;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateUserGroupAPIRequest extends APIRequest
+class UpdateUserGroupAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

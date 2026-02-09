@@ -19,11 +19,13 @@ use App\Models\ProcumentOrder;
 use App\Repositories\PoAddonsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PurchaseOrderDetails;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 /**
  * Class PoAddonsController
  * @package App\Http\Controllers\API
@@ -246,7 +248,7 @@ class PoAddonsAPIController extends AppBaseController
                    
         $input = $request->all();
 
-        $input = array_except($input, ['category']);
+        $input = Arr::except($input, ['category']);
 
         $input = $this->convertArrayToValue($input);
 
@@ -292,7 +294,7 @@ class PoAddonsAPIController extends AppBaseController
 
 
 
-        $purchaseOrder->poTotalSupplierTransactionCurrency = \Helper::roundValue($poMasterSumDeductedNotRounded);
+        $purchaseOrder->poTotalSupplierTransactionCurrency = Helper::roundValue($poMasterSumDeductedNotRounded);
         $purchaseOrder->update();
 
         $poAddons = $this->poAddonsRepository->update($input, $id);

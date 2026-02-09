@@ -18,6 +18,7 @@ use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use App\helper\email as Email;
 
 class CustomerStatementJob implements ShouldQueue
 {
@@ -38,10 +39,16 @@ class CustomerStatementJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $dataArr, $customerCodeSystem, $input, $reportTypeID, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->dataArr = $dataArr;
@@ -64,7 +71,6 @@ class CustomerStatementJob implements ShouldQueue
         $companySystemID = $this->input;
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
-        Log::useFiles(storage_path() . '/logs/payment_released_to_supplier.log');
 
         CommonJobService::db_switch($db);
 
@@ -139,7 +145,7 @@ class CustomerStatementJob implements ShouldQueue
                 $mpdf->WriteHTML($html);
                 $mpdf->Output($filePath, 'F');
             } catch (\Exception $e2) {
-                Log::error('mPDF Error in CustomerStatementJob: ' . $e2->getMessage());
+                Log::channel('payment_released_to_supplier')->error('mPDF Error in CustomerStatementJob: ' . $e2->getMessage());
                 return;
             }
         }
@@ -172,10 +178,10 @@ class CustomerStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.customer_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                         Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                         Log::channel('payment_released_to_supplier')->error('Error');
+                        Log::channel('payment_released_to_supplier')->error($sendEmail["message"]);
                     }
                 }
             }

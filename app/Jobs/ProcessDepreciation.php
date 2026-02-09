@@ -64,7 +64,6 @@ class ProcessDepreciation implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         $db = $this->dispatch_db;
         DB::beginTransaction();
         try {
@@ -225,7 +224,7 @@ class ProcessDepreciation implements ShouldQueue
         }
         catch (\Exception $e){
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('depreciation_jobs')->error($this->failed($e));
         }
 
     }

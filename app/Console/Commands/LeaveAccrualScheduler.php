@@ -40,7 +40,6 @@ class LeaveAccrualScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('leave-accrual') );
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){

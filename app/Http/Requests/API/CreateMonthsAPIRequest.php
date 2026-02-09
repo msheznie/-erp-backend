@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\Months;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateMonthsAPIRequest extends APIRequest
+class CreateMonthsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

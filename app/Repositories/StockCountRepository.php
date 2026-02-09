@@ -32,7 +32,8 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\helper\StatusService;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class StockCountRepository
@@ -97,14 +98,14 @@ class StockCountRepository extends BaseRepository
         return StockCount::class;
     }
 
-    public function stockCountListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID)
+    public function stockCountListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null)
     {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -147,6 +148,15 @@ class StockCountRepository extends BaseRepository
             if ($input['year'] && !is_null($input['year'])) {
                 $stockAdjustments->whereYear('stockAdjustmentDate', '=', $input['year']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $stockAdjustments->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
 
@@ -193,13 +203,13 @@ class StockCountRepository extends BaseRepository
                 $data[$x][trans('custom.doc_code')] = $val->stockCountCode;
                 $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
                 $data[$x][trans('custom.reference_no')] = $val->refNo;
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->stockCountDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->stockCountDate);
                 $data[$x][trans('custom.location')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
                 $data[$x][trans('custom.comment')] = $val->comment;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

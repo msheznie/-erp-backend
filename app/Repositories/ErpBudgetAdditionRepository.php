@@ -3,7 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\ErpBudgetAddition;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class ErpBudgetAdditionRepository
@@ -65,10 +66,10 @@ class ErpBudgetAdditionRepository extends BaseRepository
     {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -99,6 +100,15 @@ class ErpBudgetAdditionRepository extends BaseRepository
             if ($input['year'] && !is_null($input['year'])) {
                 $budgetAddition = $budgetAddition->whereYear('createdDateTime', '=', $input['year']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $budgetAddition->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         if ($search) {

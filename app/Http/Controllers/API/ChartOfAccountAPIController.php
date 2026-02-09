@@ -38,7 +38,7 @@ use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
@@ -52,6 +52,10 @@ use App\Services\AuditLog\ChartOfAccountAuditService;
 use App\Traits\AuditLogsTrait;
 use App\Models\ReportTemplate;
 use App\Models\CashFlowTemplateDetail;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ChartOfAccountController
@@ -99,7 +103,7 @@ class ChartOfAccountAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['final_approved_by']);
+        $input = Arr::except($input, ['final_approved_by']);
         $input = $this->convertArrayToSelectedValue($input, array('primaryCompanySystemID'));
 
         /** Validation massage : Common for Add & Update */
@@ -136,11 +140,11 @@ class ChartOfAccountAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
         $empId = $user->employee['empID'];
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['documentSystemID'] = 59;
         $input['documentID'] = 'CAM';
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        $validatorResult = Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -376,7 +380,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     return $this->sendError(trans('custom.you_cannot_edit_this_document_already_confirmed_an'), 500);
                 }
 
-                // $input = array_except($input,['currency_master']); // uses only in sub sub tables
+                // $input = Arr::except($input,['currency_master']); // uses only in sub sub tables
 
 
                 /** Validation : Edit Unique */
@@ -392,7 +396,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
                 $input['modifiedPc'] = gethostname();
                 $input['modifiedUser'] = $empId;
-                $input = array_except($input, ['confirmedEmpSystemID', 'confirmedEmpID', 'confirmedEmpName', 'confirmedEmpDate']);
+                $input = Arr::except($input, ['confirmedEmpSystemID', 'confirmedEmpID', 'confirmedEmpName', 'confirmedEmpDate']);
 
                 if ($input['confirmedYN'] == 1 && $chartOfAccount->confirmedYN == 0) {
 
@@ -409,12 +413,12 @@ class ChartOfAccountAPIController extends AppBaseController
                     }
 
                     $params = array('autoID' => $input['chartOfAccountSystemID'], 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"]);
                     }
                 }
-                $input = array_except($input, ['confirmedYN']);
+                $input = Arr::except($input, ['confirmedYN']);
 
                
                 $this->chartOfAccountRepository->update($input, $input['chartOfAccountSystemID']);
@@ -519,10 +523,10 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $chartOfAccountSystemID = $request['chartOfAccountSystemID'];
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -548,10 +552,10 @@ class ChartOfAccountAPIController extends AppBaseController
     {
         $chartOfAccountSystemID = $request->get('chartOfAccountSystemID');
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -649,10 +653,10 @@ class ChartOfAccountAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -731,14 +735,14 @@ class ChartOfAccountAPIController extends AppBaseController
         }
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -771,7 +775,7 @@ class ChartOfAccountAPIController extends AppBaseController
             ->where('erp_documentapproved.documentSystemID', 59)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $chartOfAccount = [];
@@ -822,11 +826,11 @@ class ChartOfAccountAPIController extends AppBaseController
 
         /** all Company  Drop Down */
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
             // $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -896,7 +900,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function approveChartOfAccount(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -907,7 +911,7 @@ class ChartOfAccountAPIController extends AppBaseController
 
     public function rejectChartOfAccount(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1038,10 +1042,10 @@ class ChartOfAccountAPIController extends AppBaseController
         $type = $input['type'];
         $companyId = $input['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

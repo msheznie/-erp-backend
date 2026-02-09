@@ -721,7 +721,8 @@
                         @endif
                         @php
                             $qrcode=QrCode::encoding('UTF-8')->size(130)->generate(URL::full());
-                            $qrcode=str_replace('<?xml version="1.0" encoding="UTF-8"?>',"",$qrcode); //replace to empty
+                            $xmlDeclaration = '<' . '?xml version="1.0" encoding="UTF-8"?>';
+                            $qrcode=str_replace($xmlDeclaration,"",$qrcode); //replace to empty
                         @endphp
                         <table>
                             <tr>

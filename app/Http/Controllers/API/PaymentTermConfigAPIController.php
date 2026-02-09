@@ -10,7 +10,7 @@ use App\Repositories\PaymentTermConfigRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -117,6 +117,17 @@ class PaymentTermConfigAPIController extends AppBaseController
     public function store(CreatePaymentTermConfigAPIRequest $request)
     {
         $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'term' => 'required|string|max:25',
+            'sortOrder' => 'required|integer',
+            'templateId' => 'required|integer',
+            'companySystemID' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
 
         $paymentTermConfig = $this->paymentTermConfigRepository->create($input);
 
@@ -309,6 +320,10 @@ class PaymentTermConfigAPIController extends AppBaseController
 
         $paymentTermTemplateConfigs =  PaymentTermConfig::where('templateId', $input['templateId']);
 
+        $maxSortOrder = PaymentTermConfig::where('templateId', $input['templateId'])->max('sortOrder') ?? 0;
+        $nextSortOrder = $maxSortOrder + 1;
+
+
         return \DataTables::of($paymentTermTemplateConfigs)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -319,6 +334,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('nextSortOrder', $nextSortOrder)
             ->make(true);
     }
 

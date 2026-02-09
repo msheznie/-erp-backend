@@ -37,7 +37,7 @@ use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
@@ -48,6 +48,7 @@ use Artisan;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use App\Services\AuditLog\ItemFinanceCategoryAuditService;
+use Illuminate\Support\Arr;
 
 use Illuminate\Support\Facades\Validator;
 /**
@@ -94,10 +95,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             if($request->primaryCompanySystemID) {
                 $companyId = $request->primaryCompanySystemID;
 
-                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                $isGroup = Helper::checkIsCompanyGroup($companyId);
 
                 if ($isGroup) {
-                    $companyID = \Helper::getGroupCompany($companyId);
+                    $companyID = Helper::getGroupCompany($companyId);
                 }
                 else {
                     $companyID = [$companyId];
@@ -240,7 +241,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
             $itemCategorySubArray = [];
             $i=0;
             foreach ($subCategories as $value) {
-                $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
+                $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl','finance_gl_code_revenue']);
                 if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null) {
                     $accountCode = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                     $accountDescription = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -287,10 +288,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         $mainCategoryIds = collect($mainCategory)->pluck('id');
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -423,7 +424,7 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
             $financeItemCategorySubs = FinanceItemCategorySub::where('itemCategorySubID', $input['itemCategorySubID'])->first();
 
-            $input = array_except($input,['companySystemID','finance_item_category_master']);
+            $input = Arr::except($input,['companySystemID','finance_item_category_master']);
 
             if (empty($financeItemCategorySubs)) {
                 return $this->sendError(trans('custom.sub_category_not_found'));

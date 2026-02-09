@@ -5,9 +5,12 @@ namespace App\Repositories;
 use App\Models\BudgetMaster;
 use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseRequest;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Models\TenderPurchaseRequest;
+use Carbon\Carbon;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use App\Services\ProcurementLifecycleService;
+use App\helper\Helper;
 
 /**
  * Class PurchaseRequestRepository
@@ -119,7 +122,7 @@ class PurchaseRequestRepository extends BaseRepository
         return PurchaseRequest::class;
     }
 
-    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID, $buyerEmpSystemId) {
+    public function purchaseRequestListQuery($request, $input, $search = '', $serviceLineSystemID = null, $buyerEmpSystemId = null) {
 
         $purchaseRequests = PurchaseRequest::where('companySystemID', $input['companyId']);
 
@@ -189,6 +192,25 @@ class PurchaseRequestRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseRequests->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseRequests->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
+
         
         if (isset($request['fromPortal']) && $request['fromPortal']) {
             $purchaseRequests = $purchaseRequests->where('createdUserSystemID', $request['createdUserSystemID']);
@@ -253,7 +275,7 @@ class PurchaseRequestRepository extends BaseRepository
                 $data[$x][trans('custom.excel_comments')] = $val->comments;
                 $data[$x][trans('custom.excel_internal_note')] = $val->internalNotes;
                 $data[$x][trans('custom.excel_created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.excel_created_at')] = \Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.excel_created_at')] = Helper::dateFormat($val->createdDateTime);
                 $data[$x][trans('custom.excel_status')] = StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
@@ -313,7 +335,7 @@ class PurchaseRequestRepository extends BaseRepository
             trans('custom.excel_comments') => $val->comments,
             trans('custom.excel_internal_note') => $val->internalNotes,
             trans('custom.excel_created_by') => $val->created_by? $val->created_by->empName : '',
-            trans('custom.excel_created_at') =>\Helper::dateFormat($val->createdDateTime),
+            trans('custom.excel_created_at') =>Helper::dateFormat($val->createdDateTime),
             trans('custom.excel_status') => StatusService::getStatus($val->cancelledYN, $val->manuallyClosed, $val->PRConfirmedYN, $val->approved, $val->refferedBackYN)
         ];
     }

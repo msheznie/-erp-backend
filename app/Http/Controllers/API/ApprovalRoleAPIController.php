@@ -18,7 +18,7 @@ use App\Models\ApprovalRole;
 use App\Repositories\ApprovalRoleRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -138,7 +138,7 @@ class ApprovalRoleAPIController extends AppBaseController
     }
 
     public function getApprovalRollByLevel(Request $request){
-        $approvalRole = ApprovalRole::with(['company' => function($query) {
+        $approvalRole = ApprovalRole::with(['approval_group','company' => function($query) {
             // $query->select('CompanyName');
         },'department' => function($query) {
             //$query->select('DepartmentDescription');
@@ -168,6 +168,8 @@ class ApprovalRoleAPIController extends AppBaseController
         $approvalRole->approvalGroupID = $request->approvalGroupID;
         $approvalRole->save();
 
+        $approvalRole = ApprovalRole::with(['approval_group'])->find($request->rollMasterID);
+        
         return $this->sendResponse($approvalRole->toArray(), trans('custom.update', ['attribute' => trans('custom.approval_roles')]));
     }
 }

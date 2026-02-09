@@ -57,7 +57,7 @@
                 <td>{{ $data->comments ?? '' }}</td>
                 <td>{{ $data->supplierInvoiceNo ?? '' }}</td>
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'supplier_invoice_date')->count() > 0)
-                    <td class="text-center">{{ isset($data->supplierInvoiceDate) ? \Helper::dateFormat($data->supplierInvoiceDate) : '' }}</td>
+                    <td class="text-center">{{ isset($data->supplierInvoiceDate) ? \App\helper\Helper::dateFormat($data->supplierInvoiceDate) : '' }}</td>
                 @endif
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'supplier_invoice_amount')->count() > 0)
                     <td class="text-right">{{ isset($data->supplierInvoiceAmount) ? round($data->supplierInvoiceAmount, $decimalPlaceRpt) : '' }}</td>
@@ -77,11 +77,17 @@
                     </td>
                 @endif
                 @if(isset($taxExtraColumn) && is_array($taxExtraColumn) && collect($taxExtraColumn)->where('id', 'wht_bears')->count() > 0)
-                    <td class="text-center">{{ __('custom.vendor_bears_wht') }}</td>
+                    <td class="text-center">
+                        @if(isset($data->whtPaymentMethod) && $data->whtPaymentMethod == 2)
+                            {{ __('custom.organization_bears_wht_for_tax_deduct') }}
+                        @else
+                            {{ __('custom.vendor_bears_wht') }}
+                        @endif
+                    </td>
                 @endif
-                <td class="text-center">{{ $data->paymentVoucherDate ? \Helper::dateFormat($data->paymentVoucherDate) : '' }}</td>
-                <td class="text-center">{{ \Helper::dateFormat($data->dueDateForPaymentOfWithholdingTax) }}</td>
-                <td class="text-center">{{ $data->actualDateOfPaymentOfWithholdingTax ? \Helper::dateFormat($data->actualDateOfPaymentOfWithholdingTax) : '' }}</td>
+                <td class="text-center">{{ $data->paymentVoucherDate ? \App\helper\Helper::dateFormat($data->paymentVoucherDate) : '' }}</td>
+                <td class="text-center">{{ \App\helper\Helper::dateFormat($data->dueDateForPaymentOfWithholdingTax) }}</td>
+                <td class="text-center">{{ $data->actualDateOfPaymentOfWithholdingTax ? \App\helper\Helper::dateFormat($data->actualDateOfPaymentOfWithholdingTax) : '' }}</td>
                 <td class="text-center">{{ $data->numberOfMonthsDelay ?? 0 }}</td>
                 <td class="text-right">{{ round($data->poAmount, $decimalPlaceRpt) }}</td>
                 <td class="text-center">{{ $data->whtPercentage ?? 0 }}</td>

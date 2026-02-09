@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use App\Models\CalendarDatesDetail;
 use App\Models\CalendarDatesDetailEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class CalendarDatesDetailObserver
 {
@@ -85,7 +86,7 @@ class CalendarDatesDetailObserver
 
     public function process($tender,$type,$tenderObj,$reflog_id)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

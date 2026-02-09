@@ -20,9 +20,11 @@ use App\Models\ShiftDetails;
 use App\Repositories\OutletUsersRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class OutletUsersController
@@ -164,8 +166,8 @@ class OutletUsersAPIController extends AppBaseController
         }
 
 
-        $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
-        $employee = \Helper::getEmployeeInfo();
+        $input['companyID'] = Helper::getCompanyById($input['companySystemID']);
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -276,7 +278,7 @@ class OutletUsersAPIController extends AppBaseController
     public function update($id, UpdateOutletUsersAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['employee']);
+        $input = Arr::except($input, ['employee']);
         $input = $this->convertArrayToValue($input);
         $messages = array(
             'wareHouseCode.required' => 'The Outlet field is required.',
@@ -326,8 +328,8 @@ class OutletUsersAPIController extends AppBaseController
             }
         }
 
-        $input['companyID'] = \Helper::getCompanyById($input['companySystemID']);
-        $employee = \Helper::getEmployeeInfo();
+        $input['companyID'] = Helper::getCompanyById($input['companySystemID']);
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -413,10 +415,10 @@ class OutletUsersAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

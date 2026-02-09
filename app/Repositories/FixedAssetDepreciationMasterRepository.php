@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\FixedAssetDepreciationMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class FixedAssetDepreciationMasterRepository
@@ -61,10 +62,10 @@ class FixedAssetDepreciationMasterRepository extends BaseRepository
     public function fixedAssetDepreciationListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -84,6 +85,15 @@ class FixedAssetDepreciationMasterRepository extends BaseRepository
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
                 $assetCositng->where('approved', $input['approved']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $assetCositng->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         if ($search) {

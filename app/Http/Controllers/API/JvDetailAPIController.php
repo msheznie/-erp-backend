@@ -53,7 +53,7 @@ use App\Services\JournalVoucherService;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
@@ -62,6 +62,8 @@ use Carbon\Carbon;
 use Response;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ErpProjectMaster;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class JvDetailController
@@ -315,7 +317,7 @@ class JvDetailAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'currency_by', 'console_company','chartofaccount','line_segments']);
+        $input = Arr::except($input, ['segment', 'currency_by', 'console_company','chartofaccount','line_segments']);
         $input = $this->convertArrayToValue($input);
 
         $resultData = JournalVoucherService::updateJournalVoucherDetail($id, $input);
@@ -1240,8 +1242,8 @@ GROUP BY
         $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
         $temp['comments'] = $jvMaster['JVNarration'];
-        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
-        $temp['creditAmount'] = (!$creditFlag) ? 0 : \Helper::roundValue($jvAmount);
+        $temp['debitAmount'] = (!$creditFlag) ? Helper::roundValue($jvAmount) : 0;
+        $temp['creditAmount'] = (!$creditFlag) ? 0 : Helper::roundValue($jvAmount);
         $temp['cuurencyname'] = null;
         $temp['documentSystemID'] = 17;
         $temp['documentID'] = "JV";
@@ -1455,7 +1457,7 @@ GROUP BY
         $temp['serviceLineCode'] = $serviceline->ServiceLineCode;
         $temp['clientContractID'] = null;
         $temp['comments'] = $jvMaster['JVNarration'];
-        $temp['debitAmount'] = (!$creditFlag) ? \Helper::roundValue($jvAmount) : 0;
+        $temp['debitAmount'] = (!$creditFlag) ? Helper::roundValue($jvAmount) : 0;
         $temp['creditAmount'] = (!$creditFlag) ? 0 : $generalLedgerAmount;
         $temp['cuurencyname'] = null;
         $temp['documentSystemID'] = 17;

@@ -7,6 +7,7 @@ use App\Models\DocumentMaster;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use App\helper\email as Email;
 
 class AfterDocumentCreated
 {
@@ -30,7 +31,6 @@ class AfterDocumentCreated
     {
         $document = $event->document;
 
-        Log::useFiles(storage_path() . '/logs/after_document_created.log');
         if (!empty($document)) {
             $documentArray = array(
                 'modelName' => '',
@@ -151,7 +151,7 @@ class AfterDocumentCreated
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    Log::info('Document ID Not Found' . date('H:i:s'));
+                    Log::channel('after_document_created')->error('Document ID Not Found' . date('H:i:s'));
             }
 
 
@@ -219,13 +219,13 @@ class AfterDocumentCreated
                     ]);
                     $dataEmail['emailAlertMessage'] = $temp;
 
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                 }
             }
 
         } else {
-            Log::info('Document Not Found' . date('H:i:s'));
+            Log::channel('after_document_created')->error('Document Not Found' . date('H:i:s'));
         }
     }
 

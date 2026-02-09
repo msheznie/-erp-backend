@@ -19,9 +19,10 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\BankMemoPayeeRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BankMemoPayeeController
@@ -312,7 +313,7 @@ class BankMemoPayeeAPIController extends AppBaseController
 
         $companyDefaultBankMemos = $request->get('memos');
         $createdArray = array();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = PaySupplierInvoiceMaster::find($request->get('id'));
 

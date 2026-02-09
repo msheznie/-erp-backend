@@ -42,7 +42,6 @@ class BudgetAdditionAdjustment implements ShouldQueue
     public function handle(AuditTrailRepository $auditTrailRepo,BudgetAdjustmentRepository $budgetAdjustmentRepo,BudjetdetailsRepository $budjetdetailsRepo) {
         $bat = $this->budgetAddition;
          $budgetAddition = ErpBudgetAddition::with(['detail'])->find($bat->id);
-        Log::useFiles(storage_path() . '/logs/budget_addition_adjustment_jobs.log');
         if (!empty($budgetAddition)) {
             DB::beginTransaction();
 
@@ -174,11 +173,11 @@ class BudgetAdditionAdjustment implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('budget_addition_adjustment_jobs')->error($this->failed($e));
             }
         
         } else {
-            Log::error('Budget Addition not found' . date('H:i:s'));
+            Log::channel('budget_addition_adjustment_jobs')->error('Budget Addition not found' . date('H:i:s'));
         }
     }
 

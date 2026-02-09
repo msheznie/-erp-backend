@@ -62,7 +62,6 @@ class ItemAssigned extends Model
     protected $primaryKey  = 'idItemAssigned';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -144,6 +143,7 @@ class ItemAssigned extends Model
         'isPOSItem' => 'integer',
         'sellingCost' => 'float',
         'roQuantity' => 'float',
+        'deleted_at' => 'datetime',
     ];
 
     /**

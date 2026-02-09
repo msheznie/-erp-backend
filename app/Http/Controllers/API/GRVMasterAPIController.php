@@ -83,7 +83,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use Response;
@@ -92,6 +92,11 @@ use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class GRVMasterController
@@ -143,14 +148,14 @@ class GRVMasterAPIController extends AppBaseController
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -231,7 +236,7 @@ class GRVMasterAPIController extends AppBaseController
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0,null,true);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransactionCurrencyID'], $input['supplierTransactionCurrencyID'], 0,null,true);
 
         //var_dump($companyCurrencyConversion);
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
@@ -362,7 +367,7 @@ class GRVMasterAPIController extends AppBaseController
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
-        $input = array_except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by', 'supplier_by', 'currency_by']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'location_by', 'segment_by', 'financeperiod_by', 'financeyear_by', 'grvtype_by', 'supplier_by', 'currency_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var GRVMaster $gRVMaster */
@@ -593,14 +598,14 @@ class GRVMasterAPIController extends AppBaseController
             if(($input['isSupplierBlocked']) && ($gRVMaster->grvTypeID == 2))
             {
 
-                $validatorResult = \Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
+                $validatorResult = Helper::checkBlockSuppliers($input['grvDate'],$supplier_id);
                 if (!$validatorResult['success']) {              
                     return $this->sendError(trans('custom.supplier_blocked_confirm_proceed'), 500,['type' => 'blockSupplier']);
     
                 }
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
@@ -614,7 +619,7 @@ class GRVMasterAPIController extends AppBaseController
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
             
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -739,8 +744,8 @@ class GRVMasterAPIController extends AppBaseController
                     $lineVATAmountTotal += ($value->VATAmount * $value->noQty);
                 }
 
-                $currency = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
-                $currencyVAT = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
+                $currency = Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
+                $currencyVAT = Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
 
                 $grvTotalSupplierTransactionCurrency['transactionTotalSum'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'] - $exemptVATAmount + $lineVATAmountTotal;
                 $grvTotalSupplierTransactionCurrency['reportingTotalSum'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'] - $currency['reportingAmount'] + $currencyVAT['reportingAmount'];
@@ -783,9 +788,9 @@ class GRVMasterAPIController extends AppBaseController
 
                     $logisticsChargest_RptCur = ($input['grvTotalComRptCurrency'] == null || $input['grvTotalComRptCurrency'] == 0) ? 0 : ((($row['noQty'] * $row['GRVcostPerUnitComRptCur']) / ($input['grvTotalComRptCurrency'])) * $grvTotalLogisticAmount['reportingTotalSum']) / $row['noQty'];
 
-                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = \Helper::roundValue($logisticsCharges_TransCur);
-                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur);
-                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = \Helper::roundValue($logisticsChargest_RptCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_TransCur = Helper::roundValue($logisticsCharges_TransCur);
+                    $updateGRVDetail_log_detail->logisticsCharges_LocalCur = Helper::roundValue($logisticsCharges_LocalCur);
+                    $updateGRVDetail_log_detail->logisticsChargest_RptCur = Helper::roundValue($logisticsChargest_RptCur);
 
                     $exemptExpenseDetails = TaxService::processGrvExpenseDetail($row['grvDetailsID']);
                     $expenseCOA = TaxVatCategories::with(['tax'])->where('subCatgeoryType', 3)->whereHas('tax', function ($query) use ($row) {
@@ -804,9 +809,9 @@ class GRVMasterAPIController extends AppBaseController
                     }
 
 
-                    $updateGRVDetail_log_detail->landingCost_TransCur = \Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'] - $exemptVatTrans;
-                    $updateGRVDetail_log_detail->landingCost_LocalCur = \Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'] - $exemptVATLocal;
-                    $updateGRVDetail_log_detail->landingCost_RptCur = \Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'] - $exemptVatRpt;
+                    $updateGRVDetail_log_detail->landingCost_TransCur = Helper::roundValue($logisticsCharges_TransCur) + $row['GRVcostPerUnitSupTransCur'] - $exemptVatTrans;
+                    $updateGRVDetail_log_detail->landingCost_LocalCur = Helper::roundValue($logisticsCharges_LocalCur) + $row['GRVcostPerUnitLocalCur'] - $exemptVATLocal;
+                    $updateGRVDetail_log_detail->landingCost_RptCur = Helper::roundValue($logisticsChargest_RptCur) + $row['GRVcostPerUnitComRptCur'] - $exemptVatRpt;
 
                     $updateGRVDetail_log_detail->save();
 
@@ -954,7 +959,7 @@ class GRVMasterAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
@@ -1156,7 +1161,7 @@ class GRVMasterAPIController extends AppBaseController
                 $dataEmail['companySystemID'] = $input['companySystemID'];
                 $dataEmail['alertMessage'] = trans('email.grv_confirmed');
                 $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = \Email::sendEmailErp($dataEmail); 
+                $sendEmail = Email::sendEmailErp($dataEmail); 
             } 
         }
 
@@ -1480,7 +1485,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 3)
@@ -1552,7 +1557,7 @@ class GRVMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -1584,7 +1589,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_grvmaster.grvAutoID',
@@ -1654,7 +1659,7 @@ class GRVMasterAPIController extends AppBaseController
 
     public function approveGoodReceiptVoucher(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1666,7 +1671,7 @@ class GRVMasterAPIController extends AppBaseController
 
     public function rejectGoodReceiptVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1806,7 +1811,7 @@ class GRVMasterAPIController extends AppBaseController
             $grvMasterData->isMarkupUpdated = 0;
             $grvMasterData->save();
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $grvMasterData->documentSystemID)->first();
 
@@ -1857,7 +1862,7 @@ class GRVMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -2325,7 +2330,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
      public function procumentOrderCancel($purchaseOrderID, $grvCancelledComment)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
 
@@ -2395,7 +2400,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                 'docSystemCode' => $purchaseOrder->purchaseOrderID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return ['status' => false, 'message' => $sendEmail["message"]];
         }

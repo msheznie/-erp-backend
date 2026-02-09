@@ -21,7 +21,7 @@ use App\Models\WarehouseMaster;
 use App\Repositories\WarehouseItemsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\WarehouseBinLocation;
@@ -29,6 +29,8 @@ use App\Models\ItemBatch;
 use App\Models\ItemMaster;
 use App\Models\ItemSerial;
 use App\Models\ErpItemLedger;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class WarehouseItemsController
@@ -424,7 +426,7 @@ class WarehouseItemsAPIController extends AppBaseController
 
                 $data[$x][trans('custom.warehouse')] =  $value->warehouse_by ? $value->warehouse_by['wareHouseDescription'] : '-';
                 $bin = WarehouseBinLocation::find($value->binNumber);
-                $data[$x][trans('custom.bin_location')] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : $bin ? $bin->binLocationDes : '-';
+                $data[$x][trans('custom.bin_location')] = $value->isTrack == 1? $value->binLocation['binLocationDes'] : ($bin ? $bin->binLocationDes : '-');
               
                 $data[$x][trans('custom.min_qty')] = number_format($value->minimumQty, 2);
                 $data[$x][trans('custom.max_qty')] = number_format($value->maximunQty, 2);
@@ -441,7 +443,7 @@ class WarehouseItemsAPIController extends AppBaseController
                 $data1 = array('companySystemID' => $value->companySystemID,
                     'itemCodeSystem' => $value->itemSystemCode,
                     'wareHouseId' => $value->warehouseSystemCode);
-                 $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data1);                
+                 $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data1);                
 
                  $data[$x][trans('custom.stock_qty')] = $value->isTrack == 1? number_format($value->binLocation['quantity'],2) :number_format($value->current['wareHouseStock'],2);
                  $data[$x][trans('custom.wac_local')] = number_format($itemCurrentCostAndQty['wacValueLocalWarehouse'],$localDecimal);
@@ -490,8 +492,8 @@ class WarehouseItemsAPIController extends AppBaseController
         }
 
         foreach ($companyIds as $companyId) {
-            if (\Helper::checkIsCompanyGroup($companyId)) {
-                $childCompanies = array_merge($childCompanies, \Helper::getGroupCompany($companyId));
+            if (Helper::checkIsCompanyGroup($companyId)) {
+                $childCompanies = array_merge($childCompanies, Helper::getGroupCompany($companyId));
             } else {
                 $childCompanies[] = $companyId;
             }
@@ -536,7 +538,7 @@ class WarehouseItemsAPIController extends AppBaseController
             'itemCodeSystem' => $row->itemSystemCode,
             'wareHouseId' => $row->warehouseSystemCode,
             'itemReport' => true);
-            $itemBinLocation = \Inventory::itemCurrentCostAndQty($data);
+            $itemBinLocation = Inventory::itemCurrentCostAndQty($data);
             
             $row['binLocation'] =$itemBinLocation['binLocation'] ?? [];
             $row['isTrack'] =$itemBinLocation['isTrackable'] ?? [];

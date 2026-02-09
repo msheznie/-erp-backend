@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\RoleRoute;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateRoleRouteAPIRequest extends APIRequest
+class CreateRoleRouteAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

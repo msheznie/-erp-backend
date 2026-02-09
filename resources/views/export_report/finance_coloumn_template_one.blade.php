@@ -149,7 +149,7 @@
 			            @endforeach
 	            	@endforeach
 	            	@if($columnTemplateID == 2 && $header['itemType'] == 3)
-		            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $header), $decimalPlaces)}}</td>
+		            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $header), $decimalPlaces)}}</td>
 	        		@endif
 		        </tr>
 		        @endif
@@ -198,7 +198,7 @@
 					            @endforeach
 				            @endforeach
 				            @if($columnTemplateID == 2)
-				            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data), $decimalPlaces)}}</td>
+				            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data), $decimalPlaces)}}</td>
 			        		@endif
 			            @endif
 			            @if($data['isFinalLevel'] == 0)
@@ -253,7 +253,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data2), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data2), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 			        @endif
@@ -303,7 +303,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubTwo), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubTwo), $decimalPlaces)}}</td>
 		        		@endif
 			            @endif
 			            @if($dataSubTwo['isFinalLevel'] == 0)
@@ -353,7 +353,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data23), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data23), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 			        @endif
@@ -400,7 +400,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubThree), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubThree), $decimalPlaces)}}</td>
 		        		@endif
 			            @endif
 			            @if($dataSubThree['isFinalLevel'] == 0)
@@ -446,7 +446,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data24), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data24), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 			        @endif
@@ -491,7 +491,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubFour), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubFour), $decimalPlaces)}}</td>
 		        		@endif
 			            @endif
 			            @if($dataSubFour['isFinalLevel'] == 0)
@@ -533,7 +533,7 @@
 			            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data25), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data25), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 			        @endif
@@ -572,7 +572,7 @@
 				            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $openingBalance), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $openingBalance), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 			        <tr>
@@ -599,7 +599,7 @@
 				            @endforeach
 			            @endforeach
 			            @if($columnTemplateID == 2)
-			            	<td>{{round(\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $closingBalance), $decimalPlaces)}}</td>
+			            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $closingBalance), $decimalPlaces)}}</td>
 		        		@endif
 			        </tr>
 		        @endif
@@ -630,7 +630,7 @@
 			            @endforeach
 		            @endforeach
 		            @if($columnTemplateID == 2)
-		            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
+		            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
 	        		@endif
 		        </tr>
 		        @endif
@@ -652,12 +652,12 @@
 		            @foreach ($companyHeaderData as $company)
 			            @foreach ($columns as $column)
 			            <td style="font-weight: bold;">
-		                	{{round(\Helper::grandTotalValueOfReportTemplate($company['companyCode'], $column, $grandTotalUncatArr), $decimalPlaces)}}
+		                	{{round(\App\helper\Helper::grandTotalValueOfReportTemplate($company['companyCode'], $column, $grandTotalUncatArr), $decimalPlaces)}}
 			            </td>
 			            @endforeach
 		            @endforeach
 		             @if($columnTemplateID == 2)
-		            	<td>{{round(\Helper::rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $grandTotalUncatArr), $decimalPlaces)}}</td>
+		            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $grandTotalUncatArr), $decimalPlaces)}}</td>
 	        		@endif
 		        </tr>
 		        @endif
@@ -688,7 +688,7 @@
 		            @endforeach
 		            @endforeach
 		            @if($columnTemplateID == 2)
-		            	<td>{{round(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
+		            	<td>{{round(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
 	        		@endif
 		        </tr>
 		        @endif

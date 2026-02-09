@@ -65,7 +65,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Pagination\LengthAwarePaginator;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\CompanyFinancePeriod;
@@ -79,6 +79,9 @@ use App\Services\GeneralLedger\AssetCreationService;
 use App\Services\GeneralLedgerService;
 use PHPExcel_IOFactory;
 use DateTime;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class FixedAssetMasterController
@@ -86,6 +89,49 @@ use DateTime;
  */
 class FixedAssetMasterAPIController extends AppBaseController
 {
+    /**
+     * Asset Status Constants
+     * 1 = Not in Use
+     * 2 = In Use
+     * 3 = Idle
+     * 4 = Suspended
+     */
+    const ASSET_STATUS_NOT_IN_USE = 1;
+    const ASSET_STATUS_IN_USE = 2;
+    const ASSET_STATUS_IDLE = 3;
+    const ASSET_STATUS_SUSPENDED = 4;
+
+    /**
+     * Get asset status ID from string
+     * @param string $status
+     * @return int|null
+     */
+    private function getAssetStatusId($status)
+    {
+        $statusMap = [
+            'Not in Use' => self::ASSET_STATUS_NOT_IN_USE,
+            'In Use' => self::ASSET_STATUS_IN_USE,
+            'Idle' => self::ASSET_STATUS_IDLE,
+            'Suspended' => self::ASSET_STATUS_SUSPENDED,
+        ];
+        return $statusMap[$status] ?? null;
+    }
+
+    /**
+     * Get asset status string from ID
+     * @param int $statusId
+     * @return string|null
+     */
+    private function getAssetStatusString($statusId)
+    {
+        $statusMap = [
+            self::ASSET_STATUS_NOT_IN_USE => 'Not in Use',
+            self::ASSET_STATUS_IN_USE => 'In Use',
+            self::ASSET_STATUS_IDLE => 'Idle',
+            self::ASSET_STATUS_SUSPENDED => 'Suspended',
+        ];
+        return $statusMap[$statusId] ?? null;
+    }
     /** @var  FixedAssetMasterRepository */
     private $fixedAssetMasterRepository;
     private $fixedAssetCostRepository;
@@ -186,7 +232,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $assetSerialNoArr = $input['assetSerialNo'];
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
-        $input = array_except($request->all(), 'assetSerialNo', 'itemImage');
+        $input = Arr::except($request->all(), 'assetSerialNo', 'itemImage');
         $input = $this->convertArrayToValue($input);
         $input['assetSerialNo'] = $assetSerialNoArr;
 
@@ -214,6 +260,65 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
 
+            // Check for assetStatus at top level first (asset costing scenario)
+            if (isset($input['assetStatus']) && $input['assetStatus'] !== '' && $input['assetStatus'] !== null) {
+                // Asset costing: use top-level assetStatus
+                // Validation will continue below
+            } 
+            // Check nested in assetSerialNo array (asset allocation scenario)
+            else if (isset($input['assetSerialNo']) && is_array($input['assetSerialNo']) && count($input['assetSerialNo']) > 0) {
+                // Extract from first serial number item
+                $firstSerialNo = $input['assetSerialNo'][0];
+                if (isset($firstSerialNo['assetStatus']) && $firstSerialNo['assetStatus'] !== '' && $firstSerialNo['assetStatus'] !== null) {
+                    // Validate that all serial numbers have assetStatus
+                    foreach ($input['assetSerialNo'] as $index => $assetSN) {
+                        if (!isset($assetSN['assetStatus']) || $assetSN['assetStatus'] === '' || $assetSN['assetStatus'] === null) {
+                            return $this->sendError(trans('custom.asset_status_is_required') . ' for serial number ' . ($index + 1), 500);
+                        }
+                    }
+                    // Set at top level for consistent processing
+                    $input['assetStatus'] = $firstSerialNo['assetStatus'];
+                } else {
+                    return $this->sendError(trans('custom.asset_status_is_required'), 500);
+                }
+            } 
+            else {
+                // No assetStatus found anywhere - return error
+                return $this->sendError(trans('custom.asset_status_is_required'), 500);
+            }
+
+            // Normalize assetStatus (handle both string and integer values)
+            if (is_string($input['assetStatus'])) {
+                $statusId = $this->getAssetStatusId($input['assetStatus']);
+                if ($statusId === null) {
+                    return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                }
+                $input['assetStatus'] = $statusId;
+            } else {
+                $input['assetStatus'] = (int)$input['assetStatus'];
+            }
+
+            $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+            if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+            }
+
+            $accumulatedDepreciation = isset($input['accumulated_depreciation_amount_rpt']) ? $input['accumulated_depreciation_amount_rpt'] : 0;
+            if ($accumulatedDepreciation > 0 && $input['assetStatus'] !== self::ASSET_STATUS_IN_USE) {
+                return $this->sendError(trans('custom.asset_with_accumulated_depreciation_must_be_in_use'), 500);
+            }
+
+            if ($input['assetStatus'] === self::ASSET_STATUS_IN_USE && (empty($input['dateDEP']) || !isset($input['dateDEP']))) {
+                return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+            }
+
+            if (isset($input['dateDEP']) && isset($input['documentDate'])) {
+                $depDate = new Carbon($input['dateDEP']);
+                $docDate = new Carbon($input['documentDate']);
+                if ($depDate < $docDate) {
+                    return $this->sendError(trans('custom.depreciation_start_date_cannot_be_less_than_document_date'), 500);
+                }
+            }
 
             $messages = [
                 'dateDEP.after_or_equal' => trans('custom.depreciation_date_cannot_be_less'),
@@ -235,7 +340,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture'])) {
                 if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -253,6 +358,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $grvDetailsID = $input['grvDetailsID'];
             $grvDetails = GRVDetails::with(['grv_master'])->find($grvDetailsID);
             if ($grvDetails) {
+
+                $createdFaIds = [];
 
                 $assetSerialNoCount = count($input['assetSerialNo']);
 
@@ -274,6 +381,9 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $input["documentSystemID"] = 22;
                 $input["documentID"] = 'FA';
+
+                $confirmRequested = isset($input['confirmedYN']) && $input['confirmedYN'] == 1;
+                $input['confirmedYN'] = 0;
 
                 $input['assetType'] = 1;
                 $input['supplierIDRentedAsset'] = $grvDetails->grv_master->supplierID;
@@ -304,6 +414,27 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
                 $auditCategory = isset($input['AUDITCATOGARY']) ? $input['AUDITCATOGARY'] : null;
+
+                if ($confirmRequested) {
+                    $mandatoryAttributes = ErpAttributes::where('document_id', 'ASSETCOST')
+                        ->whereNull('document_master_id')
+                        ->where('is_active', 1)
+                        ->where('is_mendatory', 1)
+                        ->get();
+                    foreach ($mandatoryAttributes as $erpAttr) {
+                        $attrValueRow = ErpAttributeValues::whereNull('document_master_id')
+                            ->where('doc_origin_detail_id', $grvDetailsID)
+                            ->where('attribute_id', $erpAttr->id)
+                            ->first();
+                        $value = $attrValueRow ? ($attrValueRow->value ?? null) : null;
+                        $isEmpty = $value === null || $value === '' || (is_string($value) && trim((string) $value) === '');
+                        if ($isEmpty) {
+                            DB::rollBack();
+                            return $this->sendError(trans('custom.please_enter_value_mandatory_fields'), 500);
+                        }
+                    }
+                }
+
                 if ($grvDetails["noQty"]) {
                     if ($grvDetails->noQty < 1) {
                         // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
@@ -339,8 +470,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $input["faCode"] = $documentCode;
                         $input["faBarcode"] = $documentCode;
                         $input['createdPcID'] = gethostname();
-                        $input['createdUserID'] = \Helper::getEmployeeID();
-                        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $input['createdUserID'] = Helper::getEmployeeID();
+                        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                         $input["timestamp"] = date('Y-m-d H:i:s');
                         unset($input['grvDetailsID']);
@@ -384,48 +515,80 @@ class FixedAssetMasterAPIController extends AppBaseController
                         $cost['rptAmount'] = $grvDetails->landingCost_RptCur * $grvDetails->noQty;
                         $this->fixedAssetCostRepository->create($cost);
 
-                        // maintain assetAllocatedQty
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty'=>$grvDetails->noQty, 'assetAllocationDoneYN' => -1]);
+                        $createdFaIds[] = $fixedAssetMasters['faID'];
+
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocatedQty' => 0, 'assetAllocationDoneYN' => -1]);
                     } else {
 
-                        $ceil_qty = ceil($grvDetails->noQty);
+                        $capitalizedQty = isset($input['capitalizedQuantity']) && $input['capitalizedQuantity'] !== '' && $input['capitalizedQuantity'] !== null
+                            ? (int) $input['capitalizedQuantity']
+                            : 0;
+                        if ($capitalizedQty < 1) {
+                            return $this->sendError(trans('custom.capitalized_quantity_is_required_and_must_be_positive'), 422);
+                        }
 
-                        $qtyRange = range(1, $ceil_qty-$grvDetails->assetAllocatedQty);
+                        $assetAllocated = (float) ($grvDetails->assetAllocatedQty ?? 0);
+                        $receivedQty = max(0, (float) $grvDetails->noQty - $assetAllocated);
+                        $maxAllowed = (int) ceil($receivedQty);
+                        if ($capitalizedQty > $maxAllowed) {
+                            return $this->sendError(
+                                ['capitalizedQuantity' => [trans('custom.capitalized_quantity_exceeds_balance')]],
+                                422
+                            );
+                        }
 
-                  
-                        $assetAllocatedQty = $grvDetails->assetAllocatedQty;
-                        if ($qtyRange) {
-                            foreach ($qtyRange as $key => $qty) {
-                                // $documentCode = ($input['companyID'] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                        $newAllocatedQty = $assetAllocated + $capitalizedQty;
 
-                                if ($qty <= $assetSerialNoCount) {
-                                    if ($input['assetSerialNo'][$key]['faUnitSerialNo']) {
-                                        $input["faUnitSerialNo"] = $input['assetSerialNo'][$key]['faUnitSerialNo'];
-                                        $assetSerialNoInput = $this->convertArrayToValue($input['assetSerialNo'][$key]);
-                                        $segmentAsset = SegmentMaster::find($assetSerialNoInput['serviceLineSerialNo']);
-                                        $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
-                                        $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
-                                        if ($segmentAsset) {
-                                            $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
+                        if ($assetSerialNoCount > 0 && isset($input['assetSerialNo']) && is_array($input['assetSerialNo'])) {
+                            foreach ($input['assetSerialNo'] as $key => $serialNoData) {
+                                if (!isset($serialNoData['faUnitSerialNo']) || !$serialNoData['faUnitSerialNo']) {
+                                    continue;
+                                }
 
-                                            $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID,$input['faCatID'],$input['faSubCatID']);
+                                $input["faUnitSerialNo"] = $serialNoData['faUnitSerialNo'];
+                                $assetSerialNoInput = $this->convertArrayToValue($serialNoData);
+                                $segmentAsset = SegmentMaster::find($assetSerialNoInput['serviceLineSerialNo']);
+                                
+                                if (!$segmentAsset) {
+                                    return $this->sendError(trans('custom.segment_not_found'), 500);
+                                }
+                                
+                                $input["faUnitSerialNo"] = $assetSerialNoInput['faUnitSerialNo'];
+                                $input["serviceLineSystemID"] = $assetSerialNoInput['serviceLineSerialNo'];
+                                $input['serviceLineCode'] = $segmentAsset->ServiceLineCode;
 
-                                            if ($documentCodeData['status']) {
-                                                $documentCode = $documentCodeData['documentCode'];
-                                                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
-                                                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)
-                                                    ->first();
-
-                                                if ($checkForDuplicateCode) {
-                                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
-                                                }
-
-                                            } else {
-                                                return $this->sendError(trans('custom.asset_code_not_configured'), 500);
-                                            }
+                                if (isset($assetSerialNoInput['assetStatus']) && $assetSerialNoInput['assetStatus'] !== '' && $assetSerialNoInput['assetStatus'] !== null) {
+                                    $serialAssetStatus = $assetSerialNoInput['assetStatus'];
+                                    if (is_string($serialAssetStatus)) {
+                                        $statusId = $this->getAssetStatusId($serialAssetStatus);
+                                        if ($statusId === null) {
+                                            return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
                                         }
+                                        $input['assetStatus'] = $statusId;
+                                    } else {
+                                        $input['assetStatus'] = (int)$serialAssetStatus;
+                                    }
+
+                                    $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+                                    if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
                                     }
                                 }
+
+                                $documentCodeData = DocumentCodeGenerate::generateAssetCode($auditCategory, $input['companySystemID'], $segmentAsset->serviceLineSystemID, $input['faCatID'], $input['faSubCatID']);
+
+                                if (!$documentCodeData['status']) {
+                                    return $this->sendError(trans('custom.asset_code_not_configured'), 500);
+                                }
+
+                                $documentCode = $documentCodeData['documentCode'];
+                                $searchDocumentCode = str_replace("\\", "\\\\", $documentCode);
+                                $checkForDuplicateCode = FixedAssetMaster::where('faCode', $searchDocumentCode)->first();
+
+                                if ($checkForDuplicateCode) {
+                                    return $this->sendError(trans('custom.asset_code_already_found'), 500);
+                                }
+
                                 $input["serialNo"] = $lastSerialNumber;
                                 $input['docOriginDocumentSystemID'] = $grvDetails->grv_master->documentSystemID;
                                 $input['docOriginDocumentID'] = $grvDetails->grv_master->documentID;
@@ -437,8 +600,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $input["faCode"] = $documentCode;
                                 $input["faBarcode"] = $documentCode;
                                 $input['createdPcID'] = gethostname();
-                                $input['createdUserID'] = \Helper::getEmployeeID();
-                                $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                $input['createdUserID'] = Helper::getEmployeeID();
+                                $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
                                 $input['createdDateAndTime'] = date('Y-m-d H:i:s');
                                 $input["timestamp"] = date('Y-m-d H:i:s');
                                 unset($input['grvDetailsID']);
@@ -481,20 +644,108 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 $cost['rptCurrencyID'] = $grvDetails->companyReportingCurrencyID;
                                 $cost['rptAmount'] = $grvDetails->landingCost_RptCur;
                                 $this->fixedAssetCostRepository->create($cost);
-                                $assetAllocatedQty++;
+
+                                $createdFaIds[] = $fixedAssetMasters['faID'];
                             }
                         }
 
-                        $allocate_qty = $assetAllocatedQty;
-                        if($ceil_qty > $assetAllocatedQty)
-                        {
-                            $allocate_qty = $ceil_qty;
+                        $grvUpdate = ['assetAllocatedQty' => $newAllocatedQty];
+                        $remainingQty = (float) $grvDetails->noQty - $newAllocatedQty;
+                        if ($remainingQty <= 0) {
+                            $grvUpdate['assetAllocationDoneYN'] = -1;
+                        } else {
+                            $grvUpdate['assetAllocationDoneYN'] = 0;
                         }
-       
-
-                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update(['assetAllocationDoneYN' => -1,'assetAllocatedQty'=>$allocate_qty]);
+                        GRVDetails::where('grvDetailsID', $grvDetailsID)->update($grvUpdate);
                     }
-                   
+
+                    if (!empty($createdFaIds)) {
+                        $allocationAttributeValues = ErpAttributeValues::whereNull('document_master_id')
+                            ->where('doc_origin_detail_id', $grvDetailsID)
+                            ->get();
+                        if ($allocationAttributeValues->isNotEmpty()) {
+                            foreach ($createdFaIds as $faId) {
+                                foreach ($allocationAttributeValues as $attrVal) {
+                                    ErpAttributeValues::create([
+                                        'attribute_id' => $attrVal->attribute_id,
+                                        'document_master_id' => $faId,
+                                        'doc_origin_detail_id' => $grvDetailsID,
+                                        'is_active' => $attrVal->is_active,
+                                        'value' => $attrVal->value,
+                                        'color' => $attrVal->color,
+                                    ]);
+                                }
+                            }
+                            ErpAttributeValues::whereNull('document_master_id')
+                                ->where('doc_origin_detail_id', $grvDetailsID)
+                                ->delete();
+                        }
+                    }
+
+                    if ($confirmRequested && !empty($createdFaIds)) {
+                        $documentDate = isset($input['documentDate']) ? $input['documentDate'] : (isset($input['dateAQ']) ? $input['dateAQ'] : null);
+                        if ($documentDate && !($documentDate instanceof \DateTimeInterface)) {
+                            $documentDate = new Carbon($documentDate);
+                        }
+                        $companySystemID = $input['companySystemID'];
+
+                        foreach ($createdFaIds as $faId) {
+                            $fixedAssetMaster = FixedAssetMaster::find($faId);
+                            if (!$fixedAssetMaster) {
+                                continue;
+                            }
+
+                            if ($documentDate) {
+                                $documentDateYearActive = CompanyFinanceYear::active_finance_year($companySystemID, $documentDate->format('Y-m-d'));
+                                if ($documentDateYearActive) {
+                                    $documentDateMonthActive = CompanyFinancePeriod::activeFinancePeriod($companySystemID, 9, $documentDate->format('Y-m-d'));
+                                    if (!$documentDateMonthActive) {
+                                        DB::rollBack();
+                                        return $this->sendError(trans('custom.document_date_not_within_active_financial_period'), 500);
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return $this->sendError(trans('custom.document_date_not_within_active_financial_period'), 500);
+                                }
+                            }
+
+                            $accumulatedDepreciationDate = $fixedAssetMaster->accumulated_depreciation_date ?? null;
+                            if ($accumulatedDepreciationDate) {
+                                if (!($accumulatedDepreciationDate instanceof \DateTimeInterface)) {
+                                    $accumulatedDepreciationDate = new Carbon($accumulatedDepreciationDate);
+                                }
+                                $accumulatedDateYearActive = CompanyFinanceYear::active_finance_year($companySystemID, $accumulatedDepreciationDate->format('Y-m-d'));
+                                if ($accumulatedDateYearActive) {
+                                    $accumulatedMonthActive = CompanyFinancePeriod::activeFinancePeriod($companySystemID, 9, $accumulatedDepreciationDate->format('Y-m-d'));
+                                    if (!$accumulatedMonthActive) {
+                                        DB::rollBack();
+                                        return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'), 500);
+                                    }
+                                } else {
+                                    DB::rollBack();
+                                    return $this->sendError(trans('custom.accumulated_depreciation_date_not_within_active_financial_period'), 500);
+                                }
+                            }
+
+                            $params = array('autoID' => $faId, 'company' => $companySystemID, 'document' => 22, 'segment' => '', 'category' => '', 'amount' => 0);
+                            $confirm = DocumentConfirm::confirmDocument($params);
+                            if (!$confirm["success"]) {
+                                DB::rollBack();
+                                return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+                            }
+
+                            $empInfo = Helper::getEmployeeInfo();
+                            $this->fixedAssetMasterRepository->update([
+                                'confirmedYN' => 1,
+                                'confirmedByEmpSystemID' => $empInfo->employeeSystemID,
+                                'confirmedByEmpID' => $empInfo->empID,
+                                'confirmedDate' => now(),
+                                'RollLevForApp_curr' => 1,
+                                'refferedBackYN' => 0,
+                            ], $faId);
+                        }
+                    }
+
                     DB::commit();
                 }
             }
@@ -637,7 +888,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $itemPicture  = isset($input['itemPicture']) ? $input['itemPicture'] : '';
         $attributes  = isset($input['attributes']) ? $input['attributes'] : null;
 
-        $input = array_except($request->all(), 'itemImage');
+        $input = Arr::except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
         $fixedAssetMaster = $this->fixedAssetMasterRepository->findWithoutFail($id);
@@ -768,6 +1019,74 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             ], $messages);
 
+            // Asset Status validation
+            if (isset($input['assetStatus'])) {
+                if (is_string($input['assetStatus'])) {
+                    $statusId = $this->getAssetStatusId($input['assetStatus']);
+                    if ($statusId === null) {
+                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                    }
+                    $input['assetStatus'] = $statusId;
+                } else {
+                    $input['assetStatus'] = (int)$input['assetStatus'];
+                }
+
+                if ($fixedAssetMaster->approved != -1) {
+                    if (empty($input['assetStatus'])) {
+                        return $this->sendError(trans('custom.asset_status_is_required'), 500);
+                    }
+
+                    $allowedStatusesBeforeApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE];
+                    if (!in_array($input['assetStatus'], $allowedStatusesBeforeApproval)) {
+                        return $this->sendError(trans('custom.invalid_asset_status_before_approval'), 500);
+                    }
+
+                    $accumulatedDepreciation = isset($input['accumulated_depreciation_amount_rpt']) ? $input['accumulated_depreciation_amount_rpt'] : ($fixedAssetMaster->accumulated_depreciation_amount_rpt ?? 0);
+                    if ($accumulatedDepreciation > 0 && $input['assetStatus'] !== self::ASSET_STATUS_IN_USE) {
+                        return $this->sendError(trans('custom.asset_with_accumulated_depreciation_must_be_in_use'), 500);
+                    }
+
+                    if ($input['assetStatus'] === self::ASSET_STATUS_IN_USE) {
+                        $dateDEP = isset($input['dateDEP']) ? $input['dateDEP'] : $fixedAssetMaster->dateDEP;
+                        if (empty($dateDEP)) {
+                            return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+                        }
+                    }
+                } else {
+                    $allowedStatusesAfterApproval = [self::ASSET_STATUS_NOT_IN_USE, self::ASSET_STATUS_IN_USE, self::ASSET_STATUS_IDLE];
+                    if (!in_array($input['assetStatus'], $allowedStatusesAfterApproval)) {
+                        return $this->sendError(trans('custom.invalid_asset_status_after_approval'), 500);
+                    }
+
+                    $oldStatus = (int)$fixedAssetMaster->assetStatus;
+                    $newStatus = (int)$input['assetStatus'];
+
+                    if ($oldStatus !== $newStatus) {
+                        // Not in Use → In Use
+                        if ($oldStatus == self::ASSET_STATUS_NOT_IN_USE && $newStatus == self::ASSET_STATUS_IN_USE) {
+                            $dateDEP = isset($input['dateDEP']) ? $input['dateDEP'] : $fixedAssetMaster->dateDEP;
+                            if (empty($dateDEP)) {
+                                return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
+                            }
+                        }
+                        // In Use → Not in Use - Allow only if depreciation not generated
+                        elseif ($oldStatus == self::ASSET_STATUS_IN_USE && $newStatus == self::ASSET_STATUS_NOT_IN_USE) {
+                            $hasDepreciation = \App\Models\FixedAssetDepreciationPeriod::where('faID', $id)
+                                ->whereHas('master_by', function($q) {
+                                    $q->where('approved', -1);
+                                })
+                                ->exists();
+                            if ($hasDepreciation) {
+                                return $this->sendError(trans('custom.cannot_change_to_not_in_use_when_depreciation_generated'), 500);
+                            }
+                        }
+                        // Not in Use → Idle (not allowed)
+                        elseif ($oldStatus == self::ASSET_STATUS_NOT_IN_USE && $newStatus == self::ASSET_STATUS_IDLE) {
+                            return $this->sendError(trans('custom.cannot_change_from_not_in_use_to_idle'), 500);
+                        }
+                    }
+                }
+            }
 
             if($fixedAssetMaster->approved != -1){
                 if ($validator->fails()) {
@@ -777,7 +1096,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if (isset($input['itemPicture']) && $input['itemPicture']) {
                 if ($itemImgaeArr && $itemImgaeArr[0] && $itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
+                    return $this->sendError(trans('custom.maximum_allowed_file_size_exe', ['sizeLimit' => Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT'))]), 500);
                 }
             }
 
@@ -949,7 +1268,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }
@@ -957,13 +1276,13 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             /** @var FixedAssetMaster $fixedAssetMaster */
             $input['modifiedPc'] = gethostname();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
-                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo']);
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID','faUnitSerialNo','assetStatus','dateDEP']);
 
                 $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
             } else {
@@ -976,8 +1295,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             $employee = Helper::getEmployeeInfo();
             if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
 
-                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
-                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo']);
+                $old_array = array_only($fixedAssetMasterOld,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus','dateDEP']);
+                $modified_array = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE','faUnitSerialNo','assetStatus','dateDEP']);
                 // update in to user log table
                 foreach ($old_array as $key => $old){
                     if(isset($modified_array[$key]) && $old != $modified_array[$key]){
@@ -1097,10 +1416,10 @@ class FixedAssetMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -1108,13 +1427,13 @@ class FixedAssetMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
-        $companyCurrency = \Helper::companyCurrency($companyId);
+        $companyCurrency = Helper::companyCurrency($companyId);
 
         $department = DepartmentMaster::showInCombo()->get();
 
@@ -1212,6 +1531,12 @@ class FixedAssetMasterAPIController extends AppBaseController
         $assetAllocation = $this->fixedAssetMasterRepository->fixedAssetMasterListQuery($request, $input, $search);
 
         return \DataTables::eloquent($assetAllocation)
+            ->addColumn('not_capitalized_qty', function ($row) {
+                $receivedQty = $row->noQty ?? 0;
+                $assetAllocatedQty = $row->assetAllocatedQty ?? 0;
+                $notCapitalizedQty = $assetAllocatedQty;
+                return max(0, (int) $notCapitalizedQty);
+            })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -1240,10 +1565,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1360,11 +1685,21 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
 
 
-        $code = $input['documentSystemCode'];
-        $asset = FixedAssetMaster::find($code);
+        $code = $input['documentSystemCode'] ?? null;
+        $docOriginDetailID = $input['docOriginDetailID'] ?? null;
+        $asset = null;
+        if ($code) {
+            $asset = FixedAssetMaster::find($code);
+        }
 
-        $erpAttributes = ErpAttributes::withTrashed()->with(['fieldOptions', 'attributeValues'  => function($query) use ($code){
-            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+        $erpAttributes = ErpAttributes::withTrashed()->with(['fieldOptions', 'attributeValues' => function ($query) use ($code, $docOriginDetailID) {
+            if ($code === null && $docOriginDetailID !== null) {
+                $query->whereNull('document_master_id')->where('doc_origin_detail_id', $docOriginDetailID);
+            } else {
+                $query->where(function ($q) use ($code) {
+                    $q->where('document_master_id', $code);
+                });
+            }
         }])->where('document_id', "ASSETCOST");
 
 
@@ -1377,20 +1712,32 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $erpAttributes = $erpAttributes->where(function ($query) use ($code) {
-            $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+            if ($code) {
+                $query->where('document_master_id', $code)->orWhere('document_master_id', null);
+            } else {
+                $query->where('document_master_id', null);
+            }
         });
 
         $erpAttributes = $erpAttributes->get();
 
             foreach ($erpAttributes as $index => $erpAttribute) {
                 if($erpAttribute->document_master_id == null) {
-                    if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
-                        if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
-                            unset($erpAttributes[$index]);
+                    // Only check asset status if asset exists
+                    if ($asset) {
+                        if($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)){
+                            if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
+                                unset($erpAttributes[$index]);
+                            }
                         }
-                    }
-                    if ($asset->approved == -1) {
-                        if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                        if ($asset->approved == -1) {
+                            if (($erpAttribute->is_active == 0 && $asset->approvedDate > $erpAttribute->inactivated_at) || ($erpAttribute->deleted_at != null && $asset->approvedDate > $erpAttribute->deleted_at)) {
+                                unset($erpAttributes[$index]);
+                            }
+                        }
+                    } else {
+                        // If no asset, show only active attributes
+                        if ($erpAttribute->is_active == 0 || $erpAttribute->deleted_at != null) {
                             unset($erpAttributes[$index]);
                         }
                     }
@@ -1412,21 +1759,43 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
-            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
-            if(!empty($isAttributeValues)){
-                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value']]);
+        $documentMasterId = $input['document_master_id'] ?? null;
+        $docOriginDetailId = $input['doc_origin_detail_id'] ?? $input['docOriginDetailID'] ?? null;
+        $isAllocationContext = $documentMasterId === null && $docOriginDetailId !== null;
+
+        $attributeValueQuery = function () use ($input, $documentMasterId, $docOriginDetailId, $isAllocationContext) {
+            $q = ErpAttributeValues::where('attribute_id', $input['attributeID']);
+            if ($isAllocationContext) {
+                $q->whereNull('document_master_id')->where('doc_origin_detail_id', $docOriginDetailId);
             } else {
-                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID']]);
+                $q->where('document_master_id', $documentMasterId);
+            }
+            return $q;
+        };
+
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $isAttributeValues = $attributeValueQuery()->first();
+            if(!empty($isAttributeValues)){
+                $attributes = $attributeValueQuery()->update(['value' => $input['value']]);
+            } else {
+                $createData = ['document_master_id' => $documentMasterId, 'value' => $input['value'], 'attribute_id' => $input['attributeID']];
+                if ($isAllocationContext) {
+                    $createData['doc_origin_detail_id'] = $docOriginDetailId;
+                }
+                $attributes = ErpAttributeValues::create($createData);
             }
         } else {
             $dropDownValues = ErpAttributesDropdown::find($input['value']);
 
-            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            $isAttributeValues = $attributeValueQuery()->first();
             if(!empty($isAttributeValues)){
-                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
+                $attributes = $attributeValueQuery()->update(['value' => $input['value'], 'color' => $dropDownValues->color]);
             } else {
-                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color]);
+                $createData = ['document_master_id' => $documentMasterId, 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color];
+                if ($isAllocationContext) {
+                    $createData['doc_origin_detail_id'] = $docOriginDetailId;
+                }
+                $attributes = ErpAttributeValues::create($createData);
             }
         }
 
@@ -1438,7 +1807,17 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $attributeValueCount = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('is_active', 1)->count();
+        $documentMasterId = $input['document_master_id'] ?? null;
+        $docOriginDetailId = $input['doc_origin_detail_id'] ?? $input['docOriginDetailID'] ?? null;
+        $isAllocationContext = $documentMasterId === null && $docOriginDetailId !== null;
+
+        $countQuery = ErpAttributeValues::where('is_active', 1);
+        if ($isAllocationContext) {
+            $countQuery->whereNull('document_master_id')->where('doc_origin_detail_id', $docOriginDetailId);
+        } else {
+            $countQuery->where('document_master_id', $documentMasterId);
+        }
+        $attributeValueCount = $countQuery->count();
 
         if($attributeValueCount > 3 && $input['action'] == 1){
             return $this->sendError(trans('custom.maximum_selections_exceeded'));
@@ -1448,21 +1827,39 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.please_select_insert_value_to_field'));
         }
 
-        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
-            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
-            if(!empty($isAttributeValues)){
-                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+        $attributeValueQuery = function () use ($input, $documentMasterId, $docOriginDetailId, $isAllocationContext) {
+            $q = ErpAttributeValues::where('attribute_id', $input['attributeID']);
+            if ($isAllocationContext) {
+                $q->whereNull('document_master_id')->where('doc_origin_detail_id', $docOriginDetailId);
             } else {
-                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'is_active' => $input['action']]);
+                $q->where('document_master_id', $documentMasterId);
+            }
+            return $q;
+        };
+
+        if($input['field_type_id'] == 1 || $input['field_type_id'] == 2) {
+            $isAttributeValues = $attributeValueQuery()->first();
+            if(!empty($isAttributeValues)){
+                $attributes = $attributeValueQuery()->update(['is_active' => $input['action']]);
+            } else {
+                $createData = ['document_master_id' => $documentMasterId, 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'is_active' => $input['action']];
+                if ($isAllocationContext) {
+                    $createData['doc_origin_detail_id'] = $docOriginDetailId;
+                }
+                $attributes = ErpAttributeValues::create($createData);
             }
         } else {
             $dropDownValues = ErpAttributesDropdown::find($input['value']);
 
-            $isAttributeValues = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->first();
+            $isAttributeValues = $attributeValueQuery()->first();
             if(!empty($isAttributeValues)){
-                $attributes = ErpAttributeValues::where('document_master_id', $input['document_master_id'])->where('attribute_id', $input['attributeID'])->update(['is_active' => $input['action']]);
+                $attributes = $attributeValueQuery()->update(['is_active' => $input['action']]);
             } else {
-                $attributes = ErpAttributeValues::create(['document_master_id' => $input['document_master_id'], 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color, 'is_active' => $input['action']]);
+                $createData = ['document_master_id' => $documentMasterId, 'value' => $input['value'], 'attribute_id' => $input['attributeID'], 'color' => $dropDownValues->color, 'is_active' => $input['action']];
+                if ($isAllocationContext) {
+                    $createData['doc_origin_detail_id'] = $docOriginDetailId;
+                }
+                $attributes = ErpAttributeValues::create($createData);
             }
         }
         return $this->sendResponse($attributes, trans('custom.fixed_asset_attributes_updated_successfully'));
@@ -1514,7 +1911,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             $this->fixedAssetMasterRepository->update($updateInput, $id);
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $fixedAssetMaster->documentSystemID)->first();
 
@@ -1561,7 +1958,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -1597,7 +1994,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -1653,7 +2050,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -1686,7 +2083,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetCost = DB::table('erp_documentapproved')
@@ -1806,8 +2203,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.asset_code')] = $val->AssetCode;
                 $data[$x][trans('custom.asset_description')] = $val->AssetDescription;
                 $data[$x][trans('custom.serial_number')] = $val->SerialNumber;
-                $data[$x][trans('custom.date_aq')] = \Helper::dateFormat($val->dateAQ);
-                $data[$x][trans('custom.date_dep')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.date_aq')] = Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.date_dep')] = Helper::dateFormat($val->dateDEP);
                 $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
                 $data[$x][trans('custom.cost_local')] = number_format($val->CostLocal, 3);
                 $data[$x][trans('custom.dep_local')] = number_format($val->DepLocal, 3);
@@ -1816,8 +2213,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.department')] = $val->department;
                 $data[$x][trans('custom.policy_type')] = $val->policyType;
                 $data[$x][trans('custom.policy_number')] = $val->policyNumber;
-                $data[$x][trans('custom.date_from')] = \Helper::dateFormat($val->dateFrom);
-                $data[$x][trans('custom.date_to')] = \Helper::dateFormat($val->dateTo);
+                $data[$x][trans('custom.date_from')] = Helper::dateFormat($val->dateFrom);
+                $data[$x][trans('custom.date_to')] = Helper::dateFormat($val->dateTo);
                 $data[$x][trans('custom.insurer_name')] = $val->insurerName;
                 $x++;
             }
@@ -1850,10 +2247,10 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function assetInsuranceReport($input, $search)
     {
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -2048,7 +2445,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
 
                 $excelUpload = $input['assetExcelUpload'];
-                $input = array_except($request->all(), 'assetExcelUpload');
+                $input = Arr::except($request->all(), 'assetExcelUpload');
                 $input = $this->convertArrayToValue($input);
 
                 $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -2067,12 +2464,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                     return $this->sendError(trans('custom.maximum_size_allow_upload_20mb'),500);
                 }
 
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
 
                 $uploadArray = array(
                     'companySystemID' => $input['companySystemID'],
                     'assetDescription' => $input['assetDescription'],
-                    'uploadedDate' => \Helper::currentDateTime(),
+                    'uploadedDate' => Helper::currentDateTime(),
                     'uploadedBy' => $employee->empID,
                     'uploadStatus' => -1
                 );
@@ -2283,8 +2680,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.serial_no')] = $val->faUnitSerialNo;
                 $data[$x][trans('custom.comments')] = $val->COMMENTS;
                 $data[$x][trans('custom.manufacture')] = $val->MANUFACTURE;
-                $data[$x][trans('custom.date_acquired')] = \Helper::dateFormat($val->dateAQ);
-                $data[$x][trans('custom.dep_date_start')] = \Helper::dateFormat($val->dateDEP);
+                $data[$x][trans('custom.date_acquired')] = Helper::dateFormat($val->dateAQ);
+                $data[$x][trans('custom.dep_date_start')] = Helper::dateFormat($val->dateDEP);
                 $data[$x][trans('custom.life_time_in_years')] = $val->depMonth;
                 $data[$x][trans('custom.dep_percentage')] = $val->DEPpercentage;
                 $data[$x][trans('custom.grv_no')] = $val->docOrigin;
@@ -2301,27 +2698,27 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $data[$x][trans('custom.asset_type')] = $val->asset_type?$val->asset_type->typeDes:'';
                 $data[$x][trans('custom.supplier_code')] = $val->supplier?$val->supplier->primarySupplierCode:'';
                 $data[$x][trans('custom.supplier_name')] = $val->supplier? $val->supplier->supplierName:'';
-                $data[$x][trans('custom.disposed_date')] = \Helper::dateFormat($val->disposedDate);
-                $data[$x][trans('custom.last_physical_verified_date')] = \Helper::dateFormat($val->lastVerifiedDate);
+                $data[$x][trans('custom.disposed_date')] = Helper::dateFormat($val->disposedDate);
+                $data[$x][trans('custom.last_physical_verified_date')] = Helper::dateFormat($val->lastVerifiedDate);
                 $data[$x][trans('custom.unit_price_local')] = $val->COSTUNIT;
                 $data[$x][trans('custom.unit_price_rpt')] = $val->costUnitRpt;
 
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::dateFormat($val->createdDateAndTime);
+                $data[$x][trans('custom.created_at')] = Helper::dateFormat($val->createdDateAndTime);
 
                 if ($val->confirmedYN == 1) {
                     $data[$x][trans('custom.confirmed_status')] = trans('custom.yes');
                 } else {
                     $data[$x][trans('custom.confirmed_status')] = trans('custom.no');
                 }
-                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                 $data[$x][trans('custom.confirmed_by')] = $val->confirmed_by?$val->confirmed_by->empName:'';
                 if ($val->approved == -1) {
                     $data[$x][trans('custom.approved_status')] = trans('custom.yes');
                 } else {
                     $data[$x][trans('custom.approved_status')] = trans('custom.no');
                 }
-                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->approvedDate);
                 $x++;
             }
         } else {
@@ -2351,7 +2748,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $id = isset($input['id'])?$input['id']:0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = $this->fixedAssetMasterRepository->findWithoutFail($id);
@@ -2442,7 +2839,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     }
                 }
     
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return $this->sendError($sendEmail["message"], 500);
                 }
@@ -2550,10 +2947,9 @@ class FixedAssetMasterAPIController extends AppBaseController
         // soft delete
         $fixedAssetMaster->delete();
 
-        // update grv details assetAllocationDoneYN,assetAllocatedQty
         if($fixedAssetMasterOld->docOriginDetailID){
             $grvDetails = GRVDetails::find($fixedAssetMasterOld->docOriginDetailID);
-            $grvDetails->assetAllocatedQty = $grvDetails->assetAllocatedQty-1;
+            $grvDetails->assetAllocatedQty = $grvDetails->assetAllocatedQty + 1;
             $grvDetails->assetAllocationDoneYN = 0;
             $grvDetails->save();
         }
@@ -2581,7 +2977,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         
 
@@ -2610,7 +3006,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -2644,7 +3040,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $companyId = $input['companyId'];
         $grv_id = $input['grv_id'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $query1 = DB::table('erp_documentapproved')
@@ -2715,7 +3111,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                     ->orWhere('assetDescription', 'LIKE', "%{$search}%");
             });
         }
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $assetCost = [];
@@ -2745,33 +3141,27 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function getAssetDetails(Request $request) {
         $input = $request->all();
 
-        // Check if both parameters are provided
-        if (isset($input['asset_codes']) && isset($input['audit_categories'])) {
+        // Check if both parameters are provided and non-empty
+        $hasAssetCodes = isset($input['asset_codes']) && is_array($input['asset_codes']) && !empty($input['asset_codes']);
+        $hasAuditCategories = isset($input['audit_categories']) && is_array($input['audit_categories']) && !empty($input['audit_categories']);
+        
+        if ($hasAssetCodes && $hasAuditCategories) {
             return $this->sendError('You can only provide either asset_codes or audit_categories, not both', 422);
         }
 
-        // Check if neither parameter is provided
-        if (!isset($input['asset_codes']) && !isset($input['audit_categories'])) {
-            return $this->sendError('Either asset_codes or audit_categories is required', 422);
-        }
-
         $validator = \Validator::make($input, [
-            'asset_codes' => 'sometimes|required_without:audit_categories|array|min:1',
-            'audit_categories' => 'sometimes|required_without:asset_codes|array|min:1',
+            'asset_codes' => 'sometimes|array',
+            'audit_categories' => 'sometimes|array',
             'page' => 'sometimes|integer|min:1',
-            'per_page' => 'sometimes|integer|min:1|max:5',
+            'per_page' => 'sometimes|integer|min:1|max:50',
         ], [
-            'asset_codes.required_without' => 'asset_codes is required when audit_categories is not provided',
             'asset_codes.array' => 'asset_codes must be an array',
-            'asset_codes.min' => 'At least one asset code is required',
-            'audit_categories.required_without' => 'audit_categories is required when asset_codes is not provided',
             'audit_categories.array' => 'audit_categories must be an array',
-            'audit_categories.min' => 'At least one audit category is required',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
             'per_page.integer' => 'per_page must be an integer',
             'per_page.min' => 'per_page must be at least 1',
-            'per_page.max' => 'per_page cannot exceed 5',
+            'per_page.max' => 'per_page cannot exceed 50',
         ]);
 
         if ($validator->fails()) {
@@ -2780,8 +3170,8 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $companySystemID = $input['company_id'];
-        $searchByAssetCodes = isset($input['asset_codes']);
-        $searchByAuditCategory = isset($input['audit_categories']);
+        $searchByAssetCodes = $hasAssetCodes;
+        $searchByAuditCategory = $hasAuditCategories;
 
         $assetCodes = [];
         $auditCategories = [];
@@ -2847,7 +3237,90 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             // Get pagination parameters
             $page = $request->get('page', 1);
-            $perPage = $request->get('per_page', 5);
+            $perPage = $request->get('per_page', 10);
+
+            // Build the query based on search type
+            $query = FixedAssetMaster::ofCompany([$companySystemID]);
+            
+            if ($searchByAssetCodes) {
+                // Filter by asset codes
+                $query->whereIn('faCode', $assetCodes);
+            } 
+            elseif ($searchByAuditCategory) {
+                // Filter by audit categories
+                $query->whereHas('finance_category', function($subQ) use ($auditCategories) {
+                    $subQ->where(function($qq) use ($auditCategories) {
+                        foreach ($auditCategories as $index => $auditCategory) {
+                            if ($index == 0) {
+                                $qq->where('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            } else {
+                                $qq->orWhere('financeCatDescription', 'like', '%' . $auditCategory . '%');
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Apply common filters for all queries (only approved and not disposed assets)
+            $query->where('approved', -1)
+                  ->where('DIPOSED', '!=', -1);
+            
+            $query->with([
+                'departmentMaster' => function($query) {
+                    $query->select('departmentSystemID', 'DepartmentID');
+                },
+                'department' => function($query) {
+                    $query->select('serviceLineSystemID', 'ServiceLineCode');
+                },
+                'location' => function($query) {
+                    $query->select('locationID', 'locationName');
+                },
+                'asset_type' => function($query) {
+                    $query->select('typeID', 'typeDes');
+                },
+                'category_by' => function($query) {
+                    $query->select('faCatID', 'catDescription');
+                },
+                'sub_category_by' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by2' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'sub_category_by3' => function($query) {
+                    $query->select('faCatSubID', 'catDescription');
+                },
+                'finance_category' => function($query) {
+                    $query->select('faFinanceCatID', 'financeCatDescription');
+                },
+                'posttogl_by' => function($query) {
+                    $query->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+                'depperiod_by' => function($query) use ($today) {
+                    $query->whereHas('master_by', function ($q) use ($today) {
+                        $q->where('approved', -1)
+                        ->where('depDate', '<', $today);
+                    })
+                    ->selectRaw('faID, SUM(depAmountLocal) as totalDepAmountLocal, SUM(depAmountRpt) as totalDepAmountRpt')
+                    ->groupBy('faID');
+                },
+                'group_all_to' => function($query) {
+                    $query->where('approved', -1);
+                },
+                'insurance_detail' => function($query) {
+                    $query->with([
+                        'policy_by' => function($q) {
+                            $q->select('insurancePolicyTypesID', 'policyDescription');
+                        },
+                        'location_by' => function($q) {
+                            $q->select('locationID', 'locationName');
+                        }
+                    ]);
+                },
+                'warranty_detail' => function($query) {
+                    $query->select('documentSystemCode', 'warranty_provider', 'start_date', 'end_date', 'warranty_coverage');
+                }
+            ]);
 
 
             $query->orderBy('faID', 'asc');
@@ -3030,8 +3503,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
                 $result[] = $assetData;
             }
-
-            // Transform the paginated collection with our result data
+            
             $transformedItems = collect($result);
             
             // Create a new paginator with transformed data, preserving pagination metadata

@@ -95,7 +95,6 @@ class Employee extends Model
      * @var array
      */
 
-    protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
 
     // protected $attributes = $this->getAttributes();
@@ -232,7 +231,8 @@ class Employee extends Model
         'isHSEadmin' => 'integer',
         'isEmailVerified' => 'integer',
         'excludeObjectivesYN' => 'integer',
-        'machineID' => 'integer'
+        'machineID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -355,6 +355,196 @@ class Employee extends Model
     public function supplier_invoice()
     {
         return $this->hasMany('App\Models\BookInvSuppMaster','createdUserSystemID','employeeSystemID');
+    }
+
+    public function debit_note()
+    {
+        return $this->hasMany('App\Models\DebitNote', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function expense_claim()
+    {
+        return $this->hasMany('App\Models\ExpenseClaimMaster', 'createdUserID', 'employeeSystemID');
+    }
+
+    public function monthly_addition()
+    {
+        return $this->hasMany('App\Models\MonthlyAdditionsMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function supplier_master()
+    {
+        return $this->hasMany('App\Models\SupplierMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function item_master()
+    {
+        return $this->hasMany('App\Models\ItemMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function customer_master()
+    {
+        return $this->hasMany('App\Models\CustomerMaster', 'createdUserID', 'empID');
+    }
+
+    public function segment()
+    {
+        return $this->hasMany('App\Models\SegmentMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function material_request()
+    {
+        return $this->hasMany('App\Models\MaterielRequest', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function material_issue()
+    {
+        return $this->hasMany('App\Models\ItemIssueMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function material_return()
+    {
+        return $this->hasMany('App\Models\ItemReturnMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function stock_transfer()
+    {
+        return $this->hasMany('App\Models\StockTransfer', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function stock_receive()
+    {
+        return $this->hasMany('App\Models\StockReceive', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function stock_adjustment()
+    {
+        return $this->hasMany('App\Models\StockAdjustment', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function purchase_return()
+    {
+        return $this->hasMany('App\Models\PurchaseReturn', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function stock_count()
+    {
+        return $this->hasMany('App\Models\StockCount', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function budget_master()
+    {
+        return $this->hasMany('App\Models\BudgetMaster', 'createdByUserSystemID', 'employeeSystemID');
+    }
+
+    public function credit_note()
+    {
+        return $this->hasMany('App\Models\CreditNote', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function batch_submission()
+    {
+        return $this->hasMany('App\Models\CustomerInvoiceTracking', 'createdUserID', 'empID');
+    }
+
+    public function quotation()
+    {
+        return $this->hasMany('App\Models\QuotationMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function sales_order()
+    {
+        return $this->hasMany('App\Models\QuotationMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function delivery_order()
+    {
+        return $this->hasMany('App\Models\DeliveryOrder', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function sales_return()
+    {
+        return $this->hasMany('App\Models\SalesReturn', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function console_jv()
+    {
+        return $this->hasMany('App\Models\ConsoleJVMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function recurring_voucher()
+    {
+        return $this->hasMany('App\Models\RecurringVoucherSetup', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function bank_reconciliation()
+    {
+        return $this->hasMany('App\Models\BankReconciliation', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function bank_transfer()
+    {
+        return $this->hasMany('App\Models\PaymentBankTransfer', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function budget_transfer()
+    {
+        return $this->hasMany('App\Models\BudgetTransferForm', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function budget_addition()
+    {
+        return $this->hasMany('App\Models\ErpBudgetAddition', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function asset_depreciation()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function asset_disposal()
+    {
+        return $this->hasMany('App\Models\AssetDisposalMaster', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function asset_capitalization()
+    {
+        return $this->hasMany('App\Models\AssetCapitalization', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function asset_verification()
+    {
+        return $this->hasMany('App\Models\AssetVerification', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function purchase_request()
+    {
+        return $this->hasMany('App\Models\PurchaseRequest', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function purchase_order()
+    {
+        return $this->hasMany('App\Models\ProcumentOrder', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function work_order()
+    {
+        return $this->hasMany('App\Models\ProcumentOrder', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function work_request()
+    {
+        return $this->hasMany('App\Models\PurchaseRequest', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function direct_request()
+    {
+        return $this->hasMany('App\Models\PurchaseRequest', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function direct_order()
+    {
+        return $this->hasMany('App\Models\ProcumentOrder', 'createdUserSystemID', 'employeeSystemID');
     }
 
     public function grv()

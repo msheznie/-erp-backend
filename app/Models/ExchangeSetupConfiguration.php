@@ -27,13 +27,11 @@ class ExchangeSetupConfiguration extends Model
         'isActive' => 'Boolean',
         'allowErChanges' => 'Boolean',
         'allowGainOrLossCal' => 'Boolean',
-        'createdBy' => 'integer'
+        'createdBy' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at'
-    ];
 
     /**
      * Validation rules

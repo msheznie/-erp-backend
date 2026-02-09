@@ -66,7 +66,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
@@ -74,6 +74,10 @@ use Carbon\CarbonPeriod;
 use PHPExcel_IOFactory;
 use App\Models\FixedAssetMaster;
 use App\Models\logUploadBudget;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class BudgetMasterController
@@ -172,7 +176,7 @@ class BudgetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdByUserID'] = $employee->empID;
         $input['createdByUserSystemID'] = $employee->employeeSystemID;
@@ -393,7 +397,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function update($id, UpdateBudgetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['confirmed_by','segment_by', 'template_master', 'finance_year_by',
+        $input = Arr::except($input, ['confirmed_by','segment_by', 'template_master', 'finance_year_by',
                                         'confirmedByEmpSystemID','confirmedByEmpID','confirmedDate',]);
 
         $input = $this->convertArrayToValue($input);
@@ -426,7 +430,7 @@ class BudgetMasterAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -496,7 +500,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'serviceLineSystemID', 'approvedYN', 'Year', 'templateMasterID', 'Year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'serviceLineSystemID', 'approvedYN', 'Year', 'templateMasterID', 'Year','createdBy'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -513,10 +517,10 @@ class BudgetMasterAPIController extends AppBaseController
         $templateMasterID = collect($templateMasterID)->pluck('id');
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -527,7 +531,7 @@ class BudgetMasterAPIController extends AppBaseController
             $isServiceLineAccess = true;
         }
 
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
 
         $accessibleSegments = SegmentRights::where('employeeSystemID', $employeeSystemID)
                                            ->where('companySystemID', $selectedCompanyId)
@@ -551,6 +555,18 @@ class BudgetMasterAPIController extends AppBaseController
                                  ->when(($isServiceLineAccess == true && (!request('serviceLineSystemID') || is_null($input['serviceLineSystemID']))), function ($q) use ($accessibleSegments) {
                                     return $q->whereIn('serviceLineSystemID', $accessibleSegments);
                                 });
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+                    $budgets->whereIn('createdUserSystemID', $createdBy); 
+                }
+            }
+        }
+
 
         $search = $request->input('search.value');
         if ($search) {
@@ -966,9 +982,9 @@ class BudgetMasterAPIController extends AppBaseController
 							}
 						}
                         $grvCommitedAmount = $notRecivedPoNonFixedAsset->totalAmount;
-                        $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                        $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                        $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                         $committedAmount = $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
                         $actualConsumption += $value->consumedRptAmount - $committedAmount;
                       
@@ -1289,7 +1305,7 @@ class BudgetMasterAPIController extends AppBaseController
                         }
                     }
 
-                    $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+                    $currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
                     $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
 
@@ -1625,7 +1641,7 @@ class BudgetMasterAPIController extends AppBaseController
                           
                             }
                             $finalCommitment =     $totalCommitedAmount - $fixedCOmmitedAmount;
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $finalCommitment);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $finalCommitment);
                             $committedAmount += $currencyConversionRptAmount['reportingAmount'];
                           
 
@@ -1652,10 +1668,10 @@ class BudgetMasterAPIController extends AppBaseController
 
                            
 
-                            $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                            $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 
                             $grvCommitedAmount = $notRecivedPoNon->totalAmount;
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                             $committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];        
                            
                         }
@@ -2069,7 +2085,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 $amount = $value->debitAmount + $value->creditAmount * -1;
 
-                $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+                $currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
                 $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
 
@@ -2330,7 +2346,7 @@ class BudgetMasterAPIController extends AppBaseController
                             $totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
 						    $commited_amount = $totalCommitedAmount - $fixedCOmmitedAmount;
                             $commited_amount = $commited_amount < 1?0:$commited_amount;
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
                             $committedAmount += $currencyConversionRptAmount['reportingAmount'];
 
 
@@ -2350,10 +2366,10 @@ class BudgetMasterAPIController extends AppBaseController
                                 }
                             }
 
-                            $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                            $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 
                             $grvCommitedAmount = $notRecivedPoNonFixedAsset->totalAmount;
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                             $committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];               
                         }
        
@@ -2520,7 +2536,7 @@ class BudgetMasterAPIController extends AppBaseController
                     if ($notRecivedPoNonFixedAsset) {
                         if($notRecivedPoNonFixedAsset->itemFinanceCategoryID == 3)
                         {
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
                             $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                         }
                         else
@@ -2538,7 +2554,7 @@ class BudgetMasterAPIController extends AppBaseController
                                 }
                             }
                             
-                            $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                            $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
                             $actualConsumption +=$currencyConversionGrvApprovedPoAmount['reportingAmount'];
                          
                         }
@@ -2568,8 +2584,8 @@ class BudgetMasterAPIController extends AppBaseController
                             }
 
                             $grvCommitedAmount = $notRecivedPoInventory->totalAmount;
-                            $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
-                            $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                            $currencyConversionRptAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                            $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
                             $committedAmount = $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
                             $actualConsumption += $value->consumedRptAmount - $committedAmount;    
 
@@ -3004,8 +3020,8 @@ class BudgetMasterAPIController extends AppBaseController
 						}
                         $grvCommitedAmount = $notRecivedPoInventory->totalAmount;
                      
-                        $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
-                        $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                        $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                        $currencyConversionRptAmount = Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                         $committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
                        
 
@@ -3020,7 +3036,7 @@ class BudgetMasterAPIController extends AppBaseController
 
             $commited_amount = $tot - $fixedCOmmitedAmount;
 			$commited_amount = $commited_amount < 1?0:$commited_amount;							
-			$currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+			$currencyConversionRptAmount = Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
 			$committedAmount = $currencyConversionRptAmount['reportingAmount'];
 
 		}
@@ -3155,7 +3171,7 @@ class BudgetMasterAPIController extends AppBaseController
                 if ($notRecivedPo) {
                     if($notRecivedPo->itemFinanceCategoryID == 3)
                     {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                        $currencyConversionRptAmount = Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
                         $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                     }
                     else
@@ -3175,9 +3191,9 @@ class BudgetMasterAPIController extends AppBaseController
                     
 
                         $grvCommitedAmount = $notRecivedPoInventory->totalAmount;
-                        $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                        $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 
-                        $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                        $currencyConversionRptAmount = Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                         $committedAmount = $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
                         $actualConsumption += $value->consumedRptAmount - $committedAmount;
 
@@ -3210,9 +3226,9 @@ class BudgetMasterAPIController extends AppBaseController
                         
     
                         $grvCommitedAmount = $notRecivedPoInventory->totalAmount;
-                        $currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+                        $currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
     
-                        $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
+                        $currencyConversionRptAmount = Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvCommitedAmount);
                         $committedAmount = $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
                         $actualConsumption += $value->consumedRptAmount - $committedAmount;
     
@@ -3625,7 +3641,7 @@ class BudgetMasterAPIController extends AppBaseController
 
             $amount = $value->debitAmount + $value->creditAmount * -1;
 
-            $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+            $currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
             $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
 
@@ -3787,7 +3803,7 @@ class BudgetMasterAPIController extends AppBaseController
             $isServiceLineAccess = true;
         }
 
-        $employeeSystemID = \Helper::getEmployeeSystemID();
+        $employeeSystemID = Helper::getEmployeeSystemID();
 
         $accessibleSegments = SegmentRights::where('employeeSystemID', $employeeSystemID)
                                            ->where('companySystemID', $companyId)
@@ -3806,7 +3822,7 @@ class BudgetMasterAPIController extends AppBaseController
         // $years = Year::orderBy('year', 'desc')->get();
         $years = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $segments = SegmentMaster::where("companySystemID", $companyId)
             ->approved()->withAssigned($companyId)
@@ -3894,9 +3910,9 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
 
-        $currencyData = \Helper::companyCurrency($companyId);
+        $currencyData = Helper::companyCurrency($companyId);
 
-        $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($companyId,12);
+        $cutOffUpdatePolicy = Helper::checkRestrictionByPolicy($companyId,12);
 
         $output = array(
             'reportTemplates' => $reportTemplates,
@@ -3919,7 +3935,7 @@ class BudgetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($input['companySystemID'],12);
+        $cutOffUpdatePolicy = Helper::checkRestrictionByPolicy($input['companySystemID'],12);
 
         if (!$cutOffUpdatePolicy) {
             return $this->sendError(trans('custom.you_cannot_update_budget_cutoff_period'));
@@ -3975,7 +3991,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $this->budgetMasterRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $budget->documentSystemID)->first();
 
@@ -4022,7 +4038,7 @@ class BudgetMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -4063,7 +4079,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -4159,7 +4175,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -4240,7 +4256,7 @@ class BudgetMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $budgets = [];
@@ -4328,7 +4344,7 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         foreach ($glCOdes as $key => $value) {
-            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
+            $value->sortOrderOfTopLevel = Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
         }
 
         $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
@@ -4642,7 +4658,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $input = $request->all();
         $excelUpload = $input['excelUploadBudget'];
-        $input = array_except($request->all(), 'excelUploadBudget');
+        $input = Arr::except($request->all(), 'excelUploadBudget');
         $input = $this->convertArrayToValue($input);
 
         $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -4661,12 +4677,12 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.maximum_file_size_exceeded'),500);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $uploadArray = array(
             'companySystemID' => $input['companySystemID'],
             'uploadComment' => $input['uploadComment'],
-            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedDate' => Helper::currentDateTime(),
             'uploadedBy' => $employee->empID,
             'uploadStatus' => -1
         );

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSSourceMenuSalesMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSSourceMenuSalesMasterRepository

@@ -41,6 +41,7 @@ use Response;
 use App\Repositories\SegmentAllocatedItemRepository;
 
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class ProcumentOrderService
 {
@@ -71,7 +72,6 @@ class ProcumentOrderService
             self::errorLogUpdate($valiatedItems['errorLog'], $procumentOrder['purchaseOrderID']);
         }
 
-        Log::info(trans('custom.add_multiple_items_end'));
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 1;
         $procumentOrder->isBulkItemJobRun = 0;
@@ -159,7 +159,7 @@ class ProcumentOrderService
                         $item['supplierTransactionER'] = 1;
                     }
 
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
+                    $currencyConversionDefaultMaster = Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
 
                     if ($currencyConversionDefaultMaster) {
                         $item['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
@@ -328,7 +328,7 @@ class ProcumentOrderService
                         $item['discountPercentage'] = $rowData['dis_percentage'];
                         if ($rowData['dis_percentage'] > 0) {
                             $discountAmount = ($item['unitCost'] / 100) * $rowData['dis_percentage'];
-                            $item['discountAmount'] = \Helper::roundValue($discountAmount);
+                            $item['discountAmount'] = Helper::roundValue($discountAmount);
                         }
                     }
 
@@ -347,15 +347,15 @@ class ProcumentOrderService
                         if ($rowData['vat_percentage'] > 0) {
                             $item['VATAmount'] = ((($item['unitCost'] - $item['discountAmount']) / 100) * $rowData['vat_percentage']);
 
-                            $currencyConversionVAT = \Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, $item['VATAmount']);
-                            $item['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                            $item['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                            $currencyConversionVAT = Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, $item['VATAmount']);
+                            $item['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                            $item['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                         }
                     }
 
                     $item['netAmount'] =   ($item['unitCost'] - $item['discountAmount'] + $item['VATAmount']) * $item['noQty'];
 
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
+                    $currencyConversionDefaultMaster = Helper::currencyConversion($purchaseOrder['companySystemID'], $purchaseOrder['supplierTransactionCurrencyID'], $supplierCurrency->currencyID, 0);
                     if ($currencyConversionDefaultMaster) {
                         $item['supplierDefaultER'] = $currencyConversionDefaultMaster['transToDocER'];
                     }

@@ -9,7 +9,7 @@ use App\Models\DepBudgetPlDetEmpColumn;
 use App\Repositories\DepBudgetPlDetColumnRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
@@ -312,7 +312,7 @@ class DepBudgetPlDetColumnAPIController extends AppBaseController
             return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
-        $empColumns = DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $request->companySystemID)->get();
+        $empColumns = DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $request->companySystemID)->where('source', $request->source)->get();
         $allColumns = DepBudgetPlDetColumn::whereNotIn('id', [1,4,6])->get();
 
         $data = [

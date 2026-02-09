@@ -33,7 +33,8 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use App\Models\SystemGlCodeScenario;
 use App\Models\ChartOfAccount;
-
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 // supplier KYC status
 define('PENDING', 0);
@@ -67,7 +68,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $suppliersDetail = DB::table('erp_documentapproved')
             ->select(
@@ -188,7 +189,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
         $supplierMasterId = $this->isSupplierMasterCreated($request['id']);
 
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
 
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
@@ -258,7 +259,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
      */
     public function rejectSupplierKYC($request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
 
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
@@ -296,7 +297,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
         $isApprovalAmmend = isset($supplierMasterData['isApprovalAmmend']) ? $supplierMasterData['isApprovalAmmend'] : 0;
         //$countryID =  $input['supplierCountryID'];
         $company = Company::where('companySystemID', $supplierMasterData['company_id'])->first();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $document = DocumentMaster::where('documentID', 'SUPM')->first();
         $selectedCompanyId = $supplierMasterData['company_id'];
 
@@ -609,7 +610,7 @@ class SupplierRegistrationApprovalController extends AppBaseController
 
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierMasters['supplierCodeSystem'])->first();
         $companyDefaultBankMemos = BankMemoTypes::orderBy('sortOrder', 'asc')->get();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $empId = $employee['empID'];
         $empName = $employee['empName'];
         $temBankMemo = new BankMemoSupplier();

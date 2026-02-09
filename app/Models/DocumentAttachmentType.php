@@ -34,7 +34,6 @@ class DocumentAttachmentType extends Model
     protected $primaryKey  = 'travelClaimAttachmentTypeID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -52,7 +51,8 @@ class DocumentAttachmentType extends Model
         'travelClaimAttachmentTypeID' => 'integer',
         'documentID' => 'string',
         'description' => 'string',
-        'timestamp' => 'string'
+        'timestamp' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

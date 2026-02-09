@@ -319,6 +319,9 @@
             @if($masterdata->invoiceType == 7)
                  {{ __('custom.employee_advance_payment') }}
                 @endif
+            @if($masterdata->invoiceType == 8)
+                 {{ __('custom.refund') }}
+                @endif
         </span>
     </div>
     <br>
@@ -687,6 +690,56 @@
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
                     <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
                     <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif
+    @if($masterdata->invoiceType == 8)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th>#</th>
+                    <th style="text-align: center">{{ __('custom.credit_note_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.credit_note_date') }}</th>
+                    <th style="text-align: center">{{ __('custom.credit_note_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.balance_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.amount_paid') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->creditnotedetail as $ddet)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>
+                            @if($ddet->creditnote)
+                                {{$ddet->creditnote->creditNoteCode}}
+                            @endif
+                        </td>
+                        <td>
+                            @if($ddet->creditnote && $ddet->creditnote->creditNoteDate)
+                                {{ \App\helper\Helper::dateFormat($ddet->creditnote->creditNoteDate)}}
+                            @endif
+                        </td>
+                        <td style="text-align: right">
+                            @if($ddet->creditnote)
+                                {{number_format($ddet->creditnote->netAmount, $transDecimal)}}
+                            @endif
+                        </td>
+                        <td style="text-align: right">
+                            @if($ddet->creditnote)
+                                {{number_format($ddet->creditnote->netAmount - $ddet->creditNotePaymentAmount, $transDecimal)}}
+                            @endif
+                        </td>
+                        <td style="text-align: right">{{number_format($ddet->creditNotePaymentAmount, $transDecimal)}}</td>
+                    </tr>
+                @endforeach
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right"
+                        style="background-color: rgb(215,215,215)">{{number_format($creditNoteDetailSubTotal, $transDecimal)}}</td>
                 </tr>
                 </tbody>
             </table>

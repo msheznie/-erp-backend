@@ -8,6 +8,7 @@ use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\DB;
 
+use App\helper\email as Email;
 class EmpDesignationUpdateNotificationService
 {
     private $companyId;
@@ -153,7 +154,7 @@ class EmpDesignationUpdateNotificationService
                     'empEmail' => $mailTo,
                     'emailAlertMessage' => $mailBody
                 ];
-                $sendEmail = \Email::sendEmailErp($emails);
+                $sendEmail = Email::sendEmailErp($emails);
 
                 if (!$sendEmail["success"]) {
                     $msg = "Employee designation update notification not sent for {$applicableCatDesc} {$name} ";

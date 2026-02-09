@@ -8,6 +8,7 @@ use App\Models\NotificationCompanyScenario;
 use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\email as Email;
 class EmpProfileCreateNotificationService
 {
     private $companyId;
@@ -130,7 +131,7 @@ class EmpProfileCreateNotificationService
                     'empEmail' => $mailTo,
                     'emailAlertMessage' => $mailBody
                 ];
-                $sendEmail = \Email::sendEmailErp($emails);
+                $sendEmail = Email::sendEmailErp($emails);
 
                 if (!$sendEmail["success"]) {
                     $msg = "Employee profile creation notification not sent for {$applicableCatDesc} {$name} "; 

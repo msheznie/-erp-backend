@@ -3,9 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\CreditNote;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class CreditNoteRepository
@@ -100,7 +101,7 @@ class CreditNoteRepository extends BaseRepository
 
     }
 
-    public function creditNoteListQuery($request, $input, $search = '', $customerID, $projectID) {
+    public function creditNoteListQuery($request, $input, $search = '', $customerID = null, $projectID = null) {
 
         $master = DB::table('erp_creditnote')
             ->leftjoin('currencymaster', 'customerCurrencyID', '=', 'currencyID')
@@ -150,6 +151,15 @@ class CreditNoteRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $master->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         /*   if (array_key_exists('year', $input)) {
                if ($input['year'] && !is_null($input['year'])) {
                    $creditNoteDate = $input['year'] . '-12-31';
@@ -193,7 +203,7 @@ class CreditNoteRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.cn_date')] = \Helper::dateFormat($val->creditNoteDate);
+                $data[$x][trans('custom.cn_date')] = Helper::dateFormat($val->creditNoteDate);
                 $data[$x][trans('custom.credit_note_code')] = $val->creditNoteCode;
                 $data[$x][trans('custom.customer')] = $val->CutomerCode;
                 $data[$x][trans('custom.comments')] = $val->comments;

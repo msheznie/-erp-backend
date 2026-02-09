@@ -36,7 +36,6 @@ class WarehouseMaster extends Model
     const CREATED_AT        = 'createdDateTime';
     const UPDATED_AT        = 'timeStamp';
     protected $primaryKey   = 'wareHouseSystemCode';
-    protected $dates        = ['deleted_at'];
 
 
     public $fillable = [
@@ -93,7 +92,8 @@ class WarehouseMaster extends Model
         'modifiedDateTime' => 'string',
         'modifiedUserName' => 'string',
         'templateImgUrl' => 'string',
-        'printTemplateId' => 'integer'
+        'printTemplateId' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

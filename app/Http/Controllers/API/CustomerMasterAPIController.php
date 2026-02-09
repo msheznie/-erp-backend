@@ -56,7 +56,7 @@ use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Response;
@@ -86,6 +86,9 @@ use App\Models\ItemIssueMaster;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Services\API\CustomerMasterBulkUploadService;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class CustomerMasterController
@@ -151,10 +154,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -211,15 +214,15 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $values = implode(',', array_map(function($value)
         {
             return trim($value, ',');
@@ -254,7 +257,7 @@ class CustomerMasterAPIController extends AppBaseController
         GROUP BY customerCodeSystem ORDER BY documentApprovedID 
         ";
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         $customerMasters = DB::select($sql);
         if ($isEmployeeDischarched == 'true') {
@@ -283,11 +286,11 @@ class CustomerMasterAPIController extends AppBaseController
 
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
             //$subCompanies = \Helper::getGroupCompany($selectedCompanyId);
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getSubCompaniesByGroupCompany($selectedCompanyId);
             /**  Companies by group  Drop Down */
             $allCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         } else {
@@ -420,10 +423,10 @@ class CustomerMasterAPIController extends AppBaseController
                                                             ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
                                                                 $companyId = $input['companySystemIDFilter'];
 
-                                                                $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                                                                $isGroup = Helper::checkIsCompanyGroup($companyId);
 
                                                                 if ($isGroup) {
-                                                                    $childCompanies = \Helper::getGroupCompany($companyId);
+                                                                    $childCompanies = Helper::getGroupCompany($companyId);
                                                                 } else {
                                                                     $childCompanies = [$companyId];
                                                                 }
@@ -449,10 +452,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $customerId = $request['customerId'];
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -638,7 +641,7 @@ class CustomerMasterAPIController extends AppBaseController
     public function update($id, UpdateCustomerMasterAPIRequest $request)
     {
 
-        $input = array_except($input, ['final_approved_by']);
+        $input = Arr::except($input, ['final_approved_by']);
 
         /** @var CustomerMaster $customerMaster */
         $customerMaster = $this->customerMasterRepository->findWithoutFail($id);
@@ -683,7 +686,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function approveCustomer(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -694,7 +697,7 @@ class CustomerMasterAPIController extends AppBaseController
 
     public function rejectCustomer(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -715,10 +718,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -746,10 +749,10 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -775,10 +778,10 @@ class CustomerMasterAPIController extends AppBaseController
 
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -1060,7 +1063,7 @@ class CustomerMasterAPIController extends AppBaseController
             $excelUpload = $input['itemExcelUpload'];
 
             $input['companySystemIDFilter'] = $companySystemID;
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file'],true);
@@ -1156,7 +1159,7 @@ class CustomerMasterAPIController extends AppBaseController
 
             switch ($document_id) {
                 case self::DOCUMENT_ID_CUSTOMER:
-                    $employee = \Helper::getEmployeeInfo();
+                    $employee = Helper::getEmployeeInfo();
                     $input['companySystemID'] = $companySystemID;
                     $result = CustomerMasterBulkUploadService::processBulkUpload($formatChk, $input, $employee);
 
@@ -1164,7 +1167,7 @@ class CustomerMasterAPIController extends AppBaseController
                     return $this->sendResponse($result, trans('custom.added_successfully'));
                     break;
                 case self::DOCUMENT_ID_SUPPLIER:
-                    $employee = \Helper::getEmployeeInfo();
+                    $employee = Helper::getEmployeeInfo();
                     $input['companySystemID'] = $companySystemID;
                     $result = SupplierMasterBulkUploadService::processBulkUpload($formatChk, $input, $employee);
                     
@@ -1179,7 +1182,7 @@ class CustomerMasterAPIController extends AppBaseController
                         $item_data = [];
                         $company_group_msg = '';
 
-                        $employee = \Helper::getEmployeeInfo();
+                        $employee = Helper::getEmployeeInfo();
                         $count++;
                            
                                 if ( (isset($value['primary_company']) && !is_null($value['primary_company'])) 
@@ -1239,7 +1242,7 @@ class CustomerMasterAPIController extends AppBaseController
                              
                                 if(isset($company))
                                 {
-                                    $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+                                    $validatorResult = Helper::checkCompanyForMasters($company->companySystemID);
 
                                     if (!$validatorResult['success']) {
                                             $groupOfComapnyFalse = true;
@@ -1744,6 +1747,7 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $header = $request->header('Authorization');
         $customerMasters = $input['customer_masters'] ?? null;
+        $companyID = $input['company_id'] ?? null;
 
         if (empty($customerMasters) || !is_array($customerMasters)) {
             return $this->sendError("customer_masters array is required", 422);
@@ -1759,7 +1763,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerCodeSystemIds = [];
 
         foreach ($customerMasters as $customerMaster) {
-            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster);
+            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster, $companyID);
             
             if (!$datasetMaster['status']) {
                 $headerData['errors'] = $datasetMaster['data'] ?? [];
@@ -1803,7 +1807,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                             
                             $successDocuments[] = self::createSuccessResponseDataArray(
-                                $customerCodeSystem,
+                                $masterDataset['customerShortCode'],
                                 $initialIndex,
                                 $customerCode
                             );
@@ -1841,7 +1845,7 @@ class CustomerMasterAPIController extends AppBaseController
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
-                return $this->sendError("Transaction failed: " . $e->getMessage(), 500);
+                return $this->sendError("Transaction failed: Database transaction failed", 500);
             }
         }
 
@@ -1866,7 +1870,6 @@ class CustomerMasterAPIController extends AppBaseController
         }
  
         return $this->sendResponse($returnData, trans('custom.customer_master_retrieved_successfully'));
-
     }
 
     public static function createErrorResponseDataArray($customerCodeSystem,$masterIndex, $headerData): array {
@@ -1875,15 +1878,14 @@ class CustomerMasterAPIController extends AppBaseController
                 'unique-key' => $customerCodeSystem,
                 'index' => $masterIndex + 1
             ],
-            'headerData' => [$headerData]
+            'errors' => $headerData['errors'] ?? []
         ];
     }
 
-    public static function createSuccessResponseDataArray($customerCodeSystem,$masterIndex,$code): array {
+    public static function createSuccessResponseDataArray($secondaryCode,$masterIndex,$code): array {
         return [
-            "Customer master No" => $customerCodeSystem,
-            "Posting" => "Success",
-            "reference" => $code
+            'customer_code' => $code,
+            'secondary_code' => $secondaryCode,
         ];
     }
 

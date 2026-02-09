@@ -15,7 +15,7 @@ use App\Models\DocumentCodeTransaction;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseRequest;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

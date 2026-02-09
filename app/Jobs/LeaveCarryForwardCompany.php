@@ -27,10 +27,16 @@ class LeaveCarryForwardCompany implements ShouldQueue
      */
     public function __construct($dispatchDb, $company)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatchDb = $dispatchDb;
@@ -45,7 +51,6 @@ class LeaveCarryForwardCompany implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
-        Log::useFiles($path); 
 
         CommonJobService::db_switch($this->dispatchDb);
 

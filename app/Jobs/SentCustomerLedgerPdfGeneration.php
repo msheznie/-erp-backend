@@ -13,6 +13,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
+use App\helper\email as Email;
 
 class SentCustomerLedgerPdfGeneration implements ShouldQueue
 {
@@ -27,10 +28,16 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
      */
     public function __construct($db, $dataArray, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dataArray = $dataArray;
@@ -49,7 +56,6 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
         ini_set('memory_limit', -1);
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::info('Customer ledger PDF generation started');
         $dataArray = $this->dataArray;
         $input = $dataArray['input'];
         $reportCount = $dataArray['reportCount'];
@@ -84,7 +90,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
 
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url,'lang' => $languageCode);
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'paidAmount' => $paidAmount, 'invoiceAmount' => $invoiceAmount, 'fromDate' => Helper::dateFormat($input['fromDate']),'companyLogo' => $checkIsGroup->logo_url,'lang' => $languageCode);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_one', $dataArr)->render();
@@ -151,7 +157,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                 }
             }
             $lang = app()->getLocale();
-            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => \Helper::dateFormat($input['fromDate']), 'toDate' => \Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url, 'lang' => $lang);
+            $dataArr = array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'fromDate' => Helper::dateFormat($input['fromDate']), 'toDate' => Helper::dateFormat($input['toDate']), 'companyLogo' => $checkIsGroup->logo_url, 'lang' => $lang);
 
             /*** make pdf file */
             $html = view('print.customer_ledger_template_two', $dataArr)->render();
@@ -236,7 +242,7 @@ class SentCustomerLedgerPdfGeneration implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $zipFilePath;
                     $dataEmail['alertMessage'] = trans('custom.customer_ledger_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         Log::error($sendEmail["message"]);
                     } else {

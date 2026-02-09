@@ -27,11 +27,13 @@ use App\Repositories\ReportTemplateDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\DocumentCodeGenerate;
 use App\Models\ReportTemplateEquity;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateDetailsController
@@ -165,8 +167,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplateDetails = $this->reportTemplateDetailsRepository->create($input);
             DB::commit();
             return $this->sendResponse($reportTemplateDetails->toArray(), trans('custom.report_template_details_saved_successfully'));
@@ -275,7 +277,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
+        $input = Arr::except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
         if (isset($input['itemType']) && ($input['itemType'] == 2 || $input['itemType'] == 1)) {
@@ -647,8 +649,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
 
             $input['fontColor'] = '#000000';
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $subCategory = $input['subCategory'];
             unset($input['subCategory']);
@@ -1040,8 +1042,8 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                 $data3['companySystemID'] = $input['companySystemID'];
                 $data3['companyID'] = $input['companyID'];
                 $data3['createdPCID'] = gethostname();
-                $data3['createdUserID'] = \Helper::getEmployeeID();
-                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data3['createdUserID'] = Helper::getEmployeeID();
+                $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 ReportTemplateLinks::create($data3);
             }
 

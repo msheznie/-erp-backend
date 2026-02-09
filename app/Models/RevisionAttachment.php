@@ -29,7 +29,6 @@ class RevisionAttachment extends Model
 
     protected $primaryKey = 'id';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'revisionId',
@@ -60,7 +59,8 @@ class RevisionAttachment extends Model
         'created_by' => 'integer',
         'modified_by' => 'integer',
         'created_at' => 'datetime',
-        'modified_at' => 'datetime'
+        'modified_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     /**

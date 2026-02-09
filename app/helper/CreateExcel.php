@@ -3,6 +3,10 @@
 namespace App\helper;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Excel;
+use App\helper\Helper;
+use App\Exports\CreateExcelExport;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 class CreateExcel
 {
@@ -11,10 +15,10 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
-        $excel_content =  \Excel::create('payment_suppliers_by_year', function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
+        $excelExport = new CreateExcelExport(function ($excel) use ($data,$fileName,$array,$columnFormat,$fontFamily) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -275,7 +279,7 @@ class CreateExcel
                     
                                 {
                                     $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-                                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                                    $fontFamily = Helper::getExcelFontFamily($lang);
                                     $cell->setValue(__('custom.company_vat_registration_no').' - '.$array['company_vat_registration_number']);
 
                                     $cell->setFont(array(
@@ -351,6 +355,61 @@ class CreateExcel
 
                     });
 
+                    $isSecondHeaderRow = false;
+                    if (!empty($data) && count($data) >= 2) {
+                        $firstRow = $data[0];
+                        $secondRow = $data[1];
+                        if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
+                            $nonEmptyCount = 0;
+                            $hasTranslationKeys = false;
+                            foreach ($secondRow as $cell) {
+                                if (!empty($cell) && is_string($cell)) {
+                                    $nonEmptyCount++;
+                                    if (preg_match('/^(custom\.|supplier|po_|grv|invoice|payment|logistic|company|amount|date|code|status)/i', $cell)) {
+                                        $hasTranslationKeys = true;
+                                    }
+                                }
+                            }
+                            if ($nonEmptyCount >= 3 && $hasTranslationKeys) {
+                                $isSecondHeaderRow = true;
+                            }
+                        }
+                        
+                        if ($isSecondHeaderRow) {
+                            $sheet->row($i + 1, function($row) use ($fontFamily) {
+                                $row->setAlignment('left');
+                                $row->setFontColor('#000000');
+                                $row->setFont(array(
+                                    'family'     => $fontFamily,
+                                    'size'       => '12',
+                                    'bold'       =>  true
+                                ));
+                            });
+                        }
+                    }
+                    
+                    $dataStartRow = $isSecondHeaderRow ? $i + 2 : $i + 1;
+                    $lastRow = $sheet->getHighestRow();
+                    if ($lastRow >= $dataStartRow) {
+                        $lastColumn = $sheet->getHighestColumn();
+                        try {
+                            $spreadsheet = $sheet->getDelegate();
+                            $worksheet = $spreadsheet->getActiveSheet();
+                            $worksheet->getStyle('A' . $dataStartRow . ':' . $lastColumn . $lastRow)->getFont()->setBold(false);
+                        } catch (\Exception $e) {
+                            // Fallback: format row by row
+                            for ($rowNum = $dataStartRow; $rowNum <= $lastRow; $rowNum++) {
+                                $sheet->row($rowNum, function($row) use ($fontFamily) {
+                                    $row->setFont(array(
+                                        'family'     => $fontFamily,
+                                        'size'       => '11',
+                                        'bold'       => false
+                                    ));
+                                });
+                            }
+                        }
+                    }
+
                     if (app()->getLocale() == 'ar') {
                         // Set right-to-left for the entire sheet
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
@@ -361,7 +420,8 @@ class CreateExcel
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->string($type);
+        }, $type);
+        $excel_content = $excelExport->getContent();
         $disk = 's3';
         $companyCode = isset($array['company_code'])?$array['company_code']:trans('custom.common');
 
@@ -373,7 +433,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
 
@@ -383,9 +443,9 @@ class CreateExcel
     public static function processDetailExport($data, $companyCode) {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content = \Excel::create('po_details_export', function($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
@@ -460,7 +520,7 @@ class CreateExcel
                     }
 
                     if ($isHeader) {
-                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
                         $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
@@ -479,7 +539,8 @@ class CreateExcel
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = trans('custom.excel_po_detail_export');
@@ -494,7 +555,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;
@@ -504,7 +565,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         if(isset($array['report_type']) && $array['report_type'] == 'SSD') {
             $sheet->cell('A5', function($cell) use($array,$type,$fontFamily)
@@ -549,7 +610,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A4', function($cell) use($array,$fontFamily)
         {
@@ -574,7 +635,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell($col, function($cell) use($array,$fontFamily)
         {
@@ -599,7 +660,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A3', function($cell) use($array,$type,$fontFamily)
         {
@@ -625,7 +686,7 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = isset($array['lang']) ? $array['lang'] : app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
         $sheet->cell('A4', function($cell) use($array,$type,$fontFamily)
         {
@@ -663,9 +724,9 @@ class CreateExcel
         }
 
                     $lang = app()->getLocale();
-                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                    $fontFamily = Helper::getExcelFontFamily($lang);
 
-                    $excel_content = \Excel::create('finance', function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
+                    $excelExport = new CreateExcelExport(function ($excel) use ($data, $templateName,$fileName, $excelColumnFormat, $fontFamily) {
                         $excel->sheet($fileName, function ($sheet) use ($data, $templateName, $excelColumnFormat ,$fileName, $fontFamily) {
                             // Set default font for entire sheet
                             $sheet->setStyle([
@@ -698,7 +759,8 @@ class CreateExcel
                                 }
                             }
                        });
-                   })->string($type);
+                   }, $type);
+                   $excel_content = $excelExport->getContent();
 
 
        $disk = 's3';
@@ -712,7 +774,7 @@ class CreateExcel
        {
            if (Storage::disk($disk)->exists($path))
            {
-               $basePath = \Helper::getFileUrlFromS3($path);
+               $basePath = Helper::getFileUrlFromS3($path);
            }
        }
 
@@ -723,9 +785,9 @@ class CreateExcel
     public static function processOpenRequestReport($data,$companyCode) {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content =  \Excel::create('open_request_detail_report', function ($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function ($excel) use ($data, $fontFamily) {
 
                 $excel->sheet('open_requests', function ($sheet) use ($data, $fontFamily) {
 
@@ -801,7 +863,8 @@ class CreateExcel
             
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = 'or_detail_export';
@@ -816,7 +879,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;
@@ -826,9 +889,9 @@ class CreateExcel
     {
         // Get language for font selection
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
-        $excel_content = \Excel::create('pr_details_export', function($excel) use ($data, $fontFamily) {
+        $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
                 $sheet->setStyle([
                     'font' => [
@@ -873,7 +936,7 @@ class CreateExcel
                     $sheet->appendRow($paddedRow);
                     
                     if ($isHeader) {
-                        $highestColumn = \PHPExcel_Cell::stringFromColumnIndex($maxColumns - 1);
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
                         $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
                             $cells->setFont([
                                 'bold' => true,
@@ -892,7 +955,8 @@ class CreateExcel
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->string('xlsx');
+        }, 'xlsx');
+        $excel_content = $excelExport->getContent();
 
         $disk = 's3';
         $fileName = trans('custom.pr_detail_export');
@@ -907,7 +971,7 @@ class CreateExcel
         {
             if (Storage::disk($disk)->exists($path))
             {
-                $basePath = \Helper::getFileUrlFromS3($path);
+                $basePath = Helper::getFileUrlFromS3($path);
             }
         }
         return $path;

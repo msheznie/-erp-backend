@@ -65,7 +65,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Validation\Rules\In;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Criteria\FilterSupplierMasterByCompanyCriteria;
@@ -80,7 +80,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
-use App\helper\email;
 use App\Models\DebitNote;
 use Illuminate\Http\Request as LaravelRequest;
 use App\Models\RegisterSupplierBusinessCategoryAssign;
@@ -90,6 +89,12 @@ use App\Models\SupplierBlock;
 use App\Traits\AuditLogsTrait;
 use App\Http\Requests\RequestSubmitKycRequest;
 use App\helper\CheckPendingDoc;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -330,7 +335,7 @@ class SupplierMasterAPIController extends AppBaseController
             $data[$x][trans('custom.lcc')] = ($val->isLCCYN==1)? trans('custom.yes') : trans('custom.no');
             $data[$x][trans('custom.sme')] = ($val->isSMEYN==1)? trans('custom.yes') : trans('custom.no');
             $data[$x][trans('custom.jsrs_number')] = $val->jsrsNo;
-            $data[$x][trans('custom.jsrs_expiry')] = ($val->jsrsExpiry)? \Helper::dateFormat($val->jsrsExpiry):'';
+            $data[$x][trans('custom.jsrs_expiry')] = ($val->jsrsExpiry)? Helper::dateFormat($val->jsrsExpiry):'';
             $data[$x][trans('custom.vat_eligible')] = ($val->vatEligible) ? trans('custom.yes') : trans('custom.no');
             $data[$x][trans('custom.vat_number')] = $val->vatNumber;
             $data[$x][trans('custom.vat_percentage')] = $val->vatPercentage;
@@ -382,7 +387,7 @@ class SupplierMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_not_found'));
         }
 
-        $docRefNo = \Helper::getCompanyDocRefNo($request['companyId'], 56);
+        $docRefNo = Helper::getCompanyDocRefNo($request['companyId'], 56);
 
         $array = array('entities' => $supplierMasters, 'docRefNo' => $docRefNo, 'company' => $company);
         $time = strtotime("now");
@@ -401,10 +406,10 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -508,6 +513,27 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
+       if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+
+                if (!empty($createdBy)) {
+
+                    if ($request['type'] == 'all') {
+                        
+                        $supplierMasters->whereIn('createdUserSystemID', $createdBy);
+                    } else {
+                        
+                        $supplierMasters->whereHas('master', function ($q) use ($createdBy) {
+                            $q->whereIn('createdUserSystemID', $createdBy);
+                        });
+                    }
+                }
+            }
+        }
+
+
         if ($search) {
             $supplierMasters = $supplierMasters->where(function ($query) use ($search) {
                 $query->where('primarySupplierCode', 'LIKE', "%{$search}%")
@@ -541,15 +567,15 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -581,7 +607,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.documentSystemID', 56)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $supplierMasters = [];
@@ -735,7 +761,7 @@ class SupplierMasterAPIController extends AppBaseController
     public function store(CreateSupplierMasterAPIRequest $request)
     {
         $input = $this->convertArrayToValue($request->all());
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
      
         if( !isset($input['liabilityAccountSysemID']) || (isset($input['liabilityAccountSysemID']) && $input['liabilityAccountSysemID'] == null)){
             return $this->sendError(trans('custom.please_select_liability_account'));
@@ -764,7 +790,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        $validatorResult = Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -877,7 +903,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function updateSupplierMaster(Request $request)
     {
-        $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
+        $input = $this->convertArrayToValue(Arr::except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
         $id = $input['supplierCodeSystem'];
 
@@ -944,10 +970,10 @@ class SupplierMasterAPIController extends AppBaseController
             }
         }
 
-        $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
+        $input = Arr::except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by','companySystemID']);
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -1156,7 +1182,7 @@ class SupplierMasterAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1210,10 +1236,10 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierId = $request['supplierId'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1408,7 +1434,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function approveSupplier(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1419,7 +1445,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function rejectSupplier(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1436,9 +1462,9 @@ class SupplierMasterAPIController extends AppBaseController
     public function getPOSuppliers(Request $request)
     {
         $companyId = $request->selectedCompanyId;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -1474,9 +1500,9 @@ class SupplierMasterAPIController extends AppBaseController
     public function getICVSuppliersAndItems(Request $request)
     {
         $companyId = $request->selectedCompanyId;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -1505,11 +1531,14 @@ class SupplierMasterAPIController extends AppBaseController
             ->groupBy('itemCodeSystem')
             ->get();
 
+        $contractEnablePolicy = Helper::checkPolicy($companyId, 93);    
+
         $output = array(
             'suppliers' => $supplierMaster,
             'items' => $items,
             'companyName' => $companyName,
-            'currencyName' => $currencyName
+            'currencyName' => $currencyName,
+            'contractEnablePolicy' => $contractEnablePolicy
         );
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -1528,10 +1557,10 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -1593,7 +1622,7 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         $supplierArray = $supplier->toArray();
-        $supplierArray = array_except($supplierArray,['isSUPDAmendAccess']);
+        $supplierArray = Arr::except($supplierArray,['isSUPDAmendAccess']);
         $storeHistory = SupplierMasterRefferedBack::insert($supplierArray);
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
@@ -1636,7 +1665,7 @@ class SupplierMasterAPIController extends AppBaseController
         $input = $request->all();
         $bytes = random_bytes(20);
         $hashKey = bin2hex($bytes);
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $expiredDays = $input['expiryPeriod'];
 
@@ -1864,7 +1893,7 @@ class SupplierMasterAPIController extends AppBaseController
                     if(isset($fileData['size'])){
                         if ($fileData['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                             DB::rollback();
-                            return $this->sendError(trans('custom.maximum_allowed_file_size_is_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
+                            return $this->sendError(trans('custom.maximum_allowed_file_size_is_exceeded').' '.Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
                         }
                     }
 
@@ -1918,7 +1947,7 @@ class SupplierMasterAPIController extends AppBaseController
                         'emailAlertMessage' => trans('email.supplier_registration_thank_you', ['companyName' => $companMaster->CompanyName])
                       ];
 
-            $sendEmail = \Email::sendEmailErp($emails);
+            $sendEmail = Email::sendEmailErp($emails);
 
             DB::commit();
             return $this->sendResponse([], trans('custom.thank_you_for_registering_with').' '.$companMaster->CompanyName.'. '.trans('custom.your_registration_reviewed'));
@@ -2124,7 +2153,7 @@ class SupplierMasterAPIController extends AppBaseController
 
             if ($supplierConfirmedYN == 1) {
                 $params = array('autoID' => $input['id'], 'company' => $companySystemID, 'document' => 86);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
                 }
@@ -2181,15 +2210,15 @@ class SupplierMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -2225,7 +2254,7 @@ class SupplierMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.documentSystemID', 86)
             ->whereIn('erp_documentapproved.companySystemID', $companyID);
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $registeredSupplier = [];
@@ -2248,7 +2277,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function approveRegisteredSupplier(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -2259,7 +2288,7 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function rejectRegisteredSupplier(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -2306,11 +2335,11 @@ class SupplierMasterAPIController extends AppBaseController
             ->orderBy("id", "desc")
             ->first();
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
-        $email = email::emailAddressFormat($request->input('email'));
+        $email = Email::emailAddressFormat($request->input('email'));
         $companyId = $request->input('company_id');
         if (!empty($isExist)) {
             if($isExist['STATUS'] === 1){
@@ -2332,7 +2361,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['alertMessage'] = "Registration Link";
                     $dataEmail['empEmail'] = $email;
                     $dataEmail['emailAlertMessage'] = $body;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                     return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
                 } else{
@@ -2354,7 +2383,7 @@ class SupplierMasterAPIController extends AppBaseController
                 $dataEmail['alertMessage'] = "Registration Link";
                 $dataEmail['empEmail'] = $email;
                 $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                $sendEmail = Email::sendEmailErp($dataEmail);
 
 
                 return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_generated_successfully'));
@@ -2383,11 +2412,11 @@ class SupplierMasterAPIController extends AppBaseController
             ->where('company_id', $request->companySystemId)
             ->first();
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
-        $email = email::emailAddressFormat($supplierdata['email']);
+        $email = Email::emailAddressFormat($supplierdata['email']);
 
         if (!empty($supplierdata)) {
             if ($supplierdata['STATUS'] === 0){
@@ -2401,7 +2430,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                     $body .= \Helper::getSupplierEmailFooter($request->companySystemId);
                     $dataEmail['emailAlertMessage'] = $body;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                     return $this->sendResponse($loginUrl, trans('srm_supplier_master.supplier_registration_link_resent_successfully'));
                 } else{
@@ -2462,10 +2491,10 @@ class SupplierMasterAPIController extends AppBaseController
         $isExist = SupplierRegistrationLink::select('supplier_master_id')->whereNotNull('supplier_master_id')->get()->pluck('supplier_master_id');    
         $companyId = $request->companyId;
         $input = $request->all();
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($companyId);
+            $companies = Helper::getGroupCompany($companyId);
         } else {
             $companies = [$companyId];
         }
@@ -2566,7 +2595,7 @@ class SupplierMasterAPIController extends AppBaseController
         $id = $input['id'];
         $isDelete = $input['isDelete'];
         $isEdit = $input['isEdit'];
-        $input = array_except($input, ['isDelete', 'id','isEdit']);
+        $input = Arr::except($input, ['isDelete', 'id','isEdit']);
         $PO = [];
         $SI = [];
         $PV= [];
@@ -2711,7 +2740,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($supplier_id);
 
         $date = isset($input['date'])?$input['date']:null;
-        $validatorResult = \Helper::checkBlockSuppliers($date,$supplier_id);
+        $validatorResult = Helper::checkBlockSuppliers($date,$supplier_id);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }

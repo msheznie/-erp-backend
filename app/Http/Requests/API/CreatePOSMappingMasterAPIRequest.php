@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSMappingMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSMappingMasterAPIRequest extends APIRequest
+class CreatePOSMappingMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

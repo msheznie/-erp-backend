@@ -22,10 +22,16 @@ class DeleteTemporaryFiles implements ShouldQueue
     public function __construct($path)
     {
         $this->path = $path;
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
     }
 
@@ -36,7 +42,6 @@ class DeleteTemporaryFiles implements ShouldQueue
      */
     public function handle()
     {
-        // Log::useFiles(storage_path() . '/logs/file_delete.log');
         $path = $this->path;
         if($path){
             if ($exists = Storage::disk('local_public')->exists($path)) {

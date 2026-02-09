@@ -27,10 +27,16 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
      */
     public function __construct($dispatch_db)
     {
-        if (env('IS_MULTI_TENANCY', false)) {
-            self::onConnection('database_main');
-        } else {
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
     }
@@ -44,15 +50,10 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
-
-        Log::useFiles(storage_path() . '/logs/budget-submission-deadline-reached-notification.log');
-        Log::info('Budget submission deadline reached notification job started for database: ' . $db);
-
         try {
             $this->sendDeadlineReachedNotifications();
-            Log::info('Budget submission deadline reached notification job completed successfully for database: ' . $db);
         } catch (\Exception $e) {
-            Log::error('Error in budget submission deadline reached notification job for database ' . $db . ': ' . $e->getMessage());
+            Log::channel('budget_submission_deadline_reached_notification')->error('Error in budget submission deadline reached notification job for database ' . $db . ': ' . $e->getMessage());
             throw $e;
         }
     }
@@ -73,12 +74,8 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
 
 
         if ($departmentBudgetPlannings->isEmpty()) {
-            Log::info('No budget plannings found with submission date that has passed');
             return;
         }
-
-        Log::info('Found ' . $departmentBudgetPlannings->count() . ' budget planning(s) with submission date that has passed');
-
 
         foreach ($departmentBudgetPlannings as $budgetPlanning) {
             try {
@@ -86,7 +83,6 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
                 $companySystemID = $budgetPlanning->masterBudgetPlannings->companySystemID ?? null;
                 
                 if (!$companySystemID) {
-                    Log::warning('Budget planning ID ' . $budgetPlanning->id . ' has no company system ID');
                     continue;
                 }
 
@@ -97,7 +93,6 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
                     ->first();
 
                 if (!$notificationDetail || !$notificationDetail->notification) {
-                    Log::info('No active notification found for company: ' . $companySystemID);
                     continue;
                 }
 
@@ -111,8 +106,6 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
                     $scenario,
                     $companySystemID
                 );
-
-                Log::info('Deadline reached notification sent for budget planning ID: ' . $budgetPlanning->id . ', Company: ' . $companySystemID);
 
             } catch (\Exception $e) {
                 Log::error('Error sending deadline reached notification for budget planning ID ' . $budgetPlanning->id . ': ' . $e->getMessage());

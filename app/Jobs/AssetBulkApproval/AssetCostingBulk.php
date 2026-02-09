@@ -11,6 +11,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
 
 class AssetCostingBulk implements ShouldQueue
 {
@@ -50,8 +52,6 @@ class AssetCostingBulk implements ShouldQueue
         $uploadData = $this->uploadData;
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path() . '/logs/approve_bulk_document.log');
-        Log::info('switching db '.$db);
         $results = $uploadData['results'];
         $empID = $uploadData['empID'];
         $grvID = $uploadData['grvID'];
@@ -59,7 +59,7 @@ class AssetCostingBulk implements ShouldQueue
 
         if(count($results) == 0)
         {
-            Log::info('There are no documents to approve');
+            Log::channel('approve_bulk_document')->error('There are no documents to approve');
         }
 
         foreach($results as $result) {
@@ -75,7 +75,7 @@ class AssetCostingBulk implements ShouldQueue
                 'fromUpload' => true,
                 'approvedBy' => $empID
             );
-            $approve = \Helper::approveDocument($params);
+            $approve = DocumentApprove::approveDocument($params);
             
             if (!$approve["success"]) {
                 $errorData[] = [
@@ -86,7 +86,7 @@ class AssetCostingBulk implements ShouldQueue
                     'errorMessage' => $approve["message"],
                     'error' => null
                 ];
-                Log::info($errorData);
+                Log::channel('approve_bulk_document')->error($errorData);
                 JobErrorLog::insert($errorData);
             }
 

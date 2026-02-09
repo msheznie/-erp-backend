@@ -772,7 +772,7 @@ class SupplierMasterBulkUploadService
             ];
         }
         
-        $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+        $validatorResult = Helper::checkCompanyForMasters($company->companySystemID);
         if (!$validatorResult['success']) {
             return [
                 'valid' => false,

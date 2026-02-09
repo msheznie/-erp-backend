@@ -64,7 +64,6 @@ class DocumentApproved extends Model
     protected $primaryKey = 'documentApprovedID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -138,7 +137,8 @@ class DocumentApproved extends Model
         'isApprovedFromPC' => 'integer',
         'approvedPCID' => 'string',
         'reference_email' => 'string',
-        'status' => 'integer'
+        'status' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

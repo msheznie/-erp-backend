@@ -13,11 +13,12 @@ use App\Models\SegmentMaster;
 use App\Repositories\BudgetConsumedDataRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\helper\Helper;
 
 /**
  * Class BudgetConsumedDataController
@@ -570,7 +571,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
             return $this->sendError(trans('custom.amount_cannot_be_greater_than_available'), 500);
         }
 
-        $consumedAmountCurrency = \Helper::currencyConversion($input['companySystemID'], $input['consumedRptCurrencyID'], $input['consumedRptCurrencyID'], $input['amountToChange']);
+        $consumedAmountCurrency = Helper::currencyConversion($input['companySystemID'], $input['consumedRptCurrencyID'], $input['consumedRptCurrencyID'], $input['amountToChange']);
 
         $companyFinanceYear = CompanyFinanceYear::find($input['newYear']);
 

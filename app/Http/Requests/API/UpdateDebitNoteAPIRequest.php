@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DebitNote;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDebitNoteAPIRequest extends APIRequest
+class UpdateDebitNoteAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

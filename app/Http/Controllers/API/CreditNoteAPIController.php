@@ -28,6 +28,8 @@ use App\Models\CreditNoteDetails;
 use App\Models\CreditNoteDetailsRefferdback;
 use App\Models\CreditNoteReferredback;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\CreditNoteReceipt;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\DebitNote;
 use App\Models\DocumentReferedHistory;
 use App\Models\GeneralLedger;
@@ -60,13 +62,17 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\CreateCreditNote;
 use App\Models\DocumentSystemMapping;
+use App\Models\PayCreditNoteDetail;
 use App\Services\API\CreditNoteAPIService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class CreditNoteController
@@ -166,12 +172,12 @@ class CreditNoteAPIController extends AppBaseController
     public function store(CreateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'currencyID', 'customerCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'currencyID', 'customerCurrencyID', 'typeID'));
         $company = Company::select('CompanyID')->where('companySystemID', $input['companySystemID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
@@ -227,6 +233,7 @@ class CreditNoteAPIController extends AppBaseController
         $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['documentType'] = 12;
+        $input['type'] = $input['typeID'];
 
         $documentDate = $input['creditNoteDate'];
         $monthBegin = $input['FYPeriodDateFrom'];
@@ -237,7 +244,7 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.document_date_not_within_financial_period'));
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         if ($company) {
@@ -251,11 +258,11 @@ class CreditNoteAPIController extends AppBaseController
         $input['creditNoteCode'] = $creditNoteCode;
 
         $input['customerCurrencyER'] = 1;
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $creditNotes = $this->creditNoteRepository->create($input);
@@ -368,9 +375,9 @@ class CreditNoteAPIController extends AppBaseController
     public function update($id, UpdateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID', 'typeID'));
 
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+        $input = Arr::except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
         /** @var CreditNote $creditNote */
@@ -398,12 +405,12 @@ class CreditNoteAPIController extends AppBaseController
         $input['departmentSystemID'] = 4;
 
         /*financial Year check*/
-        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYearCheck = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
             return $this->sendError($companyFinanceYearCheck["message"], 500);
         }
         /*financial Period check*/
-        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+        $companyFinancePeriodCheck = Helper::companyFinancePeriodCheck($input);
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
@@ -414,7 +421,7 @@ class CreditNoteAPIController extends AppBaseController
 
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
             $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                 ->where('companyPolicyCategoryID', 67)
                 ->where('isYesNO', 1)
@@ -460,27 +467,30 @@ class CreditNoteAPIController extends AppBaseController
                                             ->where('creditNoteAutoID', $id)
                                             ->first();
 
-        $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
-        $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
-        $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+        $input['creditAmountTrans'] = Helper::roundValue($totalAmount->creditAmountTrans);
+        $input['creditAmountLocal'] = Helper::roundValue($totalAmount->creditAmountLocal);
+        $input['creditAmountRpt'] = Helper::roundValue($totalAmount->creditAmountRpt);
 
 
-        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
-        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
-        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+        $input['VATAmount'] = Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = Helper::roundValue($totalAmount->VATAmountRpt);
 
 
-        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
-        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
-        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+        $input['netAmount'] = Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = Helper::roundValue($totalAmount->netAmountRpt);
 
         $input['customerCurrencyER'] = 1;
+        $input['type'] = $input['typeID'];
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['creditNoteDate'] > $curentDate) {
             return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
+
+        $message = null;
 
         if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $messages = [
@@ -512,6 +522,38 @@ class CreditNoteAPIController extends AppBaseController
 
             if (count($detail) == 0) {
                 return $this->sendError(trans('custom.you_cannot_confirm_credit_note_should_have_at_leas'), 500);
+            }
+
+            // validate refund type credit note
+            if ($input['type'] == 3) {
+                // Get all receipt vouchers for this credit note
+                $creditNoteReceipts = CreditNoteReceipt::where('creditNoteAutoID', $id)->get();
+                
+                $hasVAT = false;
+                    
+                foreach ($creditNoteReceipts as $creditNoteReceipt) {
+                    // Get the receipt voucher
+                    $receiptVoucher = $creditNoteReceipt->customerReceivePayment;
+                    
+                    if ($receiptVoucher) {
+                        $receiptDetails = $receiptVoucher->details;
+                        
+                        foreach ($receiptDetails as $detail) {
+                            // Get the related customer invoice
+                            $customerInvoice = $detail->reciept_vocuher;
+                            if ($customerInvoice && $customerInvoice->VATAmount > 0) {
+                                $hasVAT = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+
+                if ($hasVAT) {
+                    if (isset($input['isVATApplicable']) && $input['isVATApplicable'] == 0) {
+                        $message = trans('custom.refund_receipt_voucher_invoice_has_vat_credit_note_not');
+                    }
+                }
             }
 
             $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
@@ -629,20 +671,26 @@ class CreditNoteAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['creditAmountTrans']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
 
         }
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($creditNote->toArray(), trans('custom.credit_note_updated_successfully'),1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails(
+            $creditNote->toArray(), 
+            trans('custom.credit_note_updated_successfully'),
+            1,
+            $confirm['data'] ?? null,
+            $message
+        );
     }
 
     public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
@@ -650,10 +698,10 @@ class CreditNoteAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
 
-        $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
+        $input = Arr::except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['customerCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
@@ -681,12 +729,12 @@ class CreditNoteAPIController extends AppBaseController
         $input['departmentSystemID'] = 4;
 
         /*financial Year check*/
-        $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYearCheck = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYearCheck["success"]) {
             return $this->sendError($companyFinanceYearCheck["message"], 500);
         }
         /*financial Period check*/
-        $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+        $companyFinancePeriodCheck = Helper::companyFinancePeriodCheck($input);
         if (!$companyFinancePeriodCheck["success"]) {
             return $this->sendError($companyFinancePeriodCheck["message"], 500);
         }
@@ -697,7 +745,7 @@ class CreditNoteAPIController extends AppBaseController
 
 
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
 
                 if ($companyCurrencyConversion) {
                     $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
@@ -737,19 +785,19 @@ class CreditNoteAPIController extends AppBaseController
             ->where('creditNoteAutoID', $id)
             ->first();
 
-        $input['creditAmountTrans'] = \Helper::roundValue($totalAmount->creditAmountTrans);
-        $input['creditAmountLocal'] = \Helper::roundValue($totalAmount->creditAmountLocal);
-        $input['creditAmountRpt'] = \Helper::roundValue($totalAmount->creditAmountRpt);
+        $input['creditAmountTrans'] = Helper::roundValue($totalAmount->creditAmountTrans);
+        $input['creditAmountLocal'] = Helper::roundValue($totalAmount->creditAmountLocal);
+        $input['creditAmountRpt'] = Helper::roundValue($totalAmount->creditAmountRpt);
 
 
-        $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
-        $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
-        $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
+        $input['VATAmount'] = Helper::roundValue($totalAmount->VATAmount);
+        $input['VATAmountLocal'] = Helper::roundValue($totalAmount->VATAmountLocal);
+        $input['VATAmountRpt'] = Helper::roundValue($totalAmount->VATAmountRpt);
 
 
-        $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
-        $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
-        $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+        $input['netAmount'] = Helper::roundValue($totalAmount->netAmount);
+        $input['netAmountLocal'] = Helper::roundValue($totalAmount->netAmountLocal);
+        $input['netAmountRpt'] = Helper::roundValue($totalAmount->netAmountRpt);
 
         $input['customerCurrencyER'] = 1;
 
@@ -914,15 +962,15 @@ class CreditNoteAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => $input['creditAmountTrans']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
 
         }
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
@@ -995,17 +1043,17 @@ class CreditNoteAPIController extends AppBaseController
         $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
 
         $masterINVID = CreditNote::findOrFail($id);
-            $VATAmountLocal = \Helper::roundValue($masterINVID->VATAmount/$value);
-            $netAmountLocal = \Helper::roundValue($masterINVID->netAmount/$value);
-            $creditAmountLocal = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+            $VATAmountLocal = Helper::roundValue($masterINVID->VATAmount/$value);
+            $netAmountLocal = Helper::roundValue($masterINVID->netAmount/$value);
+            $creditAmountLocal = Helper::roundValue($masterINVID->creditAmountTrans/$value);
 
             $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$VATAmountLocal, 'netAmountLocal'=>$netAmountLocal,  'creditAmountLocal' =>$creditAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $localAmount = \Helper::roundValue($item->creditAmount / $value);
-            $itemVATAmountLocal= \Helper::roundValue($item->VATAmount / $value);
-            $itemNetAmountLocal= \Helper::roundValue($item->netAmount / $value);
+            $localAmount = Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountLocal= Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountLocal= Helper::roundValue($item->netAmount / $value);
             $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$itemVATAmountLocal, 'netAmountLocal'=>$itemNetAmountLocal);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -1033,17 +1081,17 @@ class CreditNoteAPIController extends AppBaseController
         $details = CreditNoteDetails::where('creditNoteAutoID',$id)->get();
 
         $masterINVID = CreditNote::findOrFail($id);
-        $VATAmountRpt = \Helper::roundValue($masterINVID->VATAmount/$value);
-        $netAmountRpt = \Helper::roundValue($masterINVID->netAmount/$value);
-        $creditAmountRpt = \Helper::roundValue($masterINVID->creditAmountTrans/$value);
+        $VATAmountRpt = Helper::roundValue($masterINVID->VATAmount/$value);
+        $netAmountRpt = Helper::roundValue($masterINVID->netAmount/$value);
+        $creditAmountRpt = Helper::roundValue($masterINVID->creditAmountTrans/$value);
 
             $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$VATAmountRpt,'netAmountRpt'=>$netAmountRpt, 'creditAmountRpt'=>$creditAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $reportingAmount = \Helper::roundValue($item->creditAmount / $value);
-            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
-            $itemNetAmountRpt = \Helper::roundValue($item->netAmount / $value);
+            $reportingAmount = Helper::roundValue($item->creditAmount / $value);
+            $itemVATAmountRpt = Helper::roundValue($item->VATAmount / $value);
+            $itemNetAmountRpt = Helper::roundValue($item->netAmount / $value);
             $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount,'VATAmountRpt'=>$itemVATAmountRpt, 'netAmountRpt'=>$itemNetAmountRpt);
             $updatedLocalER = CreditNoteDetails::findOrFail($item->creditNoteDetailsID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -1114,7 +1162,7 @@ class CreditNoteAPIController extends AppBaseController
 
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID, 1);
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -1164,7 +1212,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
@@ -1199,7 +1247,7 @@ class CreditNoteAPIController extends AppBaseController
                 $output['financialYears'] = array(array('value' => intval(date("Y")), 'label' => date("Y")),
                     array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-                $output['companyFinanceYear'] = \Helper::companyFinanceYear($companySystemID, 1);
+                $output['companyFinanceYear'] = Helper::companyFinanceYear($companySystemID, 1);
                 $output['companyLogo'] = Company::select('companySystemID', 'CompanyID', 'CompanyName', 'companyLogo')->get();
                 $output['yesNoSelection'] = YesNoSelection::all();
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->approved()->withAssigned($companySystemID)->get();
@@ -1279,7 +1327,7 @@ class CreditNoteAPIController extends AppBaseController
         $creditnote->RollLevForApp_curr = 1;
         $creditnote->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $creditnote->documentSystemiD)->first();
 
@@ -1330,7 +1378,7 @@ class CreditNoteAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1379,7 +1427,7 @@ class CreditNoteAPIController extends AppBaseController
         }
 
 
-        $creditNote->docRefNo = \Helper::getCompanyDocRefNo($creditNote->companySystemID, $creditNote->documentSystemiD);
+        $creditNote->docRefNo = Helper::getCompanyDocRefNo($creditNote->companySystemID, $creditNote->documentSystemiD);
 
         $array = array('request' => $creditNote, 'lang' => $lang);
         $time = strtotime("now");
@@ -1454,7 +1502,7 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $creditNote = DB::table('erp_documentapproved')
@@ -1546,7 +1594,7 @@ class CreditNoteAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $creditNote = DB::table('erp_documentapproved')
@@ -1632,7 +1680,7 @@ class CreditNoteAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $creditNote = [];
@@ -1769,7 +1817,7 @@ WHERE
 
     public function approvalPreCheckCreditNote(Request $request)
     {
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
@@ -1784,7 +1832,7 @@ WHERE
 
         $id = $input['creditNoteAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = CreditNote::find($id);
@@ -1795,6 +1843,15 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_credit_note_i'));
+        }
+
+        if ($masterData->type == 3) {
+            $exists = PayCreditNoteDetail::where('creditNoteAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->exists();
+            if ($exists) {
+                return $this->sendError(trans('custom.credit_note_pulled_into_payment_voucher_cannot_be_amended'));
+            }
         }
 
         // checking document matched in receive payment
@@ -1888,7 +1945,7 @@ WHERE
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }

@@ -37,6 +37,9 @@ use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ErpBudgetAdditionController
@@ -160,13 +163,13 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
         $input['createdDate'] = now();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
 
         $validator = \Validator::make($input, [
@@ -330,7 +333,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         if (empty($erpBudgetAddition)) {
             return $this->sendError(trans('custom.erp_budget_addition_not_found'));
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -352,7 +355,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                 'category' => 0,
                 'amount' => 0
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -371,7 +374,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             ->with(['purchase_order', 'purchase_request'])
             ->get();
 
-        $currency = \Helper::companyCurrency($budgetTransferForm->companySystemID);
+        $currency = Helper::companyCurrency($budgetTransferForm->companySystemID);
 
         $consumptionData = [];
         $consumptionDataWithPoPr = [];
@@ -564,7 +567,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $years = Year::orderBy('year', 'desc')->get();
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $financeYears = CompanyFinanceYear::selectRaw('DATE_FORMAT(bigginingDate,"%d %M %Y") as bigginingDate, DATE_FORMAT(endingDate,"%d %M %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $companyId)->get();
 
@@ -705,7 +708,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -775,7 +778,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $debitNotes = [];
@@ -807,7 +810,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $debitNotes = DB::table('erp_documentapproved')
@@ -924,7 +927,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
 
         $this->erpBudgetAdditionRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $budgetAddition->documentSystemID)->first();
 
@@ -973,7 +976,7 @@ class ErpBudgetAdditionAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

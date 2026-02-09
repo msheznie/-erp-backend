@@ -25,10 +25,11 @@ use App\Repositories\TaxRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\VatReturnFillingMaster;
+use App\helper\Helper;
 
 /**
  * Class TaxController
@@ -464,7 +465,7 @@ class TaxAPIController extends AppBaseController
     public function getTaxMasterDatatable(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID','createdBy'));
         $tax = Tax::with(['authority', 'type'])->where('taxCategory','!=',1);
         $companiesByGroup = "";
 
@@ -476,15 +477,23 @@ class TaxAPIController extends AppBaseController
                     $tax = $tax->where('companySystemID', $input['selectedCompanyID']);
                 }
             }else {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $companiesByGroup = $input['globalCompanyId'];
                     $tax = $tax->where('companySystemID', $companiesByGroup);
                 } else {
-                    $subCompanies = \Helper::getGroupCompany($input['globalCompanyId']);
+                    $subCompanies = Helper::getGroupCompany($input['globalCompanyId']);
                     $tax = $tax->whereIn('companySystemID', $subCompanies);
                 }
             }
         }
+
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $tax->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
 
         return \DataTables::eloquent($tax)
             ->order(function ($query) use ($input) {
@@ -502,9 +511,9 @@ class TaxAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companies = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companies = \Helper::getGroupCompany($selectedCompanyId);
+            $companies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companies = [$selectedCompanyId];
         }

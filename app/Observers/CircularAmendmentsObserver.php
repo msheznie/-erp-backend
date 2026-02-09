@@ -12,6 +12,7 @@ use App\Models\TenderCircularsEditLog;
 use App\Models\CircularAmendments;
 use App\Models\CircularAmendmentsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class CircularAmendmentsObserver
 {
     /**
@@ -40,7 +41,6 @@ class CircularAmendmentsObserver
 
             if($result)
             {
-                Log::info('tender circular created successfully');
             }
         }
 
@@ -70,7 +70,6 @@ class CircularAmendmentsObserver
             
             if($result)
             {
-                Log::info('tender circular deleted successfully');
             }
         }
 
@@ -81,7 +80,7 @@ class CircularAmendmentsObserver
     public function process($tender,$obj,$type,$tenderObj,$reflog)
     {
         
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

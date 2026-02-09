@@ -30,7 +30,6 @@ class Months extends Model
     const UPDATED_AT = 'updated_at';
     protected $appends = ['monthDes'];
 
-    protected $dates = ['deleted_at'];
 
     protected $primaryKey = 'monthID';
 
@@ -46,7 +45,8 @@ class Months extends Model
      */
     protected $casts = [
         'monthID' => 'integer',
-        'monthDes' => 'string'
+        'monthDes' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

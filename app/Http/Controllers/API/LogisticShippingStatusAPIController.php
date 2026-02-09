@@ -19,9 +19,10 @@ use App\Repositories\LogisticShippingStatusRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class LogisticShippingStatusController
@@ -122,7 +123,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
 

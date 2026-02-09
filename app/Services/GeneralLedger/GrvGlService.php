@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class GrvGlService
 {
@@ -140,8 +141,6 @@ class GrvGlService
         $unbilledGRVVATAddVatOnPO = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"]);
         $vatDetails = TaxService::processGrvVAT($masterModel["autoID"]);
 
-        Log::info('Total Logistic VAT');
-        Log::info($unbilledGRVVATAddVatOnPO);
 
         if ($masterData) {
             $transVATAmount = isset($vatDetails['masterVATTrans']) ? $vatDetails['masterVATTrans'] : 0;
@@ -164,8 +163,8 @@ class GrvGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->grvPrimaryCode;
             $data['documentDate'] = $postedDateGl;
-            $data['documentYear'] = \Helper::dateYear($postedDateGl);
-            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
+            $data['documentYear'] = Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = Helper::dateMonth($postedDateGl);
             $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
             $data['glCode'] = $masterData->UnbilledGRVAccount;
             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
@@ -182,21 +181,21 @@ class GrvGlService
             $data['supplierCodeSystem'] = $masterData->supplierID;
             $data['documentTransCurrencyID'] = $masterData->details[0]->supplierTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->details[0]->supplierTransactionER;
-            $data['documentTransAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount : ($masterData->details[0]->transAmount - $exemptVATTrans)) * -1);
+            $data['documentTransAmount'] = Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->transAmount + $transVATAmount : ($masterData->details[0]->transAmount - $exemptVATTrans)) * -1);
             $data['documentLocalCurrencyID'] = $masterData->details[0]->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->details[0]->localCurrencyER;
-            $data['documentLocalAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : ($masterData->details[0]->localAmount - $exemptVATLocal)) * -1);
+            $data['documentLocalAmount'] = Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->localAmount + $localVATAmount : ($masterData->details[0]->localAmount - $exemptVATLocal)) * -1);
             $data['documentRptCurrencyID'] = $masterData->details[0]->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->details[0]->companyReportingER;
-            $data['documentRptAmount'] = \Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : ($masterData->details[0]->rptAmount - $exemptVATRpt)) * -1);
+            $data['documentRptAmount'] = Helper::roundValue((($valEligible && !$rcmActivated) ? $masterData->details[0]->rptAmount + $rptVATAmount : ($masterData->details[0]->rptAmount - $exemptVATRpt)) * -1);
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
             array_push($finalData, $data);
 
             $exemptExpenseDetails = TaxService::processGrvExpense($masterModel["autoID"]);
@@ -218,12 +217,11 @@ class GrvGlService
                     $data['documentTransAmount'] = $exemptVatTrans;
                     $data['documentLocalAmount'] = $exemptVATLocal;
                     $data['documentRptAmount'] = $exemptVatRpt;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
             if ((($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])))) {
-                Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
                 if ($vatDetails['masterVATTrans'] > 0) {
@@ -239,22 +237,17 @@ class GrvGlService
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
 
-                            $data['documentTransAmount'] = \Helper::roundValue($vatDetails['masterVATTrans']);
-                            $data['documentLocalAmount'] = \Helper::roundValue($vatDetails['masterVATLocal']);
-                            $data['documentRptAmount'] = \Helper::roundValue($vatDetails['masterVATRpt']);
+                            $data['documentTransAmount'] = Helper::roundValue($vatDetails['masterVATTrans']);
+                            $data['documentLocalAmount'] = Helper::roundValue($vatDetails['masterVATLocal']);
+                            $data['documentRptAmount'] = Helper::roundValue($vatDetails['masterVATRpt']);
 
                             array_push($finalData, $data);
 
                             $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
-                            Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         } else {
-                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
 
@@ -280,15 +273,15 @@ class GrvGlService
 
                                 $data['documentTransCurrencyID'] = $val['supplierTransactionCurrencyID'];
                                 $data['documentTransCurrencyER'] = $val['supplierTransactionCurrencyER'];
-                                $data['documentTransAmount'] = \Helper::roundValue($unbilledTransVATAmount);
+                                $data['documentTransAmount'] = Helper::roundValue($unbilledTransVATAmount);
 
                                 $data['documentRptCurrencyID'] = $val['companyReportingCurrencyID'];
                                 $data['documentRptCurrencyER'] = $val['companyReportingER'];
-                                $data['documentRptAmount'] = \Helper::roundValue($unbilledRptVATAmount);
+                                $data['documentRptAmount'] = Helper::roundValue($unbilledRptVATAmount);
 
                                 $data['documentLocalCurrencyID'] = $val['localCurrencyID'];
                                 $data['documentLocalCurrencyER'] = $val['localCurrencyER'];
-                                $data['documentLocalAmount'] = \Helper::roundValue($unbilledLocalVATAmount);
+                                $data['documentLocalAmount'] = Helper::roundValue($unbilledLocalVATAmount);
 
                                 array_push($finalData, $data);
 
@@ -303,7 +296,6 @@ class GrvGlService
                     if(TaxService::isGRVRCMActivation($masterModel["autoID"])){
 
                         $taxDataOutputTransfer = TaxService::getOutputVATTransferGLAccount($masterData->companySystemID);
-                        Log::info('Inside the Vat Entry OutputVATTransferGLAccoun Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         if (!empty($taxDataOutputTransfer) && ($rcmActivated && $transVATAmount > 0)) {
                             $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxDataOutputTransfer->outputVatTransferGLAccountAutoID)
                                 ->where('companySystemID', $masterData->companySystemID)
@@ -315,21 +307,16 @@ class GrvGlService
                                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                                $data['documentTransAmount'] = !$rcmActivated ? \Helper::roundValue(($transVATAmount + $exemptVATTrans)) * -1 : \Helper::roundValue(($transVATAmount)) * -1;
-                                $data['documentLocalAmount'] = !$rcmActivated ? \Helper::roundValue(($localVATAmount + $exemptVATLocal)) * -1 : \Helper::roundValue(($localVATAmount)) * -1;
-                                $data['documentRptAmount'] = !$rcmActivated ? \Helper::roundValue(($rptVATAmount + $exemptVATRpt)) * -1 : \Helper::roundValue(($rptVATAmount )) * -1;
-                                $data['timestamp'] = \Helper::currentDateTime();
+                                $data['documentTransAmount'] = !$rcmActivated ? Helper::roundValue(($transVATAmount + $exemptVATTrans)) * -1 : Helper::roundValue(($transVATAmount)) * -1;
+                                $data['documentLocalAmount'] = !$rcmActivated ? Helper::roundValue(($localVATAmount + $exemptVATLocal)) * -1 : Helper::roundValue(($localVATAmount)) * -1;
+                                $data['documentRptAmount'] = !$rcmActivated ? Helper::roundValue(($rptVATAmount + $exemptVATRpt)) * -1 : Helper::roundValue(($rptVATAmount )) * -1;
+                                $data['timestamp'] = Helper::currentDateTime();
                                 array_push($finalData, $data);
 
                                 $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                Log::info('Inside the Vat Entry OutVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                             } else {
-                                Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                Log::info('Output Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                             }
                         } else {
-                            Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                            Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
                         }
                     }
                 }
@@ -351,20 +338,21 @@ class GrvGlService
                     $data['glCode'] = $val->financeGLcodebBS;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
 
-                    $data['documentTransAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->transAmount) - $exemptVATTrans): \Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
+                    $data['documentTransAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? Helper::roundValue(ABS($val->transAmount) - $exemptVATTrans): Helper::roundValue(ABS($val->transAmount) + $transBSVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] =  ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->localAmount) - $exemptVATLocal):  \Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
+                    $data['documentLocalAmount'] =  ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? Helper::roundValue(ABS($val->localAmount) - $exemptVATLocal):  Helper::roundValue(ABS($val->localAmount) + $localBSVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? \Helper::roundValue(ABS($val->rptAmount) - $exemptVATRpt): \Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = ($rcmActivated && ($expenseCOA && $expenseCOA->recordType == 2)) ? Helper::roundValue(ABS($val->rptAmount) - $exemptVATRpt): Helper::roundValue(ABS($val->rptAmount) + $rptBSVAT + $exemptVATRptAmount);
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
@@ -384,20 +372,21 @@ class GrvGlService
                     $data['glCode'] = $val->financeGLcodePL;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['supplierCodeSystem'] = $masterData->supplierID;
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
 
 
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) + $transPLVAT + $exemptVATTransAmount);
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount) + $transPLVAT + $exemptVATTransAmount);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) + $localPLVAT + $exemptVATLocalAmount);
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount) + $localPLVAT + $exemptVATLocalAmount);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) + $rptPLVAT + $exemptVATRptAmount);
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount) + $rptPLVAT + $exemptVATRptAmount);
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }
@@ -412,10 +401,6 @@ class GrvGlService
                     $vatData = TaxService::poLogisticForLineWise($val);
                     //$vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$val->supplierID);
 
-                    Log::info('$unbilledGRV item');
-                    Log::info($val);
-                    Log::info('$unbilledGRV, VAtT');
-                    Log::info($vatData);
 
                     $data['documentTransCurrencyID'] = $val->currencyID;
                     $data['documentTransCurrencyID'] = 1;
@@ -427,18 +412,18 @@ class GrvGlService
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
                     //$data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
-                    $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount + $vatData['vatOnPOTotalAmountTrans']) * -1);
+                    $data['documentTransAmount'] = Helper::roundValue(ABS($val->transAmount + $vatData['vatOnPOTotalAmountTrans']) * -1);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
                     //$data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
-                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount + $vatData['vatOnPOTotalAmountLocal']) * -1);
+                    $data['documentLocalAmount'] = Helper::roundValue(ABS($val->localAmount + $vatData['vatOnPOTotalAmountLocal']) * -1);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
                     ///$data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
-                    $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount + $vatData['vatOnPOTotalAmountRpt']) * -1);
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['documentRptAmount'] = Helper::roundValue(ABS($val->rptAmount + $vatData['vatOnPOTotalAmountRpt']) * -1);
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DocumentCodeMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DocumentCodeMasterRepository

@@ -8,7 +8,7 @@ use App\Models\TenderDocumentTypeAssignLog;
 use App\Models\TenderDocumentTypes;
 use Illuminate\Container\Container as Application;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Services\SrmDocumentModifyService;
 
 /**

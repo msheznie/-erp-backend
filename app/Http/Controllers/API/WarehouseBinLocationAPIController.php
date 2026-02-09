@@ -21,9 +21,10 @@ use App\Models\WarehouseMaster;
 use App\Repositories\WarehouseBinLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class WarehouseBinLocationController
@@ -121,7 +122,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
     public function store(CreateWarehouseBinLocationAPIRequest $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdBy'] = $employee->empID;
         $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId','isActive']);
         $validator = \Validator::make($input, [
@@ -362,10 +363,10 @@ class WarehouseBinLocationAPIController extends AppBaseController
             $selectedCompanyId = $warehouse->companySystemID;
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

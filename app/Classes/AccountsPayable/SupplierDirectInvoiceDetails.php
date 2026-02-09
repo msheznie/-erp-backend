@@ -10,6 +10,7 @@ use App\Models\SegmentMaster;
 use App\Models\Tax;
 use App\Models\VatReturnFillingCategory;
 use App\Models\VatReturnFillingMaster;
+use App\helper\Helper;
 
 
 class SupplierDirectInvoiceDetails extends DetailsMaster
@@ -90,7 +91,7 @@ class SupplierDirectInvoiceDetails extends DetailsMaster
     }
     public function setAmount(float $amount)
     {
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $this->master->localCurrencyID, $this->master->localCurrencyID, $amount);
+        $companyCurrencyConversion = Helper::currencyConversion($this->master->companySystemID, $this->master->localCurrencyID, $this->master->localCurrencyID, $amount);
         if($this->glAccountType == "OutputVATGLAccount")
         {
             $this->details->localAmount = ABS($amount);

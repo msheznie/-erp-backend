@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class TenderCircularsObserver
 {
     /**
@@ -21,7 +22,7 @@ class TenderCircularsObserver
     public function created(TenderCirculars $tender)
     {
  
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
     
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
@@ -33,7 +34,6 @@ class TenderCircularsObserver
 
             if($result)
             {
-                Log::info('tender circular created successfully');
             }
         }
 
@@ -45,7 +45,7 @@ class TenderCircularsObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
       
 
         if($obj && isset($employee))
@@ -69,7 +69,6 @@ class TenderCircularsObserver
 
            if($result)
            {    
-            Log::info('tender circular updated successfully');
            }
 
         }
@@ -78,7 +77,7 @@ class TenderCircularsObserver
     public function deleted(TenderCirculars $tender)
     {
        
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
@@ -95,7 +94,6 @@ class TenderCircularsObserver
 
             if($result)
             {
-                Log::info('tender circular deleted successfully');
             }
         }
     }

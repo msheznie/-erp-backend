@@ -8,11 +8,12 @@ use App\Models\FcmToken;
 use App\Repositories\FcmTokenRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\AuditLogsTrait;
+use App\helper\Helper;
 
 /**
  * Class FcmTokenController
@@ -116,7 +117,7 @@ class FcmTokenAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($request->all());
 
-        $user_id = \Helper::getEmployeeSystemID();
+        $user_id = Helper::getEmployeeSystemID();
         
         $validator = \Validator::make(
             $input,
@@ -351,7 +352,7 @@ class FcmTokenAPIController extends AppBaseController
     public function logoutApiUser(Request $request)
     {
         try {
-            $logged_user = \Helper::getEmployeeSystemID();
+            $logged_user = Helper::getEmployeeSystemID();
 
             if (isset($request['fcm_token']) && $logged_user > 0) {
                 FcmToken::where([

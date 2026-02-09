@@ -44,6 +44,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreateCreditNote implements ShouldQueue
 {
@@ -91,7 +93,6 @@ class CreateCreditNote implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_credit_note.log');
 
         CommonJobService::db_switch($this->db);
 
@@ -150,7 +151,7 @@ class CreateCreditNote implements ShouldQueue
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
-                $masterDatasets[] = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                $masterDatasets[] = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
             }
             else {
                 if (empty($headerData['errors'])) {
@@ -243,7 +244,7 @@ class CreateCreditNote implements ShouldQueue
                                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($confirmDataSet['documentSystemID'],$confirmDataSet['creditNoteAutoID']);
                                 $autoApproveParams['db'] = $this->db;
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();
@@ -308,9 +309,6 @@ class CreateCreditNote implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
-
-        Log::error($returnData);
-
 
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];

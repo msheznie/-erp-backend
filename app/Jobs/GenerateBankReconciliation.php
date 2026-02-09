@@ -57,7 +57,6 @@ class GenerateBankReconciliation implements ShouldQueue
         $data = $this->data;
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path().'/logs/generate_bank_reconciliation.log');
 
         DB::beginTransaction();
         try {
@@ -68,7 +67,7 @@ class GenerateBankReconciliation implements ShouldQueue
             $bankStatement = BankStatementMaster::where('statementId', $statementId)->first();
             if(!$bankStatement){
                 DB::rollBack();
-                Log::error('Bank statement not found');
+                Log::channel('generate_bank_reconciliation')->error('Bank statement not found');
                 BankStatementMaster::where('statementId', $statementId)
                     ->update([
                         'generateBankRec' => 0
@@ -88,7 +87,7 @@ class GenerateBankReconciliation implements ShouldQueue
             $responseData = json_decode($response->getContent(), true);
             if(!$responseData['success']){
                 DB::rollBack();
-                Log::error($responseData['message']);
+                Log::channel('generate_bank_reconciliation')->error($responseData['message']);
                 BankStatementMaster::where('statementId', $statementId)
                     ->update([
                         'generateBankRec' => 0

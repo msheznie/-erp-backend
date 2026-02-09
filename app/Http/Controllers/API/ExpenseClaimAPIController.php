@@ -46,9 +46,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
 
 use Response;
 
@@ -500,7 +501,7 @@ class ExpenseClaimAPIController extends AppBaseController
             return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
-        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+        $expenseClaim->docRefNo = Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
 
         return $this->sendResponse($expenseClaim->toArray(), trans('custom.expense_claim_retrieved_successfully'));
     }
@@ -514,7 +515,7 @@ class ExpenseClaimAPIController extends AppBaseController
             return $this->sendError(trans('custom.expense_claim_not_found'));
         }
 
-        $expenseClaim->docRefNo = \Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
+        $expenseClaim->docRefNo = Helper::getCompanyDocRefNo($expenseClaim->companySystemID, $expenseClaim->documentSystemID);
         $expenseClaim->localDecimal = 3;
         $expenseClaim->localDecimal = 'OMR';
         $expenseClaim->total = 0;
@@ -716,7 +717,7 @@ class ExpenseClaimAPIController extends AppBaseController
                 $data[$key] = $claim;
                 $data[$key]['total_amount']=$claim->details->sum('amount');
                 $data[$key]['currency']=$currency;
-                $data[$key] = array_except($data[$key] ,['details']);
+                $data[$key] = Arr::except($data[$key] ,['details']);
             }
             $paginate['data'] = $data;
         }

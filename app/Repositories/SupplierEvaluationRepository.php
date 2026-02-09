@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierEvaluation;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
 
 class SupplierEvaluationRepository extends BaseRepository
@@ -36,7 +36,7 @@ class SupplierEvaluationRepository extends BaseRepository
     {
         return SupplierEvaluation::class;
     }
-    public function supplierEvaluationListQuery($request, $input, $search = '', $supplier, $evaluationTemplate)
+    public function supplierEvaluationListQuery($request, $input, $search = '', $supplier = null, $evaluationTemplate = null)
     {
         $supplierEvaluation = SupplierEvaluation::with(['createdBy', 'templateMaster'])->where('companySystemID',$input['companyID']);
 
@@ -60,6 +60,15 @@ class SupplierEvaluationRepository extends BaseRepository
             if ($input['evaluationTemplate'] && !is_null($evaluationTemplate)) {
                 $supplierEvaluation->where('evaluationTemplate', $evaluationTemplate);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $supplierEvaluation->whereIn('created_by', $createdBy);
+            }
+
         }
 
         if ($search) {

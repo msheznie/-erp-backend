@@ -28,12 +28,13 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use App\Models\SupplierGroup;
 use App\Models\SupplierMaster;
+use Illuminate\Support\Arr;
 
 /**
  * Class DashboardWidgetMasterController
@@ -247,7 +248,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
     public function update($id, UpdateDashboardWidgetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'department');
+        $input = Arr::except($input,'department');
         $input = $this->convertArrayToSelectedValue($input, array('departmentID'));
 //        $validator = \Validator::make($input, [
 //            'WidgetMasterName' => 'required',
@@ -441,10 +442,10 @@ class DashboardWidgetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.widget_master_id_not_found'));
         }
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -457,7 +458,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
 
             $glCategoryType = isset($input['glType']) ? $input['glType'] : '';
             $categoryBLorPL = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 2 : 1;
-            $companyCurrency = \Helper::companyCurrency($companyID);
+            $companyCurrency = Helper::companyCurrency($companyID);
             $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
 
             $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyID)
@@ -1260,10 +1261,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -1454,10 +1455,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }

@@ -12,12 +12,12 @@ class ErpAttributeValues extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'id';
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
         'attribute_id',
         'document_master_id',
+        'doc_origin_detail_id',
         'is_active',
         'value',
         'color',
@@ -36,10 +36,12 @@ class ErpAttributeValues extends Model
         'document_id' => 'string',
         'value' => 'string',
         'document_master_id' => 'integer',
+        'doc_origin_detail_id' => 'integer',
         'is_mendatory' => 'boolean',
         'is_active' => 'boolean',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -30,6 +30,8 @@ use App\Models\CustomerContactDetails;
 use App\Models\SupplierContactType;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class CustomerMasterAPIService
 {
@@ -331,7 +333,7 @@ class CustomerMasterAPIService
                 'isAutoCreateDocument' => $input['isAutoCreateDocument']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,
@@ -462,7 +464,7 @@ class CustomerMasterAPIService
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
                 $autoApproveParams['db'] = $db;
 
-                $approveDocument = Helper::approveDocument($autoApproveParams);
+                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if (!$approveDocument["success"]) {
                     DB::rollBack();
                     return [
@@ -487,10 +489,6 @@ class CustomerMasterAPIService
             ];
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error File: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
             return [
                 'status' => false,
                 'message' => $e->getMessage(),
@@ -610,7 +608,7 @@ class CustomerMasterAPIService
         $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
         $autoApproveParams['db'] = $db;
 
-        $approveDocument = Helper::approveDocument($autoApproveParams);
+        $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
         if (!$approveDocument["success"]) {
             if ($manageTransaction) {
                 DB::rollBack();
@@ -632,11 +630,10 @@ class CustomerMasterAPIService
 
     }
 
-    public static function validateMasterData($request) {
+    public static function validateMasterData($request, $companyId) {
 
         $errorData = [];
         $systemUser = UserTypeService::getSystemEmployee();
-        $companyId = $request['company_id'] ?? null;
         $receivableAccount = isset($request['receivable_account']) ? $request['receivable_account'] : null;
         $advanceAccount = isset($request['advance_account']) ? $request['advance_account'] : null;
         $customerCountry = isset($request['customer_country']) ? $request['customer_country'] : null;
@@ -853,21 +850,10 @@ class CustomerMasterAPIService
             }
         }
 
-        $addContactDetails = isset($request['add_contact_details']) ? $request['add_contact_details'] : null;
-        
-        if ($addContactDetails !== null && $addContactDetails !== '') {
-            if ($addContactDetails != 1 && $addContactDetails != 2) {
-                $errorData[] = [
-                    'field' => "add_contact_details",
-                    'message' => ["Invalid input,add_contact_details must be 1 (Yes) or 2 (No)"]
-                ];
-            }
-        }
-
         $contactDetails = isset($request['contact_details']) ? $request['contact_details'] : null;
         $validatedContactDetails = [];
 
-        if ($contactDetails !== null && is_array($contactDetails) && isset($request['add_contact_details']) && $request['add_contact_details'] == 1) {
+        if ($contactDetails !== null && is_array($contactDetails)) {
             foreach ($contactDetails as $index => $contact) {
                 $contactType = isset($contact['contact_type']) ? $contact['contact_type'] : null;
                 $personName = isset($contact['person_name']) ? $contact['person_name'] : null;

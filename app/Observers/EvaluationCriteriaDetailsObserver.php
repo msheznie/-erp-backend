@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaDetailsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class EvaluationCriteriaDetailsObserver
 {
@@ -23,7 +24,7 @@ class EvaluationCriteriaDetailsObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
 
         if ($obj && isset($employee)) {
@@ -36,7 +37,6 @@ class EvaluationCriteriaDetailsObserver
             $master_id = $tender->getAttribute('id');
             $result = $this->process($tenderObj, $tender, $empId, 2, null, $parentId, $master_id);
             if ($result) {
-                Log::info('created succesfully 123');
             }
         }
     }
@@ -46,7 +46,7 @@ class EvaluationCriteriaDetailsObserver
 
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
      
         if ($obj && isset($employee)) {
             $empId = $employee->employeeSystemID;
@@ -82,7 +82,7 @@ class EvaluationCriteriaDetailsObserver
     public function deleted(EvaluationCriteriaDetails $tender)
     {
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));

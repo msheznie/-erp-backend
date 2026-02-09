@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\UnitConversion;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateUnitConversionAPIRequest extends APIRequest
+class UpdateUnitConversionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

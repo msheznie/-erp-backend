@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Company;
 use App\Models\SupplierContactDetails;
 use App\Models\SupplierMaster;
+use App\helper\email as Email;
 
 class SupplierStatementJob implements ShouldQueue
 {
@@ -33,10 +34,16 @@ class SupplierStatementJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $dataArr, $inputData, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->dataArr = $dataArr;
@@ -57,7 +64,6 @@ class SupplierStatementJob implements ShouldQueue
         $input = $this->inputData;
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
-        Log::useFiles(storage_path() . '/logs/supplier_statement_sent.log');
 
         CommonJobService::db_switch($db);
 
@@ -98,7 +104,7 @@ class SupplierStatementJob implements ShouldQueue
             $mpdf->WriteHTML($html);
             $mpdf->Output($filePath, 'F'); // Save to file
         } catch (\Exception $e) {
-            Log::error('mPDF Error in SupplierStatementJob: ' . $e->getMessage());
+            Log::channel('supplier_statement_sent')->error('mPDF Error in SupplierStatementJob: ' . $e->getMessage());
             return; // Exit the job if PDF generation fails
         }
 
@@ -133,10 +139,10 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.supplier_statement_report_from', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                        Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                        Log::channel('supplier_statement_sent')->error('Error');
+                        Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
                     }
                 }
             }
@@ -161,10 +167,10 @@ class SupplierStatementJob implements ShouldQueue
                     $dataEmail['attachmentFileName'] = $pdfName;
                     $dataEmail['alertMessage'] = trans('custom.supplier_statement_report', ['companyName' => $company->CompanyName]);
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
-                        Log::error('Error');
-                        Log::error($sendEmail["message"]);
+                        Log::channel('supplier_statement_sent')->error('Error');
+                        Log::channel('supplier_statement_sent')->error($sendEmail["message"]);
                     }
                 }
             }

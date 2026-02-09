@@ -91,7 +91,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
@@ -108,6 +108,13 @@ use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
+use App\Models\CurrencyConversion;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
+use App\helper\inventory as Inventory;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -211,7 +218,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'custTransactionCurrencyID'));
 
-        if (!\Helper::validateCurrencyRate($input['companyID'], $input['custTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companyID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
@@ -380,7 +387,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
@@ -395,6 +402,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+
+        $customerInvoiceDirect = $customerInvoiceDirect->refresh();
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID','isPerforma', 'salesType'));
         }
@@ -402,16 +413,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID', 'isPerforma', 'salesType'));
         }
 
+        $input['checkErChange'] = $checkErChange;
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
 
         if($customerInvoiceUpdate['status']){
+            if ($customerInvoiceDirect->confirmedYN == 0 && ($isPerforma == 0 || $isPerforma == 2)) {
+                $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+            }
             return $this->sendReponseWithDetails($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message'],1,$customerInvoiceUpdate['detail'] ?? null);
         }
         else{
+            $errorType = $customerInvoiceUpdate['type'] ?? array('type' => '');
+            if (isset($errorType['type']) && $errorType['type'] === 'erChange') {
+                $input['checkErChange'] = true;
+            }
             return $this->sendError(
                 $customerInvoiceUpdate['message'],
                 $customerInvoiceUpdate['code'] ?? 404,
-                $customerInvoiceUpdate['type'] ?? array('type' => '')
+                $errorType
             );
         }
     }
@@ -421,7 +440,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if (!\Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
+        if (!Helper::validateCurrencyRate($input['companySystemID'], $input['custTransactionCurrencyID'])) {
             return $this->sendError(
                 trans('custom.currency_exchange_rate_must_be_greater_than_zero'),
                 500
@@ -436,6 +455,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
+
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        $previousLocalER = $customerInvoiceDirect->localCurrencyER;
+        $previousReportingER = $customerInvoiceDirect->companyReportingER;
+        if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+            $customerInvoiceDirect->update([
+                'localCurrencyER' => $previousLocalER,
+                'companyReportingER' => $previousReportingER
+            ]);
+            $customerInvoiceDirect = $customerInvoiceDirect->refresh();
+            $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+        }
+
+        $customerInvoiceDirect = $customerInvoiceDirect->refresh();
 
         if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
@@ -511,7 +544,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['departmentSystemID'] = 4;
         /*financial Year check*/
         if ($isPerforma == 0) {
-            $companyFinanceYearCheck = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYearCheck = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYearCheck["success"]) {
                 return $this->sendError($companyFinanceYearCheck["message"], 500);
             }
@@ -519,7 +552,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($isPerforma == 0) {
             /*financial Period check*/
-            $companyFinancePeriodCheck = \Helper::companyFinancePeriodCheck($input);
+            $companyFinancePeriodCheck = Helper::companyFinancePeriodCheck($input);
             if (!$companyFinancePeriodCheck["success"]) {
                 return $this->sendError($companyFinancePeriodCheck["message"], 500);
             }
@@ -608,14 +641,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $myCurr = $currency->currencyID;
 
                 //$companyCurrency = \Helper::companyCurrency($currency->currencyID);
-                $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
+                $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $myCurr, $myCurr, 0);
                 /*exchange added*/
                 $_post['custTransactionCurrencyER'] = 1;
 
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                if ($checkErChange) {
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                } else {
+                    $_post['companyReportingER'] = $previousReportingER;
+                    $_post['localCurrencyER'] = $previousLocalER;
+                }
 
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
@@ -640,11 +678,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             /**/
 
         } else {
-            $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
 
+            if ($checkErChange) {
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-
+            } else {
+                $_post['companyReportingER'] = $previousReportingER;
+                $_post['localCurrencyER'] = $previousLocalER;
+            }
         }
 
 
@@ -699,12 +741,51 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
 
-        $_post['bookingAmountTrans'] = \Helper::roundValue($detailAmount->bookingAmountTrans);
-        $_post['bookingAmountLocal'] = \Helper::roundValue($detailAmount->bookingAmountLocal);
-        $_post['bookingAmountRpt'] = \Helper::roundValue($detailAmount->bookingAmountRpt);
+        $_post['bookingAmountTrans'] = Helper::roundValue($detailAmount->bookingAmountTrans);
+        $_post['bookingAmountLocal'] = Helper::roundValue($detailAmount->bookingAmountLocal);
+        $_post['bookingAmountRpt'] = Helper::roundValue($detailAmount->bookingAmountRpt);
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+                    // Get company currency information
+                    $company = Company::find($input['companySystemID']);
+                    $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                    $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+
+                    $localERDocument = Helper::roundValue($customerInvoiceDirect->localCurrencyER) ?? 0;
+                    $reportingERDocument = Helper::roundValue($customerInvoiceDirect->companyReportingER) ?? 0;
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                    if (!$conversion) {
+                        return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                    }
+                    $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                    if (!$conversion) {
+                        return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                    }
+                    $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                    if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                        $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.previous_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($localERDocument, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                            "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.current_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                            "</p>" .
+                            "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
+                        return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                    }
+                }
 
                 if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
@@ -846,7 +927,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $data = array('companySystemID' => $customerInvoiceDirect->companySystemID,
                                 'itemCodeSystem' => $updateItem->itemCodeSystem,
                                 'wareHouseId' => $customerInvoiceDirect->wareHouseSystemCode);
-                            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                             $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                             $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                             $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
@@ -959,7 +1040,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         );
 
                         $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-                        $confirm = Helper::confirmDocument($params);
+                        $confirm = DocumentConfirm::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return $this->sendError($confirm["message"], 500);
                         } else {
@@ -1071,7 +1152,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'amount' => ''
                                 );
                                 $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($_post, $id);
-                                $confirm = \Helper::confirmDocument($params);
+                                $confirm = DocumentConfirm::confirmDocument($params);
                                 if (!$confirm["success"]) {
 
                                     return $this->sendError($confirm["message"], 500);
@@ -1191,15 +1272,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
-            $bookingAmountLocal = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+            $bookingAmountLocal = Helper::roundValue($masterINVID->bookingAmountTrans/$value);
 
-            $masterVATAmountLocal = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterVATAmountLocal = Helper::roundValue($masterINVID->VATAmount / $value);
         $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterVATAmountLocal, 'bookingAmountLocal'=>$bookingAmountLocal);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $localAmount = \Helper::roundValue($item->invoiceAmount / $value);
-            $VATAmountLocal = \Helper::roundValue($item->VATAmount / $value);
+            $localAmount = Helper::roundValue($item->invoiceAmount / $value);
+            $VATAmountLocal = Helper::roundValue($item->VATAmount / $value);
             $directInvoiceDetailsArray = array('localCurrencyER'=>$value, 'localAmount'=>$localAmount,'VATAmountLocal'=>$VATAmountLocal);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -1225,15 +1306,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
 
         $masterINVID = CustomerInvoice::findOrFail($id);
-            $bookingAmountRpt = \Helper::roundValue($masterINVID->bookingAmountTrans/$value);
+            $bookingAmountRpt = Helper::roundValue($masterINVID->bookingAmountTrans/$value);
 
-            $masterVATAmountRpt = \Helper::roundValue($masterINVID->VATAmount / $value);
+            $masterVATAmountRpt = Helper::roundValue($masterINVID->VATAmount / $value);
         $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterVATAmountRpt, 'bookingAmountRpt'=>$bookingAmountRpt);
         $masterINVID->update($masterInvoiceArray);
 
         foreach($details as $item){
-            $reportingAmount = \Helper::roundValue($item->invoiceAmount / $value);
-            $itemVATAmountRpt = \Helper::roundValue($item->VATAmount / $value);
+            $reportingAmount = Helper::roundValue($item->invoiceAmount / $value);
+            $itemVATAmountRpt = Helper::roundValue($item->VATAmount / $value);
             $directInvoiceDetailsArray = array('comRptCurrencyER'=>$value, 'comRptAmount'=>$reportingAmount, 'VATAmountRpt'=>$itemVATAmountRpt);
             $updatedLocalER = CustomerInvoiceDirectDetail::findOrFail($item->custInvDirDetAutoID);
             $updatedLocalER->update($directInvoiceDetailsArray);
@@ -1243,6 +1324,60 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         else{
             return $this->sendError(trans('custom.policy_not_enabled'), 400);
+        }
+    }
+
+    public function setDefaultExchangeRate($id, Request $request)
+    {
+        try {
+            $companyId = $request->companyId;
+
+            $customerInvoice = CustomerInvoiceDirect::findOrFail($id);
+
+            if (!$customerInvoice) {
+                return $this->sendError(trans('custom.customer_invoice_direct_not_found'), 404);
+            }
+
+            // Get local currency exchange rate
+            $localCurrency = Company::find($companyId)->localCurrencyID;
+            $localER = Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localERValue = $localER['trasToLocER'] ?? 1;
+
+            // Get reporting currency exchange rate
+            $reportingCurrency = Company::find($companyId)->reportingCurrency;
+            $reportingER = Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingERValue = $reportingER['trasToRptER'] ?? 1;
+
+            // Recalculate local currency amounts
+            $bookingAmountLocal = Helper::roundValue($customerInvoice->bookingAmountTrans / $localERValue);
+            $VATAmountLocal = Helper::roundValue($customerInvoice->VATAmount / $localERValue);
+
+            // Recalculate reporting currency amounts
+            $bookingAmountRpt = Helper::roundValue($customerInvoice->bookingAmountTrans / $reportingERValue);
+            $VATAmountRpt = Helper::roundValue($customerInvoice->VATAmount / $reportingERValue);
+
+            // Update customer invoice with new exchange rates and recalculated amounts
+            $customerInvoiceArray = array(
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue,
+                'bookingAmountLocal' => $bookingAmountLocal,
+                'bookingAmountRpt' => $bookingAmountRpt,
+                'VATAmountLocal' => $VATAmountLocal,
+                'VATAmountRpt' => $VATAmountRpt
+            );
+
+            $customerInvoice->update($customerInvoiceArray);
+
+            // Apply exchange rates to details
+            $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+
+            return $this->sendResponse([
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue
+            ], trans('custom.default_exchange_rate_updated_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 
@@ -1430,7 +1565,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $excelUpload = $input['excelUploadCustomerInvoice'];
-        $input = array_except($request->all(), 'excelUploadCustomerInvoice');
+        $input = Arr::except($request->all(), 'excelUploadCustomerInvoice');
         $input = $this->convertArrayToValue($input);
 
         $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -1449,12 +1584,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError(trans('custom.max_size_upload_20mb'),500);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $uploadArray = array(
             'companySystemID' => $input['companySystemID'],
             'uploadComment' => $input['uploadComment'],
-            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedDate' => Helper::currentDateTime(),
             'uploadedBy' => $employee->empID,
             'uploadStatus' => -1
         );
@@ -1962,15 +2097,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->where('performaMasterID', $performaMasterID)
             ->get();
         //$companyCurrency = \Helper::companyCurrency($myCurr);
-        $transDecimalPlace = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $transDecimalPlace = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         $x = 0;
         if (!empty($updatedInvoiceNo)) {
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
-                $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
-                $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
+                $companyCurrencyConversion = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
+                $companyCurrencyConversionVAT = Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
                 /*define input*/
 
@@ -2002,8 +2137,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 }
                 $addToCusInvDetails[$x]['VATAmount'] = $updateInvoice->totalVatAmount;
-                $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
-                $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
+                $addToCusInvDetails[$x]['VATAmountLocal'] = Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
+                $addToCusInvDetails[$x]['VATAmountRpt'] = Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
                 $vatPercentage = 0;
                 if ($updateInvoice->totalVatAmount > 0 && ($updateInvoice->totAmount - $updateInvoice->totalVatAmount) != 0) {
                     $vatPercentage = ($updateInvoice->totalVatAmount * 100)/ ($updateInvoice->totAmount - $updateInvoice->totalVatAmount);
@@ -2191,7 +2326,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3|| $master->isPerforma == 4|| $master->isPerforma == 5) {
             $totalDetail = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
@@ -2223,7 +2358,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', trans('custom.vat_detail_already_exist_1'));
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -2266,7 +2401,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalAmount;
         } else {
@@ -2284,7 +2419,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }
             }
         }
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
 
 
         DB::beginTransaction();
@@ -2682,7 +2817,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->CompanyAddressSecondaryLanguage = $CompanyAddressSecondaryLanguage;
         $customerInvoice->companyLogo = $companyLogo;
 
-        $customerInvoice->docRefNo = \Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
+        $customerInvoice->docRefNo = Helper::getCompanyDocRefNo($customerInvoice->companySystemID, $customerInvoice->documentSystemiD);
 
         /*  $template = false;
           if ($master->isPerforma == 1) {
@@ -2961,7 +3096,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
@@ -3009,7 +3144,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
@@ -3057,7 +3192,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
@@ -3176,7 +3311,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             else if($type == 2)
             {
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
                 return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
@@ -3599,7 +3734,7 @@ GROUP BY
         $invoice->RollLevForApp_curr = 1;
         $invoice->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $invoice->documentSystemiD)->first();
 
@@ -3647,7 +3782,7 @@ GROUP BY
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -3777,7 +3912,7 @@ WHERE
             $empID = $employee->employeeSystemID;
         }
         else{
-            $empID = \Helper::getEmployeeSystemID();
+            $empID = Helper::getEmployeeSystemID();
         }
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
@@ -3860,9 +3995,9 @@ WHERE
             }
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
-        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
+        $inovicePolicy =  Helper::checkPolicy($input['companyId'],44);
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -3916,7 +4051,7 @@ WHERE
         $fromPms = (isset($input['fromPms']) && $input['fromPms']) ? true : false;
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_custinvoicedirect.custInvoiceDirectAutoID',
@@ -3990,7 +4125,7 @@ WHERE
 
     public function approvalPreCheckCustomerInvoice(Request $request)
     {
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"], 500, ['type' => $approve["type"]]);
         } else {
@@ -4001,7 +4136,7 @@ WHERE
 
     public function approveCustomerInvoice(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -4012,7 +4147,7 @@ WHERE
 
     public function rejectCustomerInvoice(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -4141,12 +4276,12 @@ WHERE
             return $this->sendError(trans('custom.you_cannot_cancel_this_customer_invoice_invoice_de'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $customerInvoiceDirectData->canceledYN = -1;
         $customerInvoiceDirectData->canceledComments = $request['cancelComments'];
         $customerInvoiceDirectData->canceledDateTime = NOW();
-        $customerInvoiceDirectData->canceledByEmpSystemID = \Helper::getEmployeeSystemID();
+        $customerInvoiceDirectData->canceledByEmpSystemID = Helper::getEmployeeSystemID();
         $customerInvoiceDirectData->canceledByEmpID = $employee->empID;
         $customerInvoiceDirectData->canceledByEmpName = $employee->empFullName;
         $customerInvoiceDirectData->customerInvoiceNo = null;
@@ -4257,7 +4392,7 @@ WHERE
             
         $id = $input['custInvoiceDirectAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = CustomerInvoiceDirect::find($id);
@@ -4372,7 +4507,7 @@ WHERE
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -4561,7 +4696,7 @@ WHERE
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount, SUM(VATAmount) as vatAmount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
         if (!empty($totalDetail)) {
@@ -4580,7 +4715,7 @@ WHERE
             return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -4623,7 +4758,7 @@ WHERE
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -4642,7 +4777,7 @@ WHERE
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
        
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
@@ -4686,7 +4821,7 @@ WHERE
 
         $companyId = $input['companyId'];
         $id = $input['id'];
-        $autoGeneratePolicy = \Helper::checkPolicy($companyId, 103);
+        $autoGeneratePolicy = Helper::checkPolicy($companyId, 103);
         if($autoGeneratePolicy)
         {
             $customerInvoiceDirect = CustomerInvoiceDirect::where('custInvoiceDirectAutoID',$id)->first();

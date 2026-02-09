@@ -56,7 +56,6 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/department_budget_process.log');
 
         DB::beginTransaction();
 
@@ -105,7 +104,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
             }
             DB::commit();
         } catch (\Exception $exception) {
-            Log::warning($exception->getMessage());
+            Log::channel('department_budget_process')->warning($exception->getMessage());
             DB::rollBack();
         }
     }

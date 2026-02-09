@@ -42,6 +42,7 @@ use App\Repositories\FixedAssetDepreciationMasterRepository;
 use App\Repositories\PdcLogRepository;
 use App\helper\CreateExcel;
 use App\Jobs\ExportDetailedPRList;
+use App\helper\Helper;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -189,7 +190,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '4':
-                $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', '','chequeSentToTreasury', 'projectID', 'employeeID'));
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'customerID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'projectID', 'employeeID'));
                 
                 $employeeID = $request['employeeID'];
                 $employeeID = (array)$employeeID;
@@ -525,7 +526,7 @@ class TransactionsExportExcel extends AppBaseController
 
         if(isset($input['stat']) && $input['stat'] && $input['documentId'] == 1) {
             $db = $input['db'] ?? "";
-            $userId = \Helper::getEmployeeSystemID();
+            $userId = Helper::getEmployeeSystemID();
             $lang = app()->getLocale() ? app()->getLocale() : 'en';
             ExportDetailedPRList::dispatch($db, $data,$userId,$companyCode,$lang);
 

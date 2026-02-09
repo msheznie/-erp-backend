@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ERPAssetVerificationDetailReferredback;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateERPAssetVerificationDetailReferredbackAPIRequest extends APIRequest
+class CreateERPAssetVerificationDetailReferredbackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

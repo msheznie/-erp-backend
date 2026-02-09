@@ -55,6 +55,7 @@ use App\Models\CustomerReceivePaymentDetail;
 use App\Models\FreeBillingMasterPerforma;
 use App\Models\QuotationMaster;
 use App\Models\QuotationStatus;
+use App\Models\CompanyPolicyMaster;
 use Carbon\Carbon;
 use function foo\func;
 use Illuminate\Http\Request;
@@ -261,6 +262,11 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $companySystemID = $request->companySystemID;
                 $currencyID = $request->currency;
 
+                $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isYesNO', 1)
+                    ->exists();
+
                 $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                     $query->with(['master']);
                 },'reporting_currency','item_by'=>
@@ -286,7 +292,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                             });
 
                         }
-                    ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                    ])
+                    ->when($isSegmentPolicyOn, function($query) {
+                        $query->with(['sales_quotation_detail' => function($q) {
+                            $q->with(['segment' => function($segQ) {
+                                $segQ->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                            }, 'master' => function($masterQ) {
+                                $masterQ->select('quotationMasterID','salesType');
+                            }])->select('quotationDetailsID','quotationMasterID','serviceLineSystemID');
+                        }]);
+                    })
+                    ->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
                         $q->where('approved', "-1");
                         $q->where('canceledYN', "0");
                         $q->where('createdDateAndTime', '>=', $fromDate);
@@ -344,6 +360,10 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
+                $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isYesNO', 1)
+                    ->exists();
 
                 $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details','item_by'=>
                     function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
@@ -368,14 +388,24 @@ class SalesMarketingReportAPIController extends AppBaseController
                                 });
 
                         }
-                ])->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
-                    $q->where('approved', "-1");
-                    $q->where('canceledYN', "0");
-                    $q->where('createdDateAndTime', '>=', $fromDate);
-                    $q->where('createdDateAndTime', '<=', $toDate);
-                    $q->where('companySystemID',$companySystemID);
-                }
-                )->get();
+                    ])
+                    ->when($isSegmentPolicyOn, function($query) {
+                        $query->with(['sales_quotation_detail' => function($q) {
+                            $q->with(['segment' => function($segQ) {
+                                $segQ->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                            }, 'master' => function($masterQ) {
+                                $masterQ->select('quotationMasterID','salesType');
+                            }])->select('quotationDetailsID','quotationMasterID','serviceLineSystemID');
+                        }]);
+                    })
+                    ->whereHas('master', function ($q) use($fromDate,$toDate,$companySystemID){
+                        $q->where('approved', "-1");
+                        $q->where('canceledYN', "0");
+                        $q->where('createdDateAndTime', '>=', $fromDate);
+                        $q->where('createdDateAndTime', '<=', $toDate);
+                        $q->where('companySystemID',$companySystemID);
+                    }
+                    )->get();
 
                 $yes = 0;
                 foreach ($invoiceDetails as $item1){
@@ -733,7 +763,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $discount_amount = 0;
 
         if ($row->documentSystemID == 71) {
-            $currencyConversionDiscount = \Helper::currencyConversion($row->companySystemID, $currency->currencyID, $currency->currencyID, $row->discountAmount);
+            $currencyConversionDiscount = Helper::currencyConversion($row->companySystemID, $currency->currencyID, $currency->currencyID, $row->discountAmount);
 
             if (isset($input['currencyID']) && $input['currencyID'] == 1)
             {
@@ -925,7 +955,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $data[] = array(
                             trans('custom.document_code') => $val['quotationCode'],
                             trans('custom.document_date') => Helper::dateFormat($val['documentDate']),
-                            trans('custom.segment') => $val['serviceLine'],
+                            trans('custom.segments') => $val['serviceLine'],
                             trans('custom.ref_no') => $val['referenceNo'],
                             trans('custom.customer') => $val['customer'],
                             trans('custom.currency') => $val['currency'],
@@ -1447,7 +1477,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $decimalPlace = array_unique($decimalPlace);
 
                     $currencyCode = "";
-                    $currency = \Helper::companyCurrency($request->companySystemID);
+                    $currency = Helper::companyCurrency($request->companySystemID);
 
                     if ($request->currencyID == 2) {
                         $currencyCode = $currency->localcurrency->CurrencyCode;
@@ -1464,7 +1494,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => Helper::dateFormat($request->fromDate), 'toDate' => Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
                     $html = view('print.customer_statement_of_account_pdf', $dataArr);
 
@@ -1493,7 +1523,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_balance_statement', $dataArr);
 
@@ -1554,7 +1584,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         $outputArr[$val->CompanyName][] = $val;
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
 
@@ -1589,7 +1619,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1598,7 +1628,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate));
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => Helper::dateFormat($request->fromDate));
 
                     $html = view('print.customer_aging_summary', $dataArr);
 
@@ -1633,7 +1663,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1645,7 +1675,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $invoiceAmountTotal = collect($output['data'])->pluck('invoiceAmount')->toArray();
                     $invoiceAmountTotal = array_sum($invoiceAmountTotal);
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
+                    $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $output['aging'], 'fromDate' => Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal);
 
                     $html = view('print.customer_aging_detail', $dataArr);
 
@@ -1673,7 +1703,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $creditNoteTotal = array_sum($creditNoteTotal);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -1690,7 +1720,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                         }
                     }
 
-                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
+                    $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlaces' => $decimalPlaces, 'fromDate' => Helper::dateFormat($request->fromDate), 'toDate' => Helper::dateFormat($request->toDate), 'selectedCurrency' => $selectedCurrency, 'bankPaymentTotal' => $bankPaymentTotal, 'creditNoteTotal' => $creditNoteTotal);
 
                     $html = view('print.customer_collection', $dataArr);
 
@@ -1721,8 +1751,8 @@ class SalesMarketingReportAPIController extends AppBaseController
         
      
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -1775,8 +1805,8 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -1830,6 +1860,11 @@ class SalesMarketingReportAPIController extends AppBaseController
             $companyID = (array)$request->companySystemID;
         }
 
+        $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
+            ->where('companySystemID', $request->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
+
         $approved_status = isset($request->approved_status)?$request->approved_status:null;
         $invoice_status = isset($request->invoice_status)?$request->invoice_status:null;
         $delivery_status = isset($request->delivery_status)?$request->delivery_status:null;
@@ -1876,7 +1911,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             })
             ->with(['segment' => function($query){
                 $query->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
-            },'detail'=> function($query){
+            },'detail'=> function($query) use ($isSegmentPolicyOn){
 
                 $query->with([
                     'invoice_detail' => function($q1){
@@ -1908,10 +1943,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                             ->select('deliveryOrderDetailID','quotationDetailsID');
 
                     }
-                ])
-                    ->select('quotationDetailsID','quotationMasterID','transactionAmount', 'VATAmount', 'requestedQty');
+                ]);
+                
+                if($isSegmentPolicyOn) {
+                    $query->with(['segment' => function($q) {
+                        $q->select('serviceLineSystemID','ServiceLineCode','ServiceLineDes');
+                    }]);
+                }
+                
+                $query->select('quotationDetailsID','quotationMasterID','transactionAmount', 'VATAmount', 'requestedQty', 'serviceLineSystemID');
             }])
-            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN','is_return')
+            ->select('quotationMasterID','quotationCode','referenceNo','documentDate','serviceLineSystemID','customerName','transactionCurrency','transactionCurrencyDecimalPlaces','documentExpDate','confirmedYN','approvedYN','refferedBackYN','deliveryStatus','invoiceStatus','refferedBackYN','confirmedYN','approvedYN','is_return','salesType')
             ->get()
             ->toArray();
 
@@ -1919,145 +1961,147 @@ class SalesMarketingReportAPIController extends AppBaseController
         $x = 0;
         if(!empty($details) && $details != []){
             foreach ($details as $data){
-                $output[$x]['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
-                $output[$x]['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
-                $output[$x]['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
-                $output[$x]['serviceLine'] = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
-                $output[$x]['referenceNo'] = isset($data['referenceNo'])?$data['referenceNo']:'';
-                $output[$x]['customer'] = isset($data['customerName'])?$data['customerName']:'';
-                $output[$x]['currency'] = isset($data['transactionCurrency'])?$data['transactionCurrency']:'';
-                $output[$x]['dp'] = isset($data['transactionCurrencyDecimalPlaces'])?$data['transactionCurrencyDecimalPlaces']:'';
-                $output[$x]['documentExpDate'] = isset($data['documentExpDate'])?$data['documentExpDate']:'';
-                $output[$x]['confirmedYN'] = isset($data['confirmedYN'])?$data['confirmedYN']:null;
-                $output[$x]['approvedYN'] = isset($data['approvedYN'])?$data['approvedYN']:null;
-                $output[$x]['refferedBackYN'] = isset($data['refferedBackYN'])?$data['refferedBackYN']:null;
-                $output[$x]['customer_status'] = isset($data['quotationMasterID'])?QuotationStatus::getLastStatus($data['quotationMasterID']):'';
-                $output[$x]['document_amount'] = 0;
-                $output[$x]['invoice_amount'] = 0;
-                $output[$x]['paid_amount'] = 0;
-                $output[$x]['is_return'] = isset($data['is_return'])?$data['is_return']:0;
-                $paid1 = 0;
-                $paid2 = 0;
-                $invoiceArray = [];
-                if(isset($data['detail']) && count($data['detail'])> 0){
+                $headerSegment = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
+                $headerSegmentID = isset($data['serviceLineSystemID'])?$data['serviceLineSystemID']:null;
+                
+                $useDetailSegments = $isSegmentPolicyOn && isset($data['salesType']) && $data['salesType'] == 2;
+                
+                if($useDetailSegments && isset($data['detail']) && count($data['detail'])> 0){
+                    $segmentGroups = [];
+                    $detailsWithoutSegment = [];
+                    
                     foreach ($data['detail'] as $qdetail){
-                        $vatAmount = isset($qdetail['VATAmount']) ? ($qdetail['VATAmount'] * $qdetail['requestedQty']) : 0;
-                        $output[$x]['document_amount'] += isset($qdetail['transactionAmount'])?($qdetail['transactionAmount']+$vatAmount):0;
-
-                        // quotation -> delovery order -> invoice
-
-                        if(isset($qdetail['delivery_order_detail']) && count($qdetail['delivery_order_detail'])> 0){
-
-                            foreach ($qdetail['delivery_order_detail'] as $deliverydetail){
-
-                                if(isset($deliverydetail['invoice_detail']) && count($deliverydetail['invoice_detail'])> 0){
-
-                                    foreach ($deliverydetail['invoice_detail'] as $invoiceDetails){
-                                        $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                        $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
-                                        $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])? ($invoiceDetails['sellingTotal']+ $vatAmount):0;
-
-                                        if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
-                                            $paid1 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
-                                        }
-
-                                        /*$paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                            ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                            ->where('matchingDocID', 0)
-                                            ->groupBy('custReceivePaymentAutoID')
-                                            ->first();
-                                        if(!empty($paymentsInvoice)){
-                                            $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                                        }
-
-                                        $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                            ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                            ->where('matchingDocID','>', 0)
-                                            ->groupBy('custReceivePaymentAutoID')
-                                            ->first();
-                                        if(!empty($paymentsInvoiceMatch)){
-                                            $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                                        }*/
-
-                                    }
-                                }
-
+                        $detailSegmentID = isset($qdetail['serviceLineSystemID'])?$qdetail['serviceLineSystemID']:null;
+                        $detailSegmentDes = isset($qdetail['segment']['ServiceLineDes'])?$qdetail['segment']['ServiceLineDes']:'';
+                        
+                        if(empty($detailSegmentID) || empty($detailSegmentDes)){
+                            $detailsWithoutSegment[] = $qdetail;
+                        } else {
+                            if(!isset($segmentGroups[$detailSegmentID])){
+                                $segmentGroups[$detailSegmentID] = [
+                                    'segmentID' => $detailSegmentID,
+                                    'segmentDes' => $detailSegmentDes,
+                                    'details' => []
+                                ];
                             }
+                            $segmentGroups[$detailSegmentID]['details'][] = $qdetail;
                         }
-
-                        // quotation -> invoice
-                        if(isset($qdetail['invoice_detail']) && count($qdetail['invoice_detail'])> 0){
-
-                            foreach ($qdetail['invoice_detail'] as $invoiceDetails){
-                                $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
-                                $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
-                                $output[$x]['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?($invoiceDetails['sellingTotal']+$vatAmount):0;
-                                if(isset($invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans']) && $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'] > 0){
-                                    $paid2 = $invoiceDetails['master']['receipt_detail'][0]['receiveAmountTrans'];
-                                }
-
-                                /*$paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                    ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                    ->where('matchingDocID', 0)
-                                    ->groupBy('custReceivePaymentAutoID')
-                                    ->first();
-                                if(!empty($paymentsInvoice)){
-                                    $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                                }
-
-                                $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                    ->where('bookingInvCodeSystem', $invoiceDetails['custInvoiceDirectAutoID'])
-                                    ->where('matchingDocID','>', 0)
-                                    ->groupBy('custReceivePaymentAutoID')
-                                    ->first();
-                                if(!empty($paymentsInvoiceMatch)){
-                                    $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                                }*/
-
-                            }
-                        }
-
                     }
-                }
-
-                // get paid amount
-                $invoiceArray = array_unique($invoiceArray);
-                if(!empty($invoiceArray) && count($invoiceArray)>0){
-                    foreach ($invoiceArray as $invoice){
-                        if($invoice > 0){
-                            $paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                ->where('bookingInvCodeSystem', $invoice)
-                                ->where('matchingDocID', 0)
-                                ->groupBy('custReceivePaymentAutoID')
-                                ->first();
-                            if(!empty($paymentsInvoice)){
-                                $output[$x]['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
-                            }
-
-                            $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
-                                ->where('bookingInvCodeSystem', $invoice)
-                                ->where('matchingDocID','>', 0)
-                                ->groupBy('custReceivePaymentAutoID')
-                                ->first();
-                            if(!empty($paymentsInvoiceMatch)){
-                                $output[$x]['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
-                            }
-                        }
-
+                    
+                    foreach($segmentGroups as $segmentGroup){
+                        $output[$x] = $this->processDocumentDetails($data, $segmentGroup['details'], $segmentGroup['segmentDes']);
+                        $x++;
                     }
+                    
+                    if(count($detailsWithoutSegment) > 0){
+                        $output[$x] = $this->processDocumentDetails($data, $detailsWithoutSegment, $headerSegment);
+                        $x++;
+                    }
+                    
+                    if(count($segmentGroups) == 0 && count($detailsWithoutSegment) == 0){
+                        $output[$x] = $this->processDocumentDetails($data, [], $headerSegment);
+                        $x++;
+                    }
+                } else {
+                    $output[$x] = $this->processDocumentDetails($data, isset($data['detail'])?$data['detail']:[], $headerSegment);
+                    $x++;
                 }
-                $output[$x]['deliveryStatus'] = isset($data['deliveryStatus'])?$data['deliveryStatus']:0;
-                $x++;
             }
         }
         return $output;
 
     }
 
+    /**
+     * Process document details and calculate amounts
+     * @param array $data Document master data
+     * @param array $details Array of detail items to process
+     * @param string $serviceLine Segment description
+     * @return array Output row data
+     */
+    private function processDocumentDetails($data, $details, $serviceLine = '')
+    {
+        $output = [];
+        $output['quotationMasterID'] = isset($data['quotationMasterID'])?$data['quotationMasterID']:'';
+        $output['quotationCode'] = isset($data['quotationCode'])?$data['quotationCode']:'';
+        $output['documentDate'] = isset($data['documentDate'])?$data['documentDate']:'';
+        $output['serviceLine'] = $serviceLine;
+        $output['referenceNo'] = isset($data['referenceNo'])?$data['referenceNo']:'';
+        $output['customer'] = isset($data['customerName'])?$data['customerName']:'';
+        $output['currency'] = isset($data['transactionCurrency'])?$data['transactionCurrency']:'';
+        $output['dp'] = isset($data['transactionCurrencyDecimalPlaces'])?$data['transactionCurrencyDecimalPlaces']:'';
+        $output['documentExpDate'] = isset($data['documentExpDate'])?$data['documentExpDate']:'';
+        $output['confirmedYN'] = isset($data['confirmedYN'])?$data['confirmedYN']:null;
+        $output['approvedYN'] = isset($data['approvedYN'])?$data['approvedYN']:null;
+        $output['refferedBackYN'] = isset($data['refferedBackYN'])?$data['refferedBackYN']:null;
+        $output['customer_status'] = isset($data['quotationMasterID'])?QuotationStatus::getLastStatus($data['quotationMasterID']):'';
+        $output['document_amount'] = 0;
+        $output['invoice_amount'] = 0;
+        $output['paid_amount'] = 0;
+        $output['is_return'] = isset($data['is_return'])?$data['is_return']:0;
+        $invoiceArray = [];
+        
+        if(!empty($details) && count($details) > 0){
+            foreach ($details as $qdetail){
+                $vatAmount = isset($qdetail['VATAmount']) ? ($qdetail['VATAmount'] * $qdetail['requestedQty']) : 0;
+                $output['document_amount'] += isset($qdetail['transactionAmount'])?($qdetail['transactionAmount']+$vatAmount):0;
+
+                if(isset($qdetail['delivery_order_detail']) && count($qdetail['delivery_order_detail'])> 0){
+                    foreach ($qdetail['delivery_order_detail'] as $deliverydetail){
+                        if(isset($deliverydetail['invoice_detail']) && count($deliverydetail['invoice_detail'])> 0){
+                            foreach ($deliverydetail['invoice_detail'] as $invoiceDetails){
+                                $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
+                                $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                                $output['invoice_amount'] += isset($invoiceDetails['sellingTotal'])? ($invoiceDetails['sellingTotal']+ $vatAmount):0;
+                            }
+                        }
+                    }
+                }
+
+                if(isset($qdetail['invoice_detail']) && count($qdetail['invoice_detail'])> 0){
+                    foreach ($qdetail['invoice_detail'] as $invoiceDetails){
+                        $invoiceArray[] = $invoiceDetails['custInvoiceDirectAutoID'];
+                        $vatAmount = isset($invoiceDetails['VATAmount']) ? ($invoiceDetails['VATAmount'] * $invoiceDetails['qtyIssuedDefaultMeasure']) : 0;
+                        $output['invoice_amount'] += isset($invoiceDetails['sellingTotal'])?($invoiceDetails['sellingTotal']+$vatAmount):0;
+                    }
+                }
+            }
+        }
+
+        $invoiceArray = array_unique($invoiceArray);
+        if(!empty($invoiceArray) && count($invoiceArray)>0){
+            foreach ($invoiceArray as $invoice){
+                if($invoice > 0){
+                    $paymentsInvoice = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
+                        ->where('bookingInvCodeSystem', $invoice)
+                        ->where('matchingDocID', 0)
+                        ->groupBy('custReceivePaymentAutoID')
+                        ->first();
+                    if(!empty($paymentsInvoice)){
+                        $output['paid_amount'] += $paymentsInvoice->receiveAmountTrans;
+                    }
+
+                    $paymentsInvoiceMatch = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountTrans) as receiveAmountTrans,matchingDocID,bookingInvCodeSystem')
+                        ->where('bookingInvCodeSystem', $invoice)
+                        ->where('matchingDocID','>', 0)
+                        ->groupBy('custReceivePaymentAutoID')
+                        ->first();
+                    if(!empty($paymentsInvoiceMatch)){
+                        $output['paid_amount'] += $paymentsInvoiceMatch->receiveAmountTrans;
+                    }
+                }
+            }
+        }
+        $output['deliveryStatus'] = isset($data['deliveryStatus'])?$data['deliveryStatus']:0;
+        
+        return $output;
+    }
+
 
     public function reportSoToReceipt(Request $request)
     {
         $input = $request->all();
+        $currencyType = $this->resolveSoToReceiptCurrencyType($input);
 
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
@@ -2073,21 +2117,135 @@ class SalesMarketingReportAPIController extends AppBaseController
                 }
             })
             ->addIndexColumn()
-            ->addColumn('deliveryOrder', function ($row) {
-                return $this->getSOtoReceiptChainViaDeliveryOrder($row);
+            ->addColumn('currencyType', function () use ($currencyType) {
+                return $this->getSoToReceiptCurrencyTypeLabel($currencyType);
             })
-            ->addColumn('soTotalComRptCurrency', function ($row) {
-                return $row->companyReportingAmount;
+            ->addColumn('deliveryOrder', function ($row) use ($currencyType) {
+                return $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);
+            })
+            ->addColumn('soTotalComRptCurrency', function ($row) use ($currencyType) {
+               return $this->selectAmountByType(
+                    $currencyType,
+                    (float)$row['transactionAmount'],
+                    (float)$row['companyLocalAmount'],
+                    (float)$row['companyReportingAmount']
+                );
             })
             ->make(true);
 
         return $data;
     }
 
-    public function getSOtoReceiptChainViaDeliveryOrder($row)
+    private function resolveSoToReceiptCurrencyType(array $input)
+    {
+        $currency = $input['currencyID'] ?? null;
+        if (is_array($currency)) {
+            $currency = $currency[0] ?? null;
+        }
+        $currency = (int)$currency;
+
+        if ($currency === 1) {
+            return 'local';
+        }
+        if ($currency === 2) {
+            return 'reporting';
+        }
+        if ($currency === 3) {
+            return 'transaction';
+        }
+
+        return 'transaction';
+    }
+
+    private function getSoToReceiptCurrencyTypeLabel($currencyType)
+    {
+        if ($currencyType === 'local') {
+            return trans('custom.local_currency');
+        }
+        if ($currencyType === 'reporting') {
+            return trans('custom.reporting_currency');
+        }
+
+        return trans('custom.transaction_currency');
+    }
+
+    private function selectAmountByType($currencyType, $transactionAmount, $localAmount, $reportingAmount)
+    {
+        if ($currencyType === 'local') {
+            return (float)$localAmount;
+        }
+        if ($currencyType === 'transaction') {
+            return (float)$transactionAmount;
+        }
+
+        return (float)$reportingAmount;
+    }
+
+    private function getConvertedAmountByType($transactionAmount, $companySystemID, $transactionCurrencyID, $currencyType, $fallbackLocal, $fallbackReporting)
+    {
+        $localAmount = $fallbackLocal;
+        $reportingAmount = $fallbackReporting;
+
+        if (!empty($companySystemID) && !empty($transactionCurrencyID)) {
+            $conversion = Helper::currencyConversion(
+                $companySystemID,
+                $transactionCurrencyID,
+                $transactionCurrencyID,
+                $transactionAmount
+            );
+            $localAmount = $conversion['localAmount'] ?? $localAmount;
+            $reportingAmount = $conversion['reportingAmount'] ?? $reportingAmount;
+        }
+
+        return $this->selectAmountByType($currencyType, $transactionAmount, $localAmount, $reportingAmount);
+    }
+
+    private function applyInvoicePaymentsCurrency($invoices, $currencyType)
+    {
+        foreach ($invoices as $invoice) {
+            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
+                                             sum(receiveAmountRpt) as rptAmount,
+                                             sum(receiveAmountTrans) as transAmount,
+                                             bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
+                ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
+                ->where('addedDocumentSystemID', 20)
+                ->where('matchingDocID', 0)
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('custReceivePaymentAutoID')
+                ->get();
+ 
+            $invoice->rptAmount = $this->selectAmountByType(
+                $currencyType,
+                (float)$invoice->master->bookingAmountTrans,
+                (float)$invoice->master->bookingAmountLocal,
+                (float)$invoice->master->bookingAmountRpt
+            );
+
+ 
+            foreach ($recieptVouchers as $payment) {
+                $payment->rptAmount = $this->selectAmountByType(
+                    $currencyType,
+                    (float)abs($payment->master->receivedAmount),
+                    (float)abs($payment->master->localAmount),
+                    (float)abs($payment->master->companyRptAmount)
+                );
+            }
+
+ 
+            $invoice->payments = $recieptVouchers->toArray();
+        }
+
+        return $invoices;
+
+    }
+
+    public function getSOtoReceiptChainViaDeliveryOrder($row, $currencyType)
     {
         $deliveryOrders = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
                                         sum(companyReportingAmount) as rptAmount,
+                                        sum(transactionAmount) as transAmount,
                                         quotationMasterID,deliveryOrderID,deliveryOrderDetailID')
             ->where('quotationMasterID', $row->quotationMasterID)
             ->with(['master' => function ($query) {
@@ -2100,14 +2258,16 @@ class SalesMarketingReportAPIController extends AppBaseController
 
         if (count($deliveryOrders) == 0) {
             $returnData['deliveryOrder'] = false;   
-            $returnData['invoices'] = $this->getSOtoReceiptChainViaCustomerInvoice($row);
+            $returnData['invoices'] = $this->getSOtoReceiptChainViaCustomerInvoice($row, $currencyType);
 
             return [$returnData];
         }
 
         foreach ($deliveryOrders as $do) {
             $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
-                                                 sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+                                                 sum(issueCostRptTotal) as rptAmount,
+                                                 sum(sellingTotal) as transAmount,
+                                                 custInvoiceDirectAutoID,deliveryOrderID')
                 ->where('deliveryOrderID', $do->deliveryOrderID)
                 ->with(['master' => function ($query) {
                     $query->with(['currency']);
@@ -2115,34 +2275,28 @@ class SalesMarketingReportAPIController extends AppBaseController
                 ->groupBy('custInvoiceDirectAutoID')
                 ->get();
 
-            foreach ($invoices as $invoice) {
-                $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
-                                                 sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
-                    ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
-                    ->where('addedDocumentSystemID', 20)
-                    ->where('matchingDocID', 0)
-                    ->with(['master' => function ($query) {
-                        $query->with(['currency']);
-                    }])
-                    ->groupBy('custReceivePaymentAutoID')
-                    ->get();
+            $invoices = $this->applyInvoicePaymentsCurrency($invoices, $currencyType);
 
-                $totalInvoices = $recieptVouchers->toArray();
+            $do->rptAmount = $this->selectAmountByType(
+                $currencyType,
+                (float)$do->transAmount,
+                (float)$do->localAmount,
+                (float)$do->rptAmount
+            );
 
-                $invoice->payments = $totalInvoices;
-            }
-
-            $do->invoices = $invoices->toArray();
+            $do->invoices = ($invoices) ? $invoices->toArray() : [];
         }
 
         return $deliveryOrders->toArray();
     }
 
     
-    public function getSOtoReceiptChainViaCustomerInvoice($row)
+    public function getSOtoReceiptChainViaCustomerInvoice($row, $currencyType)
     {
         $invoices = CustomerInvoiceItemDetails::selectRaw('sum(issueCostLocalTotal) as localAmount,
-                                             sum(issueCostRptTotal) as rptAmount,custInvoiceDirectAutoID,deliveryOrderID')
+                                             sum(issueCostRptTotal) as rptAmount,
+                                             sum(sellingTotal) as transAmount,
+                                             custInvoiceDirectAutoID,deliveryOrderID')
             ->where('quotationMasterID', $row->quotationMasterID)
             ->with(['master' => function ($query) {
                 $query->with(['currency']);
@@ -2150,24 +2304,9 @@ class SalesMarketingReportAPIController extends AppBaseController
             ->groupBy('custInvoiceDirectAutoID')
             ->get();
 
-        foreach ($invoices as $invoice) {
-            $recieptVouchers = CustomerReceivePaymentDetail::selectRaw('sum(receiveAmountLocal) as localAmount,
-                                             sum(receiveAmountRpt) as rptAmount,bookingInvCodeSystem,addedDocumentSystemID,matchingDocID, custReceivePaymentAutoID')
-                ->where('bookingInvCodeSystem', $invoice->custInvoiceDirectAutoID)
-                ->where('addedDocumentSystemID', 20)
-                ->where('matchingDocID', 0)
-                ->with(['master' => function ($query) {
-                    $query->with(['currency']);
-                }])
-                ->groupBy('custReceivePaymentAutoID')
-                ->get();
+        $invoices = $this->applyInvoicePaymentsCurrency($invoices, $currencyType);
 
-            $totalInvoices = $recieptVouchers->toArray();
-
-            $invoice->payments = $totalInvoices;
-        }
-
-        return $invoices->toArray();
+        return ($invoices) ? $invoices->toArray() : [];
     }
 
 
@@ -2255,13 +2394,14 @@ class SalesMarketingReportAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = array();
+        $currencyType = $this->resolveSoToReceiptCurrencyType($input);
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
         $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'DES')->get();
 
         foreach ($output as $row) {
-            $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row);
+            $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);
         }
 
         $type = $request->type;
@@ -2270,7 +2410,7 @@ class SalesMarketingReportAPIController extends AppBaseController
             foreach ($output as $value) {
                 $data[$x][trans('custom.company_id')] = $value->companyID;
                 $data[$x][trans('custom.so_number')] = $value->quotationCode;
-                $data[$x][trans('custom.so_approved_date')] = \Helper::dateFormat($value->approvedDate);
+                $data[$x][trans('custom.so_approved_date')] = Helper::dateFormat($value->approvedDate);
                 $data[$x][trans('custom.narration')] = $value->narration;
                 if ($value->customer) {
                     $data[$x][trans('custom.customer_code')] = $value->customer->CutomerCode;
@@ -2279,7 +2419,15 @@ class SalesMarketingReportAPIController extends AppBaseController
                     $data[$x][trans('custom.customer_code')] = '';
                     $data[$x][trans('custom.customer_name')] = '';
                 }
-                $data[$x][trans('custom.so_amount')] = number_format($value->companyReportingAmount, 2);
+                $data[$x][trans('custom.currency_type')] = $this->getSoToReceiptCurrencyTypeLabel($currencyType);
+                $data[$x][trans('custom.so_amount')] = number_format((float)$this->getConvertedAmountByType(
+                    (float)$value->transactionAmount,
+                    $value->companySystemID,
+                    $value->transactionCurrencyID,
+                    $currencyType,
+                    $value->companyLocalAmount,
+                    $value->companyReportingAmount
+                ), 2);
 
                 if (count($value->deliveryOrders) > 0) {
                     $grvMasterCount = 0;
@@ -2292,12 +2440,13 @@ class SalesMarketingReportAPIController extends AppBaseController
                             $data[$x][trans('custom.narration')] = '';
                             $data[$x][trans('custom.customer_code')] = '';
                             $data[$x][trans('custom.customer_name')] = '';
+                            $data[$x][trans('custom.currency_type')] = '';
                             $data[$x][trans('custom.so_amount')] = '';
                         }
 
                         if (isset($grv['master'])) {
                             $data[$x][trans('custom.delivery_code')] = $grv['master']['deliveryOrderCode'];
-                            $data[$x][trans('custom.delivery_date')] = \Helper::dateFormat($grv['master']['deliveryOrderDate']);
+                            $data[$x][trans('custom.delivery_date')] = Helper::dateFormat($grv['master']['deliveryOrderDate']);
                             $data[$x][trans('custom.delivery_amount')] = number_format($grv['rptAmount'], 2);
                         } else {
                             $data[$x][trans('custom.delivery_code')] = '';
@@ -2317,6 +2466,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                                     $data[$x][trans('custom.narration')] = '';
                                     $data[$x][trans('custom.customer_code')] = '';
                                     $data[$x][trans('custom.customer_name')] = '';
+                                    $data[$x][trans('custom.currency_type')] = '';
                                     $data[$x][trans('custom.po_amount')] = '';
                                     $data[$x][trans('custom.delivery_code')] = '';
                                     $data[$x][trans('custom.delivery_date')] = '';
@@ -2325,7 +2475,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                                 if ($invoice['master']) {
                                     $data[$x][trans('custom.invoice_code')] = $invoice['master']['bookingInvCode'];
-                                    $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($invoice['master']['bookingDate']);
+                                    $data[$x][trans('custom.invoice_date')] = Helper::dateFormat($invoice['master']['bookingDate']);
                                 } else {
                                     $data[$x][trans('custom.invoice_code')] = '';
                                     $data[$x][trans('custom.invoice_date')] = '';
@@ -2343,6 +2493,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                                             $data[$x][trans('custom.narration')] = '';
                                             $data[$x][trans('custom.customer_code')] = '';
                                             $data[$x][trans('custom.customer_name')] = '';
+                                            $data[$x][trans('custom.currency_type')] = '';
                                             $data[$x][trans('custom.so_amount')] = '';
                                             $data[$x][trans('custom.delivery_code')] = '';
                                             $data[$x][trans('custom.delivery_date')] = '';
@@ -2354,8 +2505,8 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                                         if (!empty($payment['master'])) {
                                             $data[$x][trans('custom.receipt_code')] = $payment['master']['custPaymentReceiveCode'];
-                                            $data[$x][trans('custom.receipt_date')] = \Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
-                                            $data[$x][trans('custom.receipt_posted_date')] = \Helper::dateFormat($payment['master']['postedDate']);
+                                            $data[$x][trans('custom.receipt_date')] = Helper::dateFormat($payment['master']['custPaymentReceiveDate']);
+                                            $data[$x][trans('custom.receipt_posted_date')] = Helper::dateFormat($payment['master']['postedDate']);
                                         } else {
                                             $data[$x][trans('custom.receipt_code')] = '';
                                             $data[$x][trans('custom.receipt_date')] = '';

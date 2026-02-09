@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CashFlowReportDetail;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class CashFlowReportDetailRepository

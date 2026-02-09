@@ -34,7 +34,6 @@ class SupplierSubCategoryAssign extends Model
     const UPDATED_AT = null; //'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -51,7 +50,8 @@ class SupplierSubCategoryAssign extends Model
     protected $casts = [
         'supplierSubCategoryAssignID' => 'integer',
         'supplierID' => 'integer',
-        'supSubCategoryID' => 'integer'
+        'supSubCategoryID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

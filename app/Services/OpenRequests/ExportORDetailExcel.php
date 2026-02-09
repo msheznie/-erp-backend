@@ -21,7 +21,6 @@ class ExportORDetailExcel {
 
     public function export() {
         $basePath = CreateExcel::processOpenRequestReport($this->data,$this->code);
-        Log::info('Export completed', ['result' => $basePath]);
         $this->sendNotification($basePath);
 
         if($basePath == '') {

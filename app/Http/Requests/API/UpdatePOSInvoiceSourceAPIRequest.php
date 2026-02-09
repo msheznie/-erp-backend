@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSInvoiceSource;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePOSInvoiceSourceAPIRequest extends APIRequest
+class UpdatePOSInvoiceSourceAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

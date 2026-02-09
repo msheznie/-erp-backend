@@ -10,8 +10,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Common\BaseRepository;
-
+use App\Repositories\BaseRepository;
+use App\Helpers\Helper;
 /**
  * Class TenderBidFormatMasterRepository
  * @package App\Repositories
@@ -160,7 +160,7 @@ class TenderBidFormatMasterRepository extends BaseRepository
                 }
 
                 $duplicateEntries = [];
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 foreach ($record as $vl){
                     $exist = TenderBidFormatDetail::checkItemExists($input['priceBidFormatId'], $vl['price_bid_item']);
                     if(empty($exist)){

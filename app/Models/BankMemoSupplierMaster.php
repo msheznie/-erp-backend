@@ -35,7 +35,6 @@ class BankMemoSupplierMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -56,7 +55,8 @@ class BankMemoSupplierMaster extends Model
         'companySystemID' => 'integer',
         'companyID' => 'string',
         'memoHeader' => 'string',
-        'memoDetail' => 'string'
+        'memoDetail' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

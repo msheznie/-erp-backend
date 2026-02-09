@@ -26,6 +26,7 @@ use App\Models\SupplierCurrency;
 use App\Models\Unit;
 use App\Models\SupplierMaster;
 use App\Models\ItemMaster;
+use App\Models\SegmentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseOrderDetails;
@@ -41,6 +42,7 @@ use App\Repositories\QuotationDetailsRepository;
 use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class QuotationAddMultipleItemsService
 {
@@ -57,7 +59,6 @@ class QuotationAddMultipleItemsService
         $items = $records;
         $itemsToUpload = array();
         // $employee = \Helper::getEmployeeInfo();
-        Log::useFiles(storage_path() . '/logs/sales_order_jobs.log');
 
         foreach($items as $item) {
             $data = array();
@@ -88,13 +89,23 @@ class QuotationAddMultipleItemsService
                         'companyID' => $company->CompanyID
                     ];
 
-                    $currencyConversion = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
-                    $data['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
-                    $data['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+                    if(isset($item['segment']) && $item['segment'] != null){
+                        $segment = SegmentMaster::where('ServiceLineCode', $item['segment'])
+                            ->where('isActive', 1)
+                            ->where('isDeleted', 0)
+                            ->first();
+                        if($segment){
+                            $data['serviceLineSystemID'] = $segment->serviceLineSystemID;
+                        }
+                    }
 
-                    $currencyConversionDefault = \Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
+                    $currencyConversion = Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
+                    $data['companyLocalAmount'] = Helper::roundValue($currencyConversion['localAmount']);
+                    $data['companyReportingAmount'] = Helper::roundValue($currencyConversion['reportingAmount']);
 
-                    $data['customerAmount'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+                    $currencyConversionDefault = Helper::currencyConversion($quotation['companySystemID'], $quotation['customerCurrencyID'], $quotation['customerCurrencyID'], $quotation['transactionAmount']);
+
+                    $data['customerAmount'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
                     $data['wacValueLocal'] = $itemAssigned?$itemAssigned->wacValueLocal:0;
 
 
@@ -114,11 +125,11 @@ class QuotationAddMultipleItemsService
                         $data['discountAmount'] = 0;
                     }
 
-                    $currencyConversionVAT = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
+                    $currencyConversionVAT = Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $item['vat']);
                     if($quotation['isVatEligible']) {
-                        $data['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                        $data['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
-                        $data['VATAmount'] = \Helper::roundValue((($data['unittransactionAmount']) - $data['discountAmount']) * ($item['vat'] / 100));
+                        $data['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                        $data['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                        $data['VATAmount'] = Helper::roundValue((($data['unittransactionAmount']) - $data['discountAmount']) * ($item['vat'] / 100));
                     }else {
                         $data['VATAmountLocal'] = 0;
                         $data['VATAmountRpt']  = 0;
@@ -128,7 +139,7 @@ class QuotationAddMultipleItemsService
                     $totalNetcost = $item['qty'] * (($data['unittransactionAmount']) - $data['discountAmount']);
                     $data['VATPercentage'] = $item['vat'];
 
-                    $data['transactionAmount'] = \Helper::roundValue($totalNetcost);
+                    $data['transactionAmount'] = Helper::roundValue($totalNetcost);
                     // $item['modifiedUserID'] = $employee->empID;
                     // $item['modifiedUserName'] = $employee->empName;
                         array_push($itemsToUpload,$data);
@@ -144,9 +155,6 @@ class QuotationAddMultipleItemsService
         QuotationMaster::where('quotationMasterID', $quotation['quotationMasterID'])->update([
             'isBulkItemJobRun' => 0
         ]);
-
-        Log::info($data);
-        
     }
 
     

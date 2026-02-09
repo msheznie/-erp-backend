@@ -38,6 +38,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\AssetFinanceCategory;
 use App\Models\FinanceItemCategorySub;
 use App\Models\FixedAssetCategory;
+use App\Models\FixedAssetCategorySub;
 use App\Models\DocumentMaster;
 use App\Models\ItemAssigned;
 use App\Models\ItemMasterCategoryType;
@@ -54,7 +55,7 @@ use App\Repositories\ItemMasterRepository;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
@@ -75,6 +76,10 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
 use App\Models\WarehouseItems;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ItemMasterController
@@ -161,6 +166,33 @@ class ItemMasterAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
 
+                if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3) {
+                    if (!isset($item['faFinanceCatID']) || is_null($item['faFinanceCatID']) || $item['faFinanceCatID'] == '') {
+                        return $this->sendError(trans('custom.finance_audit_category_is_required'));
+                    }
+                    $faFinanceCat = AssetFinanceCategory::find($item['faFinanceCatID']);
+                    if (empty($faFinanceCat)) {
+                        return $this->sendError(trans('custom.finance_audit_category_is_required'));
+                    }
+
+                    if (!isset($item['faCatID']) || is_null($item['faCatID']) || $item['faCatID'] == '') {
+                        return $this->sendError(trans('custom.main_category_is_required'));
+                    }
+                    $faCat = FixedAssetCategory::find($item['faCatID']);
+                    if (empty($faCat)) {
+                        return $this->sendError(trans('custom.main_category_is_required'));
+                    }
+
+                    if (!isset($item['faSubCatID']) || is_null($item['faSubCatID']) || $item['faSubCatID'] == '') {
+                        return $this->sendError(trans('custom.sub_category_is_required'));
+                    }
+                    $faSubCat = FixedAssetCategorySub::find($item['faSubCatID']);
+                    if (empty($faSubCat)) {
+                        return $this->sendError(trans('custom.sub_category_is_required'));
+                    }
+                    
+                }
+
                 $runningSerialOrder = $runningSerialOrder + 1;
                 $primaryCode = $code . str_pad($runningSerialOrder, $count, '0', STR_PAD_LEFT);
 
@@ -202,7 +234,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"], 500);
                     }
@@ -350,10 +382,10 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemType = $request->itemTypeID;
         $companyId = $request->primaryCompanySystemID;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -412,10 +444,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -452,6 +484,28 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMasters->where('itemConfirmedYN', $input['itemConfirmedYN']);
             }
         }
+
+        if (array_key_exists('createdBy', $input)) {
+            if ($input['createdBy'] && !is_null($input['createdBy'])) {
+
+                $createdByInput = $input['createdBy'];
+                if (is_object($createdByInput)) {
+                    $createdBy = array_filter([data_get($createdByInput, 'id')]);
+                } elseif (is_array($createdByInput)) {
+                    $createdBy = collect($createdByInput)->pluck('id')->filter()->toArray();
+                    if (empty($createdBy)) {
+                        $createdBy = collect($createdByInput)->filter()->toArray();
+                    }
+                } else {
+                    $createdBy = array_filter([$createdByInput]);
+                }
+
+                if (!empty($createdBy)) {
+                    $itemMasters->whereIn('createdUserSystemID', $createdBy);
+                }
+            }
+        }
+
 
         if ($search) {
             $itemMasters = $itemMasters->where(function ($query) use ($search) {
@@ -493,16 +547,16 @@ class ItemMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
         $itemMasters = DB::table('erp_documentapproved')->select( 'employeesdepartments.approvalDeligated','itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode', DB::raw('GROUP_CONCAT(item_category_type_master.name SEPARATOR ", ") as category_descriptions'))->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -538,7 +592,7 @@ class ItemMasterAPIController extends AppBaseController
             ->whereIn('erp_documentapproved.companySystemID', $companyID)
             ->groupBy('itemmaster.itemCodeSystem');
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $itemMasters = [];
@@ -624,8 +678,8 @@ class ItemMasterAPIController extends AppBaseController
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
         foreach ($companyList as $companyId) {
-            if (\Helper::checkIsCompanyGroup($companyId)) {
-                $subCompanies = array_merge($subCompanies, \Helper::getGroupCompany($companyId));
+            if (Helper::checkIsCompanyGroup($companyId)) {
+                $subCompanies = array_merge($subCompanies, Helper::getGroupCompany($companyId));
             } else {
                 $subCompanies = [$companyId];
             }
@@ -650,7 +704,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -821,7 +875,7 @@ class ItemMasterAPIController extends AppBaseController
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        $validatorResult = Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -1011,7 +1065,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         unset($input['categoryType']);
 
-        $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
+        $input = Arr::except($input,['finance_sub_category','company','specification','final_approved_by']);
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -1218,7 +1272,7 @@ class ItemMasterAPIController extends AppBaseController
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1293,10 +1347,10 @@ class ItemMasterAPIController extends AppBaseController
         $itemId = $request['itemCodeSystem'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1410,7 +1464,7 @@ class ItemMasterAPIController extends AppBaseController
                         // $data_info = file_get_contents($path);
                     
                         // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
-                        $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
+                        $baseimg = Helper::getFileUrlFromS3($decode_image->path);
     
                         $info['flag'] = true;
                         $info['path'] = $baseimg;
@@ -1526,7 +1580,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function approveItem(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1537,7 +1591,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function rejectItem(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1788,10 +1842,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -1933,10 +1987,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -1956,7 +2010,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -2130,5 +2184,238 @@ class ItemMasterAPIController extends AppBaseController
 
 
 
+    }
+
+    
+    public function getWarehouseItemQuantity(Request $request) {
+        $input = $request->all();
+
+        $validationRules = [
+            'wareHouse_code' => 'nullable|string',
+            'item_code' => 'nullable|string',
+            'getAll' => 'nullable',
+            'company_id' => 'required|integer',
+            'pos_type' => 'nullable|integer',
+        ];
+
+        $validationMessages = [
+            'wareHouse_code.string' =>  trans('custom.wareHouse_code_must_be_a_string'),
+            'item_code.string' => trans('custom.item_code_must_be_a_string'),
+            'company_id.required' => trans('custom.companySystemID_is_required'),
+            'company_id.integer' => trans('custom.companySystemID_must_be_an_integer'),
+            'pos_type.integer' => trans('custom.pos_type_must_be_an_integer'),
+        ];
+
+        $validator = \Validator::make($input, $validationRules, $validationMessages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 422);
+        }
+
+        if ($input['getAll'] === null) {
+            
+            return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+        }
+
+        if (isset($input['getAll']) && $input['getAll'] !== null) {
+            if ($input['getAll'] === '') {
+                return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+            }
+            if (!is_bool($input['getAll']) && $input['getAll'] !== 'true' && $input['getAll'] !== 'false') {
+                return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
+            }
+        }
+
+        $getAll = isset($input['getAll']) ? filter_var($input['getAll'], FILTER_VALIDATE_BOOLEAN) : false;
+        if ($getAll) {
+            $validationRules['page'] = 'required|integer|min:1';
+            $validationRules['per_page'] = 'required|integer|min:1';
+            $validationMessages['page.required'] = trans('custom.page_is_required_when_getAll_is_true');
+            $validationMessages['page.integer'] = trans('custom.page_must_be_an_integer');
+            $validationMessages['page.min'] = trans('custom.page_must_be_at_least_1');
+            $validationMessages['per_page.required'] = trans('custom.per_page_is_required_when_getAll_is_true');
+            $validationMessages['per_page.integer'] = trans('custom.per_page_must_be_an_integer');
+            $validationMessages['per_page.min'] = trans('custom.per_page_must_be_at_least_1');
+        }
+
+        $validator = \Validator::make($input, $validationRules, $validationMessages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 422);
+        }
+
+        $wareHouseCode = isset($input['wareHouse_code']) ? $input['wareHouse_code'] : null;
+        $itemCode = isset($input['item_code']) ? $input['item_code'] : null;
+        $companySystemID = $input['company_id'];
+        
+        $posType = null;
+        if (isset($input['pos_type']) && $input['pos_type'] !== null) {
+            $posTypeValue = (int)$input['pos_type'];
+            if (in_array($posTypeValue, [1, 2, 3])) {
+                $posType = $posTypeValue;
+            }
+        }
+
+        $companyMaster = Company::where('companySystemID', $companySystemID)->first();
+        if (!$companyMaster) {
+            return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
+        }
+
+        $isGroup = Helper::checkIsCompanyGroup($input['company_id']);
+
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($input['company_id']);
+        }
+        else {
+            $subCompanies = [$input['company_id']];
+        }
+
+        $itemSystemCode = null;
+        $wareHouseSystemCode = null;
+
+        if (!$getAll) {
+
+            if(empty($itemCode) && empty($wareHouseCode))
+            { 
+               return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
+            }   
+
+            
+            if (!empty($itemCode)) {
+                $itemMaster = ItemAssigned::where('itemPrimaryCode', $itemCode)->with('item_master')->where('isActive', 1)->where('isAssigned', -1)->whereIn('companySystemID', $subCompanies)
+                    ->first();
+                if (!$itemMaster) {
+                    return $this->sendError(trans('custom.the_item_code_not_matching_with_system', ['itemCode' => $itemCode]), 422);
+                }
+
+                if (isset($itemMaster->item_master->itemApprovedYN) && $itemMaster->item_master->itemApprovedYN != 1) {
+                    return $this->sendError(trans('custom.the_selected_item_is_not_fully_approved', ['itemCode' => $itemCode]), 422);
+                }
+
+                $itemSystemCode = $itemMaster->itemCodeSystem;
+            }
+
+            if (!empty($wareHouseCode)) {
+                $wareHouse = WarehouseMaster::where('wareHouseCode', $wareHouseCode)->where('isActive', 1)->whereIn('companySystemID', $subCompanies)
+                    ->first();
+                if (!$wareHouse) {
+                    return $this->sendError(trans('custom.the_warehouse_code_not_matching_with_system', ['wareHouseCode' => $wareHouseCode]), 422);
+                }
+
+                $wareHouseSystemCode = $wareHouse->wareHouseSystemCode;
+            }
+        }
+
+
+        $selectFields = [
+            'companymaster.CompanyName as company_name',
+            'erp_itemledger.itemPrimaryCode as item_code',
+            'itemmaster.itemDescription as item_description',
+            DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
+        ];
+        
+        if (!empty($wareHouseSystemCode)) {
+            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
+        } else {
+            $selectFields[] = DB::raw("'' as warehouse");
+        }
+
+        $baseQuery = ErpItemLedger::query()
+            ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+            ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
+            ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+            ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
+            ->select($selectFields)
+            ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+            ->groupBy('erp_itemledger.itemSystemCode')
+            ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
+
+        if (!$getAll) {
+            if (!empty($itemSystemCode)) {
+                $baseQuery->where('erp_itemledger.itemSystemCode', $itemSystemCode);
+            }
+
+            if (!empty($wareHouseSystemCode)) {
+                $baseQuery->where('erp_itemledger.wareHouseSystemCode', $wareHouseSystemCode);
+            }
+        }
+
+        if ($posType !== null) {
+            $baseQuery->where('itemmaster.pos_type', $posType);
+        }
+
+        $page = 1;
+        $perPage = null;
+        $total = 0;
+
+        if ($getAll) {
+            $countQuery = ErpItemLedger::query()
+                ->leftJoin('units', 'erp_itemledger.unitOfMeasure', '=', 'units.UnitID')
+                ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
+                ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
+                ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
+                ->select('erp_itemledger.itemSystemCode')
+                ->whereIn('erp_itemledger.companySystemID', $subCompanies)
+                ->groupBy('erp_itemledger.itemSystemCode')
+                ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
+
+            if ($posType !== null) {
+                $countQuery->where('itemmaster.pos_type', $posType);
+            }
+
+            $total = DB::table(DB::raw("({$countQuery->toSql()}) as sub"))
+                ->mergeBindings($countQuery->getQuery())
+                ->count();
+
+            $page = (int)$input['page'];
+            $perPage = (int)$input['per_page'];
+            $offset = ($page - 1) * $perPage;
+
+            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
+                ->offset($offset)
+                ->limit($perPage)
+                ->get()
+                ->toArray();
+        } else {
+            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
+                ->get()
+                ->toArray();
+        }
+
+        $data = array_map(function($item) {
+            return (array) $item;
+        }, $data);
+
+        if ($getAll) {
+            $lastPage = (int)ceil($total / $perPage);
+            $path = $request->url();
+
+            $queryParams = $request->query();
+            unset($queryParams['page']);
+            $baseUrl = $request->url();
+            if (!empty($queryParams)) {
+                $baseUrl = $baseUrl . '?' . http_build_query($queryParams);
+            }
+            $separator = strpos($baseUrl, '?') !== false ? '&' : '?';
+
+            $response = [
+                'data' => $data,
+                'current_page' => $page,
+                'first_page_url' => $baseUrl . $separator . 'page=1',
+                'from' => $total > 0 ? $offset + 1 : null,
+                'last_page' => $lastPage,
+                'last_page_url' => $baseUrl . $separator . 'page=' . $lastPage,
+                'next_page_url' => $page < $lastPage ? $baseUrl . $separator . 'page=' . ($page + 1) : null,
+                'path' => $path,
+                'per_page' => $perPage,
+                'prev_page_url' => $page > 1 ? $baseUrl . $separator . 'page=' . ($page - 1) : null,
+                'to' => $total > 0 ? min($offset + $perPage, $total) : null,
+                'total' => $total,
+            ];
+
+            return $this->sendResponse($response, trans('custom.record_retrieved_successfully_1'));
+        }
+
+        return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
     }
 }

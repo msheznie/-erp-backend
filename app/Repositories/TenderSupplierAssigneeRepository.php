@@ -9,7 +9,7 @@ use App\Models\TenderSupplierAssigneeEditLog;
 use Illuminate\Container\Container as Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Services\SrmDocumentModifyService;
 use mysql_xdevapi\Exception;
 

@@ -34,10 +34,15 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditTrial;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ConsoleJVMasterController
@@ -175,19 +180,19 @@ class ConsoleJVMasterAPIController extends AppBaseController
         }
         $input['serialNo'] = $lastSerialNumber;
 
-        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+        $companyCurrency = Helper::companyCurrency($input['companySystemID']);
         if ($companyCurrency) {
             $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
             $input['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
             if ($companyCurrencyConversion) {
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
             }
         }
 
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $input['createdPcID'] = gethostname();
 
         $consoleJVMasters = $this->consoleJVMasterRepository->create($input);
@@ -326,9 +331,9 @@ class ConsoleJVMasterAPIController extends AppBaseController
             $input['documentID'] = $documentMaster->documentID;
         }
 
-        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+        $companyCurrency = Helper::companyCurrency($input['companySystemID']);
         if ($companyCurrency) {
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['currencyID'], $input['currencyID'], 0);
             if ($companyCurrencyConversion) {
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
@@ -425,15 +430,15 @@ class ConsoleJVMasterAPIController extends AppBaseController
                 'amount' => $jvDetail->debitAmount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
 
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         $input['modifiedPc'] = gethostname();
 
         $consoleJVMaster = $this->consoleJVMasterRepository->update($input, $id);
@@ -593,7 +598,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 17)
@@ -651,7 +656,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -682,7 +687,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_consolejvmaster.consoleJvMasterAutoId',
@@ -738,7 +743,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
     public function approveConsoleJV(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -749,7 +754,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
 
     public function rejectConsoleJV(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -792,7 +797,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
         $jvMasterData->RollLevForApp_curr = 1;
         $jvMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
 
@@ -843,7 +848,7 @@ class ConsoleJVMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

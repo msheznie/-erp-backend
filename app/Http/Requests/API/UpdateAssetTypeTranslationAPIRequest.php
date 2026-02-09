@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AssetTypeTranslation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateAssetTypeTranslationAPIRequest extends APIRequest
+class UpdateAssetTypeTranslationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

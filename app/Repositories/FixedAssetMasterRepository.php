@@ -3,9 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\FixedAssetMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Models\GRVDetails;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class FixedAssetMasterRepository
@@ -108,6 +109,7 @@ class FixedAssetMasterRepository extends BaseRepository
         'selectedforJobYN',
         'timestamp',
         'empID',
+        'assetStatus',
         'assetCostingUploadID'
     ];
 
@@ -122,10 +124,10 @@ class FixedAssetMasterRepository extends BaseRepository
     public function fixedAssetMasterListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -192,8 +194,12 @@ class FixedAssetMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.doc_no')] = $val->grv_master? $val->grv_master->grvPrimaryCode : '';
                 $data[$x][trans('custom.doc_description')] = $val->itemDescription;
-                $data[$x][trans('custom.doc_date')] = $val->grv_master? (\Helper::dateFormat($val->grv_master->approvedDate)) : '';
+                $data[$x][trans('custom.doc_date')] = $val->grv_master? (Helper::dateFormat($val->grv_master->approvedDate)) : '';
                 $data[$x][trans('custom.qty')] = $val->noQty;
+                $noQtyRounded = (int) ceil($val->noQty);
+                $assetAllocatedQty = (int) ($val->assetAllocatedQty ?? 0);
+                $notCapitalizedQty = $assetAllocatedQty === 0 ? $noQtyRounded : max(0, $noQtyRounded - $assetAllocatedQty);
+                $data[$x][trans('custom.not_capitalized_quantity')] = number_format($notCapitalizedQty, 0, ".", ",");
                 $data[$x][trans('custom.amount_unit_local')] = number_format($val->landingCost_LocalCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
                 $data[$x][trans('custom.amount_unit_reporting')] = number_format($val->landingCost_RptCur, $val->localcurrency? $val->localcurrency->DecimalPlaces : '', ".", "");
 

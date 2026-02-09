@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\PurchaseReturn;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class PurchaseReturnRepository
@@ -91,7 +92,7 @@ class PurchaseReturnRepository extends BaseRepository
         },'audit_trial.modified_by'])->findWithoutFail($id);
     }
 
-    public function purchaseReturnListQuery($request, $input, $search = '', $serviceLineSystemID, $grvLocation) {
+    public function purchaseReturnListQuery($request, $input, $search = '', $serviceLineSystemID = null, $grvLocation = null) {
 
         $purchaseReturn = PurchaseReturn::where('companySystemID', $input['companyId'])
         ->where('documentSystemID', $input['documentId'])
@@ -131,6 +132,15 @@ class PurchaseReturnRepository extends BaseRepository
             if ($input['year'] && !is_null($input['year'])) {
                 $purchaseReturn->whereYear('purchaseReturnDate', '=', $input['year']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseReturn->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         $purchaseReturn = $purchaseReturn->select(
@@ -179,15 +189,15 @@ class PurchaseReturnRepository extends BaseRepository
                 $data[$x][trans('custom.doc_code')] = $val->purchaseReturnCode;
                 $data[$x][trans('custom.segment')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
                 $data[$x][trans('custom.reference_no')] = $val->purchaseReturnRefNo;
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->purchaseReturnDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->purchaseReturnDate);
                 $data[$x][trans('custom.supplier_code')] = $val->supplier_by? $val->supplier_by->primarySupplierCode : '';
                 $data[$x][trans('custom.supplier_name')] = $val->supplier_by? $val->supplier_by->supplierName : '';
                 $data[$x][trans('custom.location')] = $val->location_by? $val->location_by->wareHouseDescription : '';
                 $data[$x][trans('custom.narration')] = $val->narration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

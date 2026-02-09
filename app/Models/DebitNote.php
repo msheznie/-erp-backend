@@ -552,14 +552,14 @@ class DebitNote extends Model
 
     public function updateNetAmount($amount)
     {
-        $currencyConversionDire = \Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $amount);
+        $currencyConversionDire = Helper::currencyConversion($this->companySystemID, $this->supplierTransactionCurrencyID, $this->supplierTransactionCurrencyID, $amount);
 
         $this->netAmount = abs($amount);
-        $this->netAmountLocal =  abs(\Helper::roundValue($currencyConversionDire['localAmount']));
-        $this->netAmountRpt =  abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $this->netAmountLocal =  abs(Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->netAmountRpt =  abs(Helper::roundValue($currencyConversionDire['reportingAmount']));
         $this->debitAmountTrans = abs($amount);
-        $this->debitAmountLocal =  abs(\Helper::roundValue($currencyConversionDire['localAmount']));
-        $this->debitAmountRpt =  abs(\Helper::roundValue($currencyConversionDire['reportingAmount']));
+        $this->debitAmountLocal =  abs(Helper::roundValue($currencyConversionDire['localAmount']));
+        $this->debitAmountRpt =  abs(Helper::roundValue($currencyConversionDire['reportingAmount']));
         $this->save();
     }
 }

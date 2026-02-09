@@ -34,9 +34,11 @@ use App\Repositories\UserRepository;
 use App\Services\MaterialRequestService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\inventory as Inventory;
 
 /**
  * Class MaterielRequestDetailsController
@@ -138,7 +140,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
     {
 
 
-        $input = array_except($request->all(), 'uom_default');
+        $input = Arr::except($request->all(), 'uom_default');
         $input = $this->convertArrayToValue($input);
 
 
@@ -479,7 +481,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateMaterielRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing', 'item_by']);
         $input = $this->convertArrayToValue($input);
 
 
@@ -709,7 +711,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $data = array('companySystemID' => $companyId,
             'itemCodeSystem' => $item->itemCodeSystem,
             'wareHouseId' => $location);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $item['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
         }
 
@@ -725,7 +727,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         $data = array('companySystemID' => $companyId,
             'itemCodeSystem' => $input['itemCode'],
             'wareHouseId' => $location);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
        
         return $this->sendResponse($itemCurrentCostAndQty, trans('custom.data_retrieved_successfully'));
 

@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\MonthlyAdditionsMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class MonthlyAdditionsMasterRepository
@@ -75,10 +76,10 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
     public function monthlyAdditionsListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -100,6 +101,15 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $monthlyAdditions->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -118,7 +128,7 @@ class MonthlyAdditionsMasterRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->dateMA);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->dateMA);
                 $data[$x][trans('custom.document_code')] = $val->monthlyAdditionsCode;
                 $data[$x][trans('custom.description')] = $val->description;
                 $data[$x][trans('custom.currency')] = $val->currency_by? $val->currency_by->CurrencyCode : '';

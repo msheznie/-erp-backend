@@ -159,8 +159,8 @@ class InventoryReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -206,8 +206,8 @@ class InventoryReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -452,7 +452,7 @@ class InventoryReportAPIController extends AppBaseController
                     $companyID = "";
                     $checkIsGroup = Company::find($request->companySystemID);
                     if ($checkIsGroup->isGroup) {
-                        $companyID = \Helper::getGroupCompany($request->companySystemID);
+                        $companyID = Helper::getGroupCompany($request->companySystemID);
                     } else {
                         $companyID = (array)$request->companySystemID;
                     }
@@ -596,10 +596,10 @@ class InventoryReportAPIController extends AppBaseController
         $date = $date->format('Y-m-d');
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -859,10 +859,10 @@ class InventoryReportAPIController extends AppBaseController
         $date = $date->format('Y-m-d');
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1013,10 +1013,10 @@ FROM
         $date = $date->format('Y-m-d');
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1359,7 +1359,7 @@ FROM
                     $companyID = "";
                     $checkIsGroup = Company::find($request->companySystemID);
                     if ($checkIsGroup->isGroup) {
-                        $companyID = \Helper::getGroupCompany($request->companySystemID);
+                        $companyID = Helper::getGroupCompany($request->companySystemID);
                     } else {
                         $companyID = (array)$request->companySystemID;
                     }
@@ -1438,7 +1438,7 @@ FROM
                             $x++;
                             $data[$x][trans('custom.doc_id')] = $val->documentID;
                             $data[$x][trans('custom.document_code')] = $val->documentCode;
-                            $data[$x][trans('custom.trans_date')] = \Helper::dateFormat($val->transactionDate);
+                            $data[$x][trans('custom.trans_date')] = Helper::dateFormat($val->transactionDate);
                             $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                             $data[$x][trans('custom.warehouse')] = $val->wareHouseDescription;
                             $data[$x][trans('custom.ref_number')] = $val->referenceNumber;
@@ -1970,7 +1970,7 @@ FROM
         $toDate = $toDate->format('d/m/Y');
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         $fastMovingFrom = isset($input['fastMovingFrom'])?$input['fastMovingFrom']:0;
         $fastMovingTo= isset($input['fastMovingTo'])?$input['fastMovingTo']:0;
@@ -1979,7 +1979,7 @@ FROM
         $nonMoving = isset($input['nonMoving'])?$input['nonMoving']:0;
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

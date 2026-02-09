@@ -21,9 +21,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceTrackingController
@@ -339,7 +340,7 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'companyFinancePeriodID','customerID','contractUID','serviceLineSystemID','approvalType'));
-        $input = array_except($input,['detail','customer','finance_period_by','finance_year_by']);
+        $input = Arr::except($input,['detail','customer','finance_period_by','finance_year_by']);
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -833,9 +834,9 @@ class CustomerInvoiceTrackingAPIController extends AppBaseController
                 $data[$x]['Rig'] = $value->rigNo;
                 $data[$x]['WellNo'] = $value->wellNo;
                 $data[$x]['Booking Inv Code'] = $value->bookingInvCode;
-                $data[$x]['Customer Invoice Date'] = \Helper::dateFormat($value->bookingDate);
-                $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
-                $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?\Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
+                $data[$x]['Customer Invoice Date'] = Helper::dateFormat($value->bookingDate);
+                $data[$x]['Rental Start Date'] = isset($value->customer_invoice_direct->serviceStartDate)?Helper::dateFormat($value->customer_invoice_direct->serviceStartDate):'';
+                $data[$x]['Rental End Date'] = isset($value->customer_invoice_direct->serviceEndDate)?Helper::dateFormat($value->customer_invoice_direct->serviceEndDate):'';
                 $data[$x]['Month Service Formation'] = $value->servicePeriod;
                 $data[$x]['Amount ('.$companyRptCurrency.')'] = number_format($value->amount, 2);
                 $data[$x]['Description'] = isset($value->master->approval_type->description)?$value->master->approval_type->description:'';

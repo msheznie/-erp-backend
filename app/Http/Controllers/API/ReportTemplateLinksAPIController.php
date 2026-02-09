@@ -24,12 +24,14 @@ use App\Models\ReportTemplateLinks;
 use App\Repositories\ReportTemplateLinksRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ChartOfAccountDependency;
 use Illuminate\Support\Facades\DB;
 use App\Models\BudgetMaster;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateLinksController
@@ -178,8 +180,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                             }
                         }
                         $data['createdPCID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserID'] = Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                     }
                 }
@@ -298,7 +300,7 @@ class ReportTemplateLinksAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateLinksAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'Actions', 'DT_Row_Index']);
+        $input = Arr::except($input, ['subcategory', 'Actions', 'DT_Row_Index']);
         $input = $this->convertArrayToValue($input);
         /** @var ReportTemplateLinks $reportTemplateLinks */
         $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
@@ -411,8 +413,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
             }
@@ -499,8 +501,8 @@ class ReportTemplateLinksAPIController extends AppBaseController
                         }
                     }
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateLinks = $this->reportTemplateLinksRepository->create($data);
                 }
             }

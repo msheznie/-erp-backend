@@ -17,7 +17,7 @@ use Carbon\Carbon;
 use Cassandra\Time;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
@@ -186,14 +186,20 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         /** @var DepartmentBudgetPlanning $departmentBudgetPlanning */
         $departmentBudgetPlanning = $this->departmentBudgetPlanningRepository->with(['masterBudgetPlannings.workflow', 'department.hod.employee','delegateAccess','confirmedBy','revisions'])->findWithoutFail($id);
 
-        $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
 
-        $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
-        if (empty($departmentBudgetPlanning)) {
-            return $this->sendError(trans('custom.department_budget_planning_not_found'));
+        if($departmentBudgetPlanning)
+        {
+
+            $submissionEndDate = Carbon::parse($departmentBudgetPlanning->submissionDate)->endOfDay();
+
+            $departmentBudgetPlanning['isActiveToSubmit'] = !Carbon::parse($submissionEndDate)->lessThan(Carbon::today());
         }
 
-        return $this->sendResponse($departmentBudgetPlanning->toArray(), trans('custom.department_budget_planning_retrieved_successfully'));
+        // if (empty($departmentBudgetPlanning)) {
+        //     return $this->sendError(trans('custom.department_budget_planning_not_found'));
+        // }
+
+        return $this->sendResponse($departmentBudgetPlanning, trans('custom.department_budget_planning_retrieved_successfully'));
     }
 
     /**
@@ -388,9 +394,21 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             if($input['confirmed_yn'] == 0) {
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->confirmed_yn == 1){
+                    return $this->sendError('Company Budget Planning is already confirmed, you cannot reopen department budget planning');
+                }
+
+                if($departmentBudgetPlanning->masterBudgetPlannings->approved_yn == 1){
+                    return $this->sendError('Company Budget Planning is already approved, you cannot reopen department budget planning');
+                }
+
+
                 $departmentBudgetPlanning->confirmed_yn = 0;
                 $departmentBudgetPlanning->confirmed_by = null;
                 $departmentBudgetPlanning->confirmed_at = null;
+                $departmentBudgetPlanning->workStatus = 2;
+                $departmentBudgetPlanning->financeTeamStatus = 1;
                 $departmentBudgetPlanning->save();
                 return $this->sendResponse($departmentBudgetPlanning->toArray(), 'Department Budget Planning reopened successfully');
             }
@@ -738,7 +756,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     // Validate file size using same limit as DocumentAttachmentsAPIController
                     if (isset($attachment['fileSize'])) {
                         if ($attachment['fileSize'] > env('ATTACH_UPLOAD_SIZE_LIMIT', 10485760)) { // 10MB default
-                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . \Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                            return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than " . Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                         }
                     }
 
@@ -775,14 +793,14 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
                     $planningCode = $budgetPlanning->masterBudgetPlannings->planningCode ?? 'DEFAULT';
 
                     // Use Helper::checkPolicy and Helper::policyWiseDisk like DocumentAttachmentsAPIController
-                    if (\Helper::checkPolicy($companySystemID, 50)) {
+                    if (Helper::checkPolicy($companySystemID, 50)) {
                         $filePath = $companyId . '/G_ERP/TIME_EXT/' . $planningCode . '/' . $timeRequest->request_code . '/' . $fileName;
                     } else {
                         $filePath = 'TIME_EXT/' . $planningCode . '/' . $timeRequest->request_code . '/' . $fileName;
                     }
 
                     // Store the file using policy-wise disk (S3 or local based on company policy)
-                    $disk = \Helper::policyWiseDisk($companySystemID, 'public');
+                    $disk = Helper::policyWiseDisk($companySystemID, 'public');
                      \Storage::disk($disk)->put($filePath, $decodedFile);
 
                     // Update attachment record with file details
@@ -1059,7 +1077,7 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $companySystemID = $timeRequest->departmentBudgetPlanning->masterBudgetPlannings->companySystemID ?? 1;
 
             // Determine disk based on company policy
-            $disk = \Helper::policyWiseDisk($companySystemID, 'public');
+            $disk = Helper::policyWiseDisk($companySystemID, 'public');
 
             // Check if file exists
             if (!\Storage::disk($disk)->exists($attachment->file_path)) {

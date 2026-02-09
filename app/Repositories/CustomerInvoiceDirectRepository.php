@@ -6,10 +6,15 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\MatchDocumentMaster;
 use App\Models\CustomerInvoiceDirect;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Repositories\BaseRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\helper\StatusService;
+use App\helper\Helper;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 /**
  * Class CustomerInvoiceDirectRepository
@@ -221,7 +226,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         return $customerInvoiceDirect;
     }
 
-    public function customerInvoiceListQuery($request, $input, $search = '', $customerID) {
+    public function customerInvoiceListQuery($request, $input, $search = '', $customerID = null) {
 
         $invMaster = DB::table('erp_custinvoicedirect')
         ->leftJoin('currencymaster as TransactionCurrency', 'erp_custinvoicedirect.custTransactionCurrencyID', '=', 'TransactionCurrency.currencyID')
@@ -394,11 +399,11 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.invoice_code')] = $val->bookingInvCode;
-                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->approvedDate);
                 $data[$x][trans('custom.invoice_type')] = StatusService::getCustomerInvoiceType($val->isPerforma);
                 $data[$x][trans('custom.customer')] = $val->CustomerName;
                 $data[$x][trans('custom.invoice')] = $val->customerInvoiceNo;
-                $data[$x][trans('custom.invoice_date')] = \Helper::dateFormat($val->customerInvoiceDate);
+                $data[$x][trans('custom.invoice_date')] = Helper::dateFormat($val->customerInvoiceDate);
                 $data[$x][trans('custom.comments')] = $val->comments;
                 $data[$x][trans('custom.created_by')] = $val->empName;
                 $data[$x][trans('custom.transaction_currency')] = $val->CurrencyCode;
@@ -472,12 +477,76 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                     $temp = "<p>Dear " . $value->customer->CustomerName . ',</p><p>This is a kind reminder of outstanding payment on invoice ' . $value->documentCode . " of Amount ".$value->transaction_currency->CurrencyCode." ".number_format($remainingAmount, $value->transaction_currency->DecimalPlaces).".</p> <p>The Due date of payment is ".Carbon::parse($value->customer_invoice->invoiceDueDate)->format('Y-m-d').". Kindly note that the due date is approaching in 3 Days.</p><p>Please ignore if already paid.</p><br><p>Regards,</p><p>".$value->customer_invoice->company->CompanyName;
                     $dataEmail['alertMessage'] = "Invoice ".$value->documentCode." overdue notification";
                     $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                 }
             }
         }
 
         return ['status' => true];
+    }
+
+    /**
+     * Apply master document exchange rates to all detail items
+     *
+     * @param int $id Master document ID (custInvoiceDirectAutoID)
+     * @return bool Success status
+     */
+    public function applyMasterExchangeRatesToDetails($id)
+    {
+        try {
+            $masterDocument = $this->find($id);
+
+            if (!$masterDocument) {
+                return false;
+            }
+
+            $localCurrencyER = $masterDocument->localCurrencyER ?? 1;
+            $companyReportingER = $masterDocument->companyReportingER ?? 1;
+
+            $isPerforma = $masterDocument->isPerforma;
+
+            // Apply to direct invoices (isPerforma == 0) and item sales invoices (isPerforma == 2)
+            if ($isPerforma == 0) {
+                // Direct invoices - use CustomerInvoiceDirectDetail
+                $details = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
+
+                foreach ($details as $item) {
+                    $localAmount = Helper::roundValue($item->invoiceAmount / $localCurrencyER);
+                    $comRptAmount = Helper::roundValue($item->invoiceAmount / $companyReportingER);
+                    $VATAmountLocal = Helper::roundValue($item->VATAmount / $localCurrencyER);
+                    $VATAmountRpt = Helper::roundValue($item->VATAmount / $companyReportingER);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'comRptCurrencyER' => $companyReportingER,
+                        'localAmount' => $localAmount,
+                        'comRptAmount' => $comRptAmount,
+                        'VATAmountLocal' => $VATAmountLocal,
+                        'VATAmountRpt' => $VATAmountRpt
+                    ]);
+                }
+            } else if ($isPerforma == 2) {
+                // Item Sales Invoice - use CustomerInvoiceItemDetails
+                $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
+
+                foreach ($details as $item) {
+                    $sellingCostAfterMarginLocal = Helper::roundValue($item->sellingCostAfterMargin / $localCurrencyER);
+                    $sellingCostAfterMarginRpt = Helper::roundValue($item->sellingCostAfterMargin / $companyReportingER);
+
+                    $item->update([
+                        'localCurrencyER' => $localCurrencyER,
+                        'reportingCurrencyER' => $companyReportingER,
+                        'sellingCostAfterMarginLocal' => $sellingCostAfterMarginLocal,
+                        'sellingCostAfterMarginRpt' => $sellingCostAfterMarginRpt,
+                    ]);
+                }
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Error applying master exchange rates to details: ' . $e->getMessage());
+            return false;
+        }
     }
 
 }

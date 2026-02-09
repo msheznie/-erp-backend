@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FinalReturnIncomeTemplate;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateFinalReturnIncomeTemplateAPIRequest extends APIRequest
+class CreateFinalReturnIncomeTemplateAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

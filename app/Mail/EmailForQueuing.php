@@ -66,8 +66,6 @@ class EmailForQueuing extends Mailable implements ShouldQueue
                             ],
                         ],
                     ]);
-        Log::info('mailAttachment path');
-        Log::info($this->mailAttachment);
         if($this->mailAttachmentList && is_array($this->mailAttachmentList)) {
             foreach ($this->mailAttachmentList as  $key => $attachment) {
                 $mail->attach($attachment, array('as' => $key));

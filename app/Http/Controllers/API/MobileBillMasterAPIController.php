@@ -30,9 +30,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class MobileBillMasterController
@@ -273,7 +274,7 @@ class MobileBillMasterAPIController extends AppBaseController
     public function update($id, UpdateMobileBillMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['detail','employee_mobile','summary','confirmed_by']);
+        $input = Arr::except($input,['detail','employee_mobile','summary','confirmed_by']);
         $input = $this->convertArrayToValue($input);
         $messages = [
             'billPeriod.unique' => 'The Bill period is already taken.'

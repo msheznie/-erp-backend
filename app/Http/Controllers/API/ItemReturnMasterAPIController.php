@@ -45,10 +45,13 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ItemReturnMasterController
@@ -150,19 +153,19 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCid'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -358,7 +361,7 @@ class ItemReturnMasterAPIController extends AppBaseController
     public function update($id, UpdateItemReturnMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName','segment_by','warehouse_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'finance_period_by', 'finance_year_by']);
 
         $input = $this->convertArrayToValue($input);
@@ -418,7 +421,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         if ($itemReturnMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
@@ -431,7 +434,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -538,13 +541,13 @@ class ItemReturnMasterAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -697,7 +700,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $contracts = "";
 
@@ -738,7 +741,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
-        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
+        $materielReturn->docRefNo = Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
 
         return $this->sendResponse($materielReturn->toArray(), trans('custom.materiel_return_retrieved_successfully'));
     }
@@ -752,7 +755,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_return_not_found_1'));
         }
 
-        $materielReturn->docRefNo = \Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
+        $materielReturn->docRefNo = Helper::getCompanyDocRefNo($materielReturn->companySystemID, $materielReturn->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $materielReturn);
         $time = strtotime("now");
@@ -789,7 +792,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $itemReturnMaster = DB::table('erp_documentapproved')
@@ -872,7 +875,7 @@ class ItemReturnMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $itemReturnMaster = [];
@@ -915,7 +918,7 @@ class ItemReturnMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $itemReturnMaster = DB::table('erp_documentapproved')
@@ -1018,7 +1021,7 @@ class ItemReturnMasterAPIController extends AppBaseController
 
         $this->itemReturnMasterRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $itemReturnMaster->documentSystemID)->first();
 
@@ -1069,7 +1072,7 @@ class ItemReturnMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

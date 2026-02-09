@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ExpenseEmployeeAllocation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateExpenseEmployeeAllocationAPIRequest extends APIRequest
+class CreateExpenseEmployeeAllocationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

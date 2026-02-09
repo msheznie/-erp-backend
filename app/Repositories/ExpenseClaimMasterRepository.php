@@ -3,7 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\ExpenseClaimMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class ExpenseClaimMasterRepository
@@ -78,10 +79,10 @@ class ExpenseClaimMasterRepository extends BaseRepository
     public function expenseClaimMasterListQuery($request, $input, $search = '') {
         
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -105,6 +106,15 @@ class ExpenseClaimMasterRepository extends BaseRepository
             if (($input['glCodeAssignedYN'] == 0 || $input['glCodeAssignedYN'] == -1) && !is_null($input['glCodeAssignedYN'])) {
                 $expenseClaims = $expenseClaims->where('glCodeAssignedYN', '=', $input['glCodeAssignedYN']);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $expenseClaims->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
 

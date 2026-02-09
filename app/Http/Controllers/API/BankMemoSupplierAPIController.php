@@ -24,11 +24,12 @@ use App\Models\SupplierCurrency;
 use App\Repositories\BankMemoSupplierRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BankMemoSupplierController
@@ -149,7 +150,7 @@ class BankMemoSupplierAPIController extends AppBaseController
         $companyDefaultBankMemos = $request->get('memos');
         $createdArray = array();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         foreach ($companyDefaultBankMemos as $value) {
             if($value['isChecked']){
                 $temBankMemo = new BankMemoSupplier();

@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\MaterielRequest;
 use App\Models\MrBulkUploadErrorLog;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class MrBulkUploadErrorLogRepository

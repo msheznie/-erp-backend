@@ -8,8 +8,9 @@
 
 namespace App\Http\Controllers;
 use Illuminate\Routing\Controller as BaseController;
-use InfyOm\Generator\Utils\ResponseUtil;
+use App\Utils\ResponseUtil;
 use Response;
+use App\helper\Helper;
 
 
 class AppBaseController extends BaseController
@@ -38,14 +39,15 @@ class AppBaseController extends BaseController
         return Response::json($res, $code);
     }
 
-    public function sendReponseWithDetails($data,$message,$type,$detail)
+    public function sendReponseWithDetails($data,$message,$type,$detail,$additionalData = null)
     {
         $res = [
             'success' => true,
             'data' => $data,
             'message' => $message,
             'type' => 1,
-            'detail' => $detail
+            'detail' => $detail,
+            'additionalData' => $additionalData
         ];
 
         return Response::json($res);

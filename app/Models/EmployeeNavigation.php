@@ -34,7 +34,6 @@ class EmployeeNavigation extends Model
     const UPDATED_AT = 'timestamp';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -56,7 +55,8 @@ class EmployeeNavigation extends Model
         'empID' => 'string',
         'employeeSystemID' => 'integer',
         'userGroupID' => 'integer',
-        'companyID' => 'integer'
+        'companyID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -23,14 +23,21 @@ class DeptBudgetPlanningTimeRequest extends Model
         'updated_by'
     ];
 
-    protected $dates = [
-        'current_submission_date',
-        'new_time',
-        'date_of_request',
-        'reviewed_at',
-        'created_at',
-        'updated_at'
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'current_submission_date' => 'datetime',
+        'new_time' => 'datetime',
+        'date_of_request' => 'datetime',
+        'reviewed_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+
 
     /**
      * Get the department budget planning that owns the time request.
