@@ -83,6 +83,8 @@ class UserAuthorization
             'api/v1/getCustomWidgetGraphData',
             'api/v1/getAllApprovalDocuments',
             'api/v1/getAllcompaniesByDepartment',
+            'api/v1/getAllNotifications',
+            'api/v1/logoutApiUser',
         ];
     }
 }
