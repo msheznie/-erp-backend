@@ -959,7 +959,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Company Budget Planning not found');
         }
 
-        // Load all department budget plannings with relationships
+        // Load all department budget plannings with relationships (only departments where type = 2)
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.companyDepartmentSegments.segment',
             'financeYear',
@@ -967,6 +967,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         ])
         ->where('companyBudgetPlanningID', $budgetPlanningId)
         ->where('confirmed_yn', 1) // Only confirmed budgets
+        ->whereHas('department', function($query) {
+            $query->where('type', 2);
+        })
         ->get();
 
         // Build flat list with segment info included in each departmentBudgetPlanning
@@ -981,6 +984,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             
             // Get all segments for this department
             $departmentSegments = $department->companyDepartmentSegments;
+            
             
             if ($departmentSegments && $departmentSegments->count() > 0) {
                 // If department has multiple segments, create one record per segment
