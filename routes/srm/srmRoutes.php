@@ -211,6 +211,8 @@ Route::post('getEvalCompletedTenderList', 'TenderMasterAPIController@getEvalComp
 Route::post('getTechnicalRanking', 'TenderMasterAPIController@getTechnicalRanking')->name("Get technical ranking");
 Route::post('getCommercialRanking', 'TenderMasterAPIController@getCommercialRanking')->name("Get commercial ranking");
 Route::post('getBidItemSelection', 'TenderMasterAPIController@getBidItemSelection')->name("Get bid item selection");
+/*Route::post('getItemWiseAwardingData', 'TenderMasterAPIController@getItemWiseAwardingData')->name("Get item wise awarding data");
+Route::post('confirmItemWiseCombinedRanking', 'TenderMasterAPIController@confirmItemWiseCombinedRanking')->name("Confirm item wise combined ranking");*/
 Route::post('updateBidLineItem', 'TenderMasterAPIController@updateBidLineItem')->name("Update bid line item");
 Route::post('confirmCommBidLineItem', 'TenderMasterAPIController@confirmCommBidLineItem')->name("Confirm commercial bid line item");
 Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCommercial')->name("Confirm final commercial");
