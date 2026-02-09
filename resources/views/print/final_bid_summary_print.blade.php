@@ -332,6 +332,26 @@
     </tbody>
 </table>
     <br/>
+@if (!empty($itemWiseSummary))
+<table style="width:100%" class="bit-tender-summary-report table-bordered">
+    <tr>
+        <td style="text-align: center;"><strong>Sr. No</strong></td>
+        <td style="text-align: center;"><strong>Item Description</strong></td>
+        <td style="text-align: center;"><strong>Supplier Name</strong></td>
+        <td style="text-align: center;"><strong>Price</strong></td>
+    </tr>
+    <tbody>
+    @foreach ($itemWiseSummary as $row)
+        <tr>
+            <td style="text-align: center;">{{ $loop->index+1 }}</td>
+            <td>{{ $row->item_description }}</td>
+            <td>{{ $row->supplier_name }}</td>
+            <td style="text-align: right;">{{ $row->bid_amount != null ? number_format($row->bid_amount, 3) : '-' }}</td>
+        </tr>
+    @endforeach
+    </tbody>
+</table>
+@else
 <table style="width:100%" class="bit-tender-summary-report">
     <tr>
         <td style="text-align: center;"><strong>Sr. No</strong></td>
@@ -368,4 +388,5 @@
     @endforeach
     </tbody>
 </table>
+@endif
 </div>
