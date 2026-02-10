@@ -208,7 +208,7 @@ class BudgetNotificationService
 
    private function sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions','delegateAccess.employee')->find($departmentBudgetPlanningID);
 
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
 
@@ -550,8 +550,9 @@ class BudgetNotificationService
                 'docSystemCode' => $departmentBudgetPlanningID
             );
     
-            \Email::sendEmail($emails);
         }
+
+        \Email::sendEmail($emails);
    }
 
 
