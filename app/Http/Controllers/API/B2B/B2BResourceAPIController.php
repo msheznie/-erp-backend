@@ -266,11 +266,11 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'AG' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00,
+            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'AG' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
         ];
 
 

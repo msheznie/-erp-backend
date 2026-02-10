@@ -850,17 +850,15 @@ class BudgetMasterAPIController extends AppBaseController
 
         $templateName = "export_report.budget_summary_gl_code_wise";
 
-        \Excel::create('finance', function ($excel) use ($data, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function budgetGLCodeWiseDetails(Request $request)
@@ -2628,17 +2626,15 @@ class BudgetMasterAPIController extends AppBaseController
         $result = $this->budgetGLCodeWiseDetailsData($input);
         $templateName = "export_report.budget_summary_details";
 
-        \Excel::create('finance', function ($excel) use ($result, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($result, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
 
@@ -2826,17 +2822,15 @@ class BudgetMasterAPIController extends AppBaseController
 
         $templateName = "export_report.budget_summary_category_wise";
 
-        \Excel::create('finance', function ($excel) use ($data, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function getGlCodeWiseCommitedBudgetAmount($data, $glIds, $DLBCPolicy)
@@ -4352,12 +4346,11 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData['reportData'] = $glCOdesSorted->values()->all();
         $reportData['monthArray'] = $monthArray;
 
-        return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
-                     $excel->sheet(trans('custom.new_sheet'), function($sheet) use ($reportData) {
-                        $sheet->loadView('export_report.budget_upload_template', $reportData);
-                        
-                    });
-                })->download('xlsx');
+        return \App\Exports\CreateExcelExport::download('upload_budget_template', function ($excel) use ($reportData) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+                $sheet->loadView('export_report.budget_upload_template', $reportData);
+            });
+        }, 'xlsx');
 
     }
 

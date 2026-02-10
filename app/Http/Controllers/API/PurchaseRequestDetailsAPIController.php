@@ -1456,19 +1456,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             );
         }
 
-        \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('purchaseRequestHistory', function ($excel) use ($data) {
             $excel->sheet(trans('custom.purchaseRequestHistory'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse($csv, trans('custom.success_export'));
     }

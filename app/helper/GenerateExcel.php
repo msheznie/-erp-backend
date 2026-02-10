@@ -10,7 +10,7 @@ class GenerateExcel
     {
         
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
-        $excel_content =  \Excel::create($fileName, function ($excel) use ($data,$fileName,$array,$columnFormat) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($data, $fileName, $array, $columnFormat) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -285,8 +285,7 @@ class GenerateExcel
             }
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-        })->download($type);
-
+        }, $type);
     }
 
     public static function fromDate($array,$sheet,$type)

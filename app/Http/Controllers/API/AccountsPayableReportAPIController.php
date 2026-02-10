@@ -1458,9 +1458,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $path = 'accounts-payable/report/supplier_ledger/excel/';
 
                     $excelColumnFormat = [
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'B' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
@@ -1509,7 +1509,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $title = trans('custom.supplier_balance_summary');
                     $path = 'accounts-payable/report/supplier_balance_summary/excel/';
                     $excelColumnFormat = [
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     $exportToExcel = $exportReportToExcelService
                         ->setTitle($title)

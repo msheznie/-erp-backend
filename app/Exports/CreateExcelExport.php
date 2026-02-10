@@ -67,6 +67,34 @@ class CreateExcelExport
                 return new Xlsx($spreadsheet);
         }
     }
+
+    /**
+     * Build spreadsheet via legacy callback and return a download response.
+     * Use this instead of \Excel::create($fileName, $callback)->download($type).
+     *
+     * @param  string  $fileName  Base filename without extension
+     * @param  callable  $callback  Receives ExcelWrapper, e.g. function ($excel) { $excel->sheet('Sheet', function ($sheet) { ... }); }
+     * @param  string  $writerType  'xlsx', 'xls', or 'csv'
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public static function download(string $fileName, callable $callback, string $writerType = 'xlsx'): \Symfony\Component\HttpFoundation\Response
+    {
+        $export = new self($callback, $writerType);
+        $content = $export->getContent();
+        $ext = strtolower($writerType);
+        $mimeTypes = [
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls' => 'application/vnd.ms-excel',
+            'csv' => 'text/csv',
+        ];
+        $mime = $mimeTypes[$ext] ?? $mimeTypes['xlsx'];
+        $downloadName = $fileName . '.' . $ext;
+
+        return response($content, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment; filename="' . $downloadName . '"',
+        ]);
+    }
 }
 
 /**
@@ -75,7 +103,8 @@ class CreateExcelExport
 class ExcelWrapper
 {
     protected $spreadsheet;
-    protected $sheets = [];
+
+    protected int $sheetIndex = 0;
 
     public function __construct(Spreadsheet $spreadsheet)
     {
@@ -84,14 +113,16 @@ class ExcelWrapper
 
     public function sheet($name, callable $callback)
     {
-        $sheet = $this->spreadsheet->getActiveSheet();
-        if ($name !== $sheet->getTitle()) {
-            $sheet->setTitle($name);
+        if ($this->sheetIndex > 0) {
+            $this->spreadsheet->createSheet();
         }
-        
+        $sheet = $this->spreadsheet->getActiveSheet();
+        $sheet->setTitle($name);
+        $this->sheetIndex++;
+
         $sheetWrapper = new SheetWrapper($sheet);
         call_user_func($callback, $sheetWrapper);
-        
+
         return $this;
     }
 
@@ -108,9 +139,27 @@ class SheetWrapper
 {
     protected $worksheet;
 
+    /** @var array{view: string, data: array}|null Last loadView args for chainable with() */
+    protected $lastLoadView = null;
+
     public function __construct(Worksheet $worksheet)
     {
         $this->worksheet = $worksheet;
+    }
+
+    /**
+     * Chainable: merge extra data and re-load the last view. Supports with('key', $value) or with(['k' => 'v']).
+     */
+    public function with($key, $value = null)
+    {
+        $extra = is_array($key) ? $key : [$key => $value];
+        if ($this->lastLoadView !== null) {
+            $merged = array_merge($this->lastLoadView['data'], $extra);
+
+            return $this->loadView($this->lastLoadView['view'], $merged);
+        }
+
+        return $this;
     }
 
     public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $hasHeaderRow = true)
@@ -236,6 +285,7 @@ class SheetWrapper
 
     public function loadView($view, $data = [])
     {
+        $this->lastLoadView = ['view' => $view, 'data' => $data];
         $html = view($view, $data)->render();
         
         // Use PhpSpreadsheet's HTML reader to import the HTML
@@ -269,7 +319,7 @@ class SheetWrapper
             // This is not ideal but prevents errors
             $this->worksheet->setCellValue('A1', strip_tags($html));
         }
-        
+
         return $this;
     }
 

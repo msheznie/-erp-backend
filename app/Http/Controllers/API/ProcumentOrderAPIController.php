@@ -3396,15 +3396,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -3412,9 +3408,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.successfully_export'));
+        }, $type);
     }
 
     /**
@@ -4149,15 +4143,11 @@ WHERE
         }
 
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -4165,7 +4155,7 @@ WHERE
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        }, $type);
     }
 
     /**

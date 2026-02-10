@@ -702,20 +702,15 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
 
-        \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
-
-//        return $this->sendResponse(array(), trans('custom.success_export'));
-       return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+        }, 'xlsx');
 
     }
 

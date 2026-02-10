@@ -1095,28 +1095,19 @@ class PaymentBankTransferAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = trans('custom.payment_bank_transfer_prefix') . $input['paymentBankTransferID'] . '_' . $time;
 
-         Excel::create($fileName, function ($excel) use ($data,$columnArray) {
-            $excel->sheet(trans('custom.firstsheet'), function ($sheet) use ($data,$columnArray) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($data, $columnArray) {
+            $excel->sheet(trans('custom.firstsheet'), function ($sheet) use ($data, $columnArray) {
                 $sheet->setColumnFormat($columnArray);
                 $sheet->fromArray($data, null, 'A1', true);
-                // $sheet->setAutoSize(true);
-                //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-
                 if (app()->getLocale() == 'ar') {
                     $sheet->setRightToLeft(true);
                     $sheet->getStyle('A1:Z1000')
-                          ->getAlignment()
-                          ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        ->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                 }
-
-                //$sheet->setWidth('A', 50);
             });
-            //$lastrow = $excel->getActiveSheet()->getHighestRow();
-            //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('xls');
-
-        return $this->sendResponse([], trans('custom.payment_bank_transfer_export_to_csv_successfully'));
+        }, 'xls');
     }
 
     public function paymentBankTransferReopen(Request $request)

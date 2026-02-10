@@ -3065,13 +3065,11 @@ class CustomUserReportsAPIController extends AppBaseController
             }
 
 
-            \Excel::create('custom_report', function ($excel) use ($data) {
+            return \App\Exports\CreateExcelExport::download('custom_report', function ($excel) use ($data) {
                 $excel->sheet('sheet name', function ($sheet) use ($data) {
                     $sheet->fromArray($data, null, 'A1', true);
                     $sheet->setAutoSize(true);
                     $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -3079,7 +3077,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 });
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download('xls');
+            }, 'xls');
         }
         return $this->sendError(trans('custom.no_records_found'), 500);
     }
