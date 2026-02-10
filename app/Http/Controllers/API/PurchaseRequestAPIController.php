@@ -2770,11 +2770,8 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError($validator->messages(),422);
         }
 
-        $query = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
-        $recordsTotal = $query->count();
-        
-        $purchaseRequests = $query->get();
-        $purchaseRequests = $this->filterPurchaseRequest($purchaseRequests);
+        $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
+        $recordsTotal = $purchaseRequests->count();
 
         $purchaseRequests = collect($purchaseRequests);
         $response = \DataTables::collection($purchaseRequests)
@@ -3677,9 +3674,16 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.approvedDate',
             ]);
 
-          
-       
+            $purchaseRequests = $purchaseRequests->get();
 
+            if (isset($input['reportType']) && $input['reportType'] == 2) {
+                return $this->filterPurchaseRequest($purchaseRequests);
+            }
+
+            foreach ($purchaseRequests as $pr) {
+                $pr->setRelation('details', collect([]));
+            }
+            
             return $purchaseRequests;
     }
 
