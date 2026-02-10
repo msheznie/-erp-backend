@@ -275,8 +275,8 @@ Route::group([], function(){
     Route::resource('final_return_income_reports', 'FinalReturnIncomeReportsAPIController');
     Route::resource('final_return_income_rd', 'FinalReturnIncomeReportDetailsAPIController');
     Route::resource('final_return_income_rdv', 'FinalReturnIncomeReportDetailValuesAPIController');
-    Route::post('getReportList', 'FinalReturnIncomeReportsAPIController@getReportList');
-    Route::get('getFinalIncomeReportFormData', 'FinalReturnIncomeReportsAPIController@getFormData');
+    Route::post('getReportList', 'FinalReturnIncomeReportsAPIController@getReportList')->name('Get report list');
+    Route::get('getFinalIncomeReportFormData', 'FinalReturnIncomeReportsAPIController@getFormData')->name('Get final income report form data');
     Route::post('checkYearExists', 'FinalReturnIncomeReportsAPIController@checkYearExists');
     Route::get('incomeReportDetails/{id}', 'FinalReturnIncomeReportsAPIController@getIncomeReportDetails');
     Route::post('confirmReturnIncomeReport', 'FinalReturnIncomeReportsAPIController@confirmReturnIncomeReport');
