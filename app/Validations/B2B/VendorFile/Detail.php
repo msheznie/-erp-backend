@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Validations\B2B\VendorFile;
+
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 
 class Detail
@@ -19,7 +21,7 @@ class Detail
 
         foreach ($this->data as $dt)
         {
-            $errorArray = !empty($this->validateDetailData($dt)) ? array_flatten($this->validateDetailData($dt)) : [];
+            $errorArray = !empty($this->validateDetailData($dt)) ? Arr::flatten($this->validateDetailData($dt)) : [];
             $this->validaitons[] = (count($errorArray) != 0) ? ['key' => $dt['payment_voucher_code'], 'errors' => $errorArray, 'errorCount' => count($errorArray)] : [] ;
         }
     }
