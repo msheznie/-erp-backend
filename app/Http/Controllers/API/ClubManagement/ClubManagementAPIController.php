@@ -42,6 +42,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 class ClubManagementAPIController extends AppBaseController
 {
@@ -667,7 +668,7 @@ class ClubManagementAPIController extends AppBaseController
             'isCustomerActive'
         ];
 
-        $data = array_only($input,$inputParameterArray);
+        $data = Arr::only($input,$inputParameterArray);
 
         $customerMaster = CustomerMaster::find($input['customerCodeSystem'],$inputParameterArray);
 

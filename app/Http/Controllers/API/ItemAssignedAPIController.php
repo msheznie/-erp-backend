@@ -197,7 +197,7 @@ class ItemAssignedAPIController extends AppBaseController
             $rules = ['sellingCost' => 'required|numeric|min:0.001'];
         }
 
-        $updateColumns = array_only($input, $updateColumns);
+        $updateColumns = Arr::only($input, $updateColumns);
 
         $validator = \Validator::make($updateColumns, $rules);
         if ($validator->fails()) {

@@ -31,6 +31,7 @@ use App\Models\ItemSerial;
 use App\Models\ErpItemLedger;
 use App\helper\Helper;
 use App\helper\inventory as Inventory;
+use Illuminate\Support\Arr;
 
 /**
  * Class WarehouseItemsController
@@ -259,7 +260,7 @@ class WarehouseItemsAPIController extends AppBaseController
         }
         else
         {
-            $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
+            $warehouseItems = $this->warehouseItemsRepository->update(Arr::only($input, ['binNumber']), $id);
         }
         return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouseitems_updated_successfully'));
     }

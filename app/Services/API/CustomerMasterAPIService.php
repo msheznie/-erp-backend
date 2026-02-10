@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentConfirm;
+use Illuminate\Support\Arr;
 
 class CustomerMasterAPIService
 {
@@ -292,13 +293,13 @@ class CustomerMasterAPIService
                     $previousValue = $customerMaster->toArray();
                     $newValue = $input;
 
-                    $updateResult = CustomerMaster::where('customerCodeSystem',$customerId)->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
+                    $updateResult = CustomerMaster::where('customerCodeSystem',$customerId)->update(Arr::only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(Arr::only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
 
                     if($updateResult){
                         $customerMaster = CustomerMaster::where('customerCodeSystem',$customerId)->first();
-                        $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
-                        $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
+                        $old_array = Arr::only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
+                        $modified_array = Arr::only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
 
                         foreach ($old_array as $key => $old){
                             if($old != $modified_array[$key]){

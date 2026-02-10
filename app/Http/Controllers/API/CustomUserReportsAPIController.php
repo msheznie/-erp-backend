@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomUserReportsController
@@ -331,7 +332,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 }
             }
 
-            $customUserReports = $this->customUserReportsRepository->update(array_only($input, ['name', 'is_private']), $id);
+            $customUserReports = $this->customUserReportsRepository->update(Arr::only($input, ['name', 'is_private']), $id);
 
             DB::commit();
             return $this->sendResponse($customUserReports->toArray(), trans('custom.update', ['attribute' => trans('custom.custom_report')]));

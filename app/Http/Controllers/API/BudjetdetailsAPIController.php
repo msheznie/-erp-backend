@@ -278,7 +278,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
         }
 
-        $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
+        $budjetdetails = $this->budjetdetailsRepository->update(Arr::only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
 
         return $this->sendResponse($budjetdetails->toArray(), trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
     }
@@ -742,7 +742,7 @@ class BudjetdetailsAPIController extends AppBaseController
             if ($item['budjetAmtRpt'] < 0) {
                 $item['budjetAmtLocal'] = abs($item['budjetAmtLocal']) * -1;
             }
-            $this->budjetdetailsRepository->update(array_only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
+            $this->budjetdetailsRepository->update(Arr::only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
         }
 
         return $this->sendResponse([], trans('custom.update', ['attribute' => trans('custom.budjet_details')]));

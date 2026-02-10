@@ -1202,7 +1202,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input['customerGRVAutoID'] = null;
         }
 
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(array_only($input, ['customerGRVAutoID']), $id);
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(Arr::only($input, ['customerGRVAutoID']), $id);
 
         return $this->sendResponse($customerInvoiceDirect, trans('custom.invoice_updated_successfully_1'));
     }

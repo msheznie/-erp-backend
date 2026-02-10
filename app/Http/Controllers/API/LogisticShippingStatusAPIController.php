@@ -23,6 +23,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class LogisticShippingStatusController
@@ -243,7 +244,7 @@ class LogisticShippingStatusAPIController extends AppBaseController
             $input['statusDate'] = new Carbon($input['statusDate']);
         }
 
-        $logisticShippingStatus = $this->logisticShippingStatusRepository->update(array_only($input, ['statusDate','statusComment']), $id);
+        $logisticShippingStatus = $this->logisticShippingStatusRepository->update(Arr::only($input, ['statusDate','statusComment']), $id);
 
         return $this->sendResponse($logisticShippingStatus->toArray(), trans('custom.logisticshippingstatus_updated_successfully'));
     }

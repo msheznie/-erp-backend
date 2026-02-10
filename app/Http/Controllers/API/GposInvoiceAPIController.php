@@ -35,6 +35,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class GposInvoiceController
@@ -612,7 +613,7 @@ class GposInvoiceAPIController extends AppBaseController
             $input['voidDatetime'] = now();
         }
 
-        $gposInvoice = $this->gposInvoiceRepository->update(array_only($input, ['isVoid','voidBy','voidDatetime']), $id);
+        $gposInvoice = $this->gposInvoiceRepository->update(Arr::only($input, ['isVoid','voidBy','voidDatetime']), $id);
 
         return $this->sendResponse($gposInvoice->toArray(), trans('custom.invoice_updated_successfully'));
     }
