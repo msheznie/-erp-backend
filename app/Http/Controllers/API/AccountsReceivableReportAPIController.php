@@ -65,6 +65,7 @@ use App\helper\CreateExcel;
 use App\Jobs\DocumentAttachments\CustomerStatementJob;
 use App\Models\CustomerMasterCategoryAssigned;
 use App\Jobs\Report\AccountsReceivablePdfJob;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class AccountsReceivableReportAPIController extends AppBaseController
@@ -3505,7 +3506,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });
@@ -4008,7 +4009,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });
@@ -4490,7 +4491,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });

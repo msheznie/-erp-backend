@@ -793,7 +793,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     if($dt->exempt_vat_portion > 0)
                     {
 
-                        if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
+                        if(count($vatCategoreis) > 0 && count(collect(Arr::flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0)
                         {
                             return $this->sendError(trans('custom.exempt_vat_category_not_created'),500);
                         }

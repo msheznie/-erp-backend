@@ -891,7 +891,7 @@ class PaymentVoucherServices
                     $vatCategoreis[] = $tax->vat_categories;
                 }
 
-                if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0 && $paySupplierInvoiceMaster->directdetail->where('vatSubCategoryID',3)->count() > 0)
+                if(count($vatCategoreis) > 0 && count(collect(Arr::flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0 && $paySupplierInvoiceMaster->directdetail->where('vatSubCategoryID',3)->count() > 0)
                 {
                     return [
                         'status' => false,

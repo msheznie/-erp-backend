@@ -14,6 +14,7 @@ use App\Models\ProcumentOrder;
 use App\Models\ServiceLine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -82,7 +83,7 @@ class BudgetReportService
             ->pluck('chartOfAccountID')
             ->toArray();
 
-        foreach (array_flatten($idWithValue) as $chartOfAccountID)
+        foreach (Arr::flatten($idWithValue) as $chartOfAccountID)
             {
 
                 $currentBudgetAmount = Budjetdetails::with(['budget_master.segment_by', 'budget_master.company', 'chart_of_account'])
