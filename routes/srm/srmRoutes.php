@@ -68,7 +68,7 @@ Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTender
 
 
 Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula')->name("Add formula");
-Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
+Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate')->name('Formula generate');
 Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification')->name("Tender bid doc verification");
 
 Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList')->name("Get main works list");
@@ -284,24 +284,24 @@ Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeControlle
 Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
 Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
-Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
+Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment')->name('Get is exist common attachment');
 Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList')->name("Get tender purchase list");
 Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount')->name("Get budget item total amount");
-Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
-Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
+Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess')->name('Remove tender user access');
+Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee')->name('Add user access employee');
 Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData')->name("Get public supplier link data");
 Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink')->name("Save supplier public link");
 Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')->name("KYC Request");
 Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
 Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");
-Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval');
-Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved');
-Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender');
-Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender');
-Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
-Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays');
-Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation');
-Route::post('getCalendarDateAuditLogs', 'TenderMasterAPIController@getCalendarDateAuditLogs');
+Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval')->name('Get payment proof document approval');
+Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved')->name('Get supplier wise proof not approved');
+Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender')->name('Approve supplier wise tender');
+Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender')->name('Reject supplier wise tender');
+Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved')->name('Get supplier wise proof approved');
+Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays')->name('Update tender calendar days');
+Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation')->name('Get tender calendar validation');
+Route::post('getCalendarDateAuditLogs', 'TenderMasterAPIController@getCalendarDateAuditLogs')->name('Get calendar date audit logs');
 Route::post('getNegotiationStartedSupplierList', 'TenderNegotiationController@getNegotiationStartedSupplierList')->name("Get tender negotiated supplier list");
 Route::post('saveCustomEmail', 'TenderCustomEmailController@store')->name("create Custom tender email");
 Route::post('getSupplierListCustomEmail', 'TenderCustomEmailController@getSupplierListCustomEmail')->name("Get Negotiation Custom Email Supplier List");

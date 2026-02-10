@@ -82,7 +82,7 @@ Route::post('exportBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPICon
 Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlanningDetailAPIController@updateInternalStatus')->name('Update department budget planning detail status');
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
-Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount');
+Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount')->name('Update department budget planning detail amount');
 Route::post('getDepartmentBudgetPlanningStatusesByCompany', 'DepartmentBudgetPlanningDetailAPIController@getDepartmentBudgetPlanningStatusesByCompany')->name('Get department budget planning details by company');
 
 // Budget Delegate Access Routes

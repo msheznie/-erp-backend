@@ -53,7 +53,7 @@ Route::post('approveDocumentBulk', 'DocumentApprovedAPIController@approveDocumen
 Route::post('rejectDocumentBulk', 'DocumentApprovedAPIController@rejectDocumentBulk')->name("Reject Document Bulk");
 
 Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview')->name('Get General Ledger Review');
-// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
+// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries')->name('Update not posted GL entries');
 
 Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries')->name('Update GL Entries');
 Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport')->name('Generate segment gl report');
@@ -87,7 +87,7 @@ Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("
 Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show')->name('Show attachment sme');
 
 Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
-Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');
+Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries')->name('Post GL entries');
 
 Route::post('auditLogs', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");
 Route::post('auditLogsExternal', 'AuditTrailAPIController@auditLogs')->name("Get audit logs");

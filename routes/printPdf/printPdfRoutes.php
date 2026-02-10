@@ -1,9 +1,9 @@
 <?php
  Route::group(['middleware' => 'print_lang'], function () {
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf');
-    Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
-    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
-    Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
+    Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF')->name('Good receipt voucher print PDF');
+    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue')->name('Print item issue');
+    Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue')->name('Delivery print item issue');
     Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice')->name('Print customer invoice');
     Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher')->name('Print receipt voucher');
     Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher')->name('Print payment voucher');

@@ -131,15 +131,15 @@ Route::group([], function () {
     Route::post('requestDetailsAddAllItems', 'MaterielRequestDetailsAPIController@requestDetailsAddAllItems')->name('Material request add all item');
     Route::post('materialRequestValidateItem', 'MaterielRequestDetailsAPIController@materialRequestValidateItem')->name('Material request validate item');
     Route::post('material_requests/remove_all_items/{id}', 'MaterielRequestDetailsAPIController@removeAllItems')->name('Material request remove all items');
-    Route::post('get-mr-codes','MaterielRequestAPIController@getMaterialRequestRequestCodes');
-    Route::post('get-mr-details','MaterielRequestAPIController@getMaterialRequestDetails');
-    Route::post('get-items-to-link','MaterielRequestAPIController@getItemsToLink');
-    Route::post('get-linked-items-details','MaterielRequestAPIController@getLinkedItemsDetails');
+    Route::post('get-mr-codes','MaterielRequestAPIController@getMaterialRequestRequestCodes')->name('Get MR codes');
+    Route::post('get-mr-details','MaterielRequestAPIController@getMaterialRequestDetails')->name('Get MR details');
+    Route::post('get-items-to-link','MaterielRequestAPIController@getItemsToLink')->name('Get items to link');
+    Route::post('get-linked-items-details','MaterielRequestAPIController@getLinkedItemsDetails')->name('Get linked items details');
 
     Route::get('downloadMrItemUploadTemplate', 'MaterielRequestAPIController@downloadMrItemUploadTemplate')->name("Download MR item upload template");
-    Route::post('mrItemsUpload', 'MaterielRequestAPIController@mrItemsUpload');
+    Route::post('mrItemsUpload', 'MaterielRequestAPIController@mrItemsUpload')->name('MR items upload');
     Route::get('getMrItemBulkUploadError', 'MrBulkUploadErrorLogAPIController@getMrItemBulkUploadError')->name('Get MR item bulk upload error');
-    Route::post('deleteMrErrorLog/{id}', 'MrBulkUploadErrorLogAPIController@deleteMrErrorLog');
+    Route::post('deleteMrErrorLog/{id}', 'MrBulkUploadErrorLogAPIController@deleteMrErrorLog')->name('Delete MR error log');
 });
 
 //Material Issue Trans
@@ -163,9 +163,9 @@ Route::group([], function () {
     Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");
     Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany')->name("Get All Material Issue By Company");
     Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues')->name("Get ReferBack History By Materiel Issues");
-    Route::post('add-items-to-mi-from-mr','ItemIssueMasterAPIController@addItemFromMrToMiDetails');
-    Route::post('validate-item-before-add','ItemIssueMasterAPIController@validateItemBeforeAdd');
-    Route::post('store-all-details-mi','ItemIssueMasterAPIController@storeAllItemsFromMr');
+    Route::post('add-items-to-mi-from-mr','ItemIssueMasterAPIController@addItemFromMrToMiDetails')->name('Add items to MI from MR');
+    Route::post('validate-item-before-add','ItemIssueMasterAPIController@validateItemBeforeAdd')->name('Validate item before add');
+    Route::post('store-all-details-mi','ItemIssueMasterAPIController@storeAllItemsFromMr')->name('Store all details MI');
     Route::get('downloadMiItemUploadTemplate', 'ItemIssueDetailsAPIController@downloadMiItemUploadTemplate')->name('Download material issue item upload template');
     Route::post('miItemsUpload', 'ItemIssueDetailsAPIController@miItemsUpload')->name('Material issue items upload');
     Route::get('getMiItemBulkUploadError', 'MiBulkUploadErrorLogAPIController@getMiItemBulkUploadError')->name('Material issue item bulk upload errors');

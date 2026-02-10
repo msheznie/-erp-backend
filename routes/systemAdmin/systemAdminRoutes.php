@@ -17,7 +17,7 @@ Route::get('departmentBudgetTemplates/chart-of-accounts/{templateType}', 'Depart
 Route::get('departmentBudgetTemplates/chart-of-accounts/{templateType}/{accountType}', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsByType')->name('Get chart of accounts by type');
 Route::post('departmentBudgetTemplates/assign-gl', 'DepartmentBudgetTemplateAPIController@assignGLCodes')->name('Assign GL codes to template');
 Route::post('departmentBudgetTemplates/assigned-gl', 'DepartmentBudgetTemplateAPIController@getAssignedGLCodes')->name('Get assigned GL codes');
-Route::post('getChartOfAccountsByBudgetTemplate', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsByBudgetTemplate');
+Route::post('getChartOfAccountsByBudgetTemplate', 'DepartmentBudgetTemplateAPIController@getChartOfAccountsByBudgetTemplate')->name('Get chart of accounts by budget template');
 Route::resource('departmentBudgetTemplates', 'DepartmentBudgetTemplateAPIController');
 
 Route::group([], function(){

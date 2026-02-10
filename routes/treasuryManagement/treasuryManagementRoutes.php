@@ -49,7 +49,7 @@ Route::group([], function() {
     Route::post('createTemplateMapping', 'BankReconciliationTemplateMappingAPIController@store')->name('Add bank reconciliation template mapping');
     Route::get('getTemplateMappingDetails', 'BankReconciliationTemplateMappingAPIController@getTemplateMappingDetails')->name('Get template mapping details');
     Route::post('getBankStatementImportHistory', 'BankStatementMasterAPIController@getBankStatementImportHistory')->name('Get bank statement import history');
-    Route::post('deleteBankStatement/{id}', 'BankStatementMasterAPIController@deleteBankStatement');
+    Route::post('deleteBankStatement/{id}', 'BankStatementMasterAPIController@deleteBankStatement')->name('Delete bank statement');
     Route::get('getActiveBankAccountsByBankID', 'BankReconciliationAPIController@getActiveBankAccountsByBankID')->name('Get active bank accounts by bank id');
     Route::post('getBankStatementUploadRules', 'BankReconciliationRulesAPIController@getBankStatementUploadRules')->name('Get active bank accounts by bank id');
     Route::get('getMatchingRuleDetails', 'BankReconciliationRulesAPIController@getMatchingRuleDetails')->name('Get matching rule details');
@@ -110,8 +110,8 @@ Route::group([],function () {
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
-            Route::post('generateVendorFile','B2B\B2BResourceAPIController@generateVendorFile');
-            Route::post('downloadErrorLogFromPortal','B2B\B2BResourceAPIController@downloadErrorLogFromPortal');
+            Route::post('generateVendorFile','B2B\B2BResourceAPIController@generateVendorFile')->name('Generate vendor file');
+            Route::post('downloadErrorLogFromPortal','B2B\B2BResourceAPIController@downloadErrorLogFromPortal')->name('Download error log from portal');
         });
     });
 
