@@ -2750,16 +2750,26 @@ class PurchaseRequestAPIController extends AppBaseController
             return $this->sendError($validator->messages(),422);
         }
 
-        $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
+        $query = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
+        $recordsTotal = $query->count();
+        
+        $purchaseRequests = $query->get();
+        $purchaseRequests = $this->filterPurchaseRequest($purchaseRequests);
 
         $purchaseRequests = collect($purchaseRequests);
-        return \DataTables::collection($purchaseRequests)
+        $response = \DataTables::collection($purchaseRequests)
             ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
              ->filter(function ($instance) {  
              })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+
+        $content = json_decode($response->getContent(), true);
+        $content['recordsTotal'] = $recordsTotal;
+        $content['recordsFiltered'] = $recordsTotal;
+
+        return response()->json($content);
     }
 
 
@@ -3494,7 +3504,20 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('manuallyClosed', 0)
             ->where('cancelledYN', 0)
             ->where('prClosedYN', 0)
-            ->with(['created_by', 'priority', 'location', 'segment'])
+            ->with([
+                'created_by' => function ($q) {
+                    $q->select('employeeSystemID', 'empName');
+                },
+                'priority' => function ($q) {
+                    $q->select('priorityID', 'priorityDescription');
+                },
+                'location' => function ($q) {
+                    $q->select('locationID', 'locationName');
+                },
+                'segment' => function ($q) {
+                    $q->select('serviceLineSystemID', 'ServiceLineDes');
+                },
+            ])
             ->orderBy('purchaseRequestID', $sort);
 
         if (array_key_exists('selectedForPO', $input)) {
@@ -3626,12 +3649,12 @@ class PurchaseRequestAPIController extends AppBaseController
             ]);
 
           
-            $purchaseRequests=  $purchaseRequests->get();
+            // $purchaseRequests=  $purchaseRequests->get();
             
-            $result = $this->filterPurchaseRequest($purchaseRequests);
+            // $result = $this->filterPurchaseRequest($purchaseRequests);
        
 
-            return $result;
+            return $purchaseRequests;
     }
 
     public function filterPurchaseRequest($purchaseRequests)
