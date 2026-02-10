@@ -203,7 +203,10 @@ class SheetWrapper
     public function setAutoSize($columns = true)
     {
         if ($columns === true) {
-            foreach (range('A', $this->worksheet->getHighestColumn()) as $col) {
+            $highestColumn = $this->worksheet->getHighestColumn();
+            $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+            for ($i = 1; $i <= $highestColumnIndex; $i++) {
+                $col = Coordinate::stringFromColumnIndex($i);
                 $this->worksheet->getColumnDimension($col)->setAutoSize(true);
             }
         } elseif (is_array($columns)) {
@@ -301,15 +304,18 @@ class SheetWrapper
             // Copy data from temp worksheet to current worksheet
             $highestRow = $tempWorksheet->getHighestRow();
             $highestColumn = $tempWorksheet->getHighestColumn();
-            
+            $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+
             for ($row = 1; $row <= $highestRow; $row++) {
-                for ($col = 'A'; $col <= $highestColumn; $col++) {
-                    $cellValue = $tempWorksheet->getCell($col . $row)->getValue();
-                    $this->worksheet->setCellValue($col . $row, $cellValue);
-                    
+                for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
+                    $col = Coordinate::stringFromColumnIndex($colIndex);
+                    $cellRef = $col . $row;
+                    $cellValue = $tempWorksheet->getCell($cellRef)->getValue();
+                    $this->worksheet->setCellValue($cellRef, $cellValue);
+
                     // Copy styles
-                    $tempStyle = $tempWorksheet->getStyle($col . $row);
-                    $this->worksheet->duplicateStyle($tempStyle, $col . $row);
+                    $tempStyle = $tempWorksheet->getStyle($cellRef);
+                    $this->worksheet->duplicateStyle($tempStyle, $cellRef);
                 }
             }
             

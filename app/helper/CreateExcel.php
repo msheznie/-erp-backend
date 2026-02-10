@@ -752,11 +752,16 @@ class CreateExcel
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                    // Bold header rows: title (row 1), date range (row 3), table header (row 6)
+                                    $headerRows = min(6, $lastRow);
+                                    $worksheet->getStyle('A1:' . $lastColumn . $headerRows)->getFont()->setBold(true);
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
-                           
+
+                            $sheet->setAutoSize(true);
+
                            // Set right-to-left for Arabic locale
                             if($fileName != trans('custom.budget_template')) { 
                                 if (app()->getLocale() == 'ar') {

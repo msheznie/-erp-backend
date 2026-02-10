@@ -4033,7 +4033,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $closingBalance = $openingBalance - $budgetAmount;
         $output = array(
-            'companyName' => $reportingCurrency->CompanyName,
+            'companyName' => $reportingCurrency->CompanyName ?? '',
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
@@ -4044,7 +4044,7 @@ class FinancialReportAPIController extends AppBaseController
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
             'reportTittle' => trans('custom.project_utilization_report'),
-            'companyReportingCurrency' => $cur_rep,
+            'companyReportingCurrency' => $reportingCurrency->reportingcurrency ?? null,
         );
 
         $lang = app()->getLocale();
@@ -4625,8 +4625,10 @@ class FinancialReportAPIController extends AppBaseController
                 $output = $this->getTaxDetailQry($request);
                 $data = array();
 
-                $selectedColumns = collect($request->selectedColumn)->pluck(['id'])->toArray();
-                $reporingCurrencyCode = ($output[0]) ? $output[0]->rptCurrencyCode : null;
+                $selectedColumns = $request->selectedColumn
+                    ? collect($request->selectedColumn)->pluck('id')->toArray()
+                    : [];
+                $reporingCurrencyCode = (! empty($output) && isset($output[0])) ? $output[0]->rptCurrencyCode : null;
 
                 $cur = null;
                 $title = 'Tax Details';
@@ -8674,7 +8676,8 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
 
         $bindings = [];
 
-        for ($i = 0; $i < 5; $i++) {
+        // 4 placeholders per UNION segment (BETWEEN ? AND ?, GROUP BY ? = 1, HAVING ? != 1) × 4 segments = 16 bindings
+        for ($i = 0; $i < 4; $i++) {
             $bindings[] = $fromDate;
             $bindings[] = $toDate;
             $bindings[] = $request->reportViewID;

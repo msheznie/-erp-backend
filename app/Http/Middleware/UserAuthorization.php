@@ -59,6 +59,32 @@ class UserAuthorization
             $navigationID = $request->header('X-nav-ID') ?? 0;
             $accessType = $request->header('X-Access-Type') ?? 'None';
 
+            if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
+                
+                $res = NavigationRoute::create([
+                    'navigationID' => $navigationID,
+                    'routeName' => $routeName,
+                    'action' => self::getActionType($accessType),
+                ]);
+
+                RoleRoute::create([
+                    'routeName' => $routeName,
+                    'userGroupID' => $userGroupIDs,
+                    'companySystemID' => 0
+                ]);
+
+
+                $checkRoleRouteAfterCreate = RoleRoute::whereIn('userGroupID', $userGroupIDs)
+                                    ->where('routeName', $routeName)
+                                    ->first();
+
+                if ($checkRoleRouteAfterCreate) {
+                    return $next($request);
+                } else {
+                    return errorMsgs("Unauthorized Access");
+                }
+            }
+
             \Log::channel('authorization')->info(json_encode([
                 'navigationID' => $navigationID,
                 'routeName' => $routeName,
@@ -99,6 +125,16 @@ class UserAuthorization
             'api/v1/updateRouteAccess',
             'api/v1/auditLogsExternal',
         ];
+    }
+
+    private function getActionType($accessType)
+    {
+        return match($accessType) {
+            'None' => 0,
+            'Read' => 1,
+            'Create' => 2,
+            'Edit' => 3,
+        };
     }
 }
 

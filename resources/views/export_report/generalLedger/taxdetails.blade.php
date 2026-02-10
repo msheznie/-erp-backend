@@ -1,151 +1,151 @@
 <html>
 <center>
-    <table>
+    <table border="1" cellpadding="3" cellspacing="0" style="border-collapse: collapse; width: 100%;">
         <thead>
         <tr></tr>
-        <tr>
+        <tr style="font-weight: bold;">
             <td colspan="2"></td>
-            <td><h1>{{ __('custom.tax_details_report') }}</h1></td>
+            <td style="font-weight: bold; font-size: 14px;">{{ __('custom.tax_details_report') }}</td>
         </tr>
         <tr></tr>
-        <tr style="font-weight: bold">
-            <td>{{ __('custom.start_date') }} : {{ $fromDate }} </td>
-            <td>{{ __('custom.end_date') }} :  {{ $toDate }}</td>
+        <tr style="font-weight: bold;">
+            <td style="font-weight: bold;">{{ __('custom.start_date') }} : {{ $fromDate }} </td>
+            <td style="font-weight: bold;">{{ __('custom.end_date') }} :  {{ $toDate }}</td>
         </tr>
         <tr></tr>
-        <tr>
+        <tr style="font-weight: bold; background-color: #f0f0f0;">
             @if(in_array(1, $selectedColumns))
-                <th>{{ __('custom.company_id') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.company_id') }}</th>
             @endif
 
             @if(in_array(2, $selectedColumns))
-                <th>{{ __('custom.document_code') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.document_code') }}</th>
             @endif
 
             @if(in_array(3, $selectedColumns))
-                <th>{{ __('custom.document_date') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.document_date') }}</th>
             @endif
 
             @if(in_array(34, $selectedColumns))
-                <th>{{ __('custom.document_type') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.document_type') }}</th>
             @endif
 
             @if(in_array(15, $selectedColumns))
-                <th>{{ __('custom.reverse_charge_mechanism') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.reverse_charge_mechanism') }}</th>
             @endif
 
             @if(in_array(4, $selectedColumns))
-                <th>{{ __('custom.invoice_no') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.invoice_no') }}</th>
             @endif
 
             @if(in_array(5, $selectedColumns))
-                <th>{{ __('custom.invoice_date') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.invoice_date') }}</th>
             @endif
 
             @if(in_array(11, $selectedColumns))
-                <th>{{ __('custom.posted_date') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.posted_date') }}</th>
             @endif
 
             @if(in_array(6, $selectedColumns))
-                <th>{{ __('custom.narration') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.narration') }}</th>
             @endif
 
             @if(in_array(7, $selectedColumns))
-                <th>{{ __('custom.supplier_code') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.supplier_code') }}</th>
             @endif
 
             @if(in_array(8, $selectedColumns))
-                <th>{{ __('custom.supplier_name') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.supplier_name') }}</th>
             @endif
 
             @if(in_array(33, $selectedColumns))
-                <th>{{ __('custom.party_code') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.party_code') }}</th>
             @endif
 
             @if(in_array(32, $selectedColumns))
-                <th>{{ __('custom.party_name') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.party_name') }}</th>
             @endif
 
             @if(in_array(12, $selectedColumns))
-                <th>{{ __('custom.customer_code') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.customer_code') }}</th>
             @endif
 
             @if(in_array(13, $selectedColumns))
-                <th>{{ __('custom.customer_short_code') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.customer_short_code') }}</th>
             @endif
 
             @if(in_array(14, $selectedColumns))
-                <th>{{ __('custom.customer_name') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.customer_name') }}</th>
             @endif
 
             @if(in_array(16, $selectedColumns))
-                <th>{{ __('custom.vat_in') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.vat_in') }}</th>
             @endif
 
             @if(in_array(17, $selectedColumns))
-                <th>{{ __('custom.country') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.country') }}</th>
             @endif
 
             @if(in_array(26, $selectedColumns))
-                <th>{{ __('custom.freezone') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.freezone') }}</th>
             @endif
 
             @if(in_array(28, $selectedColumns))
-                <th>{{ __('custom.transaction') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.transaction') }}</th>
             @endif
 
             @if(in_array(27, $selectedColumns))
-                <th>{{ __('custom.goods_or_services') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.goods_or_services') }}</th>
             @endif
 
             @if(in_array(9, $selectedColumns))
-                <th>{{ __('custom.currency') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.currency') }}</th>
             @endif
 
             @if(in_array(29, $selectedColumns))
-                <th>{{ __('custom.vat_type') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.vat_type') }}</th>
             @endif
 
             @if(in_array(21, $selectedColumns))
-                <th>{{ __('custom.line_item_no') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.line_item_no') }}</th>
             @endif
 
             @if(in_array(23, $selectedColumns))
-                <th>{{ __('custom.vat_category') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.vat_category') }}</th>
             @endif
 
             @if(in_array(30, $selectedColumns))
-                <th>{{ __('custom.vat_percentage') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.vat_percentage') }}</th>
             @endif
 
-            <th>{{ __('custom.value') }}</th>
-            <th>{{ __('custom.discount') }}</th>
-            <th>{{ __('custom.net_value') }}</th>
-            <th>{{ __('custom.vat') }}</th>
+            <th style="font-weight: bold; text-align: left;">{{ __('custom.value') }}</th>
+            <th style="font-weight: bold; text-align: left;">{{ __('custom.discount') }}</th>
+            <th style="font-weight: bold; text-align: left;">{{ __('custom.net_value') }}</th>
+            <th style="font-weight: bold; text-align: left;">{{ __('custom.vat') }}</th>
 
             @if(in_array(24, $selectedColumns))
-                <th>{{ __('custom.exempt_vat_portion') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.exempt_vat_portion') }}</th>
             @endif
 
             @if(in_array(31, $selectedColumns))
-                <th>{{ __('custom.retention_amount') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.retention_amount') }}</th>
             @endif
 
-            <th>{{ __('custom.due_amount') }}</th>
+            <th style="font-weight: bold; text-align: left;">{{ __('custom.due_amount') }}</th>
 
             @if(in_array(20, $selectedColumns))
-                <th>{{ __('custom.amount_in_reporting_currency') }} ({{$reporingCurrencyCode}})</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.amount_in_reporting_currency') }} ({{$reporingCurrencyCode}})</th>
             @endif
 
             @if(in_array(19, $selectedColumns))
-                <th>{{ __('custom.exchange_rate') }}</th>
+                <th style="font-weight: bold; text-align: left;">{{ __('custom.exchange_rate') }}</th>
             @endif
 
 
         </tr>
         </thead>
         <tbody>
-        @foreach($reportData as $data)
+        @forelse($reportData as $data)
             <tr style="border-top: {{ isset($data->borderTop) ? '2px solid #000' : '1px solid #ccc' }}">
                 @if(in_array(1, $selectedColumns)) <td>{{ $data->companyID }}</td> @endif
                 @if(in_array(2, $selectedColumns)) <td>{{ $data->DocumentCode }}</td> @endif
@@ -161,7 +161,6 @@
                     <td class="word-wrap">
                         @if(!empty($data->comments))
                             {{ $data->comments }}
-                        </span>
                         @endif
                     </td>
                 @endif
@@ -311,7 +310,11 @@
 
                 @if(in_array(19, $selectedColumns)) <td>{{ $data->companyReportingER }}</td> @endif
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="30">{{ __('custom.no_data_found_in_the_excel_file') }}</td>
+            </tr>
+        @endforelse
         </tbody>
 
     </table>
