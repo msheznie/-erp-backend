@@ -151,7 +151,6 @@ Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
 
 Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
 Route::resource('tender_main_works', 'TenderMainWorksAPIController');
-Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');

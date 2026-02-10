@@ -18,7 +18,6 @@ Route::group([], function() {
     Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval')->name('Get all currency conversion approval');
 
     Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit')->name('Bank reconciliation audit');
-    Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation')->name('Print bank reconciliation');
 
 });
 

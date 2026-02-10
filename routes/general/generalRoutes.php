@@ -104,7 +104,6 @@ Route::post('export-employee-activity-audit-report', 'AuditTrailAPIController@ex
 
 Route::get('getSearchCustomers', 'CustomerMasterAPIController@getSearchCustomers')->name("Get Search Customers");
 Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");
-Route::get('getTenderTypeData', 'TenderMasterAPIController@getTenderTypeData')->name("Get Tender Type Data");
 
 Route::resource('document_attachment_edit_log', 'DocumentAttachmentsEditLogAPIController');
 

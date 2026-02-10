@@ -16,9 +16,7 @@ Route::group([], function(){
     Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
     Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
     Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
     Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
     Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');

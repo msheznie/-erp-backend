@@ -144,12 +144,8 @@ Route::group([], function () {
 
 //Material Issue Trans
 Route::group([], function () {
-    Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
-    Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
     Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
-    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
-    Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany')->name("Get All Materiel Request Not Selected For Issue By Company");
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit')->name("Get Materiel Issue Audit");
@@ -217,10 +213,8 @@ Route::group([], function () {
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer')->name("Reject Stock Transfer");
     Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack')->name("Stock Transfer ReferBack");
     Route::post('getReferBackHistoryByStockTransfer', 'StockTransferAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
-    Route::post('stock_transfer_reffered_backs', 'StockTransferAPIController@stockTransferRefferedBacks')->name("Stock Transfer RefferedBacks");
     Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen')->name("Stock Transfer Reopen");
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView')->name("Get All Stock Transfer By Company");
-    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
     Route::get('get-all-uom-convertion', 'StockTransferAPIController@getallUomConvertion')->name("Get all Uom Convertion");
     
 });
@@ -322,7 +316,6 @@ Route::group([], function () {
 // Stock Valuation
 Route::group([], function () {
     Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
-    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
 
     Route::post('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
 
@@ -335,7 +328,6 @@ Route::group([], function () {
 
 // Stock Aging
 Route::group([], function () {
-    Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
     
     Route::get('getScrapFilterData', 'InventoryReportAPIController@getScarpInventoryFilterData')->name('Get Scarp Inventory Filter Data');
 
@@ -347,7 +339,6 @@ Route::group([], function () {
 
 // Stock Taking
 Route::group([], function () {
-    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
     
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport')->name('Generate Stock Taking Report');
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking')->name('Export Stock Taking');

@@ -186,7 +186,6 @@ Route::group([], function() {
     Route::post('deleteLocation', 'ErpLocationAPIController@deleteLocation')->name('Delete location');
     Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse')->name('Get all assigned items by warehouse');
     Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse')->name('Export item assigned by warehouse');
-    Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
     Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels')->name('Get all warehouse sub levels');
     Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
     Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
@@ -213,7 +212,6 @@ Route::group([], function() {
     Route::get('getItemSubCategory', 'ItemMasterAPIController@getItemSubCategory')->name('Get item subcategory');
     Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster')->name('Update item master');
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem')->name('Get assigned companies by item');
-    Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
     Route::get('getAllMainItemsByCompany', 'ItemMasterAPIController@getAllMainItemsByCompany')->name('All main items by company');
     Route::get('checkUnitConversions', 'ItemMasterAPIController@checkUnitConversions')->name('Check unit conversions');

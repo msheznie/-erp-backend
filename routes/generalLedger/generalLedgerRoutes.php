@@ -56,7 +56,6 @@ Route::group([], function(){
     Route::resource('jv_details', 'JvDetailAPIController');
 
     Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData')->name('Get JV master form data');
-    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get JV master record');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails')->name('Get JV details');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts')->name('Get JV contracts');
     Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster')->name('JV for salary JV master');
@@ -223,11 +222,7 @@ Route::group([], function(){
 
     Route::get('contingencyBudgetAmend/{id}', 'ContingencyBudgetRefferedBackAPIController@contingencyBudgetAmend')->name('Get Contigency Budget');
 
-    Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData') ->name('Get Contigency Budget From Data');
-    Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount')->name('Get Budget Amount');
-    Route::post('get_contingency_budget_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_approved')->name('Get Budget Amount Approved');
     Route::post('get_contingency_budget_not_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_not_approved')->name('Get Budget Amount Not Approved');
-    Route::post('reject_contingency_budget', 'ContingencyBudgetPlanAPIController@reject_contingency_budget')->name('Reject Contigency Budget');
     Route::post('amendContingencyBudget', 'ContingencyBudgetPlanAPIController@amendContingencyBudget')->name('Amend Contigency Budget');
     Route::post('getContingencyAmendHistory', 'ContingencyBudgetRefferedBackAPIController@getContingencyAmendHistory')->name('Get Contigency Budget Amend History');
     Route::post('get_contingency_budget', 'ContingencyBudgetPlanAPIController@get_contingency_budget')->name('Get Contigency Budget');
