@@ -31,6 +31,10 @@ class UserAuthorization
             return $next($request);
         }
 
+        if ($request->header('From-Portal') && $request->header('From-Portal') == 1 && in_array($request->route()->uri, $this->portalIgnoreRoutes())) {
+            return $next($request);
+        }
+
         $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
 
         // if (!$checkRouteName) {
@@ -86,6 +90,14 @@ class UserAuthorization
             'api/v1/getAllNotifications',
             'api/v1/logoutApiUser',
             'api/v1/updateNotification',
+        ];
+    }
+
+    private function portalIgnoreRoutes()
+    {
+        return [
+            'api/v1/updateRouteAccess',
+            'api/v1/auditLogsExternal',
         ];
     }
 }

@@ -291,8 +291,8 @@ Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchas
 Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount')->name("Get budget item total amount");
 Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
 Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
-Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData');
-Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink');
+Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData')->name("Get public supplier link data");
+Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink')->name("Save supplier public link");
 Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')->name("KYC Request");
 Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
 Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");

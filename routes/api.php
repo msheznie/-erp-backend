@@ -639,7 +639,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
 
-                Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData');
+                Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData')->name("Get batch submission form data");
                 Route::get('getContractServiceLine', 'CustomerInvoiceTrackingAPIController@getContractServiceLine');
                 Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany')->name("Get all batch submission by company");
                 Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
