@@ -444,7 +444,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('custreceivepaymentdethistories', 'CustReceivePaymentDetRefferedHistoryAPIController');
 
-                Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
                 Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
 
                 Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
@@ -463,15 +462,11 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
 
-                Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
                 Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
                 Route::get('assetCapitalizationHistoryByID', 'AssetCapitalizationReferredAPIController@assetCapitalizationHistoryByID');
-                Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
                 Route::get('getCapitalizationDetailsHistory', 'AssetCapitalizatioDetReferredAPIController@getCapitalizationDetailsHistory');
-                Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
                 Route::post('getAllAssetDisposalAmendHistory', 'AssetDisposalReferredAPIController@getAllAssetDisposalAmendHistory');
                 Route::get('assetDisposalHistoryByID', 'AssetDisposalReferredAPIController@assetDisposalHistoryByAutoID');
-                Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
                 Route::get('getAssetDisposalDetailHistory', 'AssetDisposalDetailReferredAPIController@getAssetDisposalDetailHistory');
 
                 Route::resource('fixedassetmasterreferredhistory', 'FixedAssetMasterReferredHistoryAPIController');
@@ -657,7 +652,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
                 Route::resource('user_rights', 'UserRightsAPIController');
                 Route::resource('lpt_permissions', 'LptPermissionAPIController');
-                Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
                 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
                 Route::resource('service_lines', 'ServiceLineAPIController');
                 Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
@@ -769,18 +763,13 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
                 Route::post('appearanceSubmit', 'CompanyAPIController@appearanceSubmit');
 
-                Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
                 Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
 
-                Route::resource('advance_receipt_details', 'AdvanceReceiptDetailsAPIController');
                 Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails');
                 Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
 
 
 
-
-                Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
-                Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
                 Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
                 Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
@@ -849,7 +838,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
 
                 Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
-                Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
                 Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
 
                 Route::resource('job_error_logs', 'JobErrorLogAPIController');

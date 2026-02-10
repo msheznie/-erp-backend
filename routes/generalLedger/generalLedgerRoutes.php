@@ -221,14 +221,12 @@ Route::group([], function(){
 
     // contiungency Budget
 
-    Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
     Route::get('contingencyBudgetAmend/{id}', 'ContingencyBudgetRefferedBackAPIController@contingencyBudgetAmend')->name('Get Contigency Budget');
 
     Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData') ->name('Get Contigency Budget From Data');
     Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount')->name('Get Budget Amount');
     Route::post('get_contingency_budget_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_approved')->name('Get Budget Amount Approved');
     Route::post('get_contingency_budget_not_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_not_approved')->name('Get Budget Amount Not Approved');
-    Route::post('approve_contingency_budget', 'ContingencyBudgetPlanAPIController@approve_contingency_budget')->name('Approve Contigency Budget');
     Route::post('reject_contingency_budget', 'ContingencyBudgetPlanAPIController@reject_contingency_budget')->name('Reject Contigency Budget');
     Route::post('amendContingencyBudget', 'ContingencyBudgetPlanAPIController@amendContingencyBudget')->name('Amend Contigency Budget');
     Route::post('getContingencyAmendHistory', 'ContingencyBudgetRefferedBackAPIController@getContingencyAmendHistory')->name('Get Contigency Budget Amend History');

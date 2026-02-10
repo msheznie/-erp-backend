@@ -178,7 +178,6 @@ Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIControl
 
 Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController', ['names' => '  Supplier Bid Document Attachments']);
 
-Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
 Route::resource('bid_evaluation_selections', 'BidEvaluationSelectionAPIController');
 Route::post('getBidSelection', 'BidEvaluationSelectionAPIController@getBidSelection')->name("Get bid selection");
 
