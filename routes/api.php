@@ -122,14 +122,13 @@ Route::group(['middleware' => ['mobileServer']], function () {
                         Route::post('generateAssetDepBulkPDF', 'FixedAssetDepreciationMasterAPIController@generateAssetDepBulkPDF');
                         Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                         Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-                        Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                         Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                         Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
                         Route::post('deleteCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@deleteCustomerInvoiceUploads')->name("Delete budget uploads");
                     });
                 });
 
-                Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
+                Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode')->name("Get company local currency code");
                 Route::get('getCompanyCurrency', 'CurrencyMasterAPIController@getCompanyCurrency')->name("Get company currency");
                 Route::resource('users', 'UserAPIController');
                 Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
@@ -648,14 +647,14 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::get('getBatchSubmissionFormData', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionFormData');
                 Route::get('getContractServiceLine', 'CustomerInvoiceTrackingAPIController@getContractServiceLine');
-                Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany');
+                Route::post('getAllBatchSubmissionByCompany', 'CustomerInvoiceTrackingAPIController@getAllBatchSubmissionByCompany')->name("Get all batch submission by company");
                 Route::post('getCustomerInvoicesForBatchSubmission', 'CustomerInvoiceTrackingAPIController@getCustomerInvoicesForBatchSubmission');
                 Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
                 Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
                 Route::post('exportBatchSubmissionDetails', 'CustomerInvoiceTrackingAPIController@exportBatchSubmissionDetails');
                 Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
 
-                Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
+                Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData')->name("Get inv tracking form data");
                 Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');
                 Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
 
@@ -943,7 +942,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('dep_budget_pl_det_columns', 'DepBudgetPlDetColumnAPIController');
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
                 require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
-                Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
+                Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl')->name('Generate signed url');
 
                 Route::post('getThirdPartyApiLogDetail', 'AuditTrailAPIController@getThirdPartyApiLogDetail');
 
