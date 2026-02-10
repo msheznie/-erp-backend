@@ -511,12 +511,12 @@ class MobileBillMasterAPIController extends AppBaseController
             ->get();
         $output['company'] = [];
         if (count($segment) > 0) {
-            $companiesByGroup = array_pluck($segment, 'companySystemID');
+            $companiesByGroup = Arr::pluck($segment, 'companySystemID');
             $company = Company::select('masterCompanySystemIDReorting')
                 ->whereIn('companySystemID', $companiesByGroup)
                 ->get();
 
-            $masterCompany = array_pluck($company, 'masterCompanySystemIDReorting');
+            $masterCompany = Arr::pluck($company, 'masterCompanySystemIDReorting');
             $output['company'] = Company::select(DB::raw("companySystemID,CONCAT(CompanyID,' - ',CompanyName) as label"))
                 ->whereIn('companySystemID', $masterCompany)
                 ->get();
