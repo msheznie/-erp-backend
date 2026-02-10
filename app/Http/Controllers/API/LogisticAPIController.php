@@ -641,7 +641,7 @@ class LogisticAPIController extends AppBaseController
     public function exportLogisticsByCompanyReport(Request $request)
     {
         $data = array();
-        $output = ($this->getAllLogisticByCompanyQry($request))->orderBy('logisticMasterID', 'DES')->get();
+        $output = ($this->getAllLogisticByCompanyQry($request))->orderBy('logisticMasterID', 'desc')->get();
         $type = $request->type;
         if (!empty($output)) {
             $x = 0;

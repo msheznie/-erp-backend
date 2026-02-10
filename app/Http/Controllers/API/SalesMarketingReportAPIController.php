@@ -2398,7 +2398,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
-        $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'DES')->get();
+        $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'desc')->get();
 
         foreach ($output as $row) {
             $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);

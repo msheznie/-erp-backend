@@ -728,7 +728,7 @@ class PurchaseRequestAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getPrToGrvQry($input))->orderBy('purchaseRequestID', 'DES')->get();
+        $output = ($this->getPrToGrvQry($input))->orderBy('purchaseRequestID', 'desc')->get();
         $type = $request->type;
         if (!empty($output)) {
             $x = 0;

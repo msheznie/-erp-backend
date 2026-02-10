@@ -1640,11 +1640,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
 
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
-            $excelHeaders = $formatChk->getHeading();
+            $excelHeaders = ! empty($formatChk) ? array_keys($formatChk[0]) : [];
 
             $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $materialIssue->companySystemID)
@@ -1678,12 +1678,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
 
             if ($isProject_base) {
-                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('item_code', 'item_description', 'project', 'qty', 'comment'))->get()->toArray();
-            }
-            else {
-                $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'project', 'qty', 'comment']);
+            } else {
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'qty', 'comment']);
             }
 
             if ($materialIssue->approved == 1) {

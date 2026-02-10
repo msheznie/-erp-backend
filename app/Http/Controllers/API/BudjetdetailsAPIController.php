@@ -833,8 +833,7 @@ class BudjetdetailsAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -862,8 +861,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $selectArray[] = 'main_category';
             $selectArray[] = 'sub_category';
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select($selectArray)->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, $selectArray);
 
             $filteredRecords = array_filter(collect($record)->toArray());
             $cdcd = '-xs';

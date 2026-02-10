@@ -2982,8 +2982,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
         $currencyField = "";
         $decimalField = "";
         if ($input['documentId'] == 1) {
@@ -3201,8 +3201,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         if ($input['documentId'] == 1) {
             if ($input['currency'] == 1) {
@@ -3876,8 +3876,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $expYear = $monthExp[0];
         $expMonth = $monthExp[1];
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4004,8 +4004,8 @@ WHERE
 
         $type = $request->type;
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4201,8 +4201,8 @@ WHERE
     {
         $input = $request->all();
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -6123,7 +6123,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'DES')->get();
+        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'desc')->get();
 
         foreach ($output as $row) {
             $row->grvMasters = $this->getPOtoPaymentChain($row);
@@ -9383,7 +9383,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
 
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -9435,8 +9435,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no']);
 
             if ($purchaseOrder->cancelledYN == -1) {
                 return $this->sendError(trans('custom.purchase_order_already_closed_cannot_add'), 500);

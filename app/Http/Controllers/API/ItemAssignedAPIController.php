@@ -283,7 +283,7 @@ class ItemAssignedAPIController extends AppBaseController
         ini_set('memory_limit', -1);
         $input = $request->all();
         $data = array();
-        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'DES')->get();
+        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'desc')->get();
         $output = $this->getCurrentCostAndQty($output);
         $type = $request->type;
         if (!empty($output)) {
