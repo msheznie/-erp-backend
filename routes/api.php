@@ -24,45 +24,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
         //thrid party APIs
         Route::group(['middleware' => ['thirdPartyApis', 'thirdPartyApiLogger']], function (){
-            Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
-            Route::get('pull_bank_accounts', 'ClubManagement\ClubManagementAPIController@pullBankAccounts');
-            Route::post('post_customer_category', 'ClubManagement\ClubManagementAPIController@createCustomerCategory');
-            Route::post('post_receipt_voucher', 'ClubManagement\ClubManagementAPIController@createReceiptVoucher');
-            Route::post('post_customer_invoice', 'ClubManagement\ClubManagementAPIController@createCustomerInvoice');
-            Route::post('post_customer_master', 'ClubManagement\ClubManagementAPIController@createCustomerMaster');
-            Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
-            Route::post('pull_location', 'POS\PosAPIController@pullLocation');
-            Route::post('pull_segment', 'POS\PosAPIController@pullSegment');
-            Route::post('pull_chart_of_account', 'POS\PosAPIController@pullChartOfAccount');
-            Route::post('pull_chart_of_account_master', 'POS\PosAPIController@pullChartOfAccountMaster');
-            Route::post('pull_unit_of_measure', 'POS\PosAPIController@pullUnitOfMeasure');
-            Route::post('pull_unit_conversion', 'POS\PosAPIController@pullUnitConversion');
-            Route::post('pull_warehouse', 'POS\PosAPIController@pullWarehouse');
-            Route::post('pull_warehouse_item', 'POS\PosAPIController@pullWarehouseItem');
-            Route::post('srp_erp_warehousebinlocation', 'POS\PosAPIController@pullWarehouseBinLocation');
-            Route::post('pull_item', 'POS\PosAPIController@pullItem');
-            Route::post('pull_item_bin_location', 'POS\PosAPIController@pullItemBinLocation');
-            Route::post('pull_item_sub_category', 'POS\PosAPIController@pullItemSubCategory');
-            Route::post('pull_items_by_sub_category', 'POS\PosAPIController@pullItemsBySubCategory');
-            Route::post('pull_user', 'POS\PosAPIController@pullUser');
-            Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
-            Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
-            Route::post('pull_supplier_master', 'POS\PosAPIController@pullSupplierMaster');
-            Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
-            Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
-            Route::post('create_receipts_voucher','ReceiptAPIController@store');
-            Route::post('push_budget_items', 'SRM\ThirdPartySystemsController@pushBudgetItems');
-            Route::post('create_customer_invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
-            Route::post('credit-note','CreditNoteAPIController@createCreditNoteAPI');
-            Route::post('receipt-matching', 'ReceiptMatchingAPIController@createReceiptMatchingAPI');
-            Route::post('cancel_customer_invoice', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
-            Route::post('supplier_invoice_create','BookInvSuppMasterAPIController@createSupplierInvoices');
-            Route::post('journal-voucher','JvMasterAPIController@createJournalVoucher');
-            Route::post('payment-voucher','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
-            Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
-            Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
-            Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
-            Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
+            require __DIR__.'/../routes/externalApis/externalRoutes.php';
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
@@ -121,8 +83,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                         Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
                         Route::post('generateAssetDepBulkPDF', 'FixedAssetDepreciationMasterAPIController@generateAssetDepBulkPDF');
                         Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
-                        Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-                        Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                         Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
                         Route::post('deleteCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@deleteCustomerInvoiceUploads')->name("Delete budget uploads");
                     });
@@ -134,10 +94,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
                 Route::resource('country_masters', 'CountryMasterAPIController');
-                Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
                 Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
 
-                Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
                 Route::resource('supplier_importances', 'SupplierImportanceAPIController');
 
@@ -236,11 +194,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
                 Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-                Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
-                Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
-                Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
 
-                Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
                 Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
 
@@ -267,7 +221,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
 
-                Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
 
                 Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
@@ -285,14 +238,12 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
                 Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
 
-                Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
                 Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
 
                 Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 
                 Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
-                Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
                 Route::get('getNotifications', 'UserAPIController@getNotifications');
                 Route::post('updateNotification', 'UserAPIController@updateNotification');
@@ -326,22 +277,16 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
                 Route::resource('ticket_masters', 'TicketMasterAPIController');
                 Route::resource('field_masters', 'FieldMasterAPIController');
-                Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
 
 
 
                 Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
 
-                Route::resource('performa_details', 'PerformaDetailsAPIController');
-
-                Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
-
-                Route::resource('ticket_masters', 'TicketMasterAPIController');
-
-                Route::resource('field_masters', 'FieldMasterAPIController');
 
 
-                Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
+
+
+
 
                 Route::resource('performa_masters', 'PerformaMasterAPIController');
                 Route::resource('rig_masters', 'RigMasterAPIController');
@@ -421,7 +366,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('accruaval_from_o_p_masters', 'AccruavalFromOPMasterAPIController');
                 Route::resource('fixed_asset_costs', 'FixedAssetCostAPIController');
                 Route::resource('insurance_policy_types', 'InsurancePolicyTypeAPIController');
-                Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
 
 
                 Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
@@ -444,7 +388,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('custreceivepaymentdethistories', 'CustReceivePaymentDetRefferedHistoryAPIController');
 
-                Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
 
                 Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
                 Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');
@@ -655,7 +598,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
                 Route::resource('service_lines', 'ServiceLineAPIController');
                 Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
-                Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
                 Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
                 Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
@@ -671,30 +613,20 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail')->name("Save Delivery Order Tax Detail");
 
-                Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
 
-                Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
 
-                Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
 
-                Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
 
-                Route::resource('user_rights', 'UserRightsAPIController');
 
-                Route::resource('lpt_permissions', 'LptPermissionAPIController');
 
                 Route::resource('client_performa_app_types', 'ClientPerformaAppTypeAPIController');
 
 
-                Route::resource('customer_invoice_tracking_details', 'CustomerInvoiceTrackingDetailAPIController');
 
 
 
-                Route::resource('service_lines', 'ServiceLineAPIController');
                 //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
-                Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
-                Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
                 Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
@@ -763,10 +695,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
                 Route::post('appearanceSubmit', 'CompanyAPIController@appearanceSubmit');
 
-                Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
 
-                Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails');
-                Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
 
 
 
@@ -837,8 +766,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::resource('srp_erp_pay_shift_masters', 'SrpErpPayShiftMasterAPIController');
 
-                Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
-                Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
 
                 Route::resource('job_error_logs', 'JobErrorLogAPIController');
                 Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
@@ -880,13 +807,11 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('hrms_designations', 'HrmsDesignationAPIController');
                 Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
                 Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
-                Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
                 Route::resource('monthly_declarations_types', 'MonthlyDeclarationsTypesAPIController');
                 Route::resource('hr_monthly_deduction_masters', 'HrMonthlyDeductionMasterAPIController');
                 Route::resource('hr_payroll_masters', 'HrPayrollMasterAPIController');
                 Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIController');
                 Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
-                Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
                 Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
                 Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPIController');
                 Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
@@ -900,10 +825,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('store-employee-language', 'ERPLanguageMasterAPIController@storeEmployeeLanguage');
 
 
-                Route::resource('tax_ledgers', 'TaxLedgerAPIController');
-                Route::resource('employee_designations', 'EmployeeDesignationAPIController');
-                Route::resource('hrms_designations', 'HrmsDesignationAPIController');
-                Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
                 Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
                 Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
@@ -961,15 +882,11 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
         Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
         Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
-        Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
 
         Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
         Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
-        Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
         Route::get('test', 'TenantAPIController@test');
-        Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM'); 
         Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
-        Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
         Route::post('getCompanyTenderList', 'TenderMasterAPIController@getCompanyTenderList');
         if (env("LOG_ENABLE", false)) {
             Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
