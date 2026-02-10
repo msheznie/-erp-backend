@@ -138,7 +138,7 @@ Route::group([], function () {
 
     Route::get('downloadMrItemUploadTemplate', 'MaterielRequestAPIController@downloadMrItemUploadTemplate');
     Route::post('mrItemsUpload', 'MaterielRequestAPIController@mrItemsUpload');
-    Route::get('getMrItemBulkUploadError', 'MrBulkUploadErrorLogAPIController@getMrItemBulkUploadError');
+    Route::get('getMrItemBulkUploadError', 'MrBulkUploadErrorLogAPIController@getMrItemBulkUploadError')->name('Get MR item bulk upload error');
     Route::post('deleteMrErrorLog/{id}', 'MrBulkUploadErrorLogAPIController@deleteMrErrorLog');
 });
 
