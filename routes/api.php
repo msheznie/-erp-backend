@@ -544,12 +544,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
-                // console jv
-                Route::post('getConsoleJvApproval', 'ConsoleJVMasterAPIController@getConsoleJvApproval');
-                Route::post('getApprovedConsoleJvForCurrentUser', 'ConsoleJVMasterAPIController@getApprovedConsoleJvForCurrentUser');
-                Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV');
-                Route::post('rejectConsoleJV', 'ConsoleJVMasterAPIController@rejectConsoleJV');
-
                 Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
 
                 Route::post('getAllNotDishachargeEmployeesDropdown', 'EmployeeAPIController@getAllNotDishachargeEmployeesDropdown');
