@@ -3648,10 +3648,6 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.approvedDate',
             ]);
 
-          
-            // $purchaseRequests=  $purchaseRequests->get();
-            
-            // $result = $this->filterPurchaseRequest($purchaseRequests);
        
 
             return $purchaseRequests;
