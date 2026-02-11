@@ -12,28 +12,34 @@
 
     <tr>
         @php
-            $bigginingDt = new DateTime($entity['finance_year_by']['bigginingDate']);
-            $bigginingDate = $bigginingDt->format('d/m/Y');
-
-            $endingDt = new DateTime($entity['finance_year_by']['endingDate']);
-            $endingDate = $endingDt->format('d/m/Y');
-
-
+            $financeYearBy = $entity['finance_year_by'] ?? null;
+            if ($financeYearBy && isset($financeYearBy['bigginingDate'])) {
+                $bigginingDt = new DateTime($financeYearBy['bigginingDate']);
+                $bigginingDate = $bigginingDt->format('d/m/Y');
+            } else {
+                $bigginingDate = '-';
+            }
+            if ($financeYearBy && isset($financeYearBy['endingDate'])) {
+                $endingDt = new DateTime($financeYearBy['endingDate']);
+                $endingDate = $endingDt->format('d/m/Y');
+            } else {
+                $endingDate = '-';
+            }
         @endphp
         <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
+        <td>{{ trans('custom.year') }} : {{ $entity['Year'] ?? '-' }}</td>
 
     </tr>
     <tr>
 
-        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td>{{ trans('custom.segment') }} : {{ isset($entity['segment_by']['ServiceLineDes']) ? $entity['segment_by']['ServiceLineDes'] : '-' }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
+        <td>{{ trans('custom.template') }} : {{ isset($entity['template_master']['description']) ? $entity['template_master']['description'] : '-' }}</td>
 
     </tr>
     <tr></tr>

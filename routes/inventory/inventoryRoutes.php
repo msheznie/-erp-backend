@@ -212,7 +212,7 @@ Route::group([], function () {
 
     Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer')->name("Reject Stock Transfer");
     Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack')->name("Stock Transfer ReferBack");
-    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
+    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
     Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen')->name("Stock Transfer Reopen");
     Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView')->name("Get All Stock Transfer By Company");
     Route::get('get-all-uom-convertion', 'StockTransferAPIController@getallUomConvertion')->name("Get all Uom Convertion");

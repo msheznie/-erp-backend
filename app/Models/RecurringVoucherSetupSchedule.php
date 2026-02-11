@@ -256,13 +256,16 @@ class RecurringVoucherSetupSchedule extends Model
 
     public function generateDocument()
     {
+        if ($this->master === null) {
+            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
+        }
+
         $documentType = $this->master->documentType;
-        if($documentType == 0){
+        if ($documentType == 0) {
             return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
         }
-        else{ //remove else part with other document types
-            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
-        }
+
+        return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
     }
 
     public function getIsReActiveStateAttribute(){

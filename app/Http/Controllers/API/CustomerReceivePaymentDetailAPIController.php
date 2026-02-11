@@ -644,8 +644,8 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $sumReturnDEOTransactionAmount = 0;
         }
 
-
-        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'] + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
+        $sumOfMatchedAmount = $matchedAmount !== null ? ($matchedAmount['SumOfmatchedAmount'] ?? 0) : 0;
+        $totReceiveAmount = $totalReceiveAmountTrans + $sumOfMatchedAmount + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 
