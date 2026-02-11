@@ -8,7 +8,6 @@ use App\Models\SRMScenarioMaster;
 use App\Repositories\SRMScenarioMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
