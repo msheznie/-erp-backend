@@ -56,6 +56,7 @@ class ExportDetailedPRList implements ShouldQueue
         CommonJobService::db_switch($db);
 
         try {
+            \Log::info('ExportDetailedPRList:');
             (new ExportPRDetailExcel($this->data,$this->userId,$this->code,$this->lang))->export();
         } catch (\Exception $e) {
             Log::error('Export failed.', [
