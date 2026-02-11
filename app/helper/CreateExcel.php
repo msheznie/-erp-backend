@@ -904,31 +904,19 @@ class CreateExcel
 
         $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
-                $sheet->setStyle([
-                    'font' => [
-                        'name' => $fontFamily,
-                        'size' => 11,
-                    ]
-                ]);
-
-                $rowNum = 1;
-                  
-                $sheet->setAutoSize(true);
-
-
                 $columnWidths = [
                     'A' => 25.80,
-                    'B' => 12.80, 
-                    'C' => 13, 
-                    'D' => 13, 
-                    'E' => 13, 
-                    'F' => 13, 
-                    'G' => 13, 
-                    'H' => 15.80, 
-                    'I' => 15.80, 
-                    'J' => 13, 
-                    'K' => 13, 
-                    'L' => 13, 
+                    'B' => 12.80,
+                    'C' => 13,
+                    'D' => 13,
+                    'E' => 13,
+                    'F' => 13,
+                    'G' => 13,
+                    'H' => 15.80,
+                    'I' => 15.80,
+                    'J' => 13,
+                    'K' => 13,
+                    'L' => 13,
                 ];
 
                 foreach ($columnWidths as $col => $width) {
@@ -936,33 +924,46 @@ class CreateExcel
                 }
 
                 $maxColumns = 0;
-                foreach ($data as $row) {
-                    $maxColumns = max($maxColumns, count($row));
-                }
-
-                foreach ($data as $row) {
-                    $isHeader = isset($row['IsHeader']) ? $row['IsHeader'] : false;
+                $rows = [];
+                $headerRowIndices = [];
+                foreach ($data as $idx => $row) {
+                    $isHeader = isset($row['IsHeader']) && $row['IsHeader'];
                     unset($row['IsHeader']);
-                    $paddedRow = array_pad($row, $maxColumns, '');
-                    $sheet->appendRow($paddedRow);
-                    
+                    $indexedRow = array_values($row);
+                    $maxColumns = max($maxColumns, count($indexedRow));
+                    $rows[] = $indexedRow;
                     if ($isHeader) {
-                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
-                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
-                            $cells->setFont([
-                                'bold' => true,
-                                'size' => 12,
-                                'name' => $fontFamily
-                            ]);
-                        });
+                        $headerRowIndices[] = count($rows);
                     }
-
-                    $rowNum++;
                 }
-                
-                // Set right-to-left for Arabic locale
+
+                if (count($rows) > 0) {
+                    $paddedRows = array_map(function ($row) use ($maxColumns) {
+                        return array_pad($row, $maxColumns, '');
+                    }, $rows);
+                    $sheet->fromArray($paddedRows, null, 'A1', false, false);
+                }
+
+                $lastRow = count($rows);
+                $highestColumn = $maxColumns > 0 ? Coordinate::stringFromColumnIndex($maxColumns) : 'L';
+                $dataRange = $lastRow > 0 ? "A1:{$highestColumn}{$lastRow}" : 'A1:L1';
+                $sheet->getStyle($dataRange)->getFont()->setName($fontFamily);
+                $sheet->getStyle($dataRange)->getFont()->setSize(11);
+
+                foreach ($headerRowIndices as $rowNum) {
+                    $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
+                        $cells->setFont([
+                            'bold' => true,
+                            'size' => 12,
+                            'name' => $fontFamily
+                        ]);
+                    });
+                }
+
+                $sheet->setAutoSize(true);
+
                 if (app()->getLocale() == 'ar') {
-                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
@@ -983,6 +984,7 @@ class CreateExcel
             if (Storage::disk($disk)->exists($path))
             {
                 $basePath = Helper::getFileUrlFromS3($path);
+                \Log::info('basePath: ' . $basePath);
             }
         }
         return $path;
