@@ -39,7 +39,10 @@ class SRMScenarioMasterRepository extends BaseRepository
     {
         $input = $request->all();
 
-        $EmailMasterData = SRMScenarioMaster::getAllEmailMaster();
+        $params = [
+            'companyId' => $input['companySystemID']
+        ];
+        $EmailMasterData = SRMScenarioMaster::getAllEmailMaster($params);
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
