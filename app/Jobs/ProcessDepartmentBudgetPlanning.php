@@ -67,7 +67,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($this->companyBudgetPlanningID);
             if ($companyBudgetPlanning) {
-                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
+                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('isActive',1)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
                 foreach ($finalDepartments as $department) {
                     $data = [
                         'companyBudgetPlanningID' => $companyBudgetPlanning->id,

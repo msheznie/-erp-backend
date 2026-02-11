@@ -227,7 +227,9 @@ class Helper
     {
 
         $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
-
+        Log::info('redirectUrl', ['redirectUrl' => $redirectUrl]);
+        Log::info('IS_MULTI_TENANCY', ['IS_MULTI_TENANCY' => env('IS_MULTI_TENANCY')]);
+        Log::info('HTTP_HOST', ['HTTP_HOST' => isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '']);
         if (env('IS_MULTI_TENANCY') == true) {
             if (isset($_SERVER['HTTP_HOST'])) {
                 $url = $_SERVER['HTTP_HOST'];
