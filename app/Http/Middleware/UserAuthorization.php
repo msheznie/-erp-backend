@@ -60,12 +60,14 @@ class UserAuthorization
             $accessType = $request->header('X-Access-Type') ?? 'None';
 
             if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
-                
-                $res = NavigationRoute::create([
-                    'navigationID' => $navigationID,
-                    'routeName' => $routeName,
-                    'action' => self::getActionType($accessType),
-                ]);
+
+                NavigationRoute::firstOrCreate(
+                    [
+                        'navigationID' => $navigationID,
+                        'routeName' => $routeName,
+                        'action' => self::getActionType($accessType),
+                    ]
+                );
 
                 foreach ($userGroupIDs as $userGroupID) {
                     RoleRoute::create([
