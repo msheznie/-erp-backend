@@ -464,7 +464,7 @@ class TaxAPIController extends AppBaseController
     public function getTaxMasterDatatable(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('selectedCompanyID','createdBy'));
         $tax = Tax::with(['authority', 'type'])->where('taxCategory','!=',1);
         $companiesByGroup = "";
 
@@ -485,6 +485,14 @@ class TaxAPIController extends AppBaseController
                 }
             }
         }
+
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $tax->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+
 
         return \DataTables::eloquent($tax)
             ->order(function ($query) use ($input) {

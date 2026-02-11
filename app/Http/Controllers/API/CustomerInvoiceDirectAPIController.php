@@ -108,6 +108,7 @@ use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use PHPExcel_IOFactory;
 use Exception;
+use App\Models\CurrencyConversion;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -395,6 +396,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
 
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+
+        $customerInvoiceDirect = $customerInvoiceDirect->refresh();
+
         if ($isPerforma == 1) {
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'companyFinancePeriodID', 'companyFinanceYearID','isPerforma', 'salesType'));
         }
@@ -402,16 +407,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('customerID', 'secondaryLogoCompanySystemID', 'custTransactionCurrencyID', 'bankID', 'bankAccountID', 'companyFinancePeriodID', 'companyFinanceYearID', 'wareHouseSystemCode', 'serviceLineSystemID', 'isPerforma', 'salesType'));
         }
 
+        $input['checkErChange'] = $checkErChange;
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
 
         if($customerInvoiceUpdate['status']){
+            if ($customerInvoiceDirect->confirmedYN == 0 && ($isPerforma == 0 || $isPerforma == 2)) {
+                $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+            }
             return $this->sendReponseWithDetails($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message'],1,$customerInvoiceUpdate['detail'] ?? null);
         }
         else{
+            $errorType = $customerInvoiceUpdate['type'] ?? array('type' => '');
+            if (isset($errorType['type']) && $errorType['type'] === 'erChange') {
+                $input['checkErChange'] = true;
+            }
             return $this->sendError(
                 $customerInvoiceUpdate['message'],
                 $customerInvoiceUpdate['code'] ?? 404,
-                $customerInvoiceUpdate['type'] ?? array('type' => '')
+                $errorType
             );
         }
     }
@@ -436,6 +449,20 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $isPerforma = $customerInvoiceDirect->isPerforma;
+
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        $previousLocalER = $customerInvoiceDirect->localCurrencyER;
+        $previousReportingER = $customerInvoiceDirect->companyReportingER;
+        if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+            $customerInvoiceDirect->update([
+                'localCurrencyER' => $previousLocalER,
+                'companyReportingER' => $previousReportingER
+            ]);
+            $customerInvoiceDirect = $customerInvoiceDirect->refresh();
+            $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+        }
+
+        $customerInvoiceDirect = $customerInvoiceDirect->refresh();
 
         if ($isPerforma == 2 || $isPerforma == 3 || $isPerforma == 4|| $isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
@@ -613,9 +640,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['custTransactionCurrencyER'] = 1;
 
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+                if ($checkErChange) {
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                     $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                } else {
+                    $_post['companyReportingER'] = $previousReportingER;
+                    $_post['localCurrencyER'] = $previousLocalER;
+                }
 
                 $_post['bankID'] = null;
                 $_post['bankAccountID'] = null;
@@ -642,9 +674,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else {
             $companyCurrencyConversion = \Helper::currencyConversion($customerInvoiceDirect->companySystemID, $input['custTransactionCurrencyID'], $input['custTransactionCurrencyID'], 0);
 
+            if ($checkErChange) {
                 $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                 $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-
+            } else {
+                $_post['companyReportingER'] = $previousReportingER;
+                $_post['localCurrencyER'] = $previousLocalER;
+            }
         }
 
 
@@ -705,6 +741,45 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+                    // Get company currency information
+                    $company = Company::find($input['companySystemID']);
+                    $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                    $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+
+                    $localERDocument = Helper::roundValue($customerInvoiceDirect->localCurrencyER) ?? 0;
+                    $reportingERDocument = Helper::roundValue($customerInvoiceDirect->companyReportingER) ?? 0;
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                    if (!$conversion) {
+                        return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                    }
+                    $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                    if (!$conversion) {
+                        return $this->sendError(trans('custom.currency_exchange_rate_not_found'), 500);
+                    }
+                    $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                    if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                        $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.previous_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($localERDocument, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                            "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.current_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                            "</p>" .
+                            "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
+                        return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                    }
+                }
 
                 if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
@@ -1243,6 +1318,60 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         else{
             return $this->sendError(trans('custom.policy_not_enabled'), 400);
+        }
+    }
+
+    public function setDefaultExchangeRate($id, Request $request)
+    {
+        try {
+            $companyId = $request->companyId;
+
+            $customerInvoice = CustomerInvoiceDirect::findOrFail($id);
+
+            if (!$customerInvoice) {
+                return $this->sendError(trans('custom.customer_invoice_direct_not_found'), 404);
+            }
+
+            // Get local currency exchange rate
+            $localCurrency = Company::find($companyId)->localCurrencyID;
+            $localER = \Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $localCurrency, 0, null, true);
+            $localERValue = $localER['trasToLocER'] ?? 1;
+
+            // Get reporting currency exchange rate
+            $reportingCurrency = Company::find($companyId)->reportingCurrency;
+            $reportingER = \Helper::currencyConversion($companyId, $customerInvoice->custTransactionCurrencyID, $reportingCurrency, 0, null, true);
+            $reportingERValue = $reportingER['trasToRptER'] ?? 1;
+
+            // Recalculate local currency amounts
+            $bookingAmountLocal = \Helper::roundValue($customerInvoice->bookingAmountTrans / $localERValue);
+            $VATAmountLocal = \Helper::roundValue($customerInvoice->VATAmount / $localERValue);
+
+            // Recalculate reporting currency amounts
+            $bookingAmountRpt = \Helper::roundValue($customerInvoice->bookingAmountTrans / $reportingERValue);
+            $VATAmountRpt = \Helper::roundValue($customerInvoice->VATAmount / $reportingERValue);
+
+            // Update customer invoice with new exchange rates and recalculated amounts
+            $customerInvoiceArray = array(
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue,
+                'bookingAmountLocal' => $bookingAmountLocal,
+                'bookingAmountRpt' => $bookingAmountRpt,
+                'VATAmountLocal' => $VATAmountLocal,
+                'VATAmountRpt' => $VATAmountRpt
+            );
+
+            $customerInvoice->update($customerInvoiceArray);
+
+            // Apply exchange rates to details
+            $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
+
+            return $this->sendResponse([
+                'localCurrencyER' => $localERValue,
+                'companyReportingER' => $reportingERValue
+            ], trans('custom.default_exchange_rate_updated_successfully'));
+
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 

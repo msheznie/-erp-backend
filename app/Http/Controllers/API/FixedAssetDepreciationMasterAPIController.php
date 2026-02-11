@@ -410,7 +410,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
     public function getAssests($date,$val,$companyId)
     {
-        return FixedAssetMaster::with(['depperiod_by' => function ($query) {
+        $query = FixedAssetMaster::with(['depperiod_by' => function ($query) {
             $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
             $query->whereHas('master_by', function ($query) {
                 $query->where('approved', -1);
@@ -421,7 +421,13 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         ->ofCompany([$companyId])
         ->assetType(1)
         ->where('approved',$val)
-        ->isDisposed()->get();
+            ->isDisposed();
+
+        if ($val == -1) {
+            $query->eligibleForDepreciation();
+        }
+
+        return $query->get();
 
     }
     /**

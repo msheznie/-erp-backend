@@ -15,6 +15,7 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\CurrencyConversion;
 use App\Models\Contract;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCatalogDetail;
@@ -1191,7 +1192,8 @@ class CustomerInvoiceAPIService extends AppBaseController
                     ->first();
                 $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                if($policy == false || $input['isPerforma'] != 0) {
+                $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+                if(($policy == false || $input['isPerforma'] != 0) && $checkErChange) {
                     //$_post['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
                     $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     //$_post['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -1228,9 +1230,15 @@ class CustomerInvoiceAPIService extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false || $input['isPerforma'] != 0) {
-                $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+            if(($policy == false || $input['isPerforma'] != 0)) {
+                if ($checkErChange && $customerInvoiceDirect->confirmedYN == 1) {
+                    $_post['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $_post['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                } else {
+                    $_post['companyReportingER'] = $customerInvoiceDirect->companyReportingER;
+                    $_post['localCurrencyER'] = $customerInvoiceDirect->localCurrencyER;
+                }
             }
         }
 
@@ -1318,6 +1326,59 @@ class CustomerInvoiceAPIService extends AppBaseController
 
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
+
+                $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+                    // Get company currency information
+                    $company = Company::find($input['companySystemID']);
+                    $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
+                    $companyReportingCurrencyID = $company ? $company->reportingCurrency : null;
+
+                    $localERDocument = Helper::roundValue($customerInvoiceDirect->localCurrencyER) ?? 0;
+                    $reportingERDocument = Helper::roundValue($customerInvoiceDirect->companyReportingER) ?? 0;
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyLocalCurrencyID)->first();
+                    if (!$conversion) {
+                        return [
+                            'status' => false,
+                            'code' => 500,
+                            'message' => trans('custom.currency_exchange_rate_not_found')
+                        ];
+                    }
+                    $systemLocalER = Helper::roundValue($conversion->conversion);
+
+                    $conversion = CurrencyConversion::where('masterCurrencyID', $customerInvoiceDirect->custTransactionCurrencyID)->where('subCurrencyID', $companyReportingCurrencyID)->first();
+                    if (!$conversion) {
+                        return [
+                            'status' => false,
+                            'code' => 500,
+                            'message' => trans('custom.currency_exchange_rate_not_found')
+                        ];
+                    }
+                    $systemReportingER = Helper::roundValue($conversion->conversion);
+
+                    if (($localERDocument != $systemLocalER) || ($reportingERDocument != $systemReportingER)) {
+                        $erMessage = "<p>" . trans('custom.exchange_rates_updated_as_follows') . "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.previous_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($localERDocument, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($reportingERDocument, 7) .
+                            "</p>" .
+                            "<p style='font-size: medium;'>" .
+                            trans('custom.current_rates') . " " .
+                            trans('custom.local_er') . " " . number_format($systemLocalER, 7) .
+                            " | " . trans('custom.reporting_er') . " " . number_format($systemReportingER, 7) .
+                            "</p>" .
+                            "<p>" . trans('custom.are_you_sure_you_want_to_proceed') . "</p>";
+
+                        return [
+                            'status' => false,
+                            'code' => 500,
+                            'type' => ['type' => 'erChange'],
+                            'message' => $erMessage
+                        ];
+                    }
+                }
 
                 if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 

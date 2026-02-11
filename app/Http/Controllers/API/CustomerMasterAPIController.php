@@ -1744,6 +1744,7 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
         $header = $request->header('Authorization');
         $customerMasters = $input['customer_masters'] ?? null;
+        $companyID = $input['company_id'] ?? null;
 
         if (empty($customerMasters) || !is_array($customerMasters)) {
             return $this->sendError("customer_masters array is required", 422);
@@ -1759,7 +1760,7 @@ class CustomerMasterAPIController extends AppBaseController
         $customerCodeSystemIds = [];
 
         foreach ($customerMasters as $customerMaster) {
-            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster);
+            $datasetMaster = CustomerMasterAPIService::validateMasterData($customerMaster, $companyID);
             
             if (!$datasetMaster['status']) {
                 $headerData['errors'] = $datasetMaster['data'] ?? [];
@@ -1803,7 +1804,7 @@ class CustomerMasterAPIController extends AppBaseController
                             }
                             
                             $successDocuments[] = self::createSuccessResponseDataArray(
-                                $customerCodeSystem,
+                                $masterDataset['customerShortCode'],
                                 $initialIndex,
                                 $customerCode
                             );
@@ -1841,7 +1842,7 @@ class CustomerMasterAPIController extends AppBaseController
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
-                return $this->sendError("Transaction failed: " . $e->getMessage(), 500);
+                return $this->sendError("Transaction failed: Database transaction failed", 500);
             }
         }
 
@@ -1866,7 +1867,6 @@ class CustomerMasterAPIController extends AppBaseController
         }
  
         return $this->sendResponse($returnData, trans('custom.customer_master_retrieved_successfully'));
-
     }
 
     public static function createErrorResponseDataArray($customerCodeSystem,$masterIndex, $headerData): array {
@@ -1875,15 +1875,14 @@ class CustomerMasterAPIController extends AppBaseController
                 'unique-key' => $customerCodeSystem,
                 'index' => $masterIndex + 1
             ],
-            'headerData' => [$headerData]
+            'errors' => $headerData['errors'] ?? []
         ];
     }
 
-    public static function createSuccessResponseDataArray($customerCodeSystem,$masterIndex,$code): array {
+    public static function createSuccessResponseDataArray($secondaryCode,$masterIndex,$code): array {
         return [
-            "Customer master No" => $customerCodeSystem,
-            "Posting" => "Success",
-            "reference" => $code
+            'customer_code' => $code,
+            'secondary_code' => $secondaryCode,
         ];
     }
 

@@ -514,8 +514,6 @@ class TaxService
                 $unbilledGRVVATAddVatOnPO = $unbilledGRVVATAddVatOnPO->get();
             }
 
-        Log::info('poLogisticVATDistributionForGRV function count:' . count($unbilledGRVVATAddVatOnPO));
-
         foreach ($unbilledGRVVATAddVatOnPO as $advPayment) {
 
             $data = self::poLogisticForLineWise($advPayment);
@@ -970,6 +968,9 @@ class TaxService
             'exemptVAT' => 0,
             'exemptVATRpt' => 0,
             'exemptVATLocal' => 0,
+            'standardExemptVAT' => 0,
+            'standardExemptVATLocal' => 0,
+            'standardExemptVATRpt' => 0,
         ];
 
         if ($detailVAT) {
@@ -979,7 +980,10 @@ class TaxService
                 'totalVATRpt' => $detailVAT->totalVATRpt,
                 'exemptVAT' => 0,
                 'exemptVATRpt' => 0,
-                'exemptVATLocal' => 0
+                'exemptVATLocal' => 0,
+                'standardExemptVAT' => 0,
+                'standardExemptVATLocal' => 0,
+                'standardExemptVATRpt' => 0,
             ];
         }
 
@@ -1009,6 +1013,10 @@ class TaxService
             $vatData['exemptVAT'] += $exemptVATTransAmount;
             $vatData['exemptVATLocal'] += $exemptVATLocalAmount;
             $vatData['exemptVATRpt'] += $exemptVATRptAmount;
+
+            $vatData['standardExemptVAT'] = $exemptVATTransAmount;
+            $vatData['standardExemptVATLocal'] = $exemptVATLocalAmount;
+            $vatData['standardExemptVATRpt'] = $exemptVATRptAmount;
         }
 
         $detailExemptVAT = SupplierInvoiceItemDetail::selectRaw('SUM(VATAmount) as totalVAT, SUM(VATAmountLocal) as totalVATLocal, SUM(VATAmountRpt) as totalVATRpt, vatSubCategoryID')

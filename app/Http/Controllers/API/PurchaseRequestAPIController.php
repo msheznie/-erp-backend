@@ -50,6 +50,7 @@ use App\Models\DocumentReferedHistory;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 use App\Models\EmployeesDepartment;
+use App\Models\ApprovalGroups;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
@@ -99,7 +100,7 @@ use App\Repositories\DocumentApprovedRepository;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\DocumentCodeConfigurationService;
 use App\Jobs\ExportDetailedORList;
-
+use App\helper\SME;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -325,6 +326,8 @@ class PurchaseRequestAPIController extends AppBaseController
 
         $prTypeApproval = CompanyDocumentAttachment::where('companySystemID', $companyId)->where('documentSystemID', 1)->first();
 
+        $user_data = SME::user_details();
+        $user_segment_id = $user_data ? $user_data->segmentID : null;
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -342,7 +345,8 @@ class PurchaseRequestAPIController extends AppBaseController
             'conditions' => $conditions,
             'localCurrency' => (isset($companyCurrency)) ? $companyCurrency->localCurrencyID : 0,
             'altUOM' => (isset($checkAltUOM)) ? (boolean) $checkAltUOM->isYesNO : false,
-            'isPRTypeApprovalOn' => isset($prTypeApproval) && $prTypeApproval->isPRTypeApproval == -1
+            'isPRTypeApprovalOn' => isset($prTypeApproval) && $prTypeApproval->isPRTypeApproval == -1,
+            'user_segment_id' => $user_segment_id
         );
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
@@ -1188,6 +1192,10 @@ class PurchaseRequestAPIController extends AppBaseController
         $empID = \Helper::getEmployeeSystemID();
 
 
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+            ->where('documentSystemID', 1)
+            ->first();
+
         $purchaseRequests = DB::table('erp_documentapproved')
             ->selectRaw(
                 'erp_purchaserequest.*,
@@ -1203,14 +1211,11 @@ class PurchaseRequestAPIController extends AppBaseController
                 currencymaster.CurrencyCode,
                 currencymaster.DecimalPlaces As DecimalPlaces,
                 documentSystemCode, SUM(erp_purchaserequestdetails.totalCost) as totalCost')
-            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
+            ->join('approvalgroups', 'erp_documentapproved.approvalGroupID', '=', 'approvalgroups.rightsGroupId')
+            ->leftJoin('employeesdepartments', function ($query) use ($companyId, $empID, $serviceLinePolicy) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                     ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                     ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
-                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
-                    ->where('documentSystemID', 1)
-                    ->first();
 
                 if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
                     $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
@@ -1242,6 +1247,21 @@ class PurchaseRequestAPIController extends AppBaseController
             ->join('erp_location', 'location', 'erp_location.locationID')
             ->join('serviceline', 'erp_purchaserequest.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
+            ->where(function ($query) use ($empID) {
+                $query->where(function ($subQuery) {
+                    // For normal approval groups, filter by employeesdepartments (exclude reporting manager groups)
+                    $subQuery->whereNotNull('employeesdepartments.employeeSystemID')
+                        ->where(function($q) {
+                            $q->whereNull('approvalgroups.isReportingManager')
+                              ->orWhere('approvalgroups.isReportingManager', '!=', 1);
+                        });
+                })
+                ->orWhere(function ($subQuery) use ($empID) {
+                    // For reporting manager groups (isReportingManager = 1), check if current employee is the reporting manager
+                    $subQuery->where('approvalgroups.isReportingManager', 1)
+                        ->where('erp_documentapproved.docConfirmedByEmpSystemID', $empID);
+                });
+            })
             ->groupBy('erp_purchaserequestdetails.purchaseRequestID')
             ->whereIn('erp_documentapproved.documentSystemID', [1, 50, 51])
             ->where('erp_documentapproved.companySystemID', $companyId);
@@ -3578,6 +3598,15 @@ class PurchaseRequestAPIController extends AppBaseController
             if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
                 $purchaseRequests = $purchaseRequests->whereIn('serviceLineSystemID', $serviceLineSystemID);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $purchaseRequests->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         if ($fromDate && $toDate) {

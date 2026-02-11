@@ -93,6 +93,7 @@ class CreateDepreciation implements ShouldQueue
                         ->ofCompany([$depMaster->companySystemID])
                         ->isApproved()
                         ->assetType(1)
+                        ->eligibleForDepreciation()
                         ->orderBy('faID', 'desc')
                         ->count();
 

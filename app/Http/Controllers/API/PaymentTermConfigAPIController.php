@@ -118,6 +118,17 @@ class PaymentTermConfigAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        $validator = \Validator::make($input, [
+            'term' => 'required|string|max:25',
+            'sortOrder' => 'required|integer',
+            'templateId' => 'required|integer',
+            'companySystemID' => 'required|integer',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
         $paymentTermConfig = $this->paymentTermConfigRepository->create($input);
 
         return $this->sendResponse($paymentTermConfig->toArray(), trans('custom.payment_term_config_saved_successfully'));
@@ -309,6 +320,10 @@ class PaymentTermConfigAPIController extends AppBaseController
 
         $paymentTermTemplateConfigs =  PaymentTermConfig::where('templateId', $input['templateId']);
 
+        $maxSortOrder = PaymentTermConfig::where('templateId', $input['templateId'])->max('sortOrder') ?? 0;
+        $nextSortOrder = $maxSortOrder + 1;
+
+
         return \DataTables::of($paymentTermTemplateConfigs)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -319,6 +334,7 @@ class PaymentTermConfigAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('nextSortOrder', $nextSortOrder)
             ->make(true);
     }
 

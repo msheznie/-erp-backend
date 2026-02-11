@@ -143,6 +143,11 @@ class CompanyDepartment extends Model
         return $this->hasMany('App\Models\CompanyDepartmentEmployee', 'departmentSystemID', 'departmentSystemID');
     }
 
+    public function companyDepartmentSegments()
+    {
+        return $this->hasMany('App\Models\CompanyDepartmentSegment', 'departmentSystemID', 'departmentSystemID');
+    }
+
     public function hod()
     {
         return $this->belongsTo('App\Models\CompanyDepartmentEmployee', 'departmentSystemID', 'departmentSystemID')->where('isHOD', 1);

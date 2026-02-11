@@ -134,6 +134,10 @@ Route::group([],function (){
     Route::get('getAvailableChequeNumbers', 'PaySupplierInvoiceMasterAPIController@getAvailableChequeNumbers')->name('Get available cheque numbers');
     Route::get('getBankAccountDetails', 'DirectPaymentDetailsAPIController@getBankAccountDetails')->name('Get available cheque numbers');
     Route::get('getBankCharges', 'PaySupplierInvoiceDetailAPIController@getBankCharges')->name('Get bank charges details');
+    Route::get('getCreditNotePaymentDetails', 'PayCreditNoteDetailAPIController@getCreditNotePaymentDetails')->name('Get payment voucher credit note details');
+    Route::get('getCreditNoteForPV', 'PayCreditNoteDetailAPIController@getCreditNoteForPV')->name('Get credit note for pv');
+    Route::post('addCreditNotePaymentDetail', 'PayCreditNoteDetailAPIController@addCreditNotePaymentDetail')->name('Add credit note payment detail');
+    Route::post('deleteAllCreditNotePaymentDetail', 'PayCreditNoteDetailAPIController@deleteAllCreditNotePaymentDetail')->name('Delete all credit note payment detail');
 
     Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
     Route::resource('pdc_logs', 'PdcLogAPIController');

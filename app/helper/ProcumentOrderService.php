@@ -71,7 +71,6 @@ class ProcumentOrderService
             self::errorLogUpdate($valiatedItems['errorLog'], $procumentOrder['purchaseOrderID']);
         }
 
-        Log::info(trans('custom.add_multiple_items_end'));
         $procumentOrder = ProcumentOrder::find($purchaseOrder['purchaseOrderID']);
         $procumentOrder->upload_job_status = 1;
         $procumentOrder->isBulkItemJobRun = 0;

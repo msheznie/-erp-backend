@@ -77,6 +77,7 @@ Route::group([], function () {
     Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency')->name("Update Currency");
     Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate')->name("Customer Invoice Local Update");
     Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate')->name("Customer Invoice Reporting Update");
+    Route::put('customerInvoiceSetDefaultExchangeRate/{id}', 'CustomerInvoiceDirectAPIController@setDefaultExchangeRate')->name("Set default customer invoice exchange rate");
     Route::post('setCustomerInvoiceForActivePolicy', 'CustomerInvoiceDirectAPIController@setCustomerInvoiceForActivePolicy')->name("Get Policy Status");
 
 });
@@ -92,6 +93,7 @@ Route::group([], function () {
     Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit')->name("Credit Note Audit");
     Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote')->name("Get Filtered Debit Note");
     Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus')->name("Credit Note Receipt Status");
+    Route::post('getCreditNoteReceiptVouchers', 'CreditNoteReceiptAPIController@getReceiptVouchersForRefundCreditNote')->name("Get Receipt Vouchers For Refund Credit Note");
 
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable')->name("Credit Note Master Data Table");
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails')->name("Add Credit Note Details");

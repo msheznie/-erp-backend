@@ -318,7 +318,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
             return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
-        DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $data['companySystemID'])->delete();
+        DepBudgetPlDetEmpColumn::where('empID', $empID)->where('companySystemID', $data['companySystemID'])->where('source', $data['source'])->delete();
 
         $selectedColumns = collect($data['selectedColumns'])->pluck('id')->toArray();
         array_push($selectedColumns, ...[1,4,6]);
@@ -330,7 +330,8 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
             $dataset[] = [
                 'companySystemID' => $data['companySystemID'],
                 'empID' => $empID,
-                'columnID' => $selectedColumn
+                'columnID' => $selectedColumn,
+                'source' => $data['source']
             ];
         }
 
@@ -338,7 +339,7 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
             DepBudgetPlDetEmpColumn::insert($dataset);
         }
 
-        $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->get();
+        $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->where('source', $data['source'])->get();
 
         return $this->sendResponse($empColumns, trans('custom.employee_columns_saved_successfully'));
     }
@@ -353,7 +354,12 @@ class DepBudgetPlDetEmpColumnAPIController extends AppBaseController
             return $this->sendError(trans('custom.employee_id_not_found'));
         }
 
-        $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->get();
+
+        if(empty( $data['source'])) {
+            $data['source'] = 3;
+        }
+
+        $empColumns = DepBudgetPlDetEmpColumn::with(['column'])->where('empID', $empID)->where('companySystemID', $data['companySystemID'])->where('source', $data['source'])->get();
 
         return $this->sendResponse($empColumns, trans('custom.available_columns_retrieved_successfully'));
     }

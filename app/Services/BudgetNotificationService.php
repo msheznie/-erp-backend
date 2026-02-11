@@ -75,7 +75,6 @@ class BudgetNotificationService
 
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
-
            if (!$budgetNotifications) {
                return [
                    'success' => false,
@@ -184,15 +183,13 @@ class BudgetNotificationService
         $hod = $department->hod->employee;
 
         $baseurl = \Helper::checkDomai();
-        $parsedUrl = parse_url($baseurl);
-        $domain = $parsedUrl['scheme'] . '://' . $parsedUrl['host'];
-        $linkUrl = $domain . '/#/budget-planning/planning';
-        
+        $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
+        $linkUrl = $baseurl;
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
             'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
-            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">' . $linkUrl . '</a>'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
 
         $emails[] = array(
@@ -211,7 +208,7 @@ class BudgetNotificationService
 
    private function sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions','delegateAccess.employee')->find($departmentBudgetPlanningID);
 
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
 
@@ -407,12 +404,15 @@ class BudgetNotificationService
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
         $delegatee = Employee::find($this->delegateID);
 
+        $baseurl = \Helper::checkDomai();
+        $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
+        $linkUrl = $baseurl;
         if(empty($revision)) {
             $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
             'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
-            'Budget Review Dashboard' => 'N/A'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
         }else {
             $placeholders = [
@@ -420,7 +420,7 @@ class BudgetNotificationService
                 'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
                 'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
                 'ResubmissionDate' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
-                'Budget Review Dashboard' => 'N/A'
+                'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
             ];
 
             $budgetNotifications = BudgetNotification::where('slug', 'revision-resubmission')->first();
@@ -428,7 +428,7 @@ class BudgetNotificationService
 
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
-        
+
         $emails[] = array(
             'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
@@ -479,10 +479,9 @@ class BudgetNotificationService
                 'docSystemID' => 133,
                 'docSystemCode' => $departmentBudgetPlanningID
             );
-    
-            \Email::sendEmail($emails);
         }
 
+        \Email::sendEmail($emails);
    }
 
    private function sendFinanceRejectsForRevisionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -524,7 +523,7 @@ class BudgetNotificationService
         // Get all department users with their employee details eager loaded
         $financeUsers = CompanyDepartmentEmployee::with('employee')
                         ->whereHas('department', function ($query) {
-                        $query->where('isFinance', 1)->where('isActive', 1);
+                        $query->where('isFinance', 1)->where('isActive', 1)->where('companySystemID', $budgetPlanning->masterBudgetPlannings->companySystemID);
                         })
                         ->where('isActive', 1)
                         ->get();
@@ -551,8 +550,9 @@ class BudgetNotificationService
                 'docSystemCode' => $departmentBudgetPlanningID
             );
     
-            \Email::sendEmail($emails);
         }
+
+        \Email::sendEmail($emails);
    }
 
 

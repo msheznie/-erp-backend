@@ -27,6 +27,7 @@ use App\Models\EmployeeLedger;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\MatchDocumentMaster;
+use App\Models\PayCreditNoteDetail;
 use App\Models\PaymentVoucherBankChargeDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PaySupplierInvoiceMaster;
@@ -325,11 +326,16 @@ class PaymentVoucherServices
             $input['chequePaymentYN'] = 0;
         }
 
-        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-            $input['chequePaymentYN'] = 0;
-            $input['BPVchequeDate'] = null;
-        } else {
+        // Force pdcChequeYN to 0 when invoiceType is 8 (refund)
+        if (isset($input['invoiceType']) && $input['invoiceType'] == 8) {
             $input['pdcChequeYN'] = 0;
+        } else {
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['chequePaymentYN'] = 0;
+                $input['BPVchequeDate'] = null;
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
         }
 
         $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
@@ -346,6 +352,9 @@ class PaymentVoucherServices
         }
 
         $input['payment_mode'] = $input['paymentMode'];
+        if (isset($input['refundType']) && $input['refundType'] != 0) {
+            $input['refundType'] = $input['refundType'];
+        }
         unset($input['paymentMode'], $input['noOfCheques'], $input['totalAmount']);
 
         $paySupplierInvoiceMasters = PaySupplierInvoiceMaster::create($input);
@@ -618,6 +627,12 @@ class PaymentVoucherServices
         } else {
             $input['employeeAdvanceAccount'] = null;
             $input['employeeAdvanceAccountSystemID'] = null;
+            if (isset($input['refundType']) && $input['refundType'] != 0) {
+                $input['refundType'] = $input['refundType'];
+            }
+            else {
+                $input['refundType'] = null;
+            }
         }
 
         if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
@@ -775,21 +790,26 @@ class PaymentVoucherServices
             $input['chequePaymentYN'] = 0;
         }
 
-        if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
-            $input['BPVchequeDate'] = null;
-            $input['BPVchequeNo'] = null;
-            $input['expenseClaimOrPettyCash'] = null;
-
-            if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
-                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
-                    ->where('document_master_id', $input['documentSystemID'])
-                    ->where('company_id', $companySystemID)
-                    ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
-                    ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
-            }
-
-        } else {
+        // Force pdcChequeYN to 0 when invoiceType is 8 (refund)
+        if (isset($input['invoiceType']) && $input['invoiceType'] == 8) {
             $input['pdcChequeYN'] = 0;
+        } else {
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN']) {
+                $input['BPVchequeDate'] = null;
+                $input['BPVchequeNo'] = null;
+                $input['expenseClaimOrPettyCash'] = null;
+
+                if(!is_null($paySupplierInvoiceMaster->BPVchequeNo) && ($paySupplierInvoiceMaster->BPVchequeNo != 0)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])
+                        ->where('document_master_id', $input['documentSystemID'])
+                        ->where('company_id', $companySystemID)
+                        ->where('cheque_no', $paySupplierInvoiceMaster->BPVchequeNo)
+                        ->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                }
+
+            } else {
+                $input['pdcChequeYN'] = 0;
+            }
         }
 
         if ((isset($input['pdcChequeYN']) && !$input['pdcChequeYN']) || $input['paymentMode'] != 2 ) {
@@ -1165,7 +1185,7 @@ class PaymentVoucherServices
             }
 
             if(isset($input['payeeType'])){
-                if($input['payeeType'] == 1 && $input['invoiceType'] != 6 && $input['invoiceType'] != 7){
+                if($input['payeeType'] == 1 && $input['invoiceType'] != 6 && $input['invoiceType'] != 7 && $input['invoiceType'] != 8){
                     $validator = \Validator::make($input, [
                         'BPVsupplierID' => 'required|numeric|min:1'
                     ]);
@@ -1803,6 +1823,20 @@ class PaymentVoucherServices
 
             }
 
+            // refund type payment voucher
+            if ($paySupplierInvoiceMaster->invoiceType == 8) {
+                $payCreditNoteDetailExist = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->get();
+
+                if (count($payCreditNoteDetailExist) == 0) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
+                        'code' => 500,
+                        'type' => ['type' => 'confirm']
+                    ];
+                }
+            }
+
             $amountForApproval = 0;
             if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
                 $bankCharge = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->selectRaw('SUM(localAmount) as total')->first();
@@ -1820,12 +1854,14 @@ class PaymentVoucherServices
                 }
 
 
-            } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
+            } 
+            else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
 
                 $amountForApproval = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                     ->sum('localAmount');
 
-            } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
+            } 
+            else if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
                 $totalAmountForApprovalData = DirectPaymentDetails::where('directPaymentAutoID', $id)
                     ->selectRaw('SUM(localAmount + VATAmountLocal) as total')
@@ -1833,6 +1869,18 @@ class PaymentVoucherServices
 
                 $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
             }
+            else if ($paySupplierInvoiceMaster->invoiceType == 8) {
+                $amountForApproval = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->sum('creditNotePaymentAmount');
+                if ($amountForApproval == 0) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.credit_note_payment_amount_cannot_be_zero'),
+                        'code' => 500,
+                        'type' => ['type' => 'confirm']
+                    ];
+                }
+            }
+
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
                 $object = new ChartOfAccountValidationService();
@@ -2071,6 +2119,27 @@ class PaymentVoucherServices
                 $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                 $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
             } else {
+                $input['payAmountBank'] = 0;
+                $input['payAmountSuppTrans'] = 0;
+                $input['payAmountSuppDef'] = 0;
+                $input['payAmountCompLocal'] = 0;
+                $input['payAmountCompRpt'] = 0;
+                $input['suppAmountDocTotal'] = 0;
+            }
+        }
+
+        if($paySupplierInvoiceMaster->invoiceType == 8) {
+            $totalAmount = PayCreditNoteDetail::selectRaw("SUM(creditNotePaymentAmount) as creditNotePaymentAmount")->where('PayMasterAutoId', $id)->first();
+            if ($totalAmount && $totalAmount->creditNotePaymentAmount > 0) {
+                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->creditNotePaymentAmount);
+                $input['payAmountBank'] = $bankAmount["defaultAmount"];
+                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
+                $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
+                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+            }
+            else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
                 $input['payAmountSuppDef'] = 0;

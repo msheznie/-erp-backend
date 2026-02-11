@@ -47,6 +47,7 @@ class AssetManagementService
                 $assetRegisterDetailObj->setGroupedYN($value->groupbydesc);
                 $assetRegisterDetailObj->setSerialNumber($value->faUnitSerialNo);
                 $assetRegisterDetailObj->setAssetDescription($value->assetDescription);
+                $assetRegisterDetailObj->setLocation($value->locationName);
                 $assetRegisterDetailObj->setCategory($value->financeCatDescription);
                 $assetRegisterDetailObj->setDepPercentage(round($value->DEPpercentage, 2));
                 $assetRegisterDetailObj->setDateAcquired($value->postedDate);

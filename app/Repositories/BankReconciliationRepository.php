@@ -115,6 +115,20 @@ class BankReconciliationRepository extends BaseRepository
                                                     });
         }
 
+        if (!empty($input['createdBy'])) {
+
+            $createdBy = collect($input['createdBy'])
+                ->pluck('id')
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+
+            if (!empty($createdBy)) {
+                $bankReconciliation->whereIn('createdUserSystemID', $createdBy); 
+            }
+        }
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $bankReconciliation = $bankReconciliation->where(function ($query) use ($search) {

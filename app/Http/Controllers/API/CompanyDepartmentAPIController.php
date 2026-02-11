@@ -127,6 +127,7 @@ class CompanyDepartmentAPIController extends AppBaseController
     public function getAllCompanyDepartments(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
         $companyId = $input['companyId'] ?? null;
         
         $search = $request->input('search.value');
@@ -150,6 +151,14 @@ class CompanyDepartmentAPIController extends AppBaseController
                 $q->where('employeeSystemID', $input['hod']);
             });
         }
+
+        if (!empty($input['createdBy'])) {
+        $createdBy = collect((array) $input['createdBy'])->pluck('id')->filter()->toArray();
+        if (!empty($createdBy)) {
+            
+            $query->whereIn('createdUserSystemID', $createdBy);
+        }
+    }
 
         if (!empty($search)) {
             $query->where(function($q) use ($search) {

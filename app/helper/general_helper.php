@@ -84,6 +84,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Services\ChartOfAccountValidationService;
 use App\Services\UserTypeService;
 use App\Services\DocumentAutoApproveService;
+use App\Services\DocumentReportingManagerService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -225,7 +226,7 @@ class Helper
     public static function checkDomai()
     {
 
-        $redirectUrl =  "https://pl.uat-gears-int.com/#/approval/erp"; //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
             if (isset($_SERVER['HTTP_HOST'])) {
@@ -2522,7 +2523,6 @@ class Helper
                         }
 
                         if ($input['documentSystemID'] == 2) {
-                            Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
 
@@ -3333,6 +3333,15 @@ class Helper
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
+                            
+                            if($params["document"] == 133){
+                                $approvalLevel->where('workflow', $masterRec->workflowID);
+                                if(!$approvalLevel->exists()){
+                                    return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                }
+                            }
+
+
                             if ($isSegmentWise) {
                                 if (array_key_exists('segment', $params)) {
 
@@ -3486,7 +3495,17 @@ class Helper
                                     if ($output->approvalrole) {
                                         foreach ($output->approvalrole as $val) {
                                             if ($val->approvalGroupID) {
-                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
+                                                $approvalGroup = Models\ApprovalGroups::find($val->approvalGroupID);
+                                                if($approvalGroup && $approvalGroup->isReportingManager == 1){
+                                                    $reportingManagerResult = DocumentReportingManagerService::getReportingManagerDocumentApprovedData($empInfo, $val, $params, $sorceDocument, $docInforArr, $email_in);
+                                                    if($reportingManagerResult['success']){
+                                                        $documentApproved[] = $reportingManagerResult['data'];
+                                                    } else {
+                                                        return $reportingManagerResult;
+                                                    }
+                                                } else {
+                                                    $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
+                                                }
                                             } else {
                                                 return ['success' => false, 'message' => trans('custom.please_set_approval_group')];
                                             }
@@ -3903,6 +3922,7 @@ class Helper
 
         return $array;
     }
+
 
     /**
      * function to prompt posted date in final approval
@@ -4771,7 +4791,9 @@ class Helper
                         ->groupBy('employeeSystemID')
                         ->exists();
 
-                    if (!$checkUserHasApprovalAccess) {
+                    $approvalGroup = Models\ApprovalGroups::find($docApproved->approvalGroupID);
+
+                    if (!$checkUserHasApprovalAccess && ($approvalGroup && $approvalGroup->isReportingManager != 1)) {
                         if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
                             return ['success' => false, 'message' => trans('custom.no_access_approve_document')];
                         }
@@ -5857,7 +5879,6 @@ class Helper
                         }
 
                         if ($input['documentSystemID'] == 2) {
-                            Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
 
@@ -7895,9 +7916,6 @@ class Helper
     {
         Log::useFiles(storage_path() . '/logs/create_receipt_voucher_jobs.log');
         if ($pvMaster->invoiceType == 3) {
-            Log::info('started');
-            Log::info($pvMaster->PayMasterAutoId);
-            Log::info($pvMaster->expenseClaimOrPettyCash);
             $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->get();
             if (count($dpdetails) > 0) {
                 if ($pvMaster->expenseClaimOrPettyCash == 6 || $pvMaster->expenseClaimOrPettyCash == 7) {
@@ -7984,8 +8002,6 @@ class Helper
                     $receivePayment['createdUserID'] = $pvMaster->confirmedByEmpID;
                     $receivePayment['createdPcID'] = gethostname();
 
-                    Log::info($receivePayment);
-
                     $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
 
                     if ($custRecMaster) {
@@ -8015,13 +8031,11 @@ class Helper
                             $receivePaymentDetail['comRptCurrency'] = $val->toCompanyRptCurrencyID;
                             $receivePaymentDetail['comRptCurrencyER'] = $val->toCompanyRptCurrencyER;
                             $receivePaymentDetail['comRptAmount'] = $val->toCompanyRptCurrencyAmount;
-                            Log::info($receivePaymentDetail);
                             $custRecDetail = Models\DirectReceiptDetail::create($receivePaymentDetail);
                         }
 
                         $params = array('autoID' => $custRecMaster->custReceivePaymentAutoID, 'company' => $pvMaster->interCompanyToSystemID, 'document' => 21, 'segment' => '', 'category' => '', 'amount' => 0);
                         $confirm = self::confirmWithoutRuleDocument($params);
-                        Log::info($confirm["message"]);
                     }
                 } else {
                     $dpdetails = Models\DirectPaymentDetails::where('directPaymentAutoID', $pvMaster->PayMasterAutoId)->where('glCodeIsBank', 1)->get();
@@ -8129,12 +8143,10 @@ class Helper
                             $receivePayment['createdPcID'] = gethostname();
 
                             $custRecMaster = Models\CustomerReceivePayment::create($receivePayment);
-                            Log::info($receivePayment);
                         }
                     }
                 }
             }
-            Log::info('Successfully inserted to Customer receive voucher ' . date('H:i:s'));
             $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
             if ($pvMaster->pdcChequeYN == 0) {
                 $jobPV = BankLedgerInsert::dispatch($masterData);

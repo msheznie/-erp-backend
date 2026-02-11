@@ -32,6 +32,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CustomerInvoice;
+use App\Models\PayCreditNoteDetail;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
@@ -243,7 +244,8 @@ class ReceiptMatchingAPIService extends AppBaseController
             $input['confirmedDate'] = $customerReceivePaymentMaster->confirmedDate;
             $input['approved'] = $customerReceivePaymentMaster->approved;
             $input['approvedDate'] = $customerReceivePaymentMaster->approvedDate;
-        } else if ($input['matchType'] == 2) {
+        } 
+        else if ($input['matchType'] == 2) {
 
             if($input['isAutoCreateDocument']){
                 $creditNoteDetails = CreditNoteDetails::where('creditNoteAutoID', $input['custReceivePaymentAutoID'])->first();
@@ -263,7 +265,8 @@ class ReceiptMatchingAPIService extends AppBaseController
                         'type' => []
                     ];
                 }
-            } else {
+            } 
+            else {
                 $creditNoteDetails = CreditNoteDetails::where('creditNoteDetailsID', $input['custReceivePaymentAutoID'])->first();
                 if (empty($creditNoteDetails)) {
                     return [
@@ -297,6 +300,22 @@ class ReceiptMatchingAPIService extends AppBaseController
                     'message' => trans('custom.credit_note_matching_exists'),
                     'type' => []
                 ];
+            }
+
+            if ($creditNoteMaster->type == 3) {
+                $existCheck = PayCreditNoteDetail::where('creditNoteAutoID', $creditNoteMaster->creditNoteAutoID)
+                    ->where('companySystemID', $creditNoteMaster->companySystemID)
+                    ->whereHas('master', function ($q) {
+                        $q->where('approved', 0);
+                    })
+                    ->exists();
+                if ($existCheck) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.credit_note_link_to_pv_cannot_be_selected'),
+                        'type' => []
+                    ];
+                }
             }
 
             if(!isset($input['isAutoCreateDocument'])){

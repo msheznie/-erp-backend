@@ -1567,7 +1567,8 @@ class MaterielRequestAPIController extends AppBaseController
                 $materielRequests = MaterielRequest::whereIn('companySystemID', $subCompanies)
                     ->where("approved", -1)
                     ->where("cancelledYN", 0)
-                    ->where("serviceLineSystemID", $input['serviceLineSystemID']);
+                    ->where("serviceLineSystemID", $input['serviceLineSystemID'])
+                    ->with(['details', 'materialIssue.details']);
 
                 if ($search) {
                     $search = str_replace("\\", "\\\\", $search);
@@ -1577,8 +1578,17 @@ class MaterielRequestAPIController extends AppBaseController
                     });
                 }
 
-                $materielRequests = $materielRequests->get(['RequestID', 'RequestCode']);
-                return $materielRequests;
+
+
+                return $materielRequests->get()
+                    ->where('materialIssueStatusValue' ,'!=', 'fully_issued')
+                    ->values()
+                    ->map(function ($mr) {
+                        return [
+                            'RequestID'   => $mr->RequestID,
+                            'RequestCode' => $mr->RequestCode,
+                        ];
+                    });
                 break;
         }
 

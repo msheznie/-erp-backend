@@ -62,6 +62,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocumentStatus');
             Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
             Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
+            Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
         });
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
@@ -934,6 +935,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::post('checkCustomerInvoiceUploadStatus', 'CustomerInvoiceDirectAPIController@checkCustomerInvoiceUploadStatus');
 
                 Route::resource('s_r_m_supplier_values', 'SRMSupplierValuesAPIController');
+                Route::resource('credit_note_receipts', 'CreditNoteReceiptAPIController');
+                Route::resource('pay_credit_note_details', 'PayCreditNoteDetailAPIController');
 
                 Route::resource('workflow_configurations', 'WorkflowConfigurationAPIController');
                 Route::resource('workflow_configuration_hod_actions', 'WorkflowConfigurationHodActionAPIController')->parameters(['workflow_configuration_hod_actions' => 'id']);
@@ -944,6 +947,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
                 Route::resource('dep_budget_pl_det_emp_columns', 'DepBudgetPlDetEmpColumnAPIController');
                 require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
                 Route::post('pdf/signed-url', 'SignedPdfController@generateSignedUrl');
+
+                Route::post('getThirdPartyApiLogDetail', 'AuditTrailAPIController@getThirdPartyApiLogDetail');
             });
             Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
             Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
@@ -1051,7 +1056,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('updateUsersLoginType', 'EmployeeAPIController@updateUsersLoginType');
-        Route::get('migrateAuditLogs', 'AuditTrailAPIController@migrateAuditLogs');
         Route::get('runCronJob/{cron}', function ($cron) {
             Artisan::call($cron);
             return 'CRON Job run successfully';

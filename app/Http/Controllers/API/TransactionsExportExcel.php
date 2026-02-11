@@ -189,7 +189,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '4':
-                $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', '','chequeSentToTreasury', 'projectID', 'employeeID'));
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'customerID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'projectID', 'employeeID'));
                 
                 $employeeID = $request['employeeID'];
                 $employeeID = (array)$employeeID;

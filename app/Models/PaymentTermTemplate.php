@@ -78,7 +78,8 @@ class PaymentTermTemplate extends Model
         'templateName',
         'description',
         'isDefault',
-        'isActive'
+        'isActive',
+        'companySystemID'
     ];
 
     /**
@@ -91,7 +92,8 @@ class PaymentTermTemplate extends Model
         'templateName' => 'string',
         'description' => 'string',
         'isDefault' => 'boolean',
-        'isActive' => 'boolean'
+        'isActive' => 'boolean',
+        'companySystemID' => 'integer'
     ];
 
     /**
@@ -102,6 +104,7 @@ class PaymentTermTemplate extends Model
     public static $rules = [
         'templateName' => 'required',
         'description' => 'required',
+        'companySystemID' => 'required',
     ];
     
 }

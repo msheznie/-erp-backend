@@ -358,7 +358,7 @@ class QuotationDetailsAPIController extends AppBaseController
     public function update($id, UpdateQuotationDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID']);
+        $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID', 'serviceLineSystemID']);
         $employee = \Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
@@ -1065,6 +1065,7 @@ WHERE
                             unset($new['userRequestedQty']);
                             unset($new['requestedUnitQty']);
                             unset($new['unitQty']);
+                            unset($new['serviceLineSystemID']);
                             $new['soQuotationDetailID'] = $new['quotationDetailsID'];
                             
                             $new['createdPCID'] = gethostname();
@@ -1440,7 +1441,6 @@ WHERE
             'vatSubCategoryID' => $vatSubCategoryID,
             'companySystemID' => $companySystemID,
             'companyID' => $company ? $company->CompanyID : null,
-            'serviceLineSystemID' => $quotationMaster->serviceLineSystemID,
             'serviceLineCode' => $quotationMaster->serviceLine,
             'createdPCID' => gethostname(),
             'createdUserID' => $empID,

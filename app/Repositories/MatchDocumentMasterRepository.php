@@ -125,6 +125,16 @@ class MatchDocumentMasterRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $invMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
+
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $invMaster = $invMaster->where(function ($query) use ($search) {
@@ -217,6 +227,15 @@ class MatchDocumentMasterRepository extends BaseRepository
             if ($input['customerID'] && !is_null($input['customerID'])) {
                 $invMaster->whereIn('BPVsupplierID', $customerID);
             }
+        }
+
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $invMaster->whereIn('createdUserSystemID', $createdBy);
+            }
+
         }
 
         if ($search) {

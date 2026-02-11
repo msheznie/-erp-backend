@@ -130,6 +130,15 @@ class StockAdjustmentRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $stockAdjustments->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         // if(array_key_exists('year', $input))
 
 

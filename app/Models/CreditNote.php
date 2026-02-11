@@ -345,7 +345,8 @@ class CreditNote extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
-        'isDelegation'
+        'isDelegation',
+        'type'
     ];
 
     /**
@@ -413,7 +414,8 @@ class CreditNote extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'type' => 'integer'
     ];
 
     /**
@@ -538,5 +540,10 @@ class CreditNote extends Model
     public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
         $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_creditnote.'.$column)
             ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function receipts()
+    {
+        return $this->hasMany('App\Models\CreditNoteReceipt', 'creditNoteAutoID', 'creditNoteAutoID');
     }
 }

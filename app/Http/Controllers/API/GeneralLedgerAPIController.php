@@ -27,6 +27,7 @@ use App\Models\FixedAssetMaster;
 use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
+use App\Models\GRVDetails;
 use App\Models\InventoryReclassification;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemReturnMaster;
@@ -689,7 +690,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
         $generalLedger = [
-                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID), 
+                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID),
                 'companyCurrency' => $companyCurrency,
                 'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
@@ -949,6 +950,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
     public function getDocumentAmendFromGL(Request $request){
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
         $messages = [
             'companySystemID.required' => 'Company is required.',
             'documentSystemID.required' => 'Document is required.',
@@ -983,7 +985,14 @@ class GeneralLedgerAPIController extends AppBaseController
             ->where('documentSystemID',$input['documentSystemID'])
             ->where('documentYear',$input['yearID'])
             ->with(['confirm_by','final_approved_by']);
-
+        
+        if (array_key_exists('createdBy', $input) && !empty($input['createdBy'])) {
+            $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+            if (!empty($createdBy)) {
+                $glDocuments->whereIn('createdUserSystemID', $createdBy);
+            }
+        }
+        
         $search = $request->input('search.value');
 
         if ($search) {

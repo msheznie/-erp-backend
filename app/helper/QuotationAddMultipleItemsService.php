@@ -26,6 +26,7 @@ use App\Models\SupplierCurrency;
 use App\Models\Unit;
 use App\Models\SupplierMaster;
 use App\Models\ItemMaster;
+use App\Models\SegmentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyFinanceYear;
 use App\Models\PurchaseOrderDetails;
@@ -88,6 +89,16 @@ class QuotationAddMultipleItemsService
                         'companyID' => $company->CompanyID
                     ];
 
+                    if(isset($item['segment']) && $item['segment'] != null){
+                        $segment = SegmentMaster::where('ServiceLineCode', $item['segment'])
+                            ->where('isActive', 1)
+                            ->where('isDeleted', 0)
+                            ->first();
+                        if($segment){
+                            $data['serviceLineSystemID'] = $segment->serviceLineSystemID;
+                        }
+                    }
+
                     $currencyConversion = \Helper::currencyConversion($quotation['companySystemID'], $quotation['transactionCurrencyID'], $quotation['transactionCurrencyID'], $quotation['transactionAmount']);
                     $data['companyLocalAmount'] = \Helper::roundValue($currencyConversion['localAmount']);
                     $data['companyReportingAmount'] = \Helper::roundValue($currencyConversion['reportingAmount']);
@@ -144,9 +155,6 @@ class QuotationAddMultipleItemsService
         QuotationMaster::where('quotationMasterID', $quotation['quotationMasterID'])->update([
             'isBulkItemJobRun' => 0
         ]);
-
-        Log::info($data);
-        
     }
 
     

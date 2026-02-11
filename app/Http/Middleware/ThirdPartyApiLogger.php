@@ -100,23 +100,25 @@ class ThirdPartyApiLogger
 
         // Dispatch the enhanced logging job (with database storage)
         if ($thirdPartyIntegrationKeyId) {
-            ThirdPartyApiSummaryLogJob::dispatch(
-                $database,
-                $thirdPartyIntegrationKeyId,
-                $tenantUuid,
-                $request->path(),
-                $request->method(),
-                $requestData,
-                $responseData,
-                $response->getStatusCode(),
-                $user,
-                $executionTime,
-                $externalReference,
-                0,
-                0,
-                null,
-                $logId
-            );
+            if(config('victorialogs.store_logs')){
+                ThirdPartyApiSummaryLogJob::dispatch(
+                    $database,
+                    $thirdPartyIntegrationKeyId,
+                    $tenantUuid,
+                    $request->path(),
+                    $request->method(),
+                    $requestData,
+                    $responseData,
+                    $response->getStatusCode(),
+                    $user,
+                    $executionTime,
+                    $externalReference,
+                    0,
+                    0,
+                    null,
+                    $logId
+                )->onQueue('audit-logs');
+            }
         }
 
         return $response;

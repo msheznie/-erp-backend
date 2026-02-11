@@ -28,6 +28,8 @@ use App\Models\CreditNoteDetails;
 use App\Models\CreditNoteDetailsRefferdback;
 use App\Models\CreditNoteReferredback;
 use App\Models\CustomerReceivePaymentDetail;
+use App\Models\CreditNoteReceipt;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\DebitNote;
 use App\Models\DocumentReferedHistory;
 use App\Models\GeneralLedger;
@@ -60,6 +62,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\CreateCreditNote;
 use App\Models\DocumentSystemMapping;
+use App\Models\PayCreditNoteDetail;
 use App\Services\API\CreditNoteAPIService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
@@ -166,7 +169,7 @@ class CreditNoteAPIController extends AppBaseController
     public function store(CreateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'currencyID', 'customerCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'companyFinanceYearID', 'currencyID', 'customerCurrencyID', 'typeID'));
         $company = Company::select('CompanyID')->where('companySystemID', $input['companySystemID'])->first();
         $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
@@ -227,6 +230,7 @@ class CreditNoteAPIController extends AppBaseController
         $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['documentType'] = 12;
+        $input['type'] = $input['typeID'];
 
         $documentDate = $input['creditNoteDate'];
         $monthBegin = $input['FYPeriodDateFrom'];
@@ -368,7 +372,7 @@ class CreditNoteAPIController extends AppBaseController
     public function update($id, UpdateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID', 'typeID'));
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));
@@ -475,12 +479,15 @@ class CreditNoteAPIController extends AppBaseController
         $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
 
         $input['customerCurrencyER'] = 1;
+        $input['type'] = $input['typeID'];
 
         $_post['creditNoteDate'] = Carbon::parse($input['creditNoteDate'])->format('Y-m-d') . ' 00:00:00';
         $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
         if ($_post['creditNoteDate'] > $curentDate) {
             return $this->sendError(trans('custom.document_date_cannot_be_greater_than_current_date'), 500);
         }
+
+        $message = null;
 
         if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $messages = [
@@ -512,6 +519,38 @@ class CreditNoteAPIController extends AppBaseController
 
             if (count($detail) == 0) {
                 return $this->sendError(trans('custom.you_cannot_confirm_credit_note_should_have_at_leas'), 500);
+            }
+
+            // validate refund type credit note
+            if ($input['type'] == 3) {
+                // Get all receipt vouchers for this credit note
+                $creditNoteReceipts = CreditNoteReceipt::where('creditNoteAutoID', $id)->get();
+                
+                $hasVAT = false;
+                    
+                foreach ($creditNoteReceipts as $creditNoteReceipt) {
+                    // Get the receipt voucher
+                    $receiptVoucher = $creditNoteReceipt->customerReceivePayment;
+                    
+                    if ($receiptVoucher) {
+                        $receiptDetails = $receiptVoucher->details;
+                        
+                        foreach ($receiptDetails as $detail) {
+                            // Get the related customer invoice
+                            $customerInvoice = $detail->reciept_vocuher;
+                            if ($customerInvoice && $customerInvoice->VATAmount > 0) {
+                                $hasVAT = true;
+                                break 2;
+                            }
+                        }
+                    }
+                }
+
+                if ($hasVAT) {
+                    if (isset($input['isVATApplicable']) && $input['isVATApplicable'] == 0) {
+                        $message = trans('custom.refund_receipt_voucher_invoice_has_vat_credit_note_not');
+                    }
+                }
             }
 
             $detailValidation = CreditNoteDetails::selectRaw("IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( contractUID IS NULL OR contractUID = '' OR contractUID = 0, null, 1 ) AS contractUID,
@@ -642,7 +681,13 @@ class CreditNoteAPIController extends AppBaseController
 
         $creditNote = $this->creditNoteRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($creditNote->toArray(), trans('custom.credit_note_updated_successfully'),1,$confirm['data'] ?? null);
+        return $this->sendReponseWithDetails(
+            $creditNote->toArray(), 
+            trans('custom.credit_note_updated_successfully'),
+            1,
+            $confirm['data'] ?? null,
+            $message
+        );
     }
 
     public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
@@ -1795,6 +1840,15 @@ WHERE
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError(trans('custom.you_cannot_return_back_to_amend_this_credit_note_i'));
+        }
+
+        if ($masterData->type == 3) {
+            $exists = PayCreditNoteDetail::where('creditNoteAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->exists();
+            if ($exists) {
+                return $this->sendError(trans('custom.credit_note_pulled_into_payment_voucher_cannot_be_amended'));
+            }
         }
 
         // checking document matched in receive payment

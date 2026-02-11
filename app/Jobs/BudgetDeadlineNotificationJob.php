@@ -46,11 +46,9 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         CommonJobService::db_switch($db);
 
         Log::useFiles(storage_path() . '/logs/budget-deadline-notification.log');
-        Log::info('Budget deadline notification job started for database: ' . $db);
 
         try {
             $this->sendDeadlineNotifications();
-            Log::info('Budget deadline notification job completed successfully for database: ' . $db);
         } catch (\Exception $e) {
             Log::error('Error in budget deadline notification job for database ' . $db . ': ' . $e->getMessage());
             throw $e;
@@ -61,9 +59,9 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
     {
         $today = Carbon::today();
 
-        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->get();
+        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->first();
 
-        if ($budgetNotificationDetails->isEmpty()) {
+        if (!$budgetNotificationDetails) {
             $targetDate = $today->copy()->addDays(2)->startOfDay();
         }else {
             $reminderTime = $budgetNotificationDetails->reminderTime;
@@ -88,12 +86,8 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         ->get();
 
         if ($departmentBudgetPlannings->isEmpty()) {
-            Log::info('No budget plannings found with submission date less than 48 hours away');
             return;
         }
-
-        Log::info('Found ' . $departmentBudgetPlannings->count() . ' budget planning(s) with submission date less than 48 hours away');
-
 
         foreach ($departmentBudgetPlannings as $budgetPlanning) {
             try {
@@ -101,7 +95,6 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                 $companySystemID = $budgetPlanning->masterBudgetPlannings->companySystemID ?? null;
                 
                 if (!$companySystemID) {
-                    Log::warning('Budget planning ID ' . $budgetPlanning->id . ' has no company system ID');
                     continue;
                 }
 
@@ -114,7 +107,6 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                     ->first();
 
                 if (!$notificationDetail || !$notificationDetail->notification) {
-                    Log::info('No active notification found for company: ' . $companySystemID);
                     continue;
                 }
 
@@ -129,7 +121,6 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                     $companySystemID
                 );
 
-                Log::info('Deadline notification sent for budget planning ID: ' . $budgetPlanning->id . ', Company: ' . $companySystemID);
 
             } catch (\Exception $e) {
                 Log::error('Error sending deadline notification for budget planning ID ' . $budgetPlanning->id . ': ' . $e->getMessage());

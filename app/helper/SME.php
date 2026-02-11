@@ -65,4 +65,21 @@ class SME
 
         return ($column != null)? $data->$column: $data;
     }
+
+    public static function user_details($column=null, $more_columns = []){
+        $more_columns_str = '';
+        
+        if($more_columns){
+            $more_columns_str = ', ' . implode(', ', $more_columns);
+        }
+
+        $empID = Helper::getEmployeeSystemID();
+        $data = DB::table('srp_employeesdetails')
+                ->selectRaw('EIdNo AS empID, ECode AS empCode, Ename2 AS empName, UserName AS userName,
+                    Erp_companyID AS companyID, segmentID, payCurrencyID, payCurrency, SchMasterId, 
+                    branchID' . $more_columns_str)
+                ->where('EIdNo', $empID)->first();
+
+        return ($column != null)? $data->$column: $data;
+    }
 }

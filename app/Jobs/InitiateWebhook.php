@@ -174,24 +174,27 @@ class InitiateWebhook implements ShouldQueue
             if (!$webhookConditionsMet) {
                 $responseData['message'] = 'Webhook conditions not met';
             }
-            
-            ThirdPartyApiSummaryLogJob::dispatch(
-                $this->db,
-                null,
-                $this->tenantUuid ?: env('TENANT_UUID', 'local'),
-                $this->webhookEndpoint,
-                'POST',
-                $requestPayload,
-                $responseData,
-                $statusCode,
-                'system',
-                $executionTime,
-                $this->externalReference,
-                1,
-                $isFailed,
-                $errorMessage,
-                $this->logId
-            );
+
+            if(config('victorialogs.store_logs')){
+                ThirdPartyApiSummaryLogJob::dispatch(
+                    $this->db,
+                    null,
+                    $this->tenantUuid ?: env('TENANT_UUID', 'local'),
+                    $this->webhookEndpoint,
+                    'POST',
+                    $requestPayload,
+                    $responseData,
+                    $statusCode,
+                    'system',
+                    $executionTime,
+                    $this->externalReference,
+                    1,
+                    $isFailed,
+                    $errorMessage,
+                    $this->logId
+                )->onQueue('audit-logs');
+            }
+
         }
     }
 

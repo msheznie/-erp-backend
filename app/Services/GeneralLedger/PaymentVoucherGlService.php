@@ -2,6 +2,7 @@
 
 namespace App\Services\GeneralLedger;
 
+use App\helper\Helper;
 use App\helper\TaxService;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvanceReceiptDetails;
@@ -78,6 +79,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Models\PayCreditNoteDetail;
 use App\Services\GeneralLedger\GlPostedDateService;
 use ExchangeSetupConfig;
 
@@ -1445,6 +1447,94 @@ class PaymentVoucherGlService
                 }
 
                 $linkDocument = $dp;
+            }
+
+            if ($masterData->invoiceType == 8) {
+                $customer = CustomerMaster::find($masterData->BPVcustomerID);
+
+                $payCreditNoteDetails = PayCreditNoteDetail::with('creditnote')->where('payMasterAutoId', $masterModel["autoID"])->where('companySystemID', $masterData->companySystemID)->get();
+
+                // credit to bank account
+                $data['supplierCodeSystem'] = $masterData->BPVcustomerID;
+                $data['serviceLineSystemID'] = 24;
+                $data['serviceLineCode'] = 'X';
+                $data['chartOfAccountSystemID'] = $masterData->bank->chartOfAccountSystemID;
+                $data['glCode'] = $masterData->bank->glCodeLinked;
+                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                $data['timestamp'] = \Helper::currentDateTime();
+
+                $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                $data['documentTransAmount'] = \Helper::roundValue($masterData->payAmountSuppTrans) * -1;
+
+                $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                $data['documentLocalAmount'] = \Helper::roundValue($masterData->payAmountCompLocal) * -1;
+
+                $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                $data['documentRptAmount'] = \Helper::roundValue($masterData->payAmountCompRpt) * -1;
+                array_push($finalData, $data);
+
+                // debit to customer account
+                if ($customer) {
+                    foreach ($payCreditNoteDetails as $payCreditNoteDetail) {
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['chartOfAccountSystemID'] = $customer->custGLAccountSystemID;
+                        $data['glCode'] = $customer->custGLaccount;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                        $data['timestamp'] = \Helper::currentDateTime();
+
+                        if ($payCreditNoteDetail->creditnote) {
+                            $creditNote = $payCreditNoteDetail->creditnote;
+                            $data['documentTransCurrencyID'] = $creditNote->customerCurrencyID;
+                            $data['documentTransCurrencyER'] = $creditNote->customerCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount);
+
+                            $data['documentLocalCurrencyID'] = $creditNote->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $creditNote->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->localCurrencyER);
+
+                            $data['documentRptCurrencyID'] = $creditNote->companyReportingCurrencyID;
+                            $data['documentRptCurrencyER'] = $creditNote->companyReportingER;
+                            $data['documentRptAmount'] = \Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->companyReportingER);
+                            array_push($finalData, $data);
+                        }
+                    }
+                }
+
+                // exchange gain or loss
+                $tempFinalData = collect($finalData);
+                $localAmountSum = $tempFinalData->sum('documentLocalAmount') * -1;
+                $rptAmountSum = $tempFinalData->sum('documentRptAmount') * -1;
+
+                $epsilon = 0.00001;
+
+                if((abs($localAmountSum) > $epsilon) || (abs($rptAmountSum) > $epsilon)) {
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                    $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "exchange-gainloss-gl");
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
+                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+
+                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                    $data['timestamp'] = \Helper::currentDateTime();
+
+                    $data['documentTransAmount'] = 0;
+                    $data['documentLocalAmount'] = \Helper::roundValue($localAmountSum);
+                    $data['documentRptAmount'] = \Helper::roundValue($rptAmountSum);
+
+                    $data['serviceLineSystemID'] = 24;
+                    $data['serviceLineCode'] = 'X';
+                    array_push($finalData, $data);
+                }
             }
 
             if(ExchangeSetupConfig::isMasterDocumentExchageRateChanged($masterData))

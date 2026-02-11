@@ -13,27 +13,32 @@ trait AuditLogsTrait
 {
     public static function auditLog($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue = [], $previosValue = [], $parentID = null, $parentTable = null, $empID = null)
     {
+        if(!config('victorialogs.store_logs')){
+            return;
+        }
+
         $authEmploeeId = Auth::user() ? Auth::user()->employee_id : null;
 
         $user = !is_null($empID) ? $empID : $authEmploeeId;
 
-        //get token id
         $tokenId = Auth::user() && Auth::user()->token() ? Auth::user()->token()->id : null;
 
-        // Pass narration as docCode (original narration for translation key lookup)
-        // Variables will be extracted in the job from the narration itself
-        AuditLogJob::dispatch($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue, $previosValue, $parentID, $parentTable, $user, $tokenId);
+        AuditLogJob::dispatch($dataBase, $transactionID, $tenant_uuid, $table, $narration, $crudType, $newValue, $previosValue, $parentID, $parentTable, $user, $tokenId)->onQueue('audit-logs');
     }
 
 
     public static function log($type, $parameters)
     {
+        if(!config('victorialogs.store_logs')){
+            return;
+        }
+        
         switch ($type) {
             case 'auth':
-                AuthAuditLogJob::dispatch($parameters);
+                AuthAuditLogJob::dispatch($parameters)->onQueue('audit-logs');
                 break;
             case 'navigationAccess':
-                NavigationAccessAuditLogJob::dispatch($parameters);
+                NavigationAccessAuditLogJob::dispatch($parameters)->onQueue('audit-logs');
                 break;
             default:
                 return false;

@@ -136,6 +136,23 @@ class TenantEnforce
                         $request->request->add(['tenant_uuid' => $tenant->uuid]);
                     }
 
+                    if (in_array($request->route()->uri, ['api/v1/getThirdPartyApiLogDetail', 'api/v1/auditLogsExternal', 'api/v1/createAuditLog'])) {
+                        $subDomainArray = explode('-', $subDomain);
+                        $partCount = count($subDomainArray);
+                        if ($partCount > 1) {
+                            $firstPart = $subDomainArray[0];
+                            $lastPart = end($subDomainArray);
+                            $erpDomain = $firstPart . '-erp-' . $lastPart;
+                        } else {
+                            $erpDomain = $subDomain . '-erp';
+                        }
+
+                        $erpTenant = Tenant::where('sub_domain', 'like', $erpDomain)->first();
+                        if (!empty($erpTenant)) {
+                            $request->request->add(['tenant_uuid' => $erpTenant->uuid]);
+                        }
+                    }
+
                     $loginData = DB::table('tenant_login')->where('tenantID', $tenant->id)->first();
 
                     if ($loginData && $loginData->loginType == 4) {

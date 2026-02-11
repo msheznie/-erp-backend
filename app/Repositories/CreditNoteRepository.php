@@ -150,6 +150,15 @@ class CreditNoteRepository extends BaseRepository
             }
         }
 
+        if (array_key_exists('createdBy', $input)) {
+            if($input['createdBy'] && !is_null($input['createdBy']))
+            {
+                $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
+                $master->whereIn('createdUserSystemID', $createdBy);
+            }
+
+        }
+
         /*   if (array_key_exists('year', $input)) {
                if ($input['year'] && !is_null($input['year'])) {
                    $creditNoteDate = $input['year'] . '-12-31';

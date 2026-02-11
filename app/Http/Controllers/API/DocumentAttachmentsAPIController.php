@@ -574,6 +574,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
     public function getAllAttachments(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, ['createdBy']);
+
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -600,6 +602,13 @@ class DocumentAttachmentsAPIController extends AppBaseController
             ->when($attachmentType > 0, function ($query) use ($attachmentType) {
                 $query->where('attachmentType', $attachmentType);
             })
+            ->when(isset($input['createdBy']) && !empty($input['createdBy']), function ($query) use ($input) {
+                $createdBy = collect($input['createdBy'])->pluck('id')->filter()->toArray();
+                if (!empty($createdBy)) {
+                    $query->whereIn('createdUserSystemID', $createdBy); 
+                }
+            })
+
             ->with([
                 'document',
                 'type' => function ($query) {
