@@ -10,7 +10,6 @@ use App\Models\TenderDocumentTypes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use App\helper\FileSecurityValidator;
 use Illuminate\Support\Facades\Storage;
