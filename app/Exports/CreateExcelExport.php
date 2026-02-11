@@ -164,13 +164,17 @@ class SheetWrapper
 
     public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $hasHeaderRow = true)
     {
-        // PhpSpreadsheet's fromArray only accepts 4 parameters
-        // The 5th parameter in old Laravel Excel indicated whether to extract keys as headers
-        
+        // PhpSpreadsheet's fromArray only accepts array; convert Collection to array
+        if ($source instanceof \Illuminate\Support\Collection) {
+            $source = $source->all();
+        }
+        if (!is_array($source)) {
+            return;
+        }
         if (empty($source)) {
             return;
         }
-        
+
         // Check if this is an associative array (has string keys)
         $firstRow = reset($source);
         $isAssociative = is_array($firstRow) && !isset($firstRow[0]);
