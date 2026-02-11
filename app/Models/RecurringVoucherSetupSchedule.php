@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Eloquent as Model;
+use DateTimeInterface;
 
 /**
  * @OA\Schema(
@@ -225,6 +226,14 @@ class RecurringVoucherSetupSchedule extends Model
     protected $appends = [
         'isReActiveState'
     ];
+
+    /**
+     * Serialize dates in legacy format (Y-m-d H:i:s) for API compatibility.
+     */
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
 
     /**
      * Validation rules
