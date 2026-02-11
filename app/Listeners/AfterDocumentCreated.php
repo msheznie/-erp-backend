@@ -162,7 +162,6 @@ class AfterDocumentCreated
 
             if ($documentArray['documentExist'] == 1) {
                 $nameSpacedModel = 'App\Models\\' . $documentArray["modelName"];
-                $document = $document->toArray();
                 $missingRecodes = array();
                 $range = "";
                 $previousDoc = $nameSpacedModel::where('companySystemID', $document['companySystemID'])
