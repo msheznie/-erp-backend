@@ -55,21 +55,23 @@ use Eloquent as Model;
  *      )
  * )
  */
-class SRMScenarioMaster extends Model
+class SRMScenarioAttachments extends Model
 {
 
-    public $table = 'srm_email_scenario_master';
+    protected $table = 'srm_email_scenario_attachments';
 
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
 
-    public $fillable = [
-        'document_id',
-        'email_scenario_code',
-        'email_scenario_name',
-        'company_id',
-        'is_active'
+    protected $fillable = [
+        'scenario_detail_id',
+        'path',
+        'original_file_name',
+        'my_file_name',
+        'size_in_kbs',
+        'company_system_id',
+        'created_by'
     ];
 
     /**
@@ -78,12 +80,7 @@ class SRMScenarioMaster extends Model
      * @var array
      */
     protected $casts = [
-        'id' => 'integer',
-        'document_id' => 'integer',
-        'email_scenario_code' => 'string',
-        'email_scenario_name' => 'string',
-        'company_id' => 'integer',
-        'is_active' => 'boolean'
+
     ];
 
     /**
@@ -92,26 +89,7 @@ class SRMScenarioMaster extends Model
      * @var array
      */
     public static $rules = [
-        'document_id' => 'required',
-        'email_scenario_code' => 'required',
-        'email_scenario_name' => 'required'
+
     ];
 
-    public static function getAllEmailMaster($params = [])
-    {
-        $query = self::select('id', 'document_id', 'email_scenario_name', 'email_scenario_code')
-            ->with(['scenarioDetails' => function ($q) use ($params) {
-
-                $q->select('scenario_master_id', 'cc_emails')
-                ->where('company_system_id', $params['companyId']);
-            }])
-            ->where('is_active', 1);
-
-        return $query;
-    }
-
-    public function scenarioDetails()
-    {
-        return $this->hasOne(SRMScenarioDetails::class,'scenario_master_id', 'id');
-    }
 }
