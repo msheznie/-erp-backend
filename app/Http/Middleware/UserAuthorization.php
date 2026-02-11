@@ -67,12 +67,14 @@ class UserAuthorization
                     'action' => self::getActionType($accessType),
                 ]);
 
-                RoleRoute::create([
-                    'routeName' => $routeName,
-                    'userGroupID' => $userGroupIDs,
-                    'companySystemID' => 0
-                ]);
-
+                foreach ($userGroupIDs as $userGroupID) {
+                    RoleRoute::create([
+                        'routeName' => $routeName,
+                        'userGroupID' => $userGroupID,
+                        'companySystemID' => 0
+                    ]);
+                }
+                
 
                 $checkRoleRouteAfterCreate = RoleRoute::whereIn('userGroupID', $userGroupIDs)
                                     ->where('routeName', $routeName)
