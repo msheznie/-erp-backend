@@ -325,4 +325,6 @@ Route::post('documentMasterCrud', 'SRMDocumentMasterAPIController@documentMaster
 Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster');
 Route::post('removeDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete');
 Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster');
+Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData');
+Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData');
 /*TenderPaymentDetailAPIController*/
