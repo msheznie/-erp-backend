@@ -11,6 +11,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\Employee;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
 
@@ -183,8 +184,11 @@ class BudgetNotificationService
         $hod = $department->hod->employee;
 
         $baseurl = \Helper::checkDomai();
+        Log::info('baseurl before', ['baseurl' => $baseurl]);
         $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
+        Log::info('baseurl after', ['baseurl' => $baseurl]);
         $linkUrl = $baseurl;
+        Log::info('linkUrl', ['linkUrl' => $linkUrl]);
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
