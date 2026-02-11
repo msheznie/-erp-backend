@@ -3655,12 +3655,17 @@ class PurchaseRequestAPIController extends AppBaseController
             ]);
 
           
-            $purchaseRequests=  $purchaseRequests->get();
-            
-            $result = $this->filterPurchaseRequest($purchaseRequests);
-       
+            $purchaseRequests = $purchaseRequests->get();
 
-            return $result;
+            if (isset($input['reportType']) && $input['reportType'] == 2) {
+                return $this->filterPurchaseRequest($purchaseRequests);
+            }
+
+            foreach ($purchaseRequests as $pr) {
+                $pr->setRelation('details', collect([]));
+            }
+            
+            return $purchaseRequests;
     }
 
     public function filterPurchaseRequest($purchaseRequests)
