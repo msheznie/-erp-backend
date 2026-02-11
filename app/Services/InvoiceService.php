@@ -77,8 +77,8 @@ class InvoiceService
             ])
             ->where('bookingSuppMasInvAutoID', $id)
             ->where('supplierID', $supplierID)
-            ->where('confirmedYN', 1)
-            ->where('cancelYN', 0)
+            /*->where('confirmedYN', 1)
+            ->where('cancelYN', 0)*/
             ->whereIn('documentType', [0,1,2,3])
             ->with([
                 'detail' => function ($q) {
@@ -244,7 +244,6 @@ class InvoiceService
                     }
                 ])
             ->where('supplierID', $supplierID)
-            ->where('cancelYN', 0)
             ->whereIn('documentType', [0,1,2,3])
             ->when(
                 is_null($deliveryAppoinmentID),

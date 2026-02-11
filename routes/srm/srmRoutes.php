@@ -215,6 +215,7 @@ Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRanki
 Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData')->name("Get awarded form data");
 Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval')->name("Get employees tender awarding approval");
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
+Route::post('getTenderConfirmationDetails', 'TenderMasterAPIController@getTenderConfirmationDetails')->name("Get tender confirmation details");
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail')->name("Send tender award email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
 Route::post('getContractTypes', 'TenderMasterAPIController@getContractTypes')->name("Get Contract Types");

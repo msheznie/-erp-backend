@@ -265,4 +265,12 @@ class CompanyFinanceYear extends Model
                         ->first();
     }
 
+    public static function getFinanceYearByDate($companySystemID, $date)
+    {
+        return self::where('companySystemID', $companySystemID)
+            ->whereDate('bigginingDate', '<=', $date)
+            ->whereDate('endingDate', '>=', $date)
+            ->first();
+    }
+
 }

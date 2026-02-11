@@ -5,6 +5,11 @@ namespace App\Repositories;
 use App\Models\Appointment;
 use App\Models\PurchaseOrderDetails;
 use App\Models\GRVDetails;
+use App\Models\CompanyFinanceYear;
+use App\Models\CompanyFinancePeriod;
+use App\Models\SegmentMaster;
+use App\Models\Company;
+use Carbon\Carbon;
 use InfyOm\Generator\Common\BaseRepository;
 
 /**
@@ -117,6 +122,62 @@ class AppointmentRepository extends BaseRepository
             return [
                 'success' => false,
                 'message' => trans('srm_supplier_management.something_went_wrong') . ' ' . $e->getMessage()
+            ];
+        }
+    }
+
+    public function validateGrvCreationRequirements($companySystemID, $segment)
+    {
+        try {
+            $mytime = new Carbon();
+            
+            $fromCompanyFinanceYear = CompanyFinanceYear::getFinanceYearByDate($companySystemID, $mytime);
+
+            if (empty($fromCompanyFinanceYear)) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_supplier_management.company_finance_year_not_found')
+                ];
+            }
+
+            $fromCompanyFinancePeriod = CompanyFinancePeriod::getFinancePeriodByDate(
+                $companySystemID,
+                10,
+                $fromCompanyFinanceYear->companyFinanceYearID,
+                $mytime
+            );
+
+            if (empty($fromCompanyFinancePeriod)) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_supplier_management.company_finance_period_not_found')
+                ];
+            }
+
+            if (!isset($segment)) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_supplier_management.segment_required')
+                ];
+            }
+
+            $serviceLine = SegmentMaster::findByServiceLineSystemID($segment);
+            if (!$serviceLine) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_supplier_management.segment_not_found')
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'success'
+            ];
+
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Something went wrong: ' . $e->getMessage()
             ];
         }
     }
