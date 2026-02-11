@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\SRMScenarioMaster;
-use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 
 /**
