@@ -20,10 +20,7 @@ class ExportPRDetailExcel
     }
 
     public function export() {
-        \Log::info('ExportPRDetailExcel:xxx');
         $basePath = CreateExcel::processPRDetailExport($this->data,$this->code);
-
-        \Log::info('ExportPRDetailExcel:basePath: ' . $basePath);
         $this->sendNotification($basePath);
 
         if($basePath == '') {

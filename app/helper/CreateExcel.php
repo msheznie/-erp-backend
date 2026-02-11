@@ -939,6 +939,7 @@ class CreateExcel
                 ];
 
                 foreach ($columnWidths as $col => $width) {
+
                     $sheet->setWidth($col, $width);
                 }
 
@@ -1004,7 +1005,6 @@ class CreateExcel
             if (Storage::disk($disk)->exists($path))
             {
                 $basePath = Helper::getFileUrlFromS3($path);
-                \Log::info('basePath: ' . $basePath);
             }
         }
         return $path;

@@ -845,18 +845,42 @@ class BudgetMasterAPIController extends AppBaseController
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
 
 
-        $data = array('entity' => $budgetMaster->toArray(), 'reportData' => $reportData,
-            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+        $data = [
+            'entity' => $budgetMaster->toArray(),
+            'reportData' => $reportData,
+            'total' => $total,
+            'decimalPlaceLocal' => $decimalPlaceLocal,
+            'decimalPlaceRpt' => $decimalPlaceRpt,
+        ];
+        $templateName = 'export_report.budget_summary_gl_code_wise';
+        $fontFamily = \App\helper\Helper::getExcelFontFamily(app()->getLocale());
 
-        $templateName = "export_report.budget_summary_gl_code_wise";
-
-        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName, $fontFamily) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName, $fontFamily) {
                 $sheet->loadView($templateName, $data);
+                $lastRow = $sheet->getHighestRow();
+                $lastCol = $sheet->getHighestColumn() ?: 'K';
+                $dataRange = 'A1:' . $lastCol . max(1, $lastRow);
+                $sheet->getStyle($dataRange)->getFont()->setName($fontFamily);
+                $sheet->getStyle($dataRange)->getFont()->setSize(11);
+                $sheet->cells('A1:' . $lastCol . '1', function ($cells) use ($fontFamily) {
+                    $cells->setFont(['bold' => true, 'size' => 14, 'name' => $fontFamily]);
+                });
+                if ($lastRow >= 6) {
+                    $sheet->cells('A6:' . $lastCol . '6', function ($cells) use ($fontFamily) {
+                        $cells->setFont(['bold' => true, 'size' => 12, 'name' => $fontFamily]);
+                    });
+                }
+                if ($lastRow > 0) {
+                    $sheet->cells('A' . $lastRow . ':' . $lastCol . $lastRow, function ($cells) use ($fontFamily) {
+                        $cells->setFont(['bold' => true, 'size' => 11, 'name' => $fontFamily]);
+                    });
+                }
                 if (app()->getLocale() == 'ar') {
-                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
+                $sheet->setAutoSize(true);
             });
         }, 'xlsx');
     }
