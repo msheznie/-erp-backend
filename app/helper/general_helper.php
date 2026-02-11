@@ -240,9 +240,10 @@ class Helper
 
                 $search = '*';
                 $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+                Log::info('redirectUrl in multi tenancy', ['redirectUrl' => $redirectUrl]);
             }
         }
-
+        Log::info('redirectUrl out of multi tenancy', ['redirectUrl' => $redirectUrl]);
         return $redirectUrl;
     }
 
