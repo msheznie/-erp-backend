@@ -896,6 +896,25 @@ class CreateExcel
         return $path;
     }
 
+    /**
+     * Escape cell values that look like formulas so PhpSpreadsheet does not evaluate them.
+     * Values starting with =, +, -, @ can trigger formula evaluation and cause "Operator has no operands" errors.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    public static function escapeFormulaLikeValue($value)
+    {
+        if (!is_string($value) || $value === '') {
+            return $value;
+        }
+        $first = substr($value, 0, 1);
+        if (in_array($first, ['=', '+', '-', '@'], true)) {
+            return "'" . $value;
+        }
+        return $value;
+    }
+
     public static function processPRDetailExport($data,$companyCode)
     {
         // Get language for font selection
@@ -939,7 +958,8 @@ class CreateExcel
 
                 if (count($rows) > 0) {
                     $paddedRows = array_map(function ($row) use ($maxColumns) {
-                        return array_pad($row, $maxColumns, '');
+                        $padded = array_pad($row, $maxColumns, '');
+                        return array_map([self::class, 'escapeFormulaLikeValue'], $padded);
                     }, $rows);
                     $sheet->fromArray($paddedRows, null, 'A1', false, false);
                 }
