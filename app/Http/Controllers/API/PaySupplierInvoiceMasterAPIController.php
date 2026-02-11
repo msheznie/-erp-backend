@@ -3930,10 +3930,12 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->where('isActive',1)
             ->first();
 
-        $checkRegisterDetails = ChequeRegisterDetail::where('cheque_register_master_id',$chequeRegisterData['id'])
-            ->where('company_id',$input['company_id'])
-            ->where('status',0)
-            ->get();
+        $checkRegisterDetails = $chequeRegisterData !== null
+            ? ChequeRegisterDetail::where('cheque_register_master_id', $chequeRegisterData->id)
+                ->where('company_id', $input['company_id'])
+                ->where('status', 0)
+                ->get()
+            : collect();
 
         if(isset($input['documentAutoID'])) {
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($input['documentAutoID']);
