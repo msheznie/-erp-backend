@@ -847,7 +847,6 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                     $excelColumnFormat = [
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -855,7 +854,6 @@ class AssetManagementReportAPIController extends AppBaseController
                         'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-
                     ];
                     $title = trans('custom.asset_register_detail_report');
                     $fileName = trans('custom.asset_register_detail');
