@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Excel;
 use App\helper\Helper;
 use App\Exports\CreateExcelExport;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class CreateExcel
 {
@@ -752,9 +754,28 @@ class CreateExcel
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                                    // Bold header rows: title (row 1), date range (row 3), table header (row 6)
-                                    $headerRows = min(6, $lastRow);
-                                    $worksheet->getStyle('A1:' . $lastColumn . $headerRows)->getFont()->setBold(true);
+                                    // Bold header rows: use excelBoldHeaderRows from data if set, else default 6
+                                    $headerRows = isset($data['excelBoldHeaderRows']) ? min((int) $data['excelBoldHeaderRows'], $lastRow) : min(6, $lastRow);
+                                    if ($headerRows > 0) {
+                                        $worksheet->getStyle('A1:' . $lastColumn . $headerRows)->getFont()->setBold(true);
+                                    }
+                                    // Title row: merge across columns, center + larger font (e.g. excelTitleRow = 1)
+                                    if (isset($data['excelTitleRow']) && $data['excelTitleRow'] >= 1 && $data['excelTitleRow'] <= $lastRow) {
+                                        $titleRow = (int) $data['excelTitleRow'];
+                                        $titleRange = 'A' . $titleRow . ':' . $lastColumn . $titleRow;
+                                        $worksheet->mergeCells($titleRange);
+                                        $worksheet->getStyle($titleRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                                        $worksheet->getStyle($titleRange)->getFont()->setSize(14);
+                                    }
+                                    // Header row background (e.g. excelHeaderBackgroundRow = 2, excelHeaderBackgroundColor = '6798da')
+                                    if (isset($data['excelHeaderBackgroundRow'], $data['excelHeaderBackgroundColor']) && $data['excelHeaderBackgroundRow'] >= 1 && $data['excelHeaderBackgroundRow'] <= $lastRow) {
+                                        $bgRow = (int) $data['excelHeaderBackgroundRow'];
+                                        $bgColor = ltrim((string) $data['excelHeaderBackgroundColor'], '#');
+                                        $bgRange = 'A' . $bgRow . ':' . $lastColumn . $bgRow;
+                                        $worksheet->getStyle($bgRange)->getFill()
+                                            ->setFillType(Fill::FILL_SOLID)
+                                            ->getStartColor()->setRGB($bgColor);
+                                    }
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
