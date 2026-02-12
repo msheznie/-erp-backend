@@ -238,11 +238,8 @@ class Helper
 
                 $search = '*';
                 $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
-                Log::info('redirectUrl in multi tenancy', ['redirectUrl' => $redirectUrl]);
             }
         }
-
-        Log::info('redirectUrl in checkDomai', ['redirectUrl' => $redirectUrl]);
 
         return $redirectUrl;
     }

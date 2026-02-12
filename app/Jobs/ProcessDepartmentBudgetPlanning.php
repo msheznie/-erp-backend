@@ -85,7 +85,8 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                     $budgetPlanning = DepartmentBudgetPlanning::create($data);
 
                     $budgetNotificationService = new BudgetNotificationService();
-                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID);
+                    $url = \Helper::checkDomai();
+                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID,null,$url);
 
                     $narrationVariables = $budgetPlanning->planningCode;
                     $this->auditLog(
