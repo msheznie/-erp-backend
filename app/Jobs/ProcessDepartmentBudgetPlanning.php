@@ -24,12 +24,13 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
     public $companyBudgetPlanningID;
     public $uuid;
     public $empID;
+    public $url;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID)
+    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID, $url)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -47,6 +48,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
         $this->companyBudgetPlanningID = $companyBudgetPlanningID;
         $this->uuid = $uuid;
         $this->empID = $empID;
+        $this->url = $url;
     }
 
     /**
@@ -85,8 +87,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                     $budgetPlanning = DepartmentBudgetPlanning::create($data);
 
                     $budgetNotificationService = new BudgetNotificationService();
-                    $url = \Helper::checkDomai();
-                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID,null,$url);
+                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID,null,$this->url);
 
                     $narrationVariables = $budgetPlanning->planningCode;
                     $this->auditLog(
