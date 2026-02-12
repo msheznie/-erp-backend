@@ -6360,7 +6360,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->setDateType(2)
             ->setExcelFormat($excelColumnFormat)
             ->setCurrency($cur)
-            ->setColumnAutoSize(false)
+            ->setColumnAutoSize(true)
             ->setDetails()
             ->generateExcel();
 
