@@ -2,7 +2,7 @@
 <table>
     <thead>
         <tr>
-            <th colspan="5" align="center">{{$template->reportName}}</th>
+            <th colspan="5" align="center">{{ html_entity_decode($template->reportName ?? '', ENT_QUOTES | ENT_HTML5, 'UTF-8') }}</th>
         </tr>
         <tr>
             <th colspan="5" align="center">{{$company->CompanyName}}</th>

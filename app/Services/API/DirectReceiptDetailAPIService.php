@@ -26,7 +26,13 @@ class DirectReceiptDetailAPIService
         $objDirectReceipt = self::setCommonDetails($directReceipt,$objDirectReceipt,$receiptVoucher);
         $objDirectReceipt = self::setCustomerDetails($directReceipt,$objDirectReceipt,$receiptVoucher);
 
-        $receiptVoucher->directdetails()->create($objDirectReceipt->toArray());
+        $return = $receiptVoucher->directdetails()->create($objDirectReceipt->toArray());
+        if ($return instanceof DirectReceiptDetail) {
+            return ['status' => 'success'];
+        } 
+        else {
+            return ['status' => 'fail'];
+        }
     }
 
     private static function setCustomerDetails($directReceipt,$objDirectReceipt,$receiptVoucher):DirectReceiptDetail {

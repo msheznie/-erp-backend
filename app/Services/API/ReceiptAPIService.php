@@ -79,7 +79,7 @@ class ReceiptAPIService
                 if($saveReceipt) {
                     foreach ($receipt->details as $detail) {
                         $result = ReceiptDetailsAPIService::storeReceiptDetails($detail,$saveReceipt);
-                        if($result['status'] === 'fail') {
+                        if($result && isset($result['status']) && $result['status'] === 'fail') {
                             $isFailed = true;
                             array_push($errorDetails,$detail['invoiceCode']);
                             throw new \Exception('Failed to store receipt details for invoice: ' . $detail['invoiceCode']);
