@@ -35,6 +35,7 @@ use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
+use Illuminate\Support\Arr;
 
 /**
  * Class ERPAssetTransferController
@@ -134,7 +135,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
-        $data = array_only($input, ['type', 'serviceLineSystemID', 'location']);
+        $data = Arr::only($input, ['type', 'serviceLineSystemID', 'location']);
         $company_id = $input['companyID'];
        
         $messages = [
@@ -330,7 +331,7 @@ class ERPAssetTransferAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
-        $data = array_only($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
+        $data = Arr::only($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
         /** @var ERPAssetTransfer $eRPAssetTransfer */
         $eRPAssetTransfer = $this->eRPAssetTransferRepository->findWithoutFail($id);
 

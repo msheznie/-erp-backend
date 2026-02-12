@@ -564,18 +564,16 @@ class BankAccountAPIController extends AppBaseController
             $data[$x][trans('custom.status')] = $status;
         }
 
-        \Excel::create('bank_accounts', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('bank_accounts', function ($excel) use ($data) {
             $excel->sheet(trans('custom.bank_accounts_excel_tab'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }

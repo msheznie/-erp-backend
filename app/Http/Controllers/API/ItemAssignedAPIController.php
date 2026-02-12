@@ -197,7 +197,7 @@ class ItemAssignedAPIController extends AppBaseController
             $rules = ['sellingCost' => 'required|numeric|min:0.001'];
         }
 
-        $updateColumns = array_only($input, $updateColumns);
+        $updateColumns = Arr::only($input, $updateColumns);
 
         $validator = \Validator::make($updateColumns, $rules);
         if ($validator->fails()) {
@@ -283,7 +283,7 @@ class ItemAssignedAPIController extends AppBaseController
         ini_set('memory_limit', -1);
         $input = $request->all();
         $data = array();
-        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'DES')->get();
+        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'desc')->get();
         $output = $this->getCurrentCostAndQty($output);
         $type = $request->type;
         if (!empty($output)) {

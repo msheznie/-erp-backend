@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Excel;
 use App\helper\Helper;
 use App\Exports\CreateExcelExport;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class CreateExcel
 {
@@ -360,17 +362,23 @@ class CreateExcel
                         $firstRow = $data[0];
                         $secondRow = $data[1];
                         if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
-                            $nonEmptyCount = 0;
-                            $hasTranslationKeys = false;
+                            $translationKeyCount = 0;
+                            $totalNonEmpty = 0;
+                            
+                            // Check if second row contains actual translation keys (not just data values)
+                            // Translation keys should start with 'custom.' or similar patterns and be untranslated
                             foreach ($secondRow as $cell) {
                                 if (!empty($cell) && is_string($cell)) {
-                                    $nonEmptyCount++;
-                                    if (preg_match('/^(custom\.|supplier|po_|grv|invoice|payment|logistic|company|amount|date|code|status)/i', $cell)) {
-                                        $hasTranslationKeys = true;
+                                    $totalNonEmpty++;
+                                    // More strict check: must START with translation prefix and contain a dot
+                                    if (preg_match('/^(custom\.|trans\.|lang\.)[a-z_]+$/i', $cell)) {
+                                        $translationKeyCount++;
                                     }
                                 }
                             }
-                            if ($nonEmptyCount >= 3 && $hasTranslationKeys) {
+                            
+                            // Only mark as second header if majority of cells are actual translation keys
+                            if ($totalNonEmpty >= 3 && $translationKeyCount >= ($totalNonEmpty * 0.7)) {
                                 $isSecondHeaderRow = true;
                             }
                         }
@@ -746,11 +754,35 @@ class CreateExcel
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                    // Bold header rows: use excelBoldHeaderRows from data if set, else default 6
+                                    $headerRows = isset($data['excelBoldHeaderRows']) ? min((int) $data['excelBoldHeaderRows'], $lastRow) : min(6, $lastRow);
+                                    if ($headerRows > 0) {
+                                        $worksheet->getStyle('A1:' . $lastColumn . $headerRows)->getFont()->setBold(true);
+                                    }
+                                    // Title row: merge across columns, center + larger font (e.g. excelTitleRow = 1)
+                                    if (isset($data['excelTitleRow']) && $data['excelTitleRow'] >= 1 && $data['excelTitleRow'] <= $lastRow) {
+                                        $titleRow = (int) $data['excelTitleRow'];
+                                        $titleRange = 'A' . $titleRow . ':' . $lastColumn . $titleRow;
+                                        $worksheet->mergeCells($titleRange);
+                                        $worksheet->getStyle($titleRange)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+                                        $worksheet->getStyle($titleRange)->getFont()->setSize(14);
+                                    }
+                                    // Header row background (e.g. excelHeaderBackgroundRow = 2, excelHeaderBackgroundColor = '6798da')
+                                    if (isset($data['excelHeaderBackgroundRow'], $data['excelHeaderBackgroundColor']) && $data['excelHeaderBackgroundRow'] >= 1 && $data['excelHeaderBackgroundRow'] <= $lastRow) {
+                                        $bgRow = (int) $data['excelHeaderBackgroundRow'];
+                                        $bgColor = ltrim((string) $data['excelHeaderBackgroundColor'], '#');
+                                        $bgRange = 'A' . $bgRow . ':' . $lastColumn . $bgRow;
+                                        $worksheet->getStyle($bgRange)->getFill()
+                                            ->setFillType(Fill::FILL_SOLID)
+                                            ->getStartColor()->setRGB($bgColor);
+                                    }
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
-                           
+
+                            $sheet->setAutoSize(true);
+
                            // Set right-to-left for Arabic locale
                             if($fileName != trans('custom.budget_template')) { 
                                 if (app()->getLocale() == 'ar') {
@@ -885,6 +917,25 @@ class CreateExcel
         return $path;
     }
 
+    /**
+     * Escape cell values that look like formulas so PhpSpreadsheet does not evaluate them.
+     * Values starting with =, +, -, @ can trigger formula evaluation and cause "Operator has no operands" errors.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    public static function escapeFormulaLikeValue($value)
+    {
+        if (!is_string($value) || $value === '') {
+            return $value;
+        }
+        $first = substr($value, 0, 1);
+        if (in_array($first, ['=', '+', '-', '@'], true)) {
+            return "'" . $value;
+        }
+        return $value;
+    }
+
     public static function processPRDetailExport($data,$companyCode)
     {
         // Get language for font selection
@@ -893,65 +944,68 @@ class CreateExcel
 
         $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
             $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
-                $sheet->setStyle([
-                    'font' => [
-                        'name' => $fontFamily,
-                        'size' => 11,
-                    ]
-                ]);
-
-                $rowNum = 1;
-                  
-                $sheet->setAutoSize(true);
-
-
                 $columnWidths = [
                     'A' => 25.80,
-                    'B' => 12.80, 
-                    'C' => 13, 
-                    'D' => 13, 
-                    'E' => 13, 
-                    'F' => 13, 
-                    'G' => 13, 
-                    'H' => 15.80, 
-                    'I' => 15.80, 
-                    'J' => 13, 
-                    'K' => 13, 
-                    'L' => 13, 
+                    'B' => 12.80,
+                    'C' => 13,
+                    'D' => 13,
+                    'E' => 13,
+                    'F' => 13,
+                    'G' => 13,
+                    'H' => 15.80,
+                    'I' => 15.80,
+                    'J' => 13,
+                    'K' => 13,
+                    'L' => 13,
                 ];
 
                 foreach ($columnWidths as $col => $width) {
+
                     $sheet->setWidth($col, $width);
                 }
 
                 $maxColumns = 0;
-                foreach ($data as $row) {
-                    $maxColumns = max($maxColumns, count($row));
-                }
-
-                foreach ($data as $row) {
-                    $isHeader = isset($row['IsHeader']) ? $row['IsHeader'] : false;
+                $rows = [];
+                $headerRowIndices = [];
+                foreach ($data as $idx => $row) {
+                    $isHeader = isset($row['IsHeader']) && $row['IsHeader'];
                     unset($row['IsHeader']);
-                    $paddedRow = array_pad($row, $maxColumns, '');
-                    $sheet->appendRow($paddedRow);
-                    
+                    $indexedRow = array_values($row);
+                    $maxColumns = max($maxColumns, count($indexedRow));
+                    $rows[] = $indexedRow;
                     if ($isHeader) {
-                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns - 1);
-                        $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
-                            $cells->setFont([
-                                'bold' => true,
-                                'size' => 12,
-                                'name' => $fontFamily
-                            ]);
-                        });
+                        $headerRowIndices[] = count($rows);
                     }
-
-                    $rowNum++;
                 }
-                
-                // Set right-to-left for Arabic locale
+
+                if (count($rows) > 0) {
+                    $paddedRows = array_map(function ($row) use ($maxColumns) {
+                        $padded = array_pad($row, $maxColumns, '');
+                        return array_map([self::class, 'escapeFormulaLikeValue'], $padded);
+                    }, $rows);
+                    $sheet->fromArray($paddedRows, null, 'A1', false, false);
+                }
+
+                $lastRow = count($rows);
+                $highestColumn = $maxColumns > 0 ? Coordinate::stringFromColumnIndex($maxColumns) : 'L';
+                $dataRange = $lastRow > 0 ? "A1:{$highestColumn}{$lastRow}" : 'A1:L1';
+                $sheet->getStyle($dataRange)->getFont()->setName($fontFamily);
+                $sheet->getStyle($dataRange)->getFont()->setSize(11);
+
+                foreach ($headerRowIndices as $rowNum) {
+                    $sheet->cells("A{$rowNum}:{$highestColumn}{$rowNum}", function($cells) use ($fontFamily) {
+                        $cells->setFont([
+                            'bold' => true,
+                            'size' => 12,
+                            'name' => $fontFamily
+                        ]);
+                    });
+                }
+
+                $sheet->setAutoSize(true);
+
                 if (app()->getLocale() == 'ar') {
-                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });

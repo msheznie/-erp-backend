@@ -65,6 +65,7 @@ use App\helper\CreateExcel;
 use App\Jobs\DocumentAttachments\CustomerStatementJob;
 use App\Models\CustomerMasterCategoryAssigned;
 use App\Jobs\Report\AccountsReceivablePdfJob;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
 class AccountsReceivableReportAPIController extends AppBaseController
@@ -1063,12 +1064,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }else {
                     $dataType = 1;
                     $excelColumnFormat = [
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     $fileName = trans('custom.customer_invoice_aging_summary');
                     $title = trans('custom.customer_invoice_aging_summary');
@@ -1137,32 +1138,28 @@ class AccountsReceivableReportAPIController extends AppBaseController
                              'fromDate' =>  $request->fromDate,);
 
                     $excelColumnFormat = [
-                        'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'k' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'k' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     // Get font family based on locale
                     $lang = app()->getLocale();
                     $fontFamily = Helper::getExcelFontFamily($lang);
 
-                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat,$fontFamily) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat,$fontFamily) {
-                            // Set default font for entire sheet
+                    return \App\Exports\CreateExcelExport::download('create_customer_ledger', function ($excel) use ($outputData, $excelColumnFormat, $fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData, $excelColumnFormat, $fontFamily) {
                             $sheet->setStyle([
                                 'font' => [
                                     'name' => $fontFamily,
                                     'size' => 11,
-                                ]
+                                ],
                             ]);
-
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
-
-                            // Apply font to all cells
                             $lastRow = $sheet->getHighestRow();
                             $lastColumn = $sheet->getHighestColumn();
                             if ($lastRow > 0 && $lastColumn) {
@@ -1174,14 +1171,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
-                            
-                            // Set right-to-left for Arabic locale
                             if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
                             }
                         });
-                    })->download('xlsx');
+                    }, 'xlsx');
 
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -1207,28 +1202,25 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     'fromDate' =>  $request->fromDate,
                                     'toDate' =>  $request->toDate);
                     $excelColumnFormat = [
-                        'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     // Get font family based on locale
                     $lang = app()->getLocale();
                     $fontFamily = Helper::getExcelFontFamily($lang);
 
-                    return \Excel::create('create_customer_ledger', function ($excel) use ($outputData,$excelColumnFormat,$fontFamily) {
-                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat,$fontFamily) {
-                            // Set default font for entire sheet
+                    return \App\Exports\CreateExcelExport::download('create_customer_ledger', function ($excel) use ($outputData, $excelColumnFormat, $fontFamily) {
+                        $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData, $excelColumnFormat, $fontFamily) {
                             $sheet->setStyle([
                                 'font' => [
                                     'name' => $fontFamily,
                                     'size' => 11,
-                                ]
+                                ],
                             ]);
                             $sheet->setColumnFormat($excelColumnFormat);
                             $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template2', $outputData);
-
-                            // Apply font to all cells
                             $lastRow = $sheet->getHighestRow();
                             $lastColumn = $sheet->getHighestColumn();
                             if ($lastRow > 0 && $lastColumn) {
@@ -1240,14 +1232,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
-                            
-                            // Set right-to-left for Arabic locale
                             if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
                             }
                         });
-                    })->download('xlsx');
+                    }, 'xlsx');
                 }
 
 
@@ -1337,7 +1327,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
                     $requestCurrency = NULL;
                     $excelColumnFormat = [
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     $exportToExcel = $exportReportToExcelService
@@ -3516,7 +3506,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });
@@ -4019,7 +4009,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });
@@ -4501,7 +4491,7 @@ WHERE
             return !Str::contains($item->DocumentNarration, 'Matching');
         });
 
-        $excludedDocumentCodes = array_flatten($fullyMatchedDocuments);
+        $excludedDocumentCodes = Arr::flatten($fullyMatchedDocuments);
         $filteredData = collect($output)->reject(function ($item) use ($excludedDocumentCodes) {
             return in_array($item->DocumentCode, $excludedDocumentCodes);
         });

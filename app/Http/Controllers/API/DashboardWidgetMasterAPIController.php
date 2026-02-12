@@ -1401,17 +1401,15 @@ GROUP BY
             $reportData['report_tittle'] = 'Sales Log';
             $reportData['report_date'] = Carbon::now()->format('d/m/Y');
     
-            return \Excel::create('sales_log', function ($excel) use ($reportData, $templateName) {
+            return \App\Exports\CreateExcelExport::download('sales_log', function ($excel) use ($reportData, $templateName) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
 
         if($request->input('widgetTypeID') == 2) {
@@ -1419,11 +1417,9 @@ GROUP BY
             $templateName2 = "export_report.account_receivable";
             $reportData['report_tittle'] = 'Account Payables and Receivables';
             $reportData['report_date'] = Carbon::now()->format('d/m/Y');
-            return \Excel::create('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName,$templateName2) {
+            return \App\Exports\CreateExcelExport::download('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName, $templateName2) {
                 $excel->sheet('Overdue Payables', function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -1431,14 +1427,12 @@ GROUP BY
                 });
                 $excel->sheet('Overdue Receivables', function ($sheet) use ($reportData, $templateName2) {
                     $sheet->loadView($templateName2, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
 
 

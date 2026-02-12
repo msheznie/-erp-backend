@@ -31,6 +31,10 @@ class UserAuthorization
             return $next($request);
         }
 
+        if ($request->header('From-Portal') && $request->header('From-Portal') == 1 && in_array($request->route()->uri, $this->portalIgnoreRoutes())) {
+            return $next($request);
+        }
+
         $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
 
         // if (!$checkRouteName) {
@@ -54,6 +58,36 @@ class UserAuthorization
 
             $navigationID = $request->header('X-nav-ID') ?? 0;
             $accessType = $request->header('X-Access-Type') ?? 'None';
+
+            if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
+
+                NavigationRoute::firstOrCreate(
+                    [
+                        'navigationID' => $navigationID,
+                        'routeName' => $routeName,
+                        'action' => self::getActionType($accessType),
+                    ]
+                );
+
+                foreach ($userGroupIDs as $userGroupID) {
+                    RoleRoute::create([
+                        'routeName' => $routeName,
+                        'userGroupID' => $userGroupID,
+                        'companySystemID' => 0
+                    ]);
+                }
+                
+
+                $checkRoleRouteAfterCreate = RoleRoute::whereIn('userGroupID', $userGroupIDs)
+                                    ->where('routeName', $routeName)
+                                    ->first();
+
+                if ($checkRoleRouteAfterCreate) {
+                    return $next($request);
+                } else {
+                    return errorMsgs("Unauthorized Access");
+                }
+            }
 
             \Log::channel('authorization')->info(json_encode([
                 'navigationID' => $navigationID,
@@ -83,7 +117,28 @@ class UserAuthorization
             'api/v1/getCustomWidgetGraphData',
             'api/v1/getAllApprovalDocuments',
             'api/v1/getAllcompaniesByDepartment',
+            'api/v1/getAllNotifications',
+            'api/v1/logoutApiUser',
+            'api/v1/updateNotification',
         ];
+    }
+
+    private function portalIgnoreRoutes()
+    {
+        return [
+            'api/v1/updateRouteAccess',
+            'api/v1/auditLogsExternal',
+        ];
+    }
+
+    private function getActionType($accessType)
+    {
+        return match($accessType) {
+            'None' => 0,
+            'Read' => 1,
+            'Create' => 2,
+            'Edit' => 3,
+        };
     }
 }
 

@@ -56,7 +56,6 @@ Route::group([], function(){
     Route::resource('jv_details', 'JvDetailAPIController');
 
     Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData')->name('Get JV master form data');
-    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get JV master record');
     Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails')->name('Get JV details');
     Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts')->name('Get JV contracts');
     Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster')->name('JV for salary JV master');
@@ -113,8 +112,8 @@ Route::group([], function(){
     Route::post('exportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@exportBudgetTemplateCategoryWise')->name('Export budget template category wise');
     Route::post('exportBudgetGLCodeWiseDetails', 'BudgetMasterAPIController@exportBudgetGLCodeWiseDetails')->name('Export budget GL code wise details');
     Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise')->name('Report budget template category wise');
-    Route::post('getBudgetAmendHistory', 'BudgetMasterRefferedHistoryAPIController@getBudgetAmendHistory');
-    Route::post('getDetailsByBudgetRefereback', 'BudgetDetailsRefferedHistoryAPIController@getDetailsByBudgetRefereback');
+    Route::post('getBudgetAmendHistory', 'BudgetMasterRefferedHistoryAPIController@getBudgetAmendHistory')->name('Get budget amend history');
+    Route::post('getDetailsByBudgetRefereback', 'BudgetDetailsRefferedHistoryAPIController@getDetailsByBudgetRefereback')->name('Get details by budget refereback');
 
     //budget transfers
     Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
@@ -128,8 +127,8 @@ Route::group([], function(){
     Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition')->name('Get budget review transfer additions');
     Route::get('budget_transfer_amend/{id}', 'BudgetTransferFormRefferedBackAPIController@budgetTransferAmend')->name('Budget transfer amend');
     Route::get('getDetailsByBudgetTransferAmend', 'BudgetTransferFormDetailRefferedBackAPIController@getDetailsByBudgetTransferAmend')->name('Get details by budget transfer amend');
-    Route::get('budget_addition_amend/{id}', 'BudgetAdditionRefferedBackAPIController@budget_addition_amend');
-    Route::get('getDetailsByBudgetAdditionAmend', 'BudgetAdditionRefferedBackAPIController@getDetailsByBudgetAdditionAmend');
+    Route::get('budget_addition_amend/{id}', 'BudgetAdditionRefferedBackAPIController@budget_addition_amend')->name('Budget addition amend');
+    Route::get('getDetailsByBudgetAdditionAmend', 'BudgetAdditionRefferedBackAPIController@getDetailsByBudgetAdditionAmend')->name('Get details by budget addition amend');
 
 
     Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview')->name('Create Budget Transfer from review');
@@ -138,7 +137,7 @@ Route::group([], function(){
     Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer')->name('Amend budget transfer');
     Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory')->name('Get budget transfer amend history');
     Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition')->name('Amend budget addition');
-    Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory');
+    Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory')->name('Get budget addition amend history');
 
     // Contingency Budgets
     Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
@@ -221,15 +220,9 @@ Route::group([], function(){
 
     // contiungency Budget
 
-    Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
     Route::get('contingencyBudgetAmend/{id}', 'ContingencyBudgetRefferedBackAPIController@contingencyBudgetAmend')->name('Get Contigency Budget');
 
-    Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData') ->name('Get Contigency Budget From Data');
-    Route::get('getBudgetAmount/{id}', 'ContingencyBudgetPlanAPIController@getBudgetAmount')->name('Get Budget Amount');
-    Route::post('get_contingency_budget_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_approved')->name('Get Budget Amount Approved');
     Route::post('get_contingency_budget_not_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_not_approved')->name('Get Budget Amount Not Approved');
-    Route::post('approve_contingency_budget', 'ContingencyBudgetPlanAPIController@approve_contingency_budget')->name('Approve Contigency Budget');
-    Route::post('reject_contingency_budget', 'ContingencyBudgetPlanAPIController@reject_contingency_budget')->name('Reject Contigency Budget');
     Route::post('amendContingencyBudget', 'ContingencyBudgetPlanAPIController@amendContingencyBudget')->name('Amend Contigency Budget');
     Route::post('getContingencyAmendHistory', 'ContingencyBudgetRefferedBackAPIController@getContingencyAmendHistory')->name('Get Contigency Budget Amend History');
     Route::post('get_contingency_budget', 'ContingencyBudgetPlanAPIController@get_contingency_budget')->name('Get Contigency Budget');
@@ -275,12 +268,12 @@ Route::group([], function(){
     Route::resource('final_return_income_reports', 'FinalReturnIncomeReportsAPIController');
     Route::resource('final_return_income_rd', 'FinalReturnIncomeReportDetailsAPIController');
     Route::resource('final_return_income_rdv', 'FinalReturnIncomeReportDetailValuesAPIController');
-    Route::post('getReportList', 'FinalReturnIncomeReportsAPIController@getReportList');
-    Route::get('getFinalIncomeReportFormData', 'FinalReturnIncomeReportsAPIController@getFormData');
-    Route::post('checkYearExists', 'FinalReturnIncomeReportsAPIController@checkYearExists');
-    Route::get('incomeReportDetails/{id}', 'FinalReturnIncomeReportsAPIController@getIncomeReportDetails');
-    Route::post('confirmReturnIncomeReport', 'FinalReturnIncomeReportsAPIController@confirmReturnIncomeReport');
-    Route::post('syncGLrecords', 'FinalReturnIncomeReportsAPIController@syncGLrecords');
+    Route::post('getReportList', 'FinalReturnIncomeReportsAPIController@getReportList')->name('Get report list');
+    Route::get('getFinalIncomeReportFormData', 'FinalReturnIncomeReportsAPIController@getFormData')->name('Get final income report form data');
+    Route::post('checkYearExists', 'FinalReturnIncomeReportsAPIController@checkYearExists')->name('Check year exists');
+    Route::get('incomeReportDetails/{id}', 'FinalReturnIncomeReportsAPIController@getIncomeReportDetails')->name('Get income report details');
+    Route::post('confirmReturnIncomeReport', 'FinalReturnIncomeReportsAPIController@confirmReturnIncomeReport')->name('Confirm return income report');
+    Route::post('syncGLrecords', 'FinalReturnIncomeReportsAPIController@syncGLrecords')->name('Sync GL records');
 });
 
 

@@ -2982,8 +2982,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
         $currencyField = "";
         $decimalField = "";
         if ($input['documentId'] == 1) {
@@ -3201,8 +3201,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         if ($input['documentId'] == 1) {
             if ($input['currency'] == 1) {
@@ -3396,15 +3396,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -3412,9 +3408,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.successfully_export'));
+        }, $type);
     }
 
     /**
@@ -3882,8 +3876,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $expYear = $monthExp[0];
         $expMonth = $monthExp[1];
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4010,8 +4004,8 @@ WHERE
 
         $type = $request->type;
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4149,15 +4143,11 @@ WHERE
         }
 
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -4165,7 +4155,7 @@ WHERE
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        }, $type);
     }
 
     /**
@@ -4211,8 +4201,8 @@ WHERE
     {
         $input = $request->all();
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -6133,7 +6123,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'DES')->get();
+        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'desc')->get();
 
         foreach ($output as $row) {
             $row->grvMasters = $this->getPOtoPaymentChain($row);
@@ -6370,7 +6360,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->setDateType(2)
             ->setExcelFormat($excelColumnFormat)
             ->setCurrency($cur)
-            ->setColumnAutoSize(false)
+            ->setColumnAutoSize(true)
             ->setDetails()
             ->generateExcel();
 
@@ -9393,7 +9383,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
 
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -9445,8 +9435,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no']);
 
             if ($purchaseOrder->cancelledYN == -1) {
                 return $this->sendError(trans('custom.purchase_order_already_closed_cannot_add'), 500);

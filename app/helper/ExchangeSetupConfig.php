@@ -14,7 +14,7 @@ use App\helper\Helper;
 class ExchangeSetupConfig
 {
 
-    public function checkPolicy($companyID)
+    public static function checkPolicy($companyID)
     {
         $user = Auth::user();
 
@@ -37,7 +37,7 @@ class ExchangeSetupConfig
         return ['sucess' => true, 'message' => "Access available for the user group", 'policy' => true];
     }
 
-    public function checkExchageSetupDocumentAllowERAccess($companySystemId, $exchangeSetupDocumentTypeId)
+    public static function checkExchageSetupDocumentAllowERAccess($companySystemId, $exchangeSetupDocumentTypeId)
     {
         $exchangeSetupDocumentConfig = ExchangeSetupConfiguration::where('companyId', $companySystemId)->where('exchangeSetupDocumentTypeId', $exchangeSetupDocumentTypeId)->first();
         if (!isset($exchangeSetupDocumentConfig))
@@ -46,7 +46,7 @@ class ExchangeSetupConfig
         return $exchangeSetupDocumentConfig->allowErChanges ?? false;
     }
 
-    public function checkExchageSetupDocumentAllowPostExchangeOrGainLossEntryAccess($companySystemId, $documentSlug)
+    public static function checkExchageSetupDocumentAllowPostExchangeOrGainLossEntryAccess($companySystemId, $documentSlug)
     {
         if(!$documentSlug)
             return false;
@@ -60,7 +60,7 @@ class ExchangeSetupConfig
     }
 
 
-    public function checkExchangeRateChangedOnDocumnentLevel($masterData)
+    public static function checkExchangeRateChangedOnDocumnentLevel($masterData)
     {
         $masterExchangeRates = collect($masterData->only('companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER'));
         $paymentVoucherMasterOrg = [];
@@ -76,12 +76,12 @@ class ExchangeSetupConfig
         if(count($masterExchangeRates->diffAssoc($paymentVoucherMasterOrg)) > 0);
         {
             return
-                $this->checkExchageSetupDocumentAllowPostExchangeOrGainLossEntryAccess($masterData['companySystemID'],PaymentVoucherType::getSlugById($masterData['invoiceType']));
+                self::checkExchageSetupDocumentAllowPostExchangeOrGainLossEntryAccess($masterData['companySystemID'],PaymentVoucherType::getSlugById($masterData['invoiceType']));
 
         }
     }
 
-    public function isMasterDocumentExchageRateChanged($masterData)
+    public static function isMasterDocumentExchageRateChanged($masterData)
     {
         $masterExchangeRates = collect($masterData->only('companyRptCurrencyER','localCurrencyER','BPVbankCurrencyER'));
         $paymentVoucherMasterOrg = [];

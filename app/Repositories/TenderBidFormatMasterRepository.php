@@ -70,7 +70,7 @@ class TenderBidFormatMasterRepository extends BaseRepository
 
             $disk = 'local';
             Storage::disk($disk)->put($originalFileName, $decodeFile);
-            $sheetData = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->path($originalFileName))->get()->toArray();
+            $sheetData = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             if (empty($sheetData)) {
                 if (Storage::disk($disk)->exists($originalFileName)) {

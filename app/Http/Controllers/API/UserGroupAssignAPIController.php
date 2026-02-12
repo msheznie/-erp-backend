@@ -437,6 +437,10 @@ class UserGroupAssignAPIController extends AppBaseController
                 $array = array('mainMenus' =>[],'subMenus' => [],'cat' => $cat);
               
             }
+            $array['excelBoldHeaderRows'] = 2;
+            $array['excelTitleRow'] = 1;
+            $array['excelHeaderBackgroundRow'] = 2;
+            $array['excelHeaderBackgroundColor'] = '6798da';
 
             //return $this->sendResponse($array, trans('custom.success_export'));
            

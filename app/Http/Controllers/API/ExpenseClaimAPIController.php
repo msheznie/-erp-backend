@@ -708,7 +708,7 @@ class ExpenseClaimAPIController extends AppBaseController
         $paginate = $expenseClaim;
         if($expenseClaim->count()){
             $data = [];
-            $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
+            $paginate = Arr::only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
             foreach ($expenseClaim as $key=> $claim){
                 $currency = null;
                 if(isset($claim->details[0]->currencyID)) {
@@ -750,7 +750,7 @@ class ExpenseClaimAPIController extends AppBaseController
             ->paginate(50);
         $paginate = $expenseClaim;
         if($expenseClaim->count()){
-            $paginate = array_only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
+            $paginate = Arr::only($expenseClaim->toArray(),['current_page','first_page_url','from','last_page','last_page_url','next_page_url','path','per_page','prev_page_url','to','total']);
             $data = [];
             foreach ($expenseClaim as $key => $claim){
                 $currency = null;
@@ -810,10 +810,10 @@ class ExpenseClaimAPIController extends AppBaseController
         if(!empty($expenseClaim->expense_claim_type)){
             $claimType = $expenseClaim->expense_claim_type;
         }
-        $output['claim'] = array_only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments','confirmedYN','addedForPayment','approved']);
+        $output['claim'] = Arr::only($expenseClaim->toArray(), ['expenseClaimMasterAutoID', 'expenseClaimCode', 'expenseClaimDate', 'pettyCashYN', 'comments','confirmedYN','addedForPayment','approved']);
         $output['claim']['CompanyName'] = isset($expenseClaim->company->CompanyName) ? $expenseClaim->company->CompanyName : '';
         $output['claim']['claim_type'] = $claimType;
-        $output['claim']['currency'] = isset($expenseClaim->details[0]->currency) ? array_only($expenseClaim->details[0]->currency->toArray(),['currencyID','CurrencyName','CurrencyCode','DecimalPlaces']) : NULL;
+        $output['claim']['currency'] = isset($expenseClaim->details[0]->currency) ? Arr::only($expenseClaim->details[0]->currency->toArray(),['currencyID','CurrencyName','CurrencyCode','DecimalPlaces']) : NULL;
 
 
         /*set Detail Array*/

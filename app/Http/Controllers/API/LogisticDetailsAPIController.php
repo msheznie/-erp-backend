@@ -28,6 +28,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class LogisticDetailsController
@@ -240,7 +241,7 @@ class LogisticDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.logistic_details_not_found'));
         }
 
-        $logisticDetails = $this->logisticDetailsRepository->update(array_only($input, ['itemShippingQty']), $id);
+        $logisticDetails = $this->logisticDetailsRepository->update(Arr::only($input, ['itemShippingQty']), $id);
 
         return $this->sendResponse($logisticDetails->toArray(), trans('custom.logistic_details_updated_successfully'));
     }

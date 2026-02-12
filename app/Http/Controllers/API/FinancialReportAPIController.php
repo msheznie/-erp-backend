@@ -1157,18 +1157,15 @@ class FinancialReportAPIController extends AppBaseController
             $lang = app()->getLocale();
             $fontFamily = Helper::getExcelFontFamily($lang);
 
-            return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
+            return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
-                    // Set default font for entire sheet
                     $sheet->setStyle([
                         'font' => [
                             'name' => $fontFamily,
                             'size' => 11,
-                        ]
+                        ],
                     ]);
                     $sheet->loadView($templateName, $reportData);
-
-                    // Apply font to all cells after loading view
                     $lastRow = $sheet->getHighestRow();
                     $lastColumn = $sheet->getHighestColumn();
                     if ($lastRow > 0 && $lastColumn) {
@@ -1179,15 +1176,32 @@ class FinancialReportAPIController extends AppBaseController
                         } catch (\Exception $e) {
                             $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                         }
+                        // Merge and center title (row 1) and company (row 2)
+                        $sheet->mergeCells('A1:' . $lastColumn . '1');
+                        $sheet->mergeCells('A2:' . $lastColumn . '2');
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        // Bold title, company, period from (row 4), period to (row 5)
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                        $sheet->getStyle('A4:' . $lastColumn . '4')->getFont()->setBold(true);
+                        $sheet->getStyle('A5:' . $lastColumn . '5')->getFont()->setBold(true);
+                        // Bold column header row(s): any row where column A is "document_date" translation
+                        $documentDateHeader = __('custom.document_date');
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
+                        for ($r = 6; $r <= $lastRow; $r++) {
+                            if ((string) $worksheet->getCell('A' . $r)->getValue() === (string) $documentDateHeader) {
+                                $sheet->getStyle('A' . $r . ':' . $lastColumn . $r)->getFont()->setBold(true);
+                            }
+                        }
                     }
-                    
-                    // Set right-to-left for Arabic locale
+                    $sheet->setAutoSize(true);
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
         else{
             return $this->sendResponse([
@@ -4038,7 +4052,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $closingBalance = $openingBalance - $budgetAmount;
         $output = array(
-            'companyName' => $reportingCurrency->CompanyName,
+            'companyName' => $reportingCurrency->CompanyName ?? '',
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
@@ -4049,24 +4063,21 @@ class FinancialReportAPIController extends AppBaseController
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
             'reportTittle' => trans('custom.project_utilization_report'),
-            'companyReportingCurrency' => $cur_rep,
+            'companyReportingCurrency' => $reportingCurrency->reportingcurrency ?? null,
         );
 
         $lang = app()->getLocale();
         $fontFamily = Helper::getExcelFontFamily($lang);
 
-        return \Excel::create('upload_budget_template', function ($excel) use ($output, $fontFamily) {
+        return \App\Exports\CreateExcelExport::download('upload_budget_template', function ($excel) use ($output, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output, $fontFamily) {
-                // Set default font for entire sheet
                 $sheet->setStyle([
                     'font' => [
                         'name' => $fontFamily,
                         'size' => 11,
-                    ]
+                    ],
                 ]);
                 $sheet->loadView('export_report.project_utilization_report', $output);
-
-                // Apply font to all cells after loading view
                 $lastRow = $sheet->getHighestRow();
                 $lastColumn = $sheet->getHighestColumn();
                 if ($lastRow > 0 && $lastColumn) {
@@ -4078,14 +4089,12 @@ class FinancialReportAPIController extends AppBaseController
                         $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                     }
                 }
-
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function exportReport(Request $request, ExportGeneralLedgerReportService $exportGlToExcelService)
@@ -4130,10 +4139,10 @@ class FinancialReportAPIController extends AppBaseController
                             }
                         }
                         $excelFormat = [
-                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                         ];
                     }
@@ -4220,12 +4229,12 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.closing_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
                         }
                         $excelFormat = [
-                            'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                         ];
 
@@ -4366,31 +4375,31 @@ class FinancialReportAPIController extends AppBaseController
     
                     array_push($data,$totalArray);
                     $excelFormat = [
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'W' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'X' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Y' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Z' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AA' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AB' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                     ];
                 }
@@ -4581,24 +4590,24 @@ class FinancialReportAPIController extends AppBaseController
                 if ($reportSD == "glCode_wise") {
                     $data = $this->getGlCodeWiseRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt);
                     $excelFormat = [
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 } else {
                     $data = $this->getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt);
                     $excelFormat = [
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 $exportToExcel = $exportGlToExcelService
@@ -4635,8 +4644,10 @@ class FinancialReportAPIController extends AppBaseController
                 $output = $this->getTaxDetailQry($request);
                 $data = array();
 
-                $selectedColumns = collect($request->selectedColumn)->pluck(['id'])->toArray();
-                $reporingCurrencyCode = ($output[0]) ? $output[0]->rptCurrencyCode : null;
+                $selectedColumns = $request->selectedColumn
+                    ? collect($request->selectedColumn)->pluck('id')->toArray()
+                    : [];
+                $reporingCurrencyCode = (! empty($output) && isset($output[0])) ? $output[0]->rptCurrencyCode : null;
 
                 $cur = null;
                 $title = 'Tax Details';
@@ -4663,17 +4674,17 @@ class FinancialReportAPIController extends AppBaseController
                 $path = 'general-ledger/report/tax_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [
-                    'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AC' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AD' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AE' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'W' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'X' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Y' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Z' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AA' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AB' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AC' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AD' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AE' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
                 $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
@@ -8684,7 +8695,8 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
 
         $bindings = [];
 
-        for ($i = 0; $i < 5; $i++) {
+        // 4 placeholders per UNION segment (BETWEEN ? AND ?, GROUP BY ? = 1, HAVING ? != 1) × 4 segments = 16 bindings
+        for ($i = 0; $i < 4; $i++) {
             $bindings[] = $fromDate;
             $bindings[] = $toDate;
             $bindings[] = $request->reportViewID;
@@ -11033,13 +11045,11 @@ GROUP BY
         }
 
 
-        \Excel::create('trial_balance', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('trial_balance', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -11047,9 +11057,7 @@ GROUP BY
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        }, $type);
     }
 
     function getFinancialCustomizeRptColumnQry($request, $changeSelect = false, $companyWiseTemplate = false)
@@ -12770,19 +12778,16 @@ GROUP BY
         $lang = app()->getLocale();
         $fontFamily = Helper::getExcelFontFamily($lang);
 
-        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
-                // Set default font for entire sheet
                 $sheet->setStyle([
                     'font' => [
                         'name' => $fontFamily,
                         'size' => 11,
-                    ]
+                    ],
                 ]);
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
-
-                // Apply font to all cells after loading view
                 $lastRow = $sheet->getHighestRow();
                 $lastColumn = $sheet->getHighestColumn();
                 if ($lastRow > 0 && $lastColumn) {
@@ -12792,16 +12797,30 @@ GROUP BY
                         $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                     } catch (\Exception $e) {
                         $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
                     }
+                       // Bold header section: from row 1 to the column header row (row containing "description")
+                    $descriptionLabel = trans('custom.description');
+                    $headerEndRow = 1;
+                    for ($r = 1; $r <= min($lastRow, 25); $r++) {
+                        $cellVal = (string) $worksheet->getCell('A' . $r)->getValue();
+                        if ($cellVal !== '' && (strpos($cellVal, $descriptionLabel) !== false || $cellVal === $descriptionLabel)) {
+                            $headerEndRow = $r;
+                            break;
+                        }
+                    }
+                    if ($headerEndRow < 2) {
+                        $headerEndRow = 12;
+                    }
+                    $sheet->getStyle('A1:' . $lastColumn . $headerEndRow)->getFont()->setBold(true);
                 }
-                
-                // Set right-to-left for Arabic locale
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function getOpeningBalanceData($fromDate,$typeID,$companyID,$employeeID) {

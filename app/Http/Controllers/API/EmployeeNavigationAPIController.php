@@ -23,6 +23,7 @@ use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
+use Illuminate\Support\Arr;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
@@ -318,7 +319,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         $selectedCompanyId = (isset($request['selectedCompanyId'])) ? $request['selectedCompanyId'] : 0;
         
         $employee= EmployeeNavigation::select('companyID')->where('employeeSystemID',$user->employee_id)->get();
-        $companiesByGroup = array_pluck($employee, 'companyID');
+        $companiesByGroup = Arr::pluck($employee, 'companyID');
 
         $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0);
 
