@@ -1176,7 +1176,26 @@ class FinancialReportAPIController extends AppBaseController
                         } catch (\Exception $e) {
                             $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                         }
+                        // Merge and center title (row 1) and company (row 2)
+                        $sheet->mergeCells('A1:' . $lastColumn . '1');
+                        $sheet->mergeCells('A2:' . $lastColumn . '2');
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        // Bold title, company, period from (row 4), period to (row 5)
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                        $sheet->getStyle('A4:' . $lastColumn . '4')->getFont()->setBold(true);
+                        $sheet->getStyle('A5:' . $lastColumn . '5')->getFont()->setBold(true);
+                        // Bold column header row(s): any row where column A is "document_date" translation
+                        $documentDateHeader = __('custom.document_date');
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
+                        for ($r = 6; $r <= $lastRow; $r++) {
+                            if ((string) $worksheet->getCell('A' . $r)->getValue() === (string) $documentDateHeader) {
+                                $sheet->getStyle('A' . $r . ':' . $lastColumn . $r)->getFont()->setBold(true);
+                            }
+                        }
                     }
+                    $sheet->setAutoSize(true);
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);

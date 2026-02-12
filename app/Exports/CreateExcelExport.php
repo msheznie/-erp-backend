@@ -290,6 +290,11 @@ class SheetWrapper
         $this->worksheet->getColumnDimension($column)->setWidth($width);
     }
 
+    public function mergeCells($range)
+    {
+        $this->worksheet->mergeCells($range);
+    }
+
     public function loadView($view, $data = [])
     {
         $this->lastLoadView = ['view' => $view, 'data' => $data];
