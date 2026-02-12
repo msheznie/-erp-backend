@@ -12797,8 +12797,24 @@ GROUP BY
                         $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                     } catch (\Exception $e) {
                         $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
                     }
+                       // Bold header section: from row 1 to the column header row (row containing "description")
+                    $descriptionLabel = trans('custom.description');
+                    $headerEndRow = 1;
+                    for ($r = 1; $r <= min($lastRow, 25); $r++) {
+                        $cellVal = (string) $worksheet->getCell('A' . $r)->getValue();
+                        if ($cellVal !== '' && (strpos($cellVal, $descriptionLabel) !== false || $cellVal === $descriptionLabel)) {
+                            $headerEndRow = $r;
+                            break;
+                        }
+                    }
+                    if ($headerEndRow < 2) {
+                        $headerEndRow = 12;
+                    }
+                    $sheet->getStyle('A1:' . $lastColumn . $headerEndRow)->getFont()->setBold(true);
                 }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
