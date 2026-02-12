@@ -45,6 +45,7 @@ use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\BankMemoPayee;
+use App\Models\BankMemoSupplier;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegister;
@@ -1629,6 +1630,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->BPVsupplierID)
+                ->where('currencyID', $output->supplierTransCurrencyID)
+                ->first();
+            $beneficiaryMemo = $supplierCurrency
+                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
+                    ->where('bankMemoTypeID', 4)
+                    ->value('memoDetail')
+                : null;
+            $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
+        } else {
+            $output['supplierBeneficiaryNumber'] = null;
+        }
+
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
@@ -3154,8 +3169,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         ->where('isYesNO', 1)
         ->exists();
 
+        $supplierBeneficiaryNumber = null;
+        if ($output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->BPVsupplierID)
+                ->where('currencyID', $output->supplierTransCurrencyID)
+                ->first();
+            $supplierBeneficiaryNumber = $supplierCurrency
+                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
+                    ->where('bankMemoTypeID', 4)
+                    ->value('memoDetail')
+                : null;
+        }
+
         $order = array(
             'masterdata' => $output,
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'transDecimal' => $transDecimal,
             'localDecimal' => $localDecimal,

@@ -127,6 +127,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
+use App\Models\BankMemoSupplier;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\TenderMaster;
@@ -2015,7 +2016,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
-                $query->select('vatNumber', 'supplierCodeSystem');
+                $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
             }, 'approved' => function ($query) {
                 $query->with(['employee'=>function($query2){
                     $query2->with(['hr_emp'=>function($query3){
@@ -2077,6 +2078,16 @@ class ProcumentOrderAPIController extends AppBaseController
             ->exists();
 
         $output['isProjectBase'] = $isProjectBase;
+
+        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->supplierID)
+            ->where('currencyID', $output->supplierTransactionCurrencyID)
+            ->first();
+        $beneficiaryMemo = $supplierCurrency
+            ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
+                ->where('bankMemoTypeID', 4)
+                ->value('memoDetail')
+            : null;
+        $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -3568,10 +3579,22 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'supplier' => function ($query) {
-            $query->select('vatNumber', 'supplierCodeSystem');
+            $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+        $supplierBeneficiaryNumber = null;
+        if (!empty($outputRecord) && $outputRecord[0]->supplierID && $outputRecord[0]->supplierTransactionCurrencyID) {
+            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $outputRecord[0]->supplierID)
+                ->where('currencyID', $outputRecord[0]->supplierTransactionCurrencyID)
+                ->first();
+            $supplierBeneficiaryNumber = $supplierCurrency
+                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
+                    ->where('bankMemoTypeID', 4)
+                    ->value('memoDetail')
+                : null;
+        }
 
         $is_specification = 0;
 
@@ -3701,6 +3724,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array(
             'podata' => $outputRecord[0],
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
             'isMergedCompany' => $isMergedCompany,

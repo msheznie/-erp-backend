@@ -9970,4 +9970,6 @@ return
     'column_must_be_string' => 'Each column name must be a string',
     'column_max_length' => 'Column name cannot exceed 100 characters',
     'invalid_date_format' => 'Invalid date format',
+    'beneficiary_number' => 'Beneficiary Number',
+    'commercial_registration' => 'Registration Number',
 ];

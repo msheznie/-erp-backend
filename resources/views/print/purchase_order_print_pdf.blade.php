@@ -481,6 +481,20 @@
                                 @endif
                             </td>
                         </tr>
+                        <tr>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.commercial_registration') }}</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 78%">
+                                @if ($podata->supplier)
+                                    {{ $podata->supplier->registrationNumber }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.beneficiary_number') }}</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 78%">{{ $supplierBeneficiaryNumber ?? '' }}</td>
+                        </tr>
                     </table>
                 </td>
             </tr>
