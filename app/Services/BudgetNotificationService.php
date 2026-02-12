@@ -183,6 +183,8 @@ class BudgetNotificationService
 
         $hod = $department->hod->employee;
 
+        Log::useFiles(storage_path() . '/logs/budget_notification.log');
+
         $baseurl = \Helper::checkDomai();
         Log::info('baseurl before', ['baseurl' => $baseurl]);
         $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
