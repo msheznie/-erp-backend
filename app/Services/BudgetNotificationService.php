@@ -21,7 +21,7 @@ class BudgetNotificationService
     private $companySystemID;
     private $scenario;
     private $delegateID;
-    
+    private $baseurl;
     /**
      * Replace placeholders in template string with actual values
      *
@@ -66,13 +66,13 @@ class BudgetNotificationService
     * @param array $placeholders Optional array of placeholder values to replace
     * @return array
     */
-   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null)
+   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null,$baseurl = null)
    {
 
        $this->companySystemID = $companySystemID;
        $this->scenario = $scenario;
        $this->delegateID = $delegateID;
-
+       $this->baseurl = $baseurl;
 
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
@@ -183,14 +183,8 @@ class BudgetNotificationService
 
         $hod = $department->hod->employee;
 
-        Log::useFiles(storage_path() . '/logs/budget_notification.log');
 
-        $baseurl = \Helper::checkDomai();
-        Log::info('baseurl before', ['baseurl' => $baseurl]);
-        $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
-        Log::info('baseurl after', ['baseurl' => $baseurl]);
-        $linkUrl = $baseurl;
-        Log::info('linkUrl', ['linkUrl' => $linkUrl]);
+        $linkUrl = str_replace('approval/erp', 'budget-planning/planning', $this->baseurl);
         $placeholders = [
             'HODName' => $hod->empName.' ('.$hod->empID.')',
             'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
@@ -410,9 +404,7 @@ class BudgetNotificationService
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
         $delegatee = Employee::find($this->delegateID);
 
-        $baseurl = \Helper::checkDomai();
-        $baseurl = str_replace('approval/erp', 'budget-planning/planning', $baseurl);
-        $linkUrl = $baseurl;
+        $linkUrl = str_replace('approval/erp', 'budget-planning/planning', $this->baseurl);
         if(empty($revision)) {
             $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
