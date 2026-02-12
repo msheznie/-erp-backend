@@ -65,6 +65,7 @@ class AssetRegisterDetail
             '',
             '',
             '',
+            '',
             trans('custom.unit_cost'),
             trans('custom.accdep_amount'),
             trans('custom.net_book_value'),
