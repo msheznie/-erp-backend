@@ -848,7 +848,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                     $excelColumnFormat = [
                         'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
                         'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                         'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
