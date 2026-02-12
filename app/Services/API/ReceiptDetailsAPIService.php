@@ -10,8 +10,8 @@ class ReceiptDetailsAPIService
         switch ($receiptVoucher->documentType) {
             case 15:
             case 14 :
-                $return = DirectReceiptDetailAPIService::storeDirectReceiptDetail($directReceipt, $receiptVoucher);
-                return $return;
+                $result = DirectReceiptDetailAPIService::storeDirectReceiptDetail($directReceipt, $receiptVoucher);
+                return $result;
                 break;
             case 13 :
                 $result = CustomerInvoiceReceiptDetailsService::storeReceiptDetails($directReceipt, $receiptVoucher);
