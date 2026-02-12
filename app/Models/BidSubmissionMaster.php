@@ -186,4 +186,62 @@ class BidSubmissionMaster extends Model
     public static function checkTenderBidSubmitted($tender_id){
         return self::where('tender_id', $tender_id)->exists();
     }
+    public static function getCommercialBidIds($tenderId, $isNegotiation)
+    {
+        $tender = TenderMaster::withCount([
+            'criteriaDetails',
+            'criteriaDetails as go_no_go_count' => function ($q) {
+                $q->where('critera_type_id', 1);
+            },
+            'criteriaDetails as technical_count' => function ($q) {
+                $q->where('critera_type_id', 2);
+            },
+            'DocumentAttachments as document_count' => function ($q) {
+                $q->where('envelopType', 3);
+            }
+        ])->find($tenderId);
+
+        if (!$tender) {
+            return collect();
+        }
+
+        $negotiationIds = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation)
+            ->pluck('bid_submission_master_id_new')
+            ->toArray();
+
+        $query = self::query()
+            ->where('status', 1)
+            ->where('bidSubmittedYN', 1)
+            ->where('tender_id', $tenderId);
+
+        if (!empty($negotiationIds)) {
+            $query->when($isNegotiation == 1,
+                fn($q) => $q->whereIn('id', $negotiationIds),
+                fn($q) => $q->whereNotIn('id', $negotiationIds)
+            );
+        }
+
+        if ($tender->technical_count == 0) {
+
+            return $query
+                ->where('doc_verifiy_status', 1)
+                ->pluck('id');
+        }
+
+        return $query
+            ->selectRaw("
+            srm_bid_submission_master.id,
+            ROUND(SUM((srm_bid_submission_detail.eval_result/100)
+            * srm_tender_master.technical_weightage),3) as weightage,
+            srm_tender_master.technical_passing_weightage as passing_weightage
+        ")
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->where('commercial_verify_status', 1)
+            ->groupBy('srm_bid_submission_master.id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->orderBy('srm_bid_submission_master.id')
+            ->pluck('id');
+    }
+
 }

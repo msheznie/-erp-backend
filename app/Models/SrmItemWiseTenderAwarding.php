@@ -44,7 +44,7 @@ class SrmItemWiseTenderAwarding extends Model
         'bid_id' => 'integer',
         'supplier_id' => 'integer',
         'bid_amount' => 'decimal:3',
-        'system_pick' => 'integer',
+        'system_pick' => 'boolean',
         'award' => 'boolean',
         'is_awarded' => 'integer',
         'award_email_sent' => 'boolean',

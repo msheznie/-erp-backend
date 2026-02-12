@@ -178,77 +178,101 @@ class TenderItemWiseAwardingService
 
     public function confirmItemWiseCombinedRanking(Request $request): array
     {
-        $tenderId = $request['tenderMasterId'];
-        $isNegotiation = (int) ($request['isNegotiation'] ?? 0);
-        $comment = $request['comment'] ?? '';
-        $selections = $request['selections'] ?? [];
-        $userId = $request->user()->id ?? null;
+        try {
+            return DB::transaction(function () use ($request) {
 
-        DB::transaction(function () use ($tenderId, $isNegotiation, $comment, $selections, $userId) {
-            $bidMasterId = $this->commercialBidService->getCommercialBids($tenderId, $isNegotiation);
-            if (empty($bidMasterId) || !is_array($bidMasterId)) {
-                $bidMasterId = $bidMasterId && method_exists($bidMasterId, 'toArray') ? $bidMasterId->toArray() : [];
-            }
+                $tenderId     = $request['tenderMasterId'];
+                $isNegotiation = (int) ($request['isNegotiation'] ?? 0);
+                $comment      = $request['comment'] ?? '';
+                $selections   = $request['selections'] ?? [];
+                $userId       = $request->user()->id ?? null;
 
-            SrmItemWiseTenderAwarding::clearAwardForTenderNegotiation($tenderId, $isNegotiation);
+                $bidMasterId = $this->commercialBidService
+                    ->getCommercialBids($tenderId, $isNegotiation);
 
-            $systemPickMap = $this->getItemWiseSystemPickBidMap($tenderId, $isNegotiation);
+                $bidMasterId = $this->normalizeToArray($bidMasterId);
 
-            foreach ($selections as $sel) {
-                $bidFormatDetailId = isset($sel['bid_format_detail_id']) ? (int) $sel['bid_format_detail_id'] : null;
-                $boqItemId = isset($sel['boq_item_id']) ? (int) $sel['boq_item_id'] : null;
-                $bidId = (int) ($sel['bid_id'] ?? 0);
-                $supplierId = (int) ($sel['supplier_id'] ?? 0);
-                $bidAmount = isset($sel['bid_amount']) ? $sel['bid_amount'] : null;
-                if (!$bidId || !$supplierId) {
-                    continue;
-                }
-                if ($bidFormatDetailId === 0) {
-                    $bidFormatDetailId = null;
-                }
-                if ($boqItemId === 0) {
-                    $boqItemId = null;
-                }
-                $key = $boqItemId ? 'boq_' . $boqItemId : 'main_' . $bidFormatDetailId;
-                $isSystemPick = isset($systemPickMap[$key]) && (int) $systemPickMap[$key] === $bidId;
-
-                SrmItemWiseTenderAwarding::createOrUpdateAwarding(
-                    [
-                        'tender_id' => $tenderId,
-                        'bid_format_detail_id' => $bidFormatDetailId,
-                        'boq_item_id' => $boqItemId,
-                        'bid_id' => $bidId,
-                    ],
-                    [
-                        'supplier_id' => $supplierId,
-                        'bid_amount' => $bidAmount,
-                        'award' => 1,
-                        'is_awarded' => 0,
-                        'system_pick' => $isSystemPick ? 1 : 0,
-                        'is_negotiation' => $isNegotiation,
-                        'updated_by' => $userId,
-                    ]
+                SrmItemWiseTenderAwarding::clearAwardForTenderNegotiation(
+                    $tenderId,
+                    $isNegotiation
                 );
-            }
 
-            TenderMaster::updateCombinedRankingStatus($tenderId, $isNegotiation, $comment);
+                $systemPickMap = $this->getItemWiseSystemPickBidMap(
+                    $tenderId,
+                    $isNegotiation
+                );
 
-            $tenderNegotiationId = null;
-            if ($isNegotiation === 1) {
-                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
-                $tenderNegotiationId = $latestNegotiation ? $latestNegotiation->id : null;
-            }
-            TenderConfirmationService::saveConfirmationDetails(
-                $tenderId,
-                $tenderId,
-                TenderConfirmationDetail::MODULE_COMBINED_RANKING,
-                null,
-                $comment,
-                $tenderNegotiationId
-            );
-        });
+                foreach ($selections as $sel) {
 
-        return ['success' => true];
+                    $bidFormatDetailId = isset($sel['bid_format_detail_id'])
+                        ? (int) $sel['bid_format_detail_id']
+                        : null;
+
+                    $boqItemId = isset($sel['boq_item_id'])
+                        ? (int) $sel['boq_item_id']
+                        : null;
+
+                    $bidId      = (int) ($sel['bid_id'] ?? 0);
+                    $supplierId = (int) ($sel['supplier_id'] ?? 0);
+                    $bidAmount  = $sel['bid_amount'] ?? null;
+
+                    if (!$bidId || !$supplierId) {
+                        continue;
+                    }
+
+                    $bidFormatDetailId = $bidFormatDetailId ?: null;
+                    $boqItemId         = $boqItemId ?: null;
+
+                    $key = $boqItemId
+                        ? 'boq_' . $boqItemId
+                        : 'main_' . $bidFormatDetailId;
+
+                    $isSystemPick = isset($systemPickMap[$key])
+                        && (int) $systemPickMap[$key] === $bidId;
+
+                    $this->saveItemWiseAwarding(
+                        $tenderId,
+                        $bidFormatDetailId,
+                        $boqItemId,
+                        $bidId,
+                        $supplierId,
+                        $bidAmount,
+                        $isSystemPick,
+                        $isNegotiation,
+                        $userId
+                    );
+                }
+
+                TenderMaster::updateCombinedRankingStatus(
+                    $tenderId,
+                    $isNegotiation,
+                    $comment
+                );
+
+                $tenderNegotiationId = null;
+
+                if ($isNegotiation === 1) {
+                    $latestNegotiation = TenderNegotiation
+                        ::getTenderLatestNegotiations($tenderId);
+
+                    $tenderNegotiationId = $latestNegotiation->id ?? null;
+                }
+
+                TenderConfirmationService::saveConfirmationDetails(
+                    $tenderId,
+                    $tenderId,
+                    TenderConfirmationDetail::MODULE_COMBINED_RANKING,
+                    null,
+                    $comment,
+                    $tenderNegotiationId
+                );
+
+                return ['success' => true];
+            });
+
+        } catch (\Throwable $e) {
+            throw $e;
+        }
     }
 
     /**
@@ -277,22 +301,16 @@ class TenderItemWiseAwardingService
             $key = $boqItemId ? 'boq_' . $boqItemId : 'main_' . $bidFormatDetailId;
             $isSystemPick = isset($systemPickMap[$key]) && (int) $systemPickMap[$key] === $bidId;
 
-            SrmItemWiseTenderAwarding::createOrUpdateAwarding(
-                [
-                    'tender_id' => $tenderId,
-                    'bid_format_detail_id' => $bidFormatDetailId,
-                    'boq_item_id' => $boqItemId,
-                    'bid_id' => $bidId,
-                ],
-                [
-                    'supplier_id' => $supplierId,
-                    'bid_amount' => $bidAmount,
-                    'award' => 1,
-                    'is_awarded' => 0,
-                    'system_pick' => $isSystemPick ? 1 : 0,
-                    'is_negotiation' => $isNegotiation,
-                    'updated_by' => $userId,
-                ]
+            $this->saveItemWiseAwarding(
+                $tenderId,
+                $bidFormatDetailId,
+                $boqItemId,
+                $bidId,
+                $supplierId,
+                $bidAmount,
+                $isSystemPick,
+                $isNegotiation,
+                $userId
             );
         }
     }
@@ -456,5 +474,43 @@ class TenderItemWiseAwardingService
             $items[] = ['description' => $itemLabel, 'quantity' => $qty, 'price' => $price];
         }
         return $items;
+    }
+    public static function saveItemWiseAwarding($tenderId, $bidFormatDetailId, $boqItemId, $bidId, $supplierId,
+        $bidAmount, $isSystemPick, $isNegotiation, $userId
+    ) {
+        return SrmItemWiseTenderAwarding::createOrUpdateAwarding(
+            [
+                'tender_id' => $tenderId,
+                'bid_format_detail_id' => $bidFormatDetailId,
+                'boq_item_id' => $boqItemId,
+                'bid_id' => $bidId,
+            ],
+            [
+                'supplier_id' => $supplierId,
+                'bid_amount' => $bidAmount,
+                'award' => 1,
+                'is_awarded' => 0,
+                'system_pick' => $isSystemPick ? 1 : 0,
+                'is_negotiation' => $isNegotiation,
+                'updated_by' => $userId,
+            ]
+        );
+    }
+
+    private function normalizeToArray($data): array
+    {
+        if (empty($data)) {
+            return [];
+        }
+
+        if (is_array($data)) {
+            return $data;
+        }
+
+        if (method_exists($data, 'toArray')) {
+            return $data->toArray();
+        }
+
+        return [];
     }
 }
