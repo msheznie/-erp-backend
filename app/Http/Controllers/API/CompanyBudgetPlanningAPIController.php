@@ -209,8 +209,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         $uuid = $request->get('tenant_uuid', 'local');
-
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
+        $url = \Helper::checkDomai();
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
