@@ -143,6 +143,8 @@ class ValidateAssetCreation
 
         if(!empty($uploadCondition)){
             return self::sendJsonResponse(false,"Asset costing upload InProgress", 500);
+        } else {
+            return self::sendJsonResponse(true,"Asset costing upload not InProgress", 200);
         }
     }
 

@@ -450,7 +450,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $totalPaidAmount = ($supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+        $paymentSum = $supplierPaidAmountSumPayment !== null ? ($supplierPaidAmountSumPayment['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $debitSum = $supplierPaidAmountSumDebit !== null ? ($supplierPaidAmountSumDebit['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $totalPaidAmount = $paymentSum + $debitSum + ($machAmount * -1);
     
         if ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7) {
             if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
