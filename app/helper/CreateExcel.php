@@ -353,8 +353,8 @@ class CreateExcel
 
                     $isSecondHeaderRow = false;
                     if (!empty($data) && count($data) >= 2) {
-                        $firstRow = $data[0];
-                        $secondRow = $data[1];
+                        $firstRow = reset($data);
+                        $secondRow = next($data);
                         if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
                             $nonEmptyCount = 0;
                             $hasTranslationKeys = false;
