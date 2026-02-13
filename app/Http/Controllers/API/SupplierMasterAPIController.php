@@ -2377,7 +2377,7 @@ class SupplierMasterAPIController extends AppBaseController
                 } else {
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                 }
-                $body .= \Helper::getSupplierEmailFooter($companyId);
+                $body .= Helper::getSupplierEmailFooter($companyId);
 
                 $dataEmail['companySystemID'] = $companyId;
                 $dataEmail['alertMessage'] = "Registration Link";
