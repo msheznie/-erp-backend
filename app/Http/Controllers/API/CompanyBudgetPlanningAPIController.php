@@ -212,8 +212,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         $uuid = $request->get('tenant_uuid', 'local');
-
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
+        $url = \Helper::checkDomai();
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
@@ -962,7 +962,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Company Budget Planning not found');
         }
 
-        // Load all department budget plannings with relationships
+        // Load all department budget plannings with relationships (only departments where type = 2)
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.companyDepartmentSegments.segment',
             'financeYear',
@@ -970,6 +970,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         ])
         ->where('companyBudgetPlanningID', $budgetPlanningId)
         ->where('confirmed_yn', 1) // Only confirmed budgets
+        ->whereHas('department', function($query) {
+            $query->where('type', 2);
+        })
         ->get();
 
         // Build flat list with segment info included in each departmentBudgetPlanning
@@ -984,6 +987,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             
             // Get all segments for this department
             $departmentSegments = $department->companyDepartmentSegments;
+            
             
             if ($departmentSegments && $departmentSegments->count() > 0) {
                 // If department has multiple segments, create one record per segment
@@ -1665,7 +1669,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $url = \Helper::checkDomai();
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id,$url);
             }
 
             return $this->sendResponse([

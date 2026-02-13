@@ -42,6 +42,7 @@ Route::post('updateBudgetPlanningDelegateWorkStatus', 'CompanyBudgetPlanningAPIC
 Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
 Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
 Route::post('getBudgetGenerateDetails', 'CompanyBudgetPlanningAPIController@getBudgetGenerateDetails')->name("Get budget generate details");
+Route::post('generate-company-budget-planning', 'CompanyBudgetPlanningGenerateAPIController@generate')->name('Generate company budget planning');
 Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
 Route::post('validateBudgetPlanning', 'CompanyBudgetPlanningAPIController@validateBudgetPlanning')->name('Validate budget planning');
 Route::post('checkBudgetPlanningInProgress', 'CompanyBudgetPlanningAPIController@checkBudgetPlanningInProgress')->name('Check budget planning in progress');
