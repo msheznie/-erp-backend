@@ -2849,6 +2849,16 @@ class BudgetMasterAPIController extends AppBaseController
         return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
+                $lastRow = $sheet->getHighestRow();
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastRow > 0 && $lastColumn) {
+                    $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                    $headerRow = 6;
+                    if ($headerRow <= $lastRow) {
+                        $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $headerRow)->getFont()->setBold(true);
+                    }
+                }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);

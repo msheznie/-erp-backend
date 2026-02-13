@@ -476,8 +476,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
-                                            $defaultVAT = TaxService::getDefaultVAT($compId, $invMaster['supplierID']);
-                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                            $supplierIDForVAT = $invMaster !== null ? (is_array($invMaster) ? ($invMaster['supplierID'] ?? null) : ($invMaster->supplierID ?? null)) : null;
+                                            $defaultVAT = $supplierIDForVAT !== null ? (TaxService::getDefaultVAT($compId, $supplierIDForVAT) ?? []) : [];
+                                            if(($defaultVAT['vatMasterCategoryID'] ?? null) == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
                                                     $q->where('companySystemID', $compId)
                                                         ->where('isActive', 1)
@@ -651,8 +652,16 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
-                                            $defaultVAT = TaxService::getVATDetailsByItem($compId, $itemAssign['itemCodeSystem'], $invMaster['supplierID']);
-                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                            $itemCodeSystem = $itemAssign !== null
+                                                ? (is_array($itemAssign) ? ($itemAssign['itemCodeSystem'] ?? null) : ($itemAssign->itemCodeSystem ?? null))
+                                                : null;
+                                            $supplierID = $invMaster !== null
+                                                ? (is_array($invMaster) ? ($invMaster['supplierID'] ?? null) : ($invMaster->supplierID ?? null))
+                                                : null;
+                                            $defaultVAT = ($itemCodeSystem !== null && $supplierID !== null)
+                                                ? (TaxService::getVATDetailsByItem($compId, $itemCodeSystem, $supplierID) ?? [])
+                                                : [];
+                                            if(($defaultVAT['vatMasterCategoryID'] ?? null) == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
                                                     $q->where('companySystemID', $compId)
                                                         ->where('isActive', 1)
