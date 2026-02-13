@@ -65,7 +65,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\ApprovalLevel;
 use App\Jobs\GenerateBankReconciliation;
 use Illuminate\Support\Arr;
@@ -1756,7 +1756,7 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
-            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
             if (Storage::disk($disk)->exists($originalFileName)) {
                 Storage::disk($disk)->delete($originalFileName);
             }

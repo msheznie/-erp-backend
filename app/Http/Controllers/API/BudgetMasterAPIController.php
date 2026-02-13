@@ -71,7 +71,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\FixedAssetMaster;
 use App\Models\logUploadBudget;
 use Illuminate\Support\Arr;
@@ -4722,7 +4722,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+        $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
         $uploadData = ['objPHPExcel' => $objPHPExcel,
             'uploadBudget' => $uploadBudget,
