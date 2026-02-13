@@ -358,9 +358,15 @@ class CreateExcel
                     });
 
                     $isSecondHeaderRow = false;
-                    if (!empty($data) && count($data) >= 2) {
-                        $firstRow = $data[0];
-                        $secondRow = $data[1];
+                    $dataValues = [];
+                    if (is_array($data)) {
+                        $dataValues = array_values($data);
+                    } elseif (is_object($data) && method_exists($data, 'values')) {
+                        $dataValues = $data->values()->all();
+                    }
+                    if (count($dataValues) >= 2 && isset($dataValues[0], $dataValues[1])) {
+                        $firstRow = $dataValues[0];
+                        $secondRow = $dataValues[1];
                         if (is_array($firstRow) && is_array($secondRow) && count($firstRow) == count($secondRow)) {
                             $translationKeyCount = 0;
                             $totalNonEmpty = 0;

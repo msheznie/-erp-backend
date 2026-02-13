@@ -324,7 +324,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                                                         ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
                                                                                         ->first();                                                                                        
    
-        $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+        $paymentSum = $supplierPaidAmountSumPayment !== null ? ($supplierPaidAmountSumPayment['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $debitSum = $supplierPaidAmountSumDebit !== null ? ($supplierPaidAmountSumDebit['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $paymentSum + $debitSum;
           
 
        
