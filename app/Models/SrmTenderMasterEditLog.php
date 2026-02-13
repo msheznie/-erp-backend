@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\DateTimeLiteralCast;
 use Carbon\Carbon;
 use Eloquent as Model;
 use Awobaz\Compoships\Compoships;
@@ -996,15 +997,15 @@ class SrmTenderMasterEditLog extends Model
         'tender_document_fee' => 'float',
         'bank_id' => 'integer',
         'bank_account_id' => 'integer',
-        'document_sales_start_date' => 'datetime',
-        'document_sales_end_date' => 'datetime',
-        'pre_bid_clarification_start_date' => 'datetime',
-        'pre_bid_clarification_end_date' => 'datetime',
+        'document_sales_start_date' => DateTimeLiteralCast::class,
+        'document_sales_end_date' => DateTimeLiteralCast::class,
+        'pre_bid_clarification_start_date' => DateTimeLiteralCast::class,
+        'pre_bid_clarification_end_date' => DateTimeLiteralCast::class,
         'pre_bid_clarification_method' => 'integer',
-        'site_visit_date' => 'datetime',
-        'site_visit_end_date' => 'datetime',
-        'bid_submission_opening_date' => 'datetime',
-        'bid_submission_closing_date' => 'datetime',
+        'site_visit_date' => DateTimeLiteralCast::class,
+        'site_visit_end_date' => DateTimeLiteralCast::class,
+        'bid_submission_opening_date' => DateTimeLiteralCast::class,
+        'bid_submission_closing_date' => DateTimeLiteralCast::class,
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'deleted_by' => 'integer',
@@ -1035,12 +1036,12 @@ class SrmTenderMasterEditLog extends Model
         'commercial_passing_weightage' => 'integer',
         'technical_passing_weightage' => 'integer',
         'min_approval_bid_opening' => 'integer',
-        'bid_opening_date' => 'datetime',
-        'bid_opening_end_date' => 'datetime',
-        'technical_bid_opening_date' => 'datetime',
-        'technical_bid_closing_date' => 'datetime',
-        'commerical_bid_opening_date' => 'datetime',
-        'commerical_bid_closing_date' => 'datetime',
+        'bid_opening_date' => DateTimeLiteralCast::class,
+        'bid_opening_end_date' => DateTimeLiteralCast::class,
+        'technical_bid_opening_date' => DateTimeLiteralCast::class,
+        'technical_bid_closing_date' => DateTimeLiteralCast::class,
+        'commerical_bid_opening_date' => DateTimeLiteralCast::class,
+        'commerical_bid_closing_date' => DateTimeLiteralCast::class,
         'doc_verifiy_by_emp' => 'integer',
         'doc_verifiy_date' => 'datetime',
         'doc_verifiy_status' => 'boolean',
@@ -1084,6 +1085,36 @@ class SrmTenderMasterEditLog extends Model
         'is_clone' => 'integer',
         'clone_master_id' => 'integer'
     ];
+
+    /**
+     * Date attributes stored as literal 'Y-m-d H:i:s' - serialize as-is so no timezone shift in API.
+     */
+    protected static $literalDateAttributes = [
+        'document_sales_start_date', 'document_sales_end_date',
+        'pre_bid_clarification_start_date', 'pre_bid_clarification_end_date',
+        'site_visit_date', 'site_visit_end_date',
+        'bid_submission_opening_date', 'bid_submission_closing_date',
+        'bid_opening_date', 'bid_opening_end_date',
+        'technical_bid_opening_date', 'technical_bid_closing_date',
+        'commerical_bid_opening_date', 'commerical_bid_closing_date',
+    ];
+
+    /**
+     * Serialize literal date attributes as stored (Y-m-d H:i:s) so API/UI show exact date requested.
+     */
+    public function attributesToArray()
+    {
+        $attributes = parent::attributesToArray();
+        foreach (static::$literalDateAttributes as $key) {
+            if (array_key_exists($key, $attributes) && array_key_exists($key, $this->getRawOriginal())) {
+                $raw = $this->getRawOriginal($key);
+                if (is_string($raw) && preg_match('/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/', $raw)) {
+                    $attributes[$key] = $raw;
+                }
+            }
+        }
+        return $attributes;
+    }
 
     /**
      * Validation rules

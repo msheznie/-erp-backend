@@ -684,6 +684,24 @@ class TenderMasterAPIController extends AppBaseController
         return $data;
     }
 
+    /**
+     * Build literal 'Y-m-d H:i:s' from date + optional time in app timezone (avoids +1 day).
+     */
+    private function buildTenderDateTime($dateValue, $timeValue = null, $defaultTime = '00:00:00')
+    {
+        if (empty($dateValue)) {
+            return null;
+        }
+        $tz = config('app.timezone');
+        $date = Carbon::parse($dateValue, $tz);
+        $ymd = $date->format('Y-m-d');
+        if (empty($timeValue)) {
+            return $ymd . ' ' . $defaultTime;
+        }
+        $time = Carbon::parse($timeValue, $tz);
+        return $ymd . ' ' . $time->format('H:i:s');
+    }
+
     public function updateTender(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array(
@@ -745,56 +763,42 @@ class TenderMasterAPIController extends AppBaseController
         $bid_opening_date = null;
         $document_sales_start_date = null;
         $document_sales_end_date = null;
+        $bid_submission_opening_date = null;
+        $bid_submission_closing_date = null;
         $pre_bid_clarification_start_date = null;
         $pre_bid_clarification_end_date = null;
         $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'];
 
         if (isset($input['document_sales_start_date'])) {
-            $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
-            $document_sales_start_date = new Carbon($input['document_sales_start_date']);
-            $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d') . ' ' . $document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
+            $document_sales_start_date = $this->buildTenderDateTime($input['document_sales_start_date'], $input['document_sales_start_time'] ?? null, '00:00:00');
         }
 
-        if (isset($input['document_sales_end_time'])) {
-            $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
-            $document_sales_end_date = new Carbon($input['document_sales_end_date']);
-            $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d') . ' ' . $document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d');
+        if (isset($input['document_sales_end_date'])) {
+            $document_sales_end_date = $this->buildTenderDateTime($input['document_sales_end_date'], $input['document_sales_end_time'] ?? null, '23:59:59');
         }
 
-        if (isset($input['bid_submission_opening_time'])) {
-            $bid_submission_opening_time =  ($input['bid_submission_opening_time']) ? new Carbon($input['bid_submission_opening_time']) : null;
-            $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
-            $bid_submission_opening_date = ($input['bid_submission_opening_time']) ? $bid_submission_opening_date->format('Y-m-d') . ' ' . $bid_submission_opening_time->format('H:i:s') : $bid_submission_opening_date->format('Y-m-d');
+        if (isset($input['bid_submission_opening_date'])) {
+            $bid_submission_opening_date = $this->buildTenderDateTime($input['bid_submission_opening_date'], $input['bid_submission_opening_time'] ?? null, '00:00:00');
         }
 
-        if (isset($input['bid_submission_closing_time'])) {
-            $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
-            $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
-            $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d') . ' ' . $bid_submission_closing_time->format('H:i:s') : $bid_submission_closing_date->format('Y-m-d');
+        if (isset($input['bid_submission_closing_date'])) {
+            $bid_submission_closing_date = $this->buildTenderDateTime($input['bid_submission_closing_date'], $input['bid_submission_closing_time'] ?? null, '23:59:59');
         }
 
-        if (isset($input['pre_bid_clarification_start_time'])) {
-            $pre_bid_clarification_start_time =  ($input['pre_bid_clarification_start_time']) ? new Carbon($input['pre_bid_clarification_start_time']) : null;
-            $pre_bid_clarification_start_date = new Carbon($input['pre_bid_clarification_start_date']);
-            $pre_bid_clarification_start_date = ($input['pre_bid_clarification_start_time']) ? $pre_bid_clarification_start_date->format('Y-m-d') . ' ' . $pre_bid_clarification_start_time->format('H:i:s') : $pre_bid_clarification_start_date->format('Y-m-d');
+        if (isset($input['pre_bid_clarification_start_date'])) {
+            $pre_bid_clarification_start_date = $this->buildTenderDateTime($input['pre_bid_clarification_start_date'], $input['pre_bid_clarification_start_time'] ?? null, '00:00:00');
         }
 
-        if (isset($input['pre_bid_clarification_end_time'])) {
-            $pre_bid_clarification_end_time =  ($input['pre_bid_clarification_end_time']) ?  new Carbon($input['pre_bid_clarification_end_time']) : null;
-            $pre_bid_clarification_end_date = new Carbon($input['pre_bid_clarification_end_date']);
-            $pre_bid_clarification_end_date = ($input['pre_bid_clarification_end_time']) ?  $pre_bid_clarification_end_date->format('Y-m-d') . ' ' . $pre_bid_clarification_end_time->format('H:i:s') : $pre_bid_clarification_end_date->format('Y-m-d');
+        if (isset($input['pre_bid_clarification_end_date'])) {
+            $pre_bid_clarification_end_date = $this->buildTenderDateTime($input['pre_bid_clarification_end_date'], $input['pre_bid_clarification_end_time'] ?? null, '23:59:59');
         }
 
-        if ($input['site_visit_date']) {
-            $site_visit_time = ($input['site_visit_start_time']) ?  new Carbon($input['site_visit_start_time']) : null;
-            $site_visit_date = new Carbon($input['site_visit_date']);
-            $site_visit_date =  ($input['site_visit_start_time']) ?  $site_visit_date->format('Y-m-d') . ' ' . $site_visit_time->format('H:i:s') : $site_visit_date->format('Y-m-d');
+        if (!empty($input['site_visit_date'])) {
+            $site_visit_date = $this->buildTenderDateTime($input['site_visit_date'], $input['site_visit_start_time'] ?? null, '00:00:00');
         }
 
-        if ($input['site_visit_end_date']) {
-            $site_visit_end_time = ($input['site_visit_end_time']) ? new Carbon($input['site_visit_end_time']) : null;
-            $site_visit_end_date = new Carbon($input['site_visit_end_date']);
-            $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d') . ' ' . $site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
+        if (!empty($input['site_visit_end_date'])) {
+            $site_visit_end_date = $this->buildTenderDateTime($input['site_visit_end_date'], $input['site_visit_end_time'] ?? null, '23:59:59');
         }
 
         $currenctDate = Carbon::now();
@@ -893,16 +897,12 @@ class TenderMasterAPIController extends AppBaseController
 
             if ($input['stage'][0] == 1 || $input['stage'] == 1) {
 
-                if (isset($input['bid_opening_date_time'])) {
-                    $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
-                    $bid_opening_date = new Carbon($input['bid_opening_date']);
-                    $bid_opening_date = ($input['bid_opening_date_time']) ? $bid_opening_date->format('Y-m-d') . ' ' . $bid_opening_time->format('H:i:s') : $bid_opening_date->format('Y-m-d');
+                if (isset($input['bid_opening_date'])) {
+                    $bid_opening_date = $this->buildTenderDateTime($input['bid_opening_date'], $input['bid_opening_date_time'] ?? null, '00:00:00');
                 }
 
-                if ((isset($input['bid_opening_end_date']))) {
-                    $bid_opeing_end_time = (isset($input['bid_opening_end_date_time'])) ? new Carbon($input['bid_opening_end_date_time']) : null;
-                    $bid_opeing_end_date = (isset($input['bid_opening_end_date'])) ? new Carbon($input['bid_opening_end_date']) : null;
-                    $bid_opeing_end_date = (isset($input['bid_opening_end_date_time'])) ? $bid_opeing_end_date->format('Y-m-d') . ' ' . $bid_opeing_end_time->format('H:i:s') : $bid_opeing_end_date->format('Y-m-d');
+                if (!empty($input['bid_opening_end_date'])) {
+                    $bid_opeing_end_date = $this->buildTenderDateTime($input['bid_opening_end_date'], $input['bid_opening_end_date_time'] ?? null, '23:59:59');
                 } else {
                     $bid_opeing_end_date = null;
                     $bid_opeing_end_time = null;
@@ -966,42 +966,31 @@ class TenderMasterAPIController extends AppBaseController
                 }
 
                 if (isset($input['technical_bid_opening_date'])) {
-                    $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
-                    $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
-                    $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d') . ' ' . $technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
+                    $technical_bid_opening_date = $this->buildTenderDateTime($input['technical_bid_opening_date'], $input['technical_bid_opening_date_time'] ?? null, '00:00:00');
                 }
 
                 if (isset($input['technical_bid_closing_date'])) {
                     if (is_null($input['technical_bid_closing_date_time'])) {
                         return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_to_time_cannot_be_empty')];
                     }
-
-                    $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
-                    $technical_bid_closing_date = (isset($input['technical_bid_closing_date'])) ? new Carbon($input['technical_bid_closing_date']) : null;
-                    $technical_bid_closing_date = (isset($input['technical_bid_closing_date_time'])) ? $technical_bid_closing_date->format('Y-m-d') . ' ' . $technical_bid_closing_time->format('H:i:s') : $technical_bid_closing_date->format('Y-m-d');
+                    $technical_bid_closing_date = $this->buildTenderDateTime($input['technical_bid_closing_date'], $input['technical_bid_closing_date_time'] ?? null, '23:59:59');
                 } else {
                     $technical_bid_closing_date = null;
                     $technical_bid_closing_time = null;
                 }
 
                 if (isset($input['commerical_bid_opening_date'])) {
-                    $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
-                    $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
-                    $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d') . ' ' . $commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
-
                     if (is_null($input['commerical_bid_opening_date_time']) && $rfq) {
                         return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_from_time_cannot_be_empty')];
                     }
+                    $commerical_bid_opening_date = $this->buildTenderDateTime($input['commerical_bid_opening_date'], $input['commerical_bid_opening_date_time'] ?? null, '00:00:00');
                 }
 
                 if (isset($input['commerical_bid_closing_date'])) {
                     if (!(isset($input['commerical_bid_closing_date_time']))) {
                         return ['success' => false, 'message' => trans('srm_tender_rfx.commercial_bid_opening_to_time_cannot_be_empty')];
                     }
-
-                    $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
-                    $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
-                    $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date_time'])) ? $commerical_bid_closing_date->format('Y-m-d') . ' ' . $commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
+                    $commerical_bid_closing_date = $this->buildTenderDateTime($input['commerical_bid_closing_date'], $input['commerical_bid_closing_date_time'] ?? null, '23:59:59');
                 } else {
                     $commerical_bid_closing_date = null;
                     $commerical_bid_closing_time = null;

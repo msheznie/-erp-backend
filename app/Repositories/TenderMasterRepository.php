@@ -534,6 +534,10 @@ class TenderMasterRepository extends BaseRepository
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
 
+            if(!$updatedData['success']){
+                return ['success' => false, 'message' => $updatedData['message']];
+            }
+
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -870,7 +874,7 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
-            $sort = $calendarDatesExists['sort'] ? $calendarDatesExists['sort'] + 1 : 1;
+            $sort = ($calendarDatesExists['sort'] ?? 0) + 1;
 
 
             $logData = [];
@@ -2149,7 +2153,7 @@ class TenderMasterRepository extends BaseRepository
         $data['currency'] = CurrencyMaster::get();
         $data['evaluationTypes'] = EvaluationType::get();
         $data['bank'] = BankMaster::get();
-        $data['currentDate'] = now();
+        $data['currentDate'] = ['date' => Carbon::now()];
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::getAllProcurementCategory();
 
