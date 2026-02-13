@@ -5791,6 +5791,7 @@ return
     'type' => 'النوع',
     'type_not_found' => 'النوع غير موجود',
     'type_parameter_required' => 'معلمة النوع مطلوبة',
+    'type_input_value_is_incorrect' => 'قيمة إدخال النوع غير صحيحة',
     'un_billed_grv_id' => 'معرّف إشعار استلام البضاعة غير المفوتر',
     'unable_to_delete_as_asset_costing_is_already_succe' => 'غير قادر على الحذف حيث تم تحميل تكلفة الأصل بنجاح بالفعل',
     'unable_to_update_description_already_exist' => 'غير قادر على التحديث. الوصف موجود بالفعل',

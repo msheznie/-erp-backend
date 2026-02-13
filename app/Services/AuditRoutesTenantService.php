@@ -59,6 +59,7 @@ class AuditRoutesTenantService
             'api/v1/pull_customer_category',
             'api/v1/pull_location',
             'api/v1/pull_segment',
+            'api/v1/segments/search',
             'api/v1/pull_chart_of_account',
             'api/v1/pull_chart_of_account_master',
             'api/v1/pull_unit_of_measure',
