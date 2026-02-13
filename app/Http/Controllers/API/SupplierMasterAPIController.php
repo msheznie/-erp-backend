@@ -314,7 +314,7 @@ class SupplierMasterAPIController extends AppBaseController
             }
 
             $data[$x][trans('custom.country')] = $country;
-            $data[$x][trans('custom.supplier_group')] = $val['supplier_group']['group'];
+            $data[$x][trans('custom.supplier_group')] = ($val['supplier_group'] ?? null) !== null ? ($val['supplier_group']['group'] ?? '') : '';
             $data[$x][trans('custom.registration_number')] = $val->registrationNumber;
             $data[$x][trans('custom.supplier_business_category')] = $businessCategory;
             $data[$x][trans('custom.supplier_business_sub_category')] = $businessSubCategory;

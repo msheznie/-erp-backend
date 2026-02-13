@@ -62,7 +62,8 @@ class TenderBoqItemsRepository extends BaseRepository
         $items =array();
         foreach($itemDrop as $key => $val){
             $items[$key]['id'] = $val['itemCodeSystem'];
-            $items[$key]['label'] = $val['item_master']['itemShortDescription'];
+            $itemMaster = $val['item_master'] ?? null;
+            $items[$key]['label'] = $itemMaster !== null ? ($itemMaster['itemShortDescription'] ?? '') : '';
         }
         $data['itemDrop'] = $items;
 

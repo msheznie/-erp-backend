@@ -390,6 +390,10 @@ class SlotMasterAPIController extends AppBaseController
         }])
             ->where('id', $slotMasterID)->first();
 
+        if ($slotMaster === null) {
+            return $this->sendError('Slot Master not found', 404);
+        }
+
         $user = Helper::getEmployeeSystemID();
         $subCompanies = $isGroupCompany ? $companyData : [$companyID];
         $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
