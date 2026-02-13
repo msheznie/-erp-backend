@@ -318,11 +318,11 @@ Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySu
 Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
 Route::post('deleteAllBidMinimumApprovalDetails', 'TenderBidEmployeeDetailsController@deleteAllBidMinimumApprovalDetails')->name("Delete All Bid Minimum Approval Details");
 Route::post('deleteAllTenderUserAccess', 'TenderBidEmployeeDetailsController@deleteAllTenderUserAccess')->name("Delete All Tender User Access");
-Route::post('getAllDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster');
-Route::post('getDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData');
+Route::post('getAllSRMDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster')->name("Get All SRM Document Master");
+Route::post('getSRMDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData')->name("Get All SRM Form Data");
 Route::resource('document_master', 'SRMDocumentMasterAPIController');
-Route::post('documentMasterCrud', 'SRMDocumentMasterAPIController@documentMasterCrud');
-Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster');
-Route::post('removeDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete');
+Route::post('documentMasterSRMCrud', 'SRMDocumentMasterAPIController@documentMasterCrud')->name("Create SRM Document Master");
+Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster')->name("GET SRM Tender Document Master");
+Route::post('removeSRMDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete')->name("Remove SRM Document Master");
 Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster');
 /*TenderPaymentDetailAPIController*/
