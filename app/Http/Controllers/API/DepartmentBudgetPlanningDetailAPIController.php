@@ -771,6 +771,147 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
     }
 
     /**
+     * Get filter dropdown options (departments, parent GLs, GL descriptions, segments) for budget planning details.
+     * POST getBudgetPlanningFilterOptions
+     *
+     * @param Request $request (budgetPlanningId, companySystemID, isCompany)
+     * @return Response
+     */
+    public function getBudgetPlanningFilterOptions(Request $request)
+    {
+        $departmentPlanningId = $request->input('budgetPlanningId');
+        if (!$departmentPlanningId) {
+            return $this->sendError(trans('custom.department_planning_id_is_required'));
+        }
+
+        $employeeID = \Helper::getEmployeeSystemID();
+        $newRequest = new Request();
+        $newRequest->replace([
+            'companyId' => $request->input('companySystemID'),
+            'departmentBudgetPlanningDetailID' => $departmentPlanningId,
+            'delegateUser' => $employeeID
+        ]);
+        $controller = app(CompanyBudgetPlanningAPIController::class);
+        $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
+
+        $isCompany = $request->input('isCompany', false);
+        $departmentPlanningIds = [$departmentPlanningId];
+
+        if ($isCompany === true || $isCompany === 'true') {
+            $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($departmentPlanningId);
+            if ($companyBudgetPlanning && $companyBudgetPlanning->departmentBudgetPlannings) {
+                $departmentPlanningIds = $companyBudgetPlanning->departmentBudgetPlannings->pluck('id')->toArray();
+                if (empty($departmentPlanningIds)) {
+                    $departmentPlanningIds = [-1];
+                }
+            }
+        }
+
+        $query = DepartmentBudgetPlanningDetail::with([
+            'departmentBudgetPlanning.department',
+            'budgetTemplateGl.chartOfAccount.templateCategoryDetails',
+            'departmentSegment.segment'
+        ])->whereIn('department_planning_id', $departmentPlanningIds);
+
+        if ($request->input('type') != 'company_budget_planning' && $userPermission['success'] && isset($userPermission['data']['delegateUser']['status']) && $userPermission['data']['delegateUser']['status']) {
+            $delegateIDs = CompanyDepartmentEmployee::where('employeeSystemID', $employeeID)->pluck('departmentEmployeeSystemID')->toArray();
+            $query->whereHas('budgetDelegateAccessDetails', function ($q) use ($delegateIDs) {
+                $q->whereIn('delegatee_id', $delegateIDs);
+            });
+        }
+
+        $details = $query->get();
+
+        $departmentsMap = [];
+        $parentGLMap = [];
+        $glDescriptionMap = [];
+        $parentGLToGLDescMap = [];
+        $segmentMap = [];
+
+        foreach ($details as $detail) {
+            if ($detail->departmentBudgetPlanning && $detail->departmentBudgetPlanning->department) {
+                $dept = $detail->departmentBudgetPlanning->department;
+                $deptId = $dept->departmentSystemID ?? $dept->id;
+                if ($deptId && !isset($departmentsMap[$deptId])) {
+                    $deptCode = $dept->departmentCode ?? $dept->department_code ?? '';
+                    $deptName = $dept->departmentName ?? $dept->department_name ?? '';
+                    $displayName = ($deptCode && $deptName) ? $deptCode . ' - ' . $deptName : ($deptName ?: $deptCode);
+                    $departmentsMap[$deptId] = [
+                        'id' => $deptId,
+                        'departmentSystemID' => $deptId,
+                        'itemName' => $displayName
+                    ];
+                }
+            }
+
+            if ($detail->budgetTemplateGl && $detail->budgetTemplateGl->chartOfAccount) {
+                $coa = $detail->budgetTemplateGl->chartOfAccount;
+                $parentGL = null;
+                if ($coa->templateCategoryDetails) {
+                    $parentGL = $coa->templateCategoryDetails->description ?? null;
+                }
+                if ($parentGL && !isset($parentGLMap[$parentGL])) {
+                    $parentGLMap[$parentGL] = ['id' => $parentGL, 'itemName' => $parentGL];
+                    $parentGLToGLDescMap[$parentGL] = [];
+                }
+                $accountCode = $coa->AccountCode ?? '';
+                $accountDescription = $coa->AccountDescription ?? '';
+                if ($accountCode && $accountDescription) {
+                    $glDescKey = $accountCode . ' - ' . $accountDescription;
+                    if (!isset($glDescriptionMap[$glDescKey])) {
+                        $glDescObj = ['id' => $glDescKey, 'itemName' => $glDescKey];
+                        $glDescriptionMap[$glDescKey] = $glDescObj;
+                        if ($parentGL) {
+                            $parentGLToGLDescMap[$parentGL][] = $glDescObj;
+                        }
+                    }
+                }
+            }
+
+            if ($detail->departmentSegment && $detail->departmentSegment->segment) {
+                $seg = $detail->departmentSegment->segment;
+                $segId = $seg->serviceLineSystemID ?? $seg->id;
+                if ($segId && !isset($segmentMap[$segId])) {
+                    $segCode = $seg->ServiceLineCode ?? $seg->service_line_code ?? '';
+                    $segDes = $seg->ServiceLineDes ?? $seg->service_line_des ?? '';
+                    $displayName = ($segCode && $segDes) ? $segCode . ' - ' . $segDes : ($segDes ?: $segCode);
+                    $segmentMap[$segId] = [
+                        'id' => $segId,
+                        'serviceLineSystemID' => $segId,
+                        'ServiceLineCode' => $segCode,
+                        'ServiceLineDes' => $segDes,
+                        'itemName' => $displayName
+                    ];
+                }
+            }
+        }
+
+        $workflowMethod = null;
+        if ($isCompany === true || $isCompany === 'true') {
+            $companyBudgetPlanning = CompanyBudgetPlanning::with('workflow')->find($departmentPlanningId);
+            if ($companyBudgetPlanning && $companyBudgetPlanning->workflow) {
+                $workflowMethod = $companyBudgetPlanning->workflow->method;
+            }
+        } else {
+            $budgetPlanning = DepartmentBudgetPlanning::with('workflow')->find($departmentPlanningId);
+            if ($budgetPlanning && $budgetPlanning->workflow) {
+                $workflowMethod = $budgetPlanning->workflow->method;
+            }
+        }
+
+        $data = [
+            'departments' => array_values($departmentsMap),
+            'parentGLs' => array_values($parentGLMap),
+            'glDescriptions' => array_values($glDescriptionMap),
+            'parentGLToGLDescMap' => $parentGLToGLDescMap,
+            'segments' => array_values($segmentMap),
+            'workflowMethod' => $workflowMethod
+        ];
+
+        return $this->sendResponse($data, trans('custom.filter_options_retrieved_successfully'));
+    }
+
+    /**
      * Update internal status of a detail
      *
      * @param Request $request
@@ -1614,6 +1755,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
+
             // Check if source is from approval - if so, get all department budget planning details for the company budget planning
             $source = $request->input('source', '');
             if ($source === 'approval' || $source === 'from_approval') {
@@ -2090,6 +2232,22 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         } catch (\Exception $e) {
             return $this->sendError(trans('custom.error_exporting_excel') . ': ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Export all department budget planning details of a company budget planning to Excel (no pagination).
+     * Same format as exportBudgetPlanningDetails. Use for company-level "download all" export.
+     *
+     * @param Request $request (budgetPlanningId = CompanyBudgetPlanning ID, companySystemID, optional filters)
+     * @return Response
+     */
+    public function exportCompanyBudgetPlanningDetailsAll(Request $request)
+    {
+        $request->merge([
+            'source' => 'from_approval',
+            'isCompany' => true,
+        ]);
+        return $this->exportBudgetPlanningDetails($request);
     }
 
     /**
