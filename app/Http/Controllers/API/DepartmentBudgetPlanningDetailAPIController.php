@@ -2165,7 +2165,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 // Status 5 (Category): No department column
                 if (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2) {
                     $data[$x]['Department'] = $val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department 
-                        ? $val->departmentBudgetPlanning->department->departmentName 
+                        ? $val->departmentBudgetPlanning->department->departmentDescription 
                         : '';
                 }
                 
