@@ -286,21 +286,27 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            // Handle segment filtering
-            $segments = $request->input('segments');
-            if (!empty($segments) && is_array($segments)) {
-                // Handle both array of objects and array of IDs
-                if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
-                    $segmentIds = array_column($segments, 'id');
-                } else {
-                    $segmentIds = $segments; // Already an array of IDs
-                }
-                if (!empty($segmentIds)) {
-                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
-                        $q->whereHas('segment', function ($q2) use ($segmentIds) {
-                            $q2->whereIn('serviceLineSystemID', $segmentIds);
+            // Get selected status early so we can apply segment/department filters only when relevant for the view
+            // Status 1=Details, 2=Department, 3=Segment, 4=GL Based, 5=Category
+            $selectedStatus = (int) $request->input('selectedStatus', 1);
+
+            // Handle segment filtering (only when segment is relevant: Details or Segment view)
+            // Department view (2), GL view (4), Category view (5) do not show segment - do not apply segment filter
+            if ($selectedStatus != 2 && $selectedStatus != 4 && $selectedStatus != 5) {
+                $segments = $request->input('segments');
+                if (!empty($segments) && is_array($segments)) {
+                    if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
+                        $segmentIds = array_column($segments, 'id');
+                    } else {
+                        $segmentIds = $segments;
+                    }
+                    if (!empty($segmentIds)) {
+                        $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                            $q->whereHas('segment', function ($q2) use ($segmentIds) {
+                                $q2->whereIn('serviceLineSystemID', $segmentIds);
+                            });
                         });
-                    });
+                    }
                 }
             }
 
@@ -359,18 +365,17 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            // Handle Department filtering (only when isCompany is true)
-            $departments = $request->input('departments');
-            if (!empty($departments) && is_array($departments) && ($isCompany === true || $isCompany === 'true')) {
-                // Filter by department IDs through the department_budget_plannings relationship
-                $query->whereHas('departmentBudgetPlanning', function ($q) use ($departments) {
-                    $q->whereIn('departmentID', $departments);
-                });
+            // Handle Department filtering (only when department is relevant: Details or Department view, and isCompany)
+            // Segment view (3), GL view (4), Category view (5) do not show department - do not apply department filter
+            if (($selectedStatus == 1 || $selectedStatus == 2) && ($isCompany === true || $isCompany === 'true')) {
+                $departments = $request->input('departments');
+                if (!empty($departments) && is_array($departments)) {
+                    $query->whereHas('departmentBudgetPlanning', function ($q) use ($departments) {
+                        $q->whereIn('departmentID', $departments);
+                    });
+                }
             }
 
-            // Get selected status for grouping/filtering
-            $selectedStatus = (int) $request->input('selectedStatus', 1);
-            
             // Check if GL-based grouping is requested (either from isGLBased or selectedStatus = 4)
             $isGLBased = $request->input('isGLBased', false) || $selectedStatus == 4;
             
