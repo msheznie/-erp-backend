@@ -63,10 +63,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
             Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
             Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
             Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
-            //Route::post('customer_master_pull', 'CustomerMasterAPIController@pullCustomerMaster');
+            Route::post('customer_master_pull', 'CustomerMasterAPIController@pullCustomerMaster');
         });
-
-        Route::post('customer_master_pull', 'CustomerMasterAPIController@pullCustomerMaster');
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
 
