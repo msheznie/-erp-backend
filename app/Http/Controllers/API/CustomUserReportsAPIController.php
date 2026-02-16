@@ -555,6 +555,44 @@ class CustomUserReportsAPIController extends AppBaseController
         return false;
     }
 
+    /**
+     * For custom report, columns that join scopes addSelect (to avoid duplicate column in SQL).
+     * Key = report_master_id, value = list of "table.column" to exclude from initial select.
+     */
+    private function getSelectColumnsAddedByJoins($reportMasterId)
+    {
+        $byReport = [
+            38 => [ // ErpItemLedger
+                'created_by.empName',
+                'company.CompanyName',
+                'rpt_currency.CurrencyName',
+                'local_currency.CurrencyName',
+                'segment.ServiceLineDes',
+                'warehouse.wareHouseDescription',
+            ],
+        ];
+        return $byReport[$reportMasterId] ?? [];
+    }
+
+    /**
+     * Remove from $columns any select that duplicates what join scopes will add (avoids "Duplicate column name" SQL error).
+     */
+    private function filterColumnsDuplicateWithJoins(array $columns, $reportMasterId)
+    {
+        $addedByJoins = $this->getSelectColumnsAddedByJoins($reportMasterId);
+        if (empty($addedByJoins)) {
+            return $columns;
+        }
+        return array_values(array_filter($columns, function ($sel) use ($addedByJoins) {
+            foreach ($addedByJoins as $tableColumn) {
+                if (strpos($sel, $tableColumn . ' as ') !== false) {
+                    return false;
+                }
+            }
+            return true;
+        }));
+    }
+
     public function customReportView(Request $request)
     {
 
@@ -1222,6 +1260,7 @@ class CustomUserReportsAPIController extends AppBaseController
             if ($isDetailExist) {
                 array_push($columns, $detailPrimaryKey . ' as detailId');
             }
+            $columns = $this->filterColumnsDuplicateWithJoins($columns, $report->report_master_id);
             $namespacedModel = 'App\Models\\' . $templateData['model'];
             $data = $namespacedModel::selectRaw(implode(",", $columns));
             
