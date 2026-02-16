@@ -568,7 +568,6 @@ class BudgetNotificationService
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
 
-        
         $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 2)->first();
 
 
@@ -593,20 +592,22 @@ class BudgetNotificationService
 
 
 
-        $delegateAccessList = DepartmentBudgetPlanningsDelegateAccess::where('budgetPlanningID', $budgetPlanning->id)
-            ->with('employee')
+        $delegateAccessList = BudgetDelegateAccessRecord::whereHas('budgetPlanningDetail', function ($query) use ($budgetPlanning) {
+            $query->where('department_planning_id', $budgetPlanning->id);
+        })
+            ->with(['budgetPlanningDetail', 'delegatee.employee'])
             ->get();
 
         foreach ($delegateAccessList as $delegateAccess) {
-            if (!$delegateAccess->employee || !$delegateAccess->employee->empEmail) {
+            if (!$delegateAccess->delegatee || !$delegateAccess->delegatee->employee || !$delegateAccess->delegatee->employee->empEmail) {
                 continue;
             }
             $emails[] = array(
-                'empEmail' => $delegateAccess->employee->empEmail,
+                'empEmail' => $delegateAccess->delegatee->employee->empEmail,
                 'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
                 'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false),
                 'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true),
-                'empSystemID' => $delegateAccess->employee->employeeSystemID,
+                'empSystemID' => $delegateAccess->delegatee->employee->employeeSystemID,
                 'docSystemID' => 133,
                 'docSystemCode' => $departmentBudgetPlanningID
             );
