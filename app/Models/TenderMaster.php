@@ -1036,4 +1036,21 @@ class TenderMaster extends Model
             ->orderBy('id', 'desc')
             ->first();
     }
+
+    public static function updateCombinedRankingStatus(int $tenderId, int $isNegotiation, string $comment = ''): void
+    {
+        if ($isNegotiation === 1) {
+            self::where('id', $tenderId)->update([
+                'negotiation_combined_ranking_status' => true,
+                'negotiation_award_comment' => $comment,
+                'negotiation_is_awarded' => true,
+            ]);
+        } else {
+            self::where('id', $tenderId)->update([
+                'combined_ranking_status' => true,
+                'award_comment' => $comment,
+                'is_awarded' => true,
+            ]);
+        }
+    }
 }
