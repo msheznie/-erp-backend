@@ -10,6 +10,7 @@ use App\Models\WorkflowConfiguration;
 use App\Models\WorkflowConfigurationHodAction;
 use App\Repositories\WorkflowConfigurationRepository;
 use App\Traits\AuditLogsTrait;
+use App\Models\DepartmentBudgetPlanning;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -334,6 +335,12 @@ class WorkflowConfigurationAPIController extends AppBaseController
 
         if ($existingWorkflow) {
             return $this->sendError(trans('custom.workflow_name_already_exists_please_enter_a_unique'), 500);
+        }
+
+        $departmentBudgetPlanning = DepartmentBudgetPlanning::where('workflowID', $id)->exists();
+
+        if($departmentBudgetPlanning) {
+            return $this->sendError(trans('custom.budget_planning_is_already_in_progress'), 500);
         }
 
         $data = array_except($input, ['hodActions']);
