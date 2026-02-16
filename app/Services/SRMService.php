@@ -4942,6 +4942,8 @@ class SRMService
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $bidSubmissionCode = data_get($tenderNegotiationData, '0.supplier_tender_negotiation.bidSubmissionCode')
+            ?? data_get($tenderNegotiationData, 'supplier_tender_negotiation.bidSubmissionCode');
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
         if(!$supplierTender){
@@ -4961,7 +4963,7 @@ class SRMService
                 }
             ]);
 
-        if ($tenderNegotiation) {
+       /* if ($tenderNegotiation) {
             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
                 $bidSubmissionCodes = array_map(function ($tenderNegotiationData) {
                     return $tenderNegotiationData['supplier_tender_negotiation']['bidSubmissionCode'];
@@ -4972,6 +4974,20 @@ class SRMService
             $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
                 $query->where('bid_submission_code_old', '!=', $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
             });
+        }*/
+
+        if ($tenderNegotiation) {
+
+            $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($bidSubmissionCode) {
+                $query->whereIn('bid_submission_code_old', $bidSubmissionCode);
+            });
+
+        } else {
+
+            $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($bidSubmissionCode) {
+                $query->whereIn('bid_submission_code_old', $bidSubmissionCode);
+            });
+
         }
 
         $bidSubmitted = $bidSubmitted->where('tender_id', $tenderId)
