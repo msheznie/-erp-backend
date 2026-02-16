@@ -252,26 +252,29 @@ class ErpItemLedger extends Model
     }
 
     public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
-        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_itemledger.'.$column)
-            ->addSelect($as.".empName as ".$columnAs);
+        $alias = str_replace('.', '_', $as) . '_' . $columnAs;
+        return $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_itemledger.'.$column)
+            ->addSelect($as.'.empName as '.$alias);
     }
 
     public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
     {
+        $alias = str_replace('.', '_', $as) . '_' . $columnAs;
         return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_itemledger.'.$column)
-        ->addSelect($as.".CompanyName as ".$columnAs);
+            ->addSelect($as.'.CompanyName as '.$alias);
     }
 
     public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
+        $alias = str_replace('.', '_', $as) . '_' . $columnAs;
         return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_itemledger.'.$column)
-        ->addSelect($as.".CurrencyName as ".$columnAs);
-
+            ->addSelect($as.'.CurrencyName as '.$alias);
     }
 
     public function scopeSegmentJoin($q,$as = 'serviceline', $column = 'serviceLineSystemID' , $columnAs = 'ServiceLineDes')
     {
+        $alias = str_replace('.', '_', $as) . '_' . $columnAs;
         return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_itemledger.'.$column)
-        ->addSelect($as.".ServiceLineDes as ".$columnAs);
+            ->addSelect($as.'.ServiceLineDes as '.$alias);
     }
 
     public function scopeUnitJoin($q,$as = 'unit', $column = 'unitOfMeasure' , $columnAs = 'primarySupplierCode')
@@ -281,7 +284,8 @@ class ErpItemLedger extends Model
 
     public function scopeWareHouseJoin($q,$as = 'warehousemaster', $column = 'wareHouseSystemCode' , $columnAs = 'wareHouseDescription')
     {
+        $alias = str_replace('.', '_', $as) . '_' . $columnAs;
         return $q->leftJoin('warehousemaster as '.$as,$as.'.wareHouseSystemCode','erp_itemledger.'.$column)
-        ->addSelect($as.".wareHouseDescription as ".$columnAs);
+            ->addSelect($as.'.wareHouseDescription as '.$alias);
     }
 }

@@ -455,20 +455,30 @@ class CustomUserReportsAPIController extends AppBaseController
             ->make(true);
     }
 
-    private function geReportColumns($columns)
+    private function geReportColumns(&$columns)
     {
         $result = [];
-        foreach ($columns as $column) {
+        $usedAliases = [];
+        foreach ($columns as &$column) {
             if (isset($column['column']) && isset($column['column']['column']) && $column['column']['column_type'] != 5) {
+                $alias = $column['column']['column_as'];
+                if (isset($usedAliases[$alias])) {
+                    $tablePart = str_replace('.', '_', $column['column']['table']);
+                    $alias = $tablePart . '_' . $alias;
+                    $column['column']['column_as'] = $alias;
+                }
+                $usedAliases[$alias] = true;
+
                 $tmpColumn = $column['column']['table'] . '.' . $column['column']['column'];
                 if ($column['column']['column_type'] == 4) {
-                    $tmpColumn = 'SUM(' . $tmpColumn . ') as ' . $column['column']['column_as'];
-                }else{
-                    $tmpColumn = $tmpColumn. ' as '. $column['column']['column_as'];
+                    $tmpColumn = 'SUM(' . $tmpColumn . ') as ' . $alias;
+                } else {
+                    $tmpColumn = $tmpColumn . ' as ' . $alias;
                 }
                 array_push($result, $tmpColumn);
             }
         }
+        unset($column);
 
         return array_unique($result);
     }
@@ -1409,21 +1419,19 @@ class CustomUserReportsAPIController extends AppBaseController
                                         $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                      }
                                      else if ($table == 'transactioncurrency') {
-                                        
-                                        $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'CurrencyName');
-                                    } 
+                                        $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'transactionCurrencyName');
+                                    }
                                     else if ($table == 'rptcurrency') {
-                                        
-                                        $data->currencyJoin('rptcurrency', 'companyReportingCurrencyID', 'CurrencyName');
+                                        $data->currencyJoin('rptcurrency', 'companyReportingCurrencyID', 'rptCurrencyName');
                                     }
                                     else if($table == 'supplier'){
                                         $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
-                                    } 
+                                    }
                                       else if ($table == 'company') {
                                         $data->companyJoin('company', 'companySystemID', 'CompanyName');
-                                    } 
+                                    }
                                     else if ($table == 'localcurrency') {
-                                        $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                        $data->currencyJoin('localcurrency', 'localCurrencyID', 'localCurrencyName');
                                     } 
                                     else if ($table == 'approved_by') {
                                         $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
@@ -2700,11 +2708,11 @@ class CustomUserReportsAPIController extends AppBaseController
                                     
                                     $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                     }
-                                    else if ($table == 'rpt_currency') {   
-                                        $data->currencyJoin('rpt_currency', 'wacRptCurrencyID', 'CurrencyName');
-                                    } 
-                                    else if ($table == 'local_currency') {   
-                                        $data->currencyJoin('local_currency', 'wacLocalCurrencyID', 'CurrencyName');
+                                    else if ($table == 'rpt_currency') {
+                                        $data->currencyJoin('rpt_currency', 'wacRptCurrencyID', 'rptCurrencyName');
+                                    }
+                                    else if ($table == 'local_currency') {
+                                        $data->currencyJoin('local_currency', 'wacLocalCurrencyID', 'localCurrencyName');
                                     }  
                                     else if ($table == 'unit') {
                                         $data->unitJoin('unit', 'unitOfMeasure', 'UnitShortCode');

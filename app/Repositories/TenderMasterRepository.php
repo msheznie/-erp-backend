@@ -455,7 +455,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['rejectedComments']);
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
-        $approve = DocumentApprove::rejectDocument($data);
+        $approve = DocumentReject::rejectDocument($data);
 
         if($approve['success'])
         {
