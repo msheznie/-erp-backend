@@ -317,7 +317,7 @@ class B2BResourceAPIController extends AppBaseController
         unset($dt);
 //        array_push($txtData, implode($reportData['footer']['title'], ','));
         array_push($txtData, implode(',',Arr::flatten($reportData['footer']['data'])));
-        $txtData = implode($txtData, "\n");
+        $txtData = implode("\n", $txtData);
 
         return $txtData;
     }

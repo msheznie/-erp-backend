@@ -117,7 +117,8 @@ class ExcelWrapper
             $this->spreadsheet->createSheet();
         }
         $sheet = $this->spreadsheet->getActiveSheet();
-        $sheet->setTitle($name);
+        // PhpSpreadsheet allows max 31 characters for sheet title
+        $sheet->setTitle(mb_substr($name, 0, 31));
         $this->sheetIndex++;
 
         $sheetWrapper = new SheetWrapper($sheet);
