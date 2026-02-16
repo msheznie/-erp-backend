@@ -382,20 +382,21 @@ class PricingScheduleMasterRepository extends BaseRepository
                     PricingScheduleMaster::find($id);
                 if($scheduleMaster) {
 
-                    $scheduleDetail = self::deleteScheduleBidFormat($id, $enableRequestChange, $versionID);
+                  /*  $scheduleDetail = self::deleteScheduleBidFormat($id, $enableRequestChange, $versionID);
                     if(!$scheduleDetail['success']){
                         return $scheduleDetail;
-                    }
+                    }*/
 
                     $boqItems = $enableRequestChange ?
                         PricingScheduleDetailEditLog::getPricingScheduleMainWork($tender_id, $id, $versionID, 'get') :
-                        PricingScheduleDetail::getPricingScheduleMainWork($tender_id, $id);
-
+                        PricingScheduleDetail::getPricingScheduleMainWork($tender_id, $id,'get');
+                 
                     $enableRequestChange ?
                         PricingScheduleDetailEditLog::where('amd_pricing_schedule_master_id', $id)->update(['is_deleted' => 1]) :
                         PricingScheduleDetail::where('pricing_schedule_master_id', $id)->delete();
 
                     $boqDetails = self::deleteBoqItems($boqItems, $versionID, $enableRequestChange);
+
                     if (!$boqDetails['success']) {
                         return ['success' => false, 'message' => $boqDetails['message']];
                     }
@@ -444,13 +445,22 @@ class PricingScheduleMasterRepository extends BaseRepository
             return DB::transaction(function () use ($boqItems, $versionID, $enableRequestChange) {
                 foreach($boqItems as $item)
                 {
-                    $boqItems =  $enableRequestChange ?
-                        TenderBoqItemsEditLog::getTenderBoqItemList($item->amd_id, $versionID) :
-                        TenderBoqItems::getTenderBoqItemList($item->id);
-                    foreach($boqItems as $boqItem)
+                    $itemId = $enableRequestChange
+                        ? ($item['amd_id'] ?? null)
+                        : ($item['id'] ?? null);
+
+                    if (!$itemId) {
+                        continue; // skip items without id
+                    }
+
+                    $boqItemList = $enableRequestChange ?
+                        TenderBoqItemsEditLog::getTenderBoqItemList($itemId, $versionID) :
+                        TenderBoqItems::getTenderBoqItemList($itemId);
+
+                    foreach($boqItemList as $boqItem)
                     {
-                        $boqItem = TenderBoqItems::find($boqItem->id);
-                        $boqItem->delete();
+                        $boqItemModel = TenderBoqItems::find($boqItem['id'] ?? null);
+                        $boqItemModel?->delete();
                     }
                 }
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_deleted')];
