@@ -479,54 +479,31 @@ class CreateExcel
                     trans('custom.excel_addon_details'),
                 ];
 
-                $columnWidths = [
-                    'A' => 4, // Company ID
-                    'B' => 20, // Company ID
-                    'C' => 13, // Company Name
-                    'D' => 13, // Order Code
-                    'E' => 15, // Segment
-                    'F' => 13, // Created at
-                    'G' => 13, // Created By
-                    'H' => 13, // Category
-                    'I' => 13, // Narration
-                    'J' => 13, // Supplier Code
-                    'K' => 13, // Supplier Name
-                    'L' => 13, // Credit Period
-                    'M' => 13, // Supplier Country
-                    'N' => 13, // Expected Delivery Date
-                    'O' => 13, // Delivery Terms
-                    'P' => 13, // Penalty Terms
-                    'Q' => 13, // Confirmed Status
-                    'R' => 13, // Confirmed Date
-                    'S' => 13, // Confirmed By
-                    'T' => 13, // Approved Status
-                    'U' => 13, // Approved Date
-                    'V' => 13, // Transaction Currency
-                    'W' => 13, // Transaction Amount
-                    'X' => 13, // Local Amount
-                    'Y' => 13, // Reporting Amount
-                    'z' => 13, // Advance Payment Available
-                    'AA' => 13, // Total Advance Payment Amount
-                ];
-
-                foreach ($columnWidths as $col => $width) {
-                    $sheet->setWidth($col, $width);
-                }
-
                 $maxColumns = 0;
                 foreach ($data as $row) {
                     $maxColumns = max($maxColumns, count($row));
                 }
 
+                // Build indexed rows so PhpSpreadsheet writes columns in order (associative keys break export)
+                $indexedData = [];
                 foreach ($data as $row) {
-                    $paddedRow = array_pad($row, $maxColumns, '');
-                    $sheet->appendRow($paddedRow);
+                    $rowValues = array_values(is_array($row) ? $row : (array) $row);
+                    $indexedData[] = array_pad($rowValues, $maxColumns, '');
+                }
 
+                if (!empty($indexedData)) {
+                    $sheet->fromArray($indexedData, null, 'A1', false);
+                }
+
+                $rowNum = 1;
+                foreach ($indexedData as $paddedRow) {
                     $isHeader = false;
                     foreach ($paddedRow as $cell) {
-                        $clean = strtolower(trim($cell));
+                        $cellStr = is_scalar($cell) ? (string) $cell : '';
+                        $clean = strtolower(trim($cellStr));
                         foreach ($knownHeaders as $keyword) {
-                            if ($clean === $keyword || strpos($clean, $keyword) !== false) {
+                            $kw = is_string($keyword) ? strtolower(trim($keyword)) : '';
+                            if ($kw !== '' && ($clean === $kw || strpos($clean, $kw) !== false)) {
                                 $isHeader = true;
                                 break 2;
                             }
@@ -546,7 +523,10 @@ class CreateExcel
 
                     $rowNum++;
                 }
-                
+
+                // Auto-size columns to fit content (after data is written)
+                $sheet->setAutoSize(true);
+
                 // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
