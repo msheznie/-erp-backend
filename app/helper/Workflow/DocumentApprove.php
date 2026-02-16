@@ -1040,7 +1040,8 @@ class DocumentApprove
 
                                 if ($paySupplierMaster->invoiceType == 3) {
                                     $object = new ChartOfAccountValidationService();
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+                                    $employeeID = (isset($input['employeeID']) && $input['employeeID']) ? $input['employeeID'] : null;
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
