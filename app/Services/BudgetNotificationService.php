@@ -44,6 +44,11 @@ class BudgetNotificationService
         foreach ($replacements as $key => $value) {
             $search[] = '{{' . $key . '}}';
             $replace[] = $value;
+            // Also replace literal placeholder text when key is bracket-style e.g. [Budget Review Dashboard]
+            if (strpos($key, '[') !== false && strpos($key, ']') !== false) {
+                $search[] = $key;
+                $replace[] = $value;
+            }
         }
 
         $result = str_replace($search, $replace, $template);
@@ -413,7 +418,7 @@ class BudgetNotificationService
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
             'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
-            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
+            '[Budget Review Dashboard]' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
         }else {
             $placeholders = [
@@ -421,7 +426,7 @@ class BudgetNotificationService
                 'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
                 'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
                 'ResubmissionDate' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
-                'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
+                '[Budget Review Dashboard]' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
             ];
 
             $budgetNotifications = BudgetNotification::where('slug', 'revision-resubmission')->first();
