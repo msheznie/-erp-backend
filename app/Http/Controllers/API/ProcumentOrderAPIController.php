@@ -5495,6 +5495,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         } else {
             $companyID = (array)$request->companySystemID;
         }
+        // Ensure flat array of integers for IN clause (avoid "Array to string conversion")
+        $companyID = array_values(array_map('intval', \Illuminate\Support\Arr::flatten($companyID)));
+        $companyID = array_filter($companyID);
+        if (empty($companyID)) {
+            $companyID = [0];
+        }
 
         $year = $request->years;
         $type = $request->type;
@@ -5555,38 +5561,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if ($tempType == 1) {
             if ($output) {
                 $x = 0;
+                // SQL aliases use trans('custom.jan') etc. (e.g. CouJan, TotJan); Sept uses 'sep' => 'Sep'
+                $monthAliasKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                $monthLabelKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sept', 'oct', 'nov', 'dec'];
                 foreach ($output as $val) {
                     $data[$x][trans('custom.emp_id')] = $val->poConfirmedByEmpID;
                     $data[$x][trans('custom.employee_name')] = $val->POConfirmedEmpName;
                     $data[$x][trans('custom.designation')] = $val->designation;
                     $data[$x][trans('custom.year')] = $year;
-                    $data[$x][trans('custom.jan_count')] = $val->CouJan;
-                    $data[$x][trans('custom.jan_amt')] = $val->TotJan;
-                    $data[$x][trans('custom.feb_count')] = $val->CouFeb;
-                    $data[$x][trans('custom.feb_amt')] = $val->TotFeb;
-                    $data[$x][trans('custom.mar_count')] = $val->CouMar;
-                    $data[$x][trans('custom.mar_amt')] = $val->TotMar;
-                    $data[$x][trans('custom.apr_count')] = $val->CouApr;
-                    $data[$x][trans('custom.apr_amt')] = $val->TotApr;
-                    $data[$x][trans('custom.may_count')] = $val->CouMay;
-                    $data[$x][trans('custom.may_amt')] = $val->TotMay;
-                    $data[$x][trans('custom.jun_count')] = $val->CouJun;
-                    $data[$x][trans('custom.jun_amt')] = $val->TotJun;
-                    $data[$x][trans('custom.jul_count')] = $val->CouJul;
-                    $data[$x][trans('custom.jul_amt')] = $val->TotJul;
-                    $data[$x][trans('custom.aug_count')] = $val->CouAug;
-                    $data[$x][trans('custom.aug_amt')] = $val->TotAug;
-                    $data[$x][trans('custom.sept_count')] = $val->CouSep;
-                    $data[$x][trans('custom.sept_amt')] = $val->TotSep;
-                    $data[$x][trans('custom.oct_count')] = $val->CouOct;
-                    $data[$x][trans('custom.oct_amt')] = $val->TotOct;
-                    $data[$x][trans('custom.nov_count')] = $val->CouNov;
-                    $data[$x][trans('custom.nov_amt')] = $val->TotNov;
-                    $decMon = trans('custom.dec');
-                    $data[$x][trans('custom.dec_count')] = data_get($val, 'Cou' . $decMon, 0);
-                    $data[$x][trans('custom.dec_amt')] = data_get($val, 'Tot' . $decMon, 0);
-                    $data[$x][trans('custom.total_count')] = $val->totalCount;
-                    $data[$x][trans('custom.total_amount')] = $val->totalValue;
+                    foreach ($monthAliasKeys as $i => $aliasKey) {
+                        $mon = trans('custom.' . $aliasKey);
+                        $labelKey = $monthLabelKeys[$i];
+                        $data[$x][trans('custom.' . $labelKey . '_count')] = data_get($val, 'Cou' . $mon, 0);
+                        $data[$x][trans('custom.' . $labelKey . '_amt')] = data_get($val, 'Tot' . $mon, 0);
+                    }
+                    $data[$x][trans('custom.total_count')] = data_get($val, 'totalCount', 0);
+                    $data[$x][trans('custom.total_amount')] = data_get($val, 'totalValue', 0);
                     $x++;
                 }
             } else {

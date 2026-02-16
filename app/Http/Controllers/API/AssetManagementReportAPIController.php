@@ -1284,13 +1284,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['costQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
                     
@@ -1301,13 +1302,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['depQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
                     
@@ -1318,13 +1320,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['nbvQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
 
