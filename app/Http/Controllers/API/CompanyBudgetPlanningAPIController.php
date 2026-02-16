@@ -260,10 +260,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings','workflow')->findWithoutFail($id);
 
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
+        $companyBudgetPlanning['workflow'] = $companyBudgetPlanning->workflow;
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
@@ -714,7 +715,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
             }
 
-            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
+            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings','workflow'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
             /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
