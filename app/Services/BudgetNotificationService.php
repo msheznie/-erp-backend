@@ -7,6 +7,7 @@ use App\Models\BudgetNotificationDetail;
 use App\Models\BudgetNotificationRecipient;
 use App\Models\CompanyDepartment;
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Models\CompanyFinanceYear;
 use App\Models\BudgetDelegateAccessRecord;
 use App\Models\CompanyDepartmentEmployee;
@@ -163,7 +164,7 @@ class BudgetNotificationService
             case 'finance-rejects-for-revision':
                 $this->sendFinanceRejectsForRevisionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
-            case 'time-extension-request-submitted':
+            case 'extension-request-submitted':
                 $this->sendTimeExtensionRequestSubmittedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
                 break;
             case 'extension-request-approved':
@@ -523,12 +524,10 @@ class BudgetNotificationService
    private function sendTimeExtensionRequestSubmittedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
-        
         $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 1)->first();
-
         // Get all department users with their employee details eager loaded
         $financeUsers = CompanyDepartmentEmployee::with('employee')
-                        ->whereHas('department', function ($query) {
+                        ->whereHas('department', function ($query) use ($budgetPlanning) {
                         $query->where('isFinance', 1)->where('isActive', 1)->where('companySystemID', $budgetPlanning->masterBudgetPlannings->companySystemID);
                         })
                         ->where('isActive', 1)
@@ -539,6 +538,9 @@ class BudgetNotificationService
             'RequestedDeadline' => date('d/m/Y', strtotime($timeExtenionRequest->date_of_request)) ?? 'N/A',
             'ExtensionReason' => $timeExtenionRequest->reason_for_extension,
         ];
+
+        $subjectTemplate = $budgetNotifications->subject;
+        $bodyTemplate = $budgetNotifications->body;
 
         foreach($financeUsers as $financeUser) {
             // Check if employee exists and has an email
@@ -566,6 +568,7 @@ class BudgetNotificationService
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
 
+        
         $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->where('status', 2)->first();
 
 
@@ -589,6 +592,27 @@ class BudgetNotificationService
         );
 
 
+
+        $delegateAccessList = DepartmentBudgetPlanningsDelegateAccess::where('budgetPlanningID', $budgetPlanning->id)
+            ->with('employee')
+            ->get();
+
+        foreach ($delegateAccessList as $delegateAccess) {
+            if (!$delegateAccess->employee || !$delegateAccess->employee->empEmail) {
+                continue;
+            }
+            $emails[] = array(
+                'empEmail' => $delegateAccess->employee->empEmail,
+                'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+                'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false),
+                'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true),
+                'empSystemID' => $delegateAccess->employee->employeeSystemID,
+                'docSystemID' => 133,
+                'docSystemCode' => $departmentBudgetPlanningID
+            );
+        }
+
+
         \Email::sendEmail($emails);
    }
 
@@ -596,16 +620,15 @@ class BudgetNotificationService
    {
         $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','timeExtensionRequests')->find($departmentBudgetPlanningID);
         $timeExtenionRequest = $budgetPlanning->timeExtensionRequests->whereIn('status', [3, 4])->first();
-        
         $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             'OriginalDeadline' => date('d/m/Y', strtotime($timeExtenionRequest->current_submission_date)),
             'FinanceComments' => $timeExtenionRequest->review_comments,
+            'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
         ];
-        
+
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
-
         $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
