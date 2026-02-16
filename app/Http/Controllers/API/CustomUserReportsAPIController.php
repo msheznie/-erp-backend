@@ -562,6 +562,15 @@ class CustomUserReportsAPIController extends AppBaseController
     private function getSelectColumnsAddedByJoins($reportMasterId)
     {
         $byReport = [
+            3 => [ // DebitNote
+                'created_by.empName',
+                'approved_by.empName',
+                'transactioncurrency.CurrencyName',
+                'rptcurrency.CurrencyName',
+                'localcurrency.CurrencyName',
+                'supplier.supplierName',
+                'company.CompanyName',
+            ],
             38 => [ // ErpItemLedger
                 'created_by.empName',
                 'company.CompanyName',
