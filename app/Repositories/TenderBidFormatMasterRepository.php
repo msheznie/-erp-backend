@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Repositories\BaseRepository;
-use App\Helpers\Helper;
+use App\Helper\Helper;
 /**
  * Class TenderBidFormatMasterRepository
  * @package App\Repositories
