@@ -382,15 +382,15 @@ class PricingScheduleMasterRepository extends BaseRepository
                     PricingScheduleMaster::find($id);
                 if($scheduleMaster) {
 
-                  /*  $scheduleDetail = self::deleteScheduleBidFormat($id, $enableRequestChange, $versionID);
+                   $scheduleDetail = self::deleteScheduleBidFormat($id, $enableRequestChange, $versionID);
                     if(!$scheduleDetail['success']){
                         return $scheduleDetail;
-                    }*/
+                    }
 
                     $boqItems = $enableRequestChange ?
                         PricingScheduleDetailEditLog::getPricingScheduleMainWork($tender_id, $id, $versionID, 'get') :
                         PricingScheduleDetail::getPricingScheduleMainWork($tender_id, $id,'get');
-                 
+
                     $enableRequestChange ?
                         PricingScheduleDetailEditLog::where('amd_pricing_schedule_master_id', $id)->update(['is_deleted' => 1]) :
                         PricingScheduleDetail::where('pricing_schedule_master_id', $id)->delete();
