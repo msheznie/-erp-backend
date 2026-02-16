@@ -350,7 +350,6 @@ class TenderMasterRepository extends BaseRepository
         if ($tender->document_system_id == 113 && $opening_date_comp === null) {
             return true;
         }
-
         $opening_date_comp = Carbon::parse($opening_date_comp);
 
         return $current_date->gt($opening_date_comp) &&
@@ -548,9 +547,15 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
+
+            if (isset($updatedData['success']) && $updatedData['success'] === false) {
+                return $updatedData;
+            }
+
             if(!$updatedData['success']){
                 return $updatedData;
             }
+
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -747,16 +752,20 @@ class TenderMasterRepository extends BaseRepository
 
                 $tenderMaster->update($data);
 
-                $calendarDateMap = CalendarDates::calendarDateMap($input['calendarDates']);
+                $calendarDates = $input['calendarDates'] ?? [];
+                if (!is_array($calendarDates)) {
+                    $calendarDates = [];
+                }
+                $calendarDateMap = CalendarDates::calendarDateMap($calendarDates);
 
                 $defaultDateMappings = [
                     1 => ['start' => 'preBidClarificationStartDate', 'end' => 'preBidClarificationEndDate'],
                     2 => ['start' => 'siteVisitStartDate', 'end' => 'siteVisitEndDate'],
                 ];
 
-                foreach ($input['calendarDates'] as $calDate) {
+                foreach ($calendarDates as $calDate) {
 
-                    $calenderDateDetails = $calendarDateMap[$calDate['id']] ?? null;
+                    $calenderDateDetails = $calendarDateMap->get($calDate['id'] ?? null);
                     if (!$calenderDateDetails) {
                         continue;
                     }
@@ -777,8 +786,8 @@ class TenderMasterRepository extends BaseRepository
                             'to_date'   => $formattedDatesAndTime[$map['end']] ?? null,
                         ];
 
-                        CalendarDatesDetail::updateCalendarDates($tenderData['id'],$tenderData['company_id'],
-                            $calenderDateDetails['id'], $dates);
+                        CalendarDatesDetail::updateCalendarDates($tenderData['id'], $tenderData['company_id'],
+                            $calenderDateDetails->id, $dates);
                     }
                 }
             });
@@ -887,6 +896,11 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
+            $sort = 1;
+            if ($calendarDatesExists !== null) {
+                $currentSort = $calendarDatesExists->sort ?? $calendarDatesExists['sort'] ?? 0;
+                $sort = (int) $currentSort + 1;
+            }
             $sort = ($calendarDatesExists['sort'] ?? 0) + 1;
 
 
@@ -1845,14 +1859,14 @@ class TenderMasterRepository extends BaseRepository
         if(empty($tenderMaster)) {
             return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
         }
-        
+
         $minApprovalForAwarding = $tenderMaster->min_approval_awarding ?? 1;
-        
+
         if ($minApprovalForAwarding > 0) {
             $awardingMembers = $editOrAmend ?
                 SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $versionID) :
                 SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
-            
+
             if(count($awardingMembers) < $minApprovalForAwarding){
                 return [
                     'success' => false,
@@ -1966,12 +1980,12 @@ class TenderMasterRepository extends BaseRepository
         try {
             return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
 
-              /*  if (empty($tenderPurchaseRequestData)) {
-                    return [
-                        'success' => true,
-                        'message' => trans('srm_tender_rfx.no_purchase_request_to_update')
-                    ];
-                }*/
+                /*  if (empty($tenderPurchaseRequestData)) {
+                      return [
+                          'success' => true,
+                          'message' => trans('srm_tender_rfx.no_purchase_request_to_update')
+                      ];
+                  }*/
 
                 $newPRIds = collect($tenderPurchaseRequestData)->pluck('id')->unique()->toArray();
                 $existingRecords = $editOrAmend
@@ -2251,7 +2265,7 @@ class TenderMasterRepository extends BaseRepository
                     $awardingMembers = $requestData['enableRequestChange'] ?
                         SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $requestData['versionID']) :
                         SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
-                    
+
                     if (count($awardingMembers) < $minApprovalForAwarding) {
                         return [
                             'success' => false,
@@ -2697,20 +2711,20 @@ class TenderMasterRepository extends BaseRepository
 
     public function cloneTender($request){
         try {
-        $input = $request->all();
-        $tenderMasterUuid = $input['uuid'];
-        $companySystemID = $input['companySystemId'];
-        $isTender = $input['isTender'];
-        $documentSystemID = isset ($isTender) && $isTender ? 108 : 113;
-        $editOrAmendRequest = false;
-        $documentName = isset ($isTender) && $isTender ? 'Tender' : 'RFX';
+            $input = $request->all();
+            $tenderMasterUuid = $input['uuid'];
+            $companySystemID = $input['companySystemId'];
+            $isTender = $input['isTender'];
+            $documentSystemID = isset ($isTender) && $isTender ? 108 : 113;
+            $editOrAmendRequest = false;
+            $documentName = isset ($isTender) && $isTender ? 'Tender' : 'RFX';
 
-        $tenderMaster = TenderMaster::getTenderByUuid($tenderMasterUuid);
+            $tenderMaster = TenderMaster::getTenderByUuid($tenderMasterUuid);
             if(empty($tenderMaster)) {
                 return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
             }
 
-        $documentModify = DocumentModifyRequest::getTenderModifyRequest($tenderMaster['id']);
+            $documentModify = DocumentModifyRequest::getTenderModifyRequest($tenderMaster['id']);
             if(!empty($documentModify) && $documentModify->status == 1){
                 if($documentModify->approved ==0 && $documentModify->confirmation_approved == 0){
                     $editOrAmendRequest = true;
@@ -2727,6 +2741,7 @@ class TenderMasterRepository extends BaseRepository
 
                 $newTender = $this->cloneTenderMaster($tenderMaster, $companySystemID, $documentSystemID);
                 $this->cloneUserAccess($tenderMaster['id'], $newTender->id);
+                $this->cloneAwardingMembers($tenderMaster['id'], $newTender->id);
                 $this->cloneDepartments($tenderMaster['id'], $newTender->id);
                 $this->cloneProcurements($tenderMaster['id'], $newTender->id);
                 $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
@@ -2758,7 +2773,7 @@ class TenderMasterRepository extends BaseRepository
                     ->toArray();
                 $params = ['masterData' => true, 'docSystemId' => $documentSystemID, 'ids' => $existingParentIds];
                 $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
- 
+
                 if (!empty( $getDocumentMasterData)) {
                     foreach ($getDocumentMasterData as $doc) {
                         $documentAttachment = [
@@ -2941,6 +2956,24 @@ class TenderMasterRepository extends BaseRepository
             }
         }
     }
+    private function cloneAwardingMembers($oldTenderId, $newTenderId){
+        $awardingEmployees = SrmTenderAwardingMember::getAwardingMembers($oldTenderId);
+        if (!empty($awardingEmployees)) {
+            foreach ($awardingEmployees as $user) {
+                $newUser = $user->replicate([
+                    'id',
+                    'tender_id',
+                    'awarding_remarks',
+                    'status',
+                    'created_at'
+                ]);
+
+                $newUser->tender_id = $newTenderId;
+                $newUser->status = 0;
+                $newUser->save();
+            }
+        }
+    }
     private function cloneDepartments($oldTenderId, $newTenderId)
     {
         $tenderDepartments = SrmTenderDepartment::getTenderDepartmentEditLog($oldTenderId);
@@ -3102,7 +3135,7 @@ class TenderMasterRepository extends BaseRepository
             $oldTenderId
         );
         $criteriaIdMap = [];
-        
+
         if (!empty($evaluationCriteriaDetails)) {
 
             foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
@@ -3126,7 +3159,7 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $maxLevel = $evaluationCriteriaDetails->max('level') ?? 1;
-            
+
             for ($level = 2; $level <= $maxLevel; $level++) {
                 foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
                     if ((int) $evaluationCriteria->level !== $level) {
@@ -3144,12 +3177,12 @@ class TenderMasterRepository extends BaseRepository
                     $newCriteria->parent_id = $criteriaIdMap[$evaluationCriteria->parent_id] ?? null;
                     $newCriteria->evaluation_criteria_master_id = $evaluationCriteria->evaluation_criteria_master_id;
                     $newCriteria->save();
-                    
+
                     $criteriaIdMap[$evaluationCriteria->id] = $newCriteria->id;
                 }
             }
         }
-        
+
         return $criteriaIdMap;
     }
     private function cloneEvaluationCriteriaScoreConfig($oldTenderId, $criteriaIdMap)
