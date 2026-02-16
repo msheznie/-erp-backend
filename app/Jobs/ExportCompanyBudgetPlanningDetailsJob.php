@@ -52,9 +52,9 @@ class ExportCompanyBudgetPlanningDetailsJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
         Log::useFiles(storage_path() . '/logs/budget_planning_export.log');
-        // if ($db) {
-        //     CommonJobService::db_switch($db);
-        // }
+        if ($db) {
+            CommonJobService::db_switch($db);
+        }
 
         try {
             (new ExportCompanyBudgetPlanningDetailsExcel($this->data, $this->userId))->export();
