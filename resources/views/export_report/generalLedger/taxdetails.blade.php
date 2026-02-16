@@ -164,10 +164,10 @@
                         @endif
                     </td>
                 @endif
-                @if(in_array(7, $selectedColumns)) <td>{{ $data->primarySupplierCode }}</td> @endif
-                @if(in_array(8, $selectedColumns)) <td>{{ $data->supplierName }}</td> @endif
-                @if(in_array(33, $selectedColumns)) <td>{{ $data->primarySupplierCode }}</td> @endif
-                @if(in_array(32, $selectedColumns)) <td>{{ $data->supplierName }}</td> @endif
+                @if(in_array(7, $selectedColumns)) <td>{{ data_get($data, 'primarySupplierCode', '') }}</td> @endif
+                @if(in_array(8, $selectedColumns)) <td>{{ data_get($data, 'supplierName', '') }}</td> @endif
+                @if(in_array(33, $selectedColumns)) <td>{{ data_get($data, 'primarySupplierCode', '') }}</td> @endif
+                @if(in_array(32, $selectedColumns)) <td>{{ data_get($data, 'supplierName', '') }}</td> @endif
                 @if(in_array(12, $selectedColumns)) <td>{{ $data->CutomerCode }}</td> @endif
                 @if(in_array(13, $selectedColumns)) <td>{{ $data->customerShortCode }}</td> @endif
                 @if(in_array(14, $selectedColumns)) <td>{{ $data->CustomerName }}</td> @endif
