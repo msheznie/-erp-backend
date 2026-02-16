@@ -836,6 +836,13 @@ class TenderMasterAPIController extends AppBaseController
         $pre_bid_clarification_start_date = null;
         $pre_bid_clarification_end_date = null;
         $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'];
+        $stage = $input['stage'] ?? null;
+
+        if (is_array($stage)) {
+            $stageValue = $stage[0] ?? null;
+        } else {
+            $stageValue = $stage;
+        }
 
         if (isset($input['document_sales_start_date'])) {
             $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
@@ -977,9 +984,9 @@ class TenderMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_from_date_and_time_should_greater_than_document_sales_from_date_and_time')];
         }
 
-        if (!is_null($input['stage']) || $input['stage'] != 0) {
+        if ($stageValue != 0) {
 
-            if ($input['stage'][0] == 1 || $input['stage'] == 1) {
+            if ($stageValue == 1) {
 
                 if (isset($input['bid_opening_date_time'])) {
                     $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
@@ -1039,7 +1046,7 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-            if ($input['stage'][0] == 2 || $input['stage'] == 2) {
+            if ($stageValue == 2) {
 
                 if (is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_cannot_be_empty')];
@@ -1289,7 +1296,7 @@ class TenderMasterAPIController extends AppBaseController
                         if (is_null($input['evaluation_type_id']) || $input['evaluation_type_id'] == 0) {
                             return ['success' => false, 'message' => trans('srm_tender_rfx.evaluation_is_required')];
                         }
-                        if (is_null($input['stage']) || $input['stage'] == 0) {
+                        if ($stageValue == 0) {
                             return ['success' => false, 'message' => trans('srm_tender_rfx.stage_is_required_dot')];
                         }
 
