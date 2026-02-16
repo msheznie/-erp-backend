@@ -29,6 +29,7 @@ use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
 use App\User;
 use App\helper\CreateExcel;
+use App\Jobs\ExportCompanyBudgetPlanningDetailsJob;
 use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1728,12 +1729,27 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
     public function exportBudgetPlanningDetails(Request $request)
     {
         try {
+            $basePath = $this->runExportBudgetPlanningDetails($request);
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Run export logic and return the file path (for use by controller response or job).
+     * @param Request $request
+     * @return string File path on success
+     * @throws \Exception
+     */
+    public function runExportBudgetPlanningDetails(Request $request)
+    {
+        try {
             $input = $request->all();
             $departmentPlanningId = $request->input('budgetPlanningId');
 
-
             if (!$departmentPlanningId) {
-                return $this->sendError(trans('custom.department_planning_id_is_required'));
+                throw new \Exception(trans('custom.department_planning_id_is_required'));
             }
 
             $employeeID = \Helper::getEmployeeSystemID();
@@ -2149,19 +2165,21 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $data = array();
             $x = 0;
-            foreach ($dataset as $val) {
-                $x++;
-                $rowBySlug = $this->buildExportRowBySlug($val, $x, $selectedStatus, $isGLBased);
-                if ($isColumnSlugsArray) {
-                    $data[$x] = $this->filterExportRowByColumnSlugs($rowBySlug, $columnSlugs);
-                } else {
-                    $data[$x] = $this->exportRowSlugToHeader($rowBySlug);
+            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $selectedStatus, $isGLBased, $columnSlugs, $isColumnSlugsArray) {
+                foreach ($chunk as $val) {
+                    $x++;
+                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $selectedStatus, $isGLBased);
+                    if ($isColumnSlugsArray) {
+                        $data[$x] = $this->filterExportRowByColumnSlugs($rowBySlug, $columnSlugs);
+                    } else {
+                        $data[$x] = $this->exportRowSlugToHeader($rowBySlug);
+                    }
                 }
-            }
+            });
 
             // Ensure data array is not empty and has valid structure
             if (empty($data) || !is_array($data)) {
-                return $this->sendError(trans('custom.no_data_to_export'));
+                throw new \Exception(trans('custom.no_data_to_export'));
             }
 
             // Re-index array to start from 0 (CreateExcel expects $data[0] to exist)
@@ -2179,19 +2197,18 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
 
             if ($basePath == '') {
-                return $this->sendError('Unable to export excel');
-            } else {
-                return $this->sendResponse($basePath, trans('custom.success_export'));
+                throw new \Exception('Unable to export excel');
             }
 
+            return $basePath;
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_exporting_excel') . ': ' . $e->getMessage(), 500);
+            throw $e;
         }
     }
 
     /**
      * Export all department budget planning details of a company budget planning to Excel (no pagination).
-     * Same format as exportBudgetPlanningDetails. Use for company-level "download all" export.
+     * Dispatches a job so large exports (e.g. 1000+ records) run in background; user is notified when ready.
      *
      * @param Request $request (budgetPlanningId = CompanyBudgetPlanning ID, companySystemID, optional filters)
      * @return Response
@@ -2202,7 +2219,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             'source' => 'from_approval',
             'isCompany' => true,
         ]);
-        return $this->exportBudgetPlanningDetails($request);
+        $userId = \Helper::getEmployeeSystemID();
+        $db = $request->input('db', '');
+        ExportCompanyBudgetPlanningDetailsJob::dispatch($db, $request->all(), $userId);
+        return $this->sendResponse('', trans('custom.budget_planning_export_in_progress'));
     }
 
     /**
