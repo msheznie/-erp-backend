@@ -1248,7 +1248,27 @@ class CustomUserReportsAPIController extends AppBaseController
                 if(isset($templateData['statusColumns']) && !empty($templateData['statusColumns']))
                 {
                     foreach ($templateData['statusColumns'] as $column) {
-                        array_push($columns, $masterTable . '.' . $column);
+                        if (trim((string) $column) === '') {
+                            continue;
+                        }
+                        $toAdd = $masterTable . '.' . $column;
+                        $colBase = preg_replace('/\s+as\s+.+$/i', '', $column);
+                        $toAddBase = $masterTable . '.' . trim($colBase);
+                        $already = false;
+                        foreach ($columns as $c) {
+                            if ($c === $toAdd) {
+                                $already = true;
+                                break;
+                            }
+                            $cBase = preg_replace('/\s+as\s+.+$/i', '', $c);
+                            if (trim($cBase) === $toAddBase) {
+                                $already = true;
+                                break;
+                            }
+                        }
+                        if (!$already) {
+                            array_push($columns, $toAdd);
+                        }
                     }
                 }
             }
@@ -1433,7 +1453,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
                                 } 
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                               
                             }
@@ -1473,7 +1493,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                         $data->currencyJoin('localcurrency', 'localCurrencyID', 'localCurrencyName');
                                     } 
                                     else if ($table == 'approved_by') {
-                                        $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                        $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                     } 
                                   
                                 }
@@ -1532,7 +1552,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
                                 } 
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'bank') {
                                     $data->bankJoin('bank', 'BPVbank', 'bankName');
@@ -1591,7 +1611,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
                                 } 
                                 else if ($table == 'approve_by') {
-                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'approvedByName');
                                 } 
                                 else if ($table == 'bank') {
                                     $data->bankJoin('bank', 'bankID', 'bankName');
@@ -1641,10 +1661,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                 } 
                                 else if ($table == 'approve_by') {
-                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'approvedByName');
                                 } 
                                 else if ($table == 'created_by') {
-                                    $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approve_by', 'createdUserSystemID', 'approvedByName');
                                 }  
                                 else if ($table == 'customer') {
                                     $data->customerJoin('customer', 'customerID', 'CustomerName');
@@ -1695,10 +1715,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                         $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                     } 
                                     else if ($table == 'approve_by') {
-                                        $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                        $data->employeeJoin('approve_by', 'approvedByUserID', 'approvedByName');
                                     } 
                                     else if ($table == 'created_by') {
-                                        $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                        $data->employeeJoin('approve_by', 'createdUserSystemID', 'approvedByName');
                                     }  
                                     else if ($table == 'customer') {
                                         $data->customerJoin('customer', 'customerID', 'CustomerName');
@@ -1752,10 +1772,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                             $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                         } 
                                         else if ($table == 'approved_by') {
-                                            $data->employeeJoin('approved_by', 'approvedByUserID', 'createdByName');
+                                            $data->employeeJoin('approved_by', 'approvedByUserID', 'approvedByName');
                                         } 
                                         else if ($table == 'created_by') {
-                                            $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                            $data->employeeJoin('approve_by', 'createdUserSystemID', 'approvedByName');
                                         } 
                                         else if ($table == 'warehouse') {
                                             $data->wareHouseJoin('warehouse', 'grvLocation', 'wareHouseDescription');
@@ -1786,7 +1806,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'location_by') {
                                     $data->locationJoin('location_by', 'location', 'locationName');
@@ -1817,7 +1837,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'customer') {
                                     $data->customerJoin('customer', 'customerSystemID', 'CustomerName');
@@ -1850,7 +1870,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'customer') {
                                     $data->customerJoin('customer', 'customerID', 'CustomerName');
@@ -1883,7 +1903,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
@@ -1919,7 +1939,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
@@ -1955,7 +1975,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
@@ -1991,7 +2011,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
@@ -2036,7 +2056,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'segment') {
                                     $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
@@ -2070,7 +2090,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'modify_by') {
                                     $data->employeeJoin('modify_by', 'modifiedUserSystemID', 'createdByName');
@@ -2256,7 +2276,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('confirm_by', 'confirmedByEmpSystemID', 'createdByName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2287,7 +2307,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2319,7 +2339,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 } 
                                
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2357,7 +2377,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 } 
                                 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2398,7 +2418,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                 } 
                                 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2435,7 +2455,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
                                 }
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2503,7 +2523,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->currencyJoin('rpt_currency', 'depRptCur', 'CurrencyName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2537,7 +2557,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2579,7 +2599,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2621,7 +2641,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
                                 } 
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
@@ -2651,7 +2671,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->employeeJoin('confirmed_by', 'confirmed_by_emp_id', 'createdByName');
                                 } 
                                 else if ($table == 'approved_by') {   
-                                    $data->employeeJoin('approved_by', 'approved_by_emp_id', 'createdByName');
+                                    $data->employeeJoin('approved_by', 'approved_by_emp_id', 'approvedByName');
                                 } 
                                 else if ($table == 'location') {
                                     $data->locationJoin('location', 'location', 'locationByName');
@@ -2704,7 +2724,7 @@ class CustomUserReportsAPIController extends AppBaseController
                                        $data->currencyJoin('doc_currency', 'documentTransCurrencyID', 'CurrencyName');
                                    } 
                                    else if ($table == 'document_approved_by') {   
-                                       $data->employeeJoin('document_approved_by', 'documentFinalApprovedByEmpSystemID', 'createdByName');
+                                       $data->employeeJoin('document_approved_by', 'documentFinalApprovedByEmpSystemID', 'approvedByName');
                                    } 
                                    else if ($table == 'document_confirm_by') {   
                                        $data->employeeJoin('document_confirm_by', 'documentConfirmedByEmpSystemID', 'createdByName');
