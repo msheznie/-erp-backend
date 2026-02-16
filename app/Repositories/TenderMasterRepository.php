@@ -537,6 +537,10 @@ class TenderMasterRepository extends BaseRepository
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
 
+            if (isset($updatedData['success']) && $updatedData['success'] === false) {
+                return $updatedData;
+            }
+
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -733,16 +737,20 @@ class TenderMasterRepository extends BaseRepository
 
                 $tenderMaster->update($data);
 
-                $calendarDateMap = CalendarDates::calendarDateMap($input['calendarDates']);
+                $calendarDates = $input['calendarDates'] ?? [];
+                if (!is_array($calendarDates)) {
+                    $calendarDates = [];
+                }
+                $calendarDateMap = CalendarDates::calendarDateMap($calendarDates);
 
                 $defaultDateMappings = [
                     1 => ['start' => 'preBidClarificationStartDate', 'end' => 'preBidClarificationEndDate'],
                     2 => ['start' => 'siteVisitStartDate', 'end' => 'siteVisitEndDate'],
                 ];
 
-                foreach ($input['calendarDates'] as $calDate) {
+                foreach ($calendarDates as $calDate) {
 
-                    $calenderDateDetails = $calendarDateMap[$calDate['id']] ?? null;
+                    $calenderDateDetails = $calendarDateMap->get($calDate['id'] ?? null);
                     if (!$calenderDateDetails) {
                         continue;
                     }
@@ -763,8 +771,8 @@ class TenderMasterRepository extends BaseRepository
                             'to_date'   => $formattedDatesAndTime[$map['end']] ?? null,
                         ];
 
-                        CalendarDatesDetail::updateCalendarDates($tenderData['id'],$tenderData['company_id'],
-                            $calenderDateDetails['id'], $dates);
+                        CalendarDatesDetail::updateCalendarDates($tenderData['id'], $tenderData['company_id'],
+                            $calenderDateDetails->id, $dates);
                     }
                 }
             });
@@ -873,7 +881,11 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
-            $sort = $calendarDatesExists['sort'] ? $calendarDatesExists['sort'] + 1 : 1;
+            $sort = 1;
+            if ($calendarDatesExists !== null) {
+                $currentSort = $calendarDatesExists->sort ?? $calendarDatesExists['sort'] ?? 0;
+                $sort = (int) $currentSort + 1;
+            }
 
 
             $logData = [];

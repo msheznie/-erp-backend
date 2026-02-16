@@ -224,7 +224,7 @@ class TenderNegotiationApprovalController extends AppBaseController
                     } else {
                         $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/>';
                     }
-                    $emailBody .= \Helper::getSupplierEmailFooter($dataEmail['companySystemID']);
+                    $emailBody .= Helper::getSupplierEmailFooter($dataEmail['companySystemID']);
 
                     $dataEmail['alertMessage'] = "Tender Negotiation Invitation";
                     $dataEmail['emailAlertMessage'] = $emailBody;

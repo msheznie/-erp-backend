@@ -4957,15 +4957,25 @@ class SRMService
 
         if ($tenderNegotiation) {
             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $bidSubmissionCodes = array_map(function ($tenderNegotiationData) {
-                    return $tenderNegotiationData['supplier_tender_negotiation']['bidSubmissionCode'];
-                }, $tenderNegotiationData);
-                $query->whereIn('bid_submission_code_old' , $bidSubmissionCodes);
+                $bidSubmissionCodes = array_map(function ($item) {
+                    return $item['supplier_tender_negotiation']['bidSubmissionCode'] ?? null;
+                }, is_array($tenderNegotiationData) ? $tenderNegotiationData : []);
+                $bidSubmissionCodes = array_filter($bidSubmissionCodes);
+                if (!empty($bidSubmissionCodes)) {
+                    $query->whereIn('bid_submission_code_old', $bidSubmissionCodes);
+                }
             });
         } else {
-            $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $query->where('bid_submission_code_old', '!=', $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
-            });
+            $firstBidCode = null;
+            if (!empty($tenderNegotiationData) && is_array($tenderNegotiationData)) {
+                $first = $tenderNegotiationData[0] ?? null;
+                $firstBidCode = $first['supplier_tender_negotiation']['bidSubmissionCode'] ?? null;
+            }
+            if ($firstBidCode !== null) {
+                $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($firstBidCode) {
+                    $query->where('bid_submission_code_old', '!=', $firstBidCode);
+                });
+            }
         }
 
         $bidSubmitted = $bidSubmitted->where('tender_id', $tenderId)
