@@ -9071,6 +9071,7 @@ return
     'po_analysis' => 'تحليل أوامر الشراء',
     'order_inquiry' => 'استعلام الطلب',
     'open_requests_details_export_in_progress' => 'جارٍ تصدير تقرير الطلبات المفتوحة التفصيلي، سيتم إشعارك عند الانتهاء!!',
+    'budget_planning_export_in_progress' => 'تصدير تخطيط ميزانية الشركة قيد المعالجة. سيتم إشعارك عند جاهزية الملف.',
     'code_128' => 'الرمز 128',
     'code_39'  => 'الرمز 39',
     'cheque_cancellation_process_done_successfully' => 'تم إلغاء الشيك بنجاح...',
