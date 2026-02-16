@@ -104,8 +104,14 @@ class CalendarDates extends Model
 
     public static function calendarDateMap($calendarDates)
     {
-        return CalendarDates::whereIn('id', array_column($calendarDates, 'id'))
-            ->get()->keyBy('id');
+        if (!is_array($calendarDates) || empty($calendarDates)) {
+            return collect();
+        }
+        $ids = array_column($calendarDates, 'id');
+        if (empty($ids)) {
+            return collect();
+        }
+        return CalendarDates::whereIn('id', $ids)->get()->keyBy('id');
     }
 
     public static function getDefaultCalendarDate($defaultType){
