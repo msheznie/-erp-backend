@@ -212,8 +212,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         $uuid = $request->get('tenant_uuid', 'local');
-
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
+        $url = \Helper::checkDomai();
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
@@ -260,10 +260,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings','workflow')->findWithoutFail($id);
 
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
+        $companyBudgetPlanning['workflow'] = $companyBudgetPlanning->workflow;
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
@@ -714,7 +715,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
             }
 
-            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
+            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings','workflow'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
             /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
@@ -962,7 +963,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError('Company Budget Planning not found');
         }
 
-        // Load all department budget plannings with relationships
+        // Load all department budget plannings with relationships (only departments where type = 2)
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.companyDepartmentSegments.segment',
             'financeYear',
@@ -970,6 +971,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         ])
         ->where('companyBudgetPlanningID', $budgetPlanningId)
         ->where('confirmed_yn', 1) // Only confirmed budgets
+        ->whereHas('department', function($query) {
+            $query->where('type', 2);
+        })
         ->get();
 
         // Build flat list with segment info included in each departmentBudgetPlanning
@@ -984,6 +988,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             
             // Get all segments for this department
             $departmentSegments = $department->companyDepartmentSegments;
+            
             
             if ($departmentSegments && $departmentSegments->count() > 0) {
                 // If department has multiple segments, create one record per segment
@@ -1665,7 +1670,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $url = \Helper::checkDomai();
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id,$url);
             }
 
             return $this->sendResponse([

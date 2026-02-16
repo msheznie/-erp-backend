@@ -2776,15 +2776,22 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         $purchaseRequests = $this->getDetails($subCompanies,$input,$request, $serviceLineSystemID, $fromDate, $toDate, $sort);
+        $recordsTotal = $purchaseRequests->count();
 
         $purchaseRequests = collect($purchaseRequests);
-        return \DataTables::collection($purchaseRequests)
+        $response = \DataTables::collection($purchaseRequests)
             ->addColumn('Actions', trans('custom.actions'), trans('custom.actions'))
              ->filter(function ($instance) {  
              })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+
+        $content = json_decode($response->getContent(), true);
+        $content['recordsTotal'] = $recordsTotal;
+        $content['recordsFiltered'] = $recordsTotal;
+
+        return response()->json($content);
     }
 
 
@@ -3519,7 +3526,20 @@ class PurchaseRequestAPIController extends AppBaseController
             ->where('manuallyClosed', 0)
             ->where('cancelledYN', 0)
             ->where('prClosedYN', 0)
-            ->with(['created_by', 'priority', 'location', 'segment'])
+            ->with([
+                'created_by' => function ($q) {
+                    $q->select('employeeSystemID', 'empName');
+                },
+                'priority' => function ($q) {
+                    $q->select('priorityID', 'priorityDescription');
+                },
+                'location' => function ($q) {
+                    $q->select('locationID', 'locationName');
+                },
+                'segment' => function ($q) {
+                    $q->select('serviceLineSystemID', 'ServiceLineDes');
+                },
+            ])
             ->orderBy('purchaseRequestID', $sort);
 
         if (array_key_exists('selectedForPO', $input)) {
@@ -3659,13 +3679,17 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.approvedDate',
             ]);
 
-          
-            $purchaseRequests=  $purchaseRequests->get();
-            
-            $result = $this->filterPurchaseRequest($purchaseRequests);
-       
+            $purchaseRequests = $purchaseRequests->get();
 
-            return $result;
+            if (isset($input['reportType']) && $input['reportType'] == 2) {
+                return $this->filterPurchaseRequest($purchaseRequests);
+            }
+
+            foreach ($purchaseRequests as $pr) {
+                $pr->setRelation('details', collect([]));
+            }
+            
+            return $purchaseRequests;
     }
 
     public function filterPurchaseRequest($purchaseRequests)

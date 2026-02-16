@@ -705,6 +705,10 @@ class BudjetdetailsAPIController extends AppBaseController
         return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
+                $sheet->setAutoSize(true);
+                // Bold the column header row (Number, Category, months, Total)
+                $headerRow = 5;
+                $sheet->getStyle('A' . $headerRow . ':' . $sheet->getHighestColumn() . $headerRow)->getFont()->setBold(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);

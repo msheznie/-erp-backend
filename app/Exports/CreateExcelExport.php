@@ -117,7 +117,8 @@ class ExcelWrapper
             $this->spreadsheet->createSheet();
         }
         $sheet = $this->spreadsheet->getActiveSheet();
-        $sheet->setTitle($name);
+        // PhpSpreadsheet allows max 31 characters for sheet title
+        $sheet->setTitle(mb_substr($name, 0, 31));
         $this->sheetIndex++;
 
         $sheetWrapper = new SheetWrapper($sheet);
@@ -299,17 +300,13 @@ class SheetWrapper
     {
         $this->lastLoadView = ['view' => $view, 'data' => $data];
         $html = view($view, $data)->render();
-        
-        // Use PhpSpreadsheet's HTML reader to import the HTML
+
+        // Use loadFromString to avoid temp file and 2048-byte minimum that load($filename) has
         try {
             $reader = new Html();
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_html_');
-            file_put_contents($tempFile, $html);
-            
-            // Read HTML into a temporary spreadsheet
-            $tempSpreadsheet = $reader->load($tempFile);
+            $tempSpreadsheet = $reader->loadFromString($html);
             $tempWorksheet = $tempSpreadsheet->getActiveSheet();
-            
+
             // Copy data from temp worksheet to current worksheet
             $highestRow = $tempWorksheet->getHighestRow();
             $highestColumn = $tempWorksheet->getHighestColumn();
@@ -327,11 +324,8 @@ class SheetWrapper
                     $this->worksheet->duplicateStyle($tempStyle, $cellRef);
                 }
             }
-            
-            unlink($tempFile);
         } catch (\Exception $e) {
-            // Fallback: if HTML reader fails, just set the HTML as text in first cell
-            // This is not ideal but prevents errors
+            // Fallback: if HTML reader fails, set the HTML as text in first cell
             $this->worksheet->setCellValue('A1', strip_tags($html));
         }
 

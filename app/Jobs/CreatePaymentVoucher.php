@@ -39,6 +39,7 @@ use App\Models\CustomerMaster;
 use App\Models\CustomerAssigned;
 use Illuminate\Support\Arr;
 use App\helper\Workflow\DocumentApprove;
+use App\Services\UserTypeService;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -315,6 +316,7 @@ class CreatePaymentVoucher implements ShouldQueue
                                 $autoApproveParams['supplierPrimaryCode'] = $confirmDataSet['BPVcode'];
                                 $autoApproveParams['createMonthlyDeduction'] = $confirmDataSet['createMonthlyDeduction'];
                                 $autoApproveParams['db'] = $this->db;
+                                $autoApproveParams['employeeID'] = UserTypeService::getSystemEmployee()->empID;
 
                                 $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 

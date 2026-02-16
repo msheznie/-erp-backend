@@ -1437,10 +1437,7 @@ class ItemMasterAPIController extends AppBaseController
 
       
         $image_data = $itemMaster->itemPicture;
-        $storagePath  = Storage::disk('s3')->getDriver()->getAdapter()->getPathPrefix();
 
-
-    
         if($image_data != null || !empty($image_data))
         {
          

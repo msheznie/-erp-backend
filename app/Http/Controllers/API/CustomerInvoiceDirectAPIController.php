@@ -106,7 +106,7 @@ use App\Models\UploadCustomerInvoice;
 use App\Services\CustomerInvoiceServices;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use App\Models\CurrencyConversion;
 use Illuminate\Support\Arr;
@@ -1614,7 +1614,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
             $uploadData = ['objPHPExcel' => $objPHPExcel,
                 'uploadCustomerInvoice' => $uploadCustomerInvoice,
@@ -3129,6 +3129,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     });
                     
                 }, 'xls');
+
             }
         
         } else if ($printTemplate['printTemplateID'] == 15) {
@@ -3495,17 +3496,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
-                        $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
-                        
-                        // Set right-to-left for Arabic locale
+                $templateName = 'export_report.customer_invoice_template_ksa';
+                $data = array_merge($array, ['no_asset' => true]);
+
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($data, $templateName) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
+                        $sheet->loadView($templateName, $data);
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                            $headerRow = 10;
+                            if ($headerRow <= $lastRow) {
+                                $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $headerRow)->getFont()->setBold(true);
+                            }
+                        }
+                        $sheet->setAutoSize(true);
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                             $sheet->setRightToLeft(true);
                         }
                     });
-                }, 'csv');
+                }, 'xlsx');
             }
 
         }

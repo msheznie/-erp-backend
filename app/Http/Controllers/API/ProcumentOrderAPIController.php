@@ -5582,8 +5582,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $data[$x][trans('custom.oct_amt')] = $val->TotOct;
                     $data[$x][trans('custom.nov_count')] = $val->CouNov;
                     $data[$x][trans('custom.nov_amt')] = $val->TotNov;
-                    $data[$x][trans('custom.dec_count')] = $val->CouDece;
-                    $data[$x][trans('custom.dec_amt')] = $val->TotDece;
+                    $decMon = trans('custom.dec');
+                    $data[$x][trans('custom.dec_count')] = data_get($val, 'Cou' . $decMon, 0);
+                    $data[$x][trans('custom.dec_amt')] = data_get($val, 'Tot' . $decMon, 0);
                     $data[$x][trans('custom.total_count')] = $val->totalCount;
                     $data[$x][trans('custom.total_amount')] = $val->totalValue;
                     $x++;

@@ -77,7 +77,7 @@ use App\Traits\AuditLogsTrait;
 use App\Models\CompanyFinanceYear;
 use App\Services\GeneralLedger\AssetCreationService;
 use App\Services\GeneralLedgerService;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use DateTime;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
@@ -2489,7 +2489,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $disk = 'local';
                 Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-                $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+                $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
                 if($input['assetCostingTypeID'] == 1){
                     $uploadData = ['objPHPExcel' => $objPHPExcel,

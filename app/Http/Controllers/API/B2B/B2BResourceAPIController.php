@@ -102,7 +102,7 @@ class B2BResourceAPIController extends AppBaseController
 
             $supplierEmai = SupplierMaster::where('supplierCodeSystem', $rs['payment_voucher']['BPVsupplierID'])->pluck('supEmail')->toArray();
             $contactEmails = SupplierContactDetails::where('supplierID', $rs['payment_voucher']['BPVsupplierID'])->pluck('contactPersonEmail')->toArray();
-            $supplierContactDetailsEmails = implode(array_merge($supplierEmai, $contactEmails), ';');
+            $supplierContactDetailsEmails = implode(';', array_merge($supplierEmai, $contactEmails));
 
             $detailObject = new \App\Classes\B2B\Detail();
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $rs['payment_voucher']['BPVsupplierID'])->where('currencyID', $rs['payment_voucher']['supplierTransCurrencyID'])->first();
@@ -317,7 +317,7 @@ class B2BResourceAPIController extends AppBaseController
         unset($dt);
 //        array_push($txtData, implode($reportData['footer']['title'], ','));
         array_push($txtData, implode(',',Arr::flatten($reportData['footer']['data'])));
-        $txtData = implode($txtData, "\n");
+        $txtData = implode("\n", $txtData);
 
         return $txtData;
     }

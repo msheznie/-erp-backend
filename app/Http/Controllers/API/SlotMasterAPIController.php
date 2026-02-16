@@ -390,14 +390,10 @@ class SlotMasterAPIController extends AppBaseController
         }])
             ->where('id', $slotMasterID)->first();
 
-        if ($slotMaster === null) {
-            return $this->sendError('Slot Master not found', 404);
-        }
-
         $user = Helper::getEmployeeSystemID();
         $subCompanies = $isGroupCompany ? $companyData : [$companyID];
         $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
-        $hasAccess = in_array($slotMaster['warehouse_id'], $assignedWareHouseIds);
+        $hasAccess = in_array($slotMaster['warehouse_id'] ?? [], $assignedWareHouseIds);
 
         $dateFrom = Carbon::parse($slotMaster['from_date'] ?? null);
         $dateTo = Carbon::parse($slotMaster['to_date'] ?? null);

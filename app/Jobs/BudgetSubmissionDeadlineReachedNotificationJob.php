@@ -62,14 +62,22 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
     {
         $today = Carbon::today();
 
-        // Find budget plannings with submission date that has passed (deadline reached)
+        // Find budget plannings with submission date or approved extension new_time that has passed (deadline reached)
         // Only for non-submitted budget plannings
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.hod.employee',
             'masterBudgetPlannings.company',
-            'financeYear'
+            'financeYear',
+            'timeExtensionRequests'
         ])
-        ->whereDate('submissionDate', '=', $today)
+        ->where(function ($query) use ($today) {
+            $query->whereDate('submissionDate', '=', $today)
+                ->orWhereHas('timeExtensionRequests', function ($q) use ($today) {
+                    $q->where('status', 2) // Approved
+                        ->whereDate('new_time', '=', $today);
+                });
+        })
+        ->where('workStatus', '!=', 3)
         ->get();
 
 
