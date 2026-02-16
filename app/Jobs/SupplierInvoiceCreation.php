@@ -896,7 +896,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                     if(empty($headerDataError) && empty($validationError) && empty($detailsError))
                     {
                         DB::beginTransaction();
-                        $createSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails, $invAttachment);
+                        $createSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails, $invAttachment, $input);
 
                         if(!$createSupplierInvoice['status']) {
                             $errors =
@@ -1009,7 +1009,7 @@ class SupplierInvoiceCreation implements ShouldQueue
         }
     }
 
-    function createSupplierInvoice($invMaster, $invDetails, $invAttachment)
+    function createSupplierInvoice($invMaster, $invDetails, $invAttachment, $input = null)
     {
         $returnData = SupplierInvoiceAPIService::storeBookingInvoice($invMaster);
         if($returnData['status'] == 'success') {
@@ -1196,6 +1196,12 @@ class SupplierInvoiceCreation implements ShouldQueue
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($returnData['documentSystemID'],$returnData['bookingSuppMasInvAutoID']);
                 $autoApproveParams['db'] = $this->db;
                 $autoApproveParams['supplierPrimaryCode'] = $returnData['supplierID'];
+                if (!is_null($input) && isset($input['employee_id'])) {
+                    $autoApproveParams['employeeID'] = $input['employee_id'];
+                }
+                else {
+                    $autoApproveParams['employeeID'] = UserTypeService::getSystemEmployee()->empID;
+                }
                 $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if ($approveDocument["success"]) {
                     $invId[] = $returnData['bookingSuppMasInvAutoID'];

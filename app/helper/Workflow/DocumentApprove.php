@@ -1001,7 +1001,8 @@ class DocumentApprove
 
                                 if ($supplierInvMaster->documentType == 1 || $supplierInvMaster->documentType == 3 || $supplierInvMaster->documentType == 4) {
                                     $object = new ChartOfAccountValidationService();
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+                                    $employeeID = (isset($input['employeeID']) && $input['employeeID']) ? $input['employeeID'] : null;
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
