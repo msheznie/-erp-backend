@@ -392,10 +392,10 @@ class SRMService
 
         if (!empty($data) && is_array($data)) {
             $purchaseOrderIds = array_unique(array_column($data, 'purchaseOrderID'));
-            
+
             if (count($purchaseOrderIds) > 1) {
                 $purchaseOrders = ProcumentOrder::getPoForAppointment($purchaseOrderIds);
-                
+
                 if (!$purchaseOrders->isEmpty()) {
                     $currencyCount = $purchaseOrders->pluck('supplierTransactionCurrencyID')->unique()->count();
                     if ($currencyCount > 1) {
@@ -622,7 +622,7 @@ class SRMService
             },
             'grv' => function ($query) {
                 $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
-                ->withCount('UnbilledGrvGroupBy');
+                    ->withCount('UnbilledGrvGroupBy');
             },
             'invoice' => function ($query) {
                 $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
@@ -1365,12 +1365,12 @@ class SRMService
         $search = $request->input('search.value');
 
         $query = Appointment::
-            select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
-                'appointment.created_at as appointmentCreatedDate',
-                'suppliermaster.supplierName as appointmentCreatedBy', 'suppliermaster.supplierName',
-                'warehousemaster.wareHouseDescription', 'appointment.primary_code', 'slot_details.start_date',
-                'slot_details.end_date', 'appointment.confirmed_yn', 'appointment.approved_yn', 'appointment.cancelYN',
-                'appointment.document_system_id', 'appointment.company_id', 'appointment.id', 'appointment.slot_detail_id')
+        select('appointment.id as appointmentId', 'appointment.refferedBackYN as appointmentRefferedBackYN',
+            'appointment.created_at as appointmentCreatedDate',
+            'suppliermaster.supplierName as appointmentCreatedBy', 'suppliermaster.supplierName',
+            'warehousemaster.wareHouseDescription', 'appointment.primary_code', 'slot_details.start_date',
+            'slot_details.end_date', 'appointment.confirmed_yn', 'appointment.approved_yn', 'appointment.cancelYN',
+            'appointment.document_system_id', 'appointment.company_id', 'appointment.id', 'appointment.slot_detail_id')
             ->join('slot_details', function ($query) {
                 $query->on('appointment.slot_detail_id', '=', 'slot_details.id');
             })
@@ -1379,17 +1379,17 @@ class SRMService
             ->join('slot_master', 'slot_master.id', 'slot_details.slot_master_id')
             ->join('warehousemaster', 'slot_master.warehouse_id', 'warehousemaster.wareHouseSystemCode')
             ->with([
-                    'grv' => function ($query) {
-                        $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
-                            ->withCount('UnbilledGrvGroupBy');
-                    },
-                    'invoice' => function ($query) {
-                        $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
-                    },
-                    'slot_detail' => function ($query) {
-                        $query->select('id','slot_master_id', 'company_id');
-                    }
-                ]);
+                'grv' => function ($query) {
+                    $query->select('deliveryAppoinmentID','grvPrimaryCode', 'grvConfirmedYN', 'approved', 'refferedBackYN','grvAutoID')
+                        ->withCount('UnbilledGrvGroupBy');
+                },
+                'invoice' => function ($query) {
+                    $query->select('deliveryAppoinmentID', 'cancelYN', 'approved', 'confirmedYN', 'refferedBackYN');
+                },
+                'slot_detail' => function ($query) {
+                    $query->select('id','slot_master_id', 'company_id');
+                }
+            ]);
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -2866,19 +2866,19 @@ class SRMService
             ->with(['attachments' => function ($q) use ($tenderMasterId,$tenderMaster) {
                 $q->select('attachmentID', 'companySystemID', 'documentID', 'documentSystemCode', 'attachmentDescription',
                     'originalFileName', 'myFileName', 'attachmentType', 'timeStamp', 'path', 'envelopType');
-            $q->where('documentSystemCode', $tenderMasterId);
-            $q->where(function($query) use($tenderMaster){
-                if($tenderMaster->document_type == 0)
-                {
-                    $type = 108;
-                }
-                else
-                {
-                    $type = 113;
-                }
-                $query->where('documentSystemID', $type);
-            });
-        }])
+                $q->where('documentSystemCode', $tenderMasterId);
+                $q->where(function($query) use($tenderMaster){
+                    if($tenderMaster->document_type == 0)
+                    {
+                        $type = 108;
+                    }
+                    else
+                    {
+                        $type = 113;
+                    }
+                    $query->where('documentSystemID', $type);
+                });
+            }])
             ->whereIn('id',$doucments)
             ->where('srm_action', '!=', 2)
             ->WhereHas('attachments', function ($q1) use ($tenderMasterId,$tenderMaster) {
@@ -4536,10 +4536,10 @@ class SRMService
                     $q->select('UnitID', 'UnitShortCode', 'UnitDes');
                 },
                 'bid_boq' => function ($q) use ($bidMasterId) {
-                $q->select('id', 'boq_id', 'bid_master_id', 'main_works_id', 'qty', 'unit_amount', 'total_amount',
-                    'remarks', 'supplier_registration_id');
-            $q->where('bid_master_id', $bidMasterId);
-        }])->where('main_work_id', $mainWorkId)->get();
+                    $q->select('id', 'boq_id', 'bid_master_id', 'main_works_id', 'qty', 'unit_amount', 'total_amount',
+                        'remarks', 'supplier_registration_id');
+                    $q->where('bid_master_id', $bidMasterId);
+                }])->where('main_work_id', $mainWorkId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
@@ -4965,20 +4965,36 @@ class SRMService
                 'SupplierRegistrationLink' => function ($q) {
                     $q->select('id', 'name');
                 }
-            ]);
+            ])
+            ->when(!$tenderNegotiation, function ($q) {
+                $q->whereDoesntHave('TenderBidNegotiation');
+            });
 
-       /* if ($tenderNegotiation) {
-            $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $bidSubmissionCodes = array_map(function ($tenderNegotiationData) {
-                    return $tenderNegotiationData['supplier_tender_negotiation']['bidSubmissionCode'];
-                }, $tenderNegotiationData);
-                $query->whereIn('bid_submission_code_old' , $bidSubmissionCodes);
-            });
-        } else {
-            $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
-                $query->where('bid_submission_code_old', '!=', $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
-            });
-        }*/
+        /* if ($tenderNegotiation) {
+             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
+                 $bidSubmissionCodes = array_map(function ($item) {
+                     return $item['supplier_tender_negotiation']['bidSubmissionCode'] ?? null;
+                 }, is_array($tenderNegotiationData) ? $tenderNegotiationData : []);
+                 $bidSubmissionCodes = array_filter($bidSubmissionCodes);
+                 if (!empty($bidSubmissionCodes)) {
+                     $query->whereIn('bid_submission_code_old', $bidSubmissionCodes);
+                 }
+             });
+         } else {
+             $firstBidCode = null;
+             if (!empty($tenderNegotiationData) && is_array($tenderNegotiationData)) {
+                 $first = $tenderNegotiationData[0] ?? null;
+                 $firstBidCode = $first['supplier_tender_negotiation']['bidSubmissionCode'] ?? null;
+             }
+             if ($firstBidCode !== null) {
+                 $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($firstBidCode) {
+                     $query->where('bid_submission_code_old', '!=', $firstBidCode);
+                 });
+             }
+             $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
+                 $query->where('bid_submission_code_old', '!=', $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
+             });
+         }*/
 
         if (!empty($bidSubmissionCodes)) {
 
@@ -5555,11 +5571,11 @@ class SRMService
 
         return $base64File
             ? [
-            'success' => true,
-            'message' => 'Successfully retrieved',
-            'fileName' => $full_name,
-            'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'data' => $base64File,]
+                'success' => true,
+                'message' => 'Successfully retrieved',
+                'fileName' => $full_name,
+                'mimeType' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'data' => $base64File,]
             : ['success' => false, 'message' => 'Unable to export excel', 'data' => ''];
     }
 
@@ -7275,7 +7291,7 @@ class SRMService
                     'comment' => $comment,
                     'created_by' => $supplierID
                 ]);
-                
+
                 $this->sendPoAcknowledgementEmail($purchaseOrder, $poCreator, $supplierName, $comment);
 
                 $this->sendPoAcknowledgementNotification($purchaseOrder, $poCreator, $supplierName);
@@ -7317,7 +7333,7 @@ class SRMService
         $purchaseOrder = ProcumentOrder::select('purchaseOrderID', 'purchaseOrderCode', 'supplierID','createdUserSystemID', 'companySystemID')
             ->where('purchaseOrderID', $purchaseOrderID)
             ->first();
-        
+
         if (!$purchaseOrder) {
             return ['error' => $this->generateResponse(false, 'Purchase Order not found')];
         }
@@ -7336,7 +7352,7 @@ class SRMService
             $poCreator = Employee::where('employeeSystemID', $purchaseOrder->createdUserSystemID)
                 ->first();
         }
-        
+
         if (!$poCreator || !$poCreator->empEmail) {
             return ['error' => $this->generateResponse(false, 'PO creator email not found')];
         }
@@ -7360,24 +7376,24 @@ class SRMService
         $poNumber = $purchaseOrder->purchaseOrderCode;
         $buyerName = $poCreator->empName ?? $poCreator->empFullName ?? 'Buyer';
         $subject = "Purchase Order Acknowledgement – PO# {$poNumber}";
-        
+
         $emailBody = "Dear {$buyerName},<br/><br/>";
         $emailBody .= "We would like to inform you that the Purchase Order {$poNumber} has been acknowledged by {$supplierName} through the Supplier Portal.<br/><br/>";
-        
+
         if (!empty($comment) && $comment !== '-') {
             $emailBody .= "Supplier Comment: {$comment}<br/><br/>";
         }
-        
+
         $emailBody .= "Thank you for your continued collaboration.<br/><br/>";
         $emailBody .= "Best regards,<br/>{$supplierName}";
-        
+
         $dataEmail = [
             'companySystemID' => $purchaseOrder->companySystemID,
             'alertMessage' => $subject,
             'empEmail' => $poCreator->empEmail,
             'emailAlertMessage' => $emailBody,
         ];
-        
+
         Email::sendEmailErp($dataEmail);
     }
 
@@ -7488,9 +7504,9 @@ class SRMService
                 $penaltyDetails['due_in']
             );
 
-                $noOfInstallments = floor($noOfInstallments);
-                $calculatedAmount = $noOfInstallments * $penaltyDetails['penalty_amount'];
-                $status = $penaltyDetails['status'];
+            $noOfInstallments = floor($noOfInstallments);
+            $calculatedAmount = $noOfInstallments * $penaltyDetails['penalty_amount'];
+            $status = $penaltyDetails['status'];
 
             $duePenaltyAmount = $this->calculateDuePenaltyAmount(
                 $status,
@@ -7655,12 +7671,12 @@ class SRMService
         {
             return (float) $calculatedAmount;
         }
-        
+
         if($maximumPenaltyAmount < $calculatedAmount)
         {
             return (float) $maximumPenaltyAmount;
         }
-        
+
         if($maximumPenaltyAmount > $calculatedAmount)
         {
             return (float) $calculatedAmount;
