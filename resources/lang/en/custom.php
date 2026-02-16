@@ -9194,6 +9194,7 @@ return
     'po_analysis' => 'po_analysis',
     'order_inquiry' => 'order_inquiry',
     'open_requests_details_export_in_progress' => 'Open Request Detailed report Export in progress, you will be notified once ready !!',
+    'budget_planning_export_in_progress' => 'Company budget planning export is in progress. You will be notified once the file is ready.',
     'please_select_the_company' => 'Please select the company',
     'please_select_date_range' => 'Please select date range',
     'please_select_the_segment' => 'Please select the segments',
