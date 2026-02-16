@@ -24,6 +24,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\helper\ReopenDocument;
 use App\Http\Requests\API\CreateCustomerMasterAPIRequest;
+use App\Http\Requests\API\PullCustomerMasterRequest;
 use App\Http\Requests\API\UpdateCustomerMasterAPIRequest;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
@@ -87,6 +88,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use App\Services\API\CustomerMasterBulkUploadService;
 use Illuminate\Support\Arr;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 
@@ -1609,7 +1611,6 @@ class CustomerMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $customerMaster = CustomerMaster::find($input['customerID']);
-
         if (!$customerMaster) {
             return $this->sendError(trans('custom.customer_data_not_found'));
         }
@@ -1886,6 +1887,187 @@ class CustomerMasterAPIController extends AppBaseController
             'customer_code' => $code,
             'secondary_code' => $secondaryCode,
         ];
+    }
+
+    public function pullCustomerMaster(PullCustomerMasterRequest $request)
+    {
+        $input = $request->all();
+        $companySystemID = $input['company_id'];
+        $category = isset($input['category']) ? $input['category'] : null;
+        $customerCategory = null;
+
+        if ($category !== null && $category !== '') {
+            $customerCategory = CustomerMasterCategory::getCustomerCategory($category);
+            if (!$customerCategory) {
+                return $this->sendError('The Customer category  not matching.', 422);
+            }
+        }
+
+        $comanyMasterData = Company::find($companySystemID);
+        if ($comanyMasterData) {
+            $currencyData = CurrencyMaster::find($comanyMasterData->reportingCurrency);
+            if ($currencyData) {
+                $reportingCurrency = $currencyData->CurrencyCode ?? 'USD';
+            }
+        }
+
+        try {
+            $usePagination = $request->has('page') || $request->has('per_page');
+            $page = $request->get('page', 1);
+            $perPage = $request->get('per_page', 10);
+
+            $categoryId = $customerCategory ? $customerCategory->categoryID : null;
+            $query = CustomerMaster::approvedAssignedCustomers($companySystemID);
+
+            $query->select([
+                'customerCodeSystem',
+                'CutomerCode',
+                'customerShortCode',
+                'CustomerName',
+                'ReportTitle',
+                'customerCategoryID',
+                'interCompanyYN',
+                'customerCity',
+                'customerCountry',
+                'creditLimit',
+                'creditDays',
+                'customer_registration_no',
+                'customer_registration_expiry_date',
+                'isCustomerActive',
+                'vatEligible',
+                'vatNumber',
+                'vatPercentage',
+                'custGLaccount',
+                'custGLAccountSystemID',
+                'custUnbilledAccount',
+                'custUnbilledAccountSystemID',
+                'custAdvanceAccount',
+                'custAdvanceAccountSystemID',
+            ]);
+
+            $query->with([
+                'country' => function ($q) {
+                    $q->select('countryID', 'countryName');
+                },
+                'category' => function ($q) {
+                    $q->select('categoryID', 'categoryDescription');
+                },
+                'customer_contacts' => function ($q) {
+                    $q->select('customerContactID', 'customerID', 'contactTypeID', 'contactPersonName', 'contactPersonTelephone', 'contactPersonFax', 'contactPersonEmail', 'isDefault')
+                    ->with([
+                        'contactType' => function ($q) {
+                            $q->select('supplierContactTypeID', 'supplierContactDescription');
+                        }
+                    ]);
+                },
+                'customerCurrency' => function ($q) {
+                    $q->select('custCurrencyAutoID', 'customerCodeSystem', 'currencyID', 'isDefault', 'isAssigned')
+                    ->with([
+                        'currencyMaster' => function ($q) {
+                            $q->select('currencyID', 'CurrencyCode', 'CurrencyName');
+                        }
+                    ]);
+                },
+                'gl_account' => function ($q) {
+                    $q->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+                'unbilled_account' => function ($q) {
+                    $q->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+                'advance_account' => function ($q) {
+                    $q->select('chartOfAccountSystemID', 'AccountDescription');
+                },
+            ]);
+
+            if ($categoryId !== null) {
+                $query->where('customerCategoryID', $categoryId);
+            }
+
+            $query->orderBy('customerCodeSystem', 'asc');
+
+            $customers = $usePagination
+                ? $query->paginate($perPage, ['*'], 'page', $page)
+                : $query->get();
+
+            $result = [];
+            foreach ($customers as $customer) {
+                $contactDetailsList = [];
+                if ($customer->customer_contacts && $customer->customer_contacts->isNotEmpty()) {
+                    foreach ($customer->customer_contacts as $contact) {
+                        $contactDetailsList[] = [
+                            'contactType' => $contact->contactType->supplierContactDescription ?? null,
+                            'contactPersonName' => $contact->contactPersonName ?? null,
+                            'telephone' => $contact->contactPersonTelephone ?? null,
+                            'fax' => $contact->contactPersonFax ?? null,
+                            'email' => $contact->contactPersonEmail ?? null,
+                            'isDefault' => $contact->isDefault == -1 ? 'Yes' : 'No',
+                        ];
+                    }
+                }
+
+                $currencyDetailsList = [];
+                if ($customer->customerCurrency && $customer->customerCurrency->isNotEmpty()) {
+                    foreach ($customer->customerCurrency as $currency) {
+                        $currencyDetailsList[] = [
+                            'currencyName' => $currency->currencyMaster->CurrencyName ?? null,
+                            'isDefault' => $currency->isDefault == -1 ? 'Yes' : 'No',
+                            'isAssigned' => $currency->isAssigned == -1 ? 'Yes' : 'No',
+                        ];
+                    }
+                }
+
+                $result[] = [
+                    'primaryCode' => $customer->CutomerCode,
+                    'secondaryCode' => $customer->customerShortCode,
+                    'customerName' => $customer->CustomerName,
+                    'reportTitle' => $customer->ReportTitle ?? null,
+                    'category' => $customer->category->categoryDescription ?? null,
+                    'interCompanyYesNo' => $customer->interCompanyYN = -1 ? 'No' : 'Yes',
+                    'country' => $customer->country ? $customer->country->countryName : null,                  
+                    'city' => $customer->customerCity ?? null,
+                    'creditLimit(' . $reportingCurrency . ')' => $customer->creditLimit ?? null,
+                    'creditPeriod' => $customer->creditDays ?? null,
+                    'registrationNumber' => $customer->customer_registration_no ?? null,
+                    'registrationExpiryDate' => $customer->customer_registration_expiry_date ?? null,
+                    'isActive' => $customer->isCustomerActive == 1 ? 'Yes' : 'No',
+                    'vatEligible' => $customer->vatEligible == 1 ? 'Yes' : 'No',
+                    'vatNumber' => $customer->vatNumber ?? null,
+                    'vatPercentage' => $customer->vatPercentage ?? null,
+                    'glDetails' => [
+                        'receivableAccount' => $customer->gl_account
+                            ? ($customer->custGLaccount . ' - ' . $customer->gl_account->AccountDescription)
+                            : ($customer->custGLaccount ?? null),
+                        'unbilledAccount' => $customer->unbilled_account
+                            ? ($customer->custUnbilledAccount . ' - ' . $customer->unbilled_account->AccountDescription)
+                            : ($customer->custUnbilledAccount ?? null),
+                        'advanceAccount' => $customer->advance_account
+                            ? ($customer->custAdvanceAccount . ' - ' . $customer->advance_account->AccountDescription)
+                            : ($customer->custAdvanceAccount ?? null),
+                    ],
+                    'contactDetails' => $contactDetailsList ?? null,
+                    'currencyDetails' => $currencyDetailsList ?? null,
+                ];
+            }
+
+            if ($usePagination) {
+                $transformedItems = collect($result);
+                $paginatedResult = new LengthAwarePaginator(
+                    $transformedItems,
+                    $customers->total(),
+                    $customers->perPage(),
+                    $customers->currentPage(),
+                    [
+                        'path' => $request->url(),
+                        'query' => $request->query(),
+                    ]
+                );
+                return $this->sendResponse($paginatedResult->toArray(), trans('custom.customer_master_retrieved_successfully'));
+            }
+
+            return $this->sendResponse($result, trans('custom.customer_master_retrieved_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
     }
 
 }
