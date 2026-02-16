@@ -10,6 +10,7 @@ use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetTemplate;
 use App\Models\CompanyDepartment;
 use App\Models\DepBudgetTemplateGl;
+use App\Models\DepartmentBudgetPlanningDetail;
 use App\Jobs\AssignBudgetTemplateToAllDepartments;
 use App\Repositories\BudgetTemplateRepository;
 use Illuminate\Http\Request;
@@ -206,6 +207,12 @@ class BudgetTemplateAPIController extends AppBaseController
             return $this->sendError(trans('custom.the_template_is_assigned_to_the_department_cannot_'));
         }
 
+
+        $departmentBudgetPlanning = DepartmentBudgetPlanningDetail::where('budget_template_id', $id)->exists();
+
+        if($departmentBudgetPlanning) {
+            return $this->sendError(trans('custom.budget_template_is_used_in_department_budget_planning'), 500);
+        }
         //delete all columns assigned to the template
         \App\Models\BudgetTemplateColumn::where('budgetTemplateID', $id)->delete();
 
