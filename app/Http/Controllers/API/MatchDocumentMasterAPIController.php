@@ -366,7 +366,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = (($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] * -1) + $machAmount);
+                $supplierPaidSum = data_get($supplierPaidAmountSum, 'SumOfsupplierPaymentAmount', 0);
+                $totalPaidAmount = (($supplierPaidSum * -1) + $machAmount);
 
                 if ($debitNoteMaster->debitAmountTrans == $totalPaidAmount || $totalPaidAmount > $debitNoteMaster->debitAmountTrans) {
                     return $this->sendError(trans('custom.debit_note_amount_more_than_document'), 500);

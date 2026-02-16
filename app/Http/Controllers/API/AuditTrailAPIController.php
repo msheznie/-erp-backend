@@ -335,7 +335,7 @@ class AuditTrailAPIController extends AppBaseController
             ];
             
             if (!empty($input['module'])) {
-                $params['id'] = $input['id'];
+                $params['id'] = data_get($input, 'id');
                 $params['module'] = $this->lokiService->getAuditTables($input['module']);
                 $params['fromDate'] = $input['fromDate'] ?? null;
                 $params['toDate'] = $input['toDate'] ?? null;

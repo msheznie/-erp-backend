@@ -1567,7 +1567,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                                       ->first();  
 
 
-              $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+              $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0);
 
 
         }
@@ -1600,7 +1600,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
 
 
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0);
            
         }
         else
