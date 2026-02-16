@@ -606,9 +606,15 @@ class SRMService
             /*->where('created_by', $supplierID)*/
             ->get();
 
-        $slotMaster = SlotMaster::where('id', $slotMasterID)->first();
+        $slotMaster = SlotMaster::find($slotMasterID);
 
-        $arr['remaining_appointments'] = ($slotMaster['limit_deliveries'] == 0 ? 1 : ($slotMaster['no_of_deliveries'] - sizeof($appointment)));
+        $limitDeliveries = $slotMaster->limit_deliveries ?? 0;
+        $noOfDeliveries  = $slotMaster->no_of_deliveries ?? 0;
+
+        $arr['remaining_appointments'] =
+            $limitDeliveries == 0
+                ? 1
+                : max(0, $noOfDeliveries - sizeof($appointment));
 
         $data = Appointment::with([
             'created_by' => function ($query) {
