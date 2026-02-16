@@ -4053,7 +4053,7 @@ class Helper
             Please find published <span style='text-transform: lowercase;'>{$documentName}</span> circular details below.<br /><br />
             <b>Circular Name : </b>{$circular['circular_name']}<br /><br />
             {$descriptionHtml}Thank You<br />";
-            $emailMessage .= \Helper::getSupplierEmailFooter($companySystemID);
+            $emailMessage .= Helper::getSupplierEmailFooter($companySystemID);
 
             $dataEmail = [
                 'empEmail' => $email,
