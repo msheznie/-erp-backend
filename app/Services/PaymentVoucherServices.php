@@ -1880,8 +1880,10 @@ class PaymentVoucherServices
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
+                $employeeID = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee()->empID : null;
+
                 $object = new ChartOfAccountValidationService();
-                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"], $employeeID);
 
                 if (isset($result) && !empty($result["accountCodes"])) {
                     return [
