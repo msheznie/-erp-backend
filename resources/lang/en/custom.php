@@ -9970,4 +9970,9 @@ return
     'column_must_be_string' => 'Each column name must be a string',
     'column_max_length' => 'Column name cannot exceed 100 characters',
     'invalid_date_format' => 'Invalid date format',
+    'document_attachment_id_required' => 'Document attachment ID is required',
+    'owner_key_required' => 'Owner key is required',
+    'invalid_owner_key' => 'Invalid owner key. Must be one of: reporting_manager, hod, admin',
+    'document_access_role_updated_successfully' => 'Document access role updated successfully',
+    'error_updating_document_access_role' => 'Error updating document access role',
 ];

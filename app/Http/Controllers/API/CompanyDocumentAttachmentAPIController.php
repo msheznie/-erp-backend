@@ -21,6 +21,9 @@ use App\Models\Company;
 use App\Models\ApprovalLevel;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentMaster;
+use App\Models\DocumentAccessRole;
+use App\Models\DocumentAccessEmployee;
+use App\Models\Employee;
 use App\Repositories\CompanyDocumentAttachmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -250,4 +253,183 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         return $this->sendResponse($result, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
+
+
+    private function buildOwnersArray($documentAccessRole = null)
+    {
+        return [
+            'reporting_manager' => [
+                'document_view_access' => $documentAccessRole ? ($documentAccessRole->reportingManager_view != 0) : false,
+                'create_access_on_behalf' => $documentAccessRole ? ($documentAccessRole->reportingManager_create != 0) : false
+            ],
+            'hod' => [
+                'document_view_access' => $documentAccessRole ? ($documentAccessRole->hod_view != 0) : false,
+                'create_access_on_behalf' => $documentAccessRole ? ($documentAccessRole->hod_create != 0) : false
+            ],
+            'admin' => [
+                'document_view_access' => $documentAccessRole ? ($documentAccessRole->admin_view != 0) : false,
+                'create_access_on_behalf' => $documentAccessRole ? ($documentAccessRole->admin_create != 0) : false
+            ]
+        ];
+    }
+
+    public function getDocumentAccessRole(Request $request)
+    {
+        $input = $request->all();
+        $documentAttachmentId = $input['document_attachment_id'];
+        
+        if (empty($documentAttachmentId)) {
+            return $this->sendError('Document attachment ID is required');
+        }
+
+        $documentAccessRole = DocumentAccessRole::where('document_attachment_id', $documentAttachmentId)
+            ->with(['employees.employee'])
+            ->first();
+
+        if (empty($documentAccessRole)) {
+            $defaultData = [
+                'id' => null,
+                'document_attachment_id' => $documentAttachmentId,
+                'owners' => $this->buildOwnersArray(null),
+                'document_view_employees' => [],
+                'create_access_employees' => []
+            ];
+            return $this->sendResponse($defaultData, 'Document access role retrieved successfully');
+        }
+
+        $documentViewEmployees = [];
+        $createAccessEmployees = [];
+
+        foreach ($documentAccessRole->employees as $emp) {
+            if ($emp->employee) {
+                $employeeData = [
+                    'id' => $emp->id,
+                    'employee_id' => $emp->employee_id,
+                    'employeeSystemID' => $emp->employee->employeeSystemID,
+                    'empID' => $emp->employee->empID,
+                    'empFullName' => $emp->employee->empFullName,
+                    'empName' => $emp->employee->empName
+                ];
+                
+                $documentAccessType = $emp->document_access_type ?? 0;
+                if ($documentAccessType == 1) {
+                    $documentViewEmployees[] = $employeeData;
+                } elseif ($documentAccessType == 2) {
+                    $createAccessEmployees[] = $employeeData;
+                }
+            }
+        }
+
+        $result = [
+            'id' => $documentAccessRole->id,
+            'document_attachment_id' => $documentAccessRole->document_attachment_id,
+            'owners' => $this->buildOwnersArray($documentAccessRole),
+            'document_view_employees' => $documentViewEmployees,
+            'create_access_employees' => $createAccessEmployees
+        ];
+
+        return $this->sendResponse($result, 'Document access role retrieved successfully');
+    }
+
+    public function saveDocumentAccessRole(Request $request)
+    {
+        $input = $request->all();
+        $documentAccessRoleId = $input['document_access_role_id'];
+
+        try {
+            if (isset($input['employees']) && is_array($input['employees']) && isset($input['document_access_type'])) {
+                $documentAccessType = (int)$input['document_access_type'];
+                
+                $existingEmployeeIds = DocumentAccessEmployee::where('document_access_role_id', $documentAccessRoleId)
+                    ->where('document_access_type', $documentAccessType)
+                    ->pluck('employee_id')
+                    ->toArray();
+
+                foreach ($input['employees'] as $employee) {
+                    $employeeId = is_array($employee) ? ($employee['id'] ?? $employee) : ($employee->id ?? $employee);
+                    
+                    if (!in_array($employeeId, $existingEmployeeIds)) {
+                        DocumentAccessEmployee::create([
+                            'document_access_role_id' => $documentAccessRoleId,
+                            'employee_id' => $employeeId,
+                            'document_access_type' => $documentAccessType
+                        ]);
+                    }
+                }
+            }
+            return $this->sendResponse(true, trans('custom.document_access_role_saved_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_saving_document_access_role') . ': ' . $e->getMessage());
+        }
+    }
+
+
+    public function updateDocumentAccessRoleToggle(Request $request)
+    {
+        $input = $request->all();
+        $documentAttachmentId =  $input['companyDocumentAttachmentID'];
+        $ownerKey = $input['owner_key'];
+        $documentViewAccess = filter_var($input['document_view_access'], FILTER_VALIDATE_BOOLEAN);
+        $createAccessOnBehalf = filter_var($input['create_access_on_behalf'], FILTER_VALIDATE_BOOLEAN);
+
+        if (empty($documentAttachmentId)) {
+            return $this->sendError(trans('custom.document_attachment_id_required'));
+        }
+        if (empty($ownerKey)) {
+            return $this->sendError(trans('custom.owner_key_required'));
+        }
+
+        $columnMap = [
+            'reporting_manager' => ['view' => 'reportingManager_view', 'create' => 'reportingManager_create'],
+            'hod'              => ['view' => 'hod_view', 'create' => 'hod_create'],
+            'admin'            => ['view' => 'admin_view', 'create' => 'admin_create'],
+        ];
+        if (!isset($columnMap[$ownerKey])) {
+            return $this->sendError(trans('custom.invalid_owner_key'));
+        }
+
+        try {
+            $documentAccessRole = DocumentAccessRole::firstOrNew(['document_attachment_id' => $documentAttachmentId]);
+            if (!$documentAccessRole->exists) {
+                $documentAccessRole->reportingManager_view = 0;
+                $documentAccessRole->reportingManager_create = 0;
+                $documentAccessRole->hod_view = 0;
+                $documentAccessRole->hod_create = 0;
+                $documentAccessRole->admin_view = 0;
+                $documentAccessRole->admin_create = 0;
+            }
+            $documentAccessRole->{$columnMap[$ownerKey]['view']} = $documentViewAccess ? 1 : 0;
+            $documentAccessRole->{$columnMap[$ownerKey]['create']} = $createAccessOnBehalf ? 1 : 0;
+            $documentAccessRole->save();
+
+            return $this->sendResponse($documentAccessRole->toArray(), trans('custom.document_access_role_updated_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_updating_document_access_role') . ': ' . $e->getMessage());
+        }
+    }
+
+
+    public function deleteDocumentAccessEmployee(Request $request)
+    {
+        $employeeId = $request->input('id');
+        
+        if (empty($employeeId)) {
+            return $this->sendError('Employee ID is required');
+        }
+
+        try {
+            $documentAccessEmployee = DocumentAccessEmployee::find($employeeId);
+            
+            if (empty($documentAccessEmployee)) {
+                return $this->sendError('Document access employee not found');
+            }
+
+            $documentAccessEmployee->delete();
+
+            return $this->sendResponse([], trans('custom.document_access_employee_deleted_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError(trans('custom.error_deleting_document_access_employee') . ': ' . $e->getMessage());
+        }
+    }
+
 }
