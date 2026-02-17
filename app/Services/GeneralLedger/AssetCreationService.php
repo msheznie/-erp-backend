@@ -299,5 +299,6 @@ class AssetCreationService extends AppBaseController
 
         }
 
+        return $this->sendJsonResponse(true, 'Asset approval completed');
     }
 }
