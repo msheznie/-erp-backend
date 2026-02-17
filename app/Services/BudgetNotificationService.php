@@ -369,7 +369,6 @@ class BudgetNotificationService
             }
         }
 
-
         if (!empty($emails)) {
             Email::sendEmail($emails);
         }
