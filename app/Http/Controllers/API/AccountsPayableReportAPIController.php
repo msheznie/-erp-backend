@@ -6342,7 +6342,7 @@ ORDER BY
                         $mpdf = new \Mpdf\Mpdf($mpdfConfig);
                         $mpdf->AddPage('L');
                         $mpdf->setAutoBottomMargin = 'stretch';
-                        $mpdf->WriteHTML($html);
+                        $this->writeHtmlChunked($mpdf, $html);
                         return $mpdf->Output('supplier_statement.pdf', 'I');
                     } catch (\Exception $e) {
                         \Log::error('mPDF Error in pdfExportReport (SS): ' . $e->getMessage());
@@ -6358,7 +6358,7 @@ ORDER BY
                         $mpdf = new \Mpdf\Mpdf($mpdfConfig);
                         $mpdf->AddPage('L');
                         $mpdf->setAutoBottomMargin = 'stretch';
-                        $mpdf->WriteHTML($html);
+                        $this->writeHtmlChunked($mpdf, $html);
                         return $mpdf->Output('supplier_statement_details.pdf', 'I');
                     } catch (\Exception $e) {
                         \Log::error('mPDF Error in pdfExportReport (SSD): ' . $e->getMessage());
@@ -6688,6 +6688,44 @@ ORDER BY
         $html = view('print.supplier_ledger', $dataArr);
 
         return ['html' => $html, 'output' => $output];
+    }
+
+    /**
+     * Write HTML to mPDF in chunks to avoid pcre.backtrack_limit (1000000) exceeded.
+     * Splits at tag boundaries when possible to keep markup valid.
+     */
+    private function writeHtmlChunked(\Mpdf\Mpdf $mpdf, string $html, int $chunkSize = 500000): void
+    {
+        $len = strlen($html);
+        if ($len <= $chunkSize) {
+            $mpdf->WriteHTML($html);
+
+            return;
+        }
+        $offset = 0;
+        $boundaries = ['</tr>', '</table>', '</tbody>', '</div>', "\n"];
+        while ($offset < $len) {
+            $chunk = substr($html, $offset, $chunkSize);
+            $chunkEnd = $offset + $chunkSize;
+            if ($chunkEnd < $len) {
+                $best = -1;
+                foreach ($boundaries as $b) {
+                    $pos = strrpos($chunk, $b);
+                    if ($pos !== false && $pos > $best) {
+                        $best = $pos + strlen($b);
+                    }
+                }
+                if ($best > 0) {
+                    $chunk = substr($html, $offset, $best);
+                    $offset += $best;
+                } else {
+                    $offset += $chunkSize;
+                }
+            } else {
+                $offset = $len;
+            }
+            $mpdf->WriteHTML($chunk);
+        }
     }
 
     /**
