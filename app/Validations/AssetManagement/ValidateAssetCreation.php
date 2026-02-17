@@ -269,6 +269,7 @@ class ValidateAssetCreation
             }
         }
 
+        return self::sendJsonResponse(true, 'All validations are passed', 200);
     }
 
 }
