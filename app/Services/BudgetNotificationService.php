@@ -306,7 +306,69 @@ class BudgetNotificationService
    private function sendSubmissionDeadlineReachedEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
         $this->sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
-        // $this->sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID);
+
+        $budgetNotificationDetails = BudgetNotificationDetail::where('notification_id', 6)->where('isActive', 1)->where('companySystemID', $this->companySystemID)->exists();
+        if(!$budgetNotificationDetails) {
+            return;
+        }
+        $budgetPlanning = DepartmentBudgetPlanning::with([
+            'department.hod.employee',
+            'masterBudgetPlannings.company',
+            'revisions',
+            'budgetPlanningDetails' => function ($q) {
+                $q->whereHas('budgetDelegateAccessDetails');
+            },
+            'budgetPlanningDetails.budgetDelegateAccessDetails.delegatee.employee',
+        ])->find($departmentBudgetPlanningID);
+        $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
+        $departmentBudgetYear = CompanyFinanceYear::find($departmentBudgetPlanning->yearID);
+
+        $departmentBudgetPlanningDetails = $budgetPlanning->budgetPlanningDetails;
+        $today = Carbon::today();
+        $todayStr = $today->toDateString();
+        $emails = [];
+
+        foreach ($departmentBudgetPlanningDetails as $departmentBudgetPlanningDetail) {
+            $budgetDelegateAccessDetails = $departmentBudgetPlanningDetail->budgetDelegateAccessDetails->filter(function ($record) use ($todayStr) {
+                $submissionDate = $record->submission_time ? \Carbon\Carbon::parse($record->submission_time)->toDateString() : null;
+                return $submissionDate === $todayStr;
+            });
+            if ($budgetDelegateAccessDetails->count() > 0) {
+                foreach ($budgetDelegateAccessDetails as $budgetDelegateAccessDetail) {
+                    $delegatee = $budgetDelegateAccessDetail->delegatee;
+                    if (!$delegatee || !$delegatee->employee) {
+                        continue;
+                    }
+                    $employee = $delegatee->employee;
+                    $placeholders = [
+                        'RecipientName' => $employee->empName . ' (' . $employee->empID . ')',
+                        'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                        'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)) . ' - ' . date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                    ];
+                    $notificationToUse = $budgetNotifications;
+                    if ($revision) {
+                        $placeholders['RevisionDeadline'] = date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A';
+                        $notificationToUse = BudgetNotification::where('slug', 'revision-deadline-warning')->first() ?: $budgetNotifications;
+                    }
+                    $subjectTemplate = $notificationToUse->subject;
+                    $bodyTemplate = $notificationToUse->body;
+                    $emails[] = [
+                        'empEmail' => $employee->empEmail,
+                        'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
+                        'alertMessage' => $this->replacePlaceholders($subjectTemplate, $placeholders, false),
+                        'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true),
+                        'empSystemID' => $employee->employeeSystemID,
+                        'docSystemID' => 133,
+                        'docSystemCode' => $departmentBudgetPlanningID,
+                    ];
+                }
+            }
+        }
+
+
+        if (!empty($emails)) {
+            \Email::sendEmail($emails);
+        }
    }
 
    private function sendEmailToHOD($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
