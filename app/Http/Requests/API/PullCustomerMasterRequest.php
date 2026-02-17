@@ -29,7 +29,7 @@ class PullCustomerMasterRequest extends FormRequest
     {
         return [
             'company_id' => 'required|integer',
-            'category' => 'sometimes|string',
+            'category' => 'sometimes|array',
             'page' => 'sometimes|integer|min:1',
             'per_page' => 'sometimes|integer|min:1|max:50',
         ];
@@ -44,7 +44,7 @@ class PullCustomerMasterRequest extends FormRequest
     {
         return [
             'company_id.required' => trans('custom.companySystemID_is_required'),
-            'category.string' => trans('custom.category_must_be_an_string'),
+            'category.array' => trans('custom.category_must_be_an_array'),
             'page.integer' => trans('custom.page_must_be_an_integer'),
             'page.min' => trans('custom.page_must_be_at_least_1'),
             'per_page.integer' => trans('custom.per_page_must_be_an_integer'),
