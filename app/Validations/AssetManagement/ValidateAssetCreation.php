@@ -131,11 +131,13 @@ class ValidateAssetCreation
             return self::sendJsonResponse(false,$validator->messages(), 422);
         }
 
-        if (isset($input['itemPicture'])) {
-            if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+        if (isset($input['itemPicture']) && is_array($itemImgaeArr) && isset($itemImgaeArr[0]['size'])) {
+            if ((int) $itemImgaeArr[0]['size'] > (int) env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                 return self::sendJsonResponse(false,"Maximum allowed file size is exceeded. Please upload lesser than".Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
             }
         }
+
+        return self::sendJsonResponse(true, 'All validations are passed', 200);
     }
 
     public static function uploadValidation(){

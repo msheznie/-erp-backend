@@ -101,8 +101,8 @@ class AssetCreationService extends AppBaseController
 
     public function assetCreation(array $input)
     {
-        $itemImgaeArr = $input['itemImage'];
-        $itemPicture = $input['itemPicture'];
+        $itemImgaeArr = $input['itemImage'] ?? [];
+        $itemPicture = $input['itemPicture'] ?? null;
         $input = Arr::except($input, 'itemImage');
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
         
