@@ -2802,16 +2802,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
         $customerMaster = '';
 
+        $hasValidCategory = isset($customerCategoryID) && $customerCategoryID !== '' && (int) $customerCategoryID > 0;
+
         if ($request['reportID'] == 'CR') {
             $customerMaster = CustomerAssigned::whereIN('companySystemID', $companiesByGroup)
                                               ->groupBy('customerCodeSystem')
                                               ->orderBy('CustomerName', 'ASC')
                                               ->WhereNotNull('customerCodeSystem');
 
-            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
-                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
-                                                        $query->where('customerCategoryID', $customerCategoryID);
-                                                });
+            if ($hasValidCategory) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function ($query) use ($customerCategoryID) {
+                    $query->where('customerCategoryID', (int) $customerCategoryID);
+                });
             }
             $customerMaster = $customerMaster->get();
         } else {
@@ -2820,10 +2822,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                             ->orderBy('CustomerName', 'ASC')
                                             ->WhereNotNull('customerCodeSystem');
 
-            if (!is_null($customerCategoryID) && $customerCategoryID > 0) {
-                $customerMaster = $customerMaster->whereHas('customer_master', function($query) use ($customerCategoryID) {
-                                                        $query->where('customerCategoryID', $customerCategoryID);
-                                                });
+            if ($hasValidCategory) {
+                $customerMaster = $customerMaster->whereHas('customer_master', function ($query) use ($customerCategoryID) {
+                    $query->where('customerCategoryID', (int) $customerCategoryID);
+                });
             }
 
             $customerMaster = $customerMaster->get();
