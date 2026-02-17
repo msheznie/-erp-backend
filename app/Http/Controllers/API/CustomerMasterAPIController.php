@@ -1893,13 +1893,18 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $companySystemID = $input['company_id'];
-        $category = isset($input['category']) ? $input['category'] : null;
-        $customerCategory = null;
+        $categories = isset($input['category']) && is_array($input['category']) ? $input['category'] : [];
 
-        if ($category !== null && $category !== '') {
-            $customerCategory = CustomerMasterCategory::getCustomerCategory($category);
-            if (!$customerCategory) {
-                return $this->sendError('The Customer category  not matching.', 422);
+        $categoryIds = [];
+        if (!empty($categories)) {
+            $categories = array_values(array_filter(array_map('trim', $categories)));
+            if (!empty($categories)) {
+                $categoryIds = CustomerMasterCategory::getCustomerCategoryIds($categories);
+                $foundDescriptions = CustomerMasterCategory::whereIn('categoryID', $categoryIds)->pluck('categoryDescription')->toArray();
+                $notFound = array_diff($categories, $foundDescriptions);
+                if (!empty($notFound)) {
+                    return $this->sendError('The Customer category not matching: ' . implode(', ', $notFound), 422);
+                }
             }
         }
 
@@ -1916,7 +1921,6 @@ class CustomerMasterAPIController extends AppBaseController
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 10);
 
-            $categoryId = $customerCategory ? $customerCategory->categoryID : null;
             $query = CustomerMaster::approvedAssignedCustomers($companySystemID);
 
             $query->select([
@@ -1979,8 +1983,8 @@ class CustomerMasterAPIController extends AppBaseController
                 },
             ]);
 
-            if ($categoryId !== null) {
-                $query->where('customerCategoryID', $categoryId);
+            if (!empty($categoryIds)) {
+                $query->whereIn('customerCategoryID', $categoryIds);
             }
 
             $query->orderBy('customerCodeSystem', 'asc');

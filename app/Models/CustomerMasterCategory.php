@@ -126,8 +126,13 @@ class CustomerMasterCategory extends Model
         return $this->hasMany('App\Models\CustomerMasterCategoryAssigned','customerMasterCategoryID','categoryID');
     }
 
-    public static function getCustomerCategory($category)
+    public static function getCustomerCategoryIds($categoryDescriptions)
     {
-        return CustomerMasterCategory::select('categoryID')->where('categoryDescription', $category)->first();
+        if (empty($categoryDescriptions)) {
+            return [];
+        }
+        return CustomerMasterCategory::whereIn('categoryDescription', $categoryDescriptions)
+            ->pluck('categoryID')
+            ->toArray();
     }
 }
