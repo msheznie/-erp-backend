@@ -260,6 +260,10 @@ class AssetCreationService extends AppBaseController
             return $this->sendJsonResponse(true, 'Fixed Asset Master saved successfully', 200, $fixedAssetMasters);
         } catch (\Exception $exception) {
             DB::rollBack();
+            Log::error('Asset Creation Service Error: ' . $exception->getMessage());
+            Log::error('Asset Creation Service Error Line: ' . $exception->getLine());
+            Log::error('Asset Creation Service Error File: ' . $exception->getFile());
+            Log::error('Asset Creation Service Error Trace: ' . $exception->getTraceAsString());
             return $this->sendJsonResponse(false,$exception->getMessage());
         }
     }
