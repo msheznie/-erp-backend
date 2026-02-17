@@ -723,5 +723,4 @@ class BudgetNotificationService
         Email::sendEmail($emails);
         
    }
-
 }
