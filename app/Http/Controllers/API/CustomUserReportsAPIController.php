@@ -593,7 +593,7 @@ class CustomUserReportsAPIController extends AppBaseController
                 'supplier.primarySupplierCode',
             ],
             7 => [ // CustomerReceivePayment
-                'company.CompanyName', 'created_by.empName', 'approve_by.empName',
+                'customer.CustomerName', 'created_by.empName', 'approve_by.empName',
                 'customer_tran_currency.CurrencyName', 'rpt_currency.CurrencyName', 'local_currency.CurrencyName',
                 'bank_currency.CurrencyName', 'payee_currency.CurrencyName', 'bank.bankName',
             ],
@@ -2700,19 +2700,19 @@ class CustomUserReportsAPIController extends AppBaseController
                                 else if ($table == 'confirmed_by') {   
                                     $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
                                 } 
-                                else if ($table == 'modified_by') {   
-                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
-                                } 
-                                else if ($table == 'approved_by') {   
+                                else if ($table == 'modified_by') {
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'modifiedByName');
+                                }
+                                else if ($table == 'approved_by') {
                                     $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'approvedByName');
-                                } 
+                                }
                                 else if ($table == 'company') {
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
-                                } 
+                                }
                                 else if ($table == 'company_to') {
-                                    $data->companyJoin('company_to', 'toCompanySystemID', 'CompanyName');
-                                } 
-                                     else if ($table == 'dis_type') {
+                                    $data->companyJoin('company_to', 'toCompanySystemID', 'toCompanyName');
+                                }
+                                else if ($table == 'dis_type') {
                                     $data->disposTypeJoin('dis_type', 'disposalType', 'typeDescription');
                                 } 
                                 else if ($table == 'customer') {
