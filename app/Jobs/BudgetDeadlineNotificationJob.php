@@ -58,19 +58,6 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
     private function sendDeadlineNotifications()
     {
         $today = Carbon::today();
-
-        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->first();
-
-        if (!$budgetNotificationDetails) {
-            $targetDate = $today->copy()->addDays(2)->startOfDay();
-        }else {
-            $reminderTime = $budgetNotificationDetails->reminderTime;
-            // Convert hours to days (reminderTime is in hours)
-            // Since submissionDate is date-only, we need to round up to get the target date
-            $reminderTimeInDays = ceil($reminderTime / 24);
-            $targetDate = $today->copy()->addDays($reminderTimeInDays)->startOfDay();
-        }
-
         // Find budget plannings with submission date within the reminder time
         // Since submissionDate is a date field (YYYY-mm-dd), we compare dates only
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
@@ -78,12 +65,13 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
             'masterBudgetPlannings.company',
             'financeYear'
         ])
-        ->where(function($query) use ($today, $targetDate) {
-            $query->where('submissionDate','>', $today->toDateString())
-                  ->where('submissionDate', '<=', $targetDate->toDateString());
+        ->where(function($query) use ($today) {
+            $query->where('submissionDate','>', $today->toDateString());
+                //   ->where('submissionDate', '<=', $targetDate->toDateString());
         })
         ->where('workStatus', '!=', 3) // Only for non-submitted
         ->get();
+
 
         if ($departmentBudgetPlannings->isEmpty()) {
             return;
@@ -103,6 +91,7 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                 // You may want to add a specific slug for deadline notifications
                 $notificationDetail = BudgetNotificationDetail::with('notification')
                     ->where('isActive', 1)
+                    ->where('notification_id', 4)
                     ->where('companySystemID', $companySystemID)
                     ->first();
 
@@ -110,16 +99,32 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                     continue;
                 }
 
-                $notification = $notificationDetail->notification;
+                if (!$notificationDetail) {
+                    $targetDate = $today->copy()->addDays(2)->startOfDay();
+                }else {
+                    $reminderTime = $notificationDetail->reminderTime;
+                    // Convert hours to days (reminderTime is in hours)
+                    // Since submissionDate is date-only, we need to round up to get the target date
+                    $reminderTimeInDays = ceil($reminderTime / 24);
+                    $targetDate = $today->copy()->addDays($reminderTimeInDays)->startOfDay();
+                }
+
+
                 $scenario = 'deadline-warning'; // Default scenario if slug not set
 
-                $budgetNotificationService = new BudgetNotificationService();
-                // Send notification
-                $budgetNotificationService->sendNotification(
-                    $budgetPlanning->id,
-                    $scenario,
-                    $companySystemID
-                );
+                if($budgetPlanning->submissionDate <= $targetDate) {
+                    $budgetNotificationService = new BudgetNotificationService();
+                    // Send notification
+                    $budgetNotificationService->sendNotification(
+                        $budgetPlanning->id,
+                        $scenario,
+                        $companySystemID,
+                        null,
+                        null,
+                        $notificationDetail->reminderTime
+                    );
+                }
+
 
 
             } catch (\Exception $e) {
