@@ -126,7 +126,6 @@ class SegmentMasterAPIController extends AppBaseController
                 ]);
 
                 if ($validator->fails()) {
-                    DB::rollBack();
                     $errorMessage = $validator->errors()->first();
                     return $this->sendError($errorMessage, 422);
                 }
