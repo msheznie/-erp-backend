@@ -101,8 +101,8 @@ class AssetCreationService extends AppBaseController
 
     public function assetCreation(array $input)
     {
-        $itemImgaeArr = $input['itemImage'];
-        $itemPicture = $input['itemPicture'];
+        $itemImgaeArr = $input['itemImage'] ?? [];
+        $itemPicture = $input['itemPicture'] ?? null;
         $input = Arr::except($input, 'itemImage');
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
         
@@ -260,6 +260,10 @@ class AssetCreationService extends AppBaseController
             return $this->sendJsonResponse(true, 'Fixed Asset Master saved successfully', 200, $fixedAssetMasters);
         } catch (\Exception $exception) {
             DB::rollBack();
+            Log::error('Asset Creation Service Error: ' . $exception->getMessage());
+            Log::error('Asset Creation Service Error Line: ' . $exception->getLine());
+            Log::error('Asset Creation Service Error File: ' . $exception->getFile());
+            Log::error('Asset Creation Service Error Trace: ' . $exception->getTraceAsString());
             return $this->sendJsonResponse(false,$exception->getMessage());
         }
     }
@@ -299,5 +303,6 @@ class AssetCreationService extends AppBaseController
 
         }
 
+        return $this->sendJsonResponse(true, 'Asset approval completed');
     }
 }
