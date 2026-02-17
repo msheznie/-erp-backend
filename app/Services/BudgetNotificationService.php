@@ -24,6 +24,7 @@ class BudgetNotificationService
     private $scenario;
     private $delegateID;
     private $baseurl;
+    private $reminderTime;
     /**
      * Replace placeholders in template string with actual values
      *
@@ -73,14 +74,14 @@ class BudgetNotificationService
     * @param array $placeholders Optional array of placeholder values to replace
     * @return array
     */
-   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null,$baseurl = null)
+   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null,$baseurl = null, $reminderTime = null)
    {
 
        $this->companySystemID = $companySystemID;
        $this->scenario = $scenario;
        $this->delegateID = $delegateID;
        $this->baseurl = $baseurl;
-
+       $this->reminderTime = $reminderTime;
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
            if (!$budgetNotifications) {
@@ -314,11 +315,13 @@ class BudgetNotificationService
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
         $departmentBudgetYear = CompanyFinanceYear::find($departmentBudgetPlanning->yearID);
 
+        $reminderTimeHours = $this->reminderTime !== null ? (int) $this->reminderTime : 48;
         if(empty($revision)) {
             $placeholders = [
                 'RecipientName' =>  $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                'ReminderTime' => $reminderTimeHours,
             ];
         } else {
             $placeholders = [
@@ -326,6 +329,7 @@ class BudgetNotificationService
                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                 'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                'ReminderTime' => $reminderTimeHours,
             ];
 
             $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
@@ -334,6 +338,9 @@ class BudgetNotificationService
 
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
+        // Support both {{ReminderTime}} placeholder and legacy "48 hours" text
+        $subjectTemplate = str_replace('48 Hours', $reminderTimeHours . ' Hours', $subjectTemplate);
+        $bodyTemplate = str_replace('48 hours', $reminderTimeHours . ' hours', $bodyTemplate);
 
         $emails[] = array(
             'empEmail' => $departmentBudgetPlanning->department->hod->employee->empEmail,
@@ -344,7 +351,6 @@ class BudgetNotificationService
             'docSystemID' => 133,
             'docSystemCode' => $departmentBudgetPlanningID
         );
-
 
         \Email::sendEmail($emails);
    }
@@ -360,7 +366,6 @@ class BudgetNotificationService
         $departmentBudgetPlanningDetails = $budgetPlanning->budgetPlanningDetails;
         $departmentBudgetYear = CompanyFinanceYear::find($departmentBudgetPlanning->yearID);
 
-
         foreach($departmentBudgetPlanningDetails as $departmentBudgetPlanningDetail) {
             if($departmentBudgetPlanningDetail->budgetDelegateAccessDetails->count() > 0) {
                 $budgetDelegateAccessDetails = $departmentBudgetPlanningDetail->budgetDelegateAccessDetails->where('submission_time', '>', $today)->where('submission_time', '<=', $twoDaysFromNow);
@@ -370,11 +375,13 @@ class BudgetNotificationService
                        
                         $employee = Employee::find($delegatee->employeeSystemID);
 
+                        $reminderTimeHours = $this->reminderTime !== null ? (int) $this->reminderTime : 48;
                         if(empty($revision)) {
                             $placeholders = [
                                 'RecipientName' => $employee->empName.' ('.$employee->empID.')',
                                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
+                                'ReminderTime' => $reminderTimeHours,
                             ];
                         }else {
                             $placeholders = [
@@ -382,12 +389,14 @@ class BudgetNotificationService
                                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
                                 'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
+                                'ReminderTime' => $reminderTimeHours,
                             ];
                             $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
                         }
 
                         $subjectTemplate = $budgetNotifications->subject;
                         $bodyTemplate = $budgetNotifications->body;
+                        $bodyTemplate = str_replace('48 hours', $reminderTimeHours . ' hours', $bodyTemplate);
 
                         $emails[] = array(
                             'empEmail' => $employee->empEmail,
@@ -400,6 +409,7 @@ class BudgetNotificationService
                         );
 
                     }
+
                     \Email::sendEmail($emails);
                 }
             }
