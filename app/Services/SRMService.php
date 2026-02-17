@@ -4940,11 +4940,14 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $tenderNegotiation = $request->input('extra.tender_negotiation');
-        $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
+        $tenderNegotiationData = $request->input('extra.tender_negotiation_data') ?? [];
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $bidSubmissionCode = data_get($tenderNegotiationData, '0.supplier_tender_negotiation.bidSubmissionCode')
-            ?? data_get($tenderNegotiationData, 'supplier_tender_negotiation.bidSubmissionCode')
-            ?? null;
+        $bidSubmissionCodes = collect($tenderNegotiationData)
+            ->pluck('supplier_tender_negotiation.bidSubmissionCode')
+            ->filter()
+            ->values()
+            ->toArray();
+
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
         if(!$supplierTender){
@@ -4977,17 +4980,21 @@ class SRMService
             });
         }*/
 
-        if ($tenderNegotiation) {
+        if (!empty($bidSubmissionCodes)) {
 
-            $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($bidSubmissionCode) {
-                $query->whereIn('bid_submission_code_old', $bidSubmissionCode);
-            });
+            if ($tenderNegotiation) {
 
-        } else {
+                $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($bidSubmissionCodes) {
+                    $query->whereIn('bid_submission_code_old', $bidSubmissionCodes);
+                });
 
-            $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($bidSubmissionCode) {
-                $query->whereIn('bid_submission_code_old', $bidSubmissionCode);
-            });
+            } else {
+
+                $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($bidSubmissionCodes) {
+                    $query->whereIn('bid_submission_code_old', $bidSubmissionCodes);
+                });
+
+            }
 
         }
 
