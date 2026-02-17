@@ -4943,7 +4943,8 @@ class SRMService
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $bidSubmissionCode = data_get($tenderNegotiationData, '0.supplier_tender_negotiation.bidSubmissionCode')
-            ?? data_get($tenderNegotiationData, 'supplier_tender_negotiation.bidSubmissionCode');
+            ?? data_get($tenderNegotiationData, 'supplier_tender_negotiation.bidSubmissionCode')
+            ?? null;
 
         $supplierTender = TenderMasterSupplier::getSupplierTender($tenderId, $supplierRegId);
         if(!$supplierTender){
