@@ -109,7 +109,6 @@ class BidSubmissionDetail extends Model
         'id' => 'integer',
         'bid_master_id' => 'integer',
         'tender_id' => 'integer',
-        'evaluation_detail_id' => 'integer',
         'score_id' => 'integer',
         'result' => 'float',
         'score' => 'integer',
