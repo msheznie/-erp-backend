@@ -562,22 +562,158 @@ class CustomUserReportsAPIController extends AppBaseController
     private function getSelectColumnsAddedByJoins($reportMasterId)
     {
         $byReport = [
+            1 => [ // ExpenseClaim
+                'created_by.empName', 'confirmed_by.empName',
+                'currency.currencyCode', 'currency_local.localCurrencyCode', 'currency_reporting.rptCurrencyCode',
+                'department.ServiceLineDes', 'category.claimcategoriesDescription', 'chartOfAccount.AccountCode',
+            ],
+            2 => [ // BookInvSuppMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modified_by.empName',
+                'confirmed_by.empName', 'transactioncurrency.CurrencyName', 'localcurrency.CurrencyName',
+                'supplier.primarySupplierCode',
+            ],
             3 => [ // DebitNote
-                'created_by.empName',
-                'approved_by.empName',
-                'transactioncurrency.CurrencyName',
-                'rptcurrency.CurrencyName',
-                'localcurrency.CurrencyName',
-                'supplier.supplierName',
-                'company.CompanyName',
+                'created_by.empName', 'approved_by.empName', 'transactioncurrency.CurrencyName',
+                'rptcurrency.CurrencyName', 'localcurrency.CurrencyName', 'supplier.supplierName', 'company.CompanyName',
+            ],
+            4 => [ // PaySupplierInvoiceMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'transactioncurrency.CurrencyName', 'localcurrency.CurrencyName', 'supplier.primarySupplierCode',
+                'bank.bankName',
+            ],
+            5 => [ // CustomerInvoiceDirect
+                'company.CompanyName', 'created_by.empName', 'approve_by.empName',
+                'transCurrency.CurrencyName', 'reportCurrency.CurrencyName', 'local_currency.CurrencyName',
+                'supplierDefcurrency.CurrencyName', 'suppliercurrency.CurrencyName', 'supplier.primarySupplierCode',
+                'localcurrency.CurrencyName', 'bank.bankName', 'warehouse.wareHouseDescription',
+            ],
+            6 => [ // CreditNote
+                'company.CompanyName', 'created_by.empName', 'approve_by.empName',
+                'customer_currency.CurrencyName', 'rpt_currency.CurrencyName', 'local_currency.CurrencyName',
+                'supplier.primarySupplierCode',
+            ],
+            7 => [ // CustomerReceivePayment
+                'company.CompanyName', 'created_by.empName', 'approve_by.empName',
+                'customer_tran_currency.CurrencyName', 'rpt_currency.CurrencyName', 'local_currency.CurrencyName',
+                'bank_currency.CurrencyName', 'payee_currency.CurrencyName', 'bank.bankName',
+            ],
+            8 => [ // GRVMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'approve_by.empName',
+                'customer_tran_currency.CurrencyName', 'rpt_currency.CurrencyName', 'local_currency.CurrencyName',
+                'sup_tra_currency.CurrencyName', 'sup_def_currency.CurrencyName', 'supplier.supplierName',
+                'warehouse.wareHouseDescription',
+            ],
+            9 => [ // PurchaseRequest
+                'created_by.empName', 'confirmed_by.empName', 'canceled_by.empName', 'manually_closed_by.empName',
+                'department.ServiceLineDes', 'category.categoryDescription', 'supplier.primarySupplierCode',
+                'currency_by.currencyByName',
+            ],
+            10 => [ // ProcumentOrder
+                'created_by.empName', 'confirmed_by.empName', 'canceled_by.empName', 'manually_closed_by.empName',
+                'department.ServiceLineDes', 'category.claimcategoriesDescription', 'supplier.primarySupplierCode',
+                'currency.currencyCode', 'currency_local.localCurrencyCode', 'currency_reporting.rptCurrencyCode',
+            ],
+            12 => [ // MaterielRequest
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+            ],
+            13 => [ // ItemIssueMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'warehouse.wareHouseDescription',
+            ],
+            14 => [ // ItemReturnMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'warehouse.wareHouseDescription',
+            ],
+            15 => [ // StockTransfer
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'segment.ServiceLineDes', 'location_to.wareHouseDescription', 'location_from.wareHouseDescription',
+            ],
+            16 => [ // StockReceive
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'segment.ServiceLineDes', 'location_to.wareHouseDescription', 'location_from.wareHouseDescription',
+            ],
+            17 => [ // StockAdjustment
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'segment.ServiceLineDes', 'location.wareHouseDescription', 'reason.reason',
+            ],
+            18 => [ // PurchaseReturn
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'segment.ServiceLineDes', 'location.wareHouseDescription',
+                'supplier_default_currency.CurrencyName', 'supplier_tran_currency.CurrencyName',
+                'local_currency.CurrencyName', 'company_reporting_currency.CurrencyName',
+            ],
+            19 => [ // StockCount
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'segment.ServiceLineDes', 'location.wareHouseDescription',
+            ],
+            20 => [ // InventoryReclassification
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modify_by.empName',
+                'wareHouse.wareHouseDescription',
+            ],
+            21 => [ // QuotationMaster (doc 67)
+                'created_by.empName', 'sales_person.SalesPersonName', 'segment.ServiceLineDes',
+            ],
+            22 => [ // QuotationMaster (doc 68)
+                'created_by.empName', 'sales_person.SalesPersonName', 'segment.ServiceLineDes',
+            ],
+            23 => [ // DeliveryOrder
+                'company.CompanyName', 'created_by.empName', 'sales_person.SalesPersonName', 'segment.ServiceLineDes',
+                'wareHouse.wareHouseDescription', 'customer.CustomerName',
+                'tran_currency.CurrencyName', 'tran_currency_er.CurrencyName', 'local_currency.CurrencyName',
+                'local_currency_ET.CurrencyName', 'reporting_currency.CurrencyName', 'reporting_currency_ET.CurrencyName',
+            ],
+            24 => [ // JvMaster
+                'company.CompanyName', 'created_by.empName', 'currency.CurrencyName', 'currency_rpt.CurrencyName',
+            ],
+            25 => [ // BudgetMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'confirm_by.empName',
+                'segment.ServiceLineDes', 'template.reportName',
+            ],
+            26 => [ // BudgetTransferForm
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+            ],
+            27 => [ // ErpBudgetAddition
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'template.reportName',
+            ],
+            28 => [ // ConsoleJVMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'currency.CurrencyName', 'local_currency.CurrencyName', 'rpt_currency.CurrencyName',
+            ],
+            29 => [ // ContingencyBudgetPlan
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modified_by.empName',
+                'confirmed_by.empName', 'segment.ServiceLineDes', 'currency.CurrencyName', 'template.reportName',
+            ],
+            30 => [ // FixedAssetMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modified_by.empName', 'confirmed_by.empName',
+                'segment.ServiceLineDes', 'depratment.DepartmentDescription', 'asset_type.typeDes',
+                'fa_cat.catDescription', 'fa_cat_sub.catDescription', 'fa_cat_sub_2.catDescription', 'fa_cat_sub_3.catDescription',
+                'doc_origin_detail.itemDescription', 'location.locationName', 'finance_cat.financeCatDescription',
+            ],
+            31 => [ // FixedAssetDepreciationMaster
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'confirmed_by.empName',
+                'local_currency.CurrencyName', 'rpt_currency.CurrencyName',
+            ],
+            32 => [ // AssetDisposalMaster
+                'company.CompanyName', 'company_to.CompanyName', 'created_by.empName', 'approved_by.empName',
+                'modified_by.empName', 'confirmed_by.empName', 'dis_type.typeDescription', 'customer.CustomerName',
+            ],
+            33 => [ // AssetCapitalization
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modified_by.empName', 'confirmed_by.empName',
+                'chart_acc.AccountDescription', 'fa_cat.catDescription', 'asset.assetDescription',
+            ],
+            34 => [ // AssetVerification
+                'company.CompanyName', 'created_by.empName', 'approved_by.empName', 'modified_by.empName', 'confirmed_by.empName',
+            ],
+            35 => [ // ERPAssetTransfer
+                'created_by.empName', 'approved_by.empName', 'confirmed_by.empName', 'location.locationByName',
+            ],
+            37 => [ // GeneralLedger
+                'company.CompanyName', 'company_master.CompanyName', 'created_by.empName',
+                'document_approved_by.empName', 'document_confirm_by.empName',
+                'rpt_currency.CurrencyName', 'local_currency.CurrencyName', 'doc_currency.CurrencyName',
+                'chart_acc.AccountCode', 'segment.ServiceLineDes',
             ],
             38 => [ // ErpItemLedger
-                'created_by.empName',
-                'company.CompanyName',
-                'rpt_currency.CurrencyName',
-                'local_currency.CurrencyName',
-                'segment.ServiceLineDes',
-                'warehouse.wareHouseDescription',
+                'created_by.empName', 'company.CompanyName', 'rpt_currency.CurrencyName', 'local_currency.CurrencyName',
+                'doc_currency.CurrencyName', 'segment.ServiceLineDes', 'warehouse.wareHouseDescription', 'unit.UnitShortCode',
             ],
         ];
         return $byReport[$reportMasterId] ?? [];
@@ -585,6 +721,7 @@ class CustomUserReportsAPIController extends AppBaseController
 
     /**
      * Remove from $columns any select that duplicates what join scopes will add (avoids "Duplicate column name" SQL error).
+     * Matches "table.column as " with or without backticks.
      */
     private function filterColumnsDuplicateWithJoins(array $columns, $reportMasterId)
     {
@@ -593,8 +730,9 @@ class CustomUserReportsAPIController extends AppBaseController
             return $columns;
         }
         return array_values(array_filter($columns, function ($sel) use ($addedByJoins) {
+            $selNormalized = str_replace('`', '', $sel);
             foreach ($addedByJoins as $tableColumn) {
-                if (strpos($sel, $tableColumn . ' as ') !== false) {
+                if (strpos($selNormalized, $tableColumn . ' as ') !== false) {
                     return false;
                 }
             }
