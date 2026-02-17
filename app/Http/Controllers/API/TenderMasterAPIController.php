@@ -2748,6 +2748,7 @@ class TenderMasterAPIController extends AppBaseController
             if ($closing_commer_date_comp == null) {
                 $result2 = true;
             } else {
+                $closing_commer_date_comp = Carbon::parse($closing_commer_date_comp);
                 $result2 = $closing_commer_date_comp->gt($current_date2);
             }
 

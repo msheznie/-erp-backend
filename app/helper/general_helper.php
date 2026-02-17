@@ -3103,7 +3103,7 @@ class Helper
         return 'false';
     }
 
-    public static function getFileUrlFromS3($key)
+    public static function getFileUrlFromS3($key, $minutes ='+60 minutes')
     {
         if($key) {            
             //return Storage::disk('s3')->url($key);
@@ -3115,7 +3115,7 @@ class Helper
                 'Bucket' => $bucket,
                 'Key' => $key
             ]);
-            $request = $client->createPresignedRequest($command, '+60 minutes');
+            $request = $client->createPresignedRequest($command, $minutes);
             return (string)$request->getUri();
         }
         return '';
