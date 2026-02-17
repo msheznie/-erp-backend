@@ -26,6 +26,8 @@ Route::group(['middleware' => ['mobileServer']], function () {
         Route::group(['middleware' => ['thirdPartyApis', 'thirdPartyApiLogger']], function (){
             require __DIR__.'/../routes/externalApis/externalRoutes.php';
         });
+
+        Route::post('customer_master_pull', 'CustomerMasterAPIController@pullCustomerMaster');
         
         Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->middleware([ExtractHeadersFromBody::class,'auth.api.keycloak','authorization:api','mobileAccess']);
 
