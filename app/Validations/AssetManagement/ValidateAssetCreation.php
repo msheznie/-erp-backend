@@ -164,6 +164,8 @@ class ValidateAssetCreation
             if(empty($financePeriod)){
                 return self::sendJsonResponse(false,"Finance period not activated", 500);
             }
+
+            return self::sendJsonResponse(true, 'Finance year and period validated', 200);
         } catch(\Exception $e){
             return self::sendJsonResponse(false,$e->getMessage(), 500);
         }
