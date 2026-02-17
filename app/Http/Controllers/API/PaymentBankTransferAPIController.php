@@ -564,8 +564,10 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $bankmasterAutoID = $request['bankmasterAutoID'];
-        $bankmasterAutoID = (array)$bankmasterAutoID;
-        $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
+        $bankmasterAutoID = (array) $bankmasterAutoID;
+        $bankmasterAutoID = collect($bankmasterAutoID)->map(function ($b) {
+            return is_array($b) && isset($b['id']) ? $b['id'] : (is_object($b) ? $b->id : $b);
+        })->filter()->values()->all();
 
         $search = $request->input('search.value');
 

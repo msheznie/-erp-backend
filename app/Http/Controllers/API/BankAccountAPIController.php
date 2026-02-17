@@ -564,16 +564,18 @@ class BankAccountAPIController extends AppBaseController
             $data[$x][trans('custom.status')] = $status;
         }
 
-        return \App\Exports\CreateExcelExport::download('bank_accounts', function ($excel) use ($data) {
+        \Excel::create('bank_accounts', function ($excel) use ($data) {
             $excel->sheet(trans('custom.bank_accounts_excel_tab'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
+                
+                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        }, 'xls');
+        })->download('xls');
 
         return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }
@@ -989,10 +991,16 @@ class BankAccountAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $bankmasterAutoID = $request->get('id');
+        $bankmasterAutoIDArray = (array)$bankmasterAutoID;
+        if (is_array($bankmasterAutoID)) {
+            $bankmasterAutoIDArray = collect($bankmasterAutoIDArray)->pluck('id')->toArray();
+        }
+
         $bankAccounts = BankAccount::whereIn('companySystemID', $subCompanies)
-                                   ->where('bankmasterAutoID', $input['id'])
+                                   ->whereIn('bankmasterAutoID', $bankmasterAutoIDArray)
                                    ->get();
 
-        return $this->sendResponse($bankAccounts, trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
+        return $this->sendResponse($bankAccounts->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
 }

@@ -70,7 +70,7 @@ Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirect
 
 Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
 Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance')->name('Get bank balance');
-Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');
+Route::post('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');
 
 Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates')->name('Check policy for exchange rates');
 
