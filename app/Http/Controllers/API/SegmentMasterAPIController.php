@@ -107,7 +107,6 @@ class SegmentMasterAPIController extends AppBaseController
 
     public function pullSegment(Request $request)
     {
-        DB::beginTransaction();
         try {
             $input = $request->all();
             $company_id = $request->get('company_id');
@@ -142,7 +141,6 @@ class SegmentMasterAPIController extends AppBaseController
                 }
                 
                 if (!$isValid) {
-                    DB::rollBack();
                     return $this->sendError(trans('custom.type_input_value_is_incorrect'), 422);
                 }
             } else {
@@ -200,10 +198,8 @@ class SegmentMasterAPIController extends AppBaseController
                     });
             }
 
-            DB::commit();
             return $this->sendResponse($segments, trans('custom.data_retrieved_successfully_3'));
         } catch (\Exception $exception) {
-            DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
     }
