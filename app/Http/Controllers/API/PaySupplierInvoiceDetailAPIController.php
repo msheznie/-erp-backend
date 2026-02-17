@@ -1723,14 +1723,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
               })->where('apAutoID', $input["apAutoID"])
               ->where('documentSystemID', '=', 15)
               ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
-              ->first();  
+              ->first();
 
-              
-
-
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
-
-
+            $supplierPaidAmountSum = [
+                'SumOfsupplierPaymentAmount' => (float) data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + (float) data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0),
+            ];
         }
         else if($user_type == 1)
         {
