@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Services\GenerateCompanyBudgetPlanningService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CompanyBudgetPlanningGenerate;
 use Response;
 
 /**
@@ -31,15 +32,19 @@ class CompanyBudgetPlanningGenerateAPIController extends AppBaseController
     public function generate(Request $request)
     {
         $validated = $request->validate([
-            'id' => 'required|integer',
-            'departmentID' => 'required|integer',
+            'id' => 'required',
         ]);
 
-        $id = (int) $validated['id'];
-        $departmentID = (int) $validated['departmentID'];
+        $rowId = (string) $validated['id'];
 
-        $result = $this->generateCompanyBudgetPlanningService->generate($id, $departmentID);
 
-        return $this->sendResponse($result, 'Generate company budget planning request received.');
+        $result = $this->generateCompanyBudgetPlanningService->generate($rowId);
+
+        $data = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+
+        $data->is_generated = true;
+        $data->save();
+
+        return $this->sendResponse($data, 'Generate company budget planning request received.');
     }
 }
