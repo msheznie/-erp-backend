@@ -342,7 +342,13 @@ class TenderMasterRepository extends BaseRepository
 
         $opening_date_comp = $tender->stage === 1 ? $tender->bid_opening_date : $tender->technical_bid_opening_date;
         $opening_date_comp_end = $tender->stage === 1 ? $tender->bid_opening_end_date : $tender->technical_bid_closing_date;
-        return $current_date->gt(Carbon::parse($opening_date_comp)) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
+        $opening_date_comp = Carbon::parse($opening_date_comp);
+        if ($opening_date_comp_end !== null) {
+            $opening_date_comp_end = Carbon::parse($opening_date_comp_end);
+        }
+
+        return $current_date->gt($opening_date_comp) &&
+            ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
 
 
