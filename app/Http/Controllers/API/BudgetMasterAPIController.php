@@ -2649,31 +2649,17 @@ class BudgetMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $result = $this->budgetGLCodeWiseDetailsData($input);
-
-        $reportData = collect($result['reportData'] ?? [])->map(function ($item) {
-            $row = is_array($item) ? $item : (method_exists($item, 'toArray') ? $item->toArray() : (array) $item);
-            return [
-                'companyID' => $row['companyID'] ?? $row['CompanyID'] ?? '',
-                'serviceLine' => $row['serviceLine'] ?? $row['serviceLineCode'] ?? $row['ServiceLineCode'] ?? '',
-                'financeGLcodePL' => $row['financeGLcodePL'] ?? $row['GLCode'] ?? $row['COSTGLCODE'] ?? '',
-                'documentCode' => $row['documentCode'] ?? $row['faCode'] ?? '',
-                'budgetYear' => $row['budgetYear'] ?? $row['year'] ?? $row['Year'] ?? '',
-                'lineTotal' => (float) ($row['lineTotal'] ?? $row['actualConsumption'] ?? $row['consumedRptAmount'] ?? 0),
-            ];
-        })->values()->all();
-
-        $viewData = [
-            'reportData' => $reportData,
-            'total' => (float) ($result['total'] ?? 0),
-            'decimalPlaceLocal' => $result['decimalPlaceLocal'] ?? 3,
-            'decimalPlaceRpt' => $result['decimalPlaceRpt'] ?? 2,
-        ];
-
         $templateName = "export_report.budget_summary_details";
 
-        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($viewData, $templateName) {
-            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($viewData, $templateName) {
-                $sheet->loadView($templateName, $viewData);
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($result, $templateName) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
+                $sheet->loadView($templateName, $result);
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastColumn) {
+                    $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                    $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);

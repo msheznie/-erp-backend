@@ -1691,6 +1691,7 @@ class BankReconciliationAPIController extends AppBaseController
         $disk = 's3';
         Storage::disk($disk)->put($originalFileName, $decodeFile);
         $filePath = Storage::disk($disk)->path($originalFileName);
+        \Log::info('filePath: ' . $filePath);
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -1755,8 +1756,6 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
-            // Do not delete the file here; job will load from path and delete after processing.
-            // Passing the Excel object would break queue JSON encoding (non-serializable + possible malformed UTF-8).
             $uploadData = [
                 'storageDisk' => $disk,
                 'storagePath' => $originalFileName,
