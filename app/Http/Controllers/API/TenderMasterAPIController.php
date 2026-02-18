@@ -4743,7 +4743,7 @@ class TenderMasterAPIController extends AppBaseController
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br>";
             }
-            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+            $body .= Helper::getSupplierEmailFooter($tender->company_id);
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
@@ -4774,7 +4774,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $documentType = $this->getDocumentType($tender->document_type);
                     $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
-                    $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+                    $body .= Helper::getSupplierEmailFooter($tender->company_id);
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
