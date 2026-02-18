@@ -5,26 +5,26 @@
     <tr></tr>
     <tr>
         <td colspan="2"></td>
-        <td><h1>{{ trans('custom.asset_tracking_report') }}</h1></td>
+        <td><b><h1>{{ trans('custom.asset_tracking_report') }}</h1></b></td>
     </tr>
     <tr>
         <td colspan="2"></td>
-        <th style="font-size:15px;">{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
+        <th><b>{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</b></th>
     </tr>
     <tr></tr>
     <tr>
-        <th class="text-center">{{ trans('custom.asset_code') }}</th>
-        <th class="text-center">{{ trans('custom.type') }}</th>
-        <th class="text-center">{{ trans('custom.asset_description') }}</th>
-        <th class="text-center">{{ trans('custom.category') }}</th>
-        <th class="text-center">{{ trans('custom.document_code') }}</th>
-        <th class="text-center">{{ trans('custom.document_date') }}</th>
-        <th class="text-center">{{ trans('custom.document_type') }}</th>
-        <th class="text-center">{{ trans('custom.transfer_from') }}</th>
-        <th class="text-center">{{ trans('custom.transfer_to') }}</th>
-        <th class="text-center">{{ trans('custom.location') }}</th>
-        <th class="text-center">{{ trans('custom.department') }}</th>
-        <th class="text-center">{{ trans('custom.employee') }}</th>
+        <th class="text-center"><b>{{ trans('custom.asset_code') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.type') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.asset_description') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.category') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.document_code') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.document_date') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.document_type') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.transfer_from') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.transfer_to') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.location') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.department') }}</b></th>
+        <th class="text-center"><b>{{ trans('custom.employee') }}</b></th>
     </tr>
     </thead>
     <tbody>
