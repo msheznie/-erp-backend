@@ -12,6 +12,7 @@ use Auth;
 use App\Models\ChartOfAccount;
 use App\Models\ReportTemplateLinks;
 use App\Models\Budjetdetails;
+use App\Models\DocumentApproved;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -119,6 +120,7 @@ class GenerateCompanyBudgetPlanningService
 
             $this->confirmDoument($budget);
 
+            $this->apporveDocument($budget);
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -197,6 +199,28 @@ class GenerateCompanyBudgetPlanningService
         $confirm = \Helper::confirmDocument($params);
         if (!$confirm["success"]) {
             throw new \Exception($confirm["message"]);
+        }
+    }
+
+    private function apporveDocument(BudgetMaster $budget)
+    {
+        $documentApproveds = DocumentApproved::where('documentSystemCode', $budget->budgetmasterID)->where('documentSystemID', $budget->documentSystemID)->get();
+
+        foreach ($documentApproveds as $documentApproved)
+        {
+            $documentApproved["approvedComments"] = "Generated budget automatically through system";
+            $documentApproved['documentSystemID'] = $budget->documentSystemID;
+            $documentApproved['approvedDate'] = \Helper::currentDateTime();
+            $documentApproved['sendMail'] = false;
+            $documentApproved['sendNotication'] = false;
+            $documentApproved['isCheckPrivilages'] = false;
+            $documentApproved['isAutoCreateDocument'] = true;
+            $approval = \Helper::approveDocument($documentApproved);
+            
+            if(!$approval['success'])
+            {
+                throw new \Exception('Document approval failed: ' . ($approval['message'] ?? 'Unknown error'));
+            }
         }
     }
 }
