@@ -1688,7 +1688,7 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
         }
 
-        $disk = 'local';
+        $disk = 's3';
         Storage::disk($disk)->put($originalFileName, $decodeFile);
         $filePath = Storage::disk($disk)->path($originalFileName);
         $spreadsheet = IOFactory::load($filePath);

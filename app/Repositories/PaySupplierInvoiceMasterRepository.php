@@ -202,6 +202,30 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
+    /**
+     * Normalize filter value from request (e.g. DataTables sends [null] for empty filters).
+     * Returns null when the filter should not be applied; otherwise the value to use.
+     *
+     * @param mixed $value
+     * @return mixed|null
+     */
+    private function normalizeFilterValue($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+        if (is_array($value)) {
+            $filtered = array_filter($value, function ($v) {
+                return $v !== null && $v !== '';
+            });
+            if (count($filtered) === 0) {
+                return null;
+            }
+            return count($filtered) === 1 ? array_values($filtered)[0] : array_values($filtered);
+        }
+        return $value === '' ? null : $value;
+    }
+
     public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID = null, $projectID = null, $employeeID = null,$createdBy = null,$customerID = null) {
 
         $selectedCompanyId = $request['companyID'];
@@ -220,124 +244,103 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                         ->addSelect(DB::raw('CAST((SELECT COALESCE(SUM(comRptAmount), 0) FROM pv_bank_charges WHERE pv_bank_charges.payMasterAutoID = erp_paysupplierinvoicemaster.PayMasterAutoId) AS DECIMAL(15,2)) as bank_charge_comRpt_amount'))
                         ->whereIN('companySystemID', $subCompanies);
 
-        if (array_key_exists('cancelYN', $input)) {
-            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
-                $paymentVoucher->where('cancelYN', $input['cancelYN']);
-            }
+        $cancelYN = $this->normalizeFilterValue($input['cancelYN'] ?? null);
+        if ($cancelYN !== null && ($cancelYN == 0 || $cancelYN == -1)) {
+            $paymentVoucher->where('cancelYN', $cancelYN);
         }
 
-        if (array_key_exists('confirmedYN', $input)) {
-            if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
-            }
+        $confirmedYN = $this->normalizeFilterValue($input['confirmedYN'] ?? null);
+        if ($confirmedYN !== null && ($confirmedYN == 0 || $confirmedYN == 1)) {
+            $paymentVoucher->where('confirmedYN', $confirmedYN);
         }
 
-        if (array_key_exists('payeeTypeID', $input)) {
-            $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
-            if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVsupplierID', "!=", NULL)->where('BPVsupplierID', '!=', 0);
+        $payeeTypeID = $this->normalizeFilterValue($input['payeeTypeID'] ?? null);
+        if ($payeeTypeID !== null) {
+            if ($payeeTypeID == 1) {
+                $paymentVoucher->whereNotNull('BPVsupplierID')->where('BPVsupplierID', '!=', 0);
             }
-            if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL)->where('directPaymentPayeeEmpID', '!=', 0);
+            if ($payeeTypeID == 2) {
+                $paymentVoucher->whereNotNull('directPaymentPayeeEmpID')->where('directPaymentPayeeEmpID', '!=', 0);
             }
-            if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
+            if ($payeeTypeID == 3) {
+                $paymentVoucher->whereNull('directPaymentPayeeEmpID')->whereNull('BPVsupplierID');
             }
-            if (($payeeTypeID == 4) && !is_null($payeeTypeID)) {
-                $paymentVoucher->where('BPVcustomerID', "!=", NULL)->where(function($query) {
+            if ($payeeTypeID == 4) {
+                $paymentVoucher->whereNotNull('BPVcustomerID')->where(function ($query) {
                     $query->whereNull('directPaymentPayeeEmpID')->orWhere('directPaymentPayeeEmpID', 0);
                 });
             }
         }
 
-        if (array_key_exists('createdBy', $input)) {
-            if($input['createdBy'] && !is_null($input['createdBy']))
-            {
-                $paymentVoucher->whereIn('createdUserSystemID', $createdBy);
-            }
-
+        $createdByVal = $this->normalizeFilterValue($input['createdBy'] ?? null);
+        if ($createdByVal !== null && $createdBy !== null) {
+            $paymentVoucher->whereIn('createdUserSystemID', $createdBy);
         }
 
-        if (array_key_exists('approved', $input)) {
-            if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $paymentVoucher->where('approved', $input['approved']);
-            }
+        $approved = $this->normalizeFilterValue($input['approved'] ?? null);
+        if ($approved !== null && ($approved == 0 || $approved == -1)) {
+            $paymentVoucher->where('approved', $approved);
         }
 
-        if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
-                $paymentVoucher->whereMonth('BPVdate', '=', $input['month']);
-            }
+        $month = $this->normalizeFilterValue($input['month'] ?? null);
+        if ($month !== null) {
+            $paymentVoucher->whereMonth('BPVdate', '=', $month);
         }
 
-        if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
-                $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
-            }
+        $year = $this->normalizeFilterValue($input['year'] ?? null);
+        if ($year !== null) {
+            $paymentVoucher->whereYear('BPVdate', '=', $year);
         }
 
-        if (array_key_exists('invoiceType', $input)) {
-            if ($input['invoiceType'] && !is_null($input['invoiceType'])) {
-                $paymentVoucher->where('invoiceType', $input['invoiceType']);
-            }
+        $invoiceType = $this->normalizeFilterValue($input['invoiceType'] ?? null);
+        if ($invoiceType !== null) {
+            $paymentVoucher->where('invoiceType', $invoiceType);
         }
 
-        if (array_key_exists('supplierID', $input)) {
-            if ($input['supplierID'] && count($supplierID) > 0) {
-                $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
-            }
+        if ($supplierID !== null && count($supplierID) > 0) {
+            $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
         }
 
-        if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && count($customerID) > 0) {
-                $paymentVoucher->whereIn('BPVcustomerID', $customerID);
-            }
+        if ($customerID !== null && count($customerID) > 0) {
+            $paymentVoucher->whereIn('BPVcustomerID', $customerID);
         }
 
-        if (array_key_exists('employeeID', $input)) {
-            if ($input['employeeID'] && count($employeeID) > 0 && count($supplierID) == 0) {
+        if ($employeeID !== null && count($employeeID) > 0) {
+            if (count($supplierID ?? []) == 0) {
                 $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
-            }
-            if ($input['employeeID'] && count($supplierID) > 0 && count($employeeID) > 0) {
+            } elseif (count($supplierID) > 0 && count($employeeID) > 0) {
                 $paymentVoucher->orWhereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
 
-        if (array_key_exists('projectID', $input)) {
-            if ($input['projectID'] && !is_null($input['projectID'])) {
-                $paymentVoucher->whereIn('projectID', $projectID);
-            }
+        $projectIDVal = $this->normalizeFilterValue($input['projectID'] ?? null);
+        if ($projectIDVal !== null && $projectID !== null) {
+            $paymentVoucher->whereIn('projectID', $projectID);
         }
 
-        if (array_key_exists('chequePaymentYN', $input)) {
-            if (($input['chequePaymentYN'] == 0 || $input['chequePaymentYN'] == -1) && !is_null($input['chequePaymentYN'])) {
-                $paymentVoucher->where('chequePaymentYN', $input['chequePaymentYN']);
-            }
+        $chequePaymentYN = $this->normalizeFilterValue($input['chequePaymentYN'] ?? null);
+        if ($chequePaymentYN !== null && ($chequePaymentYN == 0 || $chequePaymentYN == -1)) {
+            $paymentVoucher->where('chequePaymentYN', $chequePaymentYN);
         }
 
-
-        if (array_key_exists('BPVbank', $input)) {
-            if ($input['BPVbank'] && !is_null($input['BPVbank'])) {
-                $paymentVoucher->where('BPVbank', $input['BPVbank']);
-            }
+        $BPVbank = $this->normalizeFilterValue($input['BPVbank'] ?? null);
+        if ($BPVbank !== null) {
+            $paymentVoucher->where('BPVbank', $BPVbank);
         }
 
-        if (array_key_exists('BPVAccount', $input)) {
-            if ($input['BPVAccount'] && !is_null($input['BPVAccount'])) {
-                $paymentVoucher->where('BPVAccount', $input['BPVAccount']);
-            }
+        $BPVAccount = $this->normalizeFilterValue($input['BPVAccount'] ?? null);
+        if ($BPVAccount !== null) {
+            $paymentVoucher->where('BPVAccount', $BPVAccount);
         }
 
-        if (array_key_exists('chequeSentToTreasury', $input)) {
-            if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
-                $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
-            }
+        $chequeSentToTreasury = $this->normalizeFilterValue($input['chequeSentToTreasury'] ?? null);
+        if ($chequeSentToTreasury !== null && ($chequeSentToTreasury == 0 || $chequeSentToTreasury == -1)) {
+            $paymentVoucher->where('chequeSentToTreasury', $chequeSentToTreasury);
         }
 
-        if (array_key_exists('payment_mode', $input)) {
-            if (!is_null($input['payment_mode'])) {
-                $paymentVoucher->where('payment_mode', $input['payment_mode']);
-            }
+        $payment_mode = $this->normalizeFilterValue($input['payment_mode'] ?? null);
+        if ($payment_mode !== null) {
+            $paymentVoucher->where('payment_mode', $payment_mode);
         }
 
 
