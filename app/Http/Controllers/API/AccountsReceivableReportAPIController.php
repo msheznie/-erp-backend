@@ -2515,8 +2515,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $mpdfConfig['direction'] = 'rtl';
             }
 
-            ini_set('pcre.backtrack_limit', '5000000');
-
             $mpdf = new \Mpdf\Mpdf($mpdfConfig);
             $mpdf->SetHTMLHeader($htmlHeader);
             $mpdf->SetHTMLFooter($htmlFooter);
@@ -2524,7 +2522,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $mpdf->setAutoBottomMargin = 'stretch';
 
             try {
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_statement_of_account.pdf', 'I');
             } catch (\Exception $e) {
                 // Fallback: try with simpler configuration
@@ -2536,7 +2534,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $mpdf->SetHTMLHeader($htmlHeader);
                 $mpdf->SetHTMLFooter($htmlFooter);
                 $mpdf->AddPage('L');
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_statement_of_account.pdf', 'I');
             }
         } elseif ($request->reportTypeID == 'CBS') {
@@ -2598,7 +2596,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $mpdf->setAutoBottomMargin = 'stretch';
 
             try {
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_balance_statement.pdf', 'I');
             } catch (\Exception $e) {
                 // Fallback: try with simpler configuration
@@ -2610,9 +2608,47 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $mpdf->SetHTMLHeader($htmlHeader);
                 $mpdf->SetHTMLFooter($htmlFooter);
                 $mpdf->AddPage('L');
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_balance_statement.pdf', 'I');
             }
+        }
+    }
+
+    /**
+     * Write HTML to mPDF in chunks to avoid pcre.backtrack_limit (1000000) exceeded.
+     * Splits at tag boundaries when possible to keep markup valid.
+     */
+    private function writeHtmlChunked(\Mpdf\Mpdf $mpdf, string $html, int $chunkSize = 500000): void
+    {
+        $len = strlen($html);
+        if ($len <= $chunkSize) {
+            $mpdf->WriteHTML($html);
+
+            return;
+        }
+        $offset = 0;
+        $boundaries = ['</tr>', '</table>', '</tbody>', '</div>', "\n"];
+        while ($offset < $len) {
+            $chunk = substr($html, $offset, $chunkSize);
+            $chunkEnd = $offset + $chunkSize;
+            if ($chunkEnd < $len) {
+                $best = -1;
+                foreach ($boundaries as $b) {
+                    $pos = strrpos($chunk, $b);
+                    if ($pos !== false && $pos > $best) {
+                        $best = $pos + strlen($b);
+                    }
+                }
+                if ($best > 0) {
+                    $chunk = substr($html, $offset, $best);
+                    $offset += $best;
+                } else {
+                    $offset += $chunkSize;
+                }
+            } else {
+                $offset = $len;
+            }
+            $mpdf->WriteHTML($chunk);
         }
     }
 

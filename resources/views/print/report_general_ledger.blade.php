@@ -206,7 +206,7 @@
                 {{$rptBalanceAmount += $val->rptBalanceAmount}}
                 <tr>
                     <td>{{ $val->documentCode  }}</td>
-                    <td>{{\Helper::dateFormat($val->documentDate)}}</td>
+                    <td>{{\App\helper\Helper::dateFormat($val->documentDate)}}</td>
                     <td>{{ $val->documentNarration  }}</td>
                     <td>{{ $val->serviceLineCode  }}</td>
                     <td>{{ $val->clientContractID  }}</td>
@@ -215,13 +215,13 @@
                         <td>{{ $val->confirmedBy  }}</td>
                     @endif
                     @if(in_array('confi_date', $extraColumns))
-                        <td>{{\Helper::dateFormat($val->documentConfirmedDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($val->documentConfirmedDate)}}</td>
                     @endif
                     @if(in_array('app_name', $extraColumns))
                         <td>{{ $val->approvedBy  }}</td>
                     @endif
                     @if(in_array('app_date', $extraColumns))
-                        <td>{{\Helper::dateFormat($val->documentFinalApprovedDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($val->documentFinalApprovedDate)}}</td>
                     @endif
                     @if($isGroup == 0)
                         <td class="text-right">{{number_format($val->localDebit, $decimalPlaceLocal)}}</td>

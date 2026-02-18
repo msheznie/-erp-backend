@@ -164,15 +164,15 @@
                     {{ $subBalanceAmount += $det->balanceAmount }}
                     <tr>
                         <td>{{ $det->documentCode  }}</td>
-                        <td>{{\Helper::dateFormat($det->postedDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($det->postedDate)}}</td>
                         <td>{{$det->clientContractID}}</td>
                         <td>{{$det->PONumber}}</td>
-                        <td>{{\Helper::dateFormat($det->invoiceDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($det->invoiceDate)}}</td>
                         <td style="word-break: break-all;white-space: normal;">{{$det->documentNarration}}</td>
                         <td>{{$det->documentCurrency}}</td>
                         <td class="text-right">{{number_format($det->invoiceAmount, $det->balanceDecimalPlaces)}}</td>
                         <td><p style="width: 80px;">{{$det->ReceiptCode}}</p></td>
-                        <td>{{\Helper::dateFormat($det->ReceiptDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($det->ReceiptDate)}}</td>
                         <td class="text-right">{{number_format($det->receiptAmount, $det->balanceDecimalPlaces)}}</td>
                         <td class="text-right">{{number_format($det->balanceAmount, $det->balanceDecimalPlaces)}}</td>
                     </tr>
