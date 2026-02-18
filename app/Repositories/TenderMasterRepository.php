@@ -347,6 +347,11 @@ class TenderMasterRepository extends BaseRepository
             $opening_date_comp_end = Carbon::parse($opening_date_comp_end);
         }
 
+        if ($tender->document_system_id == 113 && $opening_date_comp === null) {
+            return true;
+        }
+
+
         return $current_date->gt($opening_date_comp) &&
             ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
