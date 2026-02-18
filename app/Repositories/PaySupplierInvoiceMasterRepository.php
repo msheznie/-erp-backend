@@ -302,25 +302,25 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && count($customerID) > 0) {
-                \Log::info('customerID: ' . $input['customerID']);
+                \Log::info('customerID: ' . json_encode($input['customerID']));
                 $paymentVoucher->whereIn('BPVcustomerID', $customerID);
             }
         }
 
         if (array_key_exists('employeeID', $input)) {
             if ($input['employeeID'] && count($employeeID) > 0 && count($supplierID) == 0) {
-                \Log::info('employeeID: ' . $input['employeeID']);
+                \Log::info('employeeID: ' . json_encode($input['employeeID']));
                 $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
             }
             if ($input['employeeID'] && count($supplierID) > 0 && count($employeeID) > 0) {
-                \Log::info('employeeID: ' . $input['employeeID']);
+                \Log::info('employeeID: ' . json_encode($input['employeeID']));
                 $paymentVoucher->orWhereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
 
         if (array_key_exists('projectID', $input)) {
             if ($input['projectID'] && !is_null($input['projectID'])) {
-                \Log::info('projectID: ' . $input['projectID']);
+                \Log::info('projectID: ' . json_encode($input['projectID']));
                 $paymentVoucher->whereIn('projectID', $projectID);
             }
         }

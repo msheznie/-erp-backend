@@ -1645,26 +1645,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $supplierID = $request['supplierID'];
-        $supplierID = (array)$supplierID;
-        $supplierID = collect($supplierID)->pluck('id');
+        $supplierID = collect((array) ($request['supplierID'] ?? []))->pluck('id')->filter()->values();
 
-        $employeeID = $request['employeeID'];
-        $employeeID = (array)$employeeID;
-        $employeeID = collect($employeeID)->pluck('id');
+        $employeeID = collect((array) ($request['employeeID'] ?? []))->pluck('id')->filter()->values();
 
-        $customerID = $request['customerID'];
-        $customerID = (array)$customerID;
-        $customerID = collect($customerID)->pluck('id');
-        
+        $customerID = collect((array) ($request['customerID'] ?? []))->pluck('id')->filter()->values();
 
-        $projectID = $request['projectID'];
-        $projectID = (array)$projectID;
-        $projectID = collect($projectID)->pluck('id');
+        $projectID = collect((array) ($request['projectID'] ?? []))->pluck('id')->filter()->values();
 
-        $createdBy = $request['createdBy'];
-        $createdBy = (array)$createdBy;
-        $createdBy = collect($createdBy)->pluck('id');
+        $createdBy = collect((array) ($request['createdBy'] ?? []))->pluck('id')->filter()->values();
 
         $search = $request->input('search.value');
         
