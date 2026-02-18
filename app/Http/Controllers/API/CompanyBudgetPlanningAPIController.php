@@ -806,7 +806,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
                 
                 if ($isFinanceUser) {
-                    $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear'])
+                    $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','revisions'])
                         ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                         ->orderBy('id', $sort);
                       
@@ -827,7 +827,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                         $childDepartmentIds = array_unique($childDepartmentIds);
 
-                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess','masterBudgetPlannings'])
+                        $data = DepartmentBudgetPlanning::with(['department.hod.employee','financeYear','delegateAccess','masterBudgetPlannings','revisions'])
                             ->whereIn('companyBudgetPlanningID', $companyBudgetPlanningID)
                             ->whereHas('department', function($query) use ($childDepartmentIds) {
                                 $query->whereIn('departmentSystemID', $childDepartmentIds);
@@ -966,6 +966,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         // Return cached data if available and not forcing regenerate
         if (!$forceRegenerate) {
             $cachedRows = CompanyBudgetPlanningGenerate::where('company_budget_planning_id', $budgetPlanningId)
+                ->orderBy('id')
                 ->get();
             if ($cachedRows->isNotEmpty()) {
                 $result = $cachedRows->map(function ($row) {
@@ -993,8 +994,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         })
         ->get();
 
-        // Aggregate: group by (segment, budget type), sum budget amounts GL-wise across all departments
-        $groupKeyToData = []; // key: "segmentId|typeID" => [ segmentInfo, typeID, financeYear, masterBudgetPlanning, glAmounts[] ]
+        // Aggregate by segment and budget type only (not by department): one row per (segment, type), GL amounts summed across all departments
+        $groupKeyToData = []; // key: "segmentId|typeID" or "segmentId|3|OPEX|CAPEX"
 
         foreach ($departmentBudgetPlannings as $deptBudgetPlanning) {
             $typeID = $deptBudgetPlanning->typeID;
@@ -1139,7 +1140,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
         }
 
-        // Build result: one row per (segment, budget type) with GL-wise summed amounts; assign unique rowId and persist to cache
+        // Build result: one row per (segment, budget type) only — no department; assign rowId and persist to cache
         $result = [];
         $rowIndex = 0;
         $cachePayloads = [];
@@ -1163,19 +1164,28 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'typeID' => $data['typeID'],
                 'budgetType' => $data['budgetType'],
                 'master_budget_plannings' => $data['master_budget_plannings'],
+                'request_amount' => array_sum(array_column($glAmountsList, 'request_amount')),
+                'previous_year_budget' => array_sum(array_column($glAmountsList, 'previous_year_budget')),
+                'current_year_budget' => array_sum(array_column($glAmountsList, 'current_year_budget')),
+                'amount_given_by_finance' => array_sum(array_column($glAmountsList, 'amount_given_by_finance')),
+                'amount_given_by_hod' => array_sum(array_column($glAmountsList, 'amount_given_by_hod')),
+                'difference_last_current_year' => array_sum(array_column($glAmountsList, 'difference_last_current_year')),
+                'difference_current_request' => array_sum(array_column($glAmountsList, 'difference_current_request')),
                 'glAmounts' => $glAmountsList,
             ];
+            $result[] = array_merge(
+                ['rowId' => $rowId, 'DT_Row_Index' => $rowIndex, 'is_generated' => false],
+                $payload
+            );
             $cachePayloads[] = [
                 'company_budget_planning_id' => $budgetPlanningId,
                 'row_id' => $rowId,
                 'payload' => $payload,
+                'is_generated' => false,
             ];
         }
 
-        // Replace cache for this budget plan so next request returns from table
-        foreach ($cachePayloads as $item) {
-            CompanyBudgetPlanningGenerate::create($item);
-        }
+        CompanyBudgetPlanningGenerate::insert($cachePayloads);
 
         return $this->sendResponse($result, 'Budget generate details retrieved successfully');
     }

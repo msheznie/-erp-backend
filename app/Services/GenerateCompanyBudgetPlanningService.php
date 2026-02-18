@@ -132,11 +132,40 @@ class GenerateCompanyBudgetPlanningService
      */
     private function validation(string $rowId): CompanyBudgetPlanningGenerate
     {
-        $cached = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
-        if (!$cached) {
+        $detailsTogenerate = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+        if (!$detailsTogenerate) {
             throw new \Exception('Budget generate detail row not found');
         }
-        return $cached;
+
+        $payload = $detailsTogenerate->payload;
+
+        $reportID = 2; // default OPEX
+        if (stripos($payload['budgetType'], 'CAPEX') !== false) {
+            $reportID = 1;
+        } elseif (stripos($payload['budgetType'], 'OPEX') !== false) {
+            $reportID = 2;
+        }
+
+        $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
+                          ->where('isActive', 1)
+                          ->where('isDefault', 1)
+                          ->where('reportID', $reportID)
+                          ->first();
+
+        $checkBudgetMsaterExists = BudgetMaster::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
+                                    ->where('documentSystemID', 65) 
+                                    ->where('serviceLineSystemID', $payload['segmentInfo']['serviceLineSystemID'])
+                                    ->where('templateMasterID', $budgetTemplate->companyReportTemplateID)
+                                    ->where('Year', $payload['yearID'])
+                                    ->where('month', 1)
+                                    ->exists();
+
+        
+        if ($checkBudgetMsaterExists) {
+            throw new \Exception('Budget master already exists');
+        }
+
+        return $detailsTogenerate;
     }
 
     private function confirmDoument(BudgetMaster $budget)
