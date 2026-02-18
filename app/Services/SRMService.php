@@ -4965,7 +4965,10 @@ class SRMService
                 'SupplierRegistrationLink' => function ($q) {
                     $q->select('id', 'name');
                 }
-            ]);
+            ])
+            ->when(!$tenderNegotiation, function ($q) {
+                $q->whereDoesntHave('TenderBidNegotiation');
+            });
 
        /* if ($tenderNegotiation) {
             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
