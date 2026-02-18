@@ -1158,11 +1158,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                 ],
                             ]);
                             $sheet->setColumnFormat($excelColumnFormat);
-                            $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
                             $lastRow = $sheet->getHighestRow();
                             $lastColumn = $sheet->getHighestColumn();
                             if ($lastRow > 0 && $lastColumn) {
+                                $sheet->getStyle('A1:' . $lastColumn . '3')->getFont()->setBold(true);
                                 try {
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
@@ -1171,6 +1171,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
+                            $sheet->setAutoSize(true);
                             if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
@@ -1617,7 +1618,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $year = $request->year;
                     $fileName = trans('custom.collection_report_by_year') . ' -'.$year;
                     $title = trans('custom.collection_report_by_year') . ' -'.$year;
-                    $from_date = \App\helperHelper::dateFormat($request->fromDate);
+                    $from_date = \App\helper\Helper::dateFormat($request->fromDate);
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
@@ -2521,7 +2522,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $mpdf->setAutoBottomMargin = 'stretch';
 
             try {
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_statement_of_account.pdf', 'I');
             } catch (\Exception $e) {
                 // Fallback: try with simpler configuration
@@ -2533,7 +2534,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $mpdf->SetHTMLHeader($htmlHeader);
                 $mpdf->SetHTMLFooter($htmlFooter);
                 $mpdf->AddPage('L');
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_statement_of_account.pdf', 'I');
             }
         } elseif ($request->reportTypeID == 'CBS') {
@@ -2595,7 +2596,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             $mpdf->setAutoBottomMargin = 'stretch';
 
             try {
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_balance_statement.pdf', 'I');
             } catch (\Exception $e) {
                 // Fallback: try with simpler configuration
@@ -2607,9 +2608,47 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $mpdf->SetHTMLHeader($htmlHeader);
                 $mpdf->SetHTMLFooter($htmlFooter);
                 $mpdf->AddPage('L');
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output('customer_balance_statement.pdf', 'I');
             }
+        }
+    }
+
+    /**
+     * Write HTML to mPDF in chunks to avoid pcre.backtrack_limit (1000000) exceeded.
+     * Splits at tag boundaries when possible to keep markup valid.
+     */
+    private function writeHtmlChunked(\Mpdf\Mpdf $mpdf, string $html, int $chunkSize = 500000): void
+    {
+        $len = strlen($html);
+        if ($len <= $chunkSize) {
+            $mpdf->WriteHTML($html);
+
+            return;
+        }
+        $offset = 0;
+        $boundaries = ['</tr>', '</table>', '</tbody>', '</div>', "\n"];
+        while ($offset < $len) {
+            $chunk = substr($html, $offset, $chunkSize);
+            $chunkEnd = $offset + $chunkSize;
+            if ($chunkEnd < $len) {
+                $best = -1;
+                foreach ($boundaries as $b) {
+                    $pos = strrpos($chunk, $b);
+                    if ($pos !== false && $pos > $best) {
+                        $best = $pos + strlen($b);
+                    }
+                }
+                if ($best > 0) {
+                    $chunk = substr($html, $offset, $best);
+                    $offset += $best;
+                } else {
+                    $offset += $chunkSize;
+                }
+            } else {
+                $offset = $len;
+            }
+            $mpdf->WriteHTML($chunk);
         }
     }
 

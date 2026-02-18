@@ -1688,10 +1688,9 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
         }
 
-        $disk = 's3';
+        $disk = 'local';
         Storage::disk($disk)->put($originalFileName, $decodeFile);
         $filePath = Storage::disk($disk)->path($originalFileName);
-        \Log::info('filePath: ' . $filePath);
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -1756,12 +1755,20 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
+            $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+            $uniquePath = 'bank_statements/'.$company->CompanyID.'/'.$bankStatementMaster->statementId.'_'.time().'.'.$extension;
+            Storage::disk('s3')->put($uniquePath, $decodeFile);
+            if (Storage::disk($disk)->exists($originalFileName)) {
+                Storage::disk($disk)->delete($originalFileName);
+            }
+            $bankStatementMaster->update(['filePath' => $uniquePath]);
+            $statementMasterArray = $bankStatementMaster->fresh()->toArray();
             $uploadData = [
-                'storageDisk' => $disk,
-                'storagePath' => $originalFileName,
+                'filePath' => $uniquePath,
+                'disk' => 's3',
                 'uploadedCompany' => $input['companySystemID'],
                 'template' => $this->sanitizeUtf8Array($template),
-                'statementMaster' => $this->sanitizeUtf8Array($bankStatementMaster->toArray()),
+                'statementMaster' => $this->sanitizeUtf8Array($statementMasterArray),
                 'transactionCount' => (int) $input['transactionCount'],
             ];
             UploadBankStatement::dispatch($db, $uploadData, $languageCode);
@@ -1770,6 +1777,7 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.bank_statement_master_not_created'), 500);
         }
     }
+
 
     function dateValidation($date)
     {
