@@ -1688,10 +1688,9 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
         }
 
-        $disk = 's3';
+        $disk = 'local';
         Storage::disk($disk)->put($originalFileName, $decodeFile);
         $filePath = Storage::disk($disk)->path($originalFileName);
-        \Log::info('filePath: ' . $filePath);
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -1756,13 +1755,16 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
+            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            if (Storage::disk($disk)->exists($originalFileName)) {
+                Storage::disk($disk)->delete($originalFileName);
+            }
             $uploadData = [
-                'storageDisk' => $disk,
-                'storagePath' => $originalFileName,
-                'uploadedCompany' => $input['companySystemID'],
-                'template' => $this->sanitizeUtf8Array($template),
-                'statementMaster' => $this->sanitizeUtf8Array($bankStatementMaster->toArray()),
-                'transactionCount' => (int) $input['transactionCount'],
+                'objPHPExcel' => json_encode($objPHPExcel),
+                'uploadedCompany' =>  $input['companySystemID'],
+                'template' => $template,
+                'statementMaster' => $bankStatementMaster->toArray(),
+                'transactionCount' => $input['transactionCount']
             ];
             UploadBankStatement::dispatch($db, $uploadData, $languageCode);
             return $this->sendResponse([], trans('custom.statement_upload_send_to_queue'));
@@ -1770,6 +1772,7 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.bank_statement_master_not_created'), 500);
         }
     }
+
 
     function dateValidation($date)
     {

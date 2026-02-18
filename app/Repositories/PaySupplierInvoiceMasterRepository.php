@@ -222,14 +222,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         if (array_key_exists('cancelYN', $input)) {
             if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
-                \Log::info('cancelYN: ' . $input['cancelYN']);
                 $paymentVoucher->where('cancelYN', $input['cancelYN']);
             }
         }
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                \Log::info('confirmedYN: ' . $input['confirmedYN']);
                 $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
             }
         }
@@ -237,19 +235,15 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('payeeTypeID', $input)) {
             $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
             if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
-                \Log::info('payeeTypeID: ' . $payeeTypeID);
                 $paymentVoucher->where('BPVsupplierID', "!=", NULL)->where('BPVsupplierID', '!=', 0);
             }
             if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
-                \Log::info('payeeTypeID: ' . $payeeTypeID);
                 $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL)->where('directPaymentPayeeEmpID', '!=', 0);
             }
             if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
-                \Log::info('payeeTypeID: ' . $payeeTypeID);
                 $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
             }
             if (($payeeTypeID == 4) && !is_null($payeeTypeID)) {
-                \Log::info('payeeTypeID: ' . $payeeTypeID);
                 $paymentVoucher->where('BPVcustomerID', "!=", NULL)->where(function($query) {
                     $query->whereNull('directPaymentPayeeEmpID')->orWhere('directPaymentPayeeEmpID', 0);
                 });
@@ -259,7 +253,6 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('createdBy', $input)) {
             if($input['createdBy'] && !is_null($input['createdBy']))
             {
-                \Log::info('createdBy: ' . $input['createdBy']);
                 $paymentVoucher->whereIn('createdUserSystemID', $createdBy);
             }
 
@@ -267,67 +260,57 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                \Log::info('approved: ' . $input['approved']);
                 $paymentVoucher->where('approved', $input['approved']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                \Log::info('month: ' . $input['month']);
                 $paymentVoucher->whereMonth('BPVdate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                \Log::info('year: ' . $input['year']);
                 $paymentVoucher->whereYear('BPVdate', '=', $input['year']);
             }
         }
 
         if (array_key_exists('invoiceType', $input)) {
             if ($input['invoiceType'] && !is_null($input['invoiceType'])) {
-                \Log::info('invoiceType: ' . $input['invoiceType']);
                 $paymentVoucher->where('invoiceType', $input['invoiceType']);
             }
         }
 
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && count($supplierID) > 0) {
-                \Log::info('supplierID: ' . json_encode($supplierID));
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
             }
         }
 
         if (array_key_exists('customerID', $input)) {
             if ($input['customerID'] && count($customerID) > 0) {
-                \Log::info('customerID: ' . json_encode($customerID));
                 $paymentVoucher->whereIn('BPVcustomerID', $customerID);
             }
         }
 
         if (array_key_exists('employeeID', $input)) {
             if ($input['employeeID'] && count($employeeID) > 0 && count($supplierID) == 0) {
-                \Log::info('employeeID: ' . json_encode($employeeID));
                 $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
             }
             if ($input['employeeID'] && count($supplierID) > 0 && count($employeeID) > 0) {
-                \Log::info('employeeID: ' . json_encode($employeeID));
                 $paymentVoucher->orWhereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
 
         if (array_key_exists('projectID', $input)) {
             if ($input['projectID'] && !is_null($input['projectID'])) {
-                \Log::info('projectID: ' . json_encode($projectID));
                 $paymentVoucher->whereIn('projectID', $projectID);
             }
         }
 
         if (array_key_exists('chequePaymentYN', $input)) {
             if (($input['chequePaymentYN'] == 0 || $input['chequePaymentYN'] == -1) && !is_null($input['chequePaymentYN'])) {
-                \Log::info('chequePaymentYN: ' . $input['chequePaymentYN']);
                 $paymentVoucher->where('chequePaymentYN', $input['chequePaymentYN']);
             }
         }
@@ -335,28 +318,24 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
         if (array_key_exists('BPVbank', $input)) {
             if ($input['BPVbank'] && !is_null($input['BPVbank'])) {
-                \Log::info('BPVbank: ' . $input['BPVbank']);
                 $paymentVoucher->where('BPVbank', $input['BPVbank']);
             }
         }
 
         if (array_key_exists('BPVAccount', $input)) {
             if ($input['BPVAccount'] && !is_null($input['BPVAccount'])) {
-                \Log::info('BPVAccount: ' . $input['BPVAccount']);
                 $paymentVoucher->where('BPVAccount', $input['BPVAccount']);
             }
         }
 
         if (array_key_exists('chequeSentToTreasury', $input)) {
             if (($input['chequeSentToTreasury'] == 0 || $input['chequeSentToTreasury'] == -1) && !is_null($input['chequeSentToTreasury'])) {
-                \Log::info('chequeSentToTreasury: ' . $input['chequeSentToTreasury']);
                 $paymentVoucher->where('chequeSentToTreasury', $input['chequeSentToTreasury']);
             }
         }
 
         if (array_key_exists('payment_mode', $input)) {
             if (!is_null($input['payment_mode'])) {
-                \Log::info('payment_mode: ' . $input['payment_mode']);
                 $paymentVoucher->where('payment_mode', $input['payment_mode']);
             }
         }
