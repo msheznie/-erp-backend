@@ -1130,7 +1130,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     ];
                 }
                 $g = &$groupKeyToData[$groupKey]['glAmounts'][$glKey];
-                $g['request_amount'] += (float) ($detail->request_amount ?? 0);
+                $g['request_amount'] += (float) (($detail->request_amount/12) ?? 0);
                 $g['previous_year_budget'] += (float) ($detail->previous_year_budget ?? 0);
                 $g['current_year_budget'] += (float) ($detail->current_year_budget ?? 0);
                 $g['amount_given_by_finance'] += (float) ($detail->amount_given_by_finance ?? 0);
@@ -1185,7 +1185,9 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             ];
         }
 
-        CompanyBudgetPlanningGenerate::insert($cachePayloads);
+        foreach ($cachePayloads as $item) {
+            CompanyBudgetPlanningGenerate::create($item);
+        }
 
         return $this->sendResponse($result, 'Budget generate details retrieved successfully');
     }
