@@ -13,6 +13,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
@@ -55,15 +57,25 @@ class UploadBankStatement implements ShouldQueue
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
         CommonJobService::db_switch($db);
-       
+
+        $storageDisk = $uploadData['storageDisk'] ?? null;
+        $storagePath = $uploadData['storagePath'] ?? null;
+        if (! $storageDisk || ! $storagePath || ! Storage::disk($storageDisk)->exists($storagePath)) {
+            Log::channel('upload_bank_statement')->error('Bank statement file not found in storage: ' . ($storagePath ?? 'null'));
+            BankStatementMaster::where('statementId', $uploadData['statementMaster']['statementId'] ?? 0)
+                ->update(['importStatus' => 2, 'importError' => 'Statement file missing. Please re-upload.']);
+            return;
+        }
+
+        $objPHPExcel = IOFactory::load(Storage::disk($storageDisk)->path($storagePath));
+        $sheet = $objPHPExcel->getActiveSheet();
+
         DB::beginTransaction();
         try {
             $uploadedCompany = $uploadData['uploadedCompany'];
             $statementMaster = $uploadData['statementMaster'];
             $transactionCount = $uploadData['transactionCount'];
             $template = $uploadData['template'];
-            $objPHPExcel = $uploadData['objPHPExcel'];
-            $sheet = $objPHPExcel->getActiveSheet();
 
             if(is_null($template['category'])) {
                 $templateHeaderDetails = [strtolower(trim($template['transactionNumber'])), strtolower(trim($template['transactionDate'])), strtolower(trim($template['debit'])), strtolower(trim($template['credit'])), strtolower(trim($template['description']))]; //$template['transactionDate'], $template['debit'], $template['credit'], $template['description'], $template['category']];
@@ -148,11 +160,16 @@ class UploadBankStatement implements ShouldQueue
         } catch (\Exception $e) {
             DB::rollback();
             Log::channel('upload_bank_statement')->error($e->getMessage());
-            BankStatementMaster::where('statementId', $statementMaster['statementId'])
+            $statementId = $uploadData['statementMaster']['statementId'] ?? 0;
+            BankStatementMaster::where('statementId', $statementId)
                 ->update([
                     'importStatus' => 2,
                     'importError' => 'Statement upload failed. Please try re-uploading'
                 ]);
+        } finally {
+            if ($storageDisk && $storagePath && Storage::disk($storageDisk)->exists($storagePath)) {
+                Storage::disk($storageDisk)->delete($storagePath);
+            }
         }
     }
 

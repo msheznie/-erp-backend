@@ -2744,12 +2744,13 @@ class TenderMasterAPIController extends AppBaseController
             $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
 
-            $commercialDateCheckResult = $current_date2->gt($opening_commer_date_comp);
             if ($closing_commer_date_comp == null) {
                 $result2 = true;
+                $commercialDateCheckResult = ($data['master']['document_system_id'] == 113);
             } else {
                 $closing_commer_date_comp = Carbon::parse($closing_commer_date_comp);
                 $result2 = $closing_commer_date_comp->gt($current_date2);
+                $commercialDateCheckResult = $current_date2->gt(Carbon::parse($opening_commer_date_comp));
             }
 
 
@@ -2761,7 +2762,12 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
-        $result3 = $current_date2->gt(Carbon::parse($opening_date_comp));
+        if (is_null($opening_date_comp)) {
+            $result3 = ($data['master']['document_system_id'] == 113);
+        } else {
+            $result3 = $current_date2->gt($opening_date_comp);
+        }
+        
         if ($opening_date_comp_end == null) {
             $result4 = true;
         } else {

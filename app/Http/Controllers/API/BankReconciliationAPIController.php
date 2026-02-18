@@ -1688,9 +1688,10 @@ class BankReconciliationAPIController extends AppBaseController
             return $this->sendError(trans('custom.maximum_size_allow_upload'),500);
         }
 
-        $disk = 'local';
+        $disk = 's3';
         Storage::disk($disk)->put($originalFileName, $decodeFile);
         $filePath = Storage::disk($disk)->path($originalFileName);
+        \Log::info('filePath: ' . $filePath);
         $spreadsheet = IOFactory::load($filePath);
         $sheet = $spreadsheet->getActiveSheet();
 
@@ -1755,16 +1756,13 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
-            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
-            if (Storage::disk($disk)->exists($originalFileName)) {
-                Storage::disk($disk)->delete($originalFileName);
-            }
             $uploadData = [
-                'objPHPExcel' => $objPHPExcel,
-                'uploadedCompany' =>  $input['companySystemID'],
-                'template' => $template,
-                'statementMaster' => $bankStatementMaster->toArray(),
-                'transactionCount' => $input['transactionCount']
+                'storageDisk' => $disk,
+                'storagePath' => $originalFileName,
+                'uploadedCompany' => $input['companySystemID'],
+                'template' => $this->sanitizeUtf8Array($template),
+                'statementMaster' => $this->sanitizeUtf8Array($bankStatementMaster->toArray()),
+                'transactionCount' => (int) $input['transactionCount'],
             ];
             UploadBankStatement::dispatch($db, $uploadData, $languageCode);
             return $this->sendResponse([], trans('custom.statement_upload_send_to_queue'));
@@ -1784,6 +1782,23 @@ class BankReconciliationAPIController extends AppBaseController
                 return null;
             }
         }
+    }
+
+    /**
+     * Recursively sanitize array values to valid UTF-8 for queue JSON encoding.
+     *
+     * @param mixed $data
+     * @return mixed
+     */
+    private function sanitizeUtf8Array($data)
+    {
+        if (is_array($data)) {
+            return array_map([$this, 'sanitizeUtf8Array'], $data);
+        }
+        if (is_string($data)) {
+            return mb_convert_encoding($data, 'UTF-8', 'UTF-8');
+        }
+        return $data;
     }
 
     public function getActiveBankAccountsByBankID(Request $request)
