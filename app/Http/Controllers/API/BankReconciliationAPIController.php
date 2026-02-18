@@ -1755,16 +1755,21 @@ class BankReconciliationAPIController extends AppBaseController
         $bankStatementMaster = $this->bankStatementMaster->create($statementMaster);
         if($bankStatementMaster) {
             $db = isset($request->db) ? $request->db : "";
-            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            $extension = pathinfo($originalFileName, PATHINFO_EXTENSION);
+            $uniquePath = 'bank_statements/'.$company->CompanyID.'/'.$bankStatementMaster->statementId.'_'.time().'.'.$extension;
+            Storage::disk('s3')->put($uniquePath, $decodeFile);
             if (Storage::disk($disk)->exists($originalFileName)) {
                 Storage::disk($disk)->delete($originalFileName);
             }
+            $bankStatementMaster->update(['filePath' => $uniquePath]);
+            $statementMasterArray = $bankStatementMaster->fresh()->toArray();
             $uploadData = [
-                'objPHPExcel' => json_encode($objPHPExcel),
-                'uploadedCompany' =>  $input['companySystemID'],
-                'template' => $template,
-                'statementMaster' => $bankStatementMaster->toArray(),
-                'transactionCount' => $input['transactionCount']
+                'filePath' => $uniquePath,
+                'disk' => 's3',
+                'uploadedCompany' => $input['companySystemID'],
+                'template' => $this->sanitizeUtf8Array($template),
+                'statementMaster' => $this->sanitizeUtf8Array($statementMasterArray),
+                'transactionCount' => (int) $input['transactionCount'],
             ];
             UploadBankStatement::dispatch($db, $uploadData, $languageCode);
             return $this->sendResponse([], trans('custom.statement_upload_send_to_queue'));

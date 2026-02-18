@@ -13,7 +13,9 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class UploadBankStatement implements ShouldQueue
@@ -55,15 +57,27 @@ class UploadBankStatement implements ShouldQueue
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path().'/logs/upload_bank_statement.log');
-       
+
+        $disk = $uploadData['disk'] ?? 'local';
+        $filePath = $uploadData['filePath'] ?? null;
+        $tempPath = null;
+
         DB::beginTransaction();
         try {
             $uploadedCompany = $uploadData['uploadedCompany'];
             $statementMaster = $uploadData['statementMaster'];
             $transactionCount = $uploadData['transactionCount'];
             $template = $uploadData['template'];
-            $objPHPExcel = json_decode($uploadData['objPHPExcel'], true);
+
+            if ($disk === 's3') {
+                $contents = Storage::disk('s3')->get($filePath);
+                $tempPath = sys_get_temp_dir().'/bank_statement_'.uniqid().'_'.basename($filePath);
+                file_put_contents($tempPath, $contents);
+                $objPHPExcel = IOFactory::load($tempPath);
+            } else {
+                $fullPath = Storage::disk($disk)->path($filePath);
+                $objPHPExcel = IOFactory::load($fullPath);
+            }
             $sheet = $objPHPExcel->getActiveSheet();
 
             if(is_null($template['category'])) {
@@ -154,6 +168,13 @@ class UploadBankStatement implements ShouldQueue
                     'importStatus' => 2,
                     'importError' => 'Statement upload failed. Please try re-uploading'
                 ]);
+        } finally {
+            if ($tempPath !== null && file_exists($tempPath)) {
+                @unlink($tempPath);
+            }
+            if (! empty($filePath) && Storage::disk($disk)->exists($filePath)) {
+                Storage::disk($disk)->delete($filePath);
+            }
         }
     }
 
