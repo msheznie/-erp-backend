@@ -1113,24 +1113,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             }
 
                             $financialData->setChargeDuringTheYear(round($sumPeriod, $currencyDecimalPlace));
-
-                            if ($val->disposedDep == 0) {
-                                $financialData->setChargeOnDisposal(round($val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setChargeOnDisposal(round($val->disposedDep + $sumPeriod, $currencyDecimalPlace));
-                            }
-
-                            if ($val->disposedDep == 0) {
-                                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setClosingDep(round($val->openingDep - $val->disposedDep, $currencyDecimalPlace));
-                            }
-
-                            if ($val->disposedDep == 0) {
-                                $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep), $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setNbv(round($val->costClosing - ($val->openingDep - $val->disposedDep), $currencyDecimalPlace));
-                            }
+                            
+                            $financialData->setChargeOnDisposal(round($val->openingDep + $sumPeriod, $currencyDecimalPlace));
+                            $financialData->setClosingDep(round($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod), $currencyDecimalPlace));
+                            $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod)), $currencyDecimalPlace));
 
                             $rowData = [
                                 $financialData->glCode,
