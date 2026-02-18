@@ -313,34 +313,74 @@ class SheetWrapper
             $highestColumn = $tempWorksheet->getHighestColumn();
             $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
 
-            for ($row = 1; $row <= $highestRow; $row++) {
-                for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
-                    $col = Coordinate::stringFromColumnIndex($colIndex);
-                    $cellRef = $col . $row;
-                    $tempCell = $tempWorksheet->getCell($cellRef);
-                    $cellValue = $tempCell->getValue();
+            if ($highestRow > 0 && $highestColumnIndex > 0) {
+                for ($row = 1; $row <= $highestRow; $row++) {
+                    for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
+                        $col = Coordinate::stringFromColumnIndex($colIndex);
+                        $cellRef = $col . $row;
+                        $tempCell = $tempWorksheet->getCell($cellRef);
+                        $cellValue = $tempCell->getValue();
 
-                    // Prevent values starting with =, +, @ (or invalid formulas) from being interpreted as formulas
-                    $valueString = (string) $cellValue;
-                    $isFormulaLike = $tempCell->isFormula()
-                        || (strlen($valueString) > 0 && in_array($valueString[0], ['=', '+', '@'], true));
-                    if ($isFormulaLike) {
-                        $this->worksheet->setCellValueExplicit($cellRef, $valueString, DataType::TYPE_STRING);
-                    } else {
-                        $this->worksheet->setCellValue($cellRef, $cellValue);
+                        // Prevent values starting with =, +, @ (or invalid formulas) from being interpreted as formulas
+                        $valueString = (string) $cellValue;
+                        $isFormulaLike = $tempCell->isFormula()
+                            || (strlen($valueString) > 0 && in_array($valueString[0], ['=', '+', '@'], true));
+                        if ($isFormulaLike) {
+                            $this->worksheet->setCellValueExplicit($cellRef, $valueString, DataType::TYPE_STRING);
+                        } else {
+                            $this->worksheet->setCellValue($cellRef, $cellValue);
+                        }
+
+                        // Copy styles
+                        $tempStyle = $tempWorksheet->getStyle($cellRef);
+                        $this->worksheet->duplicateStyle($tempStyle, $cellRef);
                     }
-
-                    // Copy styles
-                    $tempStyle = $tempWorksheet->getStyle($cellRef);
-                    $this->worksheet->duplicateStyle($tempStyle, $cellRef);
                 }
+            } else {
+                // Html reader produced no cells: fill sheet from HTML tables via DOM
+                $this->fillSheetFromHtmlTables($html);
             }
         } catch (\Exception $e) {
-            // Fallback: if HTML reader fails, set the HTML as text in first cell
-            $this->worksheet->setCellValue('A1', strip_tags($html));
+            // Fallback: if HTML reader fails, try DOM extraction then plain text
+            $this->fillSheetFromHtmlTables($html);
         }
 
         return $this;
+    }
+
+    /**
+     * When PhpSpreadsheet Html reader returns no rows, parse HTML and write table cells manually.
+     */
+    private function fillSheetFromHtmlTables(string $html): void
+    {
+        $dom = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        libxml_clear_errors();
+        if (! $loaded) {
+            $this->worksheet->setCellValue('A1', trim(strip_tags($html)));
+
+            return;
+        }
+        $xpath = new \DOMXPath($dom);
+        $tables = $xpath->query('//table');
+        $currentRow = 1;
+        foreach ($tables as $table) {
+            $rows = $xpath->query('.//tr', $table);
+            foreach ($rows as $tr) {
+                $col = 'A';
+                $cells = $xpath->query('.//td | .//th', $tr);
+                foreach ($cells as $cell) {
+                    $value = trim($cell->textContent ?? '');
+                    $this->worksheet->setCellValueExplicit($col . $currentRow, $value, DataType::TYPE_STRING);
+                    $col++;
+                }
+                $currentRow++;
+            }
+        }
+        if ($currentRow === 1) {
+            $this->worksheet->setCellValue('A1', trim(strip_tags($html)));
+        }
     }
 
     public function getDelegate()
