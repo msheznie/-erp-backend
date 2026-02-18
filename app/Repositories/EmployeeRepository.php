@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\Employee;
+use App\Models\EmployeeNavigation;
+use App\Models\NavigationUserGroupSetup;
 use App\Repositories\BaseRepository;
 
 /**
@@ -88,5 +90,142 @@ class EmployeeRepository extends BaseRepository
     public function model()
     {
         return Employee::class;
+    }
+
+    public function buildUserResponseItem($employee, $accessMap = [])
+    {
+        $user = $employee->user_data;
+
+        return [
+            'RegisteredCompany' => $employee->emp_company->CompanyName ?? '',
+            'EmpID'             => $employee->empID,
+            'SecondaryCode'     => $employee->hr_emp->EmpSecondaryCode ?? '',
+            'Name'               => $employee->empName,
+            'UserName'           => $employee->empUserName,
+            'Email'              => $employee->empEmail,
+            'Designation'        => $employee->erp_designation->designation ?? '',
+            'UserType'          => $this->mapUserTypeToAlias(($user && $user->user_type) ? $user->user_type->userType : ''),
+            'EmpLoginActive'   => $employee->empLoginActive,
+            'DischargedYN'      => $employee->discharegedYN,
+            'AccessDetails'     => $accessMap[$employee->employeeSystemID] ?? [],
+        ];
+    }
+
+    public function mapUserTypeToAlias($dbUserType)
+    {
+        if (empty($dbUserType)) {
+            return '';
+        }
+
+        $aliases = config('products.user_type_aliases', []);
+        $reversed = array_flip($aliases);
+
+        return $reversed[$dbUserType] ?? $dbUserType;
+    }
+
+    public function batchLoadAccessDetails(array $employeeIds)
+    {
+        if (empty($employeeIds)) {
+            return [];
+        }
+
+        $navigations = EmployeeNavigation::with(['company', 'usergroup'])
+            ->whereIn('employeeSystemID', $employeeIds)
+            ->get();
+
+        $pairs = $navigations->unique(fn($n) => $n->userGroupID . '_' . $n->companyID);
+
+        $productMap = [];
+        if ($pairs->isNotEmpty()) {
+            $productRecords = NavigationUserGroupSetup::where(function ($query) use ($pairs) {
+                    $pairs->each(function ($nav) use ($query) {
+                        $query->orWhere(function ($q) use ($nav) {
+                            $q->where('userGroupID', $nav->userGroupID)
+                              ->where('companyID', $nav->companyID);
+                        });
+                    });
+                })
+                ->where('isPortalYN', true)
+                ->where('levelNo', 0)
+                ->whereIn('description', config('products.names'))
+                ->distinct()
+                ->get(['userGroupID', 'companyID', 'description']);
+
+            foreach ($productRecords as $rec) {
+                $key = $rec->userGroupID . '_' . $rec->companyID;
+                $productMap[$key][] = $rec->description;
+            }
+        }
+
+        $portalPairs = [];
+        if ($pairs->isNotEmpty()) {
+            $portalRecords = NavigationUserGroupSetup::where(function ($query) use ($pairs) {
+                    $pairs->each(function ($nav) use ($query) {
+                        $query->orWhere(function ($q) use ($nav) {
+                            $q->where('userGroupID', $nav->userGroupID)
+                              ->where('companyID', $nav->companyID);
+                        });
+                    });
+                })
+                ->where('isPortalYN', true)
+                ->distinct()
+                ->get(['userGroupID', 'companyID']);
+
+            foreach ($portalRecords as $rec) {
+                $portalPairs[$rec->userGroupID . '_' . $rec->companyID] = true;
+            }
+        }
+
+        $accessMap = [];
+        foreach ($navigations as $nav) {
+            if (!$nav->company || !$nav->usergroup) {
+                continue;
+            }
+
+            $key = $nav->userGroupID . '_' . $nav->companyID;
+
+            if (!isset($portalPairs[$key])) {
+                continue;
+            }
+
+            $products = $productMap[$key] ?? ['Self Service'];
+
+            $accessMap[$nav->employeeSystemID][] = [
+                'company'        => $nav->company->CompanyName ?? '',
+                'companyID'     => $nav->company->CompanyID ?? '',
+                'userGroup'     => $nav->usergroup->description ?? '',
+                'productAccess' => implode(', ', array_unique($products)),
+            ];
+        }
+
+        return $accessMap;
+    }
+
+    public function getEmployeeIDsByProductAccess($productName)
+    {
+        if (strtolower($productName) === 'self service') {
+            $otherProducts = array_diff(config('products.names'), ['Self Service']);
+
+            $employeesWithProducts = EmployeeNavigation::withProducts($otherProducts)
+                ->distinct()
+                ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                ->toArray();
+
+            $allPortalEmployees = EmployeeNavigation::portalUsers()
+                ->distinct()
+                ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                ->toArray();
+
+            return array_values(array_diff($allPortalEmployees, $employeesWithProducts));
+        }
+
+        if (!in_array($productName, config('products.names'))) {
+            return [];
+        }
+
+        return EmployeeNavigation::withProduct($productName)
+            ->distinct()
+            ->pluck('srp_erp_employeenavigation.employeeSystemID')
+            ->toArray();
     }
 }

@@ -9858,4 +9858,9 @@ return
     'invalid_date_format' => 'تنسيق تاريخ غير صالح',
     'beneficiary_number' => 'رقم المستفيد',
     "commercial_registration": "رقم التسجيل",
+
+    // support/users API
+    'product_access_value_not_matching' => 'قيمة الوصول إلى المنتج غير متطابقة مع النظام',
+    'user_type_not_found' => 'نوع المستخدم غير موجود',
+    'input_value_not_matching' => 'قيمة الإدخال غير متطابقة',
 ];

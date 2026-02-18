@@ -17,8 +17,12 @@ use App\helper\Helper;
 use App\Services\WebPushNotificationService;
 use App\Http\Requests\API\CreateUserAPIRequest;
 use App\Http\Requests\API\UpdateUserAPIRequest;
+use App\Models\Company;
+use App\Models\Employee;
 use App\Models\EmployeeNavigation;
+use App\Models\NavigationUserGroupSetup;
 use App\Models\User;
+use App\Models\UserType;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -318,4 +322,127 @@ class UserAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+
+
+    public function pullUserDetails(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            $validator = \Validator::make($input, [
+                'page'           => 'sometimes|integer|min:1',
+                'per_page'       => 'sometimes|integer|min:1|max:500',
+                'company'        => 'sometimes|string',
+                'user_type'      => 'sometimes|string',
+                'product_access' => 'sometimes|string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->errors()->first(), 422);
+            }
+
+            $companySystemIDs = null;
+            if ($request->has('company')) {
+                $companyName = $request->get('company');
+                $company = Company::where('CompanyName', $companyName)->first();
+
+                if (!$company) {
+                    return $this->sendError(trans('custom.input_value_not_matching'), 422);
+                }
+
+                $isGroup = Helper::checkIsCompanyGroup($company->companySystemID);
+                if ($isGroup) {
+                    $companySystemIDs = Helper::getGroupCompany($company->companySystemID);
+                } else {
+                    $companySystemIDs = [$company->companySystemID];
+                }
+            }
+
+            $userTypeId = null;
+            if ($request->has('user_type')) {
+                $inputType = $request->get('user_type');
+
+                $aliases = config('products.user_type_aliases', []);
+                $mappedType = collect($aliases)->first(
+                    fn($dbVal, $alias) => strtolower($alias) === strtolower($inputType)
+                );
+
+                $searchType = $mappedType ?? $inputType;
+                $userType = UserType::whereRaw('LOWER(userType) = ?', [strtolower($searchType)])->first();
+
+                if (!$userType) {
+                    return $this->sendError(trans('custom.user_type_not_found'), 422);
+                }
+                $userTypeId = $userType->id;
+            }
+
+            $productAccessFilter = null;
+            if ($request->has('product_access')) {
+                $inputProduct = $request->get('product_access');
+                $validProducts = config('products.names');
+
+                $productAccessFilter = collect($validProducts)->first(
+                    fn($name) => strtolower($name) === strtolower($inputProduct)
+                );
+
+                if (!$productAccessFilter) {
+                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                }
+            }
+
+            $query = Employee::query()
+                ->with([
+                    'user_data',
+                    'user_data.user_type',
+                    'emp_company',
+                    'erp_designation',
+                    'hr_emp',
+                ]);              
+
+            if ($companySystemIDs !== null) {
+                $query->whereIn('empCompanySystemID', $companySystemIDs);
+            }
+            if ($userTypeId !== null) {
+                $query->whereHas('user_data', function ($q) use ($userTypeId) {
+                    $q->where('userType', $userTypeId);
+                });
+            }
+
+            if ($productAccessFilter !== null) {
+                $employeeIDs = $this->employeeRepository->getEmployeeIDsByProductAccess($productAccessFilter);
+
+                if (empty($employeeIDs)) {
+                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                }
+
+                $query->whereIn('employeeSystemID', $employeeIDs);
+            }
+
+            if ($request->has('page')) {
+                $perPage = $request->get('per_page', 10);
+                $employees = $query->paginate($perPage);
+
+                $employeeIds = $employees->getCollection()->pluck('employeeSystemID')->toArray();
+                $accessMap = $this->employeeRepository->batchLoadAccessDetails($employeeIds);
+
+                $employees->getCollection()->transform(function ($employee) use ($accessMap) {
+                    return $this->employeeRepository->buildUserResponseItem($employee, $accessMap);
+                });
+            } else {
+                $allEmployees = $query->get();
+                $employeeIds = $allEmployees->pluck('employeeSystemID')->toArray();
+                $accessMap = $this->employeeRepository->batchLoadAccessDetails($employeeIds);
+
+                $employees = $allEmployees->map(function ($employee) use ($accessMap) {
+                    return $this->employeeRepository->buildUserResponseItem($employee, $accessMap);
+                });
+            }
+
+            return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 }
