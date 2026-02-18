@@ -1158,11 +1158,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                 ],
                             ]);
                             $sheet->setColumnFormat($excelColumnFormat);
-                            $sheet->setAutoSize(false);
                             $sheet->loadView('export_report.customer_ledger_template1', $outputData);
                             $lastRow = $sheet->getHighestRow();
                             $lastColumn = $sheet->getHighestColumn();
                             if ($lastRow > 0 && $lastColumn) {
+                                $sheet->getStyle('A1:' . $lastColumn . '3')->getFont()->setBold(true);
                                 try {
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
@@ -1171,6 +1171,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
+                            $sheet->setAutoSize(true);
                             if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
@@ -1617,7 +1618,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $year = $request->year;
                     $fileName = trans('custom.collection_report_by_year') . ' -'.$year;
                     $title = trans('custom.collection_report_by_year') . ' -'.$year;
-                    $from_date = \App\helperHelper::dateFormat($request->fromDate);
+                    $from_date = \App\helper\Helper::dateFormat($request->fromDate);
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
@@ -2513,6 +2514,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
             if ($isRTL) {
                 $mpdfConfig['direction'] = 'rtl';
             }
+
+            ini_set('pcre.backtrack_limit', '5000000');
 
             $mpdf = new \Mpdf\Mpdf($mpdfConfig);
             $mpdf->SetHTMLHeader($htmlHeader);
