@@ -4422,7 +4422,7 @@ class TenderMasterAPIController extends AppBaseController
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br>";
             }
-            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+            $body .= Helper::getSupplierEmailFooter($tender->company_id);
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
