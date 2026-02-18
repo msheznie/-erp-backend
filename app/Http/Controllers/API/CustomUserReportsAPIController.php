@@ -2029,10 +2029,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                 } 
                                 else if ($table == 'location_to') {
-                                    $data->wareHouseJoin('location_to', 'locationTo', 'wareHouseDescription');
+                                    $data->wareHouseJoin('location_to', 'locationTo', 'locationToWareHouseDescription');
                                 }
                                 else if ($table == 'location_from') {
-                                    $data->wareHouseJoin('location_from', 'locationFrom', 'wareHouseDescription');
+                                    $data->wareHouseJoin('location_from', 'locationFrom', 'locationFromWareHouseDescription');
                                 }
                             }
                         }
@@ -2065,10 +2065,10 @@ class CustomUserReportsAPIController extends AppBaseController
                                     $data->companyJoin('company', 'companySystemID', 'CompanyName');
                                 } 
                                 else if ($table == 'location_to') {
-                                    $data->wareHouseJoin('location_to', 'locationTo', 'wareHouseDescription');
+                                    $data->wareHouseJoin('location_to', 'locationTo', 'locationToWareHouseDescription');
                                 }
                                 else if ($table == 'location_from') {
-                                    $data->wareHouseJoin('location_from', 'locationFrom', 'wareHouseDescription');
+                                    $data->wareHouseJoin('location_from', 'locationFrom', 'locationFromWareHouseDescription');
                                 }
                             }
                         }

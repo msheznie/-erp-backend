@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -316,8 +317,18 @@ class SheetWrapper
                 for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
                     $col = Coordinate::stringFromColumnIndex($colIndex);
                     $cellRef = $col . $row;
-                    $cellValue = $tempWorksheet->getCell($cellRef)->getValue();
-                    $this->worksheet->setCellValue($cellRef, $cellValue);
+                    $tempCell = $tempWorksheet->getCell($cellRef);
+                    $cellValue = $tempCell->getValue();
+
+                    // Prevent values starting with =, +, @ (or invalid formulas) from being interpreted as formulas
+                    $valueString = (string) $cellValue;
+                    $isFormulaLike = $tempCell->isFormula()
+                        || (strlen($valueString) > 0 && in_array($valueString[0], ['=', '+', '@'], true));
+                    if ($isFormulaLike) {
+                        $this->worksheet->setCellValueExplicit($cellRef, $valueString, DataType::TYPE_STRING);
+                    } else {
+                        $this->worksheet->setCellValue($cellRef, $cellValue);
+                    }
 
                     // Copy styles
                     $tempStyle = $tempWorksheet->getStyle($cellRef);

@@ -1667,9 +1667,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $createdBy = collect($createdBy)->pluck('id');
 
         $search = $request->input('search.value');
-
-        \Log::info('input: ' . json_encode($input));
-        \Log::info('projectID: ' . empty($input['supplierID']));
         
         if(empty($input['BPVAccount'])){
             unset($input['BPVAccount']);
