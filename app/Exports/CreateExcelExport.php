@@ -345,6 +345,8 @@ class SheetWrapper
             $this->fillSheetFromHtmlTables($html);
         }
 
+        $this->setAutoSize(true);
+
         return $this;
     }
 
