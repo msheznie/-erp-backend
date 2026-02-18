@@ -41,3 +41,4 @@ Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocument
 Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
 Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
 Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
+Route::post('customer_master', 'CustomerMasterAPIController@pullCustomerMaster');

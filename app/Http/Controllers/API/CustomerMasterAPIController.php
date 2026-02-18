@@ -1917,7 +1917,7 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         try {
-            $usePagination = $request->has('page') || $request->has('per_page');
+            $usePagination = $request->has('page');
             $page = $request->get('page', 1);
             $perPage = $request->get('per_page', 10);
 

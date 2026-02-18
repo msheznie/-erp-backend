@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pull Customer Master API</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; line-height: 1.5; }
+        table { border-collapse: collapse; margin: 12px 0; }
+        th, td { border: 1px solid #333; padding: 8px 12px; text-align: left; }
+        th { background: #f0f0f0; }
+        pre { background: #f5f5f5; padding: 12px; overflow-x: auto; border: 1px solid #ddd; }
+        code { font-family: monospace; font-size: 13px; }
+        h1 { font-size: 1.5em; border-bottom: 1px solid #ccc; padding-bottom: 8px; }
+        h5 { font-size: 1.1em; margin: 16px 0 8px; }
+        p { margin: 8px 0; }
+    </style>
+</head>
+<body>
+
+<h1>Pull Customer Master API</h1>
+
+<h5>Overview</h5>
+<p align="justify">This API retrieves all details about customer master for a given company. It is intended for third-party systems that need to pull customer master records from the ERP.
+                   Only customers that are <strong>active</strong>, <strong>approved</strong>, and <strong>assigned</strong> for the specified company are returned.</p>
+<p align="justify">The <strong>category</strong> parameter is optional; when provided, it must be an <strong>array of category descriptions</strong> (e.g. ["General", "POS"]). Only customers in <strong>any</strong> of those categories are returned.</p>
+<p align="justify"><strong>Pagination:</strong> If <strong>page</strong> or <strong>per_page</strong> is sent, the response is paginated (default per_page: 10, maximum: 50). If <strong>neither</strong> page nor per_page is sent, <strong>all</strong> matching customers are returned in a single array (no pagination).</p>
+<p align="justify">The response includes customer header data, GL account details (receivable, unbilled, advance), contact details (multiple per customer), and currency details (multiple per customer). Credit limit is returned with the company's reporting currency in the key (e.g. creditLimit(OMR)).</p>
+
+<h5>Endpoint</h5>
+<pre><code>POST /api/v1/customer_master</code></pre>
+
+<h5>Headers</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Header</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Authorization</td>
+<td>string</td>
+<td>Yes</td>
+<td>API key for authentication (format: {{third party system code}} {{api token}})</td>
+</tr>
+<tr>
+<td>Content-Type</td>
+<td>string</td>
+<td>Yes</td>
+<td>application/json</td>
+</tr>
+<tr>
+<td>Accept</td>
+<td>string</td>
+<td>Yes</td>
+<td>application/json</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Request Body</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>category</td>
+<td>array</td>
+<td>Optional</td>
+<td>Array of customer category descriptions (e.g. ["General", "POS"]). If provided, only customers in <strong>any</strong> of these categories are returned. Each value must match an existing categoryDescription in the system.</td>
+</tr>
+<tr>
+<td>page</td>
+<td>integer</td>
+<td>No</td>
+<td>Page number for pagination (default: 1, minimum: 1). If neither page nor per_page is sent, all records are returned without pagination.</td>
+</tr>
+<tr>
+<td>per_page</td>
+<td>integer</td>
+<td>No</td>
+<td>Number of items per page (default: 10, minimum: 1, maximum: 50). If neither page nor per_page is sent, all records are returned without pagination.</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Request Body Examples</h5>
+
+<h5>Example 1: To get all customers</h5>
+<pre><code>{
+}</code></pre>
+
+<h5>Example 2: Paginated, page 1, 10 per page</h5>
+<pre><code>{
+  "page": 1,
+  "per_page": 10
+}</code></pre>
+
+<h5>Example 3: Paginated with category filter</h5>
+<pre><code>{
+  "category": ["General", "POS"],
+  "page": 1,
+  "per_page": 10
+}</code></pre>
+
+<h5>Response</h5>
+<h5>Success Response (200) – With pagination (when page or per_page is sent)</h5>
+<pre><code>{
+  "success": true,
+  "data": {
+    "current_page": 1,
+    "data": [
+      {
+        "primaryCode": "CUST001",
+        "secondaryCode": "SC01",
+        "customerName": "Acme Corporation",
+        "reportTitle": "Acme Corp",
+        "category": "General",
+        "interCompanyYesNo": "No",
+        "country": "Oman",
+        "city": "Muscat",
+        "creditLimit(OMR)": 10000.00,
+        "creditPeriod": 30,
+        "registrationNumber": "REG123",
+        "registrationExpiryDate": "2025-12-31",
+        "isActive": "Yes",
+        "vatEligible": "Yes",
+        "vatNumber": "OM123456",
+        "vatPercentage": 5,
+        "glDetails": {
+          "receivableAccount": "1100 - Trade Receivables",
+          "unbilledAccount": "1101 - Unbilled Receivables",
+          "advanceAccount": "2100 - Customer Advances"
+        },
+        "contactDetails": [
+          {
+            "contactType": "Primary",
+            "contactPersonName": "John Doe",
+            "telephone": "+968 12345678",
+            "fax": null,
+            "email": "john@acme.com",
+            "isDefault": "Yes"
+          }
+        ],
+        "currencyDetails": [
+          {
+            "currencyName": "Omani Rial",
+            "isDefault": "Yes",
+            "isAssigned": "Yes"
+          }
+        ]
+      }
+    ],
+    "first_page_url": "http://localhost:8000/api/v1/customer_master?page=1",
+    "from": 1,
+    "last_page": 2,
+    "last_page_url": "http://localhost:8000/api/v1/customer_master?page=2",
+    "links": [
+      {
+        "url": null,
+        "label": "&laquo; Previous",
+        "page": null,
+        "active": false
+      },
+      {
+        "url": "http://localhost:8000/api/v1/customer_master?page=1",
+        "label": "1",
+        "page": 1,
+        "active": true
+      },
+      {
+        "url": "http://localhost:8000/api/v1/customer_master?page=2",
+        "label": "2",
+        "page": 2,
+        "active": false
+      },
+      {
+        "url": "http://localhost:8000/api/v1/customer_master?page=2",
+        "label": "Next &raquo;",
+        "page": 2,
+        "active": false
+      }
+    ],
+    "next_page_url": "http://localhost:8000/api/v1/customer_master?page=2",
+    "path": "http://localhost:8000/api/v1/customer_master",
+    "per_page": 10,
+    "prev_page_url": null,
+    "to": 10,
+    "total": 18
+  },
+  "message": "Customer master retrieved successfully"
+}</code></pre>
+
+<h5>Success Response (200) – Without pagination (when neither page nor per_page is sent)</h5>
+<pre><code>{
+  "success": true,
+  "data": [
+    {
+      "primaryCode": "CUST001",
+      "secondaryCode": "SC01",
+      "customerName": "Acme Corporation",
+      "reportTitle": "Acme Corp",
+      "category": "General",
+      "interCompanyYesNo": "No",
+      "country": "Oman",
+      "city": "Muscat",
+      "creditLimit(OMR)": 10000.00,
+      "creditPeriod": 30,
+      "registrationNumber": "REG123",
+      "registrationExpiryDate": "2025-12-31",
+      "isActive": "Yes",
+      "vatEligible": "Yes",
+      "vatNumber": "OM123456",
+      "vatPercentage": 5,
+      "glDetails": {
+        "receivableAccount": "1100 - Trade Receivables",
+        "unbilledAccount": "1101 - Unbilled Receivables",
+        "advanceAccount": "2100 - Customer Advances"
+      },
+      "contactDetails": [
+        {
+          "contactType": "Primary",
+          "contactPersonName": "John Doe",
+          "telephone": "+968 12345678",
+          "fax": null,
+          "email": "john@acme.com",
+          "isDefault": "Yes"
+        }
+      ],
+      "currencyDetails": [
+        {
+          "currencyName": "Omani Rial",
+          "isDefault": "Yes",
+          "isAssigned": "Yes"
+        }
+      ]
+    }
+  ],
+  "message": "Customer master retrieved successfully"
+}</code></pre>
+
+<h5>Error Response (422)</h5>
+<h5>Invalid category (one or more descriptions not found)</h5>
+<pre><code>{
+  "success": false,
+  "message": "The Customer category not matching: InvalidCategory",
+}</code></pre>
+
+<h5>Validation error (category not an array)</h5>
+<pre><code>{
+  "success": false,
+  "message": "Category must be an array",
+}</code></pre>
+
+<h5>Error Response (500)</h5>
+<pre><code>{
+  "success": false,
+  "message": "Internal server error message",
+}</code></pre>
+
+<h5>Pagination Response Object</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>current_page</td>
+<td>integer</td>
+<td>Current page number</td>
+</tr>
+<tr>
+<td>data</td>
+<td>array</td>
+<td>Array of customer objects for the current page</td>
+</tr>
+<tr>
+<td>first_page_url</td>
+<td>string</td>
+<td>URL to the first page</td>
+</tr>
+<tr>
+<td>from</td>
+<td>integer</td>
+<td>Starting record number for current page</td>
+</tr>
+<tr>
+<td>last_page</td>
+<td>integer</td>
+<td>Last page number</td>
+</tr>
+<tr>
+<td>last_page_url</td>
+<td>string</td>
+<td>URL to the last page</td>
+</tr>
+<tr>
+<td>links</td>
+<td>array</td>
+<td>Array of link objects for pagination navigation (Previous, page numbers, Next). See Link Object below.</td>
+</tr>
+<tr>
+<td>next_page_url</td>
+<td>string</td>
+<td>URL to the next page (null if on last page)</td>
+</tr>
+<tr>
+<td>path</td>
+<td>string</td>
+<td>Base path for pagination URLs</td>
+</tr>
+<tr>
+<td>per_page</td>
+<td>integer</td>
+<td>Number of items per page</td>
+</tr>
+<tr>
+<td>prev_page_url</td>
+<td>string</td>
+<td>URL to the previous page (null if on first page)</td>
+</tr>
+<tr>
+<td>to</td>
+<td>integer</td>
+<td>Ending record number for current page</td>
+</tr>
+<tr>
+<td>total</td>
+<td>integer</td>
+<td>Total number of records across all pages</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Link Object (within links array)</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>url</td>
+<td>string</td>
+<td>URL for this link (null for Previous when on first page, or Next when on last page)</td>
+</tr>
+<tr>
+<td>label</td>
+<td>string</td>
+<td>Display label (e.g. "&laquo; Previous", "1", "2", "Next &raquo;")</td>
+</tr>
+<tr>
+<td>page</td>
+<td>integer</td>
+<td>Page number for this link (null for Previous/Next when not applicable)</td>
+</tr>
+<tr>
+<td>active</td>
+<td>boolean</td>
+<td>True if this link is the current page</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Data Structure</h5>
+<h5>Customer Object</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>primaryCode</td>
+<td>string</td>
+<td>Customer code</td>
+</tr>
+<tr>
+<td>secondaryCode</td>
+<td>string</td>
+<td>Customer short code</td>
+</tr>
+<tr>
+<td>customerName</td>
+<td>string</td>
+<td>Customer name</td>
+</tr>
+<tr>
+<td>reportTitle</td>
+<td>string</td>
+<td>Report title</td>
+</tr>
+<tr>
+<td>category</td>
+<td>string</td>
+<td>Customer category description</td>
+</tr>
+<tr>
+<td>interCompanyYesNo</td>
+<td>string</td>
+<td>Inter-company flag (Yes/No)</td>
+</tr>
+<tr>
+<td>country</td>
+<td>string</td>
+<td>Country name</td>
+</tr>
+<tr>
+<td>city</td>
+<td>string</td>
+<td>City</td>
+</tr>
+<tr>
+<td>creditLimit(OMR)</td>
+<td>number</td>
+<td>Credit limit; key suffix is company reporting currency (e.g. OMR, USD)</td>
+</tr>
+<tr>
+<td>creditPeriod</td>
+<td>number</td>
+<td>Credit period</td>
+</tr>
+<tr>
+<td>registrationNumber</td>
+<td>string</td>
+<td>Customer registration number</td>
+</tr>
+<tr>
+<td>registrationExpiryDate</td>
+<td>string</td>
+<td>Registration expiry date (format: YYYY-MM-DD)</td>
+</tr>
+<tr>
+<td>isActive</td>
+<td>string</td>
+<td>Is active (Yes/No)</td>
+</tr>
+<tr>
+<td>vatEligible</td>
+<td>string</td>
+<td>VAT eligible (Yes/No)</td>
+</tr>
+<tr>
+<td>vatNumber</td>
+<td>string</td>
+<td>VAT number</td>
+</tr>
+<tr>
+<td>vatPercentage</td>
+<td>number</td>
+<td>VAT percentage</td>
+</tr>
+<tr>
+<td>glDetails</td>
+<td>object</td>
+<td>GL account details (see GL Details Object). Values may be "code - description".</td>
+</tr>
+<tr>
+<td>contactDetails</td>
+<td>array</td>
+<td>Array of contact objects (see Contact Object). Multiple contacts per customer.</td>
+</tr>
+<tr>
+<td>currencyDetails</td>
+<td>array</td>
+<td>Array of currency objects (see Currency Object). Multiple currencies per customer.</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>GL Details Object</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>receivableAccount</td>
+<td>string</td>
+<td>Receivable account (code - description)</td>
+</tr>
+<tr>
+<td>unbilledAccount</td>
+<td>string</td>
+<td>Unbilled account (code - description)</td>
+</tr>
+<tr>
+<td>advanceAccount</td>
+<td>string</td>
+<td>Advance account (code - description)</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Contact Object</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>contactType</td>
+<td>string</td>
+<td>Contact type description (e.g. Primary)</td>
+</tr>
+<tr>
+<td>contactPersonName</td>
+<td>string</td>
+<td>Contact person name</td>
+</tr>
+<tr>
+<td>telephone</td>
+<td>string</td>
+<td>Telephone number</td>
+</tr>
+<tr>
+<td>fax</td>
+<td>string</td>
+<td>Fax number</td>
+</tr>
+<tr>
+<td>email</td>
+<td>string</td>
+<td>Email address</td>
+</tr>
+<tr>
+<td>isDefault</td>
+<td>string</td>
+<td>Is default contact (Yes/No)</td>
+</tr>
+</tbody>
+</table>
+<br>
+
+<h5>Currency Object</h5>
+<table border="1">
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>currencyName</td>
+<td>string</td>
+<td>Currency name</td>
+</tr>
+<tr>
+<td>isDefault</td>
+<td>string</td>
+<td>Is default currency (Yes/No)</td>
+</tr>
+<tr>
+<td>isAssigned</td>
+<td>string</td>
+<td>Is assigned (Yes/No)</td>
+</tr>
+</tbody>
+</table>
+
+</body>
+</html>
