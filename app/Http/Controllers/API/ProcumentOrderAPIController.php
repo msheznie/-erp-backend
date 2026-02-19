@@ -3398,7 +3398,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                 if (app()->getLocale() == 'ar') {
@@ -4145,7 +4145,7 @@ WHERE
 
         return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                 if (app()->getLocale() == 'ar') {
