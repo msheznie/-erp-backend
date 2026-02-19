@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Validations\B2B\VendorFile;
+
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 
 class Header
@@ -19,7 +21,7 @@ class Header
     {
         foreach ($this->data as $data)
         {
-            $errorArray = !is_null($this->validateHeaderData($data)) ? array_flatten($this->validateHeaderData($data)) : [];
+            $errorArray = !is_null($this->validateHeaderData($data)) ? Arr::flatten($this->validateHeaderData($data)) : [];
             $this->validaitons[] = (count($errorArray) != 0) ? ['key' => 'header', 'errors' => $errorArray, 'errorCount' => count($errorArray)] : [] ;
         }
 

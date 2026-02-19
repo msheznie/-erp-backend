@@ -827,6 +827,13 @@ class TenderMasterAPIController extends AppBaseController
         $pre_bid_clarification_start_date = null;
         $pre_bid_clarification_end_date = null;
         $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'];
+        $stage = $input['stage'] ?? null;
+
+        if (is_array($stage)) {
+            $stageValue = $stage[0] ?? null;
+        } else {
+            $stageValue = $stage;
+        }
 
         if (isset($input['document_sales_start_date'])) {
             $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
@@ -968,9 +975,9 @@ class TenderMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => trans('srm_tender_rfx.bid_submission_from_date_and_time_should_greater_than_document_sales_from_date_and_time')];
         }
 
-        if (!is_null($input['stage']) || $input['stage'] != 0) {
+        if ($stageValue != 0) {
 
-            if ($input['stage'][0] == 1 || $input['stage'] == 1) {
+            if ($stageValue == 1) {
 
                 if (isset($input['bid_opening_date_time'])) {
                     $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
@@ -1030,7 +1037,7 @@ class TenderMasterAPIController extends AppBaseController
 
 
 
-            if ($input['stage'][0] == 2 || $input['stage'] == 2) {
+            if ($stageValue == 2) {
 
                 if (is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => trans('srm_tender_rfx.technical_bid_opening_from_date_cannot_be_empty')];
@@ -1280,7 +1287,7 @@ class TenderMasterAPIController extends AppBaseController
                         if (is_null($input['evaluation_type_id']) || $input['evaluation_type_id'] == 0) {
                             return ['success' => false, 'message' => trans('srm_tender_rfx.evaluation_is_required')];
                         }
-                        if (is_null($input['stage']) || $input['stage'] == 0) {
+                        if ($stageValue == 0) {
                             return ['success' => false, 'message' => trans('srm_tender_rfx.stage_is_required_dot')];
                         }
 
@@ -2728,11 +2735,13 @@ class TenderMasterAPIController extends AppBaseController
             $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
 
-            $commercialDateCheckResult = $current_date2->gt($opening_commer_date_comp);
             if ($closing_commer_date_comp == null) {
                 $result2 = true;
+                $commercialDateCheckResult = ($data['master']['document_system_id'] == 113);
             } else {
+                $closing_commer_date_comp = Carbon::parse($closing_commer_date_comp);
                 $result2 = $closing_commer_date_comp->gt($current_date2);
+                $commercialDateCheckResult = $current_date2->gt(Carbon::parse($opening_commer_date_comp));
             }
 
 
@@ -2744,10 +2753,16 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
-        $result3 = $current_date2->gt($opening_date_comp);
+        if (is_null($opening_date_comp)) {
+            $result3 = ($data['master']['document_system_id'] == 113);
+        } else {
+            $result3 = $current_date2->gt($opening_date_comp);
+        }
+        
         if ($opening_date_comp_end == null) {
             $result4 = true;
         } else {
+            $opening_date_comp_end = Carbon::parse($opening_date_comp_end);
             $result4 = $opening_date_comp_end->gt($current_date2);
         }
 
@@ -4407,7 +4422,7 @@ class TenderMasterAPIController extends AppBaseController
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
                     <br>";
             }
-            $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+            $body .= Helper::getSupplierEmailFooter($tender->company_id);
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
@@ -4438,7 +4453,7 @@ class TenderMasterAPIController extends AppBaseController
                     $name = $bid->name;
                     $documentType = $this->getDocumentType($tender->document_type);
                     $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
-                    $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+                    $body .= Helper::getSupplierEmailFooter($tender->company_id);
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";

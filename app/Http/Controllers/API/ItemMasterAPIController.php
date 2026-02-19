@@ -1226,8 +1226,8 @@ class ItemMasterAPIController extends AppBaseController
 
                 $itemMasterOld = $itemMaster->toArray();
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
-                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
-                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $old_array = Arr::only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $modified_array = Arr::only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
             
                 // update in to user log table
                 foreach ($old_array as $key => $old){
@@ -1437,10 +1437,7 @@ class ItemMasterAPIController extends AppBaseController
 
       
         $image_data = $itemMaster->itemPicture;
-        $storagePath  = Storage::disk('s3')->getDriver()->getAdapter()->getPathPrefix();
 
-
-    
         if($image_data != null || !empty($image_data))
         {
          

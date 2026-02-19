@@ -3103,7 +3103,7 @@ class Helper
         return 'false';
     }
 
-    public static function getFileUrlFromS3($key)
+    public static function getFileUrlFromS3($key, $minutes ='+60 minutes')
     {
         if($key) {            
             //return Storage::disk('s3')->url($key);
@@ -3115,7 +3115,7 @@ class Helper
                 'Bucket' => $bucket,
                 'Key' => $key
             ]);
-            $request = $client->createPresignedRequest($command, '+60 minutes');
+            $request = $client->createPresignedRequest($command, $minutes);
             return (string)$request->getUri();
         }
         return '';
@@ -4053,7 +4053,7 @@ class Helper
             Please find published <span style='text-transform: lowercase;'>{$documentName}</span> circular details below.<br /><br />
             <b>Circular Name : </b>{$circular['circular_name']}<br /><br />
             {$descriptionHtml}Thank You<br />";
-            $emailMessage .= \Helper::getSupplierEmailFooter($companySystemID);
+            $emailMessage .= Helper::getSupplierEmailFooter($companySystemID);
 
             $dataEmail = [
                 'empEmail' => $email,

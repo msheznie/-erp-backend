@@ -25,6 +25,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class WarehouseBinLocationController
@@ -274,7 +275,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError(trans('custom.bin_location_you_are_trying_to_change_is_already_a'),500);
         }
 
-        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
+        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(Arr::only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
 
         return $this->sendResponse($warehouseBinLocation->toArray(), trans('custom.warehousebinlocation_updated_successfully'));
     }

@@ -126,18 +126,16 @@ class BankMemoSupplierAPIController extends AppBaseController
             $data = array();
         }
 
-         \Excel::create('supplier_currency_memos', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('supplier_currency_memos', function ($excel) use ($data) {
             $excel->sheet(trans('custom.supplier_currency_memos'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-         })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse($data, trans('custom.retrieve', ['attribute' => trans('custom.bank_memo_suppliers')]));
     }

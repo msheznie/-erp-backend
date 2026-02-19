@@ -11,8 +11,8 @@ class FilterApiController extends AppBaseController
     public function getAllCreatedByEmployees(Request  $request)
     {
         $input = $request->all();
-        $companyId = $input['companyId'];
-        $documentSystemId = $input['documentSystemID'];
+        $companyId = data_get($input, 'companyId');
+        $documentSystemId = data_get($input, 'documentSystemID');
 
         $employees = Employee::select(['employeeSystemID','empName'])->where('empCompanySystemID',$companyId)->where('empActive',1)->get();
         //scenario

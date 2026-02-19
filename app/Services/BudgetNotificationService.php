@@ -8,9 +8,11 @@ use App\Models\BudgetNotificationRecipient;
 use App\Models\CompanyDepartment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\CompanyFinanceYear;
+use App\Models\BudgetDelegateAccessRecord;
 use App\Models\CompanyDepartmentEmployee;
 use App\Models\Employee;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Exception;
 use App\helper\Helper;
@@ -22,7 +24,7 @@ class BudgetNotificationService
     private $companySystemID;
     private $scenario;
     private $delegateID;
-    
+    private $baseurl;
     /**
      * Replace placeholders in template string with actual values
      *
@@ -67,13 +69,13 @@ class BudgetNotificationService
     * @param array $placeholders Optional array of placeholder values to replace
     * @return array
     */
-   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null)
+   public function sendNotification($departmentBudgetPlanningID, $scenario, $companySystemID, $delegateID = null,$baseurl = null)
    {
 
        $this->companySystemID = $companySystemID;
        $this->scenario = $scenario;
        $this->delegateID = $delegateID;
-
+       $this->baseurl = $baseurl;
 
        try {
            $budgetNotifications = BudgetNotification::where('slug', $scenario)->first();
@@ -211,21 +213,23 @@ class BudgetNotificationService
 
    private function sendTaskDelegattionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
    {
-        $budgetPlanning = DepartmentBudgetPlanning::with('department.hod.employee','masterBudgetPlannings.company','revisions')->find($departmentBudgetPlanningID);
+            $budgetPlanning = DepartmentBudgetPlanning::with(['timeExtensionRequests' => function ($query) {
+                $query->where('status', 2);
+            }],'department.hod.employee','masterBudgetPlannings.company','revisions','delegateAccess.employee')->find($departmentBudgetPlanningID);
 
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
 
         $delegatee = CompanyDepartmentEmployee::with('employee')->find($this->delegateID);
 
+        $budgetDelegateAccess = BudgetDelegateAccessRecord::where('delegatee_id', $this->delegateID)->latest()->first();
+
         if(empty($revision)) {
             $placeholders = [
                 'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
                 'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
-                'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
+                'DeadlineDate' => ($budgetDelegateAccess) ? date('d/m/Y', strtotime($budgetDelegateAccess->submission_time)) : (date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A'),
                 'DelegateeName' => $delegatee->employee->empName.' ('.$delegatee->employee->empID.')',
-            ];
-    
-    
+            ];   
         }else {
             $placeholders = [
                 'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
@@ -393,8 +397,8 @@ class BudgetNotificationService
                             'docSystemCode' => $departmentBudgetPlanningID
                         );
 
-                        Email::sendEmail($emails);
                     }
+                    Email::sendEmail($emails);
                 }
             }
 
@@ -407,12 +411,13 @@ class BudgetNotificationService
         $revision = $budgetPlanning->revisions->where('revisionStatus', 1)->first();
         $delegatee = Employee::find($this->delegateID);
 
+        $linkUrl = str_replace('approval/erp', 'budget-planning/planning', $this->baseurl);
         if(empty($revision)) {
             $placeholders = [
             'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
             'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
-            'Budget Review Dashboard' => 'N/A'
+            'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
         ];
         }else {
             $placeholders = [
@@ -420,7 +425,7 @@ class BudgetNotificationService
                 'HODName' => $departmentBudgetPlanning->department->hod->employee->empName.' ('.$departmentBudgetPlanning->department->hod->employee->empID.')',
                 'DelegateeName' => $delegatee->empName.' ('.$delegatee->empID.')',
                 'ResubmissionDate' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
-                'Budget Review Dashboard' => 'N/A'
+                'link' => '<a href="' . $linkUrl . '" style="color: #007bff; text-decoration: underline;">Click here to view the budget planning</a>'
             ];
 
             $budgetNotifications = BudgetNotification::where('slug', 'revision-resubmission')->first();
@@ -428,7 +433,7 @@ class BudgetNotificationService
 
         $subjectTemplate = $budgetNotifications->subject;
         $bodyTemplate = $budgetNotifications->body;
-        
+
         $emails[] = array(
             'empEmail' => $budgetPlanning->department->hod->employee->empEmail,
             'companySystemID' => $budgetPlanning->masterBudgetPlannings->companySystemID,
@@ -479,10 +484,9 @@ class BudgetNotificationService
                 'docSystemID' => 133,
                 'docSystemCode' => $departmentBudgetPlanningID
             );
-    
-            Email::sendEmail($emails);
         }
 
+        Email::sendEmail($emails);
    }
 
    private function sendFinanceRejectsForRevisionEmail($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -551,8 +555,9 @@ class BudgetNotificationService
                 'docSystemCode' => $departmentBudgetPlanningID
             );
     
-            Email::sendEmail($emails);
         }
+
+        Email::sendEmail($emails);
    }
 
 

@@ -188,9 +188,9 @@ class ReceiptMatchingAPIService extends AppBaseController
                     $receiveAmountTotRpt = $advReceiptDetails["SumDetailAmountRpt"];
                     $masterID = $directReceiptDetails->custReceivePaymentAutoID;
                 }else{
-                    $receiveAmountTotTrans = $directDetails["SumDetailAmountTrans"];
-                    $receiveAmountTotLocal = $directDetails["SumDetailAmountLocal"];
-                    $receiveAmountTotRpt   = $directDetails["SumDetailAmountRpt"];
+                    $receiveAmountTotTrans = $directDetails["SumDetailAmountTrans"] ?? 0;
+                    $receiveAmountTotLocal = $directDetails["SumDetailAmountLocal"] ?? 0;
+                    $receiveAmountTotRpt   = $directDetails["SumDetailAmountRpt"] ?? 0;
                     $masterID = $directReceiptDetails->directReceiptAutoID;
 
                 }

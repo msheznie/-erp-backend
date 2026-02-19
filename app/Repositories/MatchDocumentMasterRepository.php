@@ -92,7 +92,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
     public function matchDocumentListQuery($request, $input, $search = '', $supplierID = null) {
 
-        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster = MatchDocumentMaster::where('companySystemID', data_get($input, 'companySystemID'));
         $invMaster->whereIn('documentSystemID', [4, 15]);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {

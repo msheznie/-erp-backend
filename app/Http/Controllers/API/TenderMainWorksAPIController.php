@@ -383,8 +383,7 @@ class TenderMainWorksAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -415,8 +414,7 @@ class TenderMainWorksAPIController extends AppBaseController
                 return $this->sendError(trans('srm_tender_rfx.items_null_values'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item', 'description'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item', 'description']);
 
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());

@@ -7196,6 +7196,7 @@ return
     'asset_register_detail2_report' => 'Asset Register Detail2 Report',
     'asset_register_summary_report' => 'Asset Register Summary Report',
     'asset_register_grouped_detail_report' => 'Asset Register Grouped Detail Report',
+    'asset_register_grouped_detail' => 'Asset Register Grouped Detail',
 
     // Asset Management Report Column Headers
     'fixed_asset_code' => 'Fixed Asset Code',

@@ -550,7 +550,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br />";
         }
-        $body .= \Helper::getSupplierEmailFooter($companySystemId);
+        $body .= Helper::getSupplierEmailFooter($companySystemId);
 
         $dataEmail['companySystemID'] = $companySystemId;
         $dataEmail['alertMessage'] = $alertMessage;

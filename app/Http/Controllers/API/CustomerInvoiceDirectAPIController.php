@@ -106,7 +106,7 @@ use App\Models\UploadCustomerInvoice;
 use App\Services\CustomerInvoiceServices;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Exception;
 use App\Models\CurrencyConversion;
 use Illuminate\Support\Arr;
@@ -1202,7 +1202,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input['customerGRVAutoID'] = null;
         }
 
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(array_only($input, ['customerGRVAutoID']), $id);
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update(Arr::only($input, ['customerGRVAutoID']), $id);
 
         return $this->sendResponse($customerInvoiceDirect, trans('custom.invoice_updated_successfully_1'));
     }
@@ -1614,7 +1614,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
             $uploadData = ['objPHPExcel' => $objPHPExcel,
                 'uploadCustomerInvoice' => $uploadCustomerInvoice,
@@ -3050,7 +3050,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $fileName_csv =  trans('custom.customer_invoice_') . $id . '_' . $time . '.csv';
         $fileName_xls = trans('custom.customer_invoice_') . $id . '_' . $time;
      
-
         if ($printTemplate['printTemplateID'] == 2) {
             if($type == 1)
             {
@@ -3066,7 +3065,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue', $array)->with('no_asset', true);
                         
@@ -3077,7 +3076,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }
                     });
                     
-                })->download('csv');
+                }, 'csv');
             }
         
         } else if ($printTemplate['printTemplateID'] == 13) {
@@ -3098,7 +3097,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $lang = app()->getLocale();
                 $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                return \App\Exports\CreateExcelExport::download($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
                         // Set default font for entire sheet
                         $sheet->setStyle([
@@ -3129,7 +3128,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }
                     });
                     
-                })->download('xls');
+                }, 'xls');
+
             }
         
         } else if ($printTemplate['printTemplateID'] == 15) {
@@ -3146,7 +3146,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $lang = app()->getLocale();
                 $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                return \App\Exports\CreateExcelExport::download($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
                         // Set default font for entire sheet
                         $sheet->setStyle([
@@ -3176,7 +3176,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }
                     });
                     
-                })->download('xls');
+                }, 'xls');
             }
         
         } else if ($printTemplate['printTemplateID'] == 11) {
@@ -3194,7 +3194,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $lang = app()->getLocale();
                 $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                return \App\Exports\CreateExcelExport::download($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
                         // Set default font for entire sheet
                         $sheet->setStyle([
@@ -3224,7 +3224,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }
                     });
                     
-                })->download('xls');
+                }, 'xls');
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
@@ -3239,7 +3239,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice', $array)->with('no_asset', true);
                         
@@ -3249,7 +3249,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
 
@@ -3285,7 +3285,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
                         
@@ -3295,7 +3295,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
         } else if ($printTemplate['printTemplateID'] == 12) {
@@ -3313,7 +3313,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $lang = app()->getLocale();
                 $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create($fileName_xls, function ($excel) use ($array, $fontFamily) {
+                return \App\Exports\CreateExcelExport::download($fileName_xls, function ($excel) use ($array, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array, $fontFamily) {
                         // Set default font for entire sheet
                         $sheet->setStyle([
@@ -3343,7 +3343,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         }
                     });
                     
-                })->download('xls');
+                }, 'xls');
             }
         
         } else if ($printTemplate['printTemplateID'] == 6) {
@@ -3362,7 +3362,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_hlb', $array)->with('no_asset', true);
                         
@@ -3372,7 +3372,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
 
@@ -3388,7 +3388,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_with_po_detail', $array)->with('no_asset', true);
                         
@@ -3398,7 +3398,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
    
         } else if ($printTemplate['printTemplateID'] == 7) {
@@ -3414,7 +3414,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat', $array)->with('no_asset', true);
                         
@@ -3424,7 +3424,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
 
@@ -3439,7 +3439,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.invoice_template.customer_invoice_gulf_vat_usd', $array)->with('no_asset', true);
                         
@@ -3449,7 +3449,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
         } else if ($printTemplate['printTemplateID'] == 4) {
@@ -3468,7 +3468,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
                         
@@ -3478,7 +3478,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'csv');
             }
 
         }  else if ($printTemplate['printTemplateID'] == 16) {
@@ -3496,17 +3496,28 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
             else if($type == 2)
             {
-                return \Excel::create($fileName_csv, function ($excel) use ($array) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($array) {
-                        $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
-                        
-                        // Set right-to-left for Arabic locale
+                $templateName = 'export_report.customer_invoice_template_ksa';
+                $data = array_merge($array, ['no_asset' => true]);
+
+                return \App\Exports\CreateExcelExport::download($fileName_csv, function ($excel) use ($data, $templateName) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
+                        $sheet->loadView($templateName, $data);
+                        $lastRow = $sheet->getHighestRow();
+                        $lastColumn = $sheet->getHighestColumn();
+                        if ($lastRow > 0 && $lastColumn) {
+                            $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                            $headerRow = 10;
+                            if ($headerRow <= $lastRow) {
+                                $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $headerRow)->getFont()->setBold(true);
+                            }
+                        }
+                        $sheet->setAutoSize(true);
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('csv');
+                }, 'xlsx');
             }
 
         }

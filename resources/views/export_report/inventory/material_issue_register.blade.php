@@ -1,20 +1,25 @@
 <html>
-<center>
+<body>
     <table>
         <thead>
-        <tr></tr>
         <tr>
-            <td colspan="2"></td>
-            @if($reportType == 1)
-                <h1>{{ trans('custom.employee_expense_register') }}</h1>
-            @elseif($reportType == 2)
-                <h1>{{ trans('custom.assets_expense_register') }}</h1>
-            @else
-                <h1>{{ trans('custom.segment_expense_register') }}</h1>
-            @endif
+            <td colspan="11"></td>
         </tr>
-        <tr></tr>
-        <tr style="font-weight: bold"></tr>
+        <tr>
+            <td colspan="11">
+                @if($reportType == 1)
+                    {{ trans('custom.employee_expense_register') }}
+                @elseif($reportType == 2)
+                    {{ trans('custom.assets_expense_register') }}
+                @else
+                    {{ trans('custom.segment_expense_register') }}
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td colspan="11"></td>
+        </tr>
+        <tr style="font-weight: bold">
             <td>{{ trans('custom.report_filter') }}</td>
             <td>{{ trans('custom.start_date') }} : {{ $fromDate }} </td>
             <td>{{ trans('custom.end_date') }} :  {{ $toDate }}</td>
@@ -27,40 +32,34 @@
                     {{ trans('custom.segments') }}
                 @endif
             </td>
-
             @if($reportType == 2)
-                <td>{{ trans('custom.assets') }} : {{$selectedAssets ?? trans('custom.not_selected') }}</td>
+                <td>{{ trans('custom.assets') }} : {{ $selectedAssets ?? trans('custom.not_selected') }}</td>
             @endif
-
             @if($reportType == 3)
-                <td>{{ trans('custom.segments') }} : {{$selectedSegments ?? trans('custom.not_selected') }} </td>
+                <td>{{ trans('custom.segments') }} : {{ $selectedSegments ?? trans('custom.not_selected') }} </td>
             @endif
             <td>
-
                 @if($reportType == 2)
-                    <span>{{ trans('custom.group_by_asset') }} :
-                        @if(empty($groupBy))
-                            {{ trans('custom.no') }}
-                        @else
-                            {{ trans('custom.yes') }}
-                        @endif
-                    </span>
+                    {{ trans('custom.group_by_asset') }} :
+                    @if(empty($groupBy))
+                        {{ trans('custom.no') }}
+                    @else
+                        {{ trans('custom.yes') }}
+                    @endif
                 @endif
-
                 @if($reportType == 3)
-                        <span>{{ trans('custom.group_by_segment') }} :
-                            @if(empty($groupBy))
-                                {{ trans('custom.no') }}
-                            @else
-                                {{ trans('custom.yes') }}
-                            @endif
-                        </span>
+                    {{ trans('custom.group_by_segment') }} :
+                    @if(empty($groupBy))
+                        {{ trans('custom.no') }}
+                    @else
+                        {{ trans('custom.yes') }}
+                    @endif
                 @endif
             </td>
-
-
         </tr>
-        <tr></tr>
+        <tr>
+            <td colspan="11"></td>
+        </tr>
         <tr>
             <th class="text-center">{{ trans('custom.issue_code') }}</th>
             <th class="text-center">{{ trans('custom.issue_date') }}</th>
@@ -81,7 +80,7 @@
         </tr>
         </thead>
         <tbody>
-            @foreach($reportData->groupedResults as $key => $groupedData)
+            @foreach(($reportData->groupedResults ?? []) as $key => $groupedData)
                 <tr>
                     @if(empty($groupByAsset))
                         <td colspan="11">{{ trans('custom.item_code') }} : {{$key}}</td>
@@ -138,5 +137,5 @@
             @endforeach
         </tbody>
     </table>
-</center>
+</body>
 </html>

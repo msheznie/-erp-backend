@@ -1735,7 +1735,7 @@ class MaterielRequestAPIController extends AppBaseController
 
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             if(empty($uniqueData)) {
@@ -1756,8 +1756,7 @@ class MaterielRequestAPIController extends AppBaseController
                 return $this->sendError(trans('custom.this_purchase_order_fully_approved'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'qty', 'comment']);
 
             if (count($record) > 0) {
                 $data['isBulkItemJobRun'] = 1;

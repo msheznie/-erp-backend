@@ -483,11 +483,14 @@ class ErpAttributesAPIController extends AppBaseController
                     $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
                     $asset = FixedAssetMaster::find($attribute->document_master_id);
 
+                    if ($asset === null) {
+                        continue;
+                    }
                     if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
                             ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
                     }
                     if ($asset->approved == -1) {
-                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                        if ($erpAttributes && $erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
                             ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
                         }
                     }

@@ -1105,8 +1105,7 @@ class CustomerMasterAPIController extends AppBaseController
 
                 $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
                 $writer->save($filePath);
-                $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {
-                })->get();
+                $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             } else {
                 if($document_id == self::DOCUMENT_ID_SUPPLIER) {
@@ -1116,8 +1115,7 @@ class CustomerMasterAPIController extends AppBaseController
                     $sheet->removeRow(1, 8);
                     $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
                     $writer->save($filePath);
-                    $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {
-                    })->get();
+                    $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
                 } else if($document_id == self::DOCUMENT_ID_CUSTOMER) {
                     $filePath = Storage::disk($disk)->path($originalFileName);
                     $spreadsheet = IOFactory::load($filePath);
@@ -1125,11 +1123,12 @@ class CustomerMasterAPIController extends AppBaseController
                     $sheet->removeRow(1, 8);
                     $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
                     $writer->save($filePath);
-                    $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {
-                    })->get();
+                    $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
                 } else {
-                    $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-                    })->get();
+                    $filePath = Storage::disk($disk)->path($originalFileName);
+                    $spreadsheet = IOFactory::load($filePath);
+                    $sheet = $spreadsheet->getSheet(0);
+                    $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
                 }
             }
              $uniqueData = array_filter(collect($formatChk)->toArray());

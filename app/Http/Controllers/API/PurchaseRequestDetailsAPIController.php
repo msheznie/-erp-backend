@@ -1220,7 +1220,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -1271,8 +1271,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //     }
             // }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'item_description', 'comment', 'qty','estimated_unit_cost'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'comment', 'qty', 'estimated_unit_cost']);
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
@@ -1456,19 +1455,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             );
         }
 
-        \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('purchaseRequestHistory', function ($excel) use ($data) {
             $excel->sheet(trans('custom.purchaseRequestHistory'), function ($sheet) use ($data) {
                 $sheet->fromArray($data);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse($csv, trans('custom.success_export'));
     }

@@ -302,12 +302,16 @@ class PricingScheduleDetail extends Model
     public static function getTenderPricingSchedule($tenderID, $scheduleID){
         return self::where('tender_id', $tenderID)->where('pricing_schedule_master_id', $scheduleID)->where('is_disabled', true);
     }
-    public static function getPricingScheduleMainWork($tenderMasterID, $scheduleID){
-        return self::with(['tender_boq_items'])
+    public static function getPricingScheduleMainWork($tenderMasterID, $scheduleID, $type = ''){
+        $rec = self::with(['tender_boq_items'])
             ->where('tender_id', $tenderMasterID)
             ->where('deleted_at', null)
             ->where('boq_applicable', true)
             ->where('pricing_schedule_master_id', $scheduleID);
+        if($type == 'get'){
+            return $rec->get();
+        }
+        return $rec;
     }
     public static function getPricingScheduleByID($id){
         return self::where('id', $id)

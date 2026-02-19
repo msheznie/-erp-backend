@@ -1,8 +1,8 @@
 <?php
 Route::group(['middleware' => 'max_memory_limit'], function () {
     Route::group(['middleware' => 'max_execution_limit'], function () {
-        Route::post('generateBudgetReport', 'Budget\BudgetReportController@generateReport');
-        Route::post('exportBudgetReport', 'Budget\BudgetReportController@export');
+        Route::post('generateBudgetReport', 'Budget\BudgetReportController@generateReport')->name("Generate budget report");
+        Route::post('exportBudgetReport', 'Budget\BudgetReportController@export')->name("Export budget report");
         Route::post('getRevisionGL', 'RevisionAPIController@getRevisionGL')->name('Get revision GL codes');
 
     });
@@ -42,6 +42,7 @@ Route::post('updateBudgetPlanningDelegateWorkStatus', 'CompanyBudgetPlanningAPIC
 Route::get('getBudgetPlanningFormData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningFormData')->name("Get budget planning form data");
 Route::post('getBudgetPlanningMasterData', 'CompanyBudgetPlanningAPIController@getBudgetPlanningMasterData')->name("Get budget planning master data");
 Route::post('getBudgetGenerateDetails', 'CompanyBudgetPlanningAPIController@getBudgetGenerateDetails')->name("Get budget generate details");
+Route::post('generate-company-budget-planning', 'CompanyBudgetPlanningGenerateAPIController@generate')->name('Generate company budget planning');
 Route::post('exportBudgetPlanning', 'CompanyBudgetPlanningAPIController@exportBudgetPlanning')->name('Export budget planning to Excel');
 Route::post('validateBudgetPlanning', 'CompanyBudgetPlanningAPIController@validateBudgetPlanning')->name('Validate budget planning');
 Route::post('checkBudgetPlanningInProgress', 'CompanyBudgetPlanningAPIController@checkBudgetPlanningInProgress')->name('Check budget planning in progress');
@@ -78,11 +79,13 @@ Route::resource('revisions', 'RevisionAPIController');
 
 // Department Budget Planning Details Routes
 Route::post('getDepartmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@getByDepartmentPlanning')->name('Get department budget planning details');
+Route::post('getBudgetPlanningFilterOptions', 'DepartmentBudgetPlanningDetailAPIController@getBudgetPlanningFilterOptions')->name('Get budget planning filter options');
 Route::post('exportBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController@exportBudgetPlanningDetails')->name('Export budget planning details to Excel');
+Route::post('exportCompanyBudgetPlanningDetailsAll', 'DepartmentBudgetPlanningDetailAPIController@exportCompanyBudgetPlanningDetailsAll')->name('Export all company budget planning details to Excel');
 Route::post('updateDepartmentBudgetPlanningDetailStatus', 'DepartmentBudgetPlanningDetailAPIController@updateInternalStatus')->name('Update department budget planning detail status');
 Route::post('getDepartmentBudgetPlanningSummary', 'DepartmentBudgetPlanningDetailAPIController@getSummary')->name('Get department budget planning summary');
 Route::resource('departmentBudgetPlanningDetails', 'DepartmentBudgetPlanningDetailAPIController');
-Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount');
+Route::post('updateDepartmentBudgetPlanningDetailAmount', 'DepartmentBudgetPlanningDetailAPIController@updateDepartmentBudgetPlanningDetailAmount')->name('Update department budget planning detail amount');
 Route::post('getDepartmentBudgetPlanningStatusesByCompany', 'DepartmentBudgetPlanningDetailAPIController@getDepartmentBudgetPlanningStatusesByCompany')->name('Get department budget planning details by company');
 
 // Budget Delegate Access Routes

@@ -75,7 +75,7 @@ Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTender
 
 
 Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula')->name("Add formula");
-Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
+Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate')->name('Formula generate');
 Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification')->name("Tender bid doc verification");
 
 Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList')->name("Get main works list");
@@ -158,7 +158,6 @@ Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
 
 Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
 Route::resource('tender_main_works', 'TenderMainWorksAPIController');
-Route::resource('tender_main_works', 'TenderMainWorksAPIController');
 Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
 
 Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
@@ -185,7 +184,6 @@ Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIControl
 
 Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController', ['names' => '  Supplier Bid Document Attachments']);
 
-Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
 Route::resource('bid_evaluation_selections', 'BidEvaluationSelectionAPIController');
 Route::post('getBidSelection', 'BidEvaluationSelectionAPIController@getBidSelection')->name("Get bid selection");
 
@@ -299,24 +297,24 @@ Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeControlle
 Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
 Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
-Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
+Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment')->name('Get is exist common attachment');
 Route::post('getTenderPurchaseList', 'TenderMasterAPIController@getTenderPurchaseList')->name("Get tender purchase list");
 Route::post('getBudgetItemTotalAmount', 'TenderMasterAPIController@getBudgetItemTotalAmount')->name("Get budget item total amount");
-Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess');
-Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee');
-Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData');
-Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink');
+Route::post('removeTenderUserAccess', 'TenderBidEmployeeDetailsController@removeTenderUserAccess')->name('Remove tender user access');
+Route::post('addUserAccessEmployee', 'TenderBidEmployeeDetailsController@addUserAccessEmployee')->name('Add user access employee');
+Route::post('getPublicSupplierLinkData', 'SRMPublicLinkAPIController@getPublicSupplierLinkData')->name("Get public supplier link data");
+Route::post('saveSupplierPublicLink', 'SRMPublicLinkAPIController@saveSupplierPublicLink')->name("Save supplier public link");
 Route::post('requestKycSubmit', 'SupplierMasterAPIController@requestSubmitKyc')->name("KYC Request");
 Route::post('checkBidOpeningDateValidation', 'BidSubmissionMasterAPIController@checkDateDisabled')->name("Bid Date Validation");
 Route::post('getTenderPOData', 'TenderMasterAPIController@getTenderPOData')->name("Create PO From Tender");
-Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval');
-Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved');
-Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender');
-Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender');
-Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved');
-Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays');
-Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation');
-Route::post('getCalendarDateAuditLogs', 'TenderMasterAPIController@getCalendarDateAuditLogs');
+Route::post('getPaymentProofDocumentApproval', 'TenderMasterAPIController@getPaymentProofDocumentApproval')->name('Get payment proof document approval');
+Route::post('getSupplierWiseProofNotApproved', 'TenderMasterAPIController@getSupplierWiseProofNotApproved')->name('Get supplier wise proof not approved');
+Route::post('approveSupplierWiseTender', 'TenderMasterAPIController@approveSupplierWiseTender')->name('Approve supplier wise tender');
+Route::post('rejectSupplierWiseTender', 'TenderMasterAPIController@rejectSupplierWiseTender')->name('Reject supplier wise tender');
+Route::post('getSupplierWiseProofApproved', 'TenderMasterAPIController@getSupplierWiseProofApproved')->name('Get supplier wise proof approved');
+Route::post('updateTenderCalendarDays', 'TenderMasterAPIController@updateTenderCalendarDays')->name('Update tender calendar days');
+Route::post('getTenderCalendarValidation', 'TenderMasterAPIController@getTenderCalendarValidation')->name('Get tender calendar validation');
+Route::post('getCalendarDateAuditLogs', 'TenderMasterAPIController@getCalendarDateAuditLogs')->name('Get calendar date audit logs');
 Route::post('getNegotiationStartedSupplierList', 'TenderNegotiationController@getNegotiationStartedSupplierList')->name("Get tender negotiated supplier list");
 Route::post('saveCustomEmail', 'TenderCustomEmailController@store')->name("create Custom tender email");
 Route::post('getSupplierListCustomEmail', 'TenderCustomEmailController@getSupplierListCustomEmail')->name("Get Negotiation Custom Email Supplier List");
@@ -324,12 +322,12 @@ Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySu
 Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
 Route::post('deleteAllBidMinimumApprovalDetails', 'TenderBidEmployeeDetailsController@deleteAllBidMinimumApprovalDetails')->name("Delete All Bid Minimum Approval Details");
 Route::post('deleteAllTenderUserAccess', 'TenderBidEmployeeDetailsController@deleteAllTenderUserAccess')->name("Delete All Tender User Access");
-Route::post('getAllDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster');
-Route::post('getDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData');
+Route::post('getAllSRMDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster')->name("Get All SRM Document Master");
+Route::post('getSRMDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData')->name("Get All SRM Form Data");
 Route::resource('document_master', 'SRMDocumentMasterAPIController');
-Route::post('documentMasterCrud', 'SRMDocumentMasterAPIController@documentMasterCrud');
-Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster');
-Route::post('removeDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete');
+Route::post('documentMasterSRMCrud', 'SRMDocumentMasterAPIController@documentMasterCrud')->name("Create SRM Document Master");
+Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster')->name("GET SRM Tender Document Master");
+Route::post('removeSRMDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete')->name("Remove SRM Document Master");
 Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster');
 Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData');
 Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData');

@@ -17,6 +17,7 @@ use App\Models\SupplierMaster;
 use App\Services\B2B\B2BSubmissionFileDetailService;
 use App\Services\B2B\BankTransferService;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Http\Request;
 
@@ -101,7 +102,7 @@ class B2BResourceAPIController extends AppBaseController
 
             $supplierEmai = SupplierMaster::where('supplierCodeSystem', $rs['payment_voucher']['BPVsupplierID'])->pluck('supEmail')->toArray();
             $contactEmails = SupplierContactDetails::where('supplierID', $rs['payment_voucher']['BPVsupplierID'])->pluck('contactPersonEmail')->toArray();
-            $supplierContactDetailsEmails = implode(array_merge($supplierEmai, $contactEmails), ';');
+            $supplierContactDetailsEmails = implode(';', array_merge($supplierEmai, $contactEmails));
 
             $detailObject = new \App\Classes\B2B\Detail();
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $rs['payment_voucher']['BPVsupplierID'])->where('currencyID', $rs['payment_voucher']['supplierTransCurrencyID'])->first();
@@ -241,10 +242,10 @@ class B2BResourceAPIController extends AppBaseController
         $this->vendorFile->setDetailsData($this->details);
         $this->vendorFile->setFooterData($footerDetails);
 
-        if (!empty(array_flatten($this->vendorFile->detailsDataErros)) || !empty(array_flatten($this->vendorFile->headerErrors))) {
+        if (!empty(Arr::flatten($this->vendorFile->detailsDataErros)) || !empty(Arr::flatten($this->vendorFile->headerErrors))) {
             return $this->sendError(trans('custom.validation_failed_on_some_documents'), 500, [
-                'detailsErrors' => (!empty(array_flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : [],
-                'headerErrors' => (!empty(array_flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : []
+                'detailsErrors' => (!empty(Arr::flatten($this->vendorFile->detailsDataErros))) ? $this->vendorFile->detailsDataErros : [],
+                'headerErrors' => (!empty(Arr::flatten($this->vendorFile->headerErrors))) ? $this->vendorFile->headerErrors : []
             ]);
         }
 
@@ -266,11 +267,11 @@ class B2BResourceAPIController extends AppBaseController
         ];
 
         $excelColumnFormat = [
-            'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_00,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
-            'AG' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER,
+            'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00,
+            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
+            'AG' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER,
         ];
 
 
@@ -300,7 +301,7 @@ class B2BResourceAPIController extends AppBaseController
 
 
 //        array_push($txtData, implode($reportData['header']['title'], ','));
-        array_push($txtData, implode(array_flatten($reportData['header']['data']), ','));
+        array_push($txtData, implode(',',Arr::flatten($reportData['header']['data'])));
 //        array_push($txtData, implode($reportData['detail']['title'], ','));
         foreach ($reportData['detail']['data'] as $key => &$dt) {
             foreach ($dt as $key2 => $lineData) {
@@ -311,12 +312,12 @@ class B2BResourceAPIController extends AppBaseController
             if (isset($dt['payment_voucher_code'])) {
                 unset($dt['payment_voucher_code']);
             }
-            array_push($txtData, implode(array_values($dt), ','));
+            array_push($txtData, implode(',',array_values($dt)));
         }
         unset($dt);
 //        array_push($txtData, implode($reportData['footer']['title'], ','));
-        array_push($txtData, implode(array_flatten($reportData['footer']['data']), ','));
-        $txtData = implode($txtData, "\n");
+        array_push($txtData, implode(',',Arr::flatten($reportData['footer']['data'])));
+        $txtData = implode("\n", $txtData);
 
         return $txtData;
     }

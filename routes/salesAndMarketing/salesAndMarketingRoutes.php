@@ -176,7 +176,6 @@ Route::group([], function () {
     Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory')->name("Get customer invoice master amend history");
     Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
     Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory')->name("Get CI details for amend history");
-    Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
     Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice')->name("Sales Quotation For Customer Invoice");
     Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
     Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory')->name("Get SQ details history");

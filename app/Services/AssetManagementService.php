@@ -59,8 +59,7 @@ class AssetManagementService
                 $assetRegisterDetailObj->setRptAmountUnitCost(CurrencyService::convertNumberFormatToNumber(round($value->costUnitRpt, $rptDecimalPlace)));
                 $assetRegisterDetailObj->setRptAmountAccDep(CurrencyService::convertNumberFormatToNumber(round($value->depAmountRpt, $rptDecimalPlace)));
                 $assetRegisterDetailObj->setRptAmountNetValue(CurrencyService::convertNumberFormatToNumber(round($value->rptnbv, $rptDecimalPlace)));
-                array_push($data,collect($assetRegisterDetailObj)->toArray());
-
+                array_push($data, $assetRegisterDetailObj->toRowArray());
             }
 
 
@@ -71,7 +70,7 @@ class AssetManagementService
             $assetRegisterDetailFooterObj->setRptAmountUnitCost(CurrencyService::convertNumberFormatToNumber(round($TotalcostUnitRpt,$rptDecimalPlace)));
             $assetRegisterDetailFooterObj->setRptAmountAccDep(CurrencyService::convertNumberFormatToNumber(round($TotaldepAmountRpt,$rptDecimalPlace)));
             $assetRegisterDetailFooterObj->setRptAmountNetValue( CurrencyService::convertNumberFormatToNumber(round($Totalrptnbv, $rptDecimalPlace)));
-            array_push($data,collect($assetRegisterDetailFooterObj)->toArray());
+            array_push($data, $assetRegisterDetailFooterObj->toRowArray());
 //                        $data[$x]['Dep Start Date'] = 'Total';
 
         }

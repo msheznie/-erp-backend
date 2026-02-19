@@ -278,7 +278,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $input['budjetAmtLocal'] = abs($input['budjetAmtLocal']) * -1;
         }
 
-        $budjetdetails = $this->budjetdetailsRepository->update(array_only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
+        $budjetdetails = $this->budjetdetailsRepository->update(Arr::only($input, ['budjetAmtRpt', 'budjetAmtLocal']), $id);
 
         return $this->sendResponse($budjetdetails->toArray(), trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
     }
@@ -702,20 +702,19 @@ class BudjetdetailsAPIController extends AppBaseController
 
 
 
-        \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                 $sheet->loadView($templateName, $reportData);
-                
-                // Set right-to-left for Arabic locale
+                $sheet->setAutoSize(true);
+                // Bold the column header row (Number, Category, months, Total)
+                $headerRow = 5;
+                $sheet->getStyle('A' . $headerRow . ':' . $sheet->getHighestColumn() . $headerRow)->getFont()->setBold(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
-
-//        return $this->sendResponse(array(), trans('custom.success_export'));
-       return $this->sendResponse(['budgetDetails' => $finalArray, 'months' => $monthArray], trans('custom.retrieve', ['attribute' => trans('custom.budjet_details')]));
+        }, 'xlsx');
 
     }
 
@@ -747,7 +746,7 @@ class BudjetdetailsAPIController extends AppBaseController
             if ($item['budjetAmtRpt'] < 0) {
                 $item['budjetAmtLocal'] = abs($item['budjetAmtLocal']) * -1;
             }
-            $this->budjetdetailsRepository->update(array_only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
+            $this->budjetdetailsRepository->update(Arr::only($item, ['budjetAmtRpt', 'budjetAmtLocal']), $item['budjetDetailsID']);
         }
 
         return $this->sendResponse([], trans('custom.update', ['attribute' => trans('custom.budjet_details')]));
@@ -838,8 +837,7 @@ class BudjetdetailsAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -867,8 +865,7 @@ class BudjetdetailsAPIController extends AppBaseController
             $selectArray[] = 'main_category';
             $selectArray[] = 'sub_category';
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select($selectArray)->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, $selectArray);
 
             $filteredRecords = array_filter(collect($record)->toArray());
             $cdcd = '-xs';

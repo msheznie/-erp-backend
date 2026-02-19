@@ -100,32 +100,29 @@ class BudgetReportController extends AppBaseController
                 );
 
                 $excelColumnFormat = [
-                    'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
                 $lang = app()->getLocale();
                 $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create('budget_commitment_details_report', function ($excel) use ($outputData,$excelColumnFormat, $fontFamily) {
-                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData,$excelColumnFormat, $fontFamily) {
-                        // Set default font for entire sheet
+                return \App\Exports\CreateExcelExport::download('budget_commitment_details_report', function ($excel) use ($outputData, $excelColumnFormat, $fontFamily) {
+                    $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($outputData, $excelColumnFormat, $fontFamily) {
                         $sheet->setStyle([
                             'font' => [
                                 'name' => $fontFamily,
                                 'size' => 11,
-                            ]
+                            ],
                         ]);
                         $sheet->setColumnFormat($excelColumnFormat);
                         $sheet->loadView('export_report.budget.budget_commitment_details_report', $outputData);
-
-                        // Apply font to all cells after loading view
                         $lastRow = $sheet->getHighestRow();
                         $lastColumn = $sheet->getHighestColumn();
                         if ($lastRow > 0 && $lastColumn) {
@@ -137,14 +134,12 @@ class BudgetReportController extends AppBaseController
                                 $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                             }
                         }
-                        
-                        // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('xlsx');
+                }, 'xlsx');
             default;
                 $this->sendError(trans('custom.report_not_found'),401);
                 break;

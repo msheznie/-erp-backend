@@ -476,8 +476,9 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
-                                            $defaultVAT = TaxService::getDefaultVAT($compId, $invMaster['supplierID']);
-                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                            $supplierIDForVAT = $invMaster !== null ? (is_array($invMaster) ? ($invMaster['supplierID'] ?? null) : ($invMaster->supplierID ?? null)) : null;
+                                            $defaultVAT = $supplierIDForVAT !== null ? (TaxService::getDefaultVAT($compId, $supplierIDForVAT) ?? []) : [];
+                                            if(($defaultVAT['vatMasterCategoryID'] ?? null) == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
                                                     $q->where('companySystemID', $compId)
                                                         ->where('isActive', 1)
@@ -651,8 +652,16 @@ class SupplierInvoiceCreation implements ShouldQueue
                                         }
 
                                         if ($isVATEligible && (!empty($detail['VATAmount']) || !empty($detail['VATPercentage']))) {
-                                            $defaultVAT = TaxService::getVATDetailsByItem($compId, $itemAssign['itemCodeSystem'], $invMaster['supplierID']);
-                                            if($defaultVAT['vatMasterCategoryID'] == null) {
+                                            $itemCodeSystem = $itemAssign !== null
+                                                ? (is_array($itemAssign) ? ($itemAssign['itemCodeSystem'] ?? null) : ($itemAssign->itemCodeSystem ?? null))
+                                                : null;
+                                            $supplierID = $invMaster !== null
+                                                ? (is_array($invMaster) ? ($invMaster['supplierID'] ?? null) : ($invMaster->supplierID ?? null))
+                                                : null;
+                                            $defaultVAT = ($itemCodeSystem !== null && $supplierID !== null)
+                                                ? (TaxService::getVATDetailsByItem($compId, $itemCodeSystem, $supplierID) ?? [])
+                                                : [];
+                                            if(($defaultVAT['vatMasterCategoryID'] ?? null) == null) {
                                                 $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($compId) {
                                                     $q->where('companySystemID', $compId)
                                                         ->where('isActive', 1)
@@ -887,7 +896,7 @@ class SupplierInvoiceCreation implements ShouldQueue
                     if(empty($headerDataError) && empty($validationError) && empty($detailsError))
                     {
                         DB::beginTransaction();
-                        $createSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails, $invAttachment);
+                        $createSupplierInvoice = self::createSupplierInvoice($invMaster, $invDetails, $invAttachment, $input);
 
                         if(!$createSupplierInvoice['status']) {
                             $errors =
@@ -1000,7 +1009,7 @@ class SupplierInvoiceCreation implements ShouldQueue
         }
     }
 
-    function createSupplierInvoice($invMaster, $invDetails, $invAttachment)
+    function createSupplierInvoice($invMaster, $invDetails, $invAttachment, $input = null)
     {
         $returnData = SupplierInvoiceAPIService::storeBookingInvoice($invMaster);
         if($returnData['status'] == 'success') {
@@ -1187,6 +1196,12 @@ class SupplierInvoiceCreation implements ShouldQueue
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($returnData['documentSystemID'],$returnData['bookingSuppMasInvAutoID']);
                 $autoApproveParams['db'] = $this->db;
                 $autoApproveParams['supplierPrimaryCode'] = $returnData['supplierID'];
+                if (!is_null($input) && isset($input['employee_id'])) {
+                    $autoApproveParams['employeeID'] = $input['employee_id'];
+                }
+                else {
+                    $autoApproveParams['employeeID'] = UserTypeService::getSystemEmployee()->empID;
+                }
                 $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if ($approveDocument["success"]) {
                     $invId[] = $returnData['bookingSuppMasInvAutoID'];

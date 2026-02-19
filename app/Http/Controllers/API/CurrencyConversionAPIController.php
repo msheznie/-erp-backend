@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CurrencyConversionController
@@ -133,7 +134,7 @@ class CurrencyConversionAPIController extends AppBaseController
             }
 
             $input['conversion'] = round($input['conversion'], 8);
-            $this->currencyConversionRepository->update(array_only($input, ['conversion']), $id);
+            $this->currencyConversionRepository->update(Arr::only($input, ['conversion']), $id);
 
             $subCurrency = $this->currencyConversionRepository
                 ->findWhere(['masterCurrencyID' => $currencyConversion->subCurrencyID,
