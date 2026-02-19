@@ -264,6 +264,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
         $companyBudgetPlanning['workflow'] = $companyBudgetPlanning->workflow;
+        $companyBudgetPlanning['workflowDetails'] = $companyBudgetPlanning->workflow;
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
