@@ -2172,7 +2172,7 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                     if ($templateName === 'export_report.asset_tracking') {
-                                        $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'));
+                                        $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'), true);
                                     }
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
@@ -4466,23 +4466,26 @@ WHERE
     }
 
     /**
-     * Set bold on header rows for asset expenses / asset wise expenses export (title, date, currency, section headers, column headers).
+     * Set bold on header rows for asset expenses / asset wise expenses / asset tracking export.
      *
      * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $worksheet
      * @param int $lastRow
      * @param string $lastColumn
      * @param string|null $columnHeaderLabel First column header text (e.g. trans('custom.asset_code') or trans('custom.account_code'))
+     * @param bool $onlyColumnHeaderRow When true, bold only the row where column A equals $columnHeaderLabel (e.g. asset_tracking)
      * @return void
      */
-    private function setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, $columnHeaderLabel = null)
+    private function setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, $columnHeaderLabel = null, $onlyColumnHeaderRow = false)
     {
         $columnHeaderLabel = $columnHeaderLabel ?? trans('custom.asset_code');
 
         for ($row = 1; $row <= $lastRow; $row++) {
             $cellA = $worksheet->getCell('A' . $row)->getValue();
-            $isHeaderRow = ($row <= 6)
-                || (is_string($cellA) && str_contains($cellA, ' - '))
-                || (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel);
+            $isHeaderRow = $onlyColumnHeaderRow
+                ? (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel)
+                : ($row <= 6)
+                    || (is_string($cellA) && str_contains($cellA, ' - '))
+                    || (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel);
 
             if ($isHeaderRow) {
                 $worksheet->getStyle('A' . $row . ':' . $lastColumn . $row)->getFont()->setBold(true);

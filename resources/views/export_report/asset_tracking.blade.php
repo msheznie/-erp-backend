@@ -5,11 +5,11 @@
     <tr></tr>
     <tr>
         <td colspan="2"></td>
-        <td><b><h1>{{ trans('custom.asset_tracking_report') }}</h1></b></td>
+        <td><h1>{{ trans('custom.asset_tracking_report') }}</h1></td>
     </tr>
     <tr>
         <td colspan="2"></td>
-        <th><b>{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</b></th>
+        <th>{{ trans('custom.from') }} {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - {{ trans('custom.to') }} {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</th>
     </tr>
     <tr></tr>
     <tr>
