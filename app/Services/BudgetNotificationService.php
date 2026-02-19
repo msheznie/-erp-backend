@@ -420,6 +420,7 @@ class BudgetNotificationService
         );
 
         Email::sendEmail($emails);
+        
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)

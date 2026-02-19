@@ -3,6 +3,18 @@
 namespace App\Services;
 
 use App\Models\DepartmentBudgetPlanning;
+use App\Models\CompanyBudgetPlanningGenerate;
+use App\Models\ReportTemplateDetails;
+use App\Models\Company;
+use App\Models\ReportTemplate;
+use App\Models\BudgetMaster;
+use Auth;
+use App\Models\ChartOfAccount;
+use App\Models\ReportTemplateLinks;
+use App\Models\Budjetdetails;
+use App\Models\DocumentApproved;
+use Illuminate\Support\Facades\DB;
+
 /**
  * Class GenerateCompanyBudgetPlanningService
  * @package App\Services
@@ -16,17 +28,199 @@ class GenerateCompanyBudgetPlanningService
      * @param int $departmentID Department system ID
      * @return array
      */
-    public function generate(int $id, int $departmentID): array
+    public function generate(string $rowId)
     {
-       $this->validation($id, $departmentID);
+        $cached = $this->validation($rowId);
+        $payload = $cached->payload ?? [];
+
+        $this->generateBudgetMasterData($payload);
     }
 
-    private function validation(int $id, int $departmentID): array
+    private function generateBudgetMasterData(array $payload)
     {
-        $department = DepartmentBudgetPlanning::where('departmentID', $departmentID)->where('companyBudgetPlanningID', $id)->first();
-        if (!$department) {
-            throw new \Exception('Department budget planning not found');
+        $company = Company::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])->first();
+
+        $budgetType = $payload['budgetType'] ?? '';
+        $reportID = 2; // default OPEX
+        if (stripos($budgetType, 'CAPEX') !== false) {
+            $reportID = 1;
+        } elseif (stripos($budgetType, 'OPEX') !== false) {
+            $reportID = 2;
         }
-        dd($department);
+
+        $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
+                          ->where('isActive', 1)
+                          ->where('isDefault', 1)
+                          ->where('reportID', $reportID)
+                          ->first();
+
+        if(!$budgetTemplate) {
+            throw new \Exception('Budget template not found');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $budgetArray = array(
+                'documentSystemID' => 65,
+                'documentID' => 'BUD',
+                'companySystemID' => $payload['master_budget_plannings']['companySystemID'],
+                'companyID' => $company->CompanyID,
+                'companyFinanceYearID' => $payload['financeYear']['companyFinanceYearID'],
+                'serviceLineSystemID' => $payload['segmentInfo']['serviceLineSystemID'],
+                'serviceLineCode' => $payload['segmentInfo']['ServiceLineCode'],
+                'templateMasterID' => $budgetTemplate->companyReportTemplateID,
+                'Year' => $payload['yearID'],
+                'month' => 1,
+                'generateStatus' => 100,
+                'createdByUserSystemID' => Auth::user()->employee->employeeSystemID,
+                'createdByUserID' => Auth::user()->id,
+                'createdDateTime' => \Helper::currentDateTime(),
+                'sentNotificationAt' => 30,
+                'cutOffPeriod' => 3,
+                'budgetUploadID' => null
+            );
+
+            $budget = BudgetMaster::create($budgetArray);
+
+            $glCodes = $payload['glAmounts'] ?? [];
+            $glCodeData = [];
+
+            foreach ($glCodes as $glCode) {
+
+                $companyCurrencyConversion = \Helper::currencyConversion($company->companySystemID, $company->reportingCurrency, $company->reportingCurrency, $glCode['request_amount']);
+
+                $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $glCode['chartOfAccountSystemID'])->first();
+                $reportTemplateLink = ReportTemplateLinks::where('templateMasterID', $budget->templateMasterID)->where('glAutoID', $glCode['chartOfAccountSystemID'])->first();
+                if ($reportTemplateLink) {
+                    for ($i = 1; $i <= 12; $i++) {
+                        $glCodeData[] = [
+                            'budgetmasterID' => $budget->budgetmasterID,
+                            'companySystemID' => $payload['master_budget_plannings']['companySystemID'],
+                            'companyID' => $company->CompanyID,
+                            'companyFinanceYearID' => $payload['financeYear']['companyFinanceYearID'],
+                            'serviceLineSystemID' => $payload['segmentInfo']['serviceLineSystemID'],
+                            'serviceLine' => $payload['segmentInfo']['ServiceLineCode'],
+                            'templateDetailID' => $reportTemplateLink->templateDetailID,
+                            'chartOfAccountID' => $glCode['chartOfAccountSystemID'],
+                            'glCode' => $chartOfAccount->AccountCode,
+                            'glCodeType' => $chartOfAccount->controlAccounts,
+                            'Year' => $payload['yearID'],
+                            'month' => $i,
+                            'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * \Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (\Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
+                            'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * \Helper::formatNumberWithPrecision($glCode['request_amount'])) : (\Helper::formatNumberWithPrecision($glCode['request_amount'])),
+                        ];
+                    }
+                }
+            }
+
+            if (!empty($glCodeData)) {
+                Budjetdetails::insert($glCodeData);
+            }
+
+            $this->confirmDoument($budget);
+
+            $this->apporveDocument($budget);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * @return CompanyBudgetPlanningGenerate
+     * @throws \Exception
+     */
+    private function validation(string $rowId): CompanyBudgetPlanningGenerate
+    {
+        $detailsTogenerate = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+        if (!$detailsTogenerate) {
+            throw new \Exception('Budget generate detail row not found');
+        }
+
+        $payload = $detailsTogenerate->payload;
+
+        $reportID = 2; // default OPEX
+        if (stripos($payload['budgetType'], 'CAPEX') !== false) {
+            $reportID = 1;
+        } elseif (stripos($payload['budgetType'], 'OPEX') !== false) {
+            $reportID = 2;
+        }
+
+        $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
+                          ->where('isActive', 1)
+                          ->where('isDefault', 1)
+                          ->where('reportID', $reportID)
+                          ->first();
+
+        $companySystemID = $payload['master_budget_plannings']['companySystemID'];
+        $yearID = $payload['yearID'];
+        $serviceLineSystemID = $payload['segmentInfo']['serviceLineSystemID'];
+        $templateMasterID = $budgetTemplate->companyReportTemplateID;
+
+        $existsForSegmentAndType = BudgetMaster::where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 65)
+            ->where('Year', $yearID)
+            ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('templateMasterID', $templateMasterID)
+            ->exists();
+
+        if ($existsForSegmentAndType) {
+            throw new \Exception('Budget already generated for this segment and budget type');
+        }
+
+        // $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
+        //     ->where('documentSystemID', 65)
+        //     ->where('Year', $yearID)
+        //     ->exists();
+
+        // if ($existsForBudgetYear) {
+        //     throw new \Exception('Budget already generated for this budget year');
+        // }
+
+
+        return $detailsTogenerate;
+    }
+
+    private function confirmDoument(BudgetMaster $budget)
+    {
+
+
+        $params = array('autoID' => $budget->budgetmasterID,
+            'company' => $budget->companySystemID,
+            'document' => $budget->documentSystemID,
+            'segment' => $budget->serviceLineSystemID,
+            'category' => 0,
+            'amount' => 0,
+            'isAutoCreateDocument' => true,
+        );
+
+        $confirm = \Helper::confirmDocument($params);
+        if (!$confirm["success"]) {
+            throw new \Exception($confirm["message"]);
+        }
+    }
+
+    private function apporveDocument(BudgetMaster $budget)
+    {
+        $documentApproveds = DocumentApproved::where('documentSystemCode', $budget->budgetmasterID)->where('documentSystemID', $budget->documentSystemID)->get();
+
+        foreach ($documentApproveds as $documentApproved)
+        {
+            $documentApproved["approvedComments"] = "Generated budget automatically through system";
+            $documentApproved['documentSystemID'] = $budget->documentSystemID;
+            $documentApproved['approvedDate'] = \Helper::currentDateTime();
+            $documentApproved['sendMail'] = false;
+            $documentApproved['sendNotication'] = false;
+            $documentApproved['isCheckPrivilages'] = false;
+            $documentApproved['isAutoCreateDocument'] = true;
+            $approval = \Helper::approveDocument($documentApproved);
+            
+            if(!$approval['success'])
+            {
+                throw new \Exception('Document approval failed: ' . ($approval['message'] ?? 'Unknown error'));
+            }
+        }
     }
 }
