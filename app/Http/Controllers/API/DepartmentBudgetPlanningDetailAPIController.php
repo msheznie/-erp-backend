@@ -790,7 +790,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.department_planning_id_is_required'));
         }
 
-        $employeeID = \Helper::getEmployeeSystemID();
+        $employeeID = Helper::getEmployeeSystemID();
         $newRequest = new Request();
         $newRequest->replace([
             'companyId' => $request->input('companySystemID'),
