@@ -1,3 +1,9 @@
+## 10.105.0 - 2026-02-19
+
+- Merge branch 'GHR-11302-main' into 'main'
+- 10.104.0
+- feat(Attendance): HRMS | EA | Investigate attendance processing for 1400+ employees with the new shift module [GHR-11213]
+
 # Changelog
 
 
