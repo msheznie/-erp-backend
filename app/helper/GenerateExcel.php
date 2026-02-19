@@ -245,9 +245,9 @@ class GenerateExcel
                     }
 
                     if(isset($array['dataType']) && $array['dataType'] == 2) {
-                        $sheet->fromArray($data, null, 'A'.$i, false,false);
-                    }else {
-                        $sheet->fromArray($data, null, 'A'.$i, false,true);
+                        $sheet->fromArray($data, null, 'A'.$i, true, false);
+                    } else {
+                        $sheet->fromArray($data, null, 'A'.$i, true, true);
                     }
                     (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);

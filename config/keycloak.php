@@ -11,5 +11,7 @@ return [
 
   'append_decoded_token' => env('KEYCLOAK_APPEND_DECODED_TOKEN', false),
 
-  'allowed_resources' => env('KEYCLOAK_ALLOWED_RESOURCES', 'account')
+  'allowed_resources' => env('KEYCLOAK_ALLOWED_RESOURCES', 'account'),
+
+  'accept_token_without_user' => env('KEYCLOAK_ACCEPT_TOKEN_WITHOUT_USER', false),
 ];

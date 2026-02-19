@@ -312,9 +312,9 @@ class CreateExcel
                     }
 
                     if(isset($array['dataType']) && $array['dataType'] == 2) {
-                        $sheet->fromArray($data, null, 'A'.$i, false,false);
-                    }else {
-                        $sheet->fromArray($data, null, 'A'.$i, false,true);
+                        $sheet->fromArray($data, null, 'A'.$i, true, false);
+                    } else {
+                        $sheet->fromArray($data, null, 'A'.$i, true, true);
                     }
                     (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
 
@@ -492,7 +492,7 @@ class CreateExcel
                 }
 
                 if (!empty($indexedData)) {
-                    $sheet->fromArray($indexedData, null, 'A1', false);
+                    $sheet->fromArray($indexedData, null, 'A1', true);
                 }
 
                 $rowNum = 1;
@@ -969,7 +969,7 @@ class CreateExcel
                         $padded = array_pad($row, $maxColumns, '');
                         return array_map([self::class, 'escapeFormulaLikeValue'], $padded);
                     }, $rows);
-                    $sheet->fromArray($paddedRows, null, 'A1', false, false);
+                    $sheet->fromArray($paddedRows, null, 'A1', true, false);
                 }
 
                 $lastRow = count($rows);

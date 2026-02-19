@@ -106,6 +106,7 @@ class TenantEnforce
             'api/v1/postNotPostedSchedule',
             'api/v1/generateAssetDepBulkPDF',
             'api/v1/updateRouteAccess',
+            'api/v1/exportCompanyBudgetPlanningDetailsAll',
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {

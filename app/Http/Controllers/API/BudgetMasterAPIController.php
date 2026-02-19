@@ -897,7 +897,8 @@ class BudgetMasterAPIController extends AppBaseController
 
     public function budgetGLCodeWiseDetailsData($input)
     {
-         $total = 0;
+        $total = 0;
+        $data = [];
         $glColumnName = "";
         // policy check -> Department wise budget check
         $DLBCPolicy = true; // new requiremnt no need to conider the policy
@@ -2653,6 +2654,12 @@ class BudgetMasterAPIController extends AppBaseController
         return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($result, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastColumn) {
+                    $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                    $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);

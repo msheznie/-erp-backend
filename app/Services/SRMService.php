@@ -2328,7 +2328,7 @@ class SRMService
         $profilePic = Employee::with(['profilepic'])
             ->where('employeeSystemID', $employeeId)
             ->first();
-        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'];
+        $data['profilePic'] = $profilePic['profilepic']['profile_image_url'] ?? null;
 
         return [
             'success' => true,

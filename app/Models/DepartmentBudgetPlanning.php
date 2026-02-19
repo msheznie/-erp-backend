@@ -222,6 +222,11 @@ class DepartmentBudgetPlanning extends Model
 
     }
 
+    public function delegate() 
+    {
+        return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID');
+    }
+
     public function revisions()
     {
         return $this->hasMany(Revision::class, 'budgetPlanningId');

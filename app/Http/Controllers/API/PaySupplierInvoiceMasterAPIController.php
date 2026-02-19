@@ -45,6 +45,7 @@ use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\BankMemoPayee;
+use App\Models\BankMemoSupplier;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegister;
@@ -1629,6 +1630,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $beneficiaryMemo = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+            $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
+        } else {
+            $output['supplierBeneficiaryNumber'] = null;
+        }
+
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
@@ -1645,26 +1658,15 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $supplierID = $request['supplierID'];
-        $supplierID = (array)$supplierID;
-        $supplierID = collect($supplierID)->pluck('id');
+        $supplierID = collect((array) ($request['supplierID'] ?? []))->pluck('id')->filter()->values();
 
-        $employeeID = $request['employeeID'];
-        $employeeID = (array)$employeeID;
-        $employeeID = collect($employeeID)->pluck('id');
+        $employeeID = collect((array) ($request['employeeID'] ?? []))->pluck('id')->filter()->values();
 
-        $customerID = $request['customerID'];
-        $customerID = (array)$customerID;
-        $customerID = collect($customerID)->pluck('id');
-        
+        $customerID = collect((array) ($request['customerID'] ?? []))->pluck('id')->filter()->values();
 
-        $projectID = $request['projectID'];
-        $projectID = (array)$projectID;
-        $projectID = collect($projectID)->pluck('id');
+        $projectID = collect((array) ($request['projectID'] ?? []))->pluck('id')->filter()->values();
 
-        $createdBy = $request['createdBy'];
-        $createdBy = (array)$createdBy;
-        $createdBy = collect($createdBy)->pluck('id');
+        $createdBy = collect((array) ($request['createdBy'] ?? []))->pluck('id')->filter()->values();
 
         $search = $request->input('search.value');
         
@@ -3154,8 +3156,19 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         ->where('isYesNO', 1)
         ->exists();
 
+        $supplierBeneficiaryNumber = null;
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+        }
+
         $order = array(
             'masterdata' => $output,
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'transDecimal' => $transDecimal,
             'localDecimal' => $localDecimal,

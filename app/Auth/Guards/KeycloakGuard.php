@@ -11,9 +11,10 @@ use Lcobucci\JWT\Configuration;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
 use Lcobucci\JWT\Signer\Key\InMemory;
 use Lcobucci\JWT\Validation\Constraint\SignedWith;
-use Lcobucci\JWT\Validation\Constraint\StrictValidAt;
+use Lcobucci\JWT\Validation\Constraint\LooseValidAt;
 use Lcobucci\JWT\Validation\RequiredConstraintsViolated;
 use Lcobucci\Clock\SystemClock;
+use Illuminate\Auth\GenericUser;
 
 class KeycloakGuard implements Guard
 {
@@ -65,31 +66,35 @@ class KeycloakGuard implements Guard
 
             // Load user from database if configured
             if (config('keycloak.load_user_from_database', true)) {
-                $credential = config('keycloak.user_provider_credential', 'username');
-                
-                // Try to find user by the configured credential
-                // Common fields: username, email, empID
-                $this->user = $this->provider->retrieveByCredentials([
-                    $credential => $userIdentifier
-                ]);
-                
-                // If not found and credential is 'username', try email or empID
-                if (!$this->user && $credential === 'username') {
-                    $this->user = $this->provider->retrieveByCredentials([
-                        'email' => $userIdentifier
-                    ]);
-                    
-                    if (!$this->user) {
-                        $this->user = $this->provider->retrieveByCredentials([
-                            'empID' => $userIdentifier
-                        ]);
-                    }
+                $credential = config('keycloak.user_provider_credential', 'email');
+
+                // Try configured credential first, then username, email, empID (preferred_username may match any)
+                $this->user = $this->provider->retrieveByCredentials([$credential => $userIdentifier]);
+                if (!$this->user) {
+                    $this->user = $this->provider->retrieveByCredentials(['username' => $userIdentifier]);
+                }
+                if (!$this->user) {
+                    $this->user = $this->provider->retrieveByCredentials(['email' => $userIdentifier]);
+                }
+                if (!$this->user) {
+                    $this->user = $this->provider->retrieveByCredentials(['empID' => $userIdentifier]);
                 }
             } else {
-                // Create a temporary user from token (not recommended for production)
-                $this->user = $this->provider->retrieveByCredentials([
-                    'email' => $userIdentifier
-                ]);
+                $this->user = $this->provider->retrieveByCredentials(['username' => $userIdentifier]);
+                if (!$this->user) {
+                    $this->user = $this->provider->retrieveByCredentials(['email' => $userIdentifier]);
+                }
+                if (!$this->user) {
+                    $this->user = $this->provider->retrieveByCredentials(['empID' => $userIdentifier]);
+                }
+            }
+
+            // Token valid but no user in DB: optionally accept via GenericUser so request is authenticated
+            if (!$this->user && config('keycloak.accept_token_without_user', false)) {
+                Log::channel('keycloak')->warning('Keycloak token valid but no matching user in DB; using token-only user for: ' . $userIdentifier);
+                $this->user = $this->createUserFromToken($decodedToken, $userIdentifier);
+            } elseif (!$this->user) {
+                Log::channel('keycloak')->warning('Keycloak token valid but no matching user in database (principal: ' . $userIdentifier . '). Add user or set KEYCLOAK_ACCEPT_TOKEN_WITHOUT_USER=true.');
             }
 
             // Append decoded token to user if configured
@@ -147,7 +152,7 @@ class KeycloakGuard implements Guard
     {
         try {
             $realmPublicKey = config('keycloak.realm_public_key');
-
+            
             if (empty($realmPublicKey)) {
                 Log::channel('keycloak')->error('Keycloak realm public key not configured');
                 return null;
@@ -156,28 +161,30 @@ class KeycloakGuard implements Guard
             // Format the public key (add headers if needed)
             $publicKey = $this->formatPublicKey($realmPublicKey);
 
-            // Create JWT configuration
+            $keyContent = trim(preg_replace('/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----|\s+/', '', $publicKey));
+            if ($keyContent === '') {
+                Log::channel('keycloak')->error('Keycloak realm public key is empty or invalid after formatting');
+                return null;
+            }
+
+            // Create JWT configuration (verification only; signing key is unused but must be non-empty per library)
             $configuration = Configuration::forAsymmetricSigner(
                 new Sha256(),
-                InMemory::plainText(''), // Private key not needed for validation
+                InMemory::plainText($publicKey),
                 InMemory::plainText($publicKey)
             );
 
-            // Set validation constraints
+            // Set validation constraints (LooseValidAt allows optional nbf/iat; Keycloak often omits nbf)
             $configuration->setValidationConstraints(
                 new SignedWith($configuration->signer(), $configuration->verificationKey()),
-                new StrictValidAt(SystemClock::fromSystemTimezone())
+                new LooseValidAt(SystemClock::fromSystemTimezone())
             );
 
-            // Parse and validate token
+            // Parse and validate token (use assert to get detailed violation messages)
             $parsedToken = $configuration->parser()->parse($token);
 
             $constraints = $configuration->validationConstraints();
-
-            if (!$configuration->validator()->validate($parsedToken, ...$constraints)) {
-                Log::channel('keycloak')->warning('Keycloak token validation failed');
-                return null;
-            }
+            $configuration->validator()->assert($parsedToken, ...$constraints);
 
             // Check if token is expired
             if ($parsedToken->isExpired(new \DateTimeImmutable())) {
@@ -188,12 +195,32 @@ class KeycloakGuard implements Guard
             return $parsedToken;
 
         } catch (RequiredConstraintsViolated $e) {
-            Log::channel('keycloak')->warning('Keycloak token constraints violated: ' . $e->getMessage());
+            Log::channel('keycloak')->warning('Keycloak token validation failed: ' . $e->getMessage());
             return null;
         } catch (\Exception $e) {
             Log::channel('keycloak')->error('Keycloak token validation error: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /**
+     * Build a minimal authenticatable user from the token when no DB user exists.
+     *
+     * @param \Lcobucci\JWT\UnencryptedToken $decodedToken
+     * @param string $userIdentifier
+     * @return \Illuminate\Contracts\Auth\Authenticatable
+     */
+    protected function createUserFromToken($decodedToken, $userIdentifier)
+    {
+        $sub = $decodedToken->claims()->get('sub', $userIdentifier);
+
+        return new GenericUser([
+            'id' => $sub,
+            'email' => $decodedToken->claims()->get('email', $userIdentifier),
+            'name' => $userIdentifier,
+            'password' => '',
+            'remember_token' => '',
+        ]);
     }
 
     /**

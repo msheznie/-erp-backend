@@ -997,12 +997,16 @@ class EmployeesDepartmentAPIController extends AppBaseController
                                                     $data[$x][trans('custom.group_description')] = '';
                                                 }
 
-                                                $data[$x][trans('custom.approver_name')] = $employee_department['employee']['empName'];
+                                                $data[$x][trans('custom.approver_name')] = isset($employee_department['employee']['empName'])
+                                                    ? $employee_department['employee']['empName']
+                                                    : '';
 
-                                                if ($employee_department['removedYN'] == 1) {
+                                                $removedYN = $employee_department['removedYN'] ?? 0;
+                                                $isActive = $employee_department['isActive'] ?? 0;
+                                                if ($removedYN == 1) {
                                                     $data[$x][trans('custom.approver_status')] = trans('custom.deleted');
                                                 } else {
-                                                    $data[$x][trans('custom.approver_status')] = ($employee_department['isActive'] == 1) ? trans('custom.active') : trans('custom.inactive');
+                                                    $data[$x][trans('custom.approver_status')] = ($isActive == 1) ? trans('custom.active') : trans('custom.inactive');
                                                 }
 
                                                 $employeeDepCount++;

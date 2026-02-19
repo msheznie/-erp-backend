@@ -632,6 +632,12 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],
+        'update_finance_posting_status_job' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/update-finance-posting-status-job.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
     ],
 
 ];

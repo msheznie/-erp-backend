@@ -430,6 +430,30 @@
                             <span>{{$masterdata->BPVNarration}}</span>
                         </td>
                     </tr>
+                    @if($masterdata->supplier)
+                    <tr>
+                        <td width="70px">
+                            <span style="font-weight: bold">{{ __('custom.commercial_registration') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight: bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{ $masterdata->supplier->registrationNumber ?? '' }}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="70px">
+                            <span style="font-weight: bold">{{ __('custom.beneficiary_number') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight: bold">:</span>
+                        </td>
+                        <td>
+                            <span>{{ $supplierBeneficiaryNumber ?? '' }}</span>
+                        </td>
+                    </tr>
+                    @endif
                 </table>
             </td>
             <td style="width: 40%">

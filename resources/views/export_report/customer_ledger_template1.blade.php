@@ -3,13 +3,13 @@
     <table>
         <thead>
             <tr>
-                <h1 colspan="12" style="text-align: center;">{{$companyName}}</h1>
+                <td colspan="14" style="text-align: center; font-weight: bold;"><strong>{{ $companyName }}</strong></td>
             </tr>
             <tr>
-                <h2  colspan="12" style="text-align: center;">{{trans('custom.customer_ledger')}}</h2>
+                <td colspan="14" style="text-align: center; font-weight: bold;"><strong>{{ trans('custom.customer_ledger') }}</strong></td>
             </tr>
             <tr>
-                <h4  colspan="12" style="text-align: center;">{{trans('custom.as_of_date')}} {{\App\helper\Helper::dateFormat($fromDate)}}</h4>
+                <td colspan="14" style="text-align: center; font-weight: bold;"><strong>{{ trans('custom.as_of_date') }} {{ \App\helper\Helper::dateFormat($fromDate) }}</strong></td>
             </tr>
         </thead>
         @foreach($reportData as $name => $value)
