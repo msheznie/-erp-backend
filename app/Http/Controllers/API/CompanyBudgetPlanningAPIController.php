@@ -212,7 +212,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         $uuid = $request->get('tenant_uuid', 'local');
-        $url = \Helper::checkDomai();
+        $url = Helper::checkDomai();
         ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
@@ -1670,7 +1670,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $url = \Helper::checkDomai();
+                $url = Helper::checkDomai();
                 $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id,$url);
             }
 
