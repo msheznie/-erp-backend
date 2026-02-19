@@ -257,7 +257,7 @@ class SheetWrapper
     public function appendRow(array $row)
     {
         $highestRow = $this->worksheet->getHighestRow();
-        $this->worksheet->fromArray([$row], null, 'A' . ($highestRow + 1));
+        $this->worksheet->fromArray([$row], null, 'A' . ($highestRow + 1), true);
     }
 
     public function getHighestRow()

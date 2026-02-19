@@ -244,7 +244,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
         return \App\Exports\CreateExcelExport::download('purchaseHistory', function ($excel) use ($data) {
             $excel->sheet(trans('custom.purchaseHistory'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
