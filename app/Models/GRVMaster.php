@@ -443,7 +443,10 @@ class GRVMaster extends Model
 
     public static function getGrvForDeliveryAppointment($grvAutoId)
     {
-        return self::select('grvAutoID','companySystemID')
+        return self::select('grvAutoID','companySystemID','grvPrimaryCode','grvDate','deliveryAppoinmentID')
+            ->with(['deliveryAppointment' => function ($q4) {
+                $q4->select('id','primary_code');
+            }])
             ->with(['details' => function ($q){
                 $q->select('grvAutoID','purchaseOrderMastertID','itemPrimaryCode','itemDescription','itemDescription','noQty')
                 ->with(['po_master' => function ($q2) {
@@ -452,5 +455,10 @@ class GRVMaster extends Model
             }])
             ->where('grvAutoID',$grvAutoId)
             ->first();
+    }
+
+    public function deliveryAppointment()
+    {
+        return $this->hasOne(Appointment::class, 'id','deliveryAppoinmentID');
     }
 }

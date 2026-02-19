@@ -527,11 +527,14 @@ class GRVMasterRepository extends BaseRepository
     
     GRV Details:<br><br>";
 
+        $body .= "GRV Number: {$GrvData->grvPrimaryCode}<br>";
+        $body .= "GRV Date: " . ($GrvData->grvDate ? Carbon::parse($GrvData->grvDate)->format('Y-m-d') : '-') . "<br>";
+        $body .= "Delivery Appointment Number: " . ($GrvData['deliveryAppointment'] ? $GrvData['deliveryAppointment']['primary_code'] : '-') . "<br><br>";
+
         $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
         <thead>
             <tr>
                 <th style="text-align: center;border: 1px solid black;">PO Number</th> 
-                <th style="text-align: center;border: 1px solid black;">GRV Date</th> 
                 <th style="text-align: center;border: 1px solid black;">Item Code</th>
                 <th style="text-align: center;border: 1px solid black;">Item Description</th> 
                 <th style="text-align: center;border: 1px solid black;">GRV Quantity</th> 
@@ -542,7 +545,6 @@ class GRVMasterRepository extends BaseRepository
         foreach ($GrvData['details'] as $val) {
             $body .= '<tr>
             <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>
-            <td style="text-align:center;border: 1px solid black;">-</td>
             <td style="text-align:center;border: 1px solid black;">' . $val->itemPrimaryCode . '</td>
             <td style="text-align:center;border: 1px solid black;">' . $val->itemDescription . '</td>
        <td style="text-align:center;border: 1px solid black;">' . number_format($val->noQty, 5, '.', '') . '</td>
