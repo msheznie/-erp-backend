@@ -1425,8 +1425,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
            
 
             $finalData = [];
-            $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-            })->first();
+            $formatChk = \App\helper\ExcelSheetReader::sheetFirstRow(Storage::disk('local')->path($originalFileName), 'Sheet1');
             $formatChk2 = '';
 
             if (!$formatChk) {
@@ -1447,11 +1446,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 ->first();
 
             if ($checkProjectSelectionPolicy->isYesNO == 0) {
-                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk('local')->path($originalFileName), 'Sheet1', ['gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount']);
             } else {
-                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('gl_account', 'gl_account_description', 'project', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk('local')->path($originalFileName), 'Sheet1', ['gl_account', 'gl_account_description', 'project', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount']);
             }
 
             $count = 0;
@@ -1855,13 +1852,11 @@ HAVING
             }
         }
 
-         \Excel::create('accrual_export', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('accrual_export', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -1869,9 +1864,7 @@ HAVING
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        }, $type);
     }
 
     public function amendJournalVoucherReview(Request $request)

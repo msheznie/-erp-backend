@@ -127,6 +127,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
+use App\Models\BankMemoSupplier;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\TenderMaster;
@@ -2015,7 +2016,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
-                $query->select('vatNumber', 'supplierCodeSystem');
+                $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
             }, 'approved' => function ($query) {
                 $query->with(['employee'=>function($query2){
                     $query2->with(['hr_emp'=>function($query3){
@@ -2077,6 +2078,14 @@ class ProcumentOrderAPIController extends AppBaseController
             ->exists();
 
         $output['isProjectBase'] = $isProjectBase;
+
+        $beneficiaryMemo = BankMemoSupplier::query()
+            ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+            ->where('suppliercurrency.supplierCodeSystem', $output->supplierID)
+            ->where('suppliercurrency.currencyID', $output->supplierTransactionCurrencyID)
+            ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+            ->value('erp_bankmemosupplier.memoDetail');
+        $output['supplierBeneficiaryNumber'] = $beneficiaryMemo ?? null;
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -2982,8 +2991,8 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
         $currencyField = "";
         $decimalField = "";
         if ($input['documentId'] == 1) {
@@ -3201,8 +3210,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $feilds = "";
         $colums = "";
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         if ($input['documentId'] == 1) {
             if ($input['currency'] == 1) {
@@ -3396,15 +3405,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $data[] = $test;
         }
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -3412,9 +3417,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.successfully_export'));
+        }, $type);
     }
 
     /**
@@ -3568,10 +3571,20 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'supplier' => function ($query) {
-            $query->select('vatNumber', 'supplierCodeSystem');
+            $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+        $supplierBeneficiaryNumber = null;
+        if (!empty($outputRecord) && $outputRecord[0]->supplierID && $outputRecord[0]->supplierTransactionCurrencyID) {
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $outputRecord[0]->supplierID)
+                ->where('suppliercurrency.currencyID', $outputRecord[0]->supplierTransactionCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+        }
 
         $is_specification = 0;
 
@@ -3701,6 +3714,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array(
             'podata' => $outputRecord[0],
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
             'isMergedCompany' => $isMergedCompany,
@@ -3882,8 +3896,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $expYear = $monthExp[0];
         $expMonth = $monthExp[1];
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4010,8 +4024,8 @@ WHERE
 
         $type = $request->type;
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -4149,15 +4163,11 @@ WHERE
         }
 
 
-        \Excel::create('item_wise_po_analysis', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
-                //$sheet->getStyle('A1')->getAlignment()->setWrapText(true);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -4165,7 +4175,7 @@ WHERE
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        }, $type);
     }
 
     /**
@@ -4211,8 +4221,8 @@ WHERE
     {
         $input = $request->all();
 
-        $commaSeperatedYears = join($input['years'], ",");
-        $commaSeperatedCompany = join($input['companySystemID'], ",");
+        $commaSeperatedYears = join(",", (array) $input['years']);
+        $commaSeperatedCompany = join(",", (array) $input['companySystemID']);
 
         $supplierID = $input['supplierID'];
 
@@ -5505,6 +5515,12 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         } else {
             $companyID = (array)$request->companySystemID;
         }
+        // Ensure flat array of integers for IN clause (avoid "Array to string conversion")
+        $companyID = array_values(array_map('intval', \Illuminate\Support\Arr::flatten($companyID)));
+        $companyID = array_filter($companyID);
+        if (empty($companyID)) {
+            $companyID = [0];
+        }
 
         $year = $request->years;
         $type = $request->type;
@@ -5565,37 +5581,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         if ($tempType == 1) {
             if ($output) {
                 $x = 0;
+                // SQL aliases use trans('custom.jan') etc. (e.g. CouJan, TotJan); Sept uses 'sep' => 'Sep'
+                $monthAliasKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+                $monthLabelKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sept', 'oct', 'nov', 'dec'];
                 foreach ($output as $val) {
                     $data[$x][trans('custom.emp_id')] = $val->poConfirmedByEmpID;
                     $data[$x][trans('custom.employee_name')] = $val->POConfirmedEmpName;
                     $data[$x][trans('custom.designation')] = $val->designation;
                     $data[$x][trans('custom.year')] = $year;
-                    $data[$x][trans('custom.jan_count')] = $val->CouJan;
-                    $data[$x][trans('custom.jan_amt')] = $val->TotJan;
-                    $data[$x][trans('custom.feb_count')] = $val->CouFeb;
-                    $data[$x][trans('custom.feb_amt')] = $val->TotFeb;
-                    $data[$x][trans('custom.mar_count')] = $val->CouMar;
-                    $data[$x][trans('custom.mar_amt')] = $val->TotMar;
-                    $data[$x][trans('custom.apr_count')] = $val->CouApr;
-                    $data[$x][trans('custom.apr_amt')] = $val->TotApr;
-                    $data[$x][trans('custom.may_count')] = $val->CouMay;
-                    $data[$x][trans('custom.may_amt')] = $val->TotMay;
-                    $data[$x][trans('custom.jun_count')] = $val->CouJun;
-                    $data[$x][trans('custom.jun_amt')] = $val->TotJun;
-                    $data[$x][trans('custom.jul_count')] = $val->CouJul;
-                    $data[$x][trans('custom.jul_amt')] = $val->TotJul;
-                    $data[$x][trans('custom.aug_count')] = $val->CouAug;
-                    $data[$x][trans('custom.aug_amt')] = $val->TotAug;
-                    $data[$x][trans('custom.sept_count')] = $val->CouSep;
-                    $data[$x][trans('custom.sept_amt')] = $val->TotSep;
-                    $data[$x][trans('custom.oct_count')] = $val->CouOct;
-                    $data[$x][trans('custom.oct_amt')] = $val->TotOct;
-                    $data[$x][trans('custom.nov_count')] = $val->CouNov;
-                    $data[$x][trans('custom.nov_amt')] = $val->TotNov;
-                    $data[$x][trans('custom.dec_count')] = $val->CouDece;
-                    $data[$x][trans('custom.dec_amt')] = $val->TotDece;
-                    $data[$x][trans('custom.total_count')] = $val->totalCount;
-                    $data[$x][trans('custom.total_amount')] = $val->totalValue;
+                    foreach ($monthAliasKeys as $i => $aliasKey) {
+                        $mon = trans('custom.' . $aliasKey);
+                        $labelKey = $monthLabelKeys[$i];
+                        $data[$x][trans('custom.' . $labelKey . '_count')] = data_get($val, 'Cou' . $mon, 0);
+                        $data[$x][trans('custom.' . $labelKey . '_amt')] = data_get($val, 'Tot' . $mon, 0);
+                    }
+                    $data[$x][trans('custom.total_count')] = data_get($val, 'totalCount', 0);
+                    $data[$x][trans('custom.total_amount')] = data_get($val, 'totalValue', 0);
                     $x++;
                 }
             } else {
@@ -6133,7 +6134,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     {
         $input = $request->all();
         $data = array();
-        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'DES')->get();
+        $output = ($this->getPoToPaymentQry($input))->orderBy('purchaseOrderID', 'desc')->get();
 
         foreach ($output as $row) {
             $row->grvMasters = $this->getPOtoPaymentChain($row);
@@ -6370,7 +6371,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->setDateType(2)
             ->setExcelFormat($excelColumnFormat)
             ->setCurrency($cur)
-            ->setColumnAutoSize(false)
+            ->setColumnAutoSize(true)
             ->setDetails()
             ->generateExcel();
 
@@ -9393,7 +9394,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
 
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -9445,8 +9446,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'no_qty', 'unit_cost', 'comments', 'dis_percentage', 'vat_percentage', 'project', 'client_ref_no']);
 
             if ($purchaseOrder->cancelledYN == -1) {
                 return $this->sendError(trans('custom.purchase_order_already_closed_cannot_add'), 500);

@@ -909,7 +909,7 @@ class LeaveDataMasterAPIController extends AppBaseController
 
                     $input['hrapprovalYN'] = -1;
                     $input['RollLevForApp_curr'] = 2;
-                    $updateArray = array_only($input,['policytype','leaveType','confirmedYN','confirmedby','confirmedDate','hrapprovalYN','RollLevForApp_curr']);
+                    $updateArray = Arr::only($input,['policytype','leaveType','confirmedYN','confirmedby','confirmedDate','hrapprovalYN','RollLevForApp_curr']);
 
                     $this->leaveDataMasterRepository->update($updateArray,$leaveDataMasterID);
 

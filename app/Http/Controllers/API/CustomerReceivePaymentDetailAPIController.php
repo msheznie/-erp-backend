@@ -144,7 +144,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $id = $input['id'];
         $value = $input['value'];
-        $arAutoID = array_pluck($value, 'arAutoID');
+        $arAutoID = Arr::pluck($value, 'arAutoID');
 
         $itemExistArray = array();
 
@@ -164,7 +164,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->get();
 
         if (count($detail) > 0) {
-            $names = array_pluck($detail->toArray(), 'bookingInvCode');
+            $names = Arr::pluck($detail->toArray(), 'bookingInvCode');
             return $this->sendError(trans('custom.bbelow_listed_invoices_are_already_added_to_the_cu') . join(' <br> ', $names), 500);
         } else {
 
@@ -644,8 +644,8 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $sumReturnDEOTransactionAmount = 0;
         }
 
-
-        $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'] + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
+        $sumOfMatchedAmount = $matchedAmount !== null ? ($matchedAmount['SumOfmatchedAmount'] ?? 0) : 0;
+        $totReceiveAmount = $totalReceiveAmountTrans + $sumOfMatchedAmount + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
 

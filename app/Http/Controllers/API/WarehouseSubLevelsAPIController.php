@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class WarehouseSubLevelsController
@@ -277,7 +278,7 @@ class WarehouseSubLevelsAPIController extends AppBaseController
         }
         $input['updated_pc'] = gethostname();
         $input['updated_by'] = Helper::getEmployeeSystemID();
-        $warehouseSubLevels = $this->warehouseSubLevelsRepository->update(array_only($input,
+        $warehouseSubLevels = $this->warehouseSubLevelsRepository->update(Arr::only($input,
             ['name', 'updated_pc', 'updated_by', 'description', 'isFinalLevel','isActive']), $id);
 
         if(isset($input['isActive']) && $input['isActive'] == 0){

@@ -123,12 +123,11 @@ class BudgetDelegateService
 
             // Create or update the record
             $record = $this->budgetDelegateAccessRecordRepository->createOrUpdate($recordData);
-
-            $budgetNotificationService = new BudgetNotificationService();
-            $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'delegation-confirmation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
-            $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'task-delegation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
             DB::commit();
 
+            $budgetNotificationService = new BudgetNotificationService();
+            // $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'delegation-confirmation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
+            $budgetNotificationService->sendNotification($budgetPlanningDetail->departmentBudgetPlanning->id,'task-delegation', $budgetPlanningDetail->departmentBudgetPlanning->masterBudgetPlannings->companySystemID,$data['delegatee_id']);
             return [
                 'success' => true,
                 'message' => 'Delegate access updated successfully',

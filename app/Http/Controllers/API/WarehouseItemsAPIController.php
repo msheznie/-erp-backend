@@ -31,6 +31,7 @@ use App\Models\ItemSerial;
 use App\Models\ErpItemLedger;
 use App\helper\Helper;
 use App\helper\inventory as Inventory;
+use Illuminate\Support\Arr;
 
 /**
  * Class WarehouseItemsController
@@ -259,7 +260,7 @@ class WarehouseItemsAPIController extends AppBaseController
         }
         else
         {
-            $warehouseItems = $this->warehouseItemsRepository->update(array_only($input, ['binNumber']), $id);
+            $warehouseItems = $this->warehouseItemsRepository->update(Arr::only($input, ['binNumber']), $id);
         }
         return $this->sendResponse($warehouseItems->toArray(), trans('custom.warehouseitems_updated_successfully'));
     }
@@ -454,18 +455,16 @@ class WarehouseItemsAPIController extends AppBaseController
             }
         }
 
-         \Excel::create(trans('exportExcelFile.items_by_warehouse'), function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download(trans('exportExcelFile.items_by_warehouse'), function ($excel) use ($data) {
             $excel->sheet(trans('custom.items_by_warehouse'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-         })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse(array(), trans('custom.success_export'));
     }

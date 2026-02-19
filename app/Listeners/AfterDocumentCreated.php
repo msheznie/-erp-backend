@@ -30,6 +30,11 @@ class AfterDocumentCreated
     public function handle($event)
     {
         $document = $event->document;
+        if (is_object($document) && method_exists($document, 'toArray')) {
+            $document = $document->toArray();
+        } elseif (!is_array($document)) {
+            $document = (array) $document;
+        }
 
         if (!empty($document)) {
             $documentArray = array(
@@ -157,7 +162,6 @@ class AfterDocumentCreated
 
             if ($documentArray['documentExist'] == 1) {
                 $nameSpacedModel = 'App\Models\\' . $documentArray["modelName"];
-                $document = $document->toArray();
                 $missingRecodes = array();
                 $range = "";
                 $previousDoc = $nameSpacedModel::where('companySystemID', $document['companySystemID'])

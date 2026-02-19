@@ -352,11 +352,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             }
 
 
-            $currentPrefix = AssetFinanceCategory::Select('formula')
-                ->where('faFinanceCatID', $input['faFinanceCatID'])
-                ->first();
-
-            $formula_arr_current = explode('~', $currentPrefix['formula']);
+            $formula_arr_current = $assetFinanceCategory->formula !== null
+                ? explode('~', $assetFinanceCategory->formula)
+                : [];
 
             if (!empty($formula_arr_current[0])) {
                 foreach ($formula_arr_current as $formula_row_current) {

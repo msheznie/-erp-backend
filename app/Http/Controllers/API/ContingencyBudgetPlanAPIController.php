@@ -356,7 +356,7 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-        $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->update(array_only($input, ['comments', 'year', 'serviceLineSystemID', 'templateMasterID', 'contingencyPercentage', 'budgetAmount', 'contigencyAmount', 'templateMasterID', 'contingencyPercentage', 'budgetID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
+        $contingencyBudgetPlan = $this->contingencyBudgetPlanRepository->update(Arr::only($input, ['comments', 'year', 'serviceLineSystemID', 'templateMasterID', 'contingencyPercentage', 'budgetAmount', 'contigencyAmount', 'templateMasterID', 'contingencyPercentage', 'budgetID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
         return $this->sendReponseWithDetails($contingencyBudgetPlan->toArray(), trans('custom.update', ['attribute' => trans('custom.contingency_budget')]),1,$confirm['data'] ?? null);
     }

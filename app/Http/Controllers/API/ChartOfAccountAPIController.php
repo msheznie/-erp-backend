@@ -303,8 +303,8 @@ class ChartOfAccountAPIController extends AppBaseController
 
                             CashFlowTemplateLink::where('glAutoID', $input['chartOfAccountSystemID'])->update(['glDescription' => $input['AccountDescription']]);
 
-                            $old_array = array_only($chartOfAccountOld, ['AccountDescription']);
-                            $modified_array = array_only($input, ['AccountDescription']);
+                            $old_array = Arr::only($chartOfAccountOld, ['AccountDescription']);
+                            $modified_array = Arr::only($input, ['AccountDescription']);
                             // update in to user log table
                             foreach ($old_array as $key => $old) {
                                 if ($old != $modified_array[$key]) {
@@ -349,8 +349,8 @@ class ChartOfAccountAPIController extends AppBaseController
                         if ($updateChartOfAccount) {
                             $chartOfAccountOld = $chartOfAccount->toArray();
                             ChartOfAccountsAssigned::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->update($updateData);
-                            $old_array = array_only($chartOfAccountOld, ['controllAccountYN']);
-                            $modified_array = array_only($input, ['controllAccountYN']);
+                            $old_array = Arr::only($chartOfAccountOld, ['controllAccountYN']);
+                            $modified_array = Arr::only($input, ['controllAccountYN']);
                             // update in to user log table
                             foreach ($old_array as $key => $old) {
                                 if ($old != $modified_array[$key]) {

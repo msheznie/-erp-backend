@@ -16,9 +16,7 @@ Route::group([], function(){
     Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
     Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
     Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
-    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
     Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
     Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
     Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
@@ -197,11 +195,11 @@ Route::group([], function() {
     Route::resource('exchange_setup_document_type', 'ExchangeSetup\ExchangeSetupDocumentTypeController');
     Route::resource('exhange_setup_config', 'ExchangeSetup\ExchangeSetupConfigurationController');
 
-    Route::get('exchange_setup_document/{id}/types', 'ExchangeSetup\ExchangeSetupDocumentController@getTypesOfDocument');
-    Route::post('checkDocumentExchangeRateConfigAccess', 'ExchangeSetup\ExchangeSetupConfigurationController@checkDocumentExchangeRateConfigAccess');
-    Route::post('updateDocumentExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@updateDocumentExchangeRate');
-    Route::post('setDefaultExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@setDefaultExchangeRate');
-    Route::post('getExchangeSetupConfigOfCompany', 'ExchangeSetup\ExchangeSetupDocumentController@getExchangeSetupConfigOfCompany');
+    Route::get('exchange_setup_document/{id}/types', 'ExchangeSetup\ExchangeSetupDocumentController@getTypesOfDocument')->name('Get exchange setup document types');
+    Route::post('checkDocumentExchangeRateConfigAccess', 'ExchangeSetup\ExchangeSetupConfigurationController@checkDocumentExchangeRateConfigAccess')->name('Check document exchange rate config access');
+    Route::post('updateDocumentExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@updateDocumentExchangeRate')->name('Update document exchange rate');
+    Route::post('setDefaultExchangeRate', 'ExchangeSetup\ExchangeSetupDocumentController@setDefaultExchangeRate')->name('Set default exchange rate');
+    Route::post('getExchangeSetupConfigOfCompany', 'ExchangeSetup\ExchangeSetupDocumentController@getExchangeSetupConfigOfCompany')->name('Get exchange setup config of company');
 
 });
 
@@ -222,7 +220,6 @@ Route::group([], function() {
     Route::get('getDocumentCodeMasters', 'DocumentCodeMasterAPIController@getDocumentCodeMasters')->name("Get document code masters");
     Route::get('getDocumentCodemaster', 'DocumentCodeMasterAPIController@getDocumentCodemaster')->name("Get document code master");
     Route::get('getDocumentCodePrefix', 'DocumentCodePrefixAPIController@getDocumentCodePrefix')->name("Get document code prefix");
-    // Route::post('updateDocumentCodeTransaction', 'DocumentCodeMasterAPIController@updateDocumentCodeTransaction')->name("Update document code Transaction");
     Route::get('isGettingCodeConfigured', 'DocumentCodeMasterAPIController@isGettingCodeConfigured')->name("Is getting code configured");
     Route::get('getDocumentCodeSetupTypeBased', 'DocCodeSetupTypeBasedAPIController@getDocumentCodeSetupTypeBased')->name("Get document code setup type based");
     Route::post('updateTypeBasedFormat', 'DocCodeSetupTypeBasedAPIController@updateTypeBasedFormat')->name("Update type based format");
@@ -244,9 +241,9 @@ Route::group([], function() {
   
 
 
-     Route::post('getTemplateList', 'FinalReturnIncomeTemplateAPIController@getTemplateList');
-     Route::get('chartOfAccountsTemplate', 'FinalReturnIncomeTemplateAPIController@chartOfAccountsTemplate');
+     Route::post('getTemplateList', 'FinalReturnIncomeTemplateAPIController@getTemplateList')->name('Get template list');
+     Route::get('chartOfAccountsTemplate', 'FinalReturnIncomeTemplateAPIController@chartOfAccountsTemplate')->name('Chart of accounts template');
      Route::get('getTemplateDetail/{id}', 'FinalReturnIncomeTemplateDetailsAPIController@getReportTemplateDetail')->name("Get report template detail by report template id");
-     Route::post('templateDetailRaw', 'FinalReturnIncomeTemplateDetailsAPIController@templateDetailRaw');
-     Route::get('templateColumnsLink', 'FinalReturnIncomeTemplateColumnsAPIController@templateColumnsLink');
+     Route::post('templateDetailRaw', 'FinalReturnIncomeTemplateDetailsAPIController@templateDetailRaw')->name('Template detail raw');
+     Route::get('templateColumnsLink', 'FinalReturnIncomeTemplateColumnsAPIController@templateColumnsLink')->name('Template columns link');
     });

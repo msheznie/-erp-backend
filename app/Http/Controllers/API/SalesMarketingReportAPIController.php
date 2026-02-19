@@ -814,11 +814,13 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerIds = (array) $customerIds;
         $stringCustomer = '';
 
-        foreach($customerIds as $a)
-        {
-            foreach($a as $b=>$c)
-            {
-                $stringCustomer .= $c.',';
+        foreach ($customerIds as $a) {
+            if (is_array($a) || is_object($a)) {
+                foreach ($a as $b => $c) {
+                    $stringCustomer .= $c . ',';
+                }
+            } elseif ($a !== null && $a !== false) {
+                $stringCustomer .= $a . ',';
             }
         }
 
@@ -828,11 +830,13 @@ class SalesMarketingReportAPIController extends AppBaseController
         $itemIds = (array) $itemIds;
         $stringItem = '';
 
-        foreach($itemIds as $a)
-        {
-            foreach($a as $b=>$c)
-            {
-                $stringItem .= $c.',';
+        foreach ($itemIds as $a) {
+            if (is_array($a) || is_object($a)) {
+                foreach ($a as $b => $c) {
+                    $stringItem .= $c . ',';
+                }
+            } elseif ($a !== null && $a !== false) {
+                $stringItem .= $a . ',';
             }
         }
 
@@ -841,11 +845,13 @@ class SalesMarketingReportAPIController extends AppBaseController
         $wareHouseIds = (array) $wareHouseIds;
         $stringWareHouse = '';
 
-        foreach($wareHouseIds as $a)
-        {
-            foreach($a as $b=>$c)
-            {
-                $stringWareHouse .= $c.',';
+        foreach ($wareHouseIds as $a) {
+            if (is_array($a) || is_object($a)) {
+                foreach ($a as $b => $c) {
+                    $stringWareHouse .= $c . ',';
+                }
+            } elseif ($a !== null && $a !== false) {
+                $stringWareHouse .= $a . ',';
             }
         }
 
@@ -2398,7 +2404,7 @@ class SalesMarketingReportAPIController extends AppBaseController
         $customerID= $request['customerID'];
         $customerID = (array)$customerID;
         $customerID = collect($customerID)->pluck('id');
-        $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'DES')->get();
+        $output = ($this->getSoToReceiptQry($input, $customerID))->orderBy('quotationMasterID', 'desc')->get();
 
         foreach ($output as $row) {
             $row->deliveryOrders = $this->getSOtoReceiptChainViaDeliveryOrder($row, $currencyType);

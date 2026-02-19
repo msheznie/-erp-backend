@@ -106,6 +106,7 @@ class TenantEnforce
             'api/v1/postNotPostedSchedule',
             'api/v1/generateAssetDepBulkPDF',
             'api/v1/updateRouteAccess',
+            'api/v1/exportCompanyBudgetPlanningDetailsAll',
         ];
 
         if (env('IS_MULTI_TENANCY', false)) {
@@ -142,8 +143,9 @@ class TenantEnforce
                         $partCount = count($subDomainArray);
                         if ($partCount > 1) {
                             $firstPart = $subDomainArray[0];
-                            $lastPart = end($subDomainArray);
-                            $erpDomain = $firstPart . '-erp-' . $lastPart;
+                            $remainingParts = array_slice($subDomainArray, 1);
+                            $remainingPart = implode('-', $remainingParts);
+                            $erpDomain = $firstPart . '-erp-' . $remainingPart;
                         } else {
                             $erpDomain = $subDomain . '-erp';
                         }

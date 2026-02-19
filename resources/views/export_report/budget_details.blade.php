@@ -3,35 +3,30 @@
     <thead>
     <tr>
         @php
-            $bigginingDt = new DateTime($entity['finance_year_by']['bigginingDate']);
-            $bigginingDate = $bigginingDt->format('d/m/Y');
-
-            $endingDt = new DateTime($entity['finance_year_by']['endingDate']);
-            $endingDate = $endingDt->format('d/m/Y');
-
-
+            $fy = data_get($entity, 'finance_year_by');
+            $bigginingDate = $fy && data_get($fy, 'bigginingDate') ? (new DateTime($fy['bigginingDate']))->format('d/m/Y') : '';
+            $endingDate = $fy && data_get($fy, 'endingDate') ? (new DateTime($fy['endingDate']))->format('d/m/Y') : '';
         @endphp
         <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
+        <td>{{ trans('custom.year') }} : {{ data_get($entity, 'Year', '') }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.currency') }} : {{ $currency['reportingcurrency']['CurrencyCode'] }}</td>
+        <td>{{ trans('custom.currency') }} : {{ data_get($currency, 'reportingcurrency.CurrencyCode', '') }}</td>
     </tr>
     <tr>
-
-        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
+        <td>{{ trans('custom.segment') }} : {{ data_get($entity, 'segment_by.ServiceLineDes', '') }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
+        <td>{{ trans('custom.template') }} : {{ data_get($entity, 'template_master.description', '') }}</td>
         <td> </td>
         <td> </td>
         <td> </td>
-        <td>{{ trans('custom.send_notification_at') }} {{ $entity['sentNotificationAt'] }}%</td>
+        <td>{{ trans('custom.send_notification_at') }} {{ data_get($entity, 'sentNotificationAt', '') }}%</td>
     </tr>
     <tr></tr>
     <tr></tr>
@@ -50,6 +45,7 @@
 
     </tr>
     </thead>
+    <tbody>
     @foreach($budgetDetails as $item)
         <tr>
                 <?php $mainNo = $loop->index + 1 ?>
@@ -106,6 +102,12 @@
 
             @endif
 
+            @if($item->itemType == 1)
+                @for($m = 0; $m < count($months) + 1; $m++)
+                    <td></td>
+                @endfor
+            @endif
+        </tr>
 
         @if($item->itemType == 1)
             @foreach($item->subcategory as $key => $item1)
@@ -165,7 +167,6 @@
 
                                 </tr>
                                 @endforeach
-                                </tr>
                                 @endif
                         @if($subCategory->isFinalLevel == 0 && $subCategory->itemType == 2)
                             @foreach($subCategory->subcategory as $key3 => $subSubCategory)
@@ -193,7 +194,6 @@
 
                                                 </tr>
                                                 @endforeach
-                                                </tr>
                                                 @endif
 
 
@@ -393,12 +393,10 @@
                         @endforeach
                     @endif
 
-                    </tr>
                     @endforeach
                     @endif
-                    </tr>
 
                     @endforeach
-                    </tbody>
+    </tbody>
 </table>
 </html>

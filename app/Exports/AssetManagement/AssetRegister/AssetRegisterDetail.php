@@ -65,12 +65,42 @@ class AssetRegisterDetail
             '',
             '',
             '',
+            '',
             trans('custom.unit_cost'),
             trans('custom.accdep_amount'),
             trans('custom.net_book_value'),
             trans('custom.unit_cost'),
             trans('custom.accdep_amount'),
             trans('custom.net_book_value'),
+        ];
+    }
+
+    /**
+     * Returns row values as indexed array in exact header column order for Excel export.
+     * Ensures dep % and all columns align correctly (no associative-array key order issues).
+     */
+    public function toRowArray(): array
+    {
+        return [
+            $this->costGL ?? '',
+            $this->accDepGL ?? '',
+            $this->type ?? '',
+            $this->segment ?? '',
+            $this->faCode ?? '',
+            $this->groupedYN ?? '',
+            $this->serialNumber ?? '',
+            $this->assetDescription ?? '',
+            $this->location ?? '',
+            $this->category ?? '',
+            $this->depPercentage ?? '',
+            $this->dateAcquired ?? '',
+            $this->depStartDate ?? '',
+            $this->localAmountUnitCost ?? '',
+            $this->localAmountAccDep ?? '',
+            $this->localAmountNetValue ?? '',
+            $this->rptAmountUnitCost ?? '',
+            $this->rptAmountAccDep ?? '',
+            $this->rptAmountNetValue ?? '',
         ];
     }
 

@@ -339,7 +339,19 @@ class TenderMasterRepository extends BaseRepository
 
         $opening_date_comp = $tender->stage === 1 ? $tender->bid_opening_date : $tender->technical_bid_opening_date;
         $opening_date_comp_end = $tender->stage === 1 ? $tender->bid_opening_end_date : $tender->technical_bid_closing_date;
-        return $current_date->gt($opening_date_comp) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
+
+        if ($opening_date_comp_end !== null) {
+            $opening_date_comp_end = Carbon::parse($opening_date_comp_end);
+        }
+
+        if ($tender->document_system_id == 113 && $opening_date_comp === null) {
+            return true;
+        }
+
+        $opening_date_comp = Carbon::parse($opening_date_comp);
+
+        return $current_date->gt($opening_date_comp) &&
+            ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
 
 
@@ -455,7 +467,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['rejectedComments']);
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
-        $approve = DocumentApprove::rejectDocument($data);
+        $approve = DocumentReject::rejectDocument($data);
 
         if($approve['success'])
         {
@@ -533,7 +545,9 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
-
+            if(!$updatedData['success']){
+                return $updatedData;
+            }
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -809,7 +823,7 @@ class TenderMasterRepository extends BaseRepository
 
         }
 
-        $technicalBidOpened = $currentDateFormatted->gt($bidOpeningStartDate);
+        $technicalBidOpened = $currentDateFormatted->gt(Carbon::parse($bidOpeningStartDate));
 
         if ($bidOpeningEndDate == null) {
             $result4 = true;
@@ -870,7 +884,7 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
-            $sort = $calendarDatesExists['sort'] ? $calendarDatesExists['sort'] + 1 : 1;
+            $sort = ($calendarDatesExists['sort'] ?? 0) + 1;
 
 
             $logData = [];

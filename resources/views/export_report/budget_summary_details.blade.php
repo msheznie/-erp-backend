@@ -1,22 +1,18 @@
-<html>
-<center>
-    <tr>
-        <td colspan="3"> </td>
-        <td><h1>{{ trans('custom.details') }}</h1>  </td>
-        <td colspan="3"> </td>
-
-    <tr>
-</center>
 
 <table>
-    <thead>
     <tr>
-    <td>{{ trans('custom.company_id') }}</td>
-    <td>{{ trans('custom.department') }}</td>
-    <td>{{ trans('custom.gl_code') }}</td>
-    <td>{{ trans('custom.document_code') }}</td>
-    <td>{{ trans('custom.year') }}</td>
-    <td>{{ trans('custom.pending_amount') }}</td>
+        <td colspan="3"> </td>
+        <td><strong><h1>{{ trans('custom.details') }}</h1></strong></td>
+        <td colspan="3"> </td>
+    </tr>
+    <thead>
+        <tr>
+        <td><strong>{{ trans('custom.company_id') }}</strong></td>
+        <td><strong>{{ trans('custom.department') }}</strong></td>
+        <td><strong>{{ trans('custom.gl_code') }}</strong></td>
+        <td><strong>{{ trans('custom.document_code') }}</strong></td>
+        <td><strong>{{ trans('custom.year') }}</strong></td>
+        <td><strong>{{ trans('custom.pending_amount') }}</strong></td>
     </tr>
     </thead>
     <tbody>

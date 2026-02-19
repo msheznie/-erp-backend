@@ -71,7 +71,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use PHPExcel_IOFactory;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\FixedAssetMaster;
 use App\Models\logUploadBudget;
 use Illuminate\Support\Arr;
@@ -845,22 +845,44 @@ class BudgetMasterAPIController extends AppBaseController
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
 
 
-        $data = array('entity' => $budgetMaster->toArray(), 'reportData' => $reportData,
-            'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+        $data = [
+            'entity' => $budgetMaster->toArray(),
+            'reportData' => $reportData,
+            'total' => $total,
+            'decimalPlaceLocal' => $decimalPlaceLocal,
+            'decimalPlaceRpt' => $decimalPlaceRpt,
+        ];
+        $templateName = 'export_report.budget_summary_gl_code_wise';
+        $fontFamily = \App\helper\Helper::getExcelFontFamily(app()->getLocale());
 
-        $templateName = "export_report.budget_summary_gl_code_wise";
-
-        \Excel::create('finance', function ($excel) use ($data, $templateName) {
-            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName, $fontFamily) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName, $fontFamily) {
                 $sheet->loadView($templateName, $data);
-                
-                // Set right-to-left for Arabic locale
+                $lastRow = $sheet->getHighestRow();
+                $lastCol = $sheet->getHighestColumn() ?: 'K';
+                $dataRange = 'A1:' . $lastCol . max(1, $lastRow);
+                $sheet->getStyle($dataRange)->getFont()->setName($fontFamily);
+                $sheet->getStyle($dataRange)->getFont()->setSize(11);
+                $sheet->cells('A1:' . $lastCol . '1', function ($cells) use ($fontFamily) {
+                    $cells->setFont(['bold' => true, 'size' => 14, 'name' => $fontFamily]);
+                });
+                if ($lastRow >= 6) {
+                    $sheet->cells('A6:' . $lastCol . '6', function ($cells) use ($fontFamily) {
+                        $cells->setFont(['bold' => true, 'size' => 12, 'name' => $fontFamily]);
+                    });
+                }
+                if ($lastRow > 0) {
+                    $sheet->cells('A' . $lastRow . ':' . $lastCol . $lastRow, function ($cells) use ($fontFamily) {
+                        $cells->setFont(['bold' => true, 'size' => 11, 'name' => $fontFamily]);
+                    });
+                }
                 if (app()->getLocale() == 'ar') {
-                    $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                    $sheet->getStyle($dataRange)->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
+                $sheet->setAutoSize(true);
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function budgetGLCodeWiseDetails(Request $request)
@@ -875,7 +897,8 @@ class BudgetMasterAPIController extends AppBaseController
 
     public function budgetGLCodeWiseDetailsData($input)
     {
-         $total = 0;
+        $total = 0;
+        $data = [];
         $glColumnName = "";
         // policy check -> Department wise budget check
         $DLBCPolicy = true; // new requiremnt no need to conider the policy
@@ -2628,17 +2651,21 @@ class BudgetMasterAPIController extends AppBaseController
         $result = $this->budgetGLCodeWiseDetailsData($input);
         $templateName = "export_report.budget_summary_details";
 
-        \Excel::create('finance', function ($excel) use ($result, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($result, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($result, $templateName) {
                 $sheet->loadView($templateName, $result);
-                
-                // Set right-to-left for Arabic locale
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastColumn) {
+                    $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                    $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
 
@@ -2826,17 +2853,25 @@ class BudgetMasterAPIController extends AppBaseController
 
         $templateName = "export_report.budget_summary_category_wise";
 
-        \Excel::create('finance', function ($excel) use ($data, $templateName) {
+        return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($data, $templateName) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($data, $templateName) {
                 $sheet->loadView($templateName, $data);
-                
-                // Set right-to-left for Arabic locale
+                $lastRow = $sheet->getHighestRow();
+                $lastColumn = $sheet->getHighestColumn();
+                if ($lastRow > 0 && $lastColumn) {
+                    $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                    $headerRow = 6;
+                    if ($headerRow <= $lastRow) {
+                        $sheet->getStyle('A' . $headerRow . ':' . $lastColumn . $headerRow)->getFont()->setBold(true);
+                    }
+                }
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function getGlCodeWiseCommitedBudgetAmount($data, $glIds, $DLBCPolicy)
@@ -4352,12 +4387,11 @@ class BudgetMasterAPIController extends AppBaseController
         $reportData['reportData'] = $glCOdesSorted->values()->all();
         $reportData['monthArray'] = $monthArray;
 
-        return \Excel::create('upload_budget_template', function ($excel) use ($reportData) {
-                     $excel->sheet(trans('custom.new_sheet'), function($sheet) use ($reportData) {
-                        $sheet->loadView('export_report.budget_upload_template', $reportData);
-                        
-                    });
-                })->download('xlsx');
+        return \App\Exports\CreateExcelExport::download('upload_budget_template', function ($excel) use ($reportData) {
+            $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData) {
+                $sheet->loadView('export_report.budget_upload_template', $reportData);
+            });
+        }, 'xlsx');
 
     }
 
@@ -4695,7 +4729,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+        $objPHPExcel = IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
         $uploadData = ['objPHPExcel' => $objPHPExcel,
             'uploadBudget' => $uploadBudget,

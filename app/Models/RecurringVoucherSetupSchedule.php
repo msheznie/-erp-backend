@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Eloquent as Model;
+use DateTimeInterface;
 
 /**
  * @OA\Schema(
@@ -227,6 +228,14 @@ class RecurringVoucherSetupSchedule extends Model
     ];
 
     /**
+     * Serialize dates in legacy format (Y-m-d H:i:s) for API compatibility.
+     */
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    /**
      * Validation rules
      *
      * @var array
@@ -256,13 +265,16 @@ class RecurringVoucherSetupSchedule extends Model
 
     public function generateDocument()
     {
+        if ($this->master === null) {
+            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
+        }
+
         $documentType = $this->master->documentType;
-        if($documentType == 0){
+        if ($documentType == 0) {
             return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
         }
-        else{ //remove else part with other document types
-            return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
-        }
+
+        return $this->hasOne('App\Models\JvMaster', 'jvMasterAutoId', 'generateDocumentID');
     }
 
     public function getIsReActiveStateAttribute(){

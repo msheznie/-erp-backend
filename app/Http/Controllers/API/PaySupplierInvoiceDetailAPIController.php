@@ -324,7 +324,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                                                         ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
                                                                                         ->first();                                                                                        
    
-        $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+        $paymentSum = $supplierPaidAmountSumPayment !== null ? ($supplierPaidAmountSumPayment['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $debitSum = $supplierPaidAmountSumDebit !== null ? ($supplierPaidAmountSumDebit['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $paymentSum + $debitSum;
           
 
        
@@ -448,7 +450,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $totalPaidAmount = ($supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+        $paymentSum = $supplierPaidAmountSumPayment !== null ? ($supplierPaidAmountSumPayment['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $debitSum = $supplierPaidAmountSumDebit !== null ? ($supplierPaidAmountSumDebit['SumOfsupplierPaymentAmount'] ?? 0) : 0;
+        $totalPaidAmount = $paymentSum + $debitSum + ($machAmount * -1);
     
         if ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7) {
             if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
@@ -856,7 +860,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $machAmount = $matchedAmount["SumOfmatchedAmount"];
                 }
 
-                $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+                $supplierPaidSum = data_get($supplierPaidAmountSum, 'SumOfsupplierPaymentAmount', 0);
+                $totalPaidAmount = ($supplierPaidSum + ($machAmount * -1));
 
                 if ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7) {
                     if ($val->addedDocumentSystemID == 11) {
@@ -1563,7 +1568,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                                                       ->first();  
 
 
-              $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+              $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0);
 
 
         }
@@ -1596,7 +1601,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
 
 
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0);
            
         }
         else
@@ -1718,14 +1723,11 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
               })->where('apAutoID', $input["apAutoID"])
               ->where('documentSystemID', '=', 15)
               ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
-              ->first();  
+              ->first();
 
-              
-
-
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
-
-
+            $supplierPaidAmountSum = [
+                'SumOfsupplierPaymentAmount' => (float) data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + (float) data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0),
+            ];
         }
         else if($user_type == 1)
         {
@@ -1755,7 +1757,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
               
 
 
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = data_get($supplierPaidAmountSumPayment, 'SumOfsupplierPaymentAmount', 0) + data_get($supplierPaidAmountSumDebit, 'SumOfsupplierPaymentAmount', 0);
         }
         else
         {
@@ -1773,13 +1775,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $paymentBalancedAmount = Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1)));
+        $supplierPaidSum = data_get($supplierPaidAmountSum, 'SumOfsupplierPaymentAmount', 0);
+        $paymentBalancedAmount = Helper::roundValue($paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidSum + ($machAmount * -1)));
 
         if (!$supplierPaidAmountSum) {
-            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = 0;
+            $supplierPaidAmountSum = ['SumOfsupplierPaymentAmount' => 0];
         }
 
-        $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+        $totalPaidAmount = (data_get($supplierPaidAmountSum, 'SumOfsupplierPaymentAmount', 0) + ($machAmount * -1));
     
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
 

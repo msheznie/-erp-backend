@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class LeaveAccrualInitiate implements ShouldQueue
 {
@@ -106,7 +107,7 @@ class LeaveAccrualInitiate implements ShouldQueue
                     if(count($groups) > 0){
                         $this->groupId = '';
                         foreach ($groups as $group){
-                            $group = array_only($group, ['leaveGroupID', 'description']);
+                            $group = Arr::only($group, ['leaveGroupID', 'description']);
                             $this->groupId .= $group['leaveGroupID'].', ' ?? null;
                             $seconds += 30;
                            

@@ -131,11 +131,13 @@ class ValidateAssetCreation
             return self::sendJsonResponse(false,$validator->messages(), 422);
         }
 
-        if (isset($input['itemPicture'])) {
-            if ($itemImgaeArr[0]['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+        if (isset($input['itemPicture']) && is_array($itemImgaeArr) && isset($itemImgaeArr[0]['size'])) {
+            if ((int) $itemImgaeArr[0]['size'] > (int) env('ATTACH_UPLOAD_SIZE_LIMIT')) {
                 return self::sendJsonResponse(false,"Maximum allowed file size is exceeded. Please upload lesser than".Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
             }
         }
+
+        return self::sendJsonResponse(true, 'All validations are passed', 200);
     }
 
     public static function uploadValidation(){
@@ -143,6 +145,8 @@ class ValidateAssetCreation
 
         if(!empty($uploadCondition)){
             return self::sendJsonResponse(false,"Asset costing upload InProgress", 500);
+        } else {
+            return self::sendJsonResponse(true,"Asset costing upload not InProgress", 200);
         }
     }
 
@@ -162,6 +166,8 @@ class ValidateAssetCreation
             if(empty($financePeriod)){
                 return self::sendJsonResponse(false,"Finance period not activated", 500);
             }
+
+            return self::sendJsonResponse(true, 'Finance year and period validated', 200);
         } catch(\Exception $e){
             return self::sendJsonResponse(false,$e->getMessage(), 500);
         }
@@ -267,6 +273,7 @@ class ValidateAssetCreation
             }
         }
 
+        return self::sendJsonResponse(true, 'All validations are passed', 200);
     }
 
 }

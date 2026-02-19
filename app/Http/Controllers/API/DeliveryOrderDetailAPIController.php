@@ -1753,8 +1753,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $totalRecords = count(collect($formatChk)->toArray());
             $uniqueData = array_filter(collect($formatChk)->toArray());
@@ -1801,8 +1800,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             }
 
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'qty','vat','discount'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'qty', 'vat', 'discount']);
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if ($masterData->cancelledYN == -1) {

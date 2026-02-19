@@ -139,7 +139,7 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
         }
 
         $documentUrl = "";
-        if (Storage::disk('s3')->exists($filePath)) {
+        if (is_string($filePath) && $filePath !== '' && Storage::disk('s3')->exists($filePath)) {
             $documentUrl = Helper::getFileUrlFromS3($filePath);
         }
         return $this->sendResponse($documentUrl, "Document retrived successfully");
@@ -154,21 +154,21 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
         $gender = $input['gender'];
         $empMaster = [];
 
-        if (Storage::disk('s3')->exists($empImage)) {
+        if (is_string($empImage) && $empImage !== '' && Storage::disk('s3')->exists($empImage)) {
             $data['employee'] =  Helper::getFileUrlFromS3($empImage);
         } else {
             $img = ($gender == 1) ? 'images/users/male.png' : 'images/users/female.png';
             $data['employee']  = Helper::getFileUrlFromS3($img);
         }
 
-        if (Storage::disk('s3')->exists($managerImg)) {
+        if (is_string($managerImg) && $managerImg !== '' && Storage::disk('s3')->exists($managerImg)) {
             $data['managerImg'] =  Helper::getFileUrlFromS3($managerImg);
         } else {
             $img = ($gender == 1) ? 'images/users/male.png' : 'images/users/female.png';
             $data['managerImg']  = Helper::getFileUrlFromS3($img);
         }
 
-        if (Storage::disk('s3')->exists($empSignature)) {
+        if (is_string($empSignature) && $empSignature !== '' && Storage::disk('s3')->exists($empSignature)) {
             $data['empSignature'] =  Helper::getFileUrlFromS3($empSignature);
         } else {
             $img = 'images/users/No_Image.png';
@@ -186,10 +186,11 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
         $array = [];
         if (!empty($empData)) {
             foreach ($empData as $val) {
-                if (Storage::disk('s3')->exists($val['path'])) {
-                    $documentUrl = Helper::getFileUrlFromS3($val['path']);
+                $path = isset($val['path']) ? $val['path'] : null;
+                if (is_string($path) && $path !== '' && Storage::disk('s3')->exists($path)) {
+                    $documentUrl = Helper::getFileUrlFromS3($path);
                 } else {
-                    $img = ($val['gender'] == 1) ? 'images/users/male.png' : 'images/users/female.png';
+                    $img = (isset($val['gender']) && $val['gender'] == 1) ? 'images/users/male.png' : 'images/users/female.png';
                     $documentUrl = Helper::getFileUrlFromS3($img);
                 }
                 $dataImg['empId'] = $val['empId'];
@@ -204,9 +205,9 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
     public function documentUploadDelete(Request $request)
     {
         $input = $request->all();
-        $filePath = $input['file_name'];
+        $filePath = $input['file_name'] ?? null;
 
-        if (Storage::disk('s3')->exists($filePath)) {
+        if (is_string($filePath) && $filePath !== '' && Storage::disk('s3')->exists($filePath)) {
             Storage::disk('s3')->delete($filePath);
             return $this->sendResponse([], "Attachment deleted successfully");
         } else {
@@ -218,8 +219,9 @@ class ThirdPartySystemsDocumentUploadAndDownloadAPIController extends AppBaseCon
         $input = $request->all();
         $MappingDataArrFilter = collect($input['hrDocs'])->map(function ($group) {
             $documentUrl = "";
-            if (Storage::disk('s3')->exists($group['documentFile'])) {
-                $documentUrl = Helper::getFileUrlFromS3($group['documentFile']);
+            $documentFile = $group['documentFile'] ?? null;
+            if (is_string($documentFile) && $documentFile !== '' && Storage::disk('s3')->exists($documentFile)) {
+                $documentUrl = Helper::getFileUrlFromS3($documentFile);
             }
             $group['documentPath'] = $documentUrl;
             return $group;

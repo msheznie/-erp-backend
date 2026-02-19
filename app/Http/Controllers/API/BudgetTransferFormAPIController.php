@@ -413,7 +413,7 @@ class BudgetTransferFormAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-        $budgetTransferForm = $this->budgetTransferFormRepository->update(array_only($input, ['comments', 'year', 'templatesMasterAutoID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
+        $budgetTransferForm = $this->budgetTransferFormRepository->update(Arr::only($input, ['comments', 'year', 'templatesMasterAutoID', 'modifiedPc', 'modifiedUser', 'modifiedUserSystemID']), $id);
 
         return $this->sendReponseWithDetails($budgetTransferForm->toArray(), trans('custom.update', ['attribute' => trans('custom.budget_transfer')]),1,$confirm['data'] ?? null);
     }

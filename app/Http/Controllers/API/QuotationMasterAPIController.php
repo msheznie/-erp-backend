@@ -2117,8 +2117,7 @@ class QuotationMasterAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $totalRecords = count(collect($formatChk)->toArray());
 
@@ -2191,8 +2190,7 @@ class QuotationMasterAPIController extends AppBaseController
             }
 
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'qty', 'sales_price','vat','discount','comments'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'qty', 'sales_price', 'vat', 'discount', 'comments']);
             $uploadSerialNumber = array_filter(collect($record)->toArray());
             if ($masterData->cancelledYN == -1) {
                 return $this->sendError(trans('custom.this_quotation_already_closed_you_can_not_add'), 500);

@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Csv;
@@ -67,6 +68,34 @@ class CreateExcelExport
                 return new Xlsx($spreadsheet);
         }
     }
+
+    /**
+     * Build spreadsheet via legacy callback and return a download response.
+     * Use this instead of \Excel::create($fileName, $callback)->download($type).
+     *
+     * @param  string  $fileName  Base filename without extension
+     * @param  callable  $callback  Receives ExcelWrapper, e.g. function ($excel) { $excel->sheet('Sheet', function ($sheet) { ... }); }
+     * @param  string  $writerType  'xlsx', 'xls', or 'csv'
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
+    public static function download(string $fileName, callable $callback, string $writerType = 'xlsx'): \Symfony\Component\HttpFoundation\Response
+    {
+        $export = new self($callback, $writerType);
+        $content = $export->getContent();
+        $ext = strtolower($writerType);
+        $mimeTypes = [
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'xls' => 'application/vnd.ms-excel',
+            'csv' => 'text/csv',
+        ];
+        $mime = $mimeTypes[$ext] ?? $mimeTypes['xlsx'];
+        $downloadName = $fileName . '.' . $ext;
+
+        return response($content, 200, [
+            'Content-Type' => $mime,
+            'Content-Disposition' => 'attachment; filename="' . $downloadName . '"',
+        ]);
+    }
 }
 
 /**
@@ -75,7 +104,8 @@ class CreateExcelExport
 class ExcelWrapper
 {
     protected $spreadsheet;
-    protected $sheets = [];
+
+    protected int $sheetIndex = 0;
 
     public function __construct(Spreadsheet $spreadsheet)
     {
@@ -84,14 +114,17 @@ class ExcelWrapper
 
     public function sheet($name, callable $callback)
     {
-        $sheet = $this->spreadsheet->getActiveSheet();
-        if ($name !== $sheet->getTitle()) {
-            $sheet->setTitle($name);
+        if ($this->sheetIndex > 0) {
+            $this->spreadsheet->createSheet();
         }
-        
+        $sheet = $this->spreadsheet->getActiveSheet();
+        // PhpSpreadsheet allows max 31 characters for sheet title
+        $sheet->setTitle(mb_substr($name, 0, 31));
+        $this->sheetIndex++;
+
         $sheetWrapper = new SheetWrapper($sheet);
         call_user_func($callback, $sheetWrapper);
-        
+
         return $this;
     }
 
@@ -108,20 +141,78 @@ class SheetWrapper
 {
     protected $worksheet;
 
+    /** @var array{view: string, data: array}|null Last loadView args for chainable with() */
+    protected $lastLoadView = null;
+
     public function __construct(Worksheet $worksheet)
     {
         $this->worksheet = $worksheet;
     }
 
-    public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $calculateCellValues = true)
+    /**
+     * Chainable: merge extra data and re-load the last view. Supports with('key', $value) or with(['k' => 'v']).
+     */
+    public function with($key, $value = null)
     {
-        $this->worksheet->fromArray($source, $nullValue, $startCell, $strictNullComparison, $calculateCellValues);
+        $extra = is_array($key) ? $key : [$key => $value];
+        if ($this->lastLoadView !== null) {
+            $merged = array_merge($this->lastLoadView['data'], $extra);
+
+            return $this->loadView($this->lastLoadView['view'], $merged);
+        }
+
+        return $this;
+    }
+
+    public function fromArray($source, $nullValue = null, $startCell = 'A1', $strictNullComparison = false, $hasHeaderRow = true)
+    {
+        // PhpSpreadsheet's fromArray only accepts array; convert Collection to array
+        if ($source instanceof \Illuminate\Support\Collection) {
+            $source = $source->all();
+        }
+        if (!is_array($source)) {
+            return;
+        }
+        if (empty($source)) {
+            return;
+        }
+
+        // Check if this is an associative array (has string keys)
+        $firstRow = reset($source);
+        $isAssociative = is_array($firstRow) && !isset($firstRow[0]);
+        
+        if ($hasHeaderRow && $isAssociative) {
+            // Extract headers from array keys and insert them first
+            $headers = array_keys($firstRow);
+            
+            // Convert values to indexed arrays
+            $dataRows = [];
+            foreach ($source as $row) {
+                $dataRows[] = array_values($row);
+            }
+            
+            // Insert headers first, then data
+            $this->worksheet->fromArray([$headers], $nullValue, $startCell, $strictNullComparison);
+            
+            // Calculate next row for data
+            $coordinates = Coordinate::coordinateFromString($startCell);
+            $dataStartRow = $coordinates[1] + 1;
+            $dataStartCell = $coordinates[0] . $dataStartRow;
+            
+            $this->worksheet->fromArray($dataRows, $nullValue, $dataStartCell, $strictNullComparison);
+        } else {
+            // Regular indexed array, insert as-is
+            $this->worksheet->fromArray($source, $nullValue, $startCell, $strictNullComparison);
+        }
     }
 
     public function setAutoSize($columns = true)
     {
         if ($columns === true) {
-            foreach (range('A', $this->worksheet->getHighestColumn()) as $col) {
+            $highestColumn = $this->worksheet->getHighestColumn();
+            $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+            for ($i = 1; $i <= $highestColumnIndex; $i++) {
+                $col = Coordinate::stringFromColumnIndex($i);
                 $this->worksheet->getColumnDimension($col)->setAutoSize(true);
             }
         } elseif (is_array($columns)) {
@@ -166,7 +257,7 @@ class SheetWrapper
     public function appendRow(array $row)
     {
         $highestRow = $this->worksheet->getHighestRow();
-        $this->worksheet->fromArray([$row], null, 'A' . ($highestRow + 1));
+        $this->worksheet->fromArray([$row], null, 'A' . ($highestRow + 1), true);
     }
 
     public function getHighestRow()
@@ -201,43 +292,97 @@ class SheetWrapper
         $this->worksheet->getColumnDimension($column)->setWidth($width);
     }
 
+    public function mergeCells($range)
+    {
+        $this->worksheet->mergeCells($range);
+    }
+
     public function loadView($view, $data = [])
     {
+        $this->lastLoadView = ['view' => $view, 'data' => $data];
         $html = view($view, $data)->render();
-        
-        // Use PhpSpreadsheet's HTML reader to import the HTML
+
+        // Use loadFromString to avoid temp file and 2048-byte minimum that load($filename) has
         try {
             $reader = new Html();
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_html_');
-            file_put_contents($tempFile, $html);
-            
-            // Read HTML into a temporary spreadsheet
-            $tempSpreadsheet = $reader->load($tempFile);
+            $tempSpreadsheet = $reader->loadFromString($html);
             $tempWorksheet = $tempSpreadsheet->getActiveSheet();
-            
+
             // Copy data from temp worksheet to current worksheet
             $highestRow = $tempWorksheet->getHighestRow();
             $highestColumn = $tempWorksheet->getHighestColumn();
-            
-            for ($row = 1; $row <= $highestRow; $row++) {
-                for ($col = 'A'; $col <= $highestColumn; $col++) {
-                    $cellValue = $tempWorksheet->getCell($col . $row)->getValue();
-                    $this->worksheet->setCellValue($col . $row, $cellValue);
-                    
-                    // Copy styles
-                    $tempStyle = $tempWorksheet->getStyle($col . $row);
-                    $this->worksheet->duplicateStyle($tempStyle, $col . $row);
+            $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+
+            if ($highestRow > 0 && $highestColumnIndex > 0) {
+                for ($row = 1; $row <= $highestRow; $row++) {
+                    for ($colIndex = 1; $colIndex <= $highestColumnIndex; $colIndex++) {
+                        $col = Coordinate::stringFromColumnIndex($colIndex);
+                        $cellRef = $col . $row;
+                        $tempCell = $tempWorksheet->getCell($cellRef);
+                        $cellValue = $tempCell->getValue();
+
+                        // Prevent values starting with =, +, @ (or invalid formulas) from being interpreted as formulas
+                        $valueString = (string) $cellValue;
+                        $isFormulaLike = $tempCell->isFormula()
+                            || (strlen($valueString) > 0 && in_array($valueString[0], ['=', '+', '@'], true));
+                        if ($isFormulaLike) {
+                            $this->worksheet->setCellValueExplicit($cellRef, $valueString, DataType::TYPE_STRING);
+                        } else {
+                            $this->worksheet->setCellValue($cellRef, $cellValue);
+                        }
+
+                        // Copy styles
+                        $tempStyle = $tempWorksheet->getStyle($cellRef);
+                        $this->worksheet->duplicateStyle($tempStyle, $cellRef);
+                    }
                 }
+            } else {
+                // Html reader produced no cells: fill sheet from HTML tables via DOM
+                $this->fillSheetFromHtmlTables($html);
             }
-            
-            unlink($tempFile);
         } catch (\Exception $e) {
-            // Fallback: if HTML reader fails, just set the HTML as text in first cell
-            // This is not ideal but prevents errors
-            $this->worksheet->setCellValue('A1', strip_tags($html));
+            // Fallback: if HTML reader fails, try DOM extraction then plain text
+            $this->fillSheetFromHtmlTables($html);
         }
-        
+
+        $this->setAutoSize(true);
+
         return $this;
+    }
+
+    /**
+     * When PhpSpreadsheet Html reader returns no rows, parse HTML and write table cells manually.
+     */
+    private function fillSheetFromHtmlTables(string $html): void
+    {
+        $dom = new \DOMDocument;
+        libxml_use_internal_errors(true);
+        $loaded = $dom->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        libxml_clear_errors();
+        if (! $loaded) {
+            $this->worksheet->setCellValue('A1', trim(strip_tags($html)));
+
+            return;
+        }
+        $xpath = new \DOMXPath($dom);
+        $tables = $xpath->query('//table');
+        $currentRow = 1;
+        foreach ($tables as $table) {
+            $rows = $xpath->query('.//tr', $table);
+            foreach ($rows as $tr) {
+                $col = 'A';
+                $cells = $xpath->query('.//td | .//th', $tr);
+                foreach ($cells as $cell) {
+                    $value = trim($cell->textContent ?? '');
+                    $this->worksheet->setCellValueExplicit($col . $currentRow, $value, DataType::TYPE_STRING);
+                    $col++;
+                }
+                $currentRow++;
+            }
+        }
+        if ($currentRow === 1) {
+            $this->worksheet->setCellValue('A1', trim(strip_tags($html)));
+        }
     }
 
     public function getDelegate()

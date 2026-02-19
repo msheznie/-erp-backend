@@ -11,6 +11,7 @@ use App\Models\TenderFieldType;
 use App\Repositories\TenderBidFormatMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Criteria\LimitOffsetCriteria;
@@ -935,7 +936,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
             $data = $this->tenderBidFormatMasterRepository->uploadPriceBidFormatDetails($input, $excelUpload);
             return $data;
