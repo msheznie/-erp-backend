@@ -37,10 +37,16 @@ class GenerateARCAPdfReport implements ShouldQueue
      */
     public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath,$aging, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
@@ -62,7 +68,6 @@ class GenerateARCAPdfReport implements ShouldQueue
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log');
         $languageCode = $this->languageCode;
         app()->setLocale($languageCode);
         $db = $this->dispatch_db;
@@ -96,7 +101,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
         
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
                         $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -108,7 +113,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $lang = app()->getLocale();
                 $isRTL = ($lang === 'ar');
 
-                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'lang' => $lang);
+                $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => Helper::dateFormat($request->fromDate), 'lang' => $lang);
 
                 $html = view('print.customer_aging_summary', $dataArr);
                 $htmlHeader = view('print.customer_aging_summary_header', $dataArr);
@@ -160,7 +165,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 }
 
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
                         $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -175,7 +180,7 @@ class GenerateARCAPdfReport implements ShouldQueue
                 $lang = app()->getLocale();
                 $isRTL = ($lang === 'ar');
 
-                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => \Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
+                $dataArr = array('reportData' => (object)$outputArr, 'customerCreditDays' => $customerCreditDays, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'currencyDecimalPlace' => $decimalPlaces, 'grandTotal' => $grandTotalArr, 'agingRange' => $aging, 'fromDate' => Helper::dateFormat($request->fromDate), 'invoiceAmountTotal' => $invoiceAmountTotal, 'lang' => $lang);
 
                 $html = view('print.customer_aging_detail', $dataArr);
                 $htmlHeader = view('print.customer_aging_detail_header', $dataArr);
@@ -260,7 +265,7 @@ class GenerateARCAPdfReport implements ShouldQueue
             return true;
             
         } catch (\Exception $e) {
-            Log::error($e->getMessage()." Line : ".$e->getLine());
+            Log::channel('account_recivable_report')->error($e->getMessage()." Line : ".$e->getLine());
         }
     }
 }

@@ -47,7 +47,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
@@ -58,6 +58,11 @@ use App\Services\ValidateDocumentAmend;
 use App\Services\DeliveryOrderServices;
 use App\Models\StockCount;
 use App\Models\StockAdjustment;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class DeliveryOrderController
@@ -412,7 +417,7 @@ class DeliveryOrderAPIController extends AppBaseController
 
 
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','orderType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID','salesType'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
+        $input = Arr::except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($deliveryOrder->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -687,9 +692,9 @@ class DeliveryOrderAPIController extends AppBaseController
             );
 
 
-            $update = array_except($input,['confirmedYN', 'tax']);
+            $update = Arr::except($input,['confirmedYN', 'tax']);
             $deliveryOrder = $this->deliveryOrderRepository->update($update, $id);
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             } else {
@@ -1101,7 +1106,7 @@ WHERE
 
     public function approveDeliveryOrder(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1112,7 +1117,7 @@ WHERE
 
     public function rejectDeliveryOrder(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1223,7 +1228,7 @@ WHERE
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1335,7 +1340,7 @@ WHERE
             return $this->sendError(trans('custom.you_cannot_amend_this_delivery_order'));
         }
 
-        $deliveryOrderArray = array_except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
+        $deliveryOrderArray = Arr::except($doData->toArray(),['isSUPDAmendAccess','isFrom','assetMaintenanceID','isVatEligible']);
 
         $storeDeliveryOrderHistory = DeliveryOrderRefferedback::insert($deliveryOrderArray);
 
@@ -1442,8 +1447,8 @@ WHERE
 
     public function getCommonFormData(Request $request) {
         $input = $request->all();
-        $finacialYear =  \Helper::companyFinanceYear($input['companySystemID'],0);
-        $companyFinancePeriod =  \Helper::companyFinancePeriod($input['companySystemID'],$finacialYear[0]->companyFinanceYearID,11);
+        $finacialYear =  Helper::companyFinanceYear($input['companySystemID'],0);
+        $companyFinancePeriod =  Helper::companyFinancePeriod($input['companySystemID'],$finacialYear[0]->companyFinanceYearID,11);
 
         if($companyFinancePeriod && $finacialYear) {
             return ['finacialYear' => $finacialYear[0],'companyFinancePeriod' => $companyFinancePeriod[0]];
@@ -1623,7 +1628,7 @@ WHERE
 
         $id = $input['deliveryMasterID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = DeliveryOrder::find($id);
@@ -1688,7 +1693,7 @@ WHERE
 
         DB::beginTransaction();
         try {
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             $amendCI = $this->deliveryOrderServices->amendDeliveryOrder($id,$masterData,$input,$employee);
 
             if(isset($amendCI['status']) && $amendCI['status'] == false){

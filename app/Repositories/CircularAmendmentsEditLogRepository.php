@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\CircularAmendments;
 use App\Models\CircularAmendmentsEditLog;
 use Illuminate\Contracts\Foundation\Application;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class CircularAmendmentsEditLogRepository

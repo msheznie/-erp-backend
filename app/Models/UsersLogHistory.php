@@ -33,7 +33,6 @@ class UsersLogHistory extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -51,7 +50,8 @@ class UsersLogHistory extends Model
         'id' => 'integer',
         'employee_id' => 'integer',
         'empID' => 'string',
-        'loginPCId' => 'string'
+        'loginPCId' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

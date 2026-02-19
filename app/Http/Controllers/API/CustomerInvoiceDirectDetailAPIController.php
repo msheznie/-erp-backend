@@ -28,10 +28,11 @@ use App\Repositories\CustomerInvoiceDirectDetailRepository;
 use App\Services\API\CustomerInvoiceAPIService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceDirectDetailController
@@ -359,7 +360,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, array('unit', 'department','performadetails','contract', 'project'));
+        $input = Arr::except($input, array('unit', 'department','performadetails','contract', 'project'));
         $input = $this->convertArrayToValue($input);
 
         $resultData = CustomerInvoiceAPIService::customerInvoiceDirectDetailsUpdate($input);

@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\BankAccount;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class BankAccountRepository
@@ -77,13 +78,13 @@ class BankAccountRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankAccountListQuery($request, $input, $search = '', $bankmasterAutoID) {
+    public function bankAccountListQuery($request, $input, $search = '', $bankmasterAutoID = null) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

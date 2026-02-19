@@ -93,7 +93,7 @@ Route::group([], function(){
     Route::post('dropdownValuesUpdate', 'ErpAttributesAPIController@dropdownValuesUpdate')->name('Asset cost dropdown values update');
     Route::get('getAttributesDataFormData', 'FinanceItemCategoryMasterAPIController@getAttributesDataFormData')->name('Get attributes data form data');
     Route::post('getAssetCostAttributesData', 'FinanceItemCategoryMasterAPIController@getAssetCostAttributesData')->name('Get asset cost attributes data');
-    Route::post('getAttributesDropdownData', 'ErpAttributesDropdownAPIController@getAttributesDropdownData');
+    Route::post('getAttributesDropdownData', 'ErpAttributesDropdownAPIController@getAttributesDropdownData')->name('Get attributes dropdown data');
 
 });
 

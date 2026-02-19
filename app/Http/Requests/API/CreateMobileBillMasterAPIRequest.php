@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\MobileBillMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateMobileBillMasterAPIRequest extends APIRequest
+class CreateMobileBillMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

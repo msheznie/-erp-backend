@@ -44,6 +44,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\CustomerReceivePayment;
 use App\Models\DirectReceiptDetail;
 use App\Models\CustomerReceivePaymentDetail;
+use App\helper\Helper;
 
 
 class RecieptVoucherTaxLedgerService
@@ -51,7 +52,6 @@ class RecieptVoucherTaxLedgerService
 	public static function processEntry($taxLedgerData, $masterModel)
 	{
 
-        Log::info('---- first step.. -----' . date('H:i:s'));
         $finalData = [];
         $finalDetailData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
@@ -65,10 +65,10 @@ class RecieptVoucherTaxLedgerService
             'companySystemID' => $masterModel['companySystemID'],
             'createdPCID' =>  gethostname(),
             'createdUserID' => $empID->employeeSystemID,
-            'createdDateTime' => \Helper::currentDateTime(),
+            'createdDateTime' => Helper::currentDateTime(),
             'modifiedPCID' => gethostname(),
             'modifiedUserID' => $empID->employeeSystemID,
-            'modifiedDateTime' => \Helper::currentDateTime()
+            'modifiedDateTime' => Helper::currentDateTime()
         ];
 
         $ledgerDetailsData = $ledgerData;
@@ -102,12 +102,12 @@ class RecieptVoucherTaxLedgerService
                             ->selectRaw('(SUM(receiveAmountTrans) - SUM(VATAmount)) as netAmount')
                             ->first();
                     $netAmount = $netAdv->netAmount;
-                    $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $netAmount);
+                    $currencyConversionAmount = Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $netAmount);
                 
                         
-                    $ledgerData['documentTransAmount'] = \Helper::roundValue($netAmount);
-                    $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
-                    $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
+                    $ledgerData['documentTransAmount'] = Helper::roundValue($netAmount);
+                    $ledgerData['documentLocalAmount'] = Helper::roundValue($currencyConversionAmount['localAmount']);
+                    $ledgerData['documentReportingAmount'] = Helper::roundValue($currencyConversionAmount['reportingAmount']);
 
                         
                     $details = CustomerReceivePaymentDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,custTransactionCurrencyID as transCurrencyID,companyReportingER as companyReportingER,localCurrencyER as localCurrencyER,custTransactionCurrencyER as transCurrencyER')
@@ -235,12 +235,12 @@ class RecieptVoucherTaxLedgerService
                     
                 $netAmount = $masterData->netAmount;
         
-                $currencyConversionAmount = \Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $netAmount);
+                $currencyConversionAmount = Helper::currencyConversion($masterData->companySystemID, $masterData->custTransactionCurrencyID, $masterData->custTransactionCurrencyID, $netAmount);
 
                     
-                $ledgerData['documentTransAmount'] = \Helper::roundValue($netAmount);
-                $ledgerData['documentLocalAmount'] = \Helper::roundValue($currencyConversionAmount['localAmount']);
-                $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
+                $ledgerData['documentTransAmount'] = Helper::roundValue($netAmount);
+                $ledgerData['documentLocalAmount'] = Helper::roundValue($currencyConversionAmount['localAmount']);
+                $ledgerData['documentReportingAmount'] = Helper::roundValue($currencyConversionAmount['reportingAmount']);
                             
                 $details = DirectReceiptDetail::selectRaw('erp_tax_vat_sub_categories.subCatgeoryType,SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DDRAmountCurrencyER as transCurrencyER')
                 ->where('directReceiptAutoID', $masterModel["autoID"])
@@ -249,9 +249,7 @@ class RecieptVoucherTaxLedgerService
                 ->groupBy('vatSubCategoryID')
                 ->get();
         
-                Log::info('---- second step.. -----' . date('H:i:s'));
                     foreach ($details as $key => $value) {
-                        Log::info('---- third step.. -----' . date('H:i:s'));
         
                         $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
         
@@ -296,7 +294,6 @@ class RecieptVoucherTaxLedgerService
         
                     foreach ($detailData as $key => $value) {
         
-                        Log::info('---- fourth step.. -----' . date('H:i:s'));
                         
                         $ledgerDetailsData['documentDetailID'] = $value->directReceiptAutoID;
                         $ledgerDetailsData['vatSubCategoryID'] = $value->vatSubCategoryID;

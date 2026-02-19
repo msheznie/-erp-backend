@@ -929,7 +929,7 @@ class BudgetConsumptionService
 	}
 
 
-	public static function pendingPoQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingPoQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
@@ -1046,7 +1046,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingGrvQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingGrvQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::pendingGrvQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
@@ -1167,7 +1167,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingPrnQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingPrnQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::pendingPrnQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
@@ -1282,7 +1282,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingDirectItemSIQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingDirectItemSIQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::pendingDISIQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument);
@@ -1598,7 +1598,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function pendingPurchaseRequestQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$pendingPoQry = PurchaseRequestDetails::selectRaw('(estimatedCost * quantityRequested) AS transAmount, '.$budgetFormData['glColumnName'].', companySystemID, purchaseRequestID')->where('itemFinanceCategoryID', 3)
@@ -2015,7 +2015,7 @@ class BudgetConsumptionService
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 
-				$currencyConversionRptAmount = \Helper::currencyConversion($group->first()['companySystemID'], $group->first()['currencyID'], $group->first()['currencyID'], $group->sum('amount'));
+				$currencyConversionRptAmount = Helper::currencyConversion($group->first()['companySystemID'], $group->first()['currencyID'], $group->first()['currencyID'], $group->sum('amount'));
 
 			    return [
 			        'templateDetailID' => $group->first()['templateDetailID'],
@@ -2037,7 +2037,7 @@ class BudgetConsumptionService
 			return $finalData;
 		} else {
 			foreach ($pendingSupInvQry as $key => $value) {
-				$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
+				$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
 
 				$value->localAmt = $currencyConversionRptAmount['localAmount'];
 				$value->rptAmt = $currencyConversionRptAmount['reportingAmount'];
@@ -2128,7 +2128,7 @@ class BudgetConsumptionService
 
 			$pendingSupInvQryData = $groups->map(function ($group) use ($budgetFormData){
 
-				$currencyConversionRptAmount = \Helper::currencyConversion($group->first()['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $group->sum('amount'));
+				$currencyConversionRptAmount = Helper::currencyConversion($group->first()['companySystemID'], $budgetFormData['currency'], $budgetFormData['currency'], $group->sum('amount'));
 
 			    return [
 			        'templateDetailID' => $group->first()['templateDetailID'],
@@ -2150,7 +2150,7 @@ class BudgetConsumptionService
 			return $finalData;
 		} else {
 			foreach ($pendingSupInvQry as $key => $value) {
-				$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $budgetFormData['currency'], $budgetFormData['currency'], $value->amount);
+				$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $budgetFormData['currency'], $budgetFormData['currency'], $value->amount);
 
 				$value->localAmt = $currencyConversionRptAmount['localAmount'];
 				$value->rptAmt = $value->amount;
@@ -2837,7 +2837,7 @@ class BudgetConsumptionService
 	}
 
 
-	public static function documentAmountQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function documentAmountQry($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$documentAmount = [];
 		switch ($budgetFormData['documentSystemID']) {
@@ -2876,7 +2876,7 @@ class BudgetConsumptionService
 		return $documentAmount;
 	}
 
-	public static function purchaseRequestDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function purchaseRequestDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::purchaseRequestDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);	
@@ -2969,7 +2969,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function supplierInvoiceDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function supplierInvoiceDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$supplierInvoiceData = BookInvSuppMaster::find($budgetFormData['documentSystemCode']);
 
@@ -3069,7 +3069,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function diSIDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function diSIDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::diSIDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);
@@ -3168,7 +3168,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function paymentVoucherDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function paymentVoucherDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$docAmountQry = DirectPaymentDetails::selectRaw('SUM(DPAmount) AS totalCost, directPaymentAutoID, companySystemID, budgetYear,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID, serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -3263,7 +3263,7 @@ class BudgetConsumptionService
 	}
 	
 
-	public static function jvDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function jvDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$docAmountQry = JvDetail::selectRaw('SUM(debitAmount + (creditAmount * -1)) AS totalCost, jvMasterAutoId, companySystemID ,chartOfAccountSystemID, chartOfAccountSystemID as chartOfAccountID, serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -3364,7 +3364,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function fixedAssetCostingDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function fixedAssetCostingDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$docAmountQry = FixedAssetMaster::selectRaw('SUM(costUnitRpt) AS totalCost, faID, companySystemID , costglCodeSystemID,costglCodeSystemID as chartOfAccountSystemID, costglCodeSystemID as chartOfAccountID, serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -3457,7 +3457,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function purchaseOrderDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function purchaseOrderDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::purchaseOrderDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);
@@ -3551,7 +3551,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function grvDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function grvDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 			return self::grvDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag);
@@ -3839,7 +3839,7 @@ class BudgetConsumptionService
 
                 	$companyData = Company::find($value->companySystemID);
 
-                	$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+                	$currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
 
                     $budgetConsumeData[] = array(
@@ -3882,7 +3882,7 @@ class BudgetConsumptionService
             	$companyData = Company::find($faMaster->companySystemID);
 
             	if ($companyData) {
-	            	$currencyConversionRptAmount = \Helper::currencyConversion($faMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $faMaster->costUnitRpt);
+	            	$currencyConversionRptAmount = Helper::currencyConversion($faMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $faMaster->costUnitRpt);
 
 
 	                $budgetConsumeData[] = array(
@@ -3993,7 +3993,7 @@ class BudgetConsumptionService
 	}
 
 
-	public static function pendingPoQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingPoQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($directDocument) {
 			return self::pendingPoQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes);
@@ -4160,7 +4160,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingGrvQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingGrvQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($directDocument) {
 			return self::pendingGrvQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes);
@@ -4325,7 +4325,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingPrnQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingPrnQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($directDocument) {
 			return self::pendingPrnQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes);
@@ -4484,7 +4484,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function pendingDISIQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag, $directDocument)
+	public static function pendingDISIQryDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null, $directDocument = null)
 	{
 		if ($directDocument) {
 			return self::pendingDISIQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes);
@@ -4649,7 +4649,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function purchaseRequestDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function purchaseRequestDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseRequestDetails::selectRaw('estimatedCost, purchaseRequestID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'] .' as chartOfAccountID, purchaseRequestDetailsID')
@@ -4794,7 +4794,7 @@ class BudgetConsumptionService
 		}
 	}
 
-	public static function purchaseOrderDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function purchaseOrderDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = PurchaseOrderDetails::selectRaw('GRVcostPerUnitSupTransCur, purchaseOrderMasterID, companySystemID, budgetYear,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, purchaseOrderDetailsID')
@@ -4941,7 +4941,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function grvDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function grvDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = GRVDetails::selectRaw('GRVcostPerUnitSupTransCur, erp_grvmaster.grvAutoID, erp_grvmaster.companySystemID, erp_grvmaster.grvDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, grvDetailsID, noQty, erp_grvmaster.serviceLineSystemID')
@@ -5087,7 +5087,7 @@ class BudgetConsumptionService
 
 	}
 
-	public static function diSIDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
+	public static function diSIDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag = null)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
 		$docAmountQry = SupplierInvoiceDirectItem::selectRaw('costPerUnitSupTransCur, supplier_invoice_items.VATAmountLocal, erp_bookinvsuppmaster.bookingSuppMasInvAutoID, erp_bookinvsuppmaster.companySystemID, erp_bookinvsuppmaster.bookingDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, id as siItemDetailID, noQty, erp_bookinvsuppmaster.serviceLineSystemID')
@@ -6069,12 +6069,12 @@ class BudgetConsumptionService
 
 						
 
-						$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+						$currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
 			
 
-						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+						$currencyConversionRptAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 						$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
-						$currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+						$currencyConversionRptAmountRec = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
 						$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
 					}
 				
@@ -6093,7 +6093,7 @@ class BudgetConsumptionService
 		{
 			$commited_amount = $tot - $fixedCOmmitedAmount;
 			$commited_amount = $commited_amount < 1?0:$commited_amount;							
-			$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+			$currencyConversionRptAmount = Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
 			$committedAmount = $currencyConversionRptAmount['reportingAmount'];
 
 			$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
@@ -6510,7 +6510,7 @@ class BudgetConsumptionService
 
             $amount = $value->debitAmount + $value->creditAmount * -1;
 
-            $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+            $currencyConversionRptAmount = Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
 
             $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
 
@@ -6956,10 +6956,10 @@ class BudgetConsumptionService
 									}
 								}
 
-								$currencyConversionGrvApprovedPoAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
-								$currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
+								$currencyConversionGrvApprovedPoAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $grvApprovedPoAmount);
+								$currencyConversionRptAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->totalAmount);
 								$committedAmount += $currencyConversionRptAmount['reportingAmount'] - $currencyConversionGrvApprovedPoAmount['reportingAmount'];
-								$currencyConversionRptAmountRec = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
+								$currencyConversionRptAmountRec = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
 								$partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
 							}
 						}
@@ -6967,7 +6967,7 @@ class BudgetConsumptionService
 
                     $commited_amount = $tot - $fixedCOmmitedAmount;
                     $commited_amount = $commited_amount < 1?0:$commited_amount;
-                    $currencyConversionRptAmount = \Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+                    $currencyConversionRptAmount = Helper::currencyConversion($companyId, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
                     $committedAmount = $currencyConversionRptAmount['reportingAmount'];
 				}
 

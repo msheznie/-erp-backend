@@ -64,7 +64,6 @@ class PurchaseOrderProcessDetails extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'purchaseProcessDetailID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -143,7 +142,8 @@ class PurchaseOrderProcessDetails extends Model
         'includePLForGRVYN' => 'integer',
         'isAccrued' => 'integer',
         'budgetYear' => 'integer',
-        'prBelongsYear' => 'integer'
+        'prBelongsYear' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

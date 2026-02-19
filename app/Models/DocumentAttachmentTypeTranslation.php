@@ -32,7 +32,6 @@ class DocumentAttachmentTypeTranslation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'travelClaimAttachmentTypeID',
@@ -49,7 +48,8 @@ class DocumentAttachmentTypeTranslation extends Model
         'id' => 'integer',
         'travelClaimAttachmentTypeID' => 'integer',
         'languageCode' => 'string',
-        'description' => 'string'
+        'description' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

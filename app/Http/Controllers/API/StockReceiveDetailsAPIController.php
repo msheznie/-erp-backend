@@ -23,9 +23,11 @@ use App\Models\StockTransferDetails;
 use App\Repositories\StockReceiveDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class StockReceiveDetailsController
@@ -228,7 +230,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockReceiveDetailsAPIRequest $request)
     {
 
-        $input = array_except($request->all(), ['unit_by','item_by']);
+        $input = Arr::except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $stockReceiveDetails = $this->stockReceiveDetailsRepository->findWithoutFail($id);
@@ -400,7 +402,7 @@ class StockReceiveDetailsAPIController extends AppBaseController
         $input = $request->all();
         $stockReceiveAutoID = $input['stockReceiveAutoID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
 
         foreach ($input['detailTable'] as $newValidation) {

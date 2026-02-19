@@ -28,6 +28,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
 
 class CreateJournalVoucher implements ShouldQueue
 {
@@ -75,7 +77,6 @@ class CreateJournalVoucher implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/create_journal_voucher.log');
         CommonJobService::db_switch($this->db);
 
         $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];
@@ -117,7 +118,7 @@ class CreateJournalVoucher implements ShouldQueue
             }
 
             if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
-                $masterDatasets[] = array_add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+                $masterDatasets[] = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
             }
             else {
                 if (empty($headerData['errors'])) {
@@ -181,7 +182,7 @@ class CreateJournalVoucher implements ShouldQueue
                                 $autoApproveParams['db'] = $this->db;
                                 $autoApproveParams['supplierPrimaryCode'] = $confirmDataSet['JVcode'];
 
-                                $approveDocument = Helper::approveDocument($autoApproveParams);
+                                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
 
                                 if ($approveDocument["success"]) {
                                     DB::commit();

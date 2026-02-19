@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\DB;
+use App\helper\email as Email;
 use Illuminate\Support\Facades\Log;
 
 class EmployeeTaskingNotificationService
@@ -166,7 +167,7 @@ class EmployeeTaskingNotificationService
                     'empEmail' => $mailTo,
                     'emailAlertMessage' => $mailBody
                 ];
-                $sendEmail = \Email::sendEmailErp($emails);
+                $sendEmail = Email::sendEmailErp($emails);
 
                 if (!$sendEmail["success"]) {
                     $msg = "Employee tasking notification not sent for {$applicableCatDesc} {$name} ";

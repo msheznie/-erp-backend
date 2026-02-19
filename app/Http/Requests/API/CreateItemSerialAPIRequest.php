@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ItemSerial;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateItemSerialAPIRequest extends APIRequest
+class CreateItemSerialAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

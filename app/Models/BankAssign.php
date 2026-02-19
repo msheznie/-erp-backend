@@ -39,7 +39,6 @@ class BankAssign extends Model
     const UPDATED_AT = 'TimeStamp';
     protected $primaryKey  = 'bankAssignedAutoID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -71,7 +70,8 @@ class BankAssign extends Model
         'isAssigned' => 'integer',
         'isDefault' => 'integer',
         'isActive' => 'integer',
-        'createdByEmpID' => 'string'
+        'createdByEmpID' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -78,12 +78,12 @@ use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Models\POSSOURCEShiftDetails;
 use App\Models\CurrencyMaster;
+use App\helper\Helper;
 
 class RPOSSalesGlService
 {
 	public static function processEntry($masterModel)
 	{
-        Log::useFiles(storage_path() . '/logs/cash_rpos_jobs.log');
 
         $data = [];
         $taxLedgerData = [];
@@ -126,9 +126,9 @@ class RPOSSalesGlService
                 $data['documentSystemCode'] = $masterModel["autoID"];
                 $data['documentCode'] = $gl->documentCode;
                 $data['documentDate'] = date('Y-m-d H:i:s');
-                $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
-                $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
-                $data['createdDateTime'] = \Helper::currentDateTime();
+                $data['documentYear'] = Helper::dateYear(date('Y-m-d H:i:s'));
+                $data['documentMonth'] = Helper::dateMonth(date('Y-m-d H:i:s'));
+                $data['createdDateTime'] = Helper::currentDateTime();
                 $data['createdUserID'] = $empID->empID;
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdUserPC'] = gethostname();
@@ -157,7 +157,7 @@ class RPOSSalesGlService
             else {
                 return ['status' => false, 'message' => 'error bill was not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
             }
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 $data['supplierCodeSystem'] = null;
                 array_push($finalData, $data);
 

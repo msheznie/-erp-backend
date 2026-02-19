@@ -21,7 +21,6 @@ class ExportPRDetailExcel
 
     public function export() {
         $basePath = CreateExcel::processPRDetailExport($this->data,$this->code);
-        Log::info('Export completed', ['result' => $basePath]);
         $this->sendNotification($basePath);
 
         if($basePath == '') {

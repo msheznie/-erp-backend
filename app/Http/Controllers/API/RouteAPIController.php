@@ -10,11 +10,10 @@ use App\Models\UserGroup;
 use App\Repositories\RouteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CommonJobService;
-
 /**
  * Class RouteController
  * @package App\Http\Controllers\API
@@ -385,5 +384,18 @@ class RouteAPIController extends AppBaseController
         }
 
         return 'role route table updated successfully';
+    }
+
+
+    public function updateRouteAccess(Request $request)
+    {
+        $input = $request->all();
+
+        $dataBase = isset($input['db']) ? $input['db'] : "";
+        $userGroupID = isset($input['userGroupID']) ? $input['userGroupID'] : "";
+
+        UpdateRoleRouteJob::dispatch($dataBase, $userGroupID);
+
+        return $this->sendResponse(array(), trans('custom.route_access_updated_successfully'));
     }
 }

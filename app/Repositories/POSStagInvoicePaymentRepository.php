@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\POSStagInvoicePayment;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class POSStagInvoicePaymentRepository

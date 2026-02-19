@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\MatchDocumentMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class MatchDocumentMasterRepository
@@ -89,9 +90,9 @@ class MatchDocumentMasterRepository extends BaseRepository
         return MatchDocumentMaster::class;
     }
 
-    public function matchDocumentListQuery($request, $input, $search = '', $supplierID) {
+    public function matchDocumentListQuery($request, $input, $search = '', $supplierID = null) {
 
-        $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
+        $invMaster = MatchDocumentMaster::where('companySystemID', data_get($input, 'companySystemID'));
         $invMaster->whereIn('documentSystemID', [4, 15]);
         $invMaster->with(['created_by' => function ($query) {
         }, 'supplier' => function ($query) {
@@ -159,16 +160,16 @@ class MatchDocumentMasterRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.matching_code')] = $val->matchingDocCode;
-                $data[$x][trans('custom.matching_date')] = \Helper::convertDateWithTime($val->matchingDocdate);
+                $data[$x][trans('custom.matching_date')] = Helper::convertDateWithTime($val->matchingDocdate);
                 $data[$x][trans('custom.document_code')] = $val->BPVcode;
                 $data[$x][trans('custom.supplier_code')] = $val->primarySupplierCode;
                 $data[$x][trans('custom.supplier_name')] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x][trans('custom.comments')] = $val->BPVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.cancelled_by')] = $val->cancelled_by? $val->cancelled_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.cancelled_at')] = \Helper::convertDateWithTime($val->cancelledDate);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.cancelled_at')] = Helper::convertDateWithTime($val->cancelledDate);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x][trans('custom.transaction_currency')] = $val->supplierTransCurrencyID? ($val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '') : '';
                 $data[$x][trans('custom.transaction_amount')] = $val->transactioncurrency? number_format($val->payAmountSuppTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
                 $data[$x][trans('custom.local_currency')] = $val->localCurrencyID? ($val->localcurrency? $val->localcurrency->CurrencyCode : '') : '';
@@ -194,7 +195,7 @@ class MatchDocumentMasterRepository extends BaseRepository
         return $data;
     }
 
-    public function receiptVoucherMatchingListQuery($request, $input, $search = '', $customerID) {
+    public function receiptVoucherMatchingListQuery($request, $input, $search = '', $customerID = null) {
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [19, 21]);
@@ -265,30 +266,30 @@ class MatchDocumentMasterRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x][trans('custom.matching_code')] = $val->matchingDocCode;
-                $data[$x][trans('custom.matching_date')] = \Helper::dateFormat($val->matchingDocdate);
+                $data[$x][trans('custom.matching_date')] = Helper::dateFormat($val->matchingDocdate);
                 $data[$x][trans('custom.document_code')] = $val->BPVcode;
                 $data[$x][trans('custom.customer_code')] = $val->customer? $val->customer->CutomerCode : '';
                 $data[$x][trans('custom.customer_name')] = $val->customer? $val->customer->CustomerName : '';
                 $data[$x][trans('custom.comments')] = $val->BPVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.cancelled_by')] = $val->cancelled_by? $val->cancelled_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.cancelled_at')] = \Helper::convertDateWithTime($val->cancelledDate);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.cancelled_at')] = Helper::convertDateWithTime($val->cancelledDate);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x][trans('custom.currency')] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
                 $data[$x][trans('custom.receipt_amount')] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x][trans('custom.matched_amount')] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x][trans('custom.matching_code')] = $val->matchingDocCode;
-                $data[$x][trans('custom.matching_date')] = \Helper::dateFormat($val->matchingDocdate);
+                $data[$x][trans('custom.matching_date')] = Helper::dateFormat($val->matchingDocdate);
                 $data[$x][trans('custom.document_code')] = $val->BPVcode;
                 $data[$x][trans('custom.customer_code')] = $val->customer? $val->customer->CutomerCode : '';
                 $data[$x][trans('custom.customer_name')] = $val->customer? $val->customer->CustomerName : '';
                 $data[$x][trans('custom.comments')] = $val->BPVNarration;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.cancelled_by')] = $val->cancelled_by? $val->cancelled_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.cancelled_at')] = \Helper::convertDateWithTime($val->cancelledDate);
-                $data[$x][trans('custom.confirmed_on')] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.cancelled_at')] = Helper::convertDateWithTime($val->cancelledDate);
+                $data[$x][trans('custom.confirmed_on')] = Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x][trans('custom.currency')] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
                 $data[$x][trans('custom.receipt_amount')] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x][trans('custom.matched_amount')] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");

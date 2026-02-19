@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BudgetMasterRefferedHistory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateBudgetMasterRefferedHistoryAPIRequest extends APIRequest
+class UpdateBudgetMasterRefferedHistoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

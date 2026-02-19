@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderMaster;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierTenderNegotiationRepository

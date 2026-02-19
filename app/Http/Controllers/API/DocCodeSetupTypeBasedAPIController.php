@@ -14,7 +14,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DocumentCodeMaster;
 use App\Models\DocumentCodePrefix;
 use Carbon\Carbon;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Services\DocumentCodeConfigurationService;

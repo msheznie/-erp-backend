@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\FixedAssetDepreciationMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class FixedAssetDepreciationMasterRepository
@@ -61,10 +62,10 @@ class FixedAssetDepreciationMasterRepository extends BaseRepository
     public function fixedAssetDepreciationListQuery($request, $input, $search = '') {
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

@@ -19,7 +19,7 @@ use App\Repositories\AuditTrailRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Services\VictoriaLogsService;
@@ -30,6 +30,11 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
 use App\Services\AuditLog\EmployeeAuditReportService;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
+use App\Exports\BladeViewExcelExport;
+use App\Exports\UserAuditLogsExport;
+use Maatwebsite\Excel\Facades\Excel;
+
 /**
  * Class AuditTrailController
  * @package App\Http\Controllers\API
@@ -330,7 +335,7 @@ class AuditTrailAPIController extends AppBaseController
             ];
             
             if (!empty($input['module'])) {
-                $params['id'] = $input['id'];
+                $params['id'] = data_get($input, 'id');
                 $params['module'] = $this->lokiService->getAuditTables($input['module']);
                 $params['fromDate'] = $input['fromDate'] ?? null;
                 $params['toDate'] = $input['toDate'] ?? null;
@@ -486,35 +491,13 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.user_audit_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $isRtl = $lang === 'ar';
 
-            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    $sheet->setStyle([
-                        'font' => [
-                            'name' => $fontFamily,
-                            'size' => 11,
-                        ]
-                    ]);
-                    $sheet->loadView('export_report.user_audit_logs', $reportData);
-
-                    $lastRow = $sheet->getHighestRow();
-                    $lastColumn = $sheet->getHighestColumn();
-                    if ($lastRow > 0 && $lastColumn) {
-                        try {
-                            $spreadsheet = $sheet->getDelegate();
-                            $worksheet = $spreadsheet->getActiveSheet();
-                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        } catch (\Exception $e) {
-                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        }
-                    }
-                    if (app()->getLocale() == 'ar') {
-                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                        $sheet->setRightToLeft(true);
-                    }
-                });
-            })->download('xlsx');
+            return Excel::download(
+                new UserAuditLogsExport($reportData, $fontFamily, $isRtl),
+                $fileName . '.xlsx'
+            );
 
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
@@ -563,36 +546,13 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.event_tracking_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $isRtl = $lang === 'ar';
 
-            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    $sheet->setStyle([
-                        'font' => [
-                            'name' => $fontFamily,
-                            'size' => 11,
-                        ]
-                    ]);
-                    $sheet->loadView('export_report.event_tracking_logs', $reportData);
-
-                    $lastRow = $sheet->getHighestRow();
-                    $lastColumn = $sheet->getHighestColumn();
-                    if ($lastRow > 0 && $lastColumn) {
-                        try {
-                            $spreadsheet = $sheet->getDelegate();
-                            $worksheet = $spreadsheet->getActiveSheet();
-                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        } catch (\Exception $e) {
-                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        }
-                    }
-                    
-                    if (app()->getLocale() == 'ar') {
-                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                        $sheet->setRightToLeft(true);
-                    }
-                });
-            })->download('xlsx');
+            return Excel::download(
+                new BladeViewExcelExport('export_report.event_tracking_logs', $reportData, $fontFamily, $isRtl),
+                $fileName . '.xlsx'
+            );
 
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
@@ -832,36 +792,13 @@ class AuditTrailAPIController extends AppBaseController
             $fileName = trans('custom.navigation_access_logs');
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $isRtl = $lang === 'ar';
 
-            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    $sheet->setStyle([
-                        'font' => [
-                            'name' => $fontFamily,
-                            'size' => 11,
-                        ]
-                    ]);
-                    $sheet->loadView('export_report.navigation_access_logs', $reportData);
-
-                    $lastRow = $sheet->getHighestRow();
-                    $lastColumn = $sheet->getHighestColumn();
-                    if ($lastRow > 0 && $lastColumn) {
-                        try {
-                            $spreadsheet = $sheet->getDelegate();
-                            $worksheet = $spreadsheet->getActiveSheet();
-                            $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        } catch (\Exception $e) {
-                            $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
-                        }
-                    }
-                    
-                    if (app()->getLocale() == 'ar') {
-                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                        $sheet->setRightToLeft(true);
-                    }
-                });
-            })->download('xlsx');
+            return Excel::download(
+                new BladeViewExcelExport('export_report.navigation_access_logs', $reportData, $fontFamily, $isRtl),
+                $fileName . '.xlsx'
+            );
 
         } catch (\Exception $exception) {
             return $this->sendError($exception->getMessage());
@@ -1291,27 +1228,23 @@ class AuditTrailAPIController extends AppBaseController
             ];
 
             $fileName = trans('custom.employee_activity_audit_report');
-            $fontFamily = \Helper::getExcelFontFamily(app()->getLocale());
+            $lang = app()->getLocale();
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $isRtl = $lang === 'ar';
 
-            return \Excel::create($fileName, function ($excel) use ($reportData, $fontFamily) {
-                $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $fontFamily) {
-                    $sheet->setStyle([
-                        'font' => [
-                            'name' => $fontFamily,
-                            'size' => 10,
-                        ]
-                    ]);
-
-                    $sheet->loadView('export_report.employee_activity_audit_report', $reportData);
-
-                    if (app()->getLocale() === 'ar') {
-                        $sheet->setRightToLeft(true);
-                        $sheet->getStyle('A1:Z1000')
-                            ->getAlignment()
-                            ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
-                    }
-                });
-            })->download('xlsx');
+            return Excel::download(
+                new BladeViewExcelExport(
+                    'export_report.employee_activity_audit_report',
+                    $reportData,
+                    $fontFamily,
+                    $isRtl,
+                    null,
+                    2,
+                    3,
+                    10
+                ),
+                $fileName . '.xlsx'
+            );
 
         } catch (\Exception $e) {
             return $this->sendError($e->getMessage());

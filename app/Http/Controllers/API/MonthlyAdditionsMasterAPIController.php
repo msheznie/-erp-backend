@@ -13,7 +13,7 @@
  */
 namespace App\Http\Controllers\API;
 
-use App\helper\email;
+use App\helper\email as Email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateMonthlyAdditionsMasterAPIRequest;
 use App\Http\Requests\API\UpdateMonthlyAdditionsMasterAPIRequest;
@@ -36,9 +36,11 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class MonthlyAdditionsMasterController
@@ -141,7 +143,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdpc'] = gethostname();
         //$input['createdUserID'] = $employee->empID;
@@ -194,7 +196,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $input['dateMA'] = $processPeriod->endDate;
 
-        $currencyRate = \Helper::currencyConversion($input['companySystemID'], $input['currency'], $input['currency'], 0);
+        $currencyRate = Helper::currencyConversion($input['companySystemID'], $input['currency'], $input['currency'], 0);
 
         $input['localCurrencyID'] = $company->localCurrencyID;
         $input['rptCurrencyID'] = $company->reportingCurrency;
@@ -328,7 +330,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
     public function update($id, UpdateMonthlyAdditionsMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['employment_type', 'currency_by', 'confirmed_by']);
+        $input = Arr::except($input, ['employment_type', 'currency_by', 'confirmed_by']);
         $input = $this->convertArrayToValue($input);
 
         /** @var MonthlyAdditionsMaster $monthlyAdditionsMaster */
@@ -372,12 +374,12 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
 
         $updateInput = array(
@@ -538,7 +540,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.monthly_addition_not_found'));
         }
 
-        $monthlyAddition->docRefNo = \Helper::getCompanyDocRefNo($monthlyAddition->companySystemID, $monthlyAddition->documentSystemID);
+        $monthlyAddition->docRefNo = Helper::getCompanyDocRefNo($monthlyAddition->companySystemID, $monthlyAddition->documentSystemID);
 
         return $this->sendResponse($monthlyAddition->toArray(), trans('custom.monthly_addition_retrieved_successfully'));
     }
@@ -571,7 +573,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
 
         $this->monthlyAdditionsMasterRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $monthlyAddition->documentSystemID)->first();
 
@@ -622,7 +624,7 @@ class MonthlyAdditionsMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

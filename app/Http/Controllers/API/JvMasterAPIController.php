@@ -63,13 +63,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
 use App\Models\ErpProjectMaster;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class JvMasterController
@@ -330,7 +334,7 @@ class JvMasterAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID', 'transactioncurrency', 'modified_by']);
         $input = $this->convertArrayToValue($input);
 
@@ -482,11 +486,11 @@ class JvMasterAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->get();
 
-        $isGroupCompany = \Helper::checkIsCompanyGroup($companyId);
+        $isGroupCompany = Helper::checkIsCompanyGroup($companyId);
 
         $allSubCompanies = [];
         if ($isGroupCompany) {
-            $subCompanies = \Helper::getSubCompaniesByGroupCompany($companyId);
+            $subCompanies = Helper::getSubCompaniesByGroupCompany($companyId);
             $allSubCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         }
 
@@ -795,7 +799,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             $empID = $employee->employeeSystemID;
         }
         else{
-            $empID = \Helper::getEmployeeSystemID();
+            $empID = Helper::getEmployeeSystemID();
         }
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
@@ -870,7 +874,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
@@ -919,7 +923,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $grvMasters = DB::table('erp_documentapproved')->select(
             'erp_jvmaster.jvMasterAutoId',
@@ -1001,7 +1005,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
-        $approve = \Helper::approveDocument($input);
+        $approve = DocumentApprove::approveDocument($input);
 
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
@@ -1029,7 +1033,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
 
     public function rejectJournalVoucher(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1262,7 +1266,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $jvMasterData->RollLevForApp_curr = 1;
         $jvMasterData->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $jvMasterData->documentSystemID)->first();
 
@@ -1318,7 +1322,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1410,7 +1414,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         try {
             $input = $request->all();
             $excelUpload = $input['assetExcelUpload'];
-            $input = array_except($request->all(), 'assetExcelUpload');
+            $input = Arr::except($request->all(), 'assetExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -1421,8 +1425,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
            
 
             $finalData = [];
-            $formatChk = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-            })->first();
+            $formatChk = \App\helper\ExcelSheetReader::sheetFirstRow(Storage::disk('local')->path($originalFileName), 'Sheet1');
             $formatChk2 = '';
 
             if (!$formatChk) {
@@ -1443,11 +1446,9 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 ->first();
 
             if ($checkProjectSelectionPolicy->isYesNO == 0) {
-                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk('local')->path($originalFileName), 'Sheet1', ['gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount']);
             } else {
-                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-                })->select(array('gl_account', 'gl_account_description', 'project', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+                $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk('local')->path($originalFileName), 'Sheet1', ['gl_account', 'gl_account_description', 'project', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount']);
             }
 
             $count = 0;
@@ -1562,8 +1563,8 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $data['debitAmount'] = $debitAmount;
                             $data['creditAmount'] = $creditAmount;
                             $data['createdPcID'] = gethostname();
-                            $data['createdUserID'] = \Helper::getEmployeeID();
-                            $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $data['createdUserID'] = Helper::getEmployeeID();
+                            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                             $data['createdDateTime'] = NOW();
                             $data['timeStamp'] = NOW();
                             $data['detail_project_id'] = $projectID;
@@ -1643,7 +1644,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             return $this->sendError(trans('custom.jv_master_not_found'));
         }
 
-        $refernaceDoc = \Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
+        $refernaceDoc = Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
 
         $companyId = $jvMasterDataLine->companySystemID;
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -1707,7 +1708,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function approvalPreCheckJV(Request $request)
     {
         $input = $request->all();
-        $approve = \Helper::postedDatePromptInFinalApproval($request);
+        $approve = Helper::postedDatePromptInFinalApproval($request);
         if (!$approve["success"]) {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                 return [
@@ -1851,13 +1852,11 @@ HAVING
             }
         }
 
-         \Excel::create('accrual_export', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('accrual_export', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -1865,9 +1864,7 @@ HAVING
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        }, $type);
     }
 
     public function amendJournalVoucherReview(Request $request)
@@ -1876,7 +1873,7 @@ HAVING
 
         $id = $input['jvMasterAutoId'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $jvMaster = JvMaster::find($id);
@@ -1963,7 +1960,7 @@ HAVING
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -2016,7 +2013,7 @@ HAVING
 
         $id = isset($input['jvMasterAutoId']) ? $input['jvMasterAutoId'] : 0;
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $jvMaster = JvMaster::find($id);
 

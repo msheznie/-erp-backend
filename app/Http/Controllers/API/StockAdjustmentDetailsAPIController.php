@@ -26,9 +26,12 @@ use App\Models\WarehouseMaster;
 use App\Repositories\StockAdjustmentDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class StockAdjustmentDetailsController
@@ -216,7 +219,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         $input['currentWacLocalCurrencyID'] = $item->wacValueLocalCurrencyID;
         $input['currentWacRptCurrencyID'] = $item->wacValueReportingCurrencyID;
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         if ($stockAdjustment->stockAdjustmentType == 2) {
             $input['currenctStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -226,7 +229,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
 
         $input['wacAdjRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
         $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
-        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockAdjustment->companySystemID,
 
             $item->wacValueReportingCurrencyID,
             $item->wacValueReportingCurrencyID,
@@ -376,7 +379,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
     public function update($id, UpdateStockAdjustmentDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['uom', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($input, ['uom', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToValue($input);
         /** @var StockAdjustmentDetails $stockAdjustmentDetails */
         $stockAdjustmentDetails = $this->stockAdjustmentDetailsRepository->findWithoutFail($id);
@@ -392,7 +395,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
         }
 
 
-        $companyCurrencyConversion = \Helper::currencyConversion($stockAdjustment->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockAdjustment->companySystemID,
             $stockAdjustmentDetails->currentWacLocalCurrencyID,
             $stockAdjustmentDetails->currentWacLocalCurrencyID,
             $input['wacAdjLocal']);
@@ -414,7 +417,7 @@ class StockAdjustmentDetailsAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemCodeSystem'],
             'wareHouseId' => $stockAdjustment->location);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         $currenStockQty = ($stockAdjustment->stockAdjustmentType == 2) ? $itemCurrentCostAndQty['currentStockQty'] : $itemCurrentCostAndQty['currentWareHouseStockQty'];
 

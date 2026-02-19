@@ -29,10 +29,16 @@ class LeaveAccrualProcess implements ShouldQueue
      */
     public function __construct($dispatch_db, $company_det, $accrual_type_det, $group, $debugDate = null, $debug = false)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatch_db = $dispatch_db;
@@ -51,7 +57,6 @@ class LeaveAccrualProcess implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-accrual');
-        Log::useFiles($path);
 
         ['code'=> $company_code, 'name'=> $company_name, 'id'=> $companyId] = $this->company;
 

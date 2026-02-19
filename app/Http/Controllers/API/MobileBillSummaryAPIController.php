@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Maatwebsite\Excel\Excel;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -318,10 +318,11 @@ class MobileBillSummaryAPIController extends AppBaseController
         $decodeFile = base64_decode($file);
         $path = time().'.'.$extension;
         Storage::disk('local')->put($path, $decodeFile);
-        $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk('local')->url('app/' . $path), function ($reader) {})->get();
+        $rows = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk('local')->path($path), 0);
+        $record = collect(array_map(fn ($row) => collect($row), $rows));
         $insert_data = [];
 
-        if($record->count() > 0){
+        if ($record->count() > 0) {
 
             if($input['type'] == 'summary') {
                 $tableName = 'hrms_mobilebillsummary';

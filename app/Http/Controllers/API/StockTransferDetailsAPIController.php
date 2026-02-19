@@ -31,7 +31,7 @@ use App\Models\WarehouseMaster;
 use App\Repositories\StockTransferDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -39,8 +39,10 @@ use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
 use App\helper\ItemTracking;
+use App\helper\inventory as Inventory;
 use App\Models\ItemMaster;
 use App\Models\UnitConversion;
+use Illuminate\Support\Arr;
 /**
  * Class StockTransferDetailsController
  * @package App\Http\Controllers\API
@@ -143,7 +145,7 @@ class StockTransferDetailsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
 
-        $input = array_except($request->all(), 'unit_by');
+        $input = Arr::except($request->all(), 'unit_by');
         $input = $this->convertArrayToValue($input);
 
         $companySystemID = $input['companySystemID'];
@@ -373,7 +375,7 @@ class StockTransferDetailsAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemCode'],
             'wareHouseId' => $stockTransferMaster->locationFrom);
 
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
         $input['warehouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
@@ -509,7 +511,7 @@ class StockTransferDetailsAPIController extends AppBaseController
 
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
-        $input = array_except($request->all(), ['unit_by','item_by']);
+        $input = Arr::except($request->all(), ['unit_by','item_by']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
 

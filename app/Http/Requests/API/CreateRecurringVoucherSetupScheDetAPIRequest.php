@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\RecurringVoucherSetupScheDet;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateRecurringVoucherSetupScheDetAPIRequest extends APIRequest
+class CreateRecurringVoucherSetupScheDetAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

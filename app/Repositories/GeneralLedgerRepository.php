@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\GeneralLedger;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class GeneralLedgerRepository

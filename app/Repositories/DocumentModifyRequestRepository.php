@@ -1,8 +1,6 @@
 <?php
 
 namespace App\Repositories;
-
-use App\Helper\Helper;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\DocumentModifyRequest;
@@ -11,7 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Repositories\SrmTenderMasterEditLogRepository;
 use App\Repositories\DocumentAttachmentsEditLogRepository;
 use App\Repositories\CalendarDatesDetailEditLogRepository;
@@ -32,6 +30,9 @@ use App\Repositories\TenderSupplierAssigneeEditLogRepository;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
 use Illuminate\Http\Request;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class DocumentModifyRequestRepository
@@ -211,7 +212,7 @@ class DocumentModifyRequestRepository extends BaseRepository
                     'amount' => $tenderMaster->estimated_value,
                     'tenderTypeId' => $tenderMaster->tender_type_id
                 ];
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 $title = $tenderMaster['document_system_id'] == 108
                     ? trans('srm_tender_rfx.tender')
                     : trans('srm_tender_rfx.rfx');
@@ -244,7 +245,7 @@ class DocumentModifyRequestRepository extends BaseRepository
             }
 
             return DB::transaction(function () use ($input, $reference_document_id, $tenderMaster) {
-                $approve = Helper::approveDocument($input);
+                $approve = DocumentApprove::approveDocument($input);
                 if (!$approve["success"]){
                     return ['success' => false, 'message' => $approve["message"]];
                 }
@@ -284,7 +285,7 @@ class DocumentModifyRequestRepository extends BaseRepository
         $code = ($companyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
         $input['version'] = $version;
-        $input['requested_employeeSystemID'] =\Helper::getEmployeeSystemID();
+        $input['requested_employeeSystemID'] =Helper::getEmployeeSystemID();
         $input['requested_date'] = now();
         $input['RollLevForApp_curr'] = 1;
         $input['code'] = $code;

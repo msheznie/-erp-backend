@@ -32,7 +32,7 @@ class FcmService
      * @param array|null $data
      * @return array
      */
-    public function sendNotification(array $deviceTokens, string $title, string $body, array $data = null)
+    public function sendNotification(array $deviceTokens, string $title, string $body, ?array $data = null)
     {
         if (!file_exists(storage_path('google-service-account.json'))) {
             Log::error("google-service-account.json not found");

@@ -161,7 +161,6 @@ class ProcumentOrder extends Model
 
     protected $primaryKey = 'purchaseOrderID';
 
-    protected $dates = ['deleted_at'];
     protected $appends = ['isWoAmendAccess','isVatEligible','rcmAvailable'];
 
     public $fillable = [
@@ -465,8 +464,8 @@ class ProcumentOrder extends Model
         'categoryID'  => 'integer',
         'upload_job_status'  => 'integer',
         'successDetailsCount'  => 'integer',
-        'excelRowCount'  => 'integer'
-        
+        'excelRowCount'  => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

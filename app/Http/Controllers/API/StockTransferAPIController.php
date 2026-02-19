@@ -47,7 +47,7 @@ use App\Repositories\StockTransferRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -55,9 +55,16 @@ use App\Repositories\UserRepository;
 use Carbon\Carbon;
 use Response;
 use App\helper\ItemTracking;
+use App\helper\inventory as Inventory;
 use App\Models\ItemMaster;
 use App\Models\UnitConversion;
 use App\Models\Unit;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class StockTransferController
  * @package App\Http\Controllers\API
@@ -157,20 +164,20 @@ class StockTransferAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -450,7 +457,7 @@ class StockTransferAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by','location_to_by','location_from_by','company_from','company_to']);
+        $input = Arr::except($input, ['created_by', 'confirmed_by', 'segment_by', 'finance_period_by', 'finance_year_by','location_to_by','location_from_by','company_from','company_to']);
         $input = $this->convertArrayToValue($input);
         $wareHouseFromError = array('type' => 'locationFrom');
         $wareHouseToError   = array('type' => 'locationTo');
@@ -577,7 +584,7 @@ class StockTransferAPIController extends AppBaseController
 
         if ($stockTransfer->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
@@ -590,7 +597,7 @@ class StockTransferAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -663,7 +670,7 @@ class StockTransferAPIController extends AppBaseController
                 $data = array('companySystemID' => $stockTransfer->companySystemID,
                                'itemCodeSystem' => $updateItem->itemCodeSystem,
                                'wareHouseId' => $stockTransfer->locationFrom);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                 $updateItem->warehouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                 // $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
@@ -721,12 +728,12 @@ class StockTransferAPIController extends AppBaseController
 
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => 0);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
@@ -861,9 +868,9 @@ class StockTransferAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
-        $companies = \Helper::allCompanies();
+        $companies = Helper::allCompanies();
 
         $output = array('segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -916,7 +923,7 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
-        $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
+        $stockTransfer->docRefNo = Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
 
         return $this->sendResponse($stockTransfer->toArray(), trans('custom.stock_transfer_retrieved_successfully'));
     }
@@ -930,7 +937,7 @@ class StockTransferAPIController extends AppBaseController
             return $this->sendError(trans('custom.stock_transfer_not_found'));
         }
 
-        $stockTransfer->docRefNo = \Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
+        $stockTransfer->docRefNo = Helper::getCompanyDocRefNo($stockTransfer->companySystemID, $stockTransfer->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $stockTransfer);
         $time = strtotime("now");
@@ -957,7 +964,7 @@ class StockTransferAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyID)
             ->where('documentSystemID', 13)
@@ -1015,7 +1022,7 @@ class StockTransferAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $stockTransferMasters = [];
@@ -1047,7 +1054,7 @@ class StockTransferAPIController extends AppBaseController
         }
 
         $companyID = $request->companyId;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $stockTransferMasters = DB::table('erp_documentapproved')->select(
             'erp_stocktransfer.stockTransferAutoID',
@@ -1104,7 +1111,7 @@ class StockTransferAPIController extends AppBaseController
 
     public function approveStockTransfer(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1115,7 +1122,7 @@ class StockTransferAPIController extends AppBaseController
 
     public function rejectStockTransfer(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1192,7 +1199,7 @@ class StockTransferAPIController extends AppBaseController
 
         $this->stockTransferRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $stockTransfer->documentSystemID)->first();
 
@@ -1248,7 +1255,7 @@ class StockTransferAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

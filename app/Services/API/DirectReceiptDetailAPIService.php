@@ -9,6 +9,7 @@ use App\Models\CurrencyMaster;
 use App\Models\CustomerMaster;
 use App\Models\DirectReceiptDetail;
 use App\Models\SegmentMaster;
+use App\helper\Helper;
 
 class DirectReceiptDetailAPIService
 {
@@ -25,7 +26,13 @@ class DirectReceiptDetailAPIService
         $objDirectReceipt = self::setCommonDetails($directReceipt,$objDirectReceipt,$receiptVoucher);
         $objDirectReceipt = self::setCustomerDetails($directReceipt,$objDirectReceipt,$receiptVoucher);
 
-        $receiptVoucher->directdetails()->create($objDirectReceipt->toArray());
+        $return = $receiptVoucher->directdetails()->create($objDirectReceipt->toArray());
+        if ($return instanceof DirectReceiptDetail) {
+            return ['status' => 'success'];
+        } 
+        else {
+            return ['status' => 'fail'];
+        }
     }
 
     private static function setCustomerDetails($directReceipt,$objDirectReceipt,$receiptVoucher):DirectReceiptDetail {
@@ -64,11 +71,11 @@ class DirectReceiptDetailAPIService
         $vatAmount = ($receiptVoucher->isVATApplicable && $companyMaster->vatRegisteredYN) ? $directReceipt['vatAmount'] : 0;
         $objDirectReceipt->VATAmount = $vatAmount;
         $objDirectReceipt->VATPercentage = ($vatAmount/100);
-        $currency = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $directReceipt['amount']);
-        $objDirectReceipt->comRptAmount = \Helper::roundValue($currency['reportingAmount']);
-        $objDirectReceipt->localAmount = \Helper::roundValue($currency['localAmount']);
+        $currency = Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $directReceipt['amount']);
+        $objDirectReceipt->comRptAmount = Helper::roundValue($currency['reportingAmount']);
+        $objDirectReceipt->localAmount = Helper::roundValue($currency['localAmount']);
 
-        $currencyVAT = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $vatAmount);
+        $currencyVAT = Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $vatAmount);
         $policy = CompanyPolicyMaster::where('companySystemID', $receiptVoucher->companySystemID)
             ->where('companyPolicyCategoryID', 67)
             ->where('isYesNO', 1)
@@ -77,19 +84,19 @@ class DirectReceiptDetailAPIService
             $objDirectReceipt->VATAmountLocal = $vatAmount / $receiptVoucher->localCurrencyER;
             $objDirectReceipt->VATAmountRpt = $vatAmount / $receiptVoucher->companyRptCurrencyER;
         }  if($policy == false) {
-            $objDirectReceipt->VATAmountRpt = \Helper::roundValue($currencyVAT['reportingAmount']);
-            $objDirectReceipt->VATAmountLocal = \Helper::roundValue($currencyVAT['localAmount']);
+            $objDirectReceipt->VATAmountRpt = Helper::roundValue($currencyVAT['reportingAmount']);
+            $objDirectReceipt->VATAmountLocal = Helper::roundValue($currencyVAT['localAmount']);
         }
         $netAmount = ($directReceipt['amount'] - $vatAmount);
-        $objDirectReceipt->netAmount =  \Helper::roundValue($netAmount);
-        $currencyNet = \Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $netAmount);
+        $objDirectReceipt->netAmount =  Helper::roundValue($netAmount);
+        $currencyNet = Helper::convertAmountToLocalRpt($receiptVoucher->documentSystemID, $objDirectReceipt->directReceiptAutoID, $netAmount);
         if($policy == true) {
-            $objDirectReceipt->netAmountRpt = \Helper::roundValue($netAmount/$receiptVoucher->companyRptCurrencyER);
-            $objDirectReceipt->netAmountLocal = \Helper::roundValue($netAmount/$receiptVoucher->localCurrencyER);
+            $objDirectReceipt->netAmountRpt = Helper::roundValue($netAmount/$receiptVoucher->companyRptCurrencyER);
+            $objDirectReceipt->netAmountLocal = Helper::roundValue($netAmount/$receiptVoucher->localCurrencyER);
         }
         if($policy == false) {
-            $objDirectReceipt->netAmountRpt = \Helper::roundValue($currencyNet['reportingAmount']);
-            $objDirectReceipt->netAmountLocal = \Helper::roundValue($currencyNet['localAmount']);
+            $objDirectReceipt->netAmountRpt = Helper::roundValue($currencyNet['reportingAmount']);
+            $objDirectReceipt->netAmountLocal = Helper::roundValue($currencyNet['localAmount']);
         }
 
         $objDirectReceipt->comments = $directReceipt['comments'];

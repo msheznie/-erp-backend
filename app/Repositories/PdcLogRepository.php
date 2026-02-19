@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PdcLog;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\Helper;
 use App\helper\StatusService;
 
@@ -43,7 +43,7 @@ class PdcLogRepository extends BaseRepository
         return PdcLog::class;
     }
 
-    public function pdcIssuedListQuery($request, $input, $search = '', $bankmasterAutoID) {
+    public function pdcIssuedListQuery($request, $input, $search = '', $bankmasterAutoID = null) {
         
         $companyId = $request['companyId'];
 

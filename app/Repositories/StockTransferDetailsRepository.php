@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\StockTransferDetails;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class StockTransferDetailsRepository

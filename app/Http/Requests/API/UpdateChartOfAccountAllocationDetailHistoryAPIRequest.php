@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ChartOfAccountAllocationDetailHistory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateChartOfAccountAllocationDetailHistoryAPIRequest extends APIRequest
+class UpdateChartOfAccountAllocationDetailHistoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

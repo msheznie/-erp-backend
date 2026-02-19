@@ -444,7 +444,6 @@ class FixedAssetMaster extends Model
 
     protected $primaryKey = 'faID';
 
-    protected $dates = ['deleted_at'];
     protected $appends = ['asset_code_concat', 'image_url'];
 
     public $fillable = [
@@ -665,8 +664,9 @@ class FixedAssetMaster extends Model
         'deleteComment' => 'string',
         'postToGLCode' => 'string',
         'empID' => 'integer',
-        'assetCostingUploadID' => 'integer'
+        'assetCostingUploadID' => 'integer',
 
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -765,10 +765,10 @@ class FixedAssetMaster extends Model
      */
 
     public function getImageUrlAttribute(){
-        $awsPolicy = \Helper::checkPolicy($this->companySystemID, 50);
+        $awsPolicy = Helper::checkPolicy($this->companySystemID, 50);
 
         if ($awsPolicy) {
-            return \Helper::getFileUrlFromS3($this->itemPath);    
+            return Helper::getFileUrlFromS3($this->itemPath);    
         } else {
             return $this->itemPath;
         }

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\employeeDepartmentDelegation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateemployeeDepartmentDelegationAPIRequest extends APIRequest
+class CreateemployeeDepartmentDelegationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

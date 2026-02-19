@@ -32,7 +32,7 @@ use App\Repositories\PoAdvancePaymentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Models\ProcumentOrder;
 use App\Models\CurrencyMaster;
@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Auth;
 use App\helper\Helper;
 use App\helper\CreateExcel;
 use App\Models\Company;
+use Illuminate\Support\Arr;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -90,7 +91,7 @@ class PoAdvancePaymentAPIController extends AppBaseController
     public function store(CreatePoAdvancePaymentAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['timestamp']);
+        $input = Arr::except($input, ['timestamp']);
         $input = $this->convertArrayToValue($input);
 
         $id = Auth::id();
@@ -140,14 +141,14 @@ class PoAdvancePaymentAPIController extends AppBaseController
             $input['reqAmount'] = $poTermAmount->comAmount;
             $input['reqAmountTransCur_amount'] = $poTermAmount->comAmount;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poTermAmount->comAmount);
+            $companyCurrencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $poTermAmount->comAmount);
 
             $input['reqAmountInPOTransCur'] = $poTermAmount->comAmount;
         } else {
             $input['reqAmount'] = $input['comAmount'];
             $input['reqAmountTransCur_amount'] = $input['comAmount'];
 
-            $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
+            $companyCurrencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $purchaseOrder->supplierTransactionCurrencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['comAmount']);
 
             $input['reqAmountInPOTransCur'] = $input['comAmount'];
         }
@@ -422,15 +423,15 @@ ORDER BY
         }
         $input['currencyID'] = $currencyID;
         $input['reqAmount'] = $input['detail']['reqAmount'];
-        $input['reqAmountTransCur_amount'] = \Helper::roundValue($input['detail']['reqAmount']);
+        $input['reqAmountTransCur_amount'] = Helper::roundValue($input['detail']['reqAmount']);
         $input['logisticCategoryID'] = $input['detail']['logisticCategoryID'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
+        $companyCurrencyConversion = Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $purchaseOrder->supplierTransactionCurrencyID, $input['detail']['reqAmount']);
 
         //$input['detail']['reqAmount'];
-        $input['reqAmountInPOTransCur'] = \Helper::roundValue($companyCurrencyConversion['documentAmount']);
-        $input['reqAmountInPOLocalCur'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
-        $input['reqAmountInPORptCur'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+        $input['reqAmountInPOTransCur'] = Helper::roundValue($companyCurrencyConversion['documentAmount']);
+        $input['reqAmountInPOLocalCur'] = Helper::roundValue($companyCurrencyConversion['localAmount']);
+        $input['reqAmountInPORptCur'] = Helper::roundValue($companyCurrencyConversion['reportingAmount']);
 
         $input['requestedByEmpID'] = $user->employee['empID'];
         $input['requestedByEmpName'] = $user->employee['empName'];
@@ -459,11 +460,11 @@ ORDER BY
         $input['addVatOnPO'] = isset($input['detail']['addVatOnPO']) ? $input['detail']['addVatOnPO'] : 0;
 
         if (isset($input['detail']['VATAmount']) && $input['detail']['VATAmount'] > 0) {
-            $companyCurrencyConversionVAT = \Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $currencyID, $input['detail']['VATAmount']);
+            $companyCurrencyConversionVAT = Helper::currencyConversion($purchaseOrder->companySystemID, $currencyID, $currencyID, $input['detail']['VATAmount']);
 
             $input['VATAmount'] = $input['detail']['VATAmount'];
-            $input['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
-            $input['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
+            $input['VATAmountLocal'] = Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
         }
 
         $poAdvancePayments = $this->poAdvancePaymentRepository->create($input);
@@ -680,10 +681,10 @@ ORDER BY
 
         $input = $request;
         $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -842,7 +843,7 @@ ORDER BY
                     }
 
 
-                    if (\Helper::checkIsCompanyGroup($input['companyId'])) {
+                    if (Helper::checkIsCompanyGroup($input['companyId'])) {
                         $data[$x][trans('custom.company_id')] = $val->companyID;
                         $data[$x][trans('custom.company_name')] = $val->CompanyName;
                     }
@@ -850,7 +851,7 @@ ORDER BY
                     $data[$x][trans('custom.supplier_code')] = $val->primarySupplierCode;
                     $data[$x][trans('custom.supplier_name')] = $val->supplierName;
                     $data[$x][trans('custom.purchase_order_code')] = $val->poCode;
-                    $data[$x][trans('custom.req_date')] =  \Helper::dateFormat($val->reqDate);
+                    $data[$x][trans('custom.req_date')] =  Helper::dateFormat($val->reqDate);
                     $data[$x][trans('custom.narration')] = $val->narration;
 
                     if ($input['currencyID'] == 1) {
@@ -950,7 +951,7 @@ ORDER BY
 
         $advancePayment->cancelledYN = 1; 
         $advancePayment->cancelledComment = $input['comment']; 
-        $advancePayment->cancelledByEmployeeSystemID = \Helper::getEmployeeSystemID(); 
+        $advancePayment->cancelledByEmployeeSystemID = Helper::getEmployeeSystemID(); 
         $advancePayment->cancelledDate = Carbon::now(); 
         $advancePayment->reqAmount = 0;
         $advancePayment->reqAmountTransCur_amount = 0;

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ErpAddress;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ErpAddressRepository

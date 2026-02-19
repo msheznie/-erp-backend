@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ProcumentActivity;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ProcumentActivityRepository

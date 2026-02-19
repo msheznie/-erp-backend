@@ -30,9 +30,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class MobileBillMasterController
@@ -273,7 +274,7 @@ class MobileBillMasterAPIController extends AppBaseController
     public function update($id, UpdateMobileBillMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,['detail','employee_mobile','summary','confirmed_by']);
+        $input = Arr::except($input,['detail','employee_mobile','summary','confirmed_by']);
         $input = $this->convertArrayToValue($input);
         $messages = [
             'billPeriod.unique' => 'The Bill period is already taken.'
@@ -510,12 +511,12 @@ class MobileBillMasterAPIController extends AppBaseController
             ->get();
         $output['company'] = [];
         if (count($segment) > 0) {
-            $companiesByGroup = array_pluck($segment, 'companySystemID');
+            $companiesByGroup = Arr::pluck($segment, 'companySystemID');
             $company = Company::select('masterCompanySystemIDReorting')
                 ->whereIn('companySystemID', $companiesByGroup)
                 ->get();
 
-            $masterCompany = array_pluck($company, 'masterCompanySystemIDReorting');
+            $masterCompany = Arr::pluck($company, 'masterCompanySystemIDReorting');
             $output['company'] = Company::select(DB::raw("companySystemID,CONCAT(CompanyID,' - ',CompanyName) as label"))
                 ->whereIn('companySystemID', $masterCompany)
                 ->get();
@@ -575,13 +576,11 @@ class MobileBillMasterAPIController extends AppBaseController
 
             }
 
-            \Excel::create('mobile_report', function ($excel) use ($data) {
+            return \App\Exports\CreateExcelExport::download('mobile_report', function ($excel) use ($data) {
                 $excel->sheet('sheet name', function ($sheet) use ($data) {
                     $sheet->fromArray($data, null, 'A1', true);
                     $sheet->setAutoSize(true);
                     $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -589,9 +588,8 @@ class MobileBillMasterAPIController extends AppBaseController
                 });
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download($type);
+            }, $type);
 
-            return $this->sendResponse(array(), trans('custom.success_export'));
         }
         return $this->sendError( 'No Records Found');
     }

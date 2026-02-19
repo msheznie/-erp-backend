@@ -6,7 +6,7 @@ use App\helper\Helper;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class DeliveryOrderDetailRepository

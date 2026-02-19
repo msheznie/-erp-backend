@@ -21,10 +21,12 @@ use App\Models\ChartOfAccount;
 use App\Repositories\SupplierAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class SupplierAssignedController
@@ -81,7 +83,7 @@ class SupplierAssignedAPIController extends AppBaseController
         unset( $input['masterIsMarkupPercentage']);
         unset( $input['isEEOSSPolicy']);
 
-        $input = array_except($input, ['final_approved_by','company']);
+        $input = Arr::except($input, ['final_approved_by','company']);
 
         $input = $this->convertArrayToValue($input);
         foreach($companies as $companie)
@@ -134,7 +136,7 @@ class SupplierAssignedAPIController extends AppBaseController
                 }else{
     
                        
-                            $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $input['supplierCodeSytem'], 'supplier');
+                            $validatorResult = Helper::checkCompanyForMasters($companie['id'], $input['supplierCodeSytem'], 'supplier');
                             if (!$validatorResult['success']) {
                                 return $this->sendError($validatorResult['message']);
                             }

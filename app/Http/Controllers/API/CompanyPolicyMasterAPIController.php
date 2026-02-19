@@ -28,9 +28,11 @@ use Illuminate\Support\Facades\DB;
 use App\Repositories\CompanyPolicyMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CompanyPolicyMasterController
@@ -82,10 +84,10 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $companyId = $request['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }
@@ -142,10 +144,10 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -216,7 +218,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
     public function update($id, UpdateCompanyPolicyMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['company',
+        $input = Arr::except($input, ['company',
                                         'policy_category',
                                         'companySystemID',
                                         'companyID',
@@ -229,7 +231,7 @@ class CompanyPolicyMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['modifiedByUserID'] = $employee['employeeSystemID'];
         $input['timestamp'] = now();
 

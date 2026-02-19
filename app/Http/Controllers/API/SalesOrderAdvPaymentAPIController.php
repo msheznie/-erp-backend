@@ -18,9 +18,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class SalesOrderAdvPaymentController
@@ -120,7 +121,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['timestamp']);
+        $input = Arr::except($input, ['timestamp']);
         $input = $this->convertArrayToValue($input);
         $input['soID'] = isset($input['soID']) ? $input['soID'] : 0;
         $user = Helper::getEmployeeInfo();
@@ -166,7 +167,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
         $input['reqAmount'] = $input['comAmount'];
         $input['reqAmountTransCur_amount'] = $input['comAmount'];
 
-        $companyCurrencyConversion = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $input['comAmount']);
+        $companyCurrencyConversion = Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $input['comAmount']);
 
         $input['reqAmountInPOTransCur'] = $input['comAmount'];
         $input['reqAmountInPOLocalCur'] = Helper::roundValue($companyCurrencyConversion['localAmount']);
@@ -183,7 +184,7 @@ class SalesOrderAdvPaymentAPIController extends AppBaseController
             $vatAmount = Helper::roundValue(($totalAmount->totalVATAmount/$totalAmount->totalTransactionAmount) * $input['comAmount']);
         }
 
-        $vatCurrencyConversion = \Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $vatAmount);
+        $vatCurrencyConversion = Helper::currencyConversion($salesOrder->companySystemID, $salesOrder->transactionCurrencyID, $salesOrder->transactionCurrencyID, $vatAmount);
 
         $input['VATAmount'] = $vatAmount;
         $input['VATAmountLocal'] = Helper::roundValue($vatCurrencyConversion['localAmount']);

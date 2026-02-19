@@ -42,9 +42,9 @@ class ThirdPartyApiSummaryLogJob implements ShouldQueue
     public function __construct(
         $dataBase, 
         $thirdPartyIntegrationKeyId = null, 
-        $tenant_uuid, 
-        $endpoint, 
-        $method, 
+        $tenant_uuid = null, 
+        $endpoint = null, 
+        $method = null, 
         $requestPayload = [], 
         $responsePayload = [], 
         $statusCode = null, 

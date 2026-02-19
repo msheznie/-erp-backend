@@ -54,7 +54,6 @@ class ItemIssueBulkItemsJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/item_issue_bulk_items.log');
 
         CommonJobService::db_switch($db);
         $input = $this->data;

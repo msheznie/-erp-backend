@@ -47,6 +47,9 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Exceptions\CustomerInvoiceException;
 use App\Models\ApprovalLevel;
 use App\Models\DocumentMaster;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 class CustomerInvoiceService
 {
@@ -684,7 +687,7 @@ class CustomerInvoiceService
                 //checking whether document approved table has a data for the same document
                 $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         $errorMsg = $confirm["message"];
@@ -731,8 +734,8 @@ class CustomerInvoiceService
         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
         $myCurr = $input['custTransactionCurrencyID'];
 
-        $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
-        $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
+        $companyCurrency = Helper::companyCurrency($company['companySystemID']);
+        $companyCurrencyConversion = Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
         /*exchange added*/
         $input['custTransactionCurrencyER'] = 1;
         $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
@@ -785,12 +788,12 @@ class CustomerInvoiceService
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
         $input['documentType'] = 11;
-        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
 
 
@@ -831,7 +834,7 @@ class CustomerInvoiceService
         $myCurr = $master->custTransactionCurrencyID;
         /*currencyID*/
 
-        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+        $decimal = Helper::getCurrencyDecimalPlace($myCurr);
         $x = 0;
 
 
@@ -892,7 +895,7 @@ class CustomerInvoiceService
                 }
             }
         }
-        $addToCusInvDetails["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
+        $addToCusInvDetails["comRptAmount"] =   Helper::roundValue($MyRptAmount);
         if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
             $MyLocalAmount = $totalAmount;
         } else {
@@ -910,7 +913,7 @@ class CustomerInvoiceService
                 }
             }
         }
-        $addToCusInvDetails["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+        $addToCusInvDetails["localAmount"] =  Helper::roundValue($MyLocalAmount);
 
 
         if ($master->isVatEligible) {
@@ -972,7 +975,7 @@ class CustomerInvoiceService
     {
 
         $input = $customerInvoiceDirectDetails;
-        $input = array_except($input, array('unit', 'department','performadetails','contract', 'project'));
+        $input = Arr::except($input, array('unit', 'department','performadetails','contract', 'project'));
         $AppBaseController = new AppBaseController();
         $input = $AppBaseController->convertArrayToValue($input);
         $id = $input['custInvDirDetAutoID'];
@@ -1088,7 +1091,7 @@ class CustomerInvoiceService
         $input['unitCost'] = $input['salesPrice'] - $input["discountAmountLine"];
         if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
-            $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
+            $decimal = Helper::getCurrencyDecimalPlace($myCurr);
 
             $input['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
             $input['invoiceAmountCurrencyER'] = 1;
@@ -1119,7 +1122,7 @@ class CustomerInvoiceService
                        }
                    }
                }
-            $input["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
+            $input["comRptAmount"] =   Helper::roundValue($MyRptAmount);
                 if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
                      $MyLocalAmount = $totalAmount;
                  } else {
@@ -1137,7 +1140,7 @@ class CustomerInvoiceService
                          }
                      }
                  }
-            $input["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+            $input["localAmount"] =  Helper::roundValue($MyLocalAmount);
 
 
         }
@@ -1164,19 +1167,19 @@ class CustomerInvoiceService
             }
         }
 
-        $currencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $input['VATAmount']);
+        $currencyConversionVAT = Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $input['VATAmount']);
         $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyPolicyCategoryID', 67)
             ->where('isYesNO', 1)
             ->first();
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
         if($policy == true) {
-            $input['VATAmountLocal'] = \Helper::roundValue($input["VATAmount"] / $master->localCurrencyER);
-            $input['VATAmountRpt'] = \Helper::roundValue($input["VATAmount"] / $master->companyReportingER);
+            $input['VATAmountLocal'] = Helper::roundValue($input["VATAmount"] / $master->localCurrencyER);
+            $input['VATAmountRpt'] = Helper::roundValue($input["VATAmount"] / $master->companyReportingER);
         }
         if($policy == false) {
-            $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-            $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+            $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+            $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
         }
         if (isset($input['by'])) {
             unset($input['by']);
@@ -1290,7 +1293,7 @@ class CustomerInvoiceService
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         $totalDetail = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
         if (!empty($totalDetail)) {
@@ -1309,7 +1312,7 @@ class CustomerInvoiceService
             return ['status' => false, 'message' => trans('custom.vat_detail_already_exist')];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -1352,7 +1355,7 @@ class CustomerInvoiceService
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -1371,7 +1374,7 @@ class CustomerInvoiceService
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
        
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();

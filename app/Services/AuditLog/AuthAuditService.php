@@ -7,6 +7,7 @@ use App\Models\AccessTokens;
 use App\Models\ERPLanguageMaster;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class AuthAuditService
 {
@@ -38,7 +39,7 @@ class AuthAuditService
      * Extract login data from OAuth response (for OAuth token)
      * This must be called BEFORE dispatching the job to avoid serialization issues
      *
-     * @param \Zend\Diactoros\Response $response
+     * @param \Laminas\Diactoros\Response $response
      * @param \Illuminate\Http\Request $request
      * @return array
      */

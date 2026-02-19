@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\LptPermission;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateLptPermissionAPIRequest extends APIRequest
+class CreateLptPermissionAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

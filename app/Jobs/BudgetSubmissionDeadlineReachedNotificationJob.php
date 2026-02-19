@@ -27,10 +27,16 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
      */
     public function __construct($dispatch_db)
     {
-        if (env('IS_MULTI_TENANCY', false)) {
-            self::onConnection('database_main');
-        } else {
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
     }
@@ -44,13 +50,10 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
     {
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
-
-        Log::useFiles(storage_path() . '/logs/budget-submission-deadline-reached-notification.log');
-
         try {
             $this->sendDeadlineReachedNotifications();
         } catch (\Exception $e) {
-            Log::error('Error in budget submission deadline reached notification job for database ' . $db . ': ' . $e->getMessage());
+            Log::channel('budget_submission_deadline_reached_notification')->error('Error in budget submission deadline reached notification job for database ' . $db . ': ' . $e->getMessage());
             throw $e;
         }
     }
@@ -59,14 +62,22 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
     {
         $today = Carbon::today();
 
-        // Find budget plannings with submission date that has passed (deadline reached)
+        // Find budget plannings with submission date or approved extension new_time that has passed (deadline reached)
         // Only for non-submitted budget plannings
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.hod.employee',
             'masterBudgetPlannings.company',
-            'financeYear'
+            'financeYear',
+            'timeExtensionRequests'
         ])
-        ->whereDate('submissionDate', '=', $today)
+        ->where(function ($query) use ($today) {
+            $query->whereDate('submissionDate', '=', $today)
+                ->orWhereHas('timeExtensionRequests', function ($q) use ($today) {
+                    $q->where('status', 2) // Approved
+                        ->whereDate('new_time', '=', $today);
+                });
+        })
+        ->where('workStatus', '!=', 3)
         ->get();
 
 

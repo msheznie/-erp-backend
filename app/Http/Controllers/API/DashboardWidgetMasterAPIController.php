@@ -28,12 +28,13 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use App\Models\SupplierGroup;
 use App\Models\SupplierMaster;
+use Illuminate\Support\Arr;
 
 /**
  * Class DashboardWidgetMasterController
@@ -247,7 +248,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
     public function update($id, UpdateDashboardWidgetMasterAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input,'department');
+        $input = Arr::except($input,'department');
         $input = $this->convertArrayToSelectedValue($input, array('departmentID'));
 //        $validator = \Validator::make($input, [
 //            'WidgetMasterName' => 'required',
@@ -441,10 +442,10 @@ class DashboardWidgetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.widget_master_id_not_found'));
         }
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -457,7 +458,7 @@ class DashboardWidgetMasterAPIController extends AppBaseController
 
             $glCategoryType = isset($input['glType']) ? $input['glType'] : '';
             $categoryBLorPL = isset($input['glType']) && $input['glType'] == 'profit_loss' ? 2 : 1;
-            $companyCurrency = \Helper::companyCurrency($companyID);
+            $companyCurrency = Helper::companyCurrency($companyID);
             $currentFinancialYear = CompanyFinanceYear::currentFinanceYear($companyID);
 
             $glAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyID)
@@ -1260,10 +1261,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }
@@ -1400,17 +1401,15 @@ GROUP BY
             $reportData['report_tittle'] = 'Sales Log';
             $reportData['report_date'] = Carbon::now()->format('d/m/Y');
     
-            return \Excel::create('sales_log', function ($excel) use ($reportData, $templateName) {
+            return \App\Exports\CreateExcelExport::download('sales_log', function ($excel) use ($reportData, $templateName) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
 
         if($request->input('widgetTypeID') == 2) {
@@ -1418,11 +1417,9 @@ GROUP BY
             $templateName2 = "export_report.account_receivable";
             $reportData['report_tittle'] = 'Account Payables and Receivables';
             $reportData['report_date'] = Carbon::now()->format('d/m/Y');
-            return \Excel::create('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName,$templateName2) {
+            return \App\Exports\CreateExcelExport::download('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName, $templateName2) {
                 $excel->sheet('Overdue Payables', function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -1430,14 +1427,12 @@ GROUP BY
                 });
                 $excel->sheet('Overdue Receivables', function ($sheet) use ($reportData, $templateName2) {
                     $sheet->loadView($templateName2, $reportData);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
 
 
@@ -1454,10 +1449,10 @@ GROUP BY
         }
 
         $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         }else{
             $childCompanies = [$companyID];
         }

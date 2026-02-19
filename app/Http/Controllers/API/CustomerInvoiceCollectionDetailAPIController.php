@@ -21,10 +21,12 @@ use App\Models\CustomerInvoiceDirect;
 use App\Repositories\CustomerInvoiceCollectionDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Carbon\Carbon;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CustomerInvoiceCollectionDetailController
@@ -137,12 +139,12 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
 
         $input['companySystemID'] = $invoiceMasterData->companySystemID;
         $input['companyID'] = $invoiceMasterData->companyID;
-        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserID'] = Helper::getEmployeeID();
         $input['createdPcID'] = getenv('COMPUTERNAME');
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $customerInvoiceCollectionDetails = $this->customerInvoiceCollectionDetailRepository->create($input);
 
@@ -248,7 +250,7 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceCollectionDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['modified_by']);
+        $input = Arr::except($input, ['modified_by']);
         $input = $this->convertArrayToValue($input);
         /** @var CustomerInvoiceCollectionDetail $customerInvoiceCollectionDetail */
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->findWithoutFail($id);
@@ -266,9 +268,9 @@ class CustomerInvoiceCollectionDetailAPIController extends AppBaseController
             $input['collectionDate'] = new Carbon($input['collectionDate']);
         }
 
-        $input['modifiedUser'] = \Helper::getEmployeeID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
         $input['modifiedPc'] = getenv('COMPUTERNAME');
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $customerInvoiceCollectionDetail = $this->customerInvoiceCollectionDetailRepository->update($input, $id);
 

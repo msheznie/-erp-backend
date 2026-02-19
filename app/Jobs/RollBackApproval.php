@@ -33,7 +33,6 @@ class RollBackApproval implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/rollback_approval_jobs.log');
         $masterModel = $this->masterModel;
         if (!empty($masterModel)) {
             DB::beginTransaction();
@@ -47,7 +46,7 @@ class RollBackApproval implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('rollback_approval_jobs')->error($this->failed($e));
             }
         }
     }

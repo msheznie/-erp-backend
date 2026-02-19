@@ -46,8 +46,7 @@ class JobErrorLogInsert implements ShouldQueue
     public function handle()
     {
         CommonJobService::db_switch($this->dataBase);
-        Log::useFiles(storage_path().'/logs/job_error_log.log');
-        Log::error($this->errorData);
+        Log::channel('job_error_log')->error($this->errorData);
         JobErrorLog::create($this->errorData);        
     }
 }

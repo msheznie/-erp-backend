@@ -12,7 +12,7 @@ use Illuminate\Container\Container as Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\Services\SrmDocumentModifyService;
 use Illuminate\Support\Str;
 

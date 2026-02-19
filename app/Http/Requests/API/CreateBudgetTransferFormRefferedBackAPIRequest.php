@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\BudgetTransferFormRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateBudgetTransferFormRefferedBackAPIRequest extends APIRequest
+class CreateBudgetTransferFormRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

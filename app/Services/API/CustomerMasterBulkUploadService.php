@@ -516,9 +516,9 @@ class CustomerMasterBulkUploadService
                     })
                         ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
                             $companyId = $input['companySystemIDFilter'];
-                            $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                            $isGroup = Helper::checkIsCompanyGroup($companyId);
                             if ($isGroup) {
-                                $childCompanies = \Helper::getGroupCompany($companyId);
+                                $childCompanies = Helper::getGroupCompany($companyId);
                             } else {
                                 $childCompanies = [$companyId];
                             }
@@ -687,7 +687,7 @@ class CustomerMasterBulkUploadService
             ];
         }
 
-        $validatorResult = \Helper::checkCompanyForMasters($company->companySystemID);
+        $validatorResult = Helper::checkCompanyForMasters($company->companySystemID);
         if (!$validatorResult['success']) {
             return [
                 'valid' => false,
@@ -1096,9 +1096,9 @@ class CustomerMasterBulkUploadService
                 })
                     ->when(isset($input['companySystemIDFilter']), function($query) use ($input){
                         $companyId = $input['companySystemIDFilter'];
-                        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+                        $isGroup = Helper::checkIsCompanyGroup($companyId);
                         if ($isGroup) {
-                            $childCompanies = \Helper::getGroupCompany($companyId);
+                            $childCompanies = Helper::getGroupCompany($companyId);
                         } else {
                             $childCompanies = [$companyId];
                         }

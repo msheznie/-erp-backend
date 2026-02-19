@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AssetWarranty;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateAssetWarrantyAPIRequest extends APIRequest
+class CreateAssetWarrantyAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

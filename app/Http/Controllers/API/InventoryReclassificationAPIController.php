@@ -36,9 +36,14 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\inventory as Inventory;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class InventoryReclassificationController
@@ -148,14 +153,14 @@ class InventoryReclassificationAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -220,8 +225,8 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
         $input['serialNo'] = $lastSerialNumber;
         $input['createdPCid'] = gethostname();
-        $input['createdUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $inventoryReclassifications = $this->inventoryReclassificationRepository->create($input);
         DB::commit();
@@ -331,7 +336,7 @@ class InventoryReclassificationAPIController extends AppBaseController
     public function update($id, UpdateInventoryReclassificationAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'segment_by', 'warehouse_by']);
         $input = $this->convertArrayToValue($input);
 
@@ -379,14 +384,14 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         if ($inventoryReclassification->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -431,7 +436,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                     $data = array('companySystemID' => $inventoryReclassification->companySystemID,
                         'itemCodeSystem' => $updateItem->itemSystemCode,
                         'wareHouseId' => $inventoryReclassification->wareHouseSystemCode);
-                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                     $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                     $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                     $updateItem->unitCostLocal = $itemCurrentCostAndQty['wacValueLocal'];
@@ -467,15 +472,15 @@ class InventoryReclassificationAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
         }
 
         $input['modifiedPc'] = gethostname();
-        $input['modifiedUser'] = \Helper::getEmployeeID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUser'] = Helper::getEmployeeID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $inventoryReclassification = $this->inventoryReclassificationRepository->update($input, $id);
 
@@ -570,10 +575,10 @@ class InventoryReclassificationAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -590,7 +595,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -644,7 +649,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             return $this->sendError(trans('custom.inventory_reclassification_not_found'));
         }
 
-        $invReclassification->docRefNo = \Helper::getCompanyDocRefNo($invReclassification->companySystemID, $invReclassification->documentSystemID);
+        $invReclassification->docRefNo = Helper::getCompanyDocRefNo($invReclassification->companySystemID, $invReclassification->documentSystemID);
 
         return $this->sendResponse($invReclassification->toArray(), trans('custom.inventory_reclassification_retrieved_successfully_1'));
     }
@@ -662,7 +667,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $reclassifyMaster = DB::table('erp_documentapproved')
@@ -730,7 +735,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             });
         }
 
-         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+         $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $reclassifyMaster = [];
@@ -764,7 +769,7 @@ class InventoryReclassificationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $reclassifyMaster = DB::table('erp_documentapproved')
@@ -866,7 +871,7 @@ class InventoryReclassificationAPIController extends AppBaseController
             $inventoryReclassification->RollLevForApp_curr = 1;
             $inventoryReclassification->save();
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
             $document = DocumentMaster::where('documentSystemID', $inventoryReclassification->documentSystemID)->first();
             $cancelDocNameBody = $document->documentDescription . ' <b>' . $inventoryReclassification->documentCode . '</b>';
             $cancelDocNameSubject = $document->documentDescription . ' ' . $inventoryReclassification->documentCode;
@@ -915,7 +920,7 @@ class InventoryReclassificationAPIController extends AppBaseController
                         return $this->sendError(trans('custom.approval_list_not_found'), 500);
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ProcumentOrderDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateProcumentOrderDetailAPIRequest extends APIRequest
+class UpdateProcumentOrderDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

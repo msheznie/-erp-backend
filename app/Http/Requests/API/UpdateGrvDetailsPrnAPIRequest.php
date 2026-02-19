@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\GrvDetailsPrn;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateGrvDetailsPrnAPIRequest extends APIRequest
+class UpdateGrvDetailsPrnAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

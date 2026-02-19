@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PaymentType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePaymentTypeAPIRequest extends APIRequest
+class UpdatePaymentTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

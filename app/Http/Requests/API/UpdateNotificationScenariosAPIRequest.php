@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\NotificationScenarios;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateNotificationScenariosAPIRequest extends APIRequest
+class UpdateNotificationScenariosAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

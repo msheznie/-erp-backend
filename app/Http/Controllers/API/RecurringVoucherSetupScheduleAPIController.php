@@ -9,7 +9,7 @@ use App\Repositories\RecurringVoucherSetupScheduleRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Http\Controllers\API\DocumentAttachmentsAPIController;
@@ -22,6 +22,7 @@ use App\Models\RecurringVoucherScheduleError;
 use App\Services\JournalVoucherService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 /**
  * Class RecurringVoucherSetupScheduleController
@@ -285,7 +286,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
             }
             else{
                 
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
 
                 if(count($input) == 1){
                     $newDate = Carbon::parse($input[0]['date']);
@@ -427,7 +428,7 @@ class RecurringVoucherSetupScheduleAPIController extends AppBaseController
         try{
             $masterId = $request['recurringVoucherAutoId'];
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $output = $this->recurringVoucherSetupScheduleRepository->where('recurringVoucherAutoId',$masterId)->where('isInProccess',0)
                 ->where('rrvGeneratedYN', 0)

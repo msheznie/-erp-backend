@@ -26,9 +26,10 @@ use App\Models\SegmentMaster;
 use App\Repositories\DebitNoteDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class DebitNoteDetailsController
@@ -211,7 +212,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $input['glCode'] = $chartOfAccount->AccountCode;
         $input['glCodeDes'] = $chartOfAccount->AccountDescription;
 
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, 0);
 
         $input['debitAmountCurrency'] = $debitNote->supplierTransactionCurrencyID;
         $input['debitAmountCurrencyER'] = 1;
@@ -355,7 +356,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
     public function update($id, UpdateDebitNoteDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment']);
+        $input = Arr::except($input, ['segment']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -400,8 +401,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
             $input['serviceLineCode'] = null;
         }
 
-        $input['debitAmount'] = isset($input['debitAmount']) ?  \Helper::stringToFloat($input['debitAmount']) : 0;
-        $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
+        $input['debitAmount'] = isset($input['debitAmount']) ?  Helper::stringToFloat($input['debitAmount']) : 0;
+        $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['debitAmount']);
 
         $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
             ->where('companyPolicyCategoryID', 67)
@@ -410,8 +411,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
         $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
 //        if($policy == true){
-            $input['localAmount' ]        = \Helper::roundValue($input['debitAmount'] / $debitNote->localCurrencyER);
-            $input['comRptAmount']        = \Helper::roundValue($input['debitAmount'] / $debitNote->companyReportingER);
+            $input['localAmount' ]        = Helper::roundValue($input['debitAmount'] / $debitNote->localCurrencyER);
+            $input['comRptAmount']        = Helper::roundValue($input['debitAmount'] / $debitNote->companyReportingER);
             $input['localCurrencyER' ]    = $debitNote->localCurrencyER;
             $input['comRptCurrencyER']    = $debitNote->companyReportingER;
 //        }
@@ -424,8 +425,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
 //        }
         //vat amount currency conversion
 
-        $input['VATAmount'] = isset($input['VATAmount']) ?  \Helper::stringToFloat($input['VATAmount']) : 0;
-        $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['VATAmount']);
+        $input['VATAmount'] = isset($input['VATAmount']) ?  Helper::stringToFloat($input['VATAmount']) : 0;
+        $VATCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['VATAmount']);
 
 //        if($policy == true) {
             $input['VATAmountLocal'] = $input['VATAmount'] / $debitNote->localCurrencyER;
@@ -437,8 +438,8 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         // total amount currency conversion
 
-        $input['netAmount'] = isset($input['netAmount']) ?  \Helper::stringToFloat($input['netAmount']) : 0;
-        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['netAmount']);
+        $input['netAmount'] = isset($input['netAmount']) ?  Helper::stringToFloat($input['netAmount']) : 0;
+        $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $input['netAmount']);
 
 //        if($policy == true) {
             $input['netAmountLocal'] = $input['netAmount']/ $debitNote->localCurrencyER;
@@ -454,7 +455,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         $amount = DebitNoteDetails::where('debitNoteAutoID', $debitNoteDetails->debitNoteAutoID)
             ->sum('debitAmount');
-        $companyCurrencyConversionMaster = \Helper::currencyConversion($debitNote->companySystemID, $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $amount);
+        $companyCurrencyConversionMaster = Helper::currencyConversion($debitNote->companySystemID, $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $amount);
         $debitNote['debitAmountTrans'] = $amount;
         $debitNote['debitAmountLocal'] = $companyCurrencyConversionMaster['localAmount'];
         $debitNote['debitAmountRpt']   = $companyCurrencyConversionMaster['reportingAmount'];
@@ -477,7 +478,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         //vat amount currency conversion
 
         $debitNote['VATAmount'] = $vatAmount;
-        $VATCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $vatAmount);
+        $VATCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $vatAmount);
 //        if($policy == true) {
             $debitNote['VATAmountLocal'] = $vatAmount / $debitNote->localCurrencyER;
             $debitNote['VATAmountRpt'] = $vatAmount / $debitNote->companyReportingER;
@@ -491,7 +492,7 @@ class DebitNoteDetailsAPIController extends AppBaseController
         // total amount currency conversion
 
         $debitNote['netAmount'] = $totalNetAmount;
-        $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $totalNetAmount);
+        $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $debitNote->supplierTransactionCurrencyID, $debitNote->supplierTransactionCurrencyID, $totalNetAmount);
         if($policy == true) {
             $debitNote['netAmountLocal'] = $totalNetAmount / $debitNote->localCurrencyER;
             $debitNote['netAmountRpt'] = $totalNetAmount / $debitNote->companyReportingER;

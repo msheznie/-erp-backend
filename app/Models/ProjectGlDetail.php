@@ -6,6 +6,7 @@ use Eloquent as Model;
 use Awobaz\Compoships\Compoships;
 use App\Models\ErpProjectMaster;
 use App\Models\BudgetConsumedData;
+use App\helper\Helper;
 
 /**
  * @SWG\Definition(
@@ -120,7 +121,7 @@ class ProjectGlDetail extends Model
         $projectMaster = ErpProjectMaster::with(['company'])->find($this->projectID);
         $consumedAmount = 0;
         if ($projectMaster) {
-            $convertAmount = \Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
+            $convertAmount = Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
 
             $consumedAmount = $convertAmount['documentAmount'];
         }
@@ -136,7 +137,7 @@ class ProjectGlDetail extends Model
         $projectMaster = ErpProjectMaster::with(['company'])->find($this->projectID);
         $consumedAmount = 0;
         if ($projectMaster) {
-            $convertAmount = \Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
+            $convertAmount = Helper::currencyConversion($projectMaster->companySystemID, $projectMaster->company->reportingCurrency, $projectMaster->projectCurrencyID, $consumedAmountRpt);
 
             $consumedAmount = $convertAmount['documentAmount'];
         }

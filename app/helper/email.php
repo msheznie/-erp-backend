@@ -78,6 +78,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\DocumentModifyRequest;
 use Response;
 use App\Models\AppearanceSettings;
+use App\helper\Helper;
 
 class email
 {
@@ -100,7 +101,6 @@ class email
             "<br>" . trans('email.footer_auto_generated') . "</font>";
         $empInfoSkip = array(106, 107);
         $count = 0;
-        Log::useFiles(storage_path() . '/logs/send_email_jobs.log');
 
         $hasPolicy = false;
 
@@ -578,7 +578,8 @@ class email
                     $text = $textObj->value;
                 }
 
-                $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+                $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
+
                 // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
                 if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
@@ -632,7 +633,7 @@ class email
              $text = $textObj->value;
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
@@ -685,7 +686,7 @@ class email
             $text = $textObj->value;
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)

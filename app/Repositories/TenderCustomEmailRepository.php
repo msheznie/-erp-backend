@@ -7,6 +7,7 @@ use App\Models\TenderCustomEmail;
 use App\Services\SRMService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class TenderCustomEmailRepository
 {
@@ -20,7 +21,7 @@ class TenderCustomEmailRepository
             $data['cc_email'] = json_encode($ccEmails);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $additionalData = [
             'pc_id' => gethostname(),
             'created_by' => $employee->empID,

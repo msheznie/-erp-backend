@@ -9,7 +9,7 @@ use App\Http\Requests\API\UpdateItemReturnMasterRefferedBackAPIRequest;
 use App\Models\ItemReturnMasterRefferedBack;
 use App\Repositories\ItemReturnMasterRefferedBackRepository;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

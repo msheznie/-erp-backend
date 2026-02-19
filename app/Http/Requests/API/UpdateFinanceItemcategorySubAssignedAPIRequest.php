@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FinanceItemcategorySubAssigned;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateFinanceItemcategorySubAssignedAPIRequest extends APIRequest
+class UpdateFinanceItemcategorySubAssignedAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

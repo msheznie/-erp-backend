@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\ErpAddress;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateErpAddressAPIRequest extends APIRequest
+class CreateErpAddressAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

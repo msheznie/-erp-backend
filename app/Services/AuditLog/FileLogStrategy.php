@@ -30,10 +30,9 @@ class FileLogStrategy implements LogStorageStrategyInterface
     public function store(array $logData): void
     {
         try {
-            Log::useFiles($this->logPath);
-            Log::info('data:', $logData);
+            Log::channel('audit')->info('data:', $logData);
         } catch (\Exception $e) {
-            Log::error('Failed to write to audit log file: ' . $e->getMessage());
+            Log::channel('audit')->error('Failed to write to audit log file: ' . $e->getMessage());
             throw $e;
         }
     }

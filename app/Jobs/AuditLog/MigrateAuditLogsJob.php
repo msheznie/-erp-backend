@@ -89,8 +89,7 @@ class MigrateAuditLogsJob implements ShouldQueue
                             
                             if (isset($log['table'])) {
                                 // Old audit log format - re-log using Log facade
-                                \Log::useFiles(storage_path() . '/logs/audit.log');
-                                \Log::info('data:', [
+                                \Log::channel('audit')->info('data:', [
                                     'channel' => 'audit',
                                     'transaction_id' => $log['transaction_id'] ?? '',
                                     'table' => $log['table'] ?? '',
@@ -124,7 +123,7 @@ class MigrateAuditLogsJob implements ShouldQueue
                 }
             }
         } catch (\Exception $e) {
-            Log::error("MigrateAuditLogsJob: Failed for table: {$this->table}, tenant: {$this->tenantUuid}", [
+            Log::channel('audit')->error("MigrateAuditLogsJob: Failed for table: {$this->table}, tenant: {$this->tenantUuid}", [
                 'job_id' => $this->jobId,
                 'batch_id' => $this->batchId,
                 'error' => $e->getMessage(),

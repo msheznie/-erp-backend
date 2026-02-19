@@ -22,9 +22,10 @@ use App\Models\CustomerMaster;
 use App\Repositories\CustomerMasterCategoryRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class CustomerMasterCategoryController
@@ -123,7 +124,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if (isset($request->categoryID)) {
 
@@ -162,7 +163,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
                 $customerMasterCategories = $this->customerMasterCategoryRepository->create($input);
 
 
-                $validatorResult = \Helper::checkCompanyForMasters($input['companySystemID'], $customerMasterCategories->categoryID, 'customerCategory');
+                $validatorResult = Helper::checkCompanyForMasters($input['companySystemID'], $customerMasterCategories->categoryID, 'customerCategory');
                 if ($validatorResult['success']) {
                     $createData = [
                         'customerMasterCategoryID' => $customerMasterCategories->categoryID,
@@ -366,10 +367,10 @@ class CustomerMasterCategoryAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -411,10 +412,10 @@ class CustomerMasterCategoryAPIController extends AppBaseController
 
         $selectedCompanyId = $request->get('selectedCompanyId');
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }

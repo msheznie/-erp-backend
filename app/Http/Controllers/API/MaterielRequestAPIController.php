@@ -17,7 +17,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
-use App\helper\inventory;
+use App\helper\inventory as Inventory;
 use App\Http\Requests\API\CreateMaterielRequestAPIRequest;
 use App\Http\Requests\API\UpdateMaterielRequestAPIRequest;
 use App\Jobs\mrBulkUploadItem;
@@ -57,17 +57,20 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use App\Models\GeneralLedger;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
+use Illuminate\Support\Arr;
 //use Auth;
 use App\Models\ItemIssueMaster;
 use App\Services\ValidateDocumentAmend;
 use function Clue\StreamFilter\fun;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class MaterielRequestController
@@ -191,7 +194,7 @@ class MaterielRequestAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyId = $request['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $materielRequests = DB::table('erp_documentapproved')
             ->select(
@@ -242,7 +245,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $materielRequests = [];
@@ -288,7 +291,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $mangerID = Employee::find($empID)->empID;
         $search = $request->input('search.value');
         $materielRequests = DB::table('erp_documentapproved')
@@ -386,7 +389,7 @@ class MaterielRequestAPIController extends AppBaseController
         DB::beginTransaction();
         $input = $this->convertArrayToValue($request->all());
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -549,7 +552,7 @@ class MaterielRequestAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by','confirmedEmpName',
+        $input = Arr::except($input, ['created_by', 'priority_by','warehouse_by', 'segment_by','confirmedEmpName',
                                        'ConfirmedBy','ConfirmedDate','confirmed_by','ConfirmedBySystemID']);
 
         $input = $this->convertArrayToValue($input);
@@ -561,7 +564,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -615,7 +618,7 @@ class MaterielRequestAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -693,10 +696,10 @@ class MaterielRequestAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         }else{
             $subCompanies = [$companyId];
         }
@@ -794,7 +797,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_request_not_found'));
         }
 
-        $materielRequest->docRefNo = \Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
+        $materielRequest->docRefNo = Helper::getCompanyDocRefNo($materielRequest->companySystemID, $materielRequest->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $materielRequest);
         $time = strtotime("now");
@@ -843,7 +846,7 @@ class MaterielRequestAPIController extends AppBaseController
         $materielRequest->RollLevForApp_curr = 1;
         $materielRequest->save();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $materielRequest->documentSystemID)->first();
 
@@ -894,7 +897,7 @@ class MaterielRequestAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1274,7 +1277,7 @@ class MaterielRequestAPIController extends AppBaseController
             return $this->sendError(trans('custom.cannot_cancel_purchase_request_is_created_for_this'));
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
 
         $materielRequest->cancelledYN = -1;
@@ -1321,7 +1324,7 @@ class MaterielRequestAPIController extends AppBaseController
                 'docSystemCode' => $materielRequest->RequestID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -1463,7 +1466,7 @@ class MaterielRequestAPIController extends AppBaseController
         }
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $emails = array();
         $ids_to_delete = array();
@@ -1527,7 +1530,7 @@ class MaterielRequestAPIController extends AppBaseController
             array_push($ids_to_delete, $da->documentApprovedID);
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return $this->sendError($sendEmail["message"], 500);
         }
@@ -1550,9 +1553,9 @@ class MaterielRequestAPIController extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'wareHouseFrom'));
 
                 $selectedCompanyId = $input['companyId'];
-                $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+                $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
                 if ($isGroup) {
-                    $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                    $subCompanies = Helper::getGroupCompany($selectedCompanyId);
                 } else {
                     $subCompanies = [$selectedCompanyId];
                 }
@@ -1675,7 +1678,7 @@ class MaterielRequestAPIController extends AppBaseController
         $data = array('companySystemID' => $input['companyId'],
             'itemCodeSystem' => $input['itemSystemCode'],
             'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
         $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
         $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
         if(!$itemCurrentCostAndQty)
@@ -1702,7 +1705,7 @@ class MaterielRequestAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $materialRequest = MaterielRequest::where('RequestID', $input['requestID'])->first();
@@ -1732,7 +1735,7 @@ class MaterielRequestAPIController extends AppBaseController
 
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
             if(empty($uniqueData)) {
@@ -1753,8 +1756,7 @@ class MaterielRequestAPIController extends AppBaseController
                 return $this->sendError(trans('custom.this_purchase_order_fully_approved'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'item_description', 'qty', 'comment'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'qty', 'comment']);
 
             if (count($record) > 0) {
                 $data['isBulkItemJobRun'] = 1;

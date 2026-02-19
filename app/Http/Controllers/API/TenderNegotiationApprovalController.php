@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Log;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Auth;
+use App\helper\email as Email;
 class TenderNegotiationApprovalController extends AppBaseController
 {
     /** @var  TenderNegotiationApprovalRepository */
@@ -235,7 +236,7 @@ class TenderNegotiationApprovalController extends AppBaseController
                         $dataEmail['attachmentList'] = $file;
                     }
 
-                    $sendEmail = \Email::sendEmailSRM($dataEmail);
+                    $sendEmail = Email::sendEmailSRM($dataEmail);
                 }
             }
         }

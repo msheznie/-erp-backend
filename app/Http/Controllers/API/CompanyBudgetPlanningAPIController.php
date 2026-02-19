@@ -35,9 +35,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
+use App\helper\email as Email;
 
 /**
  * Class CompanyBudgetPlanningController
@@ -209,8 +212,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
 
         $uuid = $request->get('tenant_uuid', 'local');
-
-        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id);
+        $url = \Helper::checkDomai();
+        ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.budget_planning_initiated_successfully'));
     }
@@ -257,10 +260,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     public function show($id)
     {
         /** @var CompanyBudgetPlanning $companyBudgetPlanning */
-        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings')->findWithoutFail($id);
+        $companyBudgetPlanning = $this->companyBudgetPlanningRepository->with('departmentBudgetPlannings','workflow')->findWithoutFail($id);
 
         $companyBudgetPlanning['primaryCompany'] = [$companyBudgetPlanning->companySystemID];
         $companyBudgetPlanning['budgetYear'] = [$companyBudgetPlanning->yearID];
+        $companyBudgetPlanning['workflow'] = $companyBudgetPlanning->workflow;
         if (empty($companyBudgetPlanning)) {
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
@@ -379,7 +383,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -455,7 +459,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 'amount' => null
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
@@ -558,7 +562,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             );
         }
         else {
-            $employeeID = \Helper::getEmployeeSystemID();
+            $employeeID = Helper::getEmployeeSystemID();
             $isFinanceUser = $request['isFinanceUser'];
 
             $years = CompanyBudgetPlanning::select('yearID')->groupby('yearID')->get()->pluck('yearID')->toArray();
@@ -711,7 +715,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 }
             }
 
-            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
+            $data = CompanyBudgetPlanning::with(['financeYear', 'departmentBudgetPlannings','workflow'])->whereIn('companySystemID', $companyCodes)->orderBy('id', $sort);
             /*if (array_key_exists('from', $input)) {
                 if (!is_null($request['from']) && ($request['from'] == 'erp')) {
                     $data->where('companySystemID', $input['companyId']);
@@ -774,7 +778,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data = collect();
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $isFinanceUser = false;
 
                 
@@ -1332,7 +1336,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $data = collect();
             if ($companyBudgetPlanning) {
                 $companyBudgetPlanningID = $companyBudgetPlanning->pluck('id')->toArray();
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
 
                 $isFinanceUser = false;
 
@@ -1636,8 +1640,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         try {
             $input = $request->all();
 
-            $input['empID'] =  \Helper::getEmployeeSystemID();
-            $input['created_by'] = \Helper::getEmployeeSystemID();
+            $input['empID'] =  Helper::getEmployeeSystemID();
+            $input['created_by'] = Helper::getEmployeeSystemID();
             // Validate that we have the required data
             if (empty($input)) {
                 return $this->sendError('No data provided', 400);
@@ -1666,7 +1670,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($input['workStatus'] == 3)
             {
-                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id);
+                $url = \Helper::checkDomai();
+                $this->budgetNotificationService->sendNotification($input['budgetPlanningID'],'delegatee-submission', $budgetPlan->masterBudgetPlannings->companySystemID,Auth::user()->employee_id,$url);
             }
 
             return $this->sendResponse([
@@ -2111,7 +2116,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError(trans('custom.cannot_return_back_to_amend_budget_planning_fully_approved'), 400);
             }
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             // Store confirmed_by_emp_system_id before clearing it for email notification
             $confirmedByEmpSystemID = $companyBudgetPlanning->confirmed_by_emp_system_id;
@@ -2167,7 +2172,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             }
 
             if (!empty($emails)) {
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     DB::rollBack();
                     return $this->sendError($sendEmail["message"], 500);

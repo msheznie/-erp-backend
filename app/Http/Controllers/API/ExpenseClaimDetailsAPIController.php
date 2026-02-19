@@ -31,9 +31,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class ExpenseClaimDetailsController
@@ -240,7 +241,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
     public function update($id, UpdateExpenseClaimDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment', 'chart_of_account', 'currency', 'category', 'local_currency']);
+        $input = Arr::except($input, ['segment', 'chart_of_account', 'currency', 'category', 'local_currency']);
         $input = $this->convertArrayToValue($input);
         $validator = \Validator::make($input, [
             'expenseClaimCategoriesAutoID' => 'required'
@@ -622,7 +623,7 @@ class ExpenseClaimDetailsAPIController extends AppBaseController
 
         if(isset($input['size'])){
             if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
+                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')),500);
             }
             $input['sizeInKbs'] = $input['size'];
         }

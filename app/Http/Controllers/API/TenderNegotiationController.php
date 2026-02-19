@@ -27,6 +27,8 @@ use Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use App\helper\Helper;
+use App\helper\email as Email;
 
 class TenderNegotiationController extends AppBaseController
 {
@@ -67,7 +69,7 @@ class TenderNegotiationController extends AppBaseController
     {
 
         $input = $request->all();
-        $input['started_by'] = \Helper::getEmployeeSystemID();
+        $input['started_by'] = Helper::getEmployeeSystemID();
         $input['status'] = 1;
         $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
@@ -120,7 +122,7 @@ class TenderNegotiationController extends AppBaseController
         $tenderMasterId = $input['srm_tender_master_id'];
         $noToApproval = $this->getTenderMaster($tenderMasterId);
 
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
         $selectedSupplierList = $input['selectedSupplierList'];
         $supplierList = $this->getTenderNegotiationsSuppliers($id);
         $unCheckedSupList =  collect($supplierList)->whereNotIn('srm_bid_submission_master_id',array_column($selectedSupplierList, 'srm_bid_submission_master_id'));
@@ -326,7 +328,7 @@ class TenderNegotiationController extends AppBaseController
                         $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                         $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                     }
                 }
             }
@@ -345,7 +347,7 @@ class TenderNegotiationController extends AppBaseController
         $input['tenderNegotiationID'] = $tenderNegotiationId;
 
 
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
         $selectedSupplierList = $supplierDataArray;
         $supplierList = $this->getTenderNegotiationsSuppliers($tenderNegotiationId);
         $unCheckedSupList =  collect($supplierList)->whereNotIn('srm_bid_submission_master_id',array_column($selectedSupplierList, 'srm_bid_submission_master_id'));

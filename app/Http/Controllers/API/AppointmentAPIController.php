@@ -12,12 +12,15 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ApprovalLevel;
 use App\Jobs\DeliveryAppoinmentGRV;
 use App\Models\AppointmentDetails;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class AppointmentController
@@ -291,7 +294,7 @@ class AppointmentAPIController extends AppBaseController
         $slotDetailId = $input['slotDetailId'];
         $companyId = $input['companyId'];
         $documentSystemID = 106;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $data = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
             $q->where('erp_documentapproved.rejectedYN', 0)
                 ->where('erp_documentapproved.documentSystemID', $documentSystemID)
@@ -321,7 +324,7 @@ class AppointmentAPIController extends AppBaseController
         //$slotDetailId = $input['slotDetailId'];
         $companyId = $input['companyId'];
         $documentSystemID = 106;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $data = Appointment::with(['documentApproved' => function ($q) use ($companyId, $documentSystemID, $empID) {
             $q->where('erp_documentapproved.rejectedYN', 0)
                 ->where('erp_documentapproved.documentSystemID', $documentSystemID)
@@ -348,7 +351,7 @@ class AppointmentAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
         $documentSystemID = 106;
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -429,7 +432,7 @@ class AppointmentAPIController extends AppBaseController
         );
 
 
-        $approve = \Helper::approveDocument($params);
+        $approve = DocumentApprove::approveDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -450,7 +453,7 @@ class AppointmentAPIController extends AppBaseController
             'rejectedComments' => $input['rejectedComments']
         );
 
-        $approve = \Helper::rejectDocument($params);
+        $approve = DocumentReject::rejectDocument($params);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

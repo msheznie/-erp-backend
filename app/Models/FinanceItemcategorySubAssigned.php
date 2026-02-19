@@ -45,7 +45,6 @@ class FinanceItemcategorySubAssigned extends Model
 
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -94,7 +93,8 @@ class FinanceItemcategorySubAssigned extends Model
         'companyID' => 'string',
         'isActive' => 'integer',
         'isAssigned' => 'integer',
-        'enableSpecification' => 'integer'
+        'enableSpecification' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

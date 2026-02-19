@@ -24,12 +24,13 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
     public $companyBudgetPlanningID;
     public $uuid;
     public $empID;
+    public $url;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID)
+    public function __construct($db, $companyBudgetPlanningID, $uuid, $empID, $url)
     {
         if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
             if (env('IS_MULTI_TENANCY',false)) {
@@ -47,6 +48,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
         $this->companyBudgetPlanningID = $companyBudgetPlanningID;
         $this->uuid = $uuid;
         $this->empID = $empID;
+        $this->url = $url;
     }
 
     /**
@@ -56,7 +58,6 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/department_budget_process.log');
 
         DB::beginTransaction();
 
@@ -67,7 +68,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($this->companyBudgetPlanningID);
             if ($companyBudgetPlanning) {
-                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
+                $finalDepartments = CompanyDepartment::where('companySystemID', $companyBudgetPlanning->companySystemID)->where('isActive',1)->where('type',2)->where('isFinance',0)->doesntHave('children')->get();
                 foreach ($finalDepartments as $department) {
                     $data = [
                         'companyBudgetPlanningID' => $companyBudgetPlanning->id,
@@ -85,7 +86,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
                     $budgetPlanning = DepartmentBudgetPlanning::create($data);
 
                     $budgetNotificationService = new BudgetNotificationService();
-                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID);
+                    $budgetNotificationService->sendNotification( $budgetPlanning->id,'kick-off', $companyBudgetPlanning->companySystemID,null,$this->url);
 
                     $narrationVariables = $budgetPlanning->planningCode;
                     $this->auditLog(
@@ -105,7 +106,7 @@ class ProcessDepartmentBudgetPlanning implements ShouldQueue
             }
             DB::commit();
         } catch (\Exception $exception) {
-            Log::warning($exception->getMessage());
+            Log::channel('department_budget_process')->warning($exception->getMessage());
             DB::rollBack();
         }
     }

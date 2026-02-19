@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
+use App\helper\email as Email;
 
 class SoSentToCustomerJob implements ShouldQueue
 {
@@ -35,10 +36,16 @@ class SoSentToCustomerJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $soData)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->soData = $soData;
@@ -56,7 +63,6 @@ class SoSentToCustomerJob implements ShouldQueue
         $documentTypeTitle = $input['documentTypeTitle'];
         $db = $this->dispatch_db;
 
-        Log::useFiles(storage_path() . '/logs/so_sent_to_customer.log');
 
         CommonJobService::db_switch($db);
 
@@ -149,7 +155,7 @@ class SoSentToCustomerJob implements ShouldQueue
                             'companyName' => $company->CompanyName
                         ]);
                         $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        $sendEmail = Email::sendEmailErp($dataEmail);
                         if (!$sendEmail["success"]) {
                             DB::rollback();
                             Log::error('Error');

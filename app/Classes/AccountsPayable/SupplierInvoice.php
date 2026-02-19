@@ -13,6 +13,7 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use http\Exception\InvalidArgumentException;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class SupplierInvoice
 {
@@ -220,7 +221,7 @@ class SupplierInvoice
             throw new \Exception(trans('custom.supplier_transaction_currency_details_not_found'));
 
         $supplierTranscationCurrency = $supplier->supplierCurrency->first()->currencyMaster->currencyID;
-        $companyCurrencyConversion = \Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($this->master->companySystemID, $supplierTranscationCurrency, $supplierTranscationCurrency, 0);
 
 
         $this->master->supplierVATEligible = $supplierAssignedDetail->vatEligible;

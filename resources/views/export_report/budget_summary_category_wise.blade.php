@@ -1,82 +1,87 @@
 <html>
-<center>
-    <tr>
-        <td colspan="3"> </td>
-        <td><h1>{{ trans('custom.report_template_category_wise') }}</h1>  </td>
-        <td colspan="3"> </td>
-
-    <tr>
-</center>
+<body>
 <table>
     <thead>
-
+    <tr>
+        <td colspan="3"></td>
+        <td style="font-weight: bold">{{ trans('custom.report_template_category_wise') }}</td>
+        <td colspan="3"></td>
+    </tr>
     <tr>
         @php
-            $bigginingDt = new DateTime($entity['finance_year_by']['bigginingDate']);
-            $bigginingDate = $bigginingDt->format('d/m/Y');
-
-            $endingDt = new DateTime($entity['finance_year_by']['endingDate']);
-            $endingDate = $endingDt->format('d/m/Y');
-
-
+            $financeYearBy = $entity['finance_year_by'] ?? null;
+            $bigginingDate = '';
+            $endingDate = '';
+            if ($financeYearBy) {
+                try {
+                    $startRaw = $financeYearBy['bigginingDate'] ?? $financeYearBy['beginningDate'] ?? '';
+                    if ($startRaw) {
+                        $dt = new DateTime($startRaw);
+                        $bigginingDate = $dt->format('d/m/Y');
+                    }
+                } catch (\Exception $e) {}
+                try {
+                    $endRaw = $financeYearBy['endingDate'] ?? '';
+                    if ($endRaw) {
+                        $dt = new DateTime($endRaw);
+                        $endingDate = $dt->format('d/m/Y');
+                    }
+                } catch (\Exception $e) {}
+            }
         @endphp
         <td>{{ trans('custom.finance_year') }} : {{ $bigginingDate }} - {{ $endingDate }}</td>
-        <td> </td>
-        <td> </td>
-        <td> </td>
-        <td>{{ trans('custom.year') }} : {{ $entity['Year'] }}</td>
-
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{ trans('custom.year') }} : {{ $entity['Year'] ?? '' }}</td>
     </tr>
     <tr>
-
-        <td>{{ trans('custom.segment') }} : {{ $entity['segment_by']['ServiceLineDes'] }}</td>
-        <td> </td>
-        <td> </td>
-        <td> </td>
-        <td>{{ trans('custom.template') }} : {{ $entity['template_master']['description'] }}</td>
-
+        @php
+            $segmentBy = $entity['segment_by'] ?? null;
+            $templateMaster = $entity['template_master'] ?? null;
+        @endphp
+        <td>{{ trans('custom.segment') }} : {{ (is_array($segmentBy) ? ($segmentBy['ServiceLineDes'] ?? '') : '') }}</td>
+        <td></td>
+        <td></td>
+        <td></td>
+        <td>{{ trans('custom.template') }} : {{ (is_array($templateMaster) ? ($templateMaster['description'] ?? '') : '') }}</td>
     </tr>
-    <tr></tr>
-    <tr></tr>
-
+    <tr><td colspan="6"></td></tr>
+    <tr><td colspan="6"></td></tr>
     <tr>
         <th>{{ trans('custom.template_description') }}</th>
-
-        <th>{{ trans('custom.budget_amount') }} ({{ $rptCurrency->CurrencyCode ?? 'USD' }})</th>
+        <th>{{ trans('custom.budget_amount') }} ({{ ($rptCurrency->CurrencyCode ?? null) ?: 'USD' }})</th>
         <th>{{ trans('custom.commited_budget') }}</th>
         <th>{{ trans('custom.actual_consumption') }}</th>
         <th>{{ trans('custom.pending_document_amount') }}</th>
         <th>{{ trans('custom.balance') }}</th>
-
     </tr>
     </thead>
     <tbody>
-    @foreach($reportData as $item)
+    @foreach($reportData ?? [] as $item)
         <tr>
-            <td>{{ $item->templateDetailDescription }}</td>
-            <td>{{ number_format($item->totalRpt,2) }}</td>
-            <td>{{ number_format($item->committedAmount,2) }}</td>
-            <td>{{ number_format($item->actualConsumptionAmount,2) }}</td>
-            <td>{{ number_format($item->pendingDocumentAmount,2) }}</td>
-            <td>{{ number_format($item->balance,2) }}</td>
-
+            <td>{{ $item->templateDetailDescription ?? '' }}</td>
+            <td>{{ number_format($item->totalRpt ?? 0, 2) }}</td>
+            <td>{{ number_format($item->committedAmount ?? 0, 2) }}</td>
+            <td>{{ number_format($item->actualConsumption ?? 0, 2) }}</td>
+            <td>{{ number_format($item->pendingDocumentAmount ?? 0, 2) }}</td>
+            <td>{{ number_format($item->balance ?? 0, 2) }}</td>
         </tr>
     @endforeach
-
     </tbody>
     <tfoot>
     <tr>
-
+        @php
+            $tot = $total ?? [];
+        @endphp
         <td>{{ trans('custom.total_amount') }}</td>
-
-        <td>{{ number_format($total['totalRpt'],3) }}</td>
-        <td>{{ number_format($total['committedAmount'],2) }}</td>
-        <td>{{ number_format($total['actualConsumption'],2)}}</td>
-        <td>{{ number_format($total['pendingDocumentAmount'],2) }}</td>
-        <td>{{ number_format($total['balance'],2) }}</td>
-
-
+        <td>{{ number_format($tot['totalRpt'] ?? 0, 3) }}</td>
+        <td>{{ number_format($tot['committedAmount'] ?? 0, 2) }}</td>
+        <td>{{ number_format($tot['actualConsumption'] ?? 0, 2) }}</td>
+        <td>{{ number_format($tot['pendingDocumentAmount'] ?? 0, 2) }}</td>
+        <td>{{ number_format($tot['balance'] ?? 0, 2) }}</td>
     </tr>
     </tfoot>
 </table>
+</body>
 </html>

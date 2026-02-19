@@ -19,9 +19,11 @@ use App\Models\GeneralLedger;
 use App\Models\YesNoSelection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class FinalReturnIncomeReportsController
@@ -471,15 +473,15 @@ class FinalReturnIncomeReportsAPIController extends AppBaseController
     public function confirmReturnIncomeReport(Request $request) {
         $input = $request->master;
        
-        $input = array_except($input, ['finance_year_by','template','confirmed_by']);
+        $input = Arr::except($input, ['finance_year_by','template','confirmed_by']);
 
         if($input['confirmedYN'] == 1) {
-            $input['confirmedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['confirmedByEmpSystemID'] = Helper::getEmployeeSystemID();
             $input['confirmedDate'] = now();
         }
 
         if($input['submittedYN'] == 1) {
-            $input['submittedByEmpSystemID'] = \Helper::getEmployeeSystemID();
+            $input['submittedByEmpSystemID'] = Helper::getEmployeeSystemID();
             $input['submittedDate'] = now();
         }
         

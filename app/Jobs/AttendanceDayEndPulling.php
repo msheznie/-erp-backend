@@ -29,10 +29,16 @@ class AttendanceDayEndPulling implements ShouldQueue
      */
     public function __construct($dispatchDb, $companyId, $attDate)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatchDb = $dispatchDb;
@@ -47,7 +53,6 @@ class AttendanceDayEndPulling implements ShouldQueue
      */
     public function handle()
     {        
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockOut') );
 
         CommonJobService::db_switch( $this->dispatchDb );
 

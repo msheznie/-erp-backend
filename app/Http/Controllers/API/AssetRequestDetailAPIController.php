@@ -13,7 +13,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\FixedAssetMaster;
 use App\Models\DepartmentMaster;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 

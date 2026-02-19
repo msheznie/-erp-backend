@@ -6,11 +6,11 @@ use Illuminate\Support\Facades\Storage;
 
 class GenerateExcel
 {
-    public static function process($data,$type,$fileName = 'payment_suppliers_by_year',$path_dir,$array=NULL)
+    public static function process($data,$type,$fileName = 'payment_suppliers_by_year',$path_dir = null,$array=NULL)
     {
         
         $columnFormat = isset($array['excelFormat']) ? $array['excelFormat'] : NULL;
-        $excel_content =  \Excel::create($fileName, function ($excel) use ($data,$fileName,$array,$columnFormat) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($data, $fileName, $array, $columnFormat) {
             if(isset($array['origin']) && $array['origin'] == 'SRM'){
                 $dataNew = $array['faq_data'];
                 $dataNewPrebid = $array['prebid_data'];
@@ -245,9 +245,9 @@ class GenerateExcel
                     }
 
                     if(isset($array['dataType']) && $array['dataType'] == 2) {
-                        $sheet->fromArray($data, null, 'A'.$i, false,false);
-                    }else {
-                        $sheet->fromArray($data, null, 'A'.$i, false,true);
+                        $sheet->fromArray($data, null, 'A'.$i, true, false);
+                    } else {
+                        $sheet->fromArray($data, null, 'A'.$i, true, true);
                     }
                     (isset($array['setColumnAutoSize'])) ?  $sheet->setAutoSize($array['setColumnAutoSize']) : $sheet->setAutoSize(true);
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
@@ -285,8 +285,7 @@ class GenerateExcel
             }
 
             $lastrow = $excel->getActiveSheet()->getHighestRow();
-        })->download($type);
-
+        }, $type);
     }
 
     public static function fromDate($array,$sheet,$type)

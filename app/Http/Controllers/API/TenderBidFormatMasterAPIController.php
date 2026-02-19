@@ -11,12 +11,14 @@ use App\Models\TenderFieldType;
 use App\Repositories\TenderBidFormatMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use App\helper\Helper;
 /**
  * Class TenderBidFormatMasterController
  * @package App\Http\Controllers\API
@@ -324,7 +326,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function storeBidFormat(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         /*$boq_applicable = 0;
         if(isset($input['boq_applicable']) && $input['boq_applicable']){
             $boq_applicable = 1;
@@ -390,7 +392,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function addPriceBidDetail(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
@@ -449,7 +451,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($details, array('field_type'));
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
         if(!isset($input['label']) || empty($input['label'])){
@@ -542,7 +544,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         /*$boq_applicable = 0;
         if(isset($input['boq_applicable']) && $input['boq_applicable']){
             $boq_applicable = 1;
@@ -586,7 +588,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         $tender_id = $input['tender_id'];
         $id = $input['id'];
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
 
@@ -615,7 +617,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
     public function deletePriceBidMaster(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $pricebid = self::priceBidExistInTender($input['id']);
@@ -934,7 +936,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
             $data = $this->tenderBidFormatMasterRepository->uploadPriceBidFormatDetails($input, $excelUpload);
             return $data;

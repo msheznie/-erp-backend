@@ -40,7 +40,6 @@ class SupplierCategoryMaster extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -73,7 +72,8 @@ class SupplierCategoryMaster extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

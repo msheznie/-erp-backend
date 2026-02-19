@@ -3,9 +3,10 @@
 namespace App\Repositories;
 
 use App\Models\BankReconciliation;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use Carbon\Carbon;
+use App\helper\Helper;
 
 
 /**
@@ -73,13 +74,13 @@ class BankReconciliationRepository extends BaseRepository
         }])->findWithoutFail($id);
     }
 
-    public function bankReconciliationListQuery($request, $input, $search = '' ,$bankmasterAutoID) {
+    public function bankReconciliationListQuery($request, $input, $search = '' ,$bankmasterAutoID = null) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -155,7 +156,7 @@ class BankReconciliationRepository extends BaseRepository
                 $data[$x][trans('custom.year')] = $val->year;
                 $data[$x][trans('custom.bank_name')] = $val->bank_account? $val->bank_account->bankName : '';
                 $data[$x][trans('custom.account_no')] = $val->bank_account? $val->bank_account->AccountNo : '';
-                $data[$x][trans('custom.as_of')] = \Helper::dateFormat($val->bankRecAsOf);
+                $data[$x][trans('custom.as_of')] = Helper::dateFormat($val->bankRecAsOf);
                 $data[$x][trans('custom.description')] = $val->description;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->canceledYN, NULL, $val->confirmedYN, $val->approvedYN, $val->refferedBackYN);

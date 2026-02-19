@@ -74,7 +74,6 @@ class RetryFailedAuditLogsJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::info('Starting RetryFailedAuditLogsJob');
         
         try {
             // Get retryable failed logs
@@ -160,7 +159,6 @@ class RetryFailedAuditLogsJob implements ShouldQueue
                     })
                     ->toArray();
                 
-                Log::info('Permanently failed logs by channel', $stats);
             }
         } catch (\Exception $e) {
             Log::error('Failed to get permanently failed log statistics', [

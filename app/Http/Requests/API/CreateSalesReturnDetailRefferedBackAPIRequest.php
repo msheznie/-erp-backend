@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SalesReturnDetailRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSalesReturnDetailRefferedBackAPIRequest extends APIRequest
+class CreateSalesReturnDetailRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

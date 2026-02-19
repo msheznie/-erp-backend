@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\RoleRoute;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class RoleRouteRepository

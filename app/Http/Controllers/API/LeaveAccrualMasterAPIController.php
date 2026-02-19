@@ -13,7 +13,7 @@ use App\Repositories\LeaveAccrualMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -298,7 +298,6 @@ class LeaveAccrualMasterAPIController extends AppBaseController
         //echo '<pre>'; print_r($company); echo '</pre>'; //exit;
 
         $path = CommonJobService::get_specific_log_file('leave-accrual');
-        Log::useFiles($path);
 
         $ser_per = new LeaveAccrualService($company, $accrual_type_det, []);
         $groups = $ser_per->prepare_for_accrual();

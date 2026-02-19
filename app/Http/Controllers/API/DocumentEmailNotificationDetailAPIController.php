@@ -22,9 +22,11 @@ use App\Models\Employee;
 use App\Repositories\DocumentEmailNotificationDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class DocumentEmailNotificationDetailController
@@ -251,7 +253,7 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $request->all();
-        $input = array_except($input, ['company',
+        $input = Arr::except($input, ['company',
             'policy_category',
             'companyID',
             'companySystemID',
@@ -340,10 +342,10 @@ class DocumentEmailNotificationDetailAPIController extends AppBaseController
 
         $companyId = $input['companySystemID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

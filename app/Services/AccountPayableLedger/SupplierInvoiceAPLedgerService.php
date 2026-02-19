@@ -24,6 +24,7 @@ use App\Services\GeneralLedger\GlPostedDateService;
 use App\Models\Tax;
 use App\Models\SupplierMaster;
 use App\helper\ExchangeSetupConfig;
+use App\helper\Helper;
 
 class SupplierInvoiceAPLedgerService
 {
@@ -100,17 +101,17 @@ class SupplierInvoiceAPLedgerService
 
             if ($masterData->documentType == 0 || $masterData->documentType == 2) { // check if it is supplier invoice
                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                $data['supplierTransER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
-                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
+                $data['supplierTransER'] = Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
+                $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
                 $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
-                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
+                $data['supplierDefaultCurrencyER'] = Helper::roundValue(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
+                $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans));
                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                 $data['localER'] = round(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal), 8);
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal));
+                $data['localAmount'] = Helper::roundValue(ABS($masterData->detail[0]->localAmount + $poInvoiceDirectLocalExtCharge + $taxLocal));
                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['comRptER'] = round(($masterData->detail[0]->transAmount + $poInvoiceDirectTransExtCharge + $taxTrans) / ($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt), 8);
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt));
+                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->detail[0]->rptAmount + $poInvoiceDirectRptExtCharge + $taxRpt));
 
                 if ($policyConfirmedToLinkPO['isYesNO'] == 1 && sizeof($supplierInvoiceDetailLength) == 1) {
                     $data['purchaseOrderID'] = $supplierInvoiceDetailLength[0]['purchaseOrderID'];
@@ -120,43 +121,43 @@ class SupplierInvoiceAPLedgerService
 
                 $transAmount = (isset($masterData->item_details[0]->transAmount) ? $masterData->item_details[0]->transAmount : 0) + (isset($masterData->item_details[0]->transVATAmount) ? $masterData->item_details[0]->transVATAmount : 0);
 
-                $directItemCurrencyConversion = \Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $transAmount);
+                $directItemCurrencyConversion = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $transAmount);
 
                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                $data['supplierTransER'] = \Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
-                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
+                $data['supplierTransER'] = Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
+                $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
                 $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
-                $data['supplierDefaultCurrencyER'] = \Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
-                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
+                $data['supplierDefaultCurrencyER'] = Helper::roundValue(($transAmount + $poInvoiceDirectTransExtCharge ) / ($transAmount + $poInvoiceDirectTransExtCharge ));
+                $data['supplierDefaultAmount'] = Helper::roundValue(ABS($transAmount + $poInvoiceDirectTransExtCharge ));
                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                 $data['localER'] = round(($transAmount + $poInvoiceDirectTransExtCharge ) / ($directItemCurrencyConversion['localAmount'] + $poInvoiceDirectLocalExtCharge), 8);
-                $data['localAmount'] = \Helper::roundValue(ABS($directItemCurrencyConversion['localAmount'] + $poInvoiceDirectLocalExtCharge));
+                $data['localAmount'] = Helper::roundValue(ABS($directItemCurrencyConversion['localAmount'] + $poInvoiceDirectLocalExtCharge));
                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['comRptER'] = round(($transAmount + $poInvoiceDirectTransExtCharge ) / ($directItemCurrencyConversion['reportingAmount'] + $poInvoiceDirectRptExtCharge), 8);
-                $data['comRptAmount'] = \Helper::roundValue(ABS($directItemCurrencyConversion['reportingAmount'] + $poInvoiceDirectRptExtCharge));
+                $data['comRptAmount'] = Helper::roundValue(ABS($directItemCurrencyConversion['reportingAmount'] + $poInvoiceDirectRptExtCharge));
             } else {
                 $data['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                 $data['supplierTransER'] = $masterData->supplierTransactionCurrencyER;
-                $data['supplierInvoiceAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
+                $data['supplierInvoiceAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
                 $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                 $data['supplierDefaultCurrencyER'] = $masterData->supplierTransactionCurrencyER;
-                $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
+                $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->transAmount + $taxTrans));
                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                 $data['localER'] = $masterData->localCurrencyER;
-                $data['localAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->localAmount + $taxLocal));
+                $data['localAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->localAmount + $taxLocal));
                 $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['comRptER'] = $masterData->companyReportingER;
-                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->directdetail[0]->rptAmount + $taxRpt));
+                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->directdetail[0]->rptAmount + $taxRpt));
             }
             $data['isInvoiceLockedYN'] = 0;
             $data['invoiceType'] = $masterData->documentType;
             $data['selectedToPaymentInv'] = 0;
             $data['fullyInvoice'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdPcID'] = gethostname();
-            $data['timeStamp'] = \Helper::currentDateTime();
+            $data['timeStamp'] = Helper::currentDateTime();
 
             $retentionTrans = 0;
             $retentionLocal = 0;
@@ -231,9 +232,9 @@ class SupplierInvoiceAPLedgerService
                         $totalVATAmount = 0;
                         $totalVATAmountLocal = 0;
                         $totalVATAmountRpt = 0;
-                        $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
-                        $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
-                        $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
+                        $totalVATAmount = Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
+                        $totalVATAmountLocal = Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
+                        $totalVATAmountRpt = Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
                         if ($masterData->rcmActivated != 1) {
                             $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
                             $retentionTrans = ($data['supplierDefaultAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
@@ -257,9 +258,9 @@ class SupplierInvoiceAPLedgerService
                         $totalVATAmount = 0;
                         $totalVATAmountLocal = 0;
                         $totalVATAmountRpt = 0;
-                        $totalVATAmount = \Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
-                        $totalVATAmountLocal = \Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
-                        $totalVATAmountRpt = \Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
+                        $totalVATAmount = Helper::roundValue(ABS($directVATDetails['masterVATTrans']));
+                        $totalVATAmountLocal = Helper::roundValue(ABS($directVATDetails['masterVATLocal']));
+                        $totalVATAmountRpt = Helper::roundValue(ABS($directVATDetails['masterVATRpt']));
 
                         $retentionInvoiceAmount = ($data['supplierInvoiceAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
                         $retentionTrans = ($data['supplierDefaultAmount'] - $totalVATAmount) * ($retentionPercentage / 100);
@@ -292,16 +293,16 @@ class SupplierInvoiceAPLedgerService
                     if ($masterData->documentType == 0 || $masterData->documentType == 2 || $masterData->documentType == 1 || $masterData->documentType == 3) {
 
                         if (in_array($masterData->documentType, [1, 3])) {
-                            $currencyWht = \Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $masterData->whtAmount);
+                            $currencyWht = Helper::convertAmountToLocalRpt($masterData->documentSystemID, $masterModel["autoID"], $masterData->whtAmount);
                         } 
                         else {
-                            $currencyWht = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
+                            $currencyWht = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->supplierTransactionCurrencyID, $masterData->whtAmount);
                         }
 
                         $whtAmountConTran = $masterData->whtAmount;
                         $whtAmountConInvoicet = $masterData->whtAmount;
-                        $whtAmountConLocal = \Helper::roundValue($currencyWht['localAmount']);
-                        $whtAmountConRpt = \Helper::roundValue($currencyWht['reportingAmount']);
+                        $whtAmountConLocal = Helper::roundValue($currencyWht['localAmount']);
+                        $whtAmountConRpt = Helper::roundValue($currencyWht['reportingAmount']);
                         $whtSupplier = null;
                         $taxSetup = Tax::where('taxMasterAutoID',$masterData->whtType)->first();
                         $whtAuthority = null;
@@ -320,7 +321,7 @@ class SupplierInvoiceAPLedgerService
 
                             $currencyID = $supplierCurrencies->currencyID;
 
-                            $companyCurrencyConversion = \Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
+                            $companyCurrencyConversion = Helper::currencyConversion($masterData->companySystemID, $currencyID, $currencyID, 0);
                             $localER = $companyCurrencyConversion['trasToLocER'];
                             $comRptER = $companyCurrencyConversion['trasToRptER'];
                         }
@@ -356,18 +357,18 @@ class SupplierInvoiceAPLedgerService
                         $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
                     }
                     else {
-                        $molAmountLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                        $molAmountLocalConversion = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
                         $molAmountLocalConversion = $molAmountLocalConversion['localAmount'] ?? 0;
                         
-                        $molAmountRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                        $molAmountRptConversion = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
                         $molAmountRptConversion = $molAmountRptConversion['reportingAmount'] ?? 0;
                     }
                 }
                 
                 $data['supplierInvoiceAmount'] -= $molAmount;
                 $data['supplierDefaultAmount'] -= $molAmount;
-                $data['localAmount'] -= \Helper::roundValue($molAmountLocalConversion);
-                $data['comRptAmount'] -= \Helper::roundValue($molAmountRptConversion);
+                $data['localAmount'] -= Helper::roundValue($molAmountLocalConversion);
+                $data['comRptAmount'] -= Helper::roundValue($molAmountRptConversion);
             }
 
             array_push($finalData, $data);
@@ -382,8 +383,8 @@ class SupplierInvoiceAPLedgerService
                     $molData['supplierTransCurrencyID'] = $masterData->supplierTransactionCurrencyID;
                     $molData['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
 
-                    $molData['supplierInvoiceAmount'] = \Helper::roundValue($molAmount);
-                    $molData['supplierDefaultAmount'] = \Helper::roundValue($molAmount);
+                    $molData['supplierInvoiceAmount'] = Helper::roundValue($molAmount);
+                    $molData['supplierDefaultAmount'] = Helper::roundValue($molAmount);
 
                     if ($masterData->documentType == 0 || $masterData->documentType == 2) {
                         $lastEntry = end($finalData);
@@ -399,16 +400,16 @@ class SupplierInvoiceAPLedgerService
                             $molAmountRptConversion = $molAmountConversion['reportingAmount'] ?? 0;
                         }
                         else {
-                            $molLocalConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
+                            $molLocalConversion = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->localCurrencyID, $molAmount);
                             $molAmountLocalConversion = $molLocalConversion['localAmount'] ?? 0;
                         
-                            $molRptConversion = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
+                            $molRptConversion = Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransactionCurrencyID, $masterData->companyReportingCurrencyID, $molAmount);
                             $molAmountRptConversion = $molRptConversion['reportingAmount'] ?? 0;
                         }
                     }
                     
-                    $molData['localAmount'] = \Helper::roundValue($molAmountLocalConversion);
-                    $molData['comRptAmount'] = \Helper::roundValue($molAmountRptConversion);
+                    $molData['localAmount'] = Helper::roundValue($molAmountLocalConversion);
+                    $molData['comRptAmount'] = Helper::roundValue($molAmountRptConversion);
 
                     $molData['isRetention'] = 0;
                     $molData['isWHT'] = 0;

@@ -7,6 +7,7 @@ use App\Models\DocumentMaster;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use App\helper\email as Email;
 
 class AfterDocumentCreated
 {
@@ -29,8 +30,12 @@ class AfterDocumentCreated
     public function handle($event)
     {
         $document = $event->document;
+        if (is_object($document) && method_exists($document, 'toArray')) {
+            $document = $document->toArray();
+        } elseif (!is_array($document)) {
+            $document = (array) $document;
+        }
 
-        Log::useFiles(storage_path() . '/logs/after_document_created.log');
         if (!empty($document)) {
             $documentArray = array(
                 'modelName' => '',
@@ -151,13 +156,12 @@ class AfterDocumentCreated
                     $documentArray["documentExist"] = 1;
                     break;
                 default:
-                    Log::info('Document ID Not Found' . date('H:i:s'));
+                    Log::channel('after_document_created')->error('Document ID Not Found' . date('H:i:s'));
             }
 
 
             if ($documentArray['documentExist'] == 1) {
                 $nameSpacedModel = 'App\Models\\' . $documentArray["modelName"];
-                $document = $document->toArray();
                 $missingRecodes = array();
                 $range = "";
                 $previousDoc = $nameSpacedModel::where('companySystemID', $document['companySystemID'])
@@ -219,13 +223,13 @@ class AfterDocumentCreated
                     ]);
                     $dataEmail['emailAlertMessage'] = $temp;
 
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
 
                 }
             }
 
         } else {
-            Log::info('Document Not Found' . date('H:i:s'));
+            Log::channel('after_document_created')->error('Document Not Found' . date('H:i:s'));
         }
     }
 

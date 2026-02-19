@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FieldMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateFieldMasterAPIRequest extends APIRequest
+class CreateFieldMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

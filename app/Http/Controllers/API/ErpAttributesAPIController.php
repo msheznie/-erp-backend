@@ -11,10 +11,11 @@ use App\Repositories\ErpAttributesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpAttributesDropdown;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditLogsTrait;
+use App\helper\Helper;
 
 /**
  * Class ErpAttributesController
@@ -427,7 +428,7 @@ class ErpAttributesAPIController extends AppBaseController
 
         if(isset($input['is_active']) && $input['is_active'] == false)
         {
-            $inactivatedAt = \Helper::currentDateTime();
+            $inactivatedAt = Helper::currentDateTime();
         } else {
             $inactivatedAt = null;
         }
@@ -482,11 +483,14 @@ class ErpAttributesAPIController extends AppBaseController
                     $erpAttributes = ErpAttributes::withTrashed()->find($attribute->attribute_id);
                     $asset = FixedAssetMaster::find($attribute->document_master_id);
 
+                    if ($asset === null) {
+                        continue;
+                    }
                     if ($asset->confirmedYN == 0 || ($asset->confirmedYN == 1 && $asset->approved == 0)) {
                             ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
                     }
                     if ($asset->approved == -1) {
-                        if ($erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
+                        if ($erpAttributes && $erpAttributes->is_active == 0 && $asset->createdDateAndTime > $erpAttributes->inactivated_at) {
                             ErpAttributeValues::where('id', $attribute->id)->update(['is_active' => 0]);
                         }
                     }

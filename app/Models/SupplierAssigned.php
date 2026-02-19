@@ -66,7 +66,6 @@ class SupplierAssigned extends Model
     protected $primaryKey  = 'supplierAssignedID';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -178,6 +177,7 @@ class SupplierAssigned extends Model
         'vatEligible' => 'integer',
         'vatNumber' => 'string',
         'vatPercentage' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

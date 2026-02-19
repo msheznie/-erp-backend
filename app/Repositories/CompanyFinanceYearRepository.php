@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyPolicyMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 

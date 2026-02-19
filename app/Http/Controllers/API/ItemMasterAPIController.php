@@ -55,7 +55,7 @@ use App\Repositories\ItemMasterRepository;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +76,11 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Repositories\UnitConversionRepository;
 use App\Traits\AuditLogsTrait;
 use App\Models\WarehouseItems;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -229,7 +234,7 @@ class ItemMasterAPIController extends AppBaseController
 
                 if ($input['itemConfirmedYN'] == true) {
                     $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"], 500);
                     }
@@ -377,10 +382,10 @@ class ItemMasterAPIController extends AppBaseController
 
         $itemType = $request->itemTypeID;
         $companyId = $request->primaryCompanySystemID;
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
@@ -439,10 +444,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -542,16 +547,16 @@ class ItemMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $search = $request->input('search.value');
         $itemMasters = DB::table('erp_documentapproved')->select( 'employeesdepartments.approvalDeligated','itemmaster.*', 'erp_documentapproved.documentApprovedID', 'financeitemcategorymaster.categoryDescription as financeitemcategorydescription', 'financeitemcategorysub.categoryDescription as financeitemcategorysubdescription', 'units.UnitShortCode', 'rollLevelOrder', 'financeGLcodePL', 'approvalLevelID', 'documentSystemCode', DB::raw('GROUP_CONCAT(item_category_type_master.name SEPARATOR ", ") as category_descriptions'))->join('employeesdepartments', function ($query) use ($companyID, $empID) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -587,7 +592,7 @@ class ItemMasterAPIController extends AppBaseController
             ->whereIn('erp_documentapproved.companySystemID', $companyID)
             ->groupBy('itemmaster.itemCodeSystem');
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $itemMasters = [];
@@ -673,8 +678,8 @@ class ItemMasterAPIController extends AppBaseController
         $masterCompany = Company::where("companySystemID", $selectedCompanyId)->first();
 
         foreach ($companyList as $companyId) {
-            if (\Helper::checkIsCompanyGroup($companyId)) {
-                $subCompanies = array_merge($subCompanies, \Helper::getGroupCompany($companyId));
+            if (Helper::checkIsCompanyGroup($companyId)) {
+                $subCompanies = array_merge($subCompanies, Helper::getGroupCompany($companyId));
             } else {
                 $subCompanies = [$companyId];
             }
@@ -699,7 +704,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -870,7 +875,7 @@ class ItemMasterAPIController extends AppBaseController
         $partNo = isset($input['secondaryItemCode']) ? $input['secondaryItemCode'] : '';
         $input['isPOSItem'] = isset($input['isPOSItem']) ? $input['isPOSItem'] : 0;
 
-        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        $validatorResult = Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
             return $this->sendError($validatorResult['message']);
         }
@@ -1060,7 +1065,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         unset($input['categoryType']);
 
-        $input = array_except($input,['finance_sub_category','company','specification','final_approved_by']);
+        $input = Arr::except($input,['finance_sub_category','company','specification','final_approved_by']);
 
         $employee = Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -1221,8 +1226,8 @@ class ItemMasterAPIController extends AppBaseController
 
                 $itemMasterOld = $itemMaster->toArray();
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
-                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
-                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $old_array = Arr::only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $modified_array = Arr::only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
             
                 // update in to user log table
                 foreach ($old_array as $key => $old){
@@ -1267,7 +1272,7 @@ class ItemMasterAPIController extends AppBaseController
             }
 
             $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -1342,10 +1347,10 @@ class ItemMasterAPIController extends AppBaseController
         $itemId = $request['itemCodeSystem'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1432,10 +1437,7 @@ class ItemMasterAPIController extends AppBaseController
 
       
         $image_data = $itemMaster->itemPicture;
-        $storagePath  = Storage::disk('s3')->getDriver()->getAdapter()->getPathPrefix();
 
-
-    
         if($image_data != null || !empty($image_data))
         {
          
@@ -1459,7 +1461,7 @@ class ItemMasterAPIController extends AppBaseController
                         // $data_info = file_get_contents($path);
                     
                         // $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data_info);
-                        $baseimg = \Helper::getFileUrlFromS3($decode_image->path);
+                        $baseimg = Helper::getFileUrlFromS3($decode_image->path);
     
                         $info['flag'] = true;
                         $info['path'] = $baseimg;
@@ -1575,7 +1577,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function approveItem(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -1586,7 +1588,7 @@ class ItemMasterAPIController extends AppBaseController
 
     public function rejectItem(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1837,10 +1839,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive', 'itemApprovedYN', 'itemConfirmedYN'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -1982,10 +1984,10 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -2005,7 +2007,7 @@ class ItemMasterAPIController extends AppBaseController
         $itemCategorySubArray = [];
         $i=0;
         foreach ($itemCategorySub as $value){
-            $itemCategorySubArray[$i] = array_except($value,['finance_gl_code_bs','finance_gl_code_pl']);
+            $itemCategorySubArray[$i] = Arr::except($value,['finance_gl_code_bs','finance_gl_code_pl']);
             if($value->financeGLcodePLSystemID && $value->finance_gl_code_pl != null){
                 $itemCategorySubArray[$i]['AccountCode'] = isset($value->finance_gl_code_pl->AccountCode)?$value->finance_gl_code_pl->AccountCode:'';
                 $itemCategorySubArray[$i]['AccountDescription'] = isset($value->finance_gl_code_pl->AccountDescription)?$value->finance_gl_code_pl->AccountDescription:'';
@@ -2256,10 +2258,10 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['company_id']);
+        $isGroup = Helper::checkIsCompanyGroup($input['company_id']);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($input['company_id']);
+            $subCompanies = Helper::getGroupCompany($input['company_id']);
         }
         else {
             $subCompanies = [$input['company_id']];

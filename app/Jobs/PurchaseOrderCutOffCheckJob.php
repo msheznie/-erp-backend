@@ -39,10 +39,16 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $typeData, $daysData, $valueData, $emailData, $companyIDFromScenarios)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->typeData = $typeData;
@@ -59,7 +65,6 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $days = $this->daysData;
         $type = $this->typeData;
@@ -134,7 +139,7 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
                         $sendEmail = NotificationService::emailNotification($companyIDFromScenario, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
 
                         if (!$sendEmail["success"]) {
-                            Log::error($sendEmail["message"]);
+                            Log::channel('budget_cutoff_po')->error($sendEmail["message"]);
                         }
                     }
 

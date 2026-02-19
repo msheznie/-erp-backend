@@ -29,10 +29,16 @@ class EmpDesignationUpdateNotificationJob implements ShouldQueue
 
     public function __construct($dbName, $companyId, $id, $masterDetails)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dbName = $dbName;
@@ -49,10 +55,9 @@ class EmpDesignationUpdateNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('emp-designation-update-notification') );
 
         if (empty($this->dbName)) {
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('emp_designation_update_notification')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         } else {
 

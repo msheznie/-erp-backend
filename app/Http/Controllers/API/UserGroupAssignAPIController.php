@@ -24,7 +24,7 @@ use App\Models\UserGroupAssign;
 use App\Repositories\UserGroupAssignRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -437,6 +437,10 @@ class UserGroupAssignAPIController extends AppBaseController
                 $array = array('mainMenus' =>[],'subMenus' => [],'cat' => $cat);
               
             }
+            $array['excelBoldHeaderRows'] = 2;
+            $array['excelTitleRow'] = 1;
+            $array['excelHeaderBackgroundRow'] = 2;
+            $array['excelHeaderBackgroundColor'] = '6798da';
 
             //return $this->sendResponse($array, trans('custom.success_export'));
            

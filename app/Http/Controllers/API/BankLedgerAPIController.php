@@ -54,7 +54,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
@@ -64,6 +64,7 @@ use App\helper\CreateExcel;
 use App\Services\BankLedger\BankLedgerService;
 use App\Jobs\Report\BankLedgerPdfJob;
 use App\Models\BankStatementDetail;
+use App\helper\email as Email;
 
 /**
  * Class BankLedgerController
@@ -298,7 +299,7 @@ class BankLedgerAPIController extends AppBaseController
             return $this->sendError(trans('custom.selected_document_in_matching_process'), 500);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $updateArray = array();
 
         if (array_key_exists('editType', $input)) {
@@ -548,7 +549,7 @@ class BankLedgerAPIController extends AppBaseController
 
                                 $pdfName = '/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
 
-                                $refernaceDoc = \Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
+                                $refernaceDoc = Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
 
                                 $transDecimal = 2;
                                 $localDecimal = 3;
@@ -721,7 +722,7 @@ class BankLedgerAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.customer_receive_payment')]));
         }
 
-        $refernaceDoc = \Helper::getCompanyDocRefNo($output->companySystemID, $output->documentSystemID);
+        $refernaceDoc = Helper::getCompanyDocRefNo($output->companySystemID, $output->documentSystemID);
 
         $transDecimal = 2;
         $localDecimal = 3;
@@ -827,7 +828,7 @@ class BankLedgerAPIController extends AppBaseController
             }
 
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             if ($entity->confirmedYN != 1) {
                 return $this->sendError(trans('custom.you_cannot_edit_it_is_not_confirmed'), 500);
@@ -954,10 +955,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1047,10 +1048,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1145,10 +1146,10 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1296,10 +1297,10 @@ class BankLedgerAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
 
         $selectedCompanyId = $input['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1394,10 +1395,10 @@ class BankLedgerAPIController extends AppBaseController
         $input = $request;
         $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType'));
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1481,7 +1482,7 @@ class BankLedgerAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         /*validation for cheque print*/
         if(isset($input['selectedForPrint']) && is_array($input['selectedForPrint']) && count($input['selectedForPrint'])>0){
@@ -1555,10 +1556,10 @@ class BankLedgerAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
 
             $selectedCompanyId = $input['companySystemID'];
-            $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+            $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
             if ($isGroup) {
-                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                $subCompanies = Helper::getGroupCompany($selectedCompanyId);
             } else {
                 $subCompanies = [$selectedCompanyId];
             }
@@ -1760,7 +1761,7 @@ class BankLedgerAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         
         /*validation for cheque print*/
         if(isset($input['selectedForPrint']) && is_array($input['selectedForPrint']) && count($input['selectedForPrint'])>0){
@@ -1883,10 +1884,10 @@ class BankLedgerAPIController extends AppBaseController
             $input = $this->convertArrayToSelectedValue($input, array('bankID', 'bankAccountID', 'invoiceType','option'));
 
             $selectedCompanyId = $input['companySystemID'];
-            $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+            $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
             if ($isGroup) {
-                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                $subCompanies = Helper::getGroupCompany($selectedCompanyId);
             } else {
                 $subCompanies = [$selectedCompanyId];
             }
@@ -2115,7 +2116,7 @@ class BankLedgerAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_master')]),500);
         }
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $temArray['chequePrintedYN'] = 0;
         $temArray['chequePrintedDateTime'] = '';
@@ -2161,7 +2162,7 @@ class BankLedgerAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(!isset($input['chequeNumberRangeFrom']) && !$input['chequeNumberRangeFrom']){
             $input['chequeNumberRangeFrom'] = 0;
@@ -2392,8 +2393,8 @@ class BankLedgerAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['companyId'];
         $subCompaniesByGroup = [];
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $subCompaniesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $subCompaniesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompaniesByGroup = (array)$selectedCompanyId;
         }
@@ -2420,7 +2421,7 @@ class BankLedgerAPIController extends AppBaseController
 
         $id = $input['paymentBankTransferID'];
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $emails = array();
 
         $masterData = PaymentBankTransfer::find($id);
@@ -2481,7 +2482,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
             }
 
-            $sendEmail = \Email::sendEmail($emails);
+            $sendEmail = Email::sendEmail($emails);
             if (!$sendEmail["success"]) {
                 return $this->sendError($sendEmail["message"], 500);
             }
@@ -2694,7 +2695,7 @@ class BankLedgerAPIController extends AppBaseController
                 $data[$x][trans('custom.account_description')] = $val->AccountDescription;
                 $data[$x][trans('custom.document_number')] = $val->documentCode;
                 $data[$x][trans('custom.document_type')] = $val->documentID;
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->documentDate);
                 $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                 $data[$x][trans('custom.supplier_customer')] = $val->partyName;
                 if (in_array('confi_name', $extraColumns)) {
@@ -2702,7 +2703,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmDate);
+                    $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmDate);
                 }
 
                 if (in_array('app_name', $extraColumns)) {
@@ -2710,7 +2711,7 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->approvedDate);
+                    $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->approvedDate);
                 }
 
                 if ($request->currencyID == 1) {
@@ -2855,8 +2856,8 @@ class BankLedgerAPIController extends AppBaseController
         $company_name = $checkIsGroup->CompanyName;
         $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
 
-        $to_date = \Helper::dateFormat($request->toDate);
-        $from_date = \Helper::dateFormat($request->fromDate);
+        $to_date = Helper::dateFormat($request->toDate);
+        $from_date = Helper::dateFormat($request->fromDate);
         $cur = null;
         $title = trans('custom.bank_ledger_details');
         $detail_array = array(  'type' => 1,
@@ -2887,7 +2888,7 @@ class BankLedgerAPIController extends AppBaseController
 
         $db = isset($request->db) ? $request->db : ""; 
 
-        $employeeID = \Helper::getEmployeeSystemID();
+        $employeeID = Helper::getEmployeeSystemID();
         BankLedgerPdfJob::dispatch($db, $request, [$employeeID], $languageCode)->onQueue('reporting');
 
         return $this->sendResponse([], trans('custom.bank_ledger_PDF_report_has_been_sent_to_queue'));

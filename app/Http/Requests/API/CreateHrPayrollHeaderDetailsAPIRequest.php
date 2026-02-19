@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\HrPayrollHeaderDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateHrPayrollHeaderDetailsAPIRequest extends APIRequest
+class CreateHrPayrollHeaderDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -1,9 +1,9 @@
 <?php
 namespace App\Http\Requests\API;
 use App\Models\CompanyDepartmentSegment;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCompanyDepartmentSegmentAPIRequest extends APIRequest
+class CreateCompanyDepartmentSegmentAPIRequest extends FormRequest
 {
     public function authorize()
     {

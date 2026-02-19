@@ -15,7 +15,7 @@ use App\Models\Location;
 use App\Models\WarehouseMaster;
 use App\Models\WeekDays;
 use Carbon\Carbon;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use DateInterval;
@@ -375,11 +375,11 @@ class SlotMasterAPIController extends AppBaseController
         $input = $request->all();
         $slotMasterID = $input['slotMasterID'];
         $companyID = $input['companyID'];
-        $isGroupCompany = \Helper::checkIsCompanyGroup($companyID);
+        $isGroupCompany = Helper::checkIsCompanyGroup($companyID);
         $companyData = [];
         if($isGroupCompany)
         {
-            $companiesByGroup = \Helper::getGroupCompany($companyID);
+            $companiesByGroup = Helper::getGroupCompany($companyID);
             $companyData = Company::getCompanyList($companiesByGroup);
         }
 
@@ -393,7 +393,7 @@ class SlotMasterAPIController extends AppBaseController
         $user = Helper::getEmployeeSystemID();
         $subCompanies = $isGroupCompany ? $companyData : [$companyID];
         $assignedWareHouseIds = WarehouseRights::getAssignedWarehouses($user, $subCompanies);
-        $hasAccess = in_array($slotMaster['warehouse_id'], $assignedWareHouseIds);
+        $hasAccess = in_array($slotMaster['warehouse_id'] ?? [], $assignedWareHouseIds);
 
         $dateFrom = Carbon::parse($slotMaster['from_date'] ?? null);
         $dateTo = Carbon::parse($slotMaster['to_date'] ?? null);

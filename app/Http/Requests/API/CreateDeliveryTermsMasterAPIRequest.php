@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DeliveryTermsMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDeliveryTermsMasterAPIRequest extends APIRequest
+class CreateDeliveryTermsMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

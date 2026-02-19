@@ -35,7 +35,6 @@ class Revision extends Model
 
     protected $primaryKey = 'id';
 
-    protected $dates = ['deleted_at', 'submittedDate', 'sentDateTime', 'completedDateTime'];
 
     public $fillable = [
         'revisionId',
@@ -80,7 +79,8 @@ class Revision extends Model
         'modified_by' => 'integer',
         'created_at' => 'datetime',
         'modified_at' => 'datetime',
-        'newSubmissionDate' => 'date'
+        'newSubmissionDate' => 'date',
+        'deleted_at' => 'datetime',
     ];
 
     /**

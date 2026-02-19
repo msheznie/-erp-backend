@@ -33,6 +33,9 @@ use App\Services\PaymentVoucherServices;
 use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class ReceiptAPIService
 {
@@ -76,7 +79,7 @@ class ReceiptAPIService
                 if($saveReceipt) {
                     foreach ($receipt->details as $detail) {
                         $result = ReceiptDetailsAPIService::storeReceiptDetails($detail,$saveReceipt);
-                        if($result['status'] === 'fail') {
+                        if($result && isset($result['status']) && $result['status'] === 'fail') {
                             $isFailed = true;
                             array_push($errorDetails,$detail['invoiceCode']);
                             throw new \Exception('Failed to store receipt details for invoice: ' . $detail['invoiceCode']);
@@ -123,7 +126,7 @@ class ReceiptAPIService
 
                     $receipt = self::setTaxDetails($saveReceipt);
 
-                    $confirmation = \Helper::confirmDocument($params);
+                    $confirmation = DocumentConfirm::confirmDocument($params);
                     if(!$confirmation['success'])
                     {
                         throw new \Exception('Document confirmation failed: ' . ($confirmation['message'] ?? 'Unknown error'));
@@ -142,7 +145,7 @@ class ReceiptAPIService
                         $documentApproved['sendNotication'] = false;
                         $documentApproved['isCheckPrivilages'] = false;
                         $documentApproved['isAutoCreateDocument'] = true;
-                        $approval = \Helper::approveDocument($documentApproved);
+                        $approval = DocumentApprove::approveDocument($documentApproved);
                         
                         if(!$approval['success'])
                         {
@@ -841,12 +844,12 @@ class ReceiptAPIService
         }
 
         if($currencyDetails) {
-            $companyCurrencyConversionTrans = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
-            $companyCurrencyConversionVat = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
-            $companyCurrencyConversionNet = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
-            $bankCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
+            $companyCurrencyConversionTrans = Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalAmount);
+            $companyCurrencyConversionVat = Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalVatAmount);
+            $companyCurrencyConversionNet = Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, $totalNetAmount);
+            $bankCurrencyConversion = Helper::currencyConversion($receipt->companySystemID, $myCurr, $receipt->bankCurrency, $totalAmount);
 
-            $receipt->localAmount = \Helper::roundValue($companyCurrencyConversionTrans['localAmount'])  * -1;
+            $receipt->localAmount = Helper::roundValue($companyCurrencyConversionTrans['localAmount'])  * -1;
             $receipt->receivedAmount = $totalAmount  * -1;
             $receipt->VATAmount = $totalVatAmount;
             $receipt->VATPercentage = ($totalVatAmount / 100);
@@ -855,13 +858,13 @@ class ReceiptAPIService
             $receipt->netAmount = $totalNetAmount;
             $receipt->netAmountLocal = $companyCurrencyConversionNet['localAmount'];
             $receipt->netAmountRpt = $companyCurrencyConversionNet['reportingAmount'];
-            $receipt->companyRptAmount = \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount'])  * -1;
+            $receipt->companyRptAmount = Helper::roundValue($companyCurrencyConversionTrans['reportingAmount'])  * -1;
             $receipt->bankCurrencyER = $bankCurrencyConversion['transToDocER'];
 
             if ($receipt->custTransactionCurrencyID == $companyData->localCurrencyID) {
-                $receipt->bankAmount = \Helper::roundValue($totalAmount) * -1;
+                $receipt->bankAmount = Helper::roundValue($totalAmount) * -1;
             } else {
-                $receipt->bankAmount = \Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1;
+                $receipt->bankAmount = Helper::roundValue($bankCurrencyConversion['documentAmount']) * -1;
             }
 
 
@@ -972,7 +975,7 @@ class ReceiptAPIService
     private static function setCurrencyDetails($receipt): CustomerReceivePayment {
         $myCurr = $receipt->custTransactionCurrencyID;
 
-        $companyCurrencyConversion = \Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, 0);
+        $companyCurrencyConversion = Helper::currencyConversion($receipt->companySystemID, $myCurr, $myCurr, 0);
 
         $company = Company::where('companySystemID', $receipt->companySystemID)->first();
         if ($company) {

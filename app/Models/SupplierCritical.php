@@ -32,7 +32,6 @@ class SupplierCritical extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'suppliercriticalID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -47,7 +46,8 @@ class SupplierCritical extends Model
      */
     protected $casts = [
         'suppliercriticalID' => 'integer',
-        'description' => 'string'
+        'description' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -73,7 +73,6 @@ class CustomerMaster extends Model
     protected $primaryKey  = 'customerCodeSystem';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -208,7 +207,8 @@ class CustomerMaster extends Model
         'payment_terms' => 'string',
         'customer_registration_no' => 'string',
         'customer_registration_expiry_date' => 'string',
-        'consignee_contact_no' => 'string'
+        'consignee_contact_no' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

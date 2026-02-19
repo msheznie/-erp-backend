@@ -9,10 +9,12 @@ use App\Models\QuotationMaster;
 use App\Repositories\QuotationStatusRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class QuotationStatusController
@@ -125,8 +127,8 @@ class QuotationStatusAPIController extends AppBaseController
         }
 
         $input['companySystemID'] = $quotationMasterData->companySystemID;
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $quotationStatus = $this->quotationStatusRepository->create($input);
 
@@ -232,7 +234,7 @@ class QuotationStatusAPIController extends AppBaseController
     public function update($id, UpdateQuotationStatusAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['modified_by']);
+        $input = Arr::except($input, ['modified_by']);
         $input = $this->convertArrayToValue($input);
         
         /** @var QuotationStatus $quotationStatus */
@@ -251,7 +253,7 @@ class QuotationStatusAPIController extends AppBaseController
             $input['quotationStatusDate'] = new Carbon($input['quotationStatusDate']);
         }
 
-        $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
         $quotationStatus = $this->quotationStatusRepository->update($input, $id);
 

@@ -11,10 +11,12 @@ use App\Models\Company;
 use App\Repositories\CashFlowTemplateDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class CashFlowTemplateDetailController
@@ -218,7 +220,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
     public function update($id, UpdateCashFlowTemplateDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
+        $input = Arr::except($input, ['subcategory', 'gllink', 'Actions', 'DT_Row_Index', 'subcategorytot']);
         $input = $this->convertArrayToValue($input);
 
         if($input['proceedPaymentType'] == 1){
@@ -403,7 +405,7 @@ class CashFlowTemplateDetailAPIController extends AppBaseController
 
 
             $input['createdPCID'] = gethostname();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $subCategory = $input['subCategory'];
             unset($input['subCategory']);

@@ -220,7 +220,9 @@ class VerifyCsrfTokenForApi
             'api/v1/company_budget_plannings',
             'api/v1/department_budget_plannings',
             'api/v1/getDepartmentBudgetPlanningDetails',
+            'api/v1/getBudgetPlanningFilterOptions',
             'api/v1/exportBudgetPlanningDetails',
+            'api/v1/exportCompanyBudgetPlanningDetailsAll',
             'api/v1/getBudgetDelegateFormData',
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration/{budgetTemplateId}',
@@ -286,7 +288,8 @@ class VerifyCsrfTokenForApi
             'api/v1/returnBudgetPlanningPreCheck',
             'api/v1/returnBudgetPlanningToAmend',
             'api/v1/createAuditLog',
-            'api/v1/getThirdPartyApiLogDetail'
+            'api/v1/getThirdPartyApiLogDetail',
+            'api/v1/updateRouteAccess'
         ];
 
     }

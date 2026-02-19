@@ -8,7 +8,7 @@ use App\Services\ExchangeSetup\ExchangSetupConfigurationService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Auth;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 
 class ExchangeSetupConfigurationController extends AppBaseController
 {

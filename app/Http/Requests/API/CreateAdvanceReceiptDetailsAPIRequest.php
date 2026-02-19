@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AdvanceReceiptDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateAdvanceReceiptDetailsAPIRequest extends APIRequest
+class CreateAdvanceReceiptDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

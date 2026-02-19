@@ -60,7 +60,7 @@ class DetectExpiredTokensCommand extends Command
             }
             return 0;
         } catch (\Exception $e) {
-            Log::error('Error dispatching expired token jobs: ' . $e->getMessage());
+            Log::channel('expired_tokens')->error('Error dispatching expired token jobs: ' . $e->getMessage());
             return 1;
         }
     }

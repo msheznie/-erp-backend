@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CountryMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCountryMasterAPIRequest extends APIRequest
+class UpdateCountryMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

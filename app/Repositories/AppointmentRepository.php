@@ -5,12 +5,12 @@ namespace App\Repositories;
 use App\Models\Appointment;
 use App\Models\PurchaseOrderDetails;
 use App\Models\GRVDetails;
+use App\Repositories\BaseRepository;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyFinancePeriod;
 use App\Models\SegmentMaster;
 use App\Models\Company;
 use Carbon\Carbon;
-use InfyOm\Generator\Common\BaseRepository;
 
 /**
  * Class AppointmentRepository

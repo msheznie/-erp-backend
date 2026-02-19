@@ -20,7 +20,7 @@ use App\Repositories\PdcLogRepository;
 use App\Services\PaymentVoucherServices;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
@@ -600,7 +600,7 @@ class PdcLogAPIController extends AppBaseController
         $input = $request->all();
         $htmlName = '';
         
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $pvData = PaySupplierInvoiceMaster::where('PayMasterAutoId',$input['documentmasterAutoID'])->first();
 
         if (!$pvData) {
@@ -631,10 +631,10 @@ class PdcLogAPIController extends AppBaseController
         
 
         $selectedCompanyId = $input['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

@@ -19,10 +19,11 @@ use App\Models\Company;
 use App\Repositories\CompanyNavigationMenusRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class CompanyNavigationMenusController
@@ -165,8 +166,8 @@ class CompanyNavigationMenusAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if(\Helper::checkIsCompanyGroup($selectedCompanyId)){
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if(Helper::checkIsCompanyGroup($selectedCompanyId)){
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $companiesByGroup = (array)$selectedCompanyId;
         }

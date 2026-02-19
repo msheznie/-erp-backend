@@ -28,11 +28,11 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\TenderCircularsRepository;
 use Response;
-use App\helper\email;
+use App\helper\email as Email;
 /**
  * Class TenderCircularsController
  * @package App\Http\Controllers\API
@@ -388,7 +388,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         }*/
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $data['tender_id'] = $tenderMasterID;
@@ -504,7 +504,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function tenderCircularPublish(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $companyName = "";
         $company = Company::find($request->input('company_id'));
         if(isset($company->CompanyName)){
@@ -524,9 +524,8 @@ class TenderCircularsAPIController extends AppBaseController
                 $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
             }
 
-            Log::info($file);
 
-            $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+            $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
             if ($result && $supplierList) {
                 DB::commit();
@@ -549,7 +548,7 @@ class TenderCircularsAPIController extends AppBaseController
                     $body = "Dear Supplier,"."<br /><br />"." Please find published <span style='text-transform: lowercase;'>". $documentName ."</span> circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = $file;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailErp($dataEmail);
                 }
 
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_published')];
@@ -658,7 +657,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircularSupplier(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
             $dataSupplier['circular_id'] = $input['circularId'];
@@ -681,7 +680,7 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircularAmendment(Request $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $versionID = $input['versionID'] ?? 0;
         $editOrAmend = $versionID > 0;
 

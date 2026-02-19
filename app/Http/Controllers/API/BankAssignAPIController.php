@@ -23,10 +23,12 @@ use App\Models\Company;
 use App\Repositories\BankAssignRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BankAssignController
@@ -86,7 +88,7 @@ class BankAssignAPIController extends AppBaseController
             $input['isActive']   = 1;
             $input['isDefault']  = 0;
 
-            $data = array_except($input, ['isEdit', 'TimeStamp']);
+            $data = Arr::except($input, ['isEdit', 'TimeStamp']);
 
             $bankAssigns = $this->bankAssignRepository->create($data);
         }
@@ -213,10 +215,10 @@ class BankAssignAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

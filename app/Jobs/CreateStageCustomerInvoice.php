@@ -20,6 +20,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
+use App\helper\Workflow\API\DocumentConfirmApi;
+use App\helper\Workflow\API\DocumentApproveApi;
 
 class CreateStageCustomerInvoice implements ShouldQueue
 {
@@ -51,7 +54,6 @@ class CreateStageCustomerInvoice implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
 
@@ -272,13 +274,13 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
 
 
-                $confirm = \Helper::confirmDocumentForApi($params);
+                $confirm = DocumentConfirmApi::confirmDocumentForApi($params);
 
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->get();
                 foreach ($documentApproveds as $documentApproved) {
                     $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
                     $documentApproved["db"] = $this->dataBase;
-                    \Helper::approveDocumentForApi($documentApproved);
+                    DocumentApproveApi::approveDocumentForApi($documentApproved);
                 }
 
 
@@ -296,7 +298,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 StageCustomerInvoice::truncate();
                 StageCustomerInvoiceItemDetails::truncate();
                 StageCustomerInvoiceDirectDetail::truncate();
-                Log::error($e->getMessage());
+                Log::channel('stage_create_customer_invoice')->error($e->getMessage());
             }
 
 

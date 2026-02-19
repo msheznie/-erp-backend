@@ -9,11 +9,12 @@ use App\Models\CurrencyMaster;
 use App\Repositories\CurrencyConversionDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class CurrencyConversionDetailController
@@ -241,7 +242,7 @@ class CurrencyConversionDetailAPIController extends AppBaseController
             }
 
             $input['conversion'] = round($input['conversion'], 8);
-            $this->currencyConversionDetailRepository->update(array_only($input, ['conversion']), $id);
+            $this->currencyConversionDetailRepository->update(Arr::only($input, ['conversion']), $id);
 
             $subCurrency = $this->currencyConversionDetailRepository
                 ->findWhere(['masterCurrencyID' => $currencyConversionDetail->subCurrencyID,

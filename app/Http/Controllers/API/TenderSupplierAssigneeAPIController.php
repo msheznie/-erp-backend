@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use Carbon\Carbon;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use mysql_xdevapi\Exception;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -23,7 +23,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderMaster;
 use App\Repositories\SupplierRegistrationLinkRepository;
-use App\helper\email;
+use App\helper\email as Email;
 /**
  * Class TenderSupplierAssigneeController
  * @package App\Http\Controllers\API
@@ -519,7 +519,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             }
         }
 
-        $fromName = \Helper::getEmailConfiguration('mail_name','GEARS');
+        $fromName = Helper::getEmailConfiguration('mail_name','GEARS');
 
         $file = array();
 
@@ -556,7 +556,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $dataEmail['alertMessage'] = $alertMessage;
         $dataEmail['empEmail'] = $emailFormatted;
         $dataEmail['emailAlertMessage'] = $body;
-        $sendEmail = \Email::sendEmailErp($dataEmail);
+        $sendEmail = Email::sendEmailErp($dataEmail);
 
 
 

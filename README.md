@@ -1,11 +1,11 @@
 # ERP Backend Development Setup
 
-[![Laravel](https://img.shields.io/badge/Laravel-5.5-orange.svg)](https://laravel.com)
-[![PHP](https://img.shields.io/badge/PHP-%5E7.2-blue.svg)](https://php.net)
+[![Laravel](https://img.shields.io/badge/Laravel-12-orange.svg)](https://laravel.com)
+[![PHP](https://img.shields.io/badge/PHP-%5E8.2-blue.svg)](https://php.net)
 
 ## Requirements
 
-- PHP ^7.2 # 8.2
+- PHP ^8.2
 - PHP extensions: pdo, openssl, tokenizer, xml, mbstring, curl, ldap, intl, pdo_mysql, zip, gd, ctype, date, dom, exif, ftp, gettext, hash, libxml, pcre
 - Composer - ^1.10.1
 - Node - ^14
@@ -63,7 +63,7 @@ Pull the frontend and backend into same directory, and create a docker-compose.y
 version: "3.5"
 services:
   backend:
-    image: ososerp/ubuntu-php-7.2:latest
+    image: ososerp/ubuntu-php-8.4:latest
     container_name: erp-backend
     ports:
       - 8000:8080
@@ -101,19 +101,6 @@ then docker-compose up
 
 ## Development Instructions
 
-### Creating Models from Database Table
-
-To create a model from a database table, you can use the following Artisan command provided by InfyOm. For example, let's create a model for the `users` table:
-
-```bash
-php artisan infyom:api_scaffold User --fromTable --tableName=users --skip=scaffold_controller,scaffold_requests,scaffold_routes,views
-```
-### Rolling Back Created Models
-If you need to rollback the models created using InfyOm, you can use the following command. For instance, to rollback the User model created earlier, use:
-
-```bash
-php artisan infyom:rollback User api_scaffold
-```
 ### Queue Server
 To process jobs in the background, it's recommended to run the queue server. Since most of the jobs in this project use the sync driver, the queue is set to database. Start the queue server with the following command:
 

@@ -43,7 +43,6 @@ class FinanceItemCategoryMaster extends Model
     protected $primaryKey  = 'itemCategoryID';
     protected $appends = ['categoryDescription'];
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -81,7 +80,8 @@ class FinanceItemCategoryMaster extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

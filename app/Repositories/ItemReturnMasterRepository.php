@@ -3,8 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\ItemReturnMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\helper\Helper;
 
 /**
  * Class ItemReturnMasterRepository
@@ -81,13 +82,13 @@ class ItemReturnMasterRepository extends BaseRepository
             ->findWithoutFail($id);
     }
 
-    public function itemReturnListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID) {
+    public function itemReturnListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null) {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -184,13 +185,13 @@ class ItemReturnMasterRepository extends BaseRepository
                 $data[$x][trans('custom.item_return_code')] = $val->itemReturnCode;
                 $data[$x][trans('custom.department')] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
                 $data[$x][trans('custom.reference_no')] = $val->ReturnRefNo;
-                $data[$x][trans('custom.return_date')] = \Helper::dateFormat($val->ReturnDate);
+                $data[$x][trans('custom.return_date')] = Helper::dateFormat($val->ReturnDate);
                 $data[$x][trans('custom.warehouse')] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
                 $data[$x][trans('custom.comment')] = $val->comment;
                 $data[$x][trans('custom.created_by')] = $val->created_by? $val->created_by->empName : '';
-                $data[$x][trans('custom.created_at')] = \Helper::convertDateWithTime($val->createdDateTime);
-                $data[$x][trans('custom.confirmed_at')] = \Helper::convertDateWithTime($val->confirmedDate);
-                $data[$x][trans('custom.approved_at')] = \Helper::convertDateWithTime($val->approvedDate);
+                $data[$x][trans('custom.created_at')] = Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x][trans('custom.confirmed_at')] = Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x][trans('custom.approved_at')] = Helper::convertDateWithTime($val->approvedDate);
                 $data[$x][trans('custom.status')] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

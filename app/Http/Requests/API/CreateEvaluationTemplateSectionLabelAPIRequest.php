@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\EvaluationTemplateSectionLabel;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateEvaluationTemplateSectionLabelAPIRequest extends APIRequest
+class CreateEvaluationTemplateSectionLabelAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

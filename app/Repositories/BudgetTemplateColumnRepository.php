@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BudgetTemplateColumn;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 class BudgetTemplateColumnRepository extends BaseRepository
 {
