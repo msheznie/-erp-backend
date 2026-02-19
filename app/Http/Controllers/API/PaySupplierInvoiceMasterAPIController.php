@@ -45,6 +45,7 @@ use App\Models\PdcLog;
 use App\Models\BankLedger;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\BankMemoPayee;
+use App\Models\BankMemoSupplier;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccount;
 use App\Models\ChequeRegister;
@@ -1629,6 +1630,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $beneficiaryMemo = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+            $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
+        } else {
+            $output['supplierBeneficiaryNumber'] = null;
+        }
+
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
 
     }
@@ -3143,8 +3156,19 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         ->where('isYesNO', 1)
         ->exists();
 
+        $supplierBeneficiaryNumber = null;
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+        }
+
         $order = array(
             'masterdata' => $output,
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'transDecimal' => $transDecimal,
             'localDecimal' => $localDecimal,
