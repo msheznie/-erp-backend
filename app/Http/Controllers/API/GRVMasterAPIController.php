@@ -440,9 +440,9 @@ class GRVMasterAPIController extends AppBaseController
             ->where('isCurrent', -1)
             ->first();
 
-/*        if (empty($financeYear)) {
+        if (empty($financeYear)) {
             return $this->sendError(trans('custom.selected_finance_year_not_current'));
-        }*/
+        }
 
         if ($warehouse->manufacturingYN == 1) {
             if (is_null($warehouse->WIPGLCode)) {
@@ -633,10 +633,10 @@ class GRVMasterAPIController extends AppBaseController
             $monthBegin = Carbon::parse($input['FYBiggin'])->format('Y-m-d');
             $monthEnd = Carbon::parse($input['FYEnd'])->format('Y-m-d');
 
-/*            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
+            if (($documentDate >= $monthBegin) && ($documentDate <= $monthEnd)) {
             } else {
                 return $this->sendError(trans('custom.grv_date_not_within_financial_period'));
-            }*/
+            }
 
             //getting total sum of PO detail Amount
             $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum, COALESCE(SUM(VATAmount * noQty),0) as masterTotalVAT'))
