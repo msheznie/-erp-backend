@@ -1146,6 +1146,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $cachePayloads = [];
 
         foreach ($groupKeyToData as $groupKey => $data) {
+            // Skip rows with no segment — do not generate record
+            if (($data['segmentInfo']['serviceLineSystemID'] ?? null) === null) {
+                continue;
+            }
             $rowIndex++;
             $glAmountsList = array_values($data['glAmounts']);
             $rowId = \Webpatser\Uuid\Uuid::generate()->string;
