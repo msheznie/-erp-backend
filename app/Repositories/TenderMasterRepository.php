@@ -350,7 +350,6 @@ class TenderMasterRepository extends BaseRepository
         if ($tender->document_system_id == 113 && $opening_date_comp === null) {
             return true;
         }
-
         $opening_date_comp = Carbon::parse($opening_date_comp);
 
         return $current_date->gt($opening_date_comp) &&
