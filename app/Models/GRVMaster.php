@@ -440,4 +440,17 @@ class GRVMaster extends Model
     {
         return $this->hasOne(UnbilledGrvGroupBy::class, 'grvAutoID', 'grvAutoID');
     }
+
+    public static function getGrvForDeliveryAppointment($grvAutoId)
+    {
+        return self::select('grvAutoID','companySystemID')
+            ->with(['details' => function ($q){
+                $q->select('grvAutoID','purchaseOrderMastertID','itemPrimaryCode','itemDescription','itemDescription','noQty')
+                ->with(['po_master' => function ($q2) {
+                    $q2->select(['purchaseOrderID','purchaseOrderCode']);
+                }]);
+            }])
+            ->where('grvAutoID',$grvAutoId)
+            ->first();
+    }
 }
