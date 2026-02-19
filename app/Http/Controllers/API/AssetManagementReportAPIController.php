@@ -847,15 +847,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                     $excelColumnFormat = [
-                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00,       // dep %
-                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,   // date acquired
-                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,   // dep start date
-                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+
                     ];
                     $title = trans('custom.asset_register_detail_report');
                     $fileName = trans('custom.asset_register_detail');

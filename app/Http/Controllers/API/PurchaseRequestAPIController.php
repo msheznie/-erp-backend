@@ -3679,6 +3679,7 @@ class PurchaseRequestAPIController extends AppBaseController
                 'erp_purchaserequest.approvedDate',
             ]);
 
+          
             $purchaseRequests = $purchaseRequests->get();
 
             if (isset($input['reportType']) && $input['reportType'] == 2) {
