@@ -2741,6 +2741,7 @@ class TenderMasterRepository extends BaseRepository
 
                 $newTender = $this->cloneTenderMaster($tenderMaster, $companySystemID, $documentSystemID);
                 $this->cloneUserAccess($tenderMaster['id'], $newTender->id);
+                $this->cloneAwardingMembers($tenderMaster['id'], $newTender->id);
                 $this->cloneDepartments($tenderMaster['id'], $newTender->id);
                 $this->cloneProcurements($tenderMaster['id'], $newTender->id);
                 $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
@@ -2951,6 +2952,24 @@ class TenderMasterRepository extends BaseRepository
                 ]);
 
                 $newUser->tender_id = $newTenderId;
+                $newUser->save();
+            }
+        }
+    }
+    private function cloneAwardingMembers($oldTenderId, $newTenderId){
+        $awardingEmployees = SrmTenderAwardingMember::getAwardingMembers($oldTenderId);
+        if (!empty($awardingEmployees)) {
+            foreach ($awardingEmployees as $user) {
+                $newUser = $user->replicate([
+                    'id',
+                    'tender_id',
+                    'awarding_remarks',
+                    'status',
+                    'created_at'
+                ]);
+
+                $newUser->tender_id = $newTenderId;
+                $newUser->status = 0;
                 $newUser->save();
             }
         }
