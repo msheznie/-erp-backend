@@ -384,6 +384,7 @@ class BudgetNotificationService
                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
                 'ReminderTime' => $reminderTimeHours,
+                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             ];
         } else {
             $placeholders = [
@@ -392,6 +393,7 @@ class BudgetNotificationService
                 'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
                 'ReminderTime' => $reminderTimeHours,
+                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
             ];
 
             $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
@@ -411,8 +413,9 @@ class BudgetNotificationService
             'emailAlertMessage' => $this->replacePlaceholders($bodyTemplate, $placeholders, true), // Body needs line breaks
             'empSystemID' => $departmentBudgetPlanning->department->hod->employee->employeeSystemID,
             'docSystemID' => 133,
-            'docSystemCode' => $departmentBudgetPlanningID
+            'docSystemCode' => $departmentBudgetPlanningID,
         );
+
 
         \Email::sendEmail($emails);
    }
@@ -430,7 +433,7 @@ class BudgetNotificationService
 
         foreach($departmentBudgetPlanningDetails as $departmentBudgetPlanningDetail) {
             if($departmentBudgetPlanningDetail->budgetDelegateAccessDetails->count() > 0) {
-                $budgetDelegateAccessDetails = $departmentBudgetPlanningDetail->budgetDelegateAccessDetails->where('submission_time', '>', $today)->where('submission_time', '<=', $twoDaysFromNow);
+                $budgetDelegateAccessDetails = $departmentBudgetPlanningDetail->budgetDelegateAccessDetails->where('submission_time', '<=', $twoDaysFromNow);
                 if($budgetDelegateAccessDetails->count() > 0) {
                     foreach($budgetDelegateAccessDetails as $budgetDelegateAccessDetail) {
                         $delegatee = $budgetDelegateAccessDetail->delegatee;
@@ -444,6 +447,7 @@ class BudgetNotificationService
                                 'DeadlineDate' => date('d/m/Y', strtotime($departmentBudgetPlanning->submissionDate)) ?? 'N/A',
                                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
                                 'ReminderTime' => $reminderTimeHours,
+                                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
                             ];
                         }else {
                             $placeholders = [
@@ -452,6 +456,7 @@ class BudgetNotificationService
                                 'BudgetYear' => date('d/m/Y', strtotime($departmentBudgetYear->bigginingDate)).' - '.date('d/m/Y', strtotime($departmentBudgetYear->endingDate)),
                                 'RevisionDeadline' => date('d/m/Y', strtotime($revision->newSubmissionDate)) ?? 'N/A',
                                 'ReminderTime' => $reminderTimeHours,
+                                'DepartmentName' => $departmentBudgetPlanning->department->departmentCode.' - '.$departmentBudgetPlanning->department->departmentDescription,
                             ];
                             $budgetNotifications = BudgetNotification::where('slug', 'revision-deadline-warning')->first();
                         }

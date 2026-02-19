@@ -63,15 +63,18 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.hod.employee',
             'masterBudgetPlannings.company',
-            'financeYear'
+            'financeYear',
+            'revisions'
         ])
-        ->where(function($query) use ($today) {
-            $query->where('submissionDate','>', $today->toDateString());
-                //   ->where('submissionDate', '<=', $targetDate->toDateString());
+        ->where(function ($query) use ($today) {
+            $query->where('submissionDate', '>', $today->toDateString())
+                ->orWhereHas('revisions', function ($q) use ($today) {
+                    $q->where('revisionStatus', 1)
+                        ->where('newSubmissionDate', '>', $today->toDateString());
+                });
         })
         ->where('workStatus', '!=', 3) // Only for non-submitted
         ->get();
-
 
         if ($departmentBudgetPlannings->isEmpty()) {
             return;
@@ -112,7 +115,7 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
 
                 $scenario = 'deadline-warning'; // Default scenario if slug not set
 
-                if($budgetPlanning->submissionDate <= $targetDate) {
+                if($budgetPlanning->submissionDate <= $targetDate || $budgetPlanning->revisions->where('revisionStatus', 1)->where('newSubmissionDate', '<=', $targetDate)->count() > 0) {
                     $budgetNotificationService = new BudgetNotificationService();
                     // Send notification
                     $budgetNotificationService->sendNotification(
