@@ -9974,7 +9974,7 @@ return
     'beneficiary_number' => 'Beneficiary Number',
     'commercial_registration' => 'Registration Number',
 
-    // support/users API
+    // integrations/users/search API
     'product_access_value_not_matching' => 'The Product access value not matching with system',
     'user_type_not_found' => 'The User Type not Found',
     'input_value_not_matching' => 'The input value not matching',
