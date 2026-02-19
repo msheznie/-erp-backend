@@ -328,7 +328,7 @@ Route::resource('document_master', 'SRMDocumentMasterAPIController');
 Route::post('documentMasterSRMCrud', 'SRMDocumentMasterAPIController@documentMasterCrud')->name("Create SRM Document Master");
 Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster')->name("GET SRM Tender Document Master");
 Route::post('removeSRMDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete')->name("Remove SRM Document Master");
-Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster');
-Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData');
-Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData');
+Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster')->name("GET SRM Email Master");
+Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData')->name("Store SRM Email Master");;
+Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData')->name("GET SRM Email Edit Data");
 /*TenderPaymentDetailAPIController*/
