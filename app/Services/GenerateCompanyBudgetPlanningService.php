@@ -36,6 +36,18 @@ class GenerateCompanyBudgetPlanningService
         $this->generateBudgetMasterData($payload);
     }
 
+    /**
+     * Run validation only for a row (no generate). Throws on failure.
+     *
+     * @param string $rowId
+     * @return void
+     * @throws \Exception
+     */
+    public function validateRow(string $rowId): void
+    {
+        $this->validation($rowId);
+    }
+
     private function generateBudgetMasterData(array $payload)
     {
         $company = Company::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])->first();
@@ -170,14 +182,15 @@ class GenerateCompanyBudgetPlanningService
             throw new \Exception('Budget already generated for this segment and budget type');
         }
 
-        // $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
-        //     ->where('documentSystemID', 65)
-        //     ->where('Year', $yearID)
-        //     ->exists();
+        $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 65)
+            ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('Year', $yearID)
+            ->exists();
 
-        // if ($existsForBudgetYear) {
-        //     throw new \Exception('Budget already generated for this budget year');
-        // }
+        if ($existsForBudgetYear) {
+            throw new \Exception('Budget already generated for this budget year');
+        }
 
 
         return $detailsTogenerate;

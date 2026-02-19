@@ -34,7 +34,33 @@ class CompanyBudgetPlanningGenerateAPIController extends AppBaseController
     {
 
         if (filter_var($request->input('bulkGenerate'), FILTER_VALIDATE_BOOLEAN)) {
-            $budgetPlanningId = null;
+            $budgetPlanningId =  null;
+
+            $query = CompanyBudgetPlanningGenerate::where('is_generated', false);
+            if ($budgetPlanningId !== null) {
+                $query->where('company_budget_planning_id', $budgetPlanningId);
+            }
+            $pending = $query->orderBy('id')->get();
+
+            $validationErrors = [];
+            foreach ($pending as $row) {
+                try {
+                    $this->generateCompanyBudgetPlanningService->validateRow($row->row_id);
+                } catch (\Exception $e) {
+                    $payload = $row->payload ?? [];
+                    $validationErrors[] = [
+                        'rowId'   => $row->row_id,
+                        'segment' => $payload['segment'] ?? '-',
+                        'year'    => $payload['financeYearDisplay'] ?? ($payload['yearID'] ?? '-'),
+                        'message' => $e->getMessage(),
+                    ];
+                }
+            }
+
+            if (!empty($validationErrors)) {
+                return $this->sendAPIError('Validation failed', 422, $validationErrors);
+            }
+
             GenerateBudget::dispatch($budgetPlanningId);
             return $this->sendResponse([], 'Budget generation job dispatched successfully.');
         }
