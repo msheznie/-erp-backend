@@ -1631,14 +1631,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $output['isProjectBase'] = $isProjectBase;
 
         if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
-            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->BPVsupplierID)
-                ->where('currencyID', $output->supplierTransCurrencyID)
-                ->first();
-            $beneficiaryMemo = $supplierCurrency
-                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
-                    ->where('bankMemoTypeID', 4)
-                    ->value('memoDetail')
-                : null;
+            $beneficiaryMemo = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
             $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
         } else {
             $output['supplierBeneficiaryNumber'] = null;
@@ -3170,15 +3168,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         ->exists();
 
         $supplierBeneficiaryNumber = null;
-        if ($output->BPVsupplierID && $output->supplierTransCurrencyID) {
-            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->BPVsupplierID)
-                ->where('currencyID', $output->supplierTransCurrencyID)
-                ->first();
-            $supplierBeneficiaryNumber = $supplierCurrency
-                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
-                    ->where('bankMemoTypeID', 4)
-                    ->value('memoDetail')
-                : null;
+        if ($output && $output->BPVsupplierID && $output->supplierTransCurrencyID) {
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $output->BPVsupplierID)
+                ->where('suppliercurrency.currencyID', $output->supplierTransCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
         }
 
         $order = array(

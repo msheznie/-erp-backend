@@ -2079,15 +2079,13 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
 
-        $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $output->supplierID)
-            ->where('currencyID', $output->supplierTransactionCurrencyID)
-            ->first();
-        $beneficiaryMemo = $supplierCurrency
-            ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
-                ->where('bankMemoTypeID', 4)
-                ->value('memoDetail')
-            : null;
-        $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
+        $beneficiaryMemo = BankMemoSupplier::query()
+            ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+            ->where('suppliercurrency.supplierCodeSystem', $output->supplierID)
+            ->where('suppliercurrency.currencyID', $output->supplierTransactionCurrencyID)
+            ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+            ->value('erp_bankmemosupplier.memoDetail');
+        $output['supplierBeneficiaryNumber'] = $beneficiaryMemo ?? null;
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -3586,14 +3584,12 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $supplierBeneficiaryNumber = null;
         if (!empty($outputRecord) && $outputRecord[0]->supplierID && $outputRecord[0]->supplierTransactionCurrencyID) {
-            $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $outputRecord[0]->supplierID)
-                ->where('currencyID', $outputRecord[0]->supplierTransactionCurrencyID)
-                ->first();
-            $supplierBeneficiaryNumber = $supplierCurrency
-                ? BankMemoSupplier::where('supplierCurrencyID', $supplierCurrency->supplierCurrencyID)
-                    ->where('bankMemoTypeID', 4)
-                    ->value('memoDetail')
-                : null;
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $outputRecord[0]->supplierID)
+                ->where('suppliercurrency.currencyID', $outputRecord[0]->supplierTransactionCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
         }
 
         $is_specification = 0;
