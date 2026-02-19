@@ -41,6 +41,7 @@ Route::group([], function(){
     Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData')->name("Get approval access rights form data");
     Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument')->name("Get department documents");
     Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees')->name("Get type head employees");
+    Route::get('getDelegatedEmployees', 'EmployeeAPIController@getDelegatedEmployees')->name("Get delegated employees");
     Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine')->name("Get company service lines");
     Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup')->name("Get document access group");
 
