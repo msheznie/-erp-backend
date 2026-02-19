@@ -230,20 +230,20 @@
                     <td>{{ $val->AccountDescription  }}</td>
                     <td>{{ $val->documentCode  }}</td>
                     <td>{{ $val->documentID  }}</td>
-                    <td>{{\Helper::dateFormat($val->documentDate)}}</td>
+                    <td>{{\App\helper\Helper::dateFormat($val->documentDate)}}</td>
                     <td>{{ $val->documentNarration  }}</td>
                     <td>{{ $val->partyName  }}</td>
                     @if(in_array('confi_name', $extraColumns))
                         <td>{{ $val->confirmBy  }}</td>
                     @endif
                     @if(in_array('confi_date', $extraColumns))
-                        <td>{{\Helper::dateFormat($val->confirmDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($val->confirmDate)}}</td>
                     @endif
                     @if(in_array('app_name', $extraColumns))
                         <td>{{ $val->approvedBy  }}</td>
                     @endif
                     @if(in_array('app_date', $extraColumns))
-                        <td>{{\Helper::dateFormat($val->approvedDate)}}</td>
+                        <td>{{\App\helper\Helper::dateFormat($val->approvedDate)}}</td>
                     @endif
                     @if($isGroup == 0 && $currencyID == 3)
                         <td class="text-right">{{number_format($val->localDebit, $currencyDecimalPlace)}}</td>
