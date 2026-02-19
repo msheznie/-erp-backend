@@ -401,89 +401,100 @@ class SMAttendancePullingService{
 
     function step4(){
         $companyCode = '';
+        $chunks = array_chunk($this->attData, $this->chunkSize);
 
-        foreach ($this->attData as $row) {
-            $row = get_object_vars($row);
-            $attDate = $row['att_date'];
-            $empId = $row['emp_id'];
-            $this->allEmpArr[] = $empId;
-            $isCrossDay = $row['is_cross_day'];
+        foreach ($chunks as $chunk) {
+            $chunkData = [];
 
-            if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
-                $obj = new SMFixedShiftComputation($row, $this->companyId);
-            } elseif ($isCrossDay) {
-                $obj = new SMRotaShiftCrossDayComputation($row, $this->companyId);
-            } else {
-                $obj = new SMRotaShiftDayComputation($row, $this->companyId);
+            foreach ($chunk as $row) {
+                $row = get_object_vars($row);
+                $attDate = $row['att_date'];
+                $empId = $row['emp_id'];
+                $this->allEmpArr[] = $empId;
+                $isCrossDay = $row['is_cross_day'];
+
+                if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
+                    $obj = new SMFixedShiftComputation($row, $this->companyId);
+                } elseif ($isCrossDay) {
+                    $obj = new SMRotaShiftCrossDayComputation($row, $this->companyId);
+                } else {
+                    $obj = new SMRotaShiftDayComputation($row, $this->companyId);
+                }
+
+                $obj->calculate();
+
+                $shiftHours = ($row['shiftType'] == Shifts::OPEN)? $row['workingHour']: $obj->shiftHours;
+                $shiftHours = (empty($shiftHours))? 0: $shiftHours;
+                $locationOut = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
+                $clockInDate = $isCrossDay ? $obj->clockInDate : null;
+                $clockOutDate = $isCrossDay ? $obj->clockOutDate : null;
+
+                $chunkData[] = [
+                    'empID' => $empId,
+                    'deviceID' => $row['device_id_in'],
+                    'machineID' => $row['machine_id_in'],
+                    'attendanceDate' => $attDate,
+                    'shift_id' => !empty($row['shiftID']) ? $row['shiftID'] : 0,
+                    'floorID' => $row['location_in'],
+                    'clockoutFloorID' => $locationOut,
+                    'gracePeriod' => $obj->gracePeriod,
+                    'onDuty' => $row['onDutyTime'],
+                    'offDuty' => $row['offDutyTime'],
+                    'is_cross_day' => $isCrossDay,
+
+                    'noPayAmount' => $obj->absDedAmount,
+                    'noPaynonPayrollAmount' => $obj->absDedNonAmount,
+                    'salaryCategoryID' => $obj->salCatId,
+
+                    'checkIn' => $obj->clockIn,
+                    'checkOut' => $obj->clockOut,
+                    'check_in_date' => $clockInDate,
+                    'check_out_date' => $clockOutDate,
+                    'work_out_detail_id'=> $row['detailId'],
+                    'presentTypeID' => $obj->presentAbsentType,
+
+                    'normalTime' => ($row['isHalfDay'] == 1) ? 0.5 : 1,
+                    'lateHours' => $obj->lateHours,
+                    'lateFee' => $obj->lateFee,
+                    'earlyHours' => $obj->earlyHours,
+                    'OTHours' => $obj->overTimeHours,
+                    'realTime' => $obj->realTime,
+                    'shift_hours' => $shiftHours,
+
+                    'isNormalDay' => $obj->normalDayData['true_false'],
+                    'NDaysOT' => $obj->normalDayData['hours'],
+                    'normalDay' => $obj->normalDayData['realTime'],
+
+                    'isWeekEndDay' => $obj->weekendData['true_false'],
+                    'weekendOTHours' => $obj->weekendData['hours'],
+                    'weekend' => $obj->weekendData['realTime'],
+
+                    'isHoliday' => $obj->holidayData['true_false'],
+                    'holidayOTHours' => $obj->holidayData['hours'],
+                    'holiday' => $obj->holidayData['realTime'],
+
+                    'mustCheck' => $row['isCheckInMust'],
+                    'isMultipleOcc' => $this->moreThan2RecordsExists($empId),
+                    'flexyHrFrom' => !empty($obj->flexibleHourFrom) ? $obj->flexibleHourFrom : null,
+                    'flexyHrTo' => !empty($obj->flexibleHourTo) ? $obj->flexibleHourTo : null,
+                    'companyID' => $this->companyId,
+                    'companyCode' => $companyCode,
+                    'uploadType' => $row['upload_type'],
+                    'pulled_by' => 0, 'pulled_at' => $this->dateTime,
+                    'pulled_via' => $this->pulledVia,
+                    'actual_time' => $obj->actualWorkingHours,
+                    'official_work_time' => $obj->officialWorkTime
+                ];
+
+                $obj = null;
             }
 
-            $obj->calculate();
-
-            $shiftHours = ($row['shiftType'] == Shifts::OPEN)? $row['workingHour']: $obj->shiftHours;
-            $shiftHours = (empty($shiftHours))? 0: $shiftHours;
-            $locationOut = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
-            $clockInDate = $isCrossDay ? $obj->clockInDate : null;
-            $clockOutDate = $isCrossDay ? $obj->clockOutDate : null;
-
-            $this->data[] = [
-                'empID' => $empId,
-                'deviceID' => $row['device_id_in'],
-                'machineID' => $row['machine_id_in'],
-                'attendanceDate' => $attDate,
-                'shift_id' => !empty($row['shiftID']) ? $row['shiftID'] : 0,
-                'floorID' => $row['location_in'],
-                'clockoutFloorID' => $locationOut,
-                'gracePeriod' => $obj->gracePeriod,
-                'onDuty' => $row['onDutyTime'],
-                'offDuty' => $row['offDutyTime'],
-                'is_cross_day' => $isCrossDay,
-
-                'noPayAmount' => $obj->absDedAmount,
-                'noPaynonPayrollAmount' => $obj->absDedNonAmount,
-                'salaryCategoryID' => $obj->salCatId,
-
-                'checkIn' => $obj->clockIn,
-                'checkOut' => $obj->clockOut,
-                'check_in_date' => $clockInDate,
-                'check_out_date' => $clockOutDate,
-                'work_out_detail_id'=> $row['detailId'],
-                'presentTypeID' => $obj->presentAbsentType,
-
-                'normalTime' => ($row['isHalfDay'] == 1) ? 0.5 : 1,
-                'lateHours' => $obj->lateHours,
-                'lateFee' => $obj->lateFee,
-                'earlyHours' => $obj->earlyHours,
-                'OTHours' => $obj->overTimeHours,
-                'realTime' => $obj->realTime,
-                'shift_hours' => $shiftHours,
-
-                'isNormalDay' => $obj->normalDayData['true_false'],
-                'NDaysOT' => $obj->normalDayData['hours'],
-                'normalDay' => $obj->normalDayData['realTime'],
-
-                'isWeekEndDay' => $obj->weekendData['true_false'],
-                'weekendOTHours' => $obj->weekendData['hours'],
-                'weekend' => $obj->weekendData['realTime'],
-
-                'isHoliday' => $obj->holidayData['true_false'],
-                'holidayOTHours' => $obj->holidayData['hours'],
-                'holiday' => $obj->holidayData['realTime'],
-
-                'mustCheck' => $row['isCheckInMust'],
-                'isMultipleOcc' => $this->moreThan2RecordsExists($empId),
-                'flexyHrFrom' => !empty($obj->flexibleHourFrom) ? $obj->flexibleHourFrom : null,
-                'flexyHrTo' => !empty($obj->flexibleHourTo) ? $obj->flexibleHourTo : null,
-                'companyID' => $this->companyId,
-                'companyCode' => $companyCode,
-                'uploadType' => $row['upload_type'],
-                'pulled_by' => 0, 'pulled_at' => $this->dateTime,
-                'pulled_via' => $this->pulledVia,
-                'actual_time' => $obj->actualWorkingHours,
-                'official_work_time' => $obj->officialWorkTime
-            ];
-
-            $obj = null;
+            if (!empty($chunkData)) {
+                $this->data = array_merge($this->data, $chunkData);
+                DB::table('srp_erp_pay_empattendancereview')->insert($chunkData);
+            }
         }
+
         if(!$this->isFromShift){
             $this->insertToLogTb([
                 'about to insert'=> array_column($this->data, 'empID')
@@ -511,7 +522,7 @@ class SMAttendancePullingService{
             }
         }
 
-        DB::table('srp_erp_pay_empattendancereview')->insert($this->data);
+        // Insert is done per chunk in step4
 
         $this->updateOtSettlementType();
 
