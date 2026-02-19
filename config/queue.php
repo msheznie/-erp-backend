@@ -112,7 +112,7 @@ return [
 
     'failed' => [
         'driver' => env('QUEUE_FAILED_DRIVER', 'database-uuids'),
-        'database' => env('DB_CONNECTION', 'mysql'),
+        'database' => filter_var(env('IS_MULTI_TENANCY', false), FILTER_VALIDATE_BOOLEAN) ? 'main_db' : env('DB_CONNECTION', 'mysql'),
         'table' => 'failed_jobs',
     ],
 
