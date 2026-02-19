@@ -817,7 +817,7 @@ class TenderMasterRepository extends BaseRepository
 
         }
 
-        $technicalBidOpened = $currentDateFormatted->gt($bidOpeningStartDate);
+        $technicalBidOpened = $currentDateFormatted->gt(Carbon::parse($bidOpeningStartDate));
 
         if ($bidOpeningEndDate == null) {
             $result4 = true;
