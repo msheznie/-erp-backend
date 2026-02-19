@@ -9856,4 +9856,6 @@ return
     'column_must_be_string' => 'يجب أن يكون اسم كل عمود نص',
     'column_max_length' => 'لا يمكن أن يتجاوز اسم العمود 100 حرف',
     'invalid_date_format' => 'تنسيق تاريخ غير صالح',
+    'beneficiary_number' => 'رقم المستفيد',
+    "commercial_registration": "رقم التسجيل",
 ];
