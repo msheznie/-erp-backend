@@ -118,9 +118,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Passport routes are automatically registered in Passport v13+
         // No need to call Passport::routes() anymore
-        if (filter_var(env('PASSPORT_SKIP_KEY_PERMISSION_CHECK', false), FILTER_VALIDATE_BOOLEAN)) {
-            Passport::$validateKeyPermissions = false;
-        }
+        
         // Configure Passport token expiration
         // Note: tokensExpireIn and refreshTokensExpireIn accept CarbonInterval or DateInterval
         Passport::tokensExpireIn(CarbonInterval::hours(1));
