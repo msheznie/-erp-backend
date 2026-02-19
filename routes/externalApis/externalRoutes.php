@@ -41,3 +41,18 @@ Route::get('employees/documents/status', 'EmployeeAPIController@employeeDocument
 Route::post('create-customer-master','CustomerMasterAPIController@createCustomerMasterAPI');
 Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
 Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
+
+Route::prefix('integrations')->group(function () {
+    //external integrations
+    Route::post('customer-invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
+    Route::post('credit-notes','CreditNoteAPIController@createCreditNoteAPI');
+    Route::post('receipt-matchings', 'ReceiptMatchingAPIController@createReceiptMatchingAPI');
+    Route::post('customer-invoices/cancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
+    Route::post('supplier-invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
+    Route::post('journal-vouchers','JvMasterAPIController@createJournalVoucher');
+    Route::post('payment-vouchers','PaySupplierInvoiceMasterAPIController@createPaymentVoucherAPI');
+    Route::get('employees/document-status', 'EmployeeAPIController@employeeDocumentStatus');
+    Route::post('customers','CustomerMasterAPIController@createCustomerMasterAPI');
+    Route::post('assets/search', 'FixedAssetMasterAPIController@getAssetDetails');
+    Route::post('warehouses/items/search', 'ItemMasterAPIController@getWarehouseItemQuantity');
+});
