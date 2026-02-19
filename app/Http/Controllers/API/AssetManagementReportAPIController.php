@@ -2124,6 +2124,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $spreadsheet = $sheet->getDelegate();
                                 $worksheet = $spreadsheet->getActiveSheet();
                                 $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                if ($templateName === 'export_report.asset_expenses') {
+                                    $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'));
+                                }
+                                if ($templateName === 'export_report.asset_wise_expenses') {
+                                    $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.account_code'));
+                                }
                             } catch (\Exception $e) {
                                 $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                             }
@@ -2165,6 +2171,9 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                    if ($templateName === 'export_report.asset_tracking') {
+                                        $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'), true);
+                                    }
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
@@ -4454,6 +4463,34 @@ WHERE
         $output = \DB::select($qry);
 
         return $output;
+    }
+
+    /**
+     * Set bold on header rows for asset expenses / asset wise expenses / asset tracking export.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $worksheet
+     * @param int $lastRow
+     * @param string $lastColumn
+     * @param string|null $columnHeaderLabel First column header text (e.g. trans('custom.asset_code') or trans('custom.account_code'))
+     * @param bool $onlyColumnHeaderRow When true, bold only the row where column A equals $columnHeaderLabel (e.g. asset_tracking)
+     * @return void
+     */
+    private function setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, $columnHeaderLabel = null, $onlyColumnHeaderRow = false)
+    {
+        $columnHeaderLabel = $columnHeaderLabel ?? trans('custom.asset_code');
+
+        for ($row = 1; $row <= $lastRow; $row++) {
+            $cellA = $worksheet->getCell('A' . $row)->getValue();
+            $isHeaderRow = $onlyColumnHeaderRow
+                ? (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel)
+                : ($row <= 6)
+                    || (is_string($cellA) && str_contains($cellA, ' - '))
+                    || (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel);
+
+            if ($isHeaderRow) {
+                $worksheet->getStyle('A' . $row . ':' . $lastColumn . $row)->getFont()->setBold(true);
+            }
+        }
     }
 
     private function getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency){
