@@ -41,7 +41,10 @@ class SendTenderNotificationService
 
                     $targetDate = Carbon::parse($tender->$dateField);
                     if (self::checkNotificationCondition($beforeAfterType, $frequency, $targetDate, $now)) {
-                        self::sendReminder($tender, $scenarioID, $tender->stage);
+                        if ($beforeAfterType == 0 && $tender->stage == 1 && $scenarioID == 46) {
+                            continue;
+                        }
+                        self::sendReminder($tender, $scenarioID, $tender->stage, $beforeAfterType);
                     }
                 }
             }
@@ -114,7 +117,7 @@ class SendTenderNotificationService
         return $notificationTime->isSameMinute($currentDate);
     }
 
-    public static function sendReminder($tender, $scenarioID, $stage)
+    public static function sendReminder($tender, $scenarioID, $stage, $beforeAfter = 0)
     {
         $reminderUsersList = $tender->tenderBidMinimumApproval ?? [];
         $emailSubject = self::getEmailSubject($scenarioID);
@@ -124,7 +127,7 @@ class SendTenderNotificationService
                 $empName = $user->employee->empName ?? '-';
                 $empEmail = $user->employee->empEmail ?? null;
                 if($empEmail != null){
-                    $emailBody = self::getEmailBody($scenarioID, $tender, $empName);
+                    $emailBody = self::getEmailBody($scenarioID, $tender, $empName, $beforeAfter);
                     $dataEmail['empEmail'] = $empEmail;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['isEmailSend'] = 0;
@@ -134,6 +137,53 @@ class SendTenderNotificationService
                     $sendEmail = Email::sendEmailErp($dataEmail);
                     if (!$sendEmail["success"]) {
                         $errorMessage  = $sendEmail["message"];
+                    }
+                }
+            }
+        }
+        if($scenarioID == 45){
+            $techBidOpeningMembers = $tender->tenderUserAccess ?? [];
+            if(!empty($techBidOpeningMembers)){
+                foreach($techBidOpeningMembers as $user){
+                    $dataEmail = [];
+                    $empName = $user->employee->empName ?? '-';
+                    $empEmail = $user->employee->empEmail ?? null;
+                    if($empEmail != null){
+                        $emailBody = self::getEmailBody($scenarioID, $tender, $empName, $beforeAfter);
+                        $dataEmail['empEmail'] = $empEmail;
+                        $dataEmail['companySystemID'] = $tender->company_id;
+                        $dataEmail['isEmailSend'] = 0;
+                        $dataEmail['attachmentFileName'] = '';
+                        $dataEmail['alertMessage'] = $emailSubject;
+                        $dataEmail['emailAlertMessage'] = $emailBody;
+                        $sendEmail = Email::sendEmailErp($dataEmail);
+                        if (!$sendEmail["success"]) {
+                            $errorMessage  = $sendEmail["message"];
+                        }
+                    }
+                }
+            }
+        }
+
+        if($scenarioID == 46){
+            $commercialBidOpeningMembers = $tender->tenderUserAccess ?? [];
+            if(!empty($commercialBidOpeningMembers)){
+                foreach($commercialBidOpeningMembers as $user){
+                    $dataEmail = [];
+                    $empName = $user->employee->empName ?? '-';
+                    $empEmail = $user->employee->empEmail ?? null;
+                    if($empEmail != null){
+                        $emailBody = self::getEmailBody($scenarioID, $tender, $empName, $beforeAfter);
+                        $dataEmail['empEmail'] = $empEmail;
+                        $dataEmail['companySystemID'] = $tender->company_id;
+                        $dataEmail['isEmailSend'] = 0;
+                        $dataEmail['attachmentFileName'] = '';
+                        $dataEmail['alertMessage'] = $emailSubject;
+                        $dataEmail['emailAlertMessage'] = $emailBody;
+                        $sendEmail = Email::sendEmailErp($dataEmail);
+                        if (!$sendEmail["success"]) {
+                            $errorMessage  = $sendEmail["message"];
+                        }
                     }
                 }
             }
@@ -151,7 +201,7 @@ class SendTenderNotificationService
 
         return $subjects[$scenarioID] ?? '';
     }
-    public static function getEmailBody($scenarioID, $tender, $empName){
+    public static function getEmailBody($scenarioID, $tender, $empName, $beforeAfter = 0){
         $tenderDetails = [
             'code' => $tender->tender_code ?? '-',
             'title' => $tender->title ?? '-',
@@ -162,19 +212,24 @@ class SendTenderNotificationService
             case 45:
                 if($tender->stage == 1) {
                     $bidDate = $tender->bid_opening_date_time ? Carbon::parse($tender->bid_opening_date_time) : '-';
+                    $bidEndDate = $tender->bid_opening_end_date_time ? Carbon::parse($tender->bid_opening_end_date_time) : '-';
                 } else{
                     $bidDate = $tender->technical_bid_opening_date_time ? Carbon::parse($tender->technical_bid_opening_date_time) : '-';
+                    $bidEndDate = $tender->technical_bid_closing_date_time ? Carbon::parse($tender->technical_bid_closing_date_time) : '-';
                 }
                 break;
             case 46:
                 if($tender->stage == 1) {
                     $bidDate = $tender->bid_opening_date_time ? Carbon::parse($tender->bid_opening_date_time) : '-';
+                    $bidEndDate = $tender->bid_opening_end_date_time ? Carbon::parse($tender->bid_opening_end_date_time) : '-';
                 } else{
                     $bidDate = $tender->commerical_bid_opening_date_time ? Carbon::parse($tender->commerical_bid_opening_date_time) : '-';
+                    $bidEndDate = $tender->commerical_bid_closing_date_time ? Carbon::parse($tender->commerical_bid_closing_date_time) : '-';
                 }
                 break;
             default:
                 $bidDate = null;
+                $bidEndDate = null;
                 break;
         }
         $messages = [
@@ -185,6 +240,7 @@ class SendTenderNotificationService
         if (!isset($messages[$scenarioID])) {
             return '';
         }
+        $bidEndDateLine = ($beforeAfter == 2) ? "<p><strong>Bid Opening End Date and Time:</strong> {$bidEndDate}</p>\n            " : '';
         return "
             <p>Dear {$empName},</p>
             <p>This is a reminder regarding the {$messages[$scenarioID]} for the following tender:</p>
@@ -192,7 +248,7 @@ class SendTenderNotificationService
             <p><strong>Tender Title:</strong> {$tenderDetails['title']}</p>
             <p><strong>Tender Description:</strong> {$tenderDetails['description']}</p>
             <p><strong>Bid Opening Start Date and Time:</strong> {$bidDate}</p>
-            <p>Please ensure all necessary preparations are completed before the scheduled time.</p>
+            {$bidEndDateLine}<p>Please ensure all necessary preparations are completed before the scheduled time.</p>
             <p>Thank you.</p>
         ";
     }
