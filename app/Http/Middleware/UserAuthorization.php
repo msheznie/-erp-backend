@@ -55,8 +55,8 @@ class UserAuthorization
         if ($checkRoleRoute) {
             return $next($request);
         } else {
-            // $navigationID = $request->header('X-nav-ID') ?? 0;
-            // $accessType = $request->header('X-Access-Type') ?? 'None';
+            $navigationID = $request->header('X-nav-ID') ?? 0;
+            $accessType = $request->header('X-Access-Type') ?? 'None';
 
             // if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
 
@@ -88,12 +88,12 @@ class UserAuthorization
             //     }
             // }
 
-            // \Log::channel('authorization')->info(json_encode([
-            //     'navigationID' => $navigationID,
-            //     'routeName' => $routeName,
-            //     'routeURI' => $request->route()->uri,
-            //     'accessType' => $accessType
-            // ]));
+            \Log::channel('authorization')->info(json_encode([
+                'navigationID' => $navigationID,
+                'routeName' => $routeName,
+                'routeURI' => $request->route()->uri,
+                'accessType' => $accessType
+            ]));
             return errorMsgs("Unauthorized Access");
         }
     }
