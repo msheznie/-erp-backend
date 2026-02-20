@@ -212,7 +212,7 @@ class BidSubmissionMaster extends Model
         $query = self::query()
             ->where('status', 1)
             ->where('bidSubmittedYN', 1)
-            ->where('tender_id', $tenderId);
+            ->where('srm_bid_submission_master.tender_id', $tenderId);
 
         if (!empty($negotiationIds)) {
             $query->when($isNegotiation == 1,
@@ -225,7 +225,7 @@ class BidSubmissionMaster extends Model
 
             return $query
                 ->where('doc_verifiy_status', 1)
-                ->pluck('id');
+                ->pluck('srm_bid_submission_master.id');
         }
 
         return $query
@@ -237,7 +237,7 @@ class BidSubmissionMaster extends Model
         ")
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-            ->where('commercial_verify_status', 1)
+            ->where('srm_bid_submission_master.commercial_verify_status', 1)
             ->groupBy('srm_bid_submission_master.id')
             ->havingRaw('weightage >= passing_weightage')
             ->orderBy('srm_bid_submission_master.id')
