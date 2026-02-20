@@ -180,7 +180,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     if ($detail) {
                         if (abs($detail->receiveAmountTrans) > abs($item['SumOfreceiveAmountTrans'])) {
                             $itemDrt = "Selected Invoice " . $item['bookingInvDocCode'] . " is all ready fully settled. Please check again";
-                            $itemExistArray[] = [$itemDrt];
+                            $itemExistArray[] = $itemDrt;
 
                         }
 
@@ -196,11 +196,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     if ($glCheck) {
                         if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                             $itemDrt = "Selected Invoice " . $item['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                            $itemExistArray[] = [$itemDrt];
+                            $itemExistArray[] = $itemDrt;
                         }
                     } else {
                         $itemDrt = "Selected Invoice " . $item['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                        $itemExistArray[] = [$itemDrt];
+                        $itemExistArray[] = $itemDrt;
                     }
 
                     $selectedArAutoID[] = $item['arAutoID'];
@@ -236,7 +236,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             }
 
             if (!empty($itemExistArray)) {
-                return $this->sendError($itemExistArray, 422);
+                return $this->sendError(implode(', ', $itemExistArray), 422);
             }
 
         }
@@ -742,11 +742,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
                         $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                        $itemExistArray[] = [$itemDrt];
+                        $itemExistArray[] = $itemDrt;
                     }
                 } else {
                     $itemDrt = "Selected Invoice " . $itemExist['bookingInvDocCode'] . " is not updated in general ledger. Please check again";
-                    $itemExistArray[] = [$itemDrt];
+                    $itemExistArray[] = $itemDrt;
                 }
 
                 if ($matchDocumentMasterData->documentSystemID == 21 && $vatTotal > 0) {
