@@ -150,13 +150,13 @@
                 @if(in_array(1, $selectedColumns)) <td>{{ $data->companyID }}</td> @endif
                 @if(in_array(2, $selectedColumns)) <td>{{ $data->DocumentCode }}</td> @endif
                 @if(in_array(3, $selectedColumns)) <td>{{ $data->DocumentDate }}</td> @endif
-                @if(in_array(34, $selectedColumns)) <td>{{ $data->documentType }}</td> @endif
+                @if(in_array(34, $selectedColumns)) <td>{{ data_get($data, 'documentType', '') }}</td> @endif
                 @if(in_array(15, $selectedColumns))
                     <td>{{ (isset($data->rcmActivated) && $data->rcmActivated == 1) ? __('custom.yes') : __('custom.no') }}</td>
                 @endif
-                @if(in_array(4, $selectedColumns)) <td>{{ $data->invoiceNo }}</td> @endif
-                @if(in_array(5, $selectedColumns)) <td>{{ $data->invoiceDate }}</td> @endif
-                @if(in_array(11, $selectedColumns)) <td>{{ $data->postedDate }}</td> @endif
+                @if(in_array(4, $selectedColumns)) <td>{{ data_get($data, 'invoiceNo', data_get($data, 'DocumentCode', '')) }}</td> @endif
+                @if(in_array(5, $selectedColumns)) <td>{{ data_get($data, 'invoiceDate', data_get($data, 'DocumentDate', '')) }}</td> @endif
+                @if(in_array(11, $selectedColumns)) <td>{{ data_get($data, 'postedDate', '') }}</td> @endif
                 @if(in_array(6, $selectedColumns))
                     <td class="word-wrap">
                         @if(!empty($data->comments))
@@ -168,16 +168,16 @@
                 @if(in_array(8, $selectedColumns)) <td>{{ data_get($data, 'supplierName', '') }}</td> @endif
                 @if(in_array(33, $selectedColumns)) <td>{{ data_get($data, 'primarySupplierCode', '') }}</td> @endif
                 @if(in_array(32, $selectedColumns)) <td>{{ data_get($data, 'supplierName', '') }}</td> @endif
-                @if(in_array(12, $selectedColumns)) <td>{{ $data->CutomerCode }}</td> @endif
-                @if(in_array(13, $selectedColumns)) <td>{{ $data->customerShortCode }}</td> @endif
-                @if(in_array(14, $selectedColumns)) <td>{{ $data->CustomerName }}</td> @endif
-                @if(in_array(16, $selectedColumns)) <td>{{ $data->vatNumber }}</td> @endif
-                @if(in_array(17, $selectedColumns)) <td>{{ $data->countryName }}</td> @endif
+                @if(in_array(12, $selectedColumns)) <td>{{ data_get($data, 'CutomerCode', '') }}</td> @endif
+                @if(in_array(13, $selectedColumns)) <td>{{ data_get($data, 'customerShortCode', '') }}</td> @endif
+                @if(in_array(14, $selectedColumns)) <td>{{ data_get($data, 'CustomerName', '') }}</td> @endif
+                @if(in_array(16, $selectedColumns)) <td>{{ data_get($data, 'vatNumber', '') }}</td> @endif
+                @if(in_array(17, $selectedColumns)) <td>{{ data_get($data, 'countryName', '') }}</td> @endif
                 @if(in_array(26, $selectedColumns)) <td></td> @endif
-                @if(in_array(28, $selectedColumns)) <td>{{ $data->transcation }}</td> @endif
-                @if(in_array(27, $selectedColumns)) <td>{{ $data->goodORService }}</td> @endif
-                @if(in_array(9, $selectedColumns)) <td>{{ $data->CurrencyCode }}</td> @endif
-                @if(in_array(29, $selectedColumns)) <td>{{ $data->vatCategory }}</td> @endif
+                @if(in_array(28, $selectedColumns)) <td>{{ data_get($data, 'transcation', '') }}</td> @endif
+                @if(in_array(27, $selectedColumns)) <td>{{ data_get($data, 'goodORService', '') }}</td> @endif
+                @if(in_array(9, $selectedColumns)) <td>{{ data_get($data, 'CurrencyCode', '') }}</td> @endif
+                @if(in_array(29, $selectedColumns)) <td>{{ data_get($data, 'vatCategory', '') }}</td> @endif
 
                 @if(in_array(21, $selectedColumns))
                     <td>
