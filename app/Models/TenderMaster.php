@@ -843,7 +843,19 @@ class TenderMaster extends Model
                                 $q->select('employeeSystemID', 'empName', 'empEmail');
                             }
                         ]);
+                }, 'tenderUserAccess' => function ($q) use ($scenarioID){
+                    $q->select('id', 'user_id', 'tender_id', 'module_id')
+                        ->with([
+                            'employee' => function ($q) {
+                                $q->select('employeeSystemID', 'empName', 'empEmail');
+                            }
+                        ])->when($scenarioID == 45, function ($q) {
+                            $q->where('module_id', 1);
+                        })->when($scenarioID == 46, function ($q) {
+                            $q->where('module_id', 2);
+                        });
                 }
+
             ])
             ->get();
     }
