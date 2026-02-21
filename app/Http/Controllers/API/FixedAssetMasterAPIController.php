@@ -1069,13 +1069,14 @@ class FixedAssetMasterAPIController extends AppBaseController
                                 return $this->sendError(trans('custom.depreciation_start_date_required_for_in_use'), 500);
                             }
                         }
-                        // In Use → Not in Use - Allow only if depreciation not generated
                         elseif ($oldStatus == self::ASSET_STATUS_IN_USE && $newStatus == self::ASSET_STATUS_NOT_IN_USE) {
-                            $hasDepreciation = \App\Models\FixedAssetDepreciationPeriod::where('faID', $id)
-                                ->whereHas('master_by', function($q) {
-                                    $q->where('approved', -1);
-                                })
-                                ->exists();
+                            $hasDepreciation = \App\Models\FixedAssetDepreciationPeriod::where('faID', $id)->exists();
+                            if ($hasDepreciation) {
+                                return $this->sendError(trans('custom.cannot_change_to_not_in_use_when_depreciation_generated'), 500);
+                            }
+                        }
+                        elseif ($oldStatus == self::ASSET_STATUS_IDLE && $newStatus == self::ASSET_STATUS_NOT_IN_USE) {
+                            $hasDepreciation = \App\Models\FixedAssetDepreciationPeriod::where('faID', $id)->exists();
                             if ($hasDepreciation) {
                                 return $this->sendError(trans('custom.cannot_change_to_not_in_use_when_depreciation_generated'), 500);
                             }
