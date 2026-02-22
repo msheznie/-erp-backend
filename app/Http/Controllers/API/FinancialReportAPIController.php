@@ -9468,7 +9468,7 @@ GROUP BY id
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
 
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output(trans('custom.financial_trial_balance').'.pdf', 'I');
                 break;
 
@@ -9549,13 +9549,51 @@ GROUP BY id
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
         
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output($templateName, 'I');
 
                 break;
 
             default:
                 return $this->sendError(trans('custom.no_report_id_found'));
+        }
+    }
+
+    /**
+     * Write HTML to mPDF in chunks to avoid pcre.backtrack_limit (1000000) exceeded.
+     * Splits at tag boundaries when possible to keep markup valid.
+     */
+    private function writeHtmlChunked(\Mpdf\Mpdf $mpdf, string $html, int $chunkSize = 500000): void
+    {
+        $len = strlen($html);
+        if ($len <= $chunkSize) {
+            $mpdf->WriteHTML($html);
+
+            return;
+        }
+        $offset = 0;
+        $boundaries = ['</tr>', '</table>', '</tbody>', '</div>', "\n"];
+        while ($offset < $len) {
+            $chunk = substr($html, $offset, $chunkSize);
+            $chunkEnd = $offset + $chunkSize;
+            if ($chunkEnd < $len) {
+                $best = -1;
+                foreach ($boundaries as $b) {
+                    $pos = strrpos($chunk, $b);
+                    if ($pos !== false && $pos > $best) {
+                        $best = $pos + strlen($b);
+                    }
+                }
+                if ($best > 0) {
+                    $chunk = substr($html, $offset, $best);
+                    $offset += $best;
+                } else {
+                    $offset += $chunkSize;
+                }
+            } else {
+                $offset = $len;
+            }
+            $mpdf->WriteHTML($chunk);
         }
     }
 

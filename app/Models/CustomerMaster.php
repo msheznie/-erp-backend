@@ -259,5 +259,35 @@ class CustomerMaster extends Model
     public function customer_contacts(){
         return $this->hasMany('App\Models\CustomerContactDetails','customerID','customerCodeSystem');
     }
+        
+    public function customerAssigned(){
+        return $this->hasMany('App\Models\CustomerAssigned','customerCodeSystem','customerCodeSystem');
+    }
 
+    public function advance_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount','custAdvanceAccountSystemID','chartOfAccountSystemID');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo('App\Models\CustomerMasterCategory','customerCategoryID','categoryID');
+    }
+
+    /**
+     * Query builder for active, approved, assigned customers (for pagination / eager load).
+     *
+     * @param int $companySystemID
+     * @param int|string|null $category Optional customerCategoryID to filter by category
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function approvedAssignedCustomers($companySystemID)
+    {
+        return CustomerMaster::where('primaryCompanySystemID', $companySystemID)
+            ->where('isCustomerActive', 1)
+            ->where('approvedYN', 1)
+            ->whereHas('customerAssigned', function ($q) {
+                $q->where('isAssigned', -1)->where('isActive', 1);
+            });
+    }
 }
