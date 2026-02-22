@@ -109,5 +109,10 @@ class CustomerContactDetails extends Model
         
     ];
 
+    public function contactType()
+    {
+        return $this->belongsTo('App\Models\SupplierContactType','contactTypeID','supplierContactTypeID');
+    }
+
     
 }
