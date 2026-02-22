@@ -9834,6 +9834,8 @@ return
     'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'تم سحب مذكرة الإئتمان إلى فاتورة الدفع; لذلك، لا يمكن تعديل هذا المستند.',
     'credit_note_link_to_pv_cannot_be_selected' => 'تم ربط مذكرة الإئتمان بفاتورة الدفع في حالة مسودة أو قيد المراجعة ولا يمكن تحديدها.',
     'order_cannot_cancelled_multiple_pos' => 'لا يمكن إلغاء الطلب لأنه تم إنشاء أمر آخر.',
+    'category_must_be_an_array' => 'الفئة يجب أن تكون مصفوفة',
+    'per_page_cannot_exceed_50' => 'العدد لكل صفحة لا يمكن أن يتجاوز 50',
     
     // Employee Activity Audit Report Validation Messages
     'screens_accessed_required' => 'الشاشات التي تم الوصول إليها مطلوبة',
