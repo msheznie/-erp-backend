@@ -55,5 +55,7 @@ Route::prefix('integrations')->group(function () {
     Route::post('customers','CustomerMasterAPIController@createCustomerMasterAPI');
     Route::post('assets/search', 'FixedAssetMasterAPIController@getAssetDetails');
     Route::post('warehouses/items/search', 'ItemMasterAPIController@getWarehouseItemQuantity');
+    Route::post('segments/search', 'SegmentMasterAPIController@pullSegment');
+    Route::post('customers/search', 'CustomerMasterAPIController@pullCustomerMaster');
     Route::post('users/search', 'UserAPIController@pullUserDetails');
 });

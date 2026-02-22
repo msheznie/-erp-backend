@@ -217,16 +217,26 @@ class CustomerReceivePaymentGlService
                             ->get();
 
                     $serviceLineSystemIDs = collect($receiptDetails)->pluck('serviceLineSystemID')->toArray();
+                    $firstReceiptDetail = $receiptDetails->first();
 
-                    foreach ($receiptDetails as $keyRe => $valueRe) {
-                        $data['documentTransAmount'] = Helper::roundValue($valueRe->receiveAmountTrans) * -1;
-                        $data['documentLocalAmount'] = Helper::roundValue($valueRe->receiveAmountLocal) * -1;
-                        $data['documentRptAmount'] = Helper::roundValue($valueRe->receiveAmountRpt) * -1;
+                    if ($receiptDetails->count() === 1) {
+                        $valueRe = $receiptDetails->first();
+                        $data['documentTransAmount'] = Helper::roundValue($cpd->transAmount) * -1;
+                        $data['documentLocalAmount'] = Helper::roundValue($cpd->localAmount) * -1;
+                        $data['documentRptAmount'] = Helper::roundValue($cpd->rptAmount) * -1;
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
-                        $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
                         array_push($finalData, $data);
+                    } else {
+                        foreach ($receiptDetails as $keyRe => $valueRe) {
+                            $data['documentTransAmount'] = Helper::roundValue($valueRe->receiveAmountTrans) * -1;
+                            $data['documentLocalAmount'] = Helper::roundValue($valueRe->receiveAmountLocal) * -1;
+                            $data['documentRptAmount'] = Helper::roundValue($valueRe->receiveAmountRpt) * -1;
+                            $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                            $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                            array_push($finalData, $data);
+                        }
                     }
-                    
 
                     $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account") :$masterData->bank->chartOfAccountSystemID;
                     $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account") : $masterData->bank->glCodeLinked;
@@ -245,18 +255,30 @@ class CustomerReceivePaymentGlService
                                                                 ->whereIn('serviceLineSystemID', $serviceLineSystemIDs)
                                                                 ->groupBy('serviceLineSystemID')
                                                                 ->get();
-                                                                
 
-                    foreach ($receiptDetails as $keyRe => $valueRe) {
+                    if ($receiptDetails->count() === 1) {
+                        $valueRe = $receiptDetails->first();
                         $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
-
-                        if($valueRe->net_amount > 0){
-                            $data['documentTransAmount'] = (Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentLocalAmount'] = (Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentRptAmount'] = (Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
-                            $data['serviceLineCode'] =  $valueRe->serviceLineCode;
-                            array_push($finalData, $data); 
+                        $directAmountTrans = isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0;
+                        $totalReceiptTrans = Helper::roundValue($cpd->transAmount) + Helper::roundValue($directAmountTrans);
+                        $data['documentTransAmount'] = Helper::roundValue($totalReceiptTrans);
+                        $data['documentLocalAmount'] = Helper::roundValue($cpd->localAmount + (isset($directAmountBank->localAmount) ? $directAmountBank->localAmount : 0));
+                        $data['documentRptAmount'] = Helper::roundValue($cpd->rptAmount + (isset($directAmountBank->rptAmount) ? $directAmountBank->rptAmount : 0));
+                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
+                        array_push($finalData, $data);
+                    } else {
+                        foreach ($receiptDetails as $keyRe => $valueRe) {
+                            $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
+                            $segmentNetTrans = $valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0);
+                            if ($segmentNetTrans != 0) {
+                                $data['documentTransAmount'] = Helper::roundValue($segmentNetTrans);
+                                $data['documentLocalAmount'] = Helper::roundValue((1 / $masterData->localCurrencyER) * $segmentNetTrans);
+                                $data['documentRptAmount'] = Helper::roundValue((1 / $masterData->companyRptCurrencyER) * $segmentNetTrans);
+                                $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                                $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                                array_push($finalData, $data);
+                            }
                         }
                     }
 

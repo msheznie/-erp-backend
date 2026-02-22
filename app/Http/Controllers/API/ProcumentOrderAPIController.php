@@ -2041,6 +2041,55 @@ class ProcumentOrderAPIController extends AppBaseController
             }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment', 'project'
         ])->first();
 
+        $output['supplier_master_details'] = null;
+        if (!empty($output) && !empty($output->supplierID)) {
+            $supplierMasterDetails = SupplierMaster::with([
+                'supplier_group:id,group',
+                'supplier_category:id,category',
+                'country:countryID,countryName'
+            ])
+                ->select([
+                    'supplierCodeSystem',
+                    'supplierName',
+                    'address',
+                    'telephone',
+                    'fax',
+                    'supEmail',
+                    'webAddress',
+                    'omanization',
+                    'registrationNumber',
+                    'registrationExprity',
+                    'supplier_group_id',
+                    'supplier_category_id',
+                    'supplierCountryID'
+                ])
+                ->where('supplierCodeSystem', $output->supplierID)
+                ->first();
+
+            $output['supplier_master_details'] = $supplierMasterDetails ? [
+                'name' => $supplierMasterDetails->supplierName,
+                'supplierGroup' => data_get($supplierMasterDetails, 'supplier_group.group'),
+                'supplierCategory' => data_get($supplierMasterDetails, 'supplier_category.category'),
+                'address' => $supplierMasterDetails->address,
+                'country' => data_get($supplierMasterDetails, 'country.countryName'),
+                'telephone' => $supplierMasterDetails->telephone,
+                'fax' => $supplierMasterDetails->fax,
+                'email' => $supplierMasterDetails->supEmail,
+                'webAddress' => $supplierMasterDetails->webAddress,
+                'omanization' => ($supplierMasterDetails->omanization === null || $supplierMasterDetails->omanization === '')
+                    ? null
+                    : (is_numeric($supplierMasterDetails->omanization)
+                        ? ((fmod((float) $supplierMasterDetails->omanization, 1.0) == 0.0
+                            ? (string) ((int) $supplierMasterDetails->omanization)
+                            : rtrim(rtrim((string) $supplierMasterDetails->omanization, '0'), '.')) . '%')
+                        : null),
+                'registrationNumber' => $supplierMasterDetails->registrationNumber,
+                'registrationExpiry' => !empty($supplierMasterDetails->registrationExprity)
+                    ? Carbon::parse($supplierMasterDetails->registrationExprity)->toDateString()
+                    : null,
+            ] : null;
+        }
+
 
         $is_specification = false;
 
@@ -3407,7 +3456,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_by_supplier_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                 if (app()->getLocale() == 'ar') {
@@ -4165,7 +4214,7 @@ WHERE
 
         return \App\Exports\CreateExcelExport::download('item_wise_po_analysis', function ($excel) use ($data) {
             $excel->sheet(trans('exportExcelFile.spent_analysis_drilldown_report'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
                 if (app()->getLocale() == 'ar') {

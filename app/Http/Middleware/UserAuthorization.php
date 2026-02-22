@@ -55,7 +55,6 @@ class UserAuthorization
         if ($checkRoleRoute) {
             return $next($request);
         } else {
-
             $navigationID = $request->header('X-nav-ID') ?? 0;
             $accessType = $request->header('X-Access-Type') ?? 'None';
 
@@ -95,8 +94,6 @@ class UserAuthorization
                 'routeURI' => $request->route()->uri,
                 'accessType' => $accessType
             ]));
-
-
             return errorMsgs("Unauthorized Access");
         }
     }
@@ -121,6 +118,7 @@ class UserAuthorization
             'api/v1/logoutApiUser',
             'api/v1/updateNotification',
             'api/v1/getThirdPartyApiLogDetail',
+            'api/v1/getCurrentHomeUrl',
         ];
     }
 

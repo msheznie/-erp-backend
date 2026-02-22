@@ -759,6 +759,7 @@ return
     'budget_template_retrieved_successfully' => 'تم استرداد قالب الميزانية بنجاح',
     'budget_template_saved_successfully' => 'تم حفظ قالب الميزانية بنجاح',
     'budget_template_updated_successfully' => 'تم تحديث قالب الميزانية بنجاح',
+    'budget_template_is_used_in_department_budget_planning' => 'قالب الميزانية هذا قيد الاستخدام ولا يمكن حذفه لأن الميزانية قد تم البدء بها بالفعل.',
     'budget_templates_exported_successfully' => 'تم تصدير قوالب الميزانية بنجاح',
     'budget_templates_retrieved_successfully' => 'تم استرداد قوالب الميزانية بنجاح',
     'budget_templates_retrieved_successfully_1' => 'تم استرداد قوالب الميزانية بنجاح',
@@ -5790,6 +5791,7 @@ return
     'type' => 'النوع',
     'type_not_found' => 'النوع غير موجود',
     'type_parameter_required' => 'معلمة النوع مطلوبة',
+    'type_input_value_is_incorrect' => 'قيمة إدخال النوع غير صحيحة',
     'un_billed_grv_id' => 'معرّف إشعار استلام البضاعة غير المفوتر',
     'unable_to_delete_as_asset_costing_is_already_succe' => 'غير قادر على الحذف حيث تم تحميل تكلفة الأصل بنجاح بالفعل',
     'unable_to_update_description_already_exist' => 'غير قادر على التحديث. الوصف موجود بالفعل',
@@ -6043,6 +6045,7 @@ return
     'workflow_configuration_retrieved_successfully' => 'تم استرداد تكوين سير العمل بنجاح',
     'workflow_configuration_saved_successfully' => 'تم حفظ تكوين سير العمل بنجاح',
     'workflow_configuration_updated_successfully' => 'تم تحديث تكوين سير العمل بنجاح',
+    'workflow_configuration_is_used_in_department_budget_planning' => 'تكوين سير العمل مستخدم في تخطيط ميزانية القسم ولا يمكن حذفه.',
     'workflow_configurations_retrieved_successfully' => 'تم استرداد تكوينات سير العمل بنجاح',
     'workflow_name_already_exists_please_enter_a_unique' => 'اسم سير العمل موجود بالفعل. يرجى إدخال اسم فريد.',
     'workflowconfiguration_updated_successfully' => 'تم تحديث تكوين سير العمل بنجاح',
@@ -9069,6 +9072,7 @@ return
     'po_analysis' => 'تحليل أوامر الشراء',
     'order_inquiry' => 'استعلام الطلب',
     'open_requests_details_export_in_progress' => 'جارٍ تصدير تقرير الطلبات المفتوحة التفصيلي، سيتم إشعارك عند الانتهاء!!',
+    'budget_planning_export_in_progress' => 'تصدير تخطيط ميزانية الشركة قيد المعالجة. سيتم إشعارك عند جاهزية الملف.',
     'code_128' => 'الرمز 128',
     'code_39'  => 'الرمز 39',
     'cheque_cancellation_process_done_successfully' => 'تم إلغاء الشيك بنجاح...',
@@ -9831,6 +9835,8 @@ return
     'credit_note_pulled_into_payment_voucher_cannot_be_amended' => 'تم سحب مذكرة الإئتمان إلى فاتورة الدفع; لذلك، لا يمكن تعديل هذا المستند.',
     'credit_note_link_to_pv_cannot_be_selected' => 'تم ربط مذكرة الإئتمان بفاتورة الدفع في حالة مسودة أو قيد المراجعة ولا يمكن تحديدها.',
     'order_cannot_cancelled_multiple_pos' => 'لا يمكن إلغاء الطلب لأنه تم إنشاء أمر آخر.',
+    'category_must_be_an_array' => 'الفئة يجب أن تكون مصفوفة',
+    'per_page_cannot_exceed_50' => 'العدد لكل صفحة لا يمكن أن يتجاوز 50',
     
     // Employee Activity Audit Report Validation Messages
     'screens_accessed_required' => 'الشاشات التي تم الوصول إليها مطلوبة',
@@ -9856,11 +9862,9 @@ return
     'column_must_be_string' => 'يجب أن يكون اسم كل عمود نص',
     'column_max_length' => 'لا يمكن أن يتجاوز اسم العمود 100 حرف',
     'invalid_date_format' => 'تنسيق تاريخ غير صالح',
+    'document_attachment_id_required' => 'معرف مرفق المستند مطلوب',
+    'owner_key_required' => 'مفتاح المالك مطلوب',
+    'invalid_owner_key' => 'مفتاح المالك غير صالح. يجب أن يكون واحد من: reporting_manager, hod, admin',
     'beneficiary_number' => 'رقم المستفيد',
-    "commercial_registration": "رقم التسجيل",
-
-    // integrations/users/search API
-    'product_access_value_not_matching' => 'قيمة الوصول إلى المنتج غير متطابقة مع النظام',
-    'user_type_not_found' => 'نوع المستخدم غير موجود',
-    'input_value_not_matching' => 'قيمة الإدخال غير متطابقة',
+    'commercial_registration' => 'رقم التسجيل',
 ];

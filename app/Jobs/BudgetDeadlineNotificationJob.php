@@ -62,29 +62,20 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
     private function sendDeadlineNotifications()
     {
         $today = Carbon::today();
-
-        $budgetNotificationDetails = BudgetNotificationDetail::where('isActive', 1)->where('notification_id', 4)->first();
-
-        if (!$budgetNotificationDetails) {
-            $targetDate = $today->copy()->addDays(2)->startOfDay();
-        }else {
-            $reminderTime = $budgetNotificationDetails->reminderTime;
-            // Convert hours to days (reminderTime is in hours)
-            // Since submissionDate is date-only, we need to round up to get the target date
-            $reminderTimeInDays = ceil($reminderTime / 24);
-            $targetDate = $today->copy()->addDays($reminderTimeInDays)->startOfDay();
-        }
-
         // Find budget plannings with submission date within the reminder time
         // Since submissionDate is a date field (YYYY-mm-dd), we compare dates only
         $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
             'department.hod.employee',
             'masterBudgetPlannings.company',
-            'financeYear'
+            'financeYear',
+            'revisions'
         ])
-        ->where(function($query) use ($today, $targetDate) {
-            $query->where('submissionDate','>', $today->toDateString())
-                  ->where('submissionDate', '<=', $targetDate->toDateString());
+        ->where(function ($query) use ($today) {
+            $query->where('submissionDate', '>', $today->toDateString())
+                ->orWhereHas('revisions', function ($q) use ($today) {
+                    $q->where('revisionStatus', 1)
+                        ->where('newSubmissionDate', '>', $today->toDateString());
+                });
         })
         ->where('workStatus', '!=', 3) // Only for non-submitted
         ->get();
@@ -107,6 +98,7 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                 // You may want to add a specific slug for deadline notifications
                 $notificationDetail = BudgetNotificationDetail::with('notification')
                     ->where('isActive', 1)
+                    ->where('notification_id', 4)
                     ->where('companySystemID', $companySystemID)
                     ->first();
 
@@ -114,16 +106,32 @@ class BudgetDeadlineNotificationJob implements ShouldQueue
                     continue;
                 }
 
-                $notification = $notificationDetail->notification;
+                if (!$notificationDetail) {
+                    $targetDate = $today->copy()->addDays(2)->startOfDay();
+                }else {
+                    $reminderTime = $notificationDetail->reminderTime;
+                    // Convert hours to days (reminderTime is in hours)
+                    // Since submissionDate is date-only, we need to round up to get the target date
+                    $reminderTimeInDays = ceil($reminderTime / 24);
+                    $targetDate = $today->copy()->addDays($reminderTimeInDays)->startOfDay();
+                }
+
+
                 $scenario = 'deadline-warning'; // Default scenario if slug not set
 
-                $budgetNotificationService = new BudgetNotificationService();
-                // Send notification
-                $budgetNotificationService->sendNotification(
-                    $budgetPlanning->id,
-                    $scenario,
-                    $companySystemID
-                );
+                if($budgetPlanning->submissionDate <= $targetDate || $budgetPlanning->revisions->where('revisionStatus', 1)->where('newSubmissionDate', '<=', $targetDate)->count() > 0) {
+                    $budgetNotificationService = new BudgetNotificationService();
+                    // Send notification
+                    $budgetNotificationService->sendNotification(
+                        $budgetPlanning->id,
+                        $scenario,
+                        $companySystemID,
+                        null,
+                        null,
+                        $notificationDetail->reminderTime
+                    );
+                }
+
 
 
             } catch (\Exception $e) {

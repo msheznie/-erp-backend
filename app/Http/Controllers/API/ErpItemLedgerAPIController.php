@@ -623,7 +623,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         return \App\Exports\CreateExcelExport::download('itemTransactionHistory', function ($excel) use ($data_obj) {
 
             $excel->sheet(trans('custom.itemTransactionHistory'), function ($sheet) use ($data_obj) {
-                $sheet->fromArray($data_obj);
+                $sheet->fromArray($data_obj, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 
                 // Set right-to-left for Arabic locale
