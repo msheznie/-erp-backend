@@ -53,6 +53,7 @@ use App\helper\CreateExcel;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use Illuminate\Support\Facades\Log;
 
 
 class AssetManagementReportAPIController extends AppBaseController
@@ -1114,23 +1115,23 @@ class AssetManagementReportAPIController extends AppBaseController
                             }
 
                             $financialData->setChargeDuringTheYear(round($sumPeriod, $currencyDecimalPlace));
-
-                            if ($val->disposedDep == 0) {
+                            
+                            if ($val->DIPOSED == 0) {
                                 $financialData->setChargeOnDisposal(round($val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setChargeOnDisposal(round($val->disposedDep + $sumPeriod, $currencyDecimalPlace));
+                            } elseif ($val->DIPOSED != 0) {
+                                $financialData->setChargeOnDisposal(round($val->openingDep + $sumPeriod, $currencyDecimalPlace));
                             }
 
-                            if ($val->disposedDep == 0) {
+                            if ($val->DIPOSED == 0) {
                                 $financialData->setClosingDep(round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setClosingDep(round($val->openingDep - $val->disposedDep, $currencyDecimalPlace));
+                            } elseif ($val->DIPOSED != 0) {
+                                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod), $currencyDecimalPlace));
                             }
 
-                            if ($val->disposedDep == 0) {
+                            if ($val->DIPOSED == 0) {
                                 $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep), $currencyDecimalPlace));
-                            } elseif ($val->disposedDep != 0) {
-                                $financialData->setNbv(round($val->costClosing - ($val->openingDep - $val->disposedDep), $currencyDecimalPlace));
+                            } elseif ($val->DIPOSED != 0) {
+                                $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod)), $currencyDecimalPlace));
                             }
 
                             $rowData = [
