@@ -5846,6 +5846,7 @@ return
     'type' => 'Type',
     'type_not_found' => 'Type not found',
     'type_parameter_required' => 'Type parameter required',
+    'type_input_value_is_incorrect' => 'Type input value is incorrect',
     'un_billed_grv_id' => 'Un billed Grv id',
     'unable_to_delete_as_asset_costing_is_already_succe' => 'Unable to delete as asset costing is already successfully uploaded',
     'unable_to_update_description_already_exist' => 'Unable to update. Description already exist',
