@@ -228,6 +228,7 @@ class TenantEnforce
             'api/v1/integrations/customers',
             'api/v1/integrations/assets/search',
             'api/v1/integrations/warehouses/items/search',
+            'api/v1/integrations/segments/search',
         ];
     }
 
