@@ -1667,7 +1667,7 @@ class SupplierMasterAPIController extends AppBaseController
         $hashKey = bin2hex($bytes);
         $empID = Helper::getEmployeeSystemID();
 
-        $expiredDays = $input['expiryPeriod'];
+        $expiredDays = (int) ($input['expiryPeriod'] ?? 0);
 
         $insertData = [
             'hashKey' => $hashKey,
