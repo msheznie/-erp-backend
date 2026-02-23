@@ -114,6 +114,9 @@ class SRMScenarioDetailsRepository extends BaseRepository
         $companyId = $request->input('companyId');
 
         $emailData = SRMScenarioDetails::where('scenario_master_id', $scenarioId)
+            ->with(['attachments' => function ($q) {
+                $q->select('my_file_name','original_file_name','path','size_in_kbs','scenario_detail_id');
+            }])
             ->where('company_system_id', $companyId)
             ->first();
 
