@@ -101,7 +101,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.api.keycloak' => \App\Http\Middleware\EitherAuthAPIorKeyClock::class,
             'mobileServer' => \App\Http\Middleware\MobileServer::class,
             'checkNotVerifiedEmail' => \App\Http\Middleware\NotVerifiedEmailMiddleware::class,
-            'csrf.api' => \App\Http\Middleware\VerifyCsrfTokenForApi::class,
+            'request.signature' => \App\Http\Middleware\RequestSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
