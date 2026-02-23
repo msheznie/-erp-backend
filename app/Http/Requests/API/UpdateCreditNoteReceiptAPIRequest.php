@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CreditNoteReceipt;
-use App\Http\Requests\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCreditNoteReceiptAPIRequest extends APIRequest
+class UpdateCreditNoteReceiptAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

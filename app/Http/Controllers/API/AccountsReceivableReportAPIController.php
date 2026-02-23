@@ -306,7 +306,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
-                } else {
+                } 
+                else {
                     //customer statement of account
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
@@ -3236,17 +3237,17 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
     (
     mainQuery.documentRptAmount + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount), 
-    0) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+    0) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
     mainQuery.documentLocalAmount  + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount), 
-    0)  + round(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ), mainQuery.documentLocalDecimalPlaces)
+    0)  + round(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ), mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
     mainQuery.documentTransAmount + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount), 
-    0)  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+    0)  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
     ) AS balanceTrans,
     mainQuery.customerName,   
     mainQuery.PONumber 
@@ -3465,6 +3466,19 @@ WHERE
             AND salesreturndetails.deliveryOrderDetailID <> 0
             GROUP BY salesreturndetails.deliveryOrderDetailID
     ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20     
+    LEFT JOIN (
+    SELECT
+        creditNoteAutoID,
+        companySystemID,
+        SUM(creditNotePaymentAmount) AS sumCreditNotePaymentAmount,
+        SUM(creditNotePaymentAmountLocal) AS sumCreditNotePaymentAmountLocal,
+        SUM(creditNotePaymentAmountRpt) AS sumCreditNotePaymentAmountRpt
+    FROM erp_paycreditnotedetails
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY creditNoteAutoID, companySystemID
+    ) AS cnRefund ON mainQuery.documentSystemID = 19
+    AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
+    AND mainQuery.companySystemID = cnRefund.companySystemID
     LEFT JOIN (
     SELECT
         companySystemID,
@@ -3741,22 +3755,22 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
     (
-    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
+    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
-    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+  + ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ),  mainQuery.documentLocalDecimalPlaces)
+    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+  + ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ),  mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
-    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
+    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
     ) AS balanceTrans,
     (
-    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
+    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
     ) AS balanceSubsequentCollectionRpt,
     (
-    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+ +  ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)),mainQuery.documentLocalDecimalPlaces)
+    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+ +  ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)),mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
     ) AS balanceSubsequentCollectionLocal,
     (
-    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+ + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
+    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+ + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
     ) AS balanceSubsequentCollectionTrans,
 
     mainQuery.customerName,
@@ -3895,6 +3909,19 @@ GROUP BY erp_generalledger.companySystemID, erp_generalledger.chartOfAccountSyst
             AND salesreturndetails.deliveryOrderDetailID <> 0
             GROUP BY salesreturndetails.deliveryOrderDetailID
     ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20       
+    LEFT JOIN (
+    SELECT
+        creditNoteAutoID,
+        companySystemID,
+        SUM(creditNotePaymentAmount) AS sumCreditNotePaymentAmount,
+        SUM(creditNotePaymentAmountLocal) AS sumCreditNotePaymentAmountLocal,
+        SUM(creditNotePaymentAmountRpt) AS sumCreditNotePaymentAmountRpt
+    FROM erp_paycreditnotedetails
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY creditNoteAutoID, companySystemID
+    ) AS cnRefund ON mainQuery.documentSystemID = 19
+    AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
+    AND mainQuery.companySystemID = cnRefund.companySystemID
     LEFT JOIN (
     SELECT
         erp_matchdocumentmaster.companySystemID,
@@ -4287,13 +4314,13 @@ IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMa
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
     (
-    (mainQuery.documentRptAmount) +  ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+    (mainQuery.documentRptAmount) +  ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
-    (mainQuery.documentLocalAmount) + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+    (mainQuery.documentLocalAmount) + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
-    (mainQuery.documentTransAmount)
+    (mainQuery.documentTransAmount) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
     ) AS balanceTrans,
     mainQuery.CustomerName,
     mainQuery.creditDays,
@@ -4405,6 +4432,19 @@ WHERE
             AND salesreturndetails.deliveryOrderDetailID <> 0
             GROUP BY salesreturndetails.deliveryOrderDetailID
     ) srDEO ON srDEO.custInvoiceDirectAutoID = mainQuery.documentSystemCode AND mainQuery.documentSystemID = 20     
+    LEFT JOIN (
+    SELECT
+        creditNoteAutoID,
+        companySystemID,
+        SUM(creditNotePaymentAmount) AS sumCreditNotePaymentAmount,
+        SUM(creditNotePaymentAmountLocal) AS sumCreditNotePaymentAmountLocal,
+        SUM(creditNotePaymentAmountRpt) AS sumCreditNotePaymentAmountRpt
+    FROM erp_paycreditnotedetails
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY creditNoteAutoID, companySystemID
+    ) AS cnRefund ON mainQuery.documentSystemID = 19
+    AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
+    AND mainQuery.companySystemID = cnRefund.companySystemID
     LEFT JOIN (
     SELECT
         erp_matchdocumentmaster.companySystemID,
@@ -4868,7 +4908,7 @@ SELECT
     CASE
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
-        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0) / erp_generalledger.documentLocalCurrencyER
+        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountLocal, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
         -(erp_generalledger.documentLocalAmount)
@@ -4926,7 +4966,7 @@ SELECT
     CASE
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
-        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0) / erp_generalledger.documentRptCurrencyER
+        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountRpt, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
          -(erp_generalledger.documentRptAmount)
@@ -5130,7 +5170,7 @@ WHERE
                 (select sum(matchedAmount)/erp_matchdocumentmaster.companyRptCurrencyER from erp_matchdocumentmaster as erp2  WHERE  erp2.documentSystemID = 21 AND erp2.PayMasterAutoId = erp_matchdocumentmaster.PayMasterAutoId AND erp2.serviceLineSystemID = erp_matchdocumentmaster.serviceLineSystemID AND erp_matchdocumentmaster.confirmedYN=1)
         END 
         AS MatchedBRVRptAmount,
-        IF ((erp_matchdocumentmaster.payAmountSuppTrans - matchBalanceAmount),true,false) AS FullyMatched
+        IF ((erp_matchdocumentmaster.payAmountSuppTrans - (SUM(erp_matchdocumentmaster.matchingAmount) + IFNULL((SELECT SUM(pcd.creditNotePaymentAmount) FROM erp_paycreditnotedetails pcd WHERE pcd.creditNoteAutoID = erp_matchdocumentmaster.PayMasterAutoId AND pcd.companySystemID = erp_matchdocumentmaster.companySystemID), 0))), true, false) AS FullyMatched
     FROM
         erp_matchdocumentmaster
         INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
@@ -5459,7 +5499,65 @@ WHERE
     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
-    UNION ALL 
+    UNION ALL
+    SELECT
+    erp_generalledger.companySystemID,
+    erp_generalledger.companyID,
+    companymaster.CompanyName,
+    erp_generalledger.documentID,
+    erp_generalledger.documentSystemCode,
+    erp_generalledger.documentCode,
+    erp_generalledger.documentSystemID,
+    erp_generalledger.documentDate,
+    erp_generalledger.glCode,
+    erp_generalledger.supplierCodeSystem,
+    customermaster.CutomerCode,
+    customermaster.CustomerName,
+    erp_generalledger.invoiceNumber,
+    erp_generalledger.invoiceDate,
+    erp_generalledger.chartOfAccountSystemID,
+    erp_generalledger.documentNarration,
+    erp_generalledger.documentTransCurrencyID,
+    currTrans.CurrencyCode as documentTransCurrency,
+    currTrans.DecimalPlaces as documentTransDecimalPlaces,
+    erp_generalledger.documentTransAmount,
+    erp_generalledger.documentLocalCurrencyID,
+    currLocal.CurrencyCode as documentLocalCurrency,
+    currLocal.DecimalPlaces as documentLocalDecimalPlaces,
+    erp_generalledger.documentLocalAmount,
+    erp_generalledger.documentRptCurrencyID,
+    currRpt.CurrencyCode as documentRptCurrency,
+    currRpt.DecimalPlaces as documentRptDecimalPlaces,
+    erp_generalledger.documentRptAmount,
+    erp_generalledger.documentType,
+    CONCAT(customermaster.CutomerCode," - ",customermaster.CustomerName) as concatCustomerName,
+    0 AS sumReturnTransactionAmount,
+    0 AS sumReturnLocalAmount,
+    0 AS sumReturnRptAmount,
+    0 AS sumReturnDEOTransactionAmount,
+    0 AS sumReturnDEOLocalAmount,
+    0 AS sumReturnDEORptAmount,
+    chartofaccounts.AccountDescription as AccountDescription
+FROM
+    erp_generalledger
+    INNER JOIN erp_paysupplierinvoicemaster ON erp_generalledger.documentSystemCode = erp_paysupplierinvoicemaster.PayMasterAutoId
+        AND erp_generalledger.documentSystemID = 4
+        AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
+        AND erp_paysupplierinvoicemaster.invoiceType = 8
+        AND erp_paysupplierinvoicemaster.refundType = 3
+    INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
+    LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
+    LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
+    LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+    LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
+    LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
+WHERE
+    erp_generalledger.documentSystemID = 4
+    AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+    AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
+    AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
+    UNION ALL
     SELECT
     erp_generalledger.companySystemID,
     erp_generalledger.companyID,
@@ -5507,10 +5605,10 @@ FROM
     LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
     LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
 WHERE
-    (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21")
+    (erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "4")
     AND DATE( erp_generalledger.documentDate) < "' . $fromDate . '"
     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
+    AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
     GROUP BY erp_generalledger.supplierCodeSystem) AS CustomerBalanceSummary_Detail ORDER BY CustomerBalanceSummary_Detail.documentDate ASC');
 
