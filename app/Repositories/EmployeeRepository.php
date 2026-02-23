@@ -128,17 +128,17 @@ class EmployeeRepository extends BaseRepository
         $user = $employee->user_data;
 
         return [
-            'RegisteredCompany' => $employee->emp_company->CompanyName ?? '',
-            'EmpID'             => $employee->empID,
-            'SecondaryCode'     => $employee->hr_emp->EmpSecondaryCode ?? '',
-            'Name'               => $employee->empName,
-            'UserName'           => $employee->empUserName,
-            'Email'              => $employee->empEmail,
-            'Designation'        => $employee->erp_designation->designation ?? '',
-            'UserType'          => $this->mapUserTypeToAlias(($user && $user->user_type) ? $user->user_type->userType : ''),
-            'EmpLoginActive'   => $employee->empLoginActive,
-            'DischargedYN'      => $employee->discharegedYN,
-            'AccessDetails'     => $accessMap[$employee->employeeSystemID] ?? [],
+            'registeredCompany' => $employee->emp_company->CompanyName ?? '',
+            'empID'             => $employee->empID,
+            'secondaryCode'     => $employee->hr_emp->EmpSecondaryCode ?? '',
+            'name'               => $employee->empName,
+            'userName'           => $employee->empUserName,
+            'email'              => $employee->empEmail,
+            'designation'        => $employee->erp_designation->designation ?? '',
+            'userType'          => $this->mapUserTypeToAlias(($user && $user->user_type) ? $user->user_type->userType : ''),
+            'empLoginActive'   => ($employee->empLoginActive == 1) ? 'yes' : 'no',
+            'dischargedYN'      => ($employee->discharegedYN != 0) ? 'yes' : 'no',
+            'accessDetails'     => $accessMap[$employee->employeeSystemID] ?? [],
         ];
     }
 
