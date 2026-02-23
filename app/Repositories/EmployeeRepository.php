@@ -93,7 +93,7 @@ class EmployeeRepository extends BaseRepository
     }
 
    
-    public static function getProductNames(): array
+    public function getProductNames(): array
     {
         return [
             'ERP',
@@ -112,7 +112,7 @@ class EmployeeRepository extends BaseRepository
     }
 
    
-    public static function getUserTypeAliases(): array
+    public function getUserTypeAliases(): array
     {
         return [
             'ESS user'         => 'ESS User',
@@ -148,7 +148,7 @@ class EmployeeRepository extends BaseRepository
             return '';
         }
 
-        $aliases = self::getUserTypeAliases();
+        $aliases = $this->getUserTypeAliases();
         $reversed = array_flip($aliases);
 
         return $reversed[$dbUserType] ?? $dbUserType;
@@ -178,7 +178,7 @@ class EmployeeRepository extends BaseRepository
                 })
                 ->where('isPortalYN', true)
                 ->where('levelNo', 0)
-                ->whereIn('description', self::getProductNames())
+                ->whereIn('description', $this->getProductNames())
                 ->distinct()
                 ->get(['userGroupID', 'companyID', 'description']);
 
@@ -235,7 +235,7 @@ class EmployeeRepository extends BaseRepository
     public function getEmployeeIDsByProductAccess($productName)
     {
         if (strtolower($productName) === 'self service') {
-            $otherProducts = array_diff(self::getProductNames(), ['Self Service']);
+            $otherProducts = array_diff($this->getProductNames(), ['Self Service']);
 
             $employeesWithProducts = EmployeeNavigation::withProducts($otherProducts)
                 ->distinct()
@@ -250,7 +250,7 @@ class EmployeeRepository extends BaseRepository
             return array_values(array_diff($allPortalEmployees, $employeesWithProducts));
         }
 
-        if (!in_array($productName, self::getProductNames())) {
+        if (!in_array($productName, $this->getProductNames())) {
             return [];
         }
 

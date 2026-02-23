@@ -363,7 +363,7 @@ class UserAPIController extends AppBaseController
             if ($request->has('user_type')) {
                 $inputType = $request->get('user_type');
 
-                $aliases = EmployeeRepository::getUserTypeAliases();
+                $aliases = $this->employeeRepository->getUserTypeAliases();
                 $mappedType = collect($aliases)->first(
                     fn($dbVal, $alias) => strtolower($alias) === strtolower($inputType)
                 );
@@ -380,7 +380,7 @@ class UserAPIController extends AppBaseController
             $productAccessFilter = null;
             if ($request->has('product_access')) {
                 $inputProduct = $request->get('product_access');
-                $validProducts = EmployeeRepository::getProductNames();
+                $validProducts = $this->employeeRepository->getProductNames();
 
                 $productAccessFilter = collect($validProducts)->first(
                     fn($name) => strtolower($name) === strtolower($inputProduct)
