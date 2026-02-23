@@ -2209,8 +2209,7 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validator->errors()->first(), 422);
         }
 
-        if ($input['getAll'] === null) {
-            
+        if (array_key_exists('getAll', $input) && $input['getAll'] === null) {
             return $this->sendError(trans('custom.getAll_must_be_a_boolean_value_true_or_false'), 422);
         }
 
