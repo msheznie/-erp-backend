@@ -4,6 +4,10 @@ namespace App\Exports\B2B\VendorFile;
 
 use App\Validations\B2B\VendorFile\Detail;
 use App\Validations\B2B\VendorFile\Header;
+use App\Models\PaymentBankTransfer;
+use App\Models\PaySupplierInvoiceMaster;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class VendorFile
 {
@@ -38,10 +42,9 @@ class VendorFile
     /**
      * @param mixed $footerData
      */
-    public function setFooterData($footerData): void
+    public function setFooterData($bankTransferID): void
     {
-        $this->footerData = $footerData;
-        $this->processFooterData();
+        $this->processFooterData($bankTransferID);
     }
 
     public function header() : array
@@ -56,7 +59,7 @@ class VendorFile
     public function detail() : array
     {
         return [
-            'title' => ['Section Index', 'Transfer Method', 'Credit Amount', 'Credit Currency', 'Exchange Rate', 'DealReferNo', 'ValueDate', 'Debit Account No', 'Credit Account No', 'TransactionReference', 'Debit Narrative', 'Debit Narrative 2', 'Credit Narrative', 'Payment Details 1', 'Payment Details 2', 'Payment Details 3', 'Payment Details 4', 'Beneficiary Name', 'Beneficiary Address 1', 'Beneficiary Address 2', 'Institution Name Address 1', 'Institution Name Address 2', 'Institution Name Address 3', 'Institution Name Address 4', 'Swift', 'Intermediary Account', 'Intermediary Swift', 'Intermediary Name', 'Intermediary Address 1', 'Intermediary Address 2', 'Intermediary Address 3', 'Charges Type', 'Sort Code of the beneficiary bank', 'IFSC', 'Fedwire', 'Email', 'Dispatch Mode', 'Transactor Code', 'Supporting Document Name'],
+            'title' => ['Section Index', 'Transfer Method', 'Credit Amount', 'Credit Currency', 'Exchange Rate', 'ValueDate', 'Debit Account No', 'Credit Account No', 'Debit Narrative', 'Debit Narrative 2', 'Credit Narrative', 'Payment Details 1', 'Payment Details 2', 'Payment Details 3', 'Payment Details 4', 'Beneficiary Name', 'Beneficiary Address 1', 'Beneficiary Address 2', 'Institution Name Address 1', 'Institution Name Address 2', 'Institution Name Address 3', 'Institution Name Address 4', 'Swift', 'Intermediary Account', 'Intermediary Swift', 'Intermediary Name', 'Intermediary Address 1', 'Intermediary Address 2', 'Intermediary Address 3', 'Charges Type', 'Sort Code of the beneficiary bank', 'IFSC', 'Fedwire', 'Email', 'Dispatch Mode', 'Transactor Code'],
             'data' => $this->detailsData
         ];
     }
@@ -64,7 +67,7 @@ class VendorFile
     public function footer() : array
     {
         return [
-            'title' => ['Section Index', 'Num Of Records', 'Total Amount'],
+            'title' => ['Section Index', 'Invoice Number', 'Invoice Date','Invoice Details','Invoice Amount'],
             'data' => $this->footerData
         ];
     }
@@ -108,34 +111,96 @@ class VendorFile
         $this->detailsData = $processedDetailsData;
     }
 
-    private function processFooterData()
+    /**
+     * Get payment vouchers by bank transfer ID via API (datatable format).
+     * Params are passed as paymentBankTransferID; the API method is unchanged.
+     *
+     * @param int $paymentBankTransferID
+     * @return array
+     */
+    private function getPaymentsByBankTransfer(int $paymentBankTransferID): array
+    {
+        $bankTransfer = PaymentBankTransfer::find($paymentBankTransferID);
+        if (!$bankTransfer) {
+            return [];
+        }
+
+        $request = new Request([
+            'companyId' => $bankTransfer->companySystemID,
+            'paymentBankTransferID' => $paymentBankTransferID,
+            'bankAccountAutoID' => $bankTransfer->bankAccountAutoID,
+            'isFromHistory' => 0,
+            'order' => [['column' => 0, 'dir' => 'asc']],
+        ]);
+
+        $response = app('App\Http\Controllers\API\BankLedgerAPIController')->getPaymentsByBankTransfer($request);
+        $content = $response->getData(true);
+        $data = $content['data'] ?? [];
+
+        // Only payment vouchers with Bank Transfer YN checked (pulledToBankTransferYN == -1)
+        return collect($data)->filter(function ($row) {
+            $yn = is_array($row) ? ($row['pulledToBankTransferYN'] ?? null) : ($row->pulledToBankTransferYN ?? null);
+            return (int) $yn === -1;
+        })->values()->all();
+    }
+
+    private function processFooterData($bankTransferID)
     {
         // Process footerData to remove special characters from strings
         $processedFooterData = [];
+
+        $bankTransfer = PaymentBankTransfer::find($bankTransferID);
+        $bankTransferDetails = $bankTransfer ? $this->getPaymentsByBankTransfer((int) $bankTransferID) : [];
         
-        // Get field indices for amount fields
-        $footerTitles = ['Section Index', 'Num Of Records', 'Total Amount'];
-               
-        foreach ($this->footerData as $rowIndex => $row) {
-            $processedRow = [];
-            foreach ($row as $columnIndex => $value) {
-                if (is_string($value)) {
-                    // Skip special character removal for amount fields
-                    if ($columnIndex == 2) {
-                        // Keep amounts as they are
-                        $processedRow[$columnIndex] = $value;
-                    } else {
-                        // Remove special characters, keeping only alphanumeric characters and spaces
-                        $processedRow[$columnIndex] = preg_replace('/[^a-zA-Z0-9]/', '', $value);
-                    }
-                } else {
-                    // Keep non-string values as they are
-                    $processedRow[$columnIndex] = $value;
-                }
+        $sectionIndex = 0;
+        foreach ($bankTransferDetails as $bankTransferDetail) {
+            if (($bankTransferDetail['documentSystemID'] ?? null) != 4) {
+                continue;
             }
-            $processedFooterData[$rowIndex] = $processedRow;
+            $documentSystemCode = $bankTransferDetail['documentSystemCode'] ?? null;
+            if (empty($documentSystemCode)) {
+                continue;
+            }
+            $paymentVoucher = PaySupplierInvoiceMaster::with([
+                'supplierdetail' => function ($q) {
+                    $q->whereHas('supplier_invoice', function ($q2) {
+                        $q2->where('documentType', 1);
+                    });
+                },
+                'supplierdetail.supplier_invoice',
+            ])->find($documentSystemCode);
+
+            $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
+            if (empty($supplierDetails)) {
+                continue;
+            }
+            foreach ($supplierDetails as $detail) {
+                $invoice = $detail->supplier_invoice ?? null;
+                if (!$invoice) {
+                    continue;
+                }
+                $sectionIndex++;
+                $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
+                try {
+                    $bookingDateFormatted = $invoice->bookingDate
+                        ? Carbon::parse($invoice->bookingDate)->format('Ymd')
+                        : '';
+                } catch (\Throwable $e) {
+                    $bookingDateFormatted = '';
+                }
+                $invoiceDetails = (string) ($invoice->comments ?? $invoice->supplierInvoiceNo ?? '');
+                $processedFooterData[] = [
+                    $sectionIndex,
+                    preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode),
+                    $bookingDateFormatted,
+                    preg_replace('/[^a-zA-Z0-9]/', '', $invoiceDetails),
+                    // $invoice->netAmount+$invoice->invoiceAmount ?? 0,
+                    $paymentVoucher->payAmountSuppTrans ?? 0,
+                ];
+            }
         }
-        
+
+
         $this->footerData = $processedFooterData;
     }
 
