@@ -136,8 +136,8 @@ class EmployeeRepository extends BaseRepository
             'email'              => $employee->empEmail,
             'designation'        => $employee->erp_designation->designation ?? '',
             'userType'          => $this->mapUserTypeToAlias(($user && $user->user_type) ? $user->user_type->userType : ''),
-            'empLoginActive'   => ($employee->empLoginActive == 1) ? 'yes' : 'no',
-            'dischargedYN'      => ($employee->discharegedYN != 0) ? 'yes' : 'no',
+            'empLoginActive'   => $employee->empLoginActive == 1,
+            'dischargedYN'     => $employee->discharegedYN != 0,
             'accessDetails'     => $accessMap[$employee->employeeSystemID] ?? [],
         ];
     }
