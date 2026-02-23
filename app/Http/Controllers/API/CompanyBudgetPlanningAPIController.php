@@ -8,6 +8,7 @@ use App\Http\Requests\API\UpdateCompanyBudgetPlanningAPIRequest;
 use App\Jobs\ProcessDepartmentBudgetPlanning;
 use App\Models\BudgetControl;
 use App\Models\BudgetDelegateAccess;
+use App\Models\ReportTemplate;
 use App\Models\BudgetDelegateAccessRecord;
 use App\Models\Company;
 use App\Models\CompanyBudgetPlanning;
@@ -1157,8 +1158,22 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $rowIndex++;
             $glAmountsList = array_values($data['glAmounts']);
             $rowId = \Webpatser\Uuid\Uuid::generate()->string;
+            // Default template description from ReportTemplate (same as GenerateCompanyBudgetPlanningService)
+            $budgetType = $data['budgetType'] ?? '';
+            $reportID = 2; // default OPEX
+            if (stripos($budgetType, 'CAPEX') !== false) {
+                $reportID = 1;
+            } elseif (stripos($budgetType, 'OPEX') !== false) {
+                $reportID = 2;
+            }
+            $defaultReportTemplate = ReportTemplate::where('companySystemID', $companyBudgetPlanning->companySystemID)
+                ->where('isActive', 1)
+                ->where('isDefault', 1)
+                ->where('reportID', $reportID)
+                ->first();
+            $templateDescription = $defaultReportTemplate ? ($defaultReportTemplate->description ?? '-') : ($companyBudgetPlanning->planningCode ?? '-');
             $payload = [
-                'templateDescription' => $companyBudgetPlanning->planningCode ?? '-',
+                'templateDescription' => $templateDescription,
                 'department' => [
                     'departmentSystemID' => null,
                     'departmentCode' => '',
