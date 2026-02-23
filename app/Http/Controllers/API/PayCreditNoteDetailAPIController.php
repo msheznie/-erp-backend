@@ -243,8 +243,12 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             return $this->sendError('Pay Credit Note Detail not found');
         }
 
+        $transAmount = Helper::convertAmountToLocalRpt(203, $payCreditNoteDetail["PayMasterAutoId"], $input['creditNotePaymentAmount'] ?? 0);
+
         $data = [
-            'creditNotePaymentAmount' => $input['creditNotePaymentAmount']
+            'creditNotePaymentAmount' => $input['creditNotePaymentAmount'],
+            'creditNotePaymentAmountLocal' => $transAmount['localAmount'] ?? 0,
+            'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0
         ];
 
         $payCreditNoteDetail = $this->payCreditNoteDetailRepository->update($data, $id);
@@ -453,11 +457,14 @@ class PayCreditNoteDetailAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $item) {
                 if (isset($item['isChecked']) && $item['isChecked']) {
-                    $payCreditNoteDetail = $this->payCreditNoteDetailRepository->create([
+                    $transAmount = Helper::convertAmountToLocalRpt(203, $input["payMasterAutoId"], $item['creditNotePaymentAmount'] ?? 0);
+                    $this->payCreditNoteDetailRepository->create([
                         'PayMasterAutoId' => $input["payMasterAutoId"],
                         'creditNoteAutoID' => $item['creditNoteAutoID'],
                         'companySystemID' => $payMaster->companySystemID,
-                        'creditNotePaymentAmount' => $item['creditNotePaymentAmount'] ?? 0
+                        'creditNotePaymentAmount' => $item['creditNotePaymentAmount'] ?? 0,
+                        'creditNotePaymentAmountLocal' => $transAmount['localAmount'] ?? 0,
+                        'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0
                     ]);
                 }
             }
