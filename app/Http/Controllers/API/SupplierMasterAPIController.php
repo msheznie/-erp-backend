@@ -2428,7 +2428,7 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['alertMessage'] = "Registration Link";
                     $dataEmail['empEmail'] = $email;
                     $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
-                    $body .= \Helper::getSupplierEmailFooter($request->companySystemId);
+                    $body .= Helper::getSupplierEmailFooter($request->companySystemId);
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = Email::sendEmailErp($dataEmail);
 
