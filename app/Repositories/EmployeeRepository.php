@@ -160,7 +160,15 @@ class EmployeeRepository extends BaseRepository
             return [];
         }
 
-        $navigations = EmployeeNavigation::with(['company', 'usergroup'])
+        $navigations = EmployeeNavigation::with([
+            'company' => function ($query) {
+                $query->select('companySystemID', 'CompanyID', 'CompanyName');
+            },
+            'usergroup' => function ($query) {
+                $query->select('userGroupID', 'description');
+            },
+        ])
+            ->select('employeeSystemID', 'userGroupID', 'companyID')
             ->whereIn('employeeSystemID', $employeeIds)
             ->get();
 

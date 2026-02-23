@@ -392,12 +392,33 @@ class UserAPIController extends AppBaseController
             }
 
             $query = Employee::query()
+                ->select([
+                    'employeeSystemID',
+                    'empID',
+                    'empName',
+                    'empUserName',
+                    'empEmail',
+                    'empLoginActive',
+                    'discharegedYN',
+                    'empCompanySystemID',
+                    'designation',
+                ])
                 ->with([
-                    'user_data',
-                    'user_data.user_type',
-                    'emp_company',
-                    'erp_designation',
-                    'hr_emp',
+                    'user_data' => function ($query) {
+                        $query->select('id', 'employee_id', 'userType');
+                    },
+                    'user_data.user_type' => function ($query) {
+                        $query->select('id', 'userType');
+                    },
+                    'emp_company' => function ($query) {
+                        $query->select('companySystemID', 'CompanyName');
+                    },
+                    'erp_designation' => function ($query) {
+                        $query->select('DesignationID', 'DesDescription');
+                    },
+                    'hr_emp' => function ($query) {
+                        $query->select('EIdNo', 'EmpSecondaryCode');
+                    },
                 ]);              
 
             if ($companySystemIDs !== null) {
