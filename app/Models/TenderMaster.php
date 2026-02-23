@@ -680,7 +680,7 @@ class TenderMaster extends Model
     {
         return TenderMaster::select('id','stage', 'bid_opening_date',
             'technical_bid_opening_date', 'bid_opening_end_date', 'technical_bid_closing_date','title','tender_code',
-            'commerical_bid_opening_date', 'commerical_bid_closing_date'
+            'commerical_bid_opening_date', 'commerical_bid_closing_date','document_system_id'
         )
             ->where('id', $tenderId)
             ->where('company_id', $companyId)
