@@ -92,6 +92,37 @@ class EmployeeRepository extends BaseRepository
         return Employee::class;
     }
 
+   
+    public static function getProductNames(): array
+    {
+        return [
+            'ERP',
+            'POS',
+            'HRMS',
+            'OBP',
+            'Manufacturing',
+            'Self Service',
+            'Club Management',
+            'Help Desk',
+            'Operation & PMS',
+            'Survey Management',
+            'Contract Management',
+            'QHSE',
+        ];
+    }
+
+   
+    public static function getUserTypeAliases(): array
+    {
+        return [
+            'ESS user'         => 'ESS User',
+            'Super admin'      => 'Super Admin',
+            'Enterprise User'  => 'Enterprise User',
+            'Functional user'  => 'Functional User',
+            'External user'    => 'External Portal User',
+        ];
+    }
+
     public function buildUserResponseItem($employee, $accessMap = [])
     {
         $user = $employee->user_data;
@@ -117,7 +148,7 @@ class EmployeeRepository extends BaseRepository
             return '';
         }
 
-        $aliases = config('products.user_type_aliases', []);
+        $aliases = self::getUserTypeAliases();
         $reversed = array_flip($aliases);
 
         return $reversed[$dbUserType] ?? $dbUserType;
@@ -147,7 +178,7 @@ class EmployeeRepository extends BaseRepository
                 })
                 ->where('isPortalYN', true)
                 ->where('levelNo', 0)
-                ->whereIn('description', config('products.names'))
+                ->whereIn('description', self::getProductNames())
                 ->distinct()
                 ->get(['userGroupID', 'companyID', 'description']);
 
@@ -204,7 +235,7 @@ class EmployeeRepository extends BaseRepository
     public function getEmployeeIDsByProductAccess($productName)
     {
         if (strtolower($productName) === 'self service') {
-            $otherProducts = array_diff(config('products.names'), ['Self Service']);
+            $otherProducts = array_diff(self::getProductNames(), ['Self Service']);
 
             $employeesWithProducts = EmployeeNavigation::withProducts($otherProducts)
                 ->distinct()
@@ -219,7 +250,7 @@ class EmployeeRepository extends BaseRepository
             return array_values(array_diff($allPortalEmployees, $employeesWithProducts));
         }
 
-        if (!in_array($productName, config('products.names'))) {
+        if (!in_array($productName, self::getProductNames())) {
             return [];
         }
 
