@@ -85,5 +85,42 @@ class EmployeeNavigation extends Model
         return $this->hasOne('App\Models\EmployeeNavigationAccess', 'employeeNavigationID', 'id');
     }
 
+     public function navigationUserGroupSetup()
+    {
+        return $this->hasOne(
+            NavigationUserGroupSetup::class,
+            'userGroupID',
+            'userGroupID'
+        )->whereColumn(
+            'srp_erp_navigationusergroupsetup.companyID',
+            'srp_erp_employeenavigation.companyID'
+        );
+    }
+
+    public function scopePortalUsers($query)
+    {
+        return $query->whereHas('navigationUserGroupSetup', function ($q) {
+            $q->where('isPortalYN', 1);
+        });
+    }
+
+    public function scopeWithProduct($query, $productName)
+    {
+        return $query->whereHas('navigationUserGroupSetup', function ($q) use ($productName) {
+            $q->where('isPortalYN', 1)
+              ->where('levelNo', 0)
+              ->where('description', $productName);
+        });
+    }
+
+    public function scopeWithProducts($query, array $productNames)
+    {
+        return $query->whereHas('navigationUserGroupSetup', function ($q) use ($productNames) {
+            $q->where('isPortalYN', 1)
+              ->where('levelNo', 0)
+              ->whereIn('description', $productNames);
+        });
+    }
+
     
 }

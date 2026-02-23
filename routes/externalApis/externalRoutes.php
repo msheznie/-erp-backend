@@ -57,4 +57,5 @@ Route::prefix('integrations')->group(function () {
     Route::post('warehouses/items/search', 'ItemMasterAPIController@getWarehouseItemQuantity');
     Route::post('segments/search', 'SegmentMasterAPIController@pullSegment');
     Route::post('customers/search', 'CustomerMasterAPIController@pullCustomerMaster');
+    Route::post('users/search', 'UserAPIController@pullUserDetails');
 });
