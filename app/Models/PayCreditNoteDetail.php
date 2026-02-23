@@ -74,7 +74,9 @@ class PayCreditNoteDetail extends Model
         'PayMasterAutoId',
         'creditNoteAutoID',
         'companySystemID',
-        'creditNotePaymentAmount'
+        'creditNotePaymentAmount',
+        'creditNotePaymentAmountLocal',
+        'creditNotePaymentAmountRpt'
     ];
 
     /**
@@ -87,7 +89,9 @@ class PayCreditNoteDetail extends Model
         'PayMasterAutoId' => 'integer',
         'creditNoteAutoID' => 'integer',
         'companySystemID' => 'integer',
-        'creditNotePaymentAmount' => 'float'
+        'creditNotePaymentAmount' => 'float',
+        'creditNotePaymentAmountLocal' => 'float',
+        'creditNotePaymentAmountRpt' => 'float'
     ];
 
     /**
@@ -99,7 +103,9 @@ class PayCreditNoteDetail extends Model
         'PayMasterAutoId' => 'required',
         'creditNoteAutoID' => 'required',
         'companySystemID' => 'required',
-        'creditNotePaymentAmount' => 'required'
+        'creditNotePaymentAmount' => 'required',
+        'creditNotePaymentAmountLocal' => 'required',
+        'creditNotePaymentAmountRpt' => 'required'
     ];
 
     public function master()
