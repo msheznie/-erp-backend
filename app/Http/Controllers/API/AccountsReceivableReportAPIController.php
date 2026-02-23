@@ -4060,17 +4060,18 @@ WHERE
 
     public function getFullyMatchedInvoices($companyID,$asOfDate,$customerSystemID)
     {
-        $invoiceQuery = 'SELECT ec2.bookingInvCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ABS(matchedAmount) as matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec 
+        $invoiceQuery = 'SELECT ec2.bookingInvCode,ABS(ROUND(receivedAmount,3)) as receivedAmount ,ROUND(ABS(SUM(ec2.receiveAmountTrans)), 3) AS matchedAmount,ROUND((ci.bookingAmountTrans + ci.VATAmount),3) as invoiceAmount from erp_customerreceivepayment ec 
         LEFT JOIN erp_matchdocumentmaster em ON ec.custReceivePaymentAutoID  = em.PayMasterAutoId  
         LEFT JOIN erp_custreceivepaymentdet ec2 ON ec2.matchingDocID  = em.matchDocumentMasterAutoID 
         LEFT JOIN erp_custinvoicedirect ci ON ci.custInvoiceDirectAutoID = ec2.bookingInvCodeSystem
         WHERE 
-        custPaymentReceiveCode IS NOT NULL
+        ec.custPaymentReceiveCode IS NOT NULL
         AND ec2.bookingInvCode IS NOT NULL
         AND em.matchingConfirmedYN = 1
         AND ec2.companySystemID IN (' . join(',', $companyID) . ')
         AND DATE(em.matchingDocdate)  <= "' . $asOfDate . '"
         AND ec.customerID IN (' . join(',', $customerSystemID) . ')
+        GROUP BY ec2.bookingInvCodeSystem, ec2.bookingInvCode
         HAVING matchedAmount=invoiceAmount';
 
         $fullyMatchedInvoices = \DB::select($invoiceQuery);
