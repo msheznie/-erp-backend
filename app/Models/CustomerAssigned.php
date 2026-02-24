@@ -159,5 +159,9 @@ class CustomerAssigned extends Model
         return $this->belongsTo('App\Models\CustomerMaster','customerCodeSystem','customerCodeSystem');
     }
 
+    public function master(){
+        return $this->belongsTo('App\Models\CustomerMaster','customerCodeSystem','customerCodeSystem');
+    }
+
 
 }
