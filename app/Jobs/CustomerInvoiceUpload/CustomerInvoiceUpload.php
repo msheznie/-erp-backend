@@ -69,11 +69,6 @@ class CustomerInvoiceUpload implements ShouldQueue
         $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
         $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'];
 
-        Log::info('[CustomerInvoiceUpload] Job started', [
-            'upload_id' => $uploadId,
-            'db'        => $db,
-        ]);
-
         $employee = $uploadData['employee'];
         $objPHPExcel = $uploadData['objPHPExcel'];
         $uploadedCompany = $uploadData['uploadedCompany'];
@@ -103,7 +98,6 @@ class CustomerInvoiceUpload implements ShouldQueue
                         $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
                 }
-
                 if ($col == 'G') {
                     $cellValue = (string)$cellValue; 
                 }
@@ -140,13 +134,6 @@ class CustomerInvoiceUpload implements ShouldQueue
         }
         
         UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['totalInvoices' => $customerInvoiceCount]);
-
-        UploadCustomerInvoice::where('id', $uploadId)->update(['totalInvoices' => $customerInvoiceCount]);
-
-        Log::info('[CustomerInvoiceUpload] Dispatching sub-jobs', [
-            'upload_id'     => $uploadId,
-            'invoice_count' => $customerInvoiceCount,
-        ]);
 
         foreach($detailRows as $invoiceNo => $ciData){
             if($invoiceNo != null){
