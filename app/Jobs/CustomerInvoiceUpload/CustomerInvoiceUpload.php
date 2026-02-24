@@ -81,14 +81,32 @@ class CustomerInvoiceUpload implements ShouldQueue
 
         $sheet         = $objPHPExcel->getActiveSheet();
         $startRow      = 13;
-        $highestRow    = $sheet->getHighestRow();
-        $highestColumn = $sheet->getHighestColumn();
+        $highestRow    = $sheet->getHighestDataRow();
+        $highestColumn = $sheet->getHighestDataColumn();
 
         Log::info('[CustomerInvoiceUpload] Spreadsheet loaded', [
             'upload_id'      => $uploadId,
             'highest_row'    => $highestRow,
             'highest_column' => $highestColumn,
         ]);
+
+        if ($highestRow < $startRow) {
+            $errorMsg = 'No data rows found in the uploaded file (data starts at row 13).';
+
+            Log::warning('[CustomerInvoiceUpload] Empty spreadsheet', [
+                'upload_id'   => $uploadId,
+                'highest_row' => $highestRow,
+            ]);
+
+            UploadCustomerInvoice::where('id', $uploadId)->update(['uploadStatus' => 0]);
+            LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                'is_failed'   => 1,
+                'log_message' => $errorMsg,
+            ]);
+
+            CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadId);
+            return;
+        }
 
         $detailRows = [];
         $rowNumber  = 13;
@@ -109,7 +127,7 @@ class CustomerInvoiceUpload implements ShouldQueue
                 }
 
                 if ($col == 'G') {
-                    $cellValue = (string) $cellValue;
+                    $cellValue = ($cellValue !== null && $cellValue !== '') ? (string) $cellValue : null;
                 }
 
                 $rowData[] = $cellValue;
@@ -124,12 +142,13 @@ class CustomerInvoiceUpload implements ShouldQueue
         $customerInvoiceCount = 0;
 
         Log::info('[CustomerInvoiceUpload] Validating invoice numbers for duplicates', [
-            'upload_id'    => $uploadId,
-            'group_count'  => $detailRows->count(),
+            'upload_id'   => $uploadId,
+            'group_count' => $detailRows->count(),
+            'group_keys'  => $detailRows->keys()->filter()->values()->all(),
         ]);
 
         foreach ($detailRows as $invoiceNo => $detailValue) {
-            if ($invoiceNo != null) {
+            if (!empty($invoiceNo)) {
                 $ifExistCustomerInvoiceDirect = CustomerInvoiceDirect::where('customerInvoiceNo', $invoiceNo)->first();
 
                 if ($ifExistCustomerInvoiceDirect) {
@@ -157,6 +176,24 @@ class CustomerInvoiceUpload implements ShouldQueue
             }
         }
 
+        if ($customerInvoiceCount === 0) {
+            $errorMsg = 'No valid invoice numbers found in the uploaded file. Ensure invoice numbers are in column G starting from row 13.';
+
+            Log::warning('[CustomerInvoiceUpload] No valid invoices found in file', [
+                'upload_id'  => $uploadId,
+                'group_keys' => $detailRows->keys()->all(),
+            ]);
+
+            UploadCustomerInvoice::where('id', $uploadId)->update(['uploadStatus' => 0]);
+            LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                'is_failed'   => 1,
+                'log_message' => $errorMsg,
+            ]);
+
+            CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadId);
+            return;
+        }
+
         UploadCustomerInvoice::where('id', $uploadId)->update(['totalInvoices' => $customerInvoiceCount]);
 
         Log::info('[CustomerInvoiceUpload] Dispatching sub-jobs', [
@@ -165,7 +202,7 @@ class CustomerInvoiceUpload implements ShouldQueue
         ]);
 
         foreach ($detailRows as $invoiceNo => $ciData) {
-            if ($invoiceNo != null) {
+            if (!empty($invoiceNo)) {
                 CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $uploadData)->onQueue('single');
             }
         }
