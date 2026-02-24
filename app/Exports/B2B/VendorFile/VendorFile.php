@@ -190,7 +190,7 @@ class VendorFile
                 }
                 $invoiceDetails = (string) ($invoice->comments ?? $invoice->supplierInvoiceNo ?? '');
                 $processedFooterData[] = [
-                    $sectionIndex,
+                    'S3',
                     preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode),
                     $bookingDateFormatted,
                     preg_replace('/[^a-zA-Z0-9]/', '', $invoiceDetails),
