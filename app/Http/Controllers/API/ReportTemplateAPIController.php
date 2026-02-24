@@ -730,7 +730,8 @@ class ReportTemplateAPIController extends AppBaseController
 
         $templateData = ReportTemplateDetails::with(['subcategory' => function ($query) {
                                                 $query->where('itemType', 2)
-                                                      ->orderBy('serialLength', 'sortOrder');
+                                                      ->orderBy('serialLength')
+                                                      ->orderBy('sortOrder');
                                             }])->find($input['templateDetailID']);
 
         return $this->sendResponse($templateData, trans('custom.report_template_retrieved_successfully'));
