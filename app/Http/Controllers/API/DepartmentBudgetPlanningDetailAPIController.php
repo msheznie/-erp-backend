@@ -191,7 +191,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $employeeID =  Helper::getEmployeeSystemID();
 
-//        $employeeID = 110;
         $newRequest = new Request();
         $newRequest->replace([
             'companyId' => $request->input('companySystemID'),
@@ -288,27 +287,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            // Get selected status early so we can apply segment/department filters only when relevant for the view
+            // Get selected status early so we can apply segment/department filters
             // Status 1=Details, 2=Department, 3=Segment, 4=GL Based, 5=Category
             $selectedStatus = (int) $request->input('selectedStatus', 1);
 
-            // Handle segment filtering (only when segment is relevant: Details or Segment view)
-            // Department view (2), GL view (4), Category view (5) do not show segment - do not apply segment filter
-            if ($selectedStatus != 2 && $selectedStatus != 4 && $selectedStatus != 5) {
-                $segments = $request->input('segments');
-                if (!empty($segments) && is_array($segments)) {
-                    if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
-                        $segmentIds = array_column($segments, 'id');
-                    } else {
-                        $segmentIds = $segments;
-                    }
-                    if (!empty($segmentIds)) {
-                        $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
-                            $q->whereHas('segment', function ($q2) use ($segmentIds) {
-                                $q2->whereIn('serviceLineSystemID', $segmentIds);
-                            });
+            // Handle segment filtering: apply whenever user selects segments (all report types), so grouped result is filtered by segment
+            $segments = $request->input('segments');
+            if (!empty($segments) && is_array($segments)) {
+                if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
+                    $segmentIds = array_column($segments, 'id');
+                } else {
+                    $segmentIds = $segments;
+                }
+                if (!empty($segmentIds)) {
+                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                        $q->whereHas('segment', function ($q2) use ($segmentIds) {
+                            $q2->whereIn('serviceLineSystemID', $segmentIds);
                         });
-                    }
+                    });
                 }
             }
 
@@ -367,14 +363,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            // Handle Department filtering (only when department is relevant: Details or Department view, and isCompany)
-            // Segment view (3), GL view (4), Category view (5) do not show department - do not apply department filter
-            if (($selectedStatus == 1 || $selectedStatus == 2) && ($isCompany === true || $isCompany === 'true')) {
+            // Handle Department filtering: apply whenever user selects departments in company view (all report types)
+            // So e.g. Report Type Segment + Department filter = group by segment, but only include data from selected department(s)
+            if ($isCompany === true || $isCompany === 'true') {
                 $departments = $request->input('departments');
                 if (!empty($departments) && is_array($departments)) {
-                    $query->whereHas('departmentBudgetPlanning', function ($q) use ($departments) {
-                        $q->whereIn('departmentID', $departments);
-                    });
+                    $deptIds = [];
+                    foreach ($departments as $d) {
+                        if (is_array($d) && isset($d['id'])) {
+                            $deptIds[] = $d['id'];
+                        } elseif (is_numeric($d)) {
+                            $deptIds[] = (int) $d;
+                        }
+                    }
+                    if (!empty($deptIds)) {
+                        $query->whereHas('departmentBudgetPlanning', function ($q) use ($deptIds) {
+                            $q->whereIn('departmentID', $deptIds);
+                        });
+                    }
                 }
             }
 
