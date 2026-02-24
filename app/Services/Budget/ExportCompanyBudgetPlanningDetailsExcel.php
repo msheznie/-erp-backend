@@ -50,7 +50,7 @@ class ExportCompanyBudgetPlanningDetailsExcel
     private function sendNotification($basePath)
     {
         $webPushData = [
-            'title' => 'budget_planning_export_ready',
+            'title' => trans('custom.budget_planning_export_ready'),
             'body' => '',
             'url' => '',
             'path' => $basePath,

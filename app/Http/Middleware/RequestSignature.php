@@ -210,6 +210,8 @@ class RequestSignature
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration/{budgetTemplateId}',
             'api/v1/getBudgetPlanningUserPermissions',
+            'api/v1/getBudgetGenerateDetails',
+            'api/v1/generate-company-budget-planning',
             'api/v1/getDepBudgetPlDetEmpColumns',
             'api/v1/updateDepartmentBudgetPlanningDetailAmount',
             'api/v1/getAllDepartmentSegments',
