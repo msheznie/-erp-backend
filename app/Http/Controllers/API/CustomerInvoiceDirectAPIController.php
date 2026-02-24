@@ -91,6 +91,7 @@ use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -1606,11 +1607,16 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             $logUploadCustomerInvoice = LogUploadCustomerInvoice::create($uploadLogArray);
 
-
-
             $db = isset($request->db) ? $request->db : "";
 
             $disk = 'local';
+
+            Log::info('[CustomerInvoiceUpload] Saving uploaded file', [
+                'upload_id' => $uploadCustomerInvoice->id,
+                'filename'  => $originalFileName,
+                'extension' => $extension,
+                'size'      => $size,
+            ]);
 
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
@@ -1625,10 +1631,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
             CustomerInvoiceUpload::dispatch($db, $uploadData);
 
+            Log::info('[CustomerInvoiceUpload] Job dispatched', [
+                'upload_id'   => $uploadCustomerInvoice->id,
+                'company_id'  => $input['companySystemID'],
+                'uploaded_by' => $employee->empID,
+                'db'          => $db,
+            ]);
+
             DB::commit();
             return $this->sendResponse([], trans('custom.customer_invoice_uploaded_successfully'));
         } catch (\Exception $exception) {
             DB::rollBack();
+            Log::error('[CustomerInvoiceUpload] Upload failed before job dispatch', [
+                'company_id' => $input['companySystemID'] ?? null,
+                'filename'   => $originalFileName ?? null,
+                'error'      => $exception->getMessage(),
+                'file'       => $exception->getFile(),
+                'line'       => $exception->getLine(),
+            ]);
             return $this->sendError($exception->getMessage());
         }
 

@@ -57,7 +57,7 @@ class CustomerInvoiceUpload implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(): void
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
@@ -65,80 +65,142 @@ class CustomerInvoiceUpload implements ShouldQueue
         $db = $this->db;
 
         CommonJobService::db_switch($db);
-           
+
         $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
         $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'];
+        $uploadId = $uploadCustomerInvoice->id;
 
-        $employee = $uploadData['employee'];
-        $objPHPExcel = $uploadData['objPHPExcel'];
+        Log::info('[CustomerInvoiceUpload] Job started', [
+            'upload_id' => $uploadId,
+            'db'        => $db,
+        ]);
+
+        $employee        = $uploadData['employee'];
+        $objPHPExcel     = $uploadData['objPHPExcel'];
         $uploadedCompany = $uploadData['uploadedCompany'];
 
-        $sheet  = $objPHPExcel->getActiveSheet();
-        $startRow = 13;
-        $highestRow = $sheet->getHighestRow();
+        $sheet         = $objPHPExcel->getActiveSheet();
+        $startRow      = 13;
+        $highestRow    = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
+
+        Log::info('[CustomerInvoiceUpload] Spreadsheet loaded', [
+            'upload_id'      => $uploadId,
+            'highest_row'    => $highestRow,
+            'highest_column' => $highestColumn,
+        ]);
+
         $detailRows = [];
-        $rowNumber = 13;
-        
+        $rowNumber  = 13;
+
         for ($row = $startRow; $row <= $highestRow; ++$row) {
             $rowData = [];
             for ($col = 'A'; $col <= $highestColumn; ++$col) {
                 $cellValue = $sheet->getCell($col . $row)->getValue();
 
                 if ($col == 'E' || $col == 'F') {
-                    // Check if the value looks like a numeric date
                     if (is_numeric($cellValue) && $cellValue > 25569) {
-                        // Convert the numeric date to day, month, year
                         $unixTimestamp = ($cellValue - 25569) * 86400;
-                        $day = date('d', $unixTimestamp);
-                        $month = date('m', $unixTimestamp);
-                        $year = date('Y', $unixTimestamp);
-
-                        // Format it as MM/DD/YYYY
-                        $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
+                        $day           = date('d', $unixTimestamp);
+                        $month         = date('m', $unixTimestamp);
+                        $year          = date('Y', $unixTimestamp);
+                        $cellValue     = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
                 }
+
                 if ($col == 'G') {
-                    $cellValue = (string)$cellValue; 
+                    $cellValue = (string) $cellValue;
                 }
 
                 $rowData[] = $cellValue;
             }
 
-            $rowData[] = $rowNumber;
+            $rowData[]    = $rowNumber;
             $detailRows[] = $rowData;
-            $rowNumber ++;
+            $rowNumber++;
         }
 
-        $detailRows = collect($detailRows)->groupBy(6);
+        $detailRows           = collect($detailRows)->groupBy(6);
         $customerInvoiceCount = 0;
-        foreach($detailRows as $invoiceNo => $detailValue){
-            if($invoiceNo != null){
-                $ifExistCustomerInvoiceDirect = CustomerInvoiceDirect::where('customerInvoiceNo',$invoiceNo)->first();
-                if($ifExistCustomerInvoiceDirect){
+
+        Log::info('[CustomerInvoiceUpload] Validating invoice numbers for duplicates', [
+            'upload_id'    => $uploadId,
+            'group_count'  => $detailRows->count(),
+        ]);
+
+        foreach ($detailRows as $invoiceNo => $detailValue) {
+            if ($invoiceNo != null) {
+                $ifExistCustomerInvoiceDirect = CustomerInvoiceDirect::where('customerInvoiceNo', $invoiceNo)->first();
+
+                if ($ifExistCustomerInvoiceDirect) {
                     $errorMsg = "Customer Invoice No $invoiceNo already exist.";
-                    $rowData = collect($detailValue)->first();
-                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
-                    LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
-                        'is_failed' => 1,
-                        'error_line' => isset($rowData[20]) ? $rowData[20] : "",
-                        'log_message' => $errorMsg
+                    $rowData  = collect($detailValue)->first();
+
+                    Log::warning('[CustomerInvoiceUpload] Duplicate invoice number found', [
+                        'upload_id'  => $uploadId,
+                        'invoice_no' => $invoiceNo,
+                        'error_line' => isset($rowData[20]) ? $rowData[20] : null,
                     ]);
 
-                    CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
+                    UploadCustomerInvoice::where('id', $uploadId)->update(['uploadStatus' => 0]);
+                    LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                        'is_failed'   => 1,
+                        'error_line'  => isset($rowData[20]) ? $rowData[20] : "",
+                        'log_message' => $errorMsg,
+                    ]);
+
+                    CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadId);
                     return;
                 }
 
                 $customerInvoiceCount++;
             }
         }
-        
-        UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['totalInvoices' => $customerInvoiceCount]);
 
-        foreach($detailRows as $invoiceNo => $ciData){
-            if($invoiceNo != null){
-                CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $uploadData)->onQueue('single');            
-            }    
+        UploadCustomerInvoice::where('id', $uploadId)->update(['totalInvoices' => $customerInvoiceCount]);
+
+        Log::info('[CustomerInvoiceUpload] Dispatching sub-jobs', [
+            'upload_id'     => $uploadId,
+            'invoice_count' => $customerInvoiceCount,
+        ]);
+
+        foreach ($detailRows as $invoiceNo => $ciData) {
+            if ($invoiceNo != null) {
+                CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $uploadData)->onQueue('single');
+            }
+        }
+
+        Log::info('[CustomerInvoiceUpload] Job completed successfully', [
+            'upload_id'     => $uploadId,
+            'invoice_count' => $customerInvoiceCount,
+        ]);
+    }
+
+    public function failed(\Throwable $exception): void
+    {
+        $uploadData              = $this->uploadData;
+        $uploadCustomerInvoice   = $uploadData['uploadCustomerInvoice'] ?? null;
+        $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'] ?? null;
+        $uploadId                = $uploadCustomerInvoice->id ?? null;
+
+        Log::error('[CustomerInvoiceUpload] Job failed', [
+            'upload_id' => $uploadId,
+            'db'        => $this->db,
+            'error'     => $exception->getMessage(),
+            'file'      => $exception->getFile(),
+            'line'      => $exception->getLine(),
+            'trace'     => $exception->getTraceAsString(),
+        ]);
+
+        if ($uploadId) {
+            UploadCustomerInvoice::where('id', $uploadId)->update(['uploadStatus' => 0]);
+        }
+
+        if ($logUploadCustomerInvoice) {
+            LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                'is_failed'   => 1,
+                'log_message' => '[Job failed] ' . $exception->getMessage(),
+            ]);
         }
     }
 }
