@@ -1208,6 +1208,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             ];
         }
 
+        // Replace cache (delete existing) to avoid duplicate segment rows on refresh/forceRegenerate
+        CompanyBudgetPlanningGenerate::where('company_budget_planning_id', $budgetPlanningId)->delete();
         foreach ($cachePayloads as $item) {
             CompanyBudgetPlanningGenerate::create($item);
         }
