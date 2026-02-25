@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\Company;
 use App\Repositories\RecurringVoucherSetupRepository;
+use App\Repositories\SupplierRegistrationLinkRepository;
 use Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -79,6 +80,7 @@ class TransactionsExportExcel extends AppBaseController
     private $fixedAssetDepreciationMasterRepository;
     private $pdcLogRepository;
     private $recurringVoucherSetupRepository;
+    private $supplierRegistrationLinkRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -113,7 +115,8 @@ class TransactionsExportExcel extends AppBaseController
         FixedAssetMasterRepository $fixedAssetMasterRepo,
         FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
         PdcLogRepository $pdcLogRepository,
-        RecurringVoucherSetupRepository $recurringVoucherSetupRepository
+        RecurringVoucherSetupRepository $recurringVoucherSetupRepository,
+        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -149,6 +152,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->fixedAssetDepreciationMasterRepository = $fixedAssetDepreciationMasterRepo;
         $this->pdcLogRepository = $pdcLogRepository;
         $this->recurringVoucherSetupRepository = $recurringVoucherSetupRepository;
+        $this->supplierRegistrationLinkRepository = $supplierRegistrationLinkRepository;
     }
 
     public function exportRecord(Request $request) { 
@@ -503,6 +507,12 @@ class TransactionsExportExcel extends AppBaseController
                 $dataQry = $this->recurringVoucherSetupRepository->rrvMasterListQuery($request, $input, $search);
                 $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
+            case '107':
+                $input = $this->convertArrayToSelectedValue($input, array('approved_yn'));
+                $dataQry = $this->supplierRegistrationLinkRepository->getSupplierRegistrationData($request, $input, $search);
+                $data =  $this->supplierRegistrationLinkRepository->setExportExcelData($dataQry);
+                break;
+
             default:
                 return $this->sendResponse(array(), trans('custom.export_failed'));
         }
