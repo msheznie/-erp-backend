@@ -915,12 +915,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->toArray();
 
         $i = 0;
-        //$arr = [];
+        //$arr = [];2
         foreach ($resultTable as $a){
             $arr[$i] = DocumentAttachments::with(['bid_verify'])
                 ->whereIn('documentSystemCode', [$a['id']])
                 ->where('documentSystemID', $documentSystemID)
-                ->whereIn('attachmentType',[0, 11])
+                ->whereIn('attachmentType',[2])
                 ->where('envelopType',3)
                 ->get();
             $i++;
