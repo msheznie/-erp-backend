@@ -1508,50 +1508,40 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function downloadCITemplate(Request $request){
 
-        $file_type = $request->type;
-
         $companySystemID = $request->companySystemID;
-        $sentNotificationAt = $request->sentNotificationAt;
+
         $local = $request->get('language');
-        if(!empty($local)) {
+        if (!empty($local)) {
             app()->setLocale($local);
         }
 
-
-        $templateName = "download_template.ci_template";
-        $fileName = 'customer_invoice_template';
-        $path = 'accounts-receivable/transactions/customer-invoice-template/excel/';
-
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $companySystemID)
-        ->where('isYesNO', 1)
-        ->exists();
-
+            ->where('companySystemID', $companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
 
-        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+        $company   = Company::find($companySystemID);
+        $shortCode = $company ? $company->companyShortCode : 'company';
 
+        $baseName  = "{$shortCode}_customer_invoice_template_" . time() . '.xlsx';
+        $s3Path    = "{$shortCode}/accounts-receivable/transactions/customer-invoice-template/excel/{$baseName}";
 
-        $output = array(
-            'company' => $company,
-            'companyCode' =>$company->companyShortCode,
-            'sentNotificationAt' => $sentNotificationAt,
-            'isProjectBase' => $isProjectBase,
-            'isVATEligible' => $isVATEligible,
-   
+        $content = \Maatwebsite\Excel\Facades\Excel::raw(
+            new \App\Exports\CustomerInvoiceTemplateExport($isProjectBase, $isVATEligible, $shortCode),
+            \Maatwebsite\Excel\Excel::XLSX
         );
 
-        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+        $stored = \Illuminate\Support\Facades\Storage::disk('s3')->put($s3Path, $content);
 
-        if($basePath == '')
-        {
+        if (!$stored) {
             return $this->sendError(trans('custom.unable_export_excel'));
         }
-        else
-        {
-            return $this->sendResponse($basePath, trans('custom.success_export'));
-        }
+
+        $basePath = Helper::getFileUrlFromS3($s3Path);
+
+        return $this->sendResponse($basePath, trans('custom.success_export'));
     }
 
     public function uploadCustomerInvoice(Request $request) {
