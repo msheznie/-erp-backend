@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\helper\StatusService;
 use App\Models\SRMPublicLink;
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
@@ -58,9 +59,9 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         }
         $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
-        if($result){ 
+        if($result){
             return ['status' => true,'id' =>$supplierRegistrationLink->id];
-        }else { 
+        }else {
             return ['status' => false];
         }
     }
@@ -98,5 +99,91 @@ class SupplierRegistrationLinkRepository extends BaseRepository
             return ['success' => false, 'message' => $exception->getMessage(), 'data' => false];
         }
 
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->orderBy('id', 'desc')->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x]['Supplier Name'] = $val->name;
+                $data[$x]['Email'] = $val->email;
+                $data[$x]['Registration Number'] = $val->registration_number;
+                $data[$x]['Created At'] = Helper::dateFormat($val->created_at);
+                $data[$x]['Status'] = $this->supplierRegistrationLinkStatus($val->confirmed_yn,$val->approved_yn, $val->refferedBackYN);
+                $data[$x]['Is Linked'] = !empty($val->supplier_master_id) ? 'Yes' : 'No';
+                $data[$x]['Linked Supplier Code'] = !empty($val->supplier) ? $val->supplier->primarySupplierCode : '-';
+                $data[$x]['Linked Supplier Name'] = !empty($val->supplier) ? $val->supplier->supplierName : '-';
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
+    }
+
+    public function getSupplierRegistrationData($request)
+    {
+        $query =  SupplierRegistrationLink::getSupplierRegData();
+
+        $search = $request->input('search.value');
+
+        if (!empty($search)) {
+            $search = str_replace("\\", "\\\\", $search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                        $supplierQuery->where('supplierName', 'LIKE', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        if (!empty($request->input('approved_yn'))) {
+            $status = $request->input('approved_yn');
+
+            if ($status == 0) {
+                $query->where('confirmed_yn', 0)
+                    ->where('approved_yn', 0);
+            }
+
+            if ($status == 1) {
+                $query->where('confirmed_yn', 1)
+                    ->where('approved_yn', 0)
+                    ->where('refferedBackYN', 0);
+            }
+
+            if ($status == 2) {
+                $query->where('confirmed_yn', 1)
+                    ->where('approved_yn', -1);
+            }
+        }
+
+        return $query;
+    }
+
+    public static function supplierRegistrationLinkStatus($confirmedYn, $approvedYn, $refferedBackYN)
+    {
+        $type = "";
+        if ($confirmedYn == 0 && $approvedYn == 0) {
+            $type = 'Not Confirmed';
+        }
+        else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == 0) {
+            $type = 'Pending Approval';
+        } else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == -1) {
+            $type = 'Referred Back';
+        }else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == -1) {
+            $type = 'Rejected';
+        }
+        else if ($confirmedYn == 1 && ($approvedYn == -1 || $approvedYn == 1 )) {
+            $type = 'Fully Approved';
+        }
+        return $type;
     }
 }
