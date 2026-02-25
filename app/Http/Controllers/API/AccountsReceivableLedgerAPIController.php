@@ -332,7 +332,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                         erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,
                     CurrencyCode,
                     DecimalPlaces,
-                      erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) - IFNULL( sumReturnTransactionAmount, 0) - IFNULL(sumReturnDEOTransactionAmount, 0) as balanceAmount,
+                    (erp_accountsreceivableledger.custInvoiceAmount-IFNULL( SumOfreceiveAmountTrans, 0 )-IFNULL( matchedAmount*-1, 0 ) - IFNULL( sumReturnTransactionAmount, 0) - IFNULL(sumReturnDEOTransactionAmount, 0) + IF(erp_accountsreceivableledger.documentSystemID = 19, IFNULL(pcnd.sumPayCreditNoteTrans, 0), 0)) as balanceAmount,
                     IFNULL( matchedAmount, 0 ) AS matchedAmount,
                     FALSE AS isChecked 
                 FROM
@@ -423,6 +423,19 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     AND salesreturndetails.deliveryOrderDetailID <> 0
                     GROUP BY salesreturndetails.deliveryOrderDetailID
             ) srDEO ON srDEO.custInvoiceDirectAutoID = erp_accountsreceivableledger.documentCodeSystem AND erp_accountsreceivableledger.documentSystemID = 20 
+                    LEFT JOIN (
+                SELECT
+                    erp_paycreditnotedetails.creditNoteAutoID,
+                    erp_paycreditnotedetails.companySystemID,
+                    SUM(erp_paycreditnotedetails.creditNotePaymentAmount) AS sumPayCreditNoteTrans,
+                    SUM(erp_paycreditnotedetails.creditNotePaymentAmountLocal) AS sumPayCreditNoteLocal,
+                    SUM(erp_paycreditnotedetails.creditNotePaymentAmountRpt) AS sumPayCreditNoteRpt
+                FROM erp_paycreditnotedetails
+                WHERE erp_paycreditnotedetails.companySystemID = $master->companySystemID
+                GROUP BY erp_paycreditnotedetails.creditNoteAutoID, erp_paycreditnotedetails.companySystemID
+                    ) pcnd ON pcnd.creditNoteAutoID = erp_accountsreceivableledger.documentCodeSystem
+                    AND pcnd.companySystemID = erp_accountsreceivableledger.companySystemID
+                    AND erp_accountsreceivableledger.documentSystemID = 19
                     LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
                 WHERE
                     date(erp_accountsreceivableledger.documentDate) <= '{$custPaymentReceiveDate}'
