@@ -34,26 +34,34 @@ class CompanyBudgetPlanningGenerateAPIController extends AppBaseController
     {
 
         if (filter_var($request->input('bulkGenerate'), FILTER_VALIDATE_BOOLEAN)) {
-            $budgetPlanningId =  null;
+            $budgetPlanningId = $request->input('budgetPlanningId');
 
             $query = CompanyBudgetPlanningGenerate::where('is_generated', false);
-            if ($budgetPlanningId !== null) {
+            if ($budgetPlanningId !== null && $budgetPlanningId !== '') {
                 $query->where('company_budget_planning_id', $budgetPlanningId);
             }
             $pending = $query->orderBy('id')->get();
 
             $validationErrors = [];
+            $seen = [];
             foreach ($pending as $row) {
                 try {
                     $this->generateCompanyBudgetPlanningService->validateRow($row->row_id);
                 } catch (\Exception $e) {
                     $payload = $row->payload ?? [];
-                    $validationErrors[] = [
-                        'rowId'   => $row->row_id,
-                        'segment' => $payload['segment'] ?? '-',
-                        'year'    => $payload['financeYearDisplay'] ?? ($payload['yearID'] ?? '-'),
-                        'message' => $e->getMessage(),
-                    ];
+                    $segment = $payload['segment'] ?? '-';
+                    $year    = $payload['financeYearDisplay'] ?? ($payload['yearID'] ?? '-');
+                    $message = $e->getMessage();
+                    $key     = $segment . '|' . $year . '|' . $message;
+                    if (!isset($seen[$key])) {
+                        $seen[$key] = true;
+                        $validationErrors[] = [
+                            'rowId'   => $row->row_id,
+                            'segment' => $segment,
+                            'year'    => $year,
+                            'message' => $message,
+                        ];
+                    }
                 }
             }
 
