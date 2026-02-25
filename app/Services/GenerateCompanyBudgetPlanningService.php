@@ -14,7 +14,10 @@ use App\Models\ReportTemplateLinks;
 use App\Models\Budjetdetails;
 use App\Models\DocumentApproved;
 use Illuminate\Support\Facades\DB;
-
+use App\helper\Workflow\DocumentConfirm;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Helper;
+use Carbon\Carbon;
 /**
  * Class GenerateCompanyBudgetPlanningService
  * @package App\Services
@@ -33,7 +36,7 @@ class GenerateCompanyBudgetPlanningService
         $cached = $this->validation($rowId);
         $payload = $cached->payload ?? [];
 
-        $this->generateBudgetMasterData($payload);
+        $this->generateBudgetMasterData($payload, $rowId);
     }
 
     /**
@@ -48,7 +51,7 @@ class GenerateCompanyBudgetPlanningService
         $this->validation($rowId);
     }
 
-    private function generateBudgetMasterData(array $payload)
+    private function generateBudgetMasterData(array $payload, string $rowId)
     {
         $company = Company::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])->first();
 
@@ -82,12 +85,12 @@ class GenerateCompanyBudgetPlanningService
                 'serviceLineSystemID' => $payload['segmentInfo']['serviceLineSystemID'],
                 'serviceLineCode' => $payload['segmentInfo']['ServiceLineCode'],
                 'templateMasterID' => $budgetTemplate->companyReportTemplateID,
-                'Year' => $payload['yearID'],
+                'Year' => Carbon::parse($payload['financeYear']['bigginingDate'])->year,
                 'month' => 1,
                 'generateStatus' => 100,
                 'createdByUserSystemID' => Auth::user()->employee->employeeSystemID,
                 'createdByUserID' => Auth::user()->id,
-                'createdDateTime' => \Helper::currentDateTime(),
+                'createdDateTime' => Helper::currentDateTime(),
                 'sentNotificationAt' => 30,
                 'cutOffPeriod' => 3,
                 'budgetUploadID' => null
@@ -100,7 +103,7 @@ class GenerateCompanyBudgetPlanningService
 
             foreach ($glCodes as $glCode) {
 
-                $companyCurrencyConversion = \Helper::currencyConversion($company->companySystemID, $company->reportingCurrency, $company->reportingCurrency, $glCode['request_amount']);
+                $companyCurrencyConversion = Helper::currencyConversion($company->companySystemID, $company->localCurrencyID, $company->localCurrencyID, $glCode['request_amount']);
 
                 $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $glCode['chartOfAccountSystemID'])->first();
                 $reportTemplateLink = ReportTemplateLinks::where('templateMasterID', $budget->templateMasterID)->where('glAutoID', $glCode['chartOfAccountSystemID'])->first();
@@ -117,10 +120,12 @@ class GenerateCompanyBudgetPlanningService
                             'chartOfAccountID' => $glCode['chartOfAccountSystemID'],
                             'glCode' => $chartOfAccount->AccountCode,
                             'glCodeType' => $chartOfAccount->controlAccounts,
-                            'Year' => $payload['yearID'],
+                            'Year' => Carbon::parse($payload['financeYear']['bigginingDate'])->year,
                             'month' => $i,
-                            'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * \Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (\Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
-                            'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * \Helper::formatNumberWithPrecision($glCode['request_amount'])) : (\Helper::formatNumberWithPrecision($glCode['request_amount'])),
+                            'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
+                            'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])) : (Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])),
+                            'createdDateTime' => now(),
+                            'timestamp' => now()
                         ];
                     }
                 }
@@ -133,6 +138,10 @@ class GenerateCompanyBudgetPlanningService
             $this->confirmDoument($budget);
 
             $this->apporveDocument($budget);
+
+            $detailsTogenerate = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+            $detailsTogenerate->budget_master_id = $budget->budgetmasterID;
+            $detailsTogenerate->save();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -160,11 +169,24 @@ class GenerateCompanyBudgetPlanningService
             $reportID = 2;
         }
 
+        $typeMap = [
+            1 => "OPEX",
+            2 => "CAPEX",
+            3 => (str_contains($payload['budgetType'], '-')) ? explode(' - ', $payload['budgetType'])[1] : null ,
+        ];
+
+       
+        $type = $typeMap[(int) $payload['typeID']] ?? null;
+
         $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
                           ->where('isActive', 1)
                           ->where('isDefault', 1)
                           ->where('reportID', $reportID)
                           ->first();
+
+        if(empty($budgetTemplate)) {
+            throw new \Exception('Budget default template not found for '.$type);
+        }
 
         $companySystemID = $payload['master_budget_plannings']['companySystemID'];
         $yearID = $payload['yearID'];
@@ -173,25 +195,47 @@ class GenerateCompanyBudgetPlanningService
 
         $existsForSegmentAndType = BudgetMaster::where('companySystemID', $companySystemID)
             ->where('documentSystemID', 65)
-            ->where('Year', $yearID)
+            ->where('companyFinanceYearID', $yearID)
             ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('approvedYN', 0)
             ->where('templateMasterID', $templateMasterID)
             ->exists();
 
         if ($existsForSegmentAndType) {
-            throw new \Exception('Budget already generated for this segment and budget type');
+            $errorMsg= 'A budget already exists in Draft/Open status for '.$payload['segment'].' - '.$payload['templateDescription'].' - '.$payload['financeYearDisplay'].'. Please review or delete the existing budget before generating';
+            throw new \Exception($errorMsg);
         }
 
+
+
+        $existsForSegmentAndTypeAndApproved = BudgetMaster::where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 65)
+            ->where('companyFinanceYearID', $yearID)
+            ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('approvedYN', -1)
+            ->where('templateMasterID', $templateMasterID)
+            ->exists();
+
+        if ($existsForSegmentAndTypeAndApproved) {
+            $errorMsg= 'An '.$type.' budget already exists for this '.$payload['segment'].' for the financial year '.$payload['financeYearDisplay'];
+            throw new \Exception($errorMsg);
+        }
+
+
+        $templateMasterID = ($type == "CAPEX") ? 1 : 2;
+
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
+            ->whereHas('template_master', function($query) use ($templateMasterID) {
+                $query->where('reportID', $templateMasterID);
+            })
             ->where('documentSystemID', 65)
             ->where('serviceLineSystemID', $serviceLineSystemID)
-            ->where('Year', $yearID)
+            ->where('companyFinanceYearID', $yearID)
             ->exists();
 
         if ($existsForBudgetYear) {
-            throw new \Exception('Budget already generated for this budget year');
+            throw new \Exception('A budget for '.$type.' already exists for the financial year '.$payload['financeYearDisplay'].'. Common budget type cannot be initiated for the same period.');
         }
-
 
         return $detailsTogenerate;
     }
@@ -209,7 +253,7 @@ class GenerateCompanyBudgetPlanningService
             'isAutoCreateDocument' => true,
         );
 
-        $confirm = \Helper::confirmDocument($params);
+        $confirm = DocumentConfirm::confirmDocument($params);
         if (!$confirm["success"]) {
             throw new \Exception($confirm["message"]);
         }
@@ -223,12 +267,12 @@ class GenerateCompanyBudgetPlanningService
         {
             $documentApproved["approvedComments"] = "Generated budget automatically through system";
             $documentApproved['documentSystemID'] = $budget->documentSystemID;
-            $documentApproved['approvedDate'] = \Helper::currentDateTime();
+            $documentApproved['approvedDate'] = Helper::currentDateTime();
             $documentApproved['sendMail'] = false;
             $documentApproved['sendNotication'] = false;
             $documentApproved['isCheckPrivilages'] = false;
             $documentApproved['isAutoCreateDocument'] = true;
-            $approval = \Helper::approveDocument($documentApproved);
+            $approval = DocumentApprove::approveDocument($documentApproved);
             
             if(!$approval['success'])
             {
