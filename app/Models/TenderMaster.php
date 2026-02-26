@@ -335,7 +335,9 @@ class TenderMaster extends Model
         'isDelegation',
         'uuid',
         'is_clone',
-        'clone_master_id'
+        'clone_master_id',
+        'awarded_date',
+        'awarded_by'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -1049,5 +1051,14 @@ class TenderMaster extends Model
                 'is_awarded' => true,
             ]);
         }
+    }
+
+    public function tenderAwardedDetails()
+    {
+        return $this->hasOne(
+            \App\Models\TenderConfirmationDetail::class,
+            'tender_id',
+            'id'
+        )->where('module', 9);
     }
 }
