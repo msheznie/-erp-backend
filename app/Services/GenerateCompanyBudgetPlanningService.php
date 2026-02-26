@@ -36,7 +36,7 @@ class GenerateCompanyBudgetPlanningService
         $cached = $this->validation($rowId);
         $payload = $cached->payload ?? [];
 
-        $this->generateBudgetMasterData($payload);
+        $this->generateBudgetMasterData($payload, $rowId);
     }
 
     /**
@@ -51,7 +51,7 @@ class GenerateCompanyBudgetPlanningService
         $this->validation($rowId);
     }
 
-    private function generateBudgetMasterData(array $payload)
+    private function generateBudgetMasterData(array $payload, string $rowId)
     {
         $company = Company::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])->first();
 
@@ -136,6 +136,10 @@ class GenerateCompanyBudgetPlanningService
             $this->confirmDoument($budget);
 
             $this->apporveDocument($budget);
+
+            $detailsTogenerate = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+            $detailsTogenerate->budget_master_id = $budget->budgetmasterID;
+            $detailsTogenerate->save();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();

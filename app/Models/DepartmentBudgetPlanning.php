@@ -125,6 +125,7 @@ class DepartmentBudgetPlanning extends Model
 
     public $fillable = [
         'companyBudgetPlanningID',
+        'budget_master_id',
         'departmentID',
         'initiatedDate',
         'periodID',
@@ -150,6 +151,7 @@ class DepartmentBudgetPlanning extends Model
     protected $casts = [
         'id' => 'integer',
         'companyBudgetPlanningID' => 'integer',
+        'budget_master_id' => 'integer',
         'departmentID' => 'integer',
         'initiatedDate' => 'date',
         'periodID' => 'integer',
@@ -174,6 +176,7 @@ class DepartmentBudgetPlanning extends Model
      */
     public static $rules = [
         'companyBudgetPlanningID' => 'required',
+        'budget_master_id' => 'required',
         'departmentID' => 'required',
         'initiatedDate' => 'required',
         'periodID' => 'required',
@@ -220,6 +223,10 @@ class DepartmentBudgetPlanning extends Model
     {
         return $this->hasOne(DepartmentBudgetPlanningsDelegateAccess::class, 'budgetPlanningID')->where('empID', Auth::user()->employee_id);
 
+    }
+
+    public function budgetMaster() {
+        return $this->belongsTo(BudgetMaster::class, 'budget_master_id', 'budgetmasterID');
     }
 
     public function delegate() 
