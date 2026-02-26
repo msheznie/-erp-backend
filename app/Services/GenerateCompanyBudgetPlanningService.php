@@ -103,7 +103,7 @@ class GenerateCompanyBudgetPlanningService
 
             foreach ($glCodes as $glCode) {
 
-                $companyCurrencyConversion = Helper::currencyConversion($company->companySystemID, $company->reportingCurrency, $company->reportingCurrency, $glCode['request_amount']);
+                $companyCurrencyConversion = Helper::currencyConversion($company->companySystemID, $company->localCurrencyID, $company->localCurrencyID, $glCode['request_amount']);
 
                 $chartOfAccount = ChartOfAccount::where('chartOfAccountSystemID', $glCode['chartOfAccountSystemID'])->first();
                 $reportTemplateLink = ReportTemplateLinks::where('templateMasterID', $budget->templateMasterID)->where('glAutoID', $glCode['chartOfAccountSystemID'])->first();
@@ -123,7 +123,7 @@ class GenerateCompanyBudgetPlanningService
                             'Year' => $payload['yearID'],
                             'month' => $i,
                             'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
-                            'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($glCode['request_amount'])) : (Helper::formatNumberWithPrecision($glCode['request_amount'])),
+                            'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])) : (Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])),
                         ];
                     }
                 }
