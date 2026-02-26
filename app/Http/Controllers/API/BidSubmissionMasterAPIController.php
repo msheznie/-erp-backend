@@ -920,7 +920,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $arr[$i] = DocumentAttachments::with(['bid_verify'])
                 ->whereIn('documentSystemCode', [$a['id']])
                 ->where('documentSystemID', $documentSystemID)
-                ->whereIn('attachmentType',[2])
+                ->whereIn('attachmentType',[0,11])
                 ->where('envelopType',3)
                 ->get();
             $i++;
