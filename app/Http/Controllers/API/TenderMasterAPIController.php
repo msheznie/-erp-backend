@@ -4193,7 +4193,11 @@ class TenderMasterAPIController extends AppBaseController
         $getNegotiationCode = TenderMaster::select('negotiation_code', 'evaluation_type_id')->where('id', $tenderId)->first();
         $isNegotiation = ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' && $getNegotiationCode->negotiation_code != null)) ? 1 : 0;
 
-        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+        $tender = TenderMaster::
+            with(['tenderAwardedDetails' => function ($q) {
+            $q->with(['actionByEmployee']);
+            }])
+            ->where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
             if ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' || $getNegotiationCode->negotiation_code != null)) {
                 $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
