@@ -947,6 +947,9 @@ class TenderMaster extends Model
         return $query->select('id', 'tender_code', 'document_system_id', 'published_at',
             'bid_submission_opening_date', 'technical_bid_opening_date',
             'commerical_bid_opening_date', 'contract_id', 'created_at')
+            ->with(['tenderAwardedDetails' => function ($q) {
+                $q->select('tender_id','action_at');
+            }])
             ->orderBy('created_at', 'desc');
     }
 
@@ -967,10 +970,13 @@ class TenderMaster extends Model
 
         // Load tender basic info
         $tenders = DB::table('srm_tender_master')
-            ->whereIn('id', $tenderIds)
-            ->select('id', 'tender_code', 'published_at', 'bid_submission_opening_date',
-                'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id')
+            ->whereIn('srm_tender_master.id', $tenderIds)
+            ->where ('tcd.module', 9)
+            ->select('srm_tender_master.id', 'tender_code', 'published_at', 'bid_submission_opening_date',
+                'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id','tcd.action_at')
+            ->leftJoin('srm_tender_confirmation_details as tcd', 'tcd.tender_id', '=', 'srm_tender_master.id')
             ->get()
+
             ->keyBy('id');
 
         // Load approvals

@@ -375,6 +375,7 @@ class ProcurementLifecycleService
         $technicalEvaluationDate = $tenderInfo ? $this->formatDateTime($tenderInfo->technical_bid_opening_date ?? null) : '-';
         $commercialEvaluationDate = $tenderInfo ? $this->formatDateTime($tenderInfo->commerical_bid_opening_date ?? null) : '-';
         $publishedDate = $tenderInfo ? $this->formatDateTime($tenderInfo->published_at ?? null) : '-';
+        $tenderAwardedDate = $tenderInfo ? $this->formatDateTime($tenderInfo->action_at ?? null) : '-';
 
         // Get PO from Tender if exists
         $poData = [];
@@ -415,6 +416,7 @@ class ProcurementLifecycleService
             'technicalEvaluationDate' => $technicalEvaluationDate,
             'commercialEvaluationDate' => $commercialEvaluationDate,
             'publishedDate' => $publishedDate,
+            'tenderAwardedDate' => $tenderAwardedDate,
             'contractCode' => $contractCode,
             'contractVariation' => $contractVariation,
             'contractVariationTypes' => $contractVariationTypes,
