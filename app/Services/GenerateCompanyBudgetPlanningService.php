@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 use App\helper\Workflow\DocumentConfirm;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Helper;
-
+use Carbon\Carbon;
 /**
  * Class GenerateCompanyBudgetPlanningService
  * @package App\Services
@@ -36,7 +36,7 @@ class GenerateCompanyBudgetPlanningService
         $cached = $this->validation($rowId);
         $payload = $cached->payload ?? [];
 
-        $this->generateBudgetMasterData($payload);
+        $this->generateBudgetMasterData($payload, $rowId);
     }
 
     /**
@@ -51,7 +51,7 @@ class GenerateCompanyBudgetPlanningService
         $this->validation($rowId);
     }
 
-    private function generateBudgetMasterData(array $payload)
+    private function generateBudgetMasterData(array $payload, string $rowId)
     {
         $company = Company::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])->first();
 
@@ -85,7 +85,7 @@ class GenerateCompanyBudgetPlanningService
                 'serviceLineSystemID' => $payload['segmentInfo']['serviceLineSystemID'],
                 'serviceLineCode' => $payload['segmentInfo']['ServiceLineCode'],
                 'templateMasterID' => $budgetTemplate->companyReportTemplateID,
-                'Year' => $payload['yearID'],
+                'Year' => Carbon::parse($payload['financeYear']['bigginingDate'])->year,
                 'month' => 1,
                 'generateStatus' => 100,
                 'createdByUserSystemID' => Auth::user()->employee->employeeSystemID,
@@ -120,7 +120,7 @@ class GenerateCompanyBudgetPlanningService
                             'chartOfAccountID' => $glCode['chartOfAccountSystemID'],
                             'glCode' => $chartOfAccount->AccountCode,
                             'glCodeType' => $chartOfAccount->controlAccounts,
-                            'Year' => $payload['yearID'],
+                            'Year' => Carbon::parse($payload['financeYear']['bigginingDate'])->year,
                             'month' => $i,
                             'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
                             'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])) : (Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])),
@@ -136,6 +136,10 @@ class GenerateCompanyBudgetPlanningService
             $this->confirmDoument($budget);
 
             $this->apporveDocument($budget);
+
+            $detailsTogenerate = CompanyBudgetPlanningGenerate::where('row_id', $rowId)->first();
+            $detailsTogenerate->budget_master_id = $budget->budgetmasterID;
+            $detailsTogenerate->save();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
@@ -176,7 +180,7 @@ class GenerateCompanyBudgetPlanningService
 
         $existsForSegmentAndType = BudgetMaster::where('companySystemID', $companySystemID)
             ->where('documentSystemID', 65)
-            ->where('Year', $yearID)
+            ->where('companyFinanceYearID', $yearID)
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->where('templateMasterID', $templateMasterID)
             ->exists();
