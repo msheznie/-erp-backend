@@ -979,6 +979,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                     return array_merge([
                         'rowId' => $row->row_id,
                         'is_generated' => $row->is_generated,
+                        'budget_master_id' => $row->budget_master_id,
                     ], $payload);
                 })->values()->all();
                 return $this->sendResponse($result, 'Budget generate details retrieved from cache');
