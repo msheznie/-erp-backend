@@ -145,17 +145,13 @@ class LeaveAccrualService
         $dailyBasisYN = $this->dailyBasis ? 1 : 0;
         $yearDateFilter = '';
 
-        if(isset($input->year_det['id'])){
-            $yearDateFilter = " m.company_finance_year_id = ".$this->year_det['id'];
-        }
-
-        if (isset($input->year_det['accrualPolicyValue']) && $this->year_det['accrualPolicyValue'] == 2){
-            $year = Carbon::parse( $this->date )->format('Y');
-            $yearDateFilter = " m.year = '{$year}' ";
-        }
-
         if ($dailyBasisYN == 1) {
             $yearDateFilter = "m.dailyAccrualDate = '{$this->date}'";
+        } elseif (isset($this->year_det['accrualPolicyValue']) && $this->year_det['accrualPolicyValue'] == 2){
+            $year = Carbon::parse( $this->date )->format('Y');
+            $yearDateFilter = " m.year = '{$year}' ";
+        } elseif (isset($this->year_det['id'])){
+            $yearDateFilter = " m.company_finance_year_id = ".$this->year_det['id'];
         }
 
         $extraFilters = '';
