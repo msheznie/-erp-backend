@@ -5898,4 +5898,16 @@ class TenderMasterAPIController extends AppBaseController
         }
     }
 
+
+    public function getBudgetGlList(Request $request)
+    {
+        try {
+            $input = $request->all();
+            $record = $this->tenderMasterRepository->getBudgetGlList($input);
+            return $this->sendResponse($record['data'], $record['message']);
+        } catch (\Throwable $e) {
+            return $this->sendError('something went wrong '.$e->getMessage());
+        }
+    }
+
 }

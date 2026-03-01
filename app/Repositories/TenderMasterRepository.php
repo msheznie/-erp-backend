@@ -1754,6 +1754,7 @@ class TenderMasterRepository extends BaseRepository
         $data['prebidclarificationDateId'] = $prebidclarificationDateId->id;
         $data['hasSiteVisitDate'] = $siteVisitDateCount;
         $data['siteVisitDateId'] = $siteVisitDateId->id;
+        $data['isBudgetItemExists'] = false;
         return $data;
     }
     public function removeCalendarDates(Request $request){
@@ -3363,5 +3364,44 @@ class TenderMasterRepository extends BaseRepository
                 ? $confirmationDetail->actionByEmployee->empFullName
                 : null
         ];
+    }
+
+    public function getBudgetGlList($input)
+    {
+        $idList = $input['idList'];
+
+        $prDetails = PurchaseRequestDetails::getPurchaseRequestDetails($idList)
+            ->unique('itemCode')
+            ->map(function ($detail) {
+
+                $categoryID = $detail->itemFinanceCategoryID;
+                $finance = $detail->financeCategorySub ?? null;
+
+                $glSystemID = null;
+                $coa = null;
+
+                if (in_array($categoryID, [1, 2, 4])) {
+                    $glSystemID = $finance->financeGLcodePLSystemID ?? null;
+                    $coa = $finance->finance_gl_code_pl ?? null;
+                } elseif ($categoryID == 3) {
+                    return null;
+                } else {
+                    return null;
+                }
+
+                return [
+                    'id' => $glSystemID,
+                    'name' => trim(($coa->AccountCode ?? '') . ' | ' . ($coa->AccountDescription ?? '')),
+                ];
+            })
+            ->filter()
+            ->values();
+
+
+        return [
+          'success' => true,
+          'message' => 'Success',
+          'data' => $prDetails
+      ];
     }
 }

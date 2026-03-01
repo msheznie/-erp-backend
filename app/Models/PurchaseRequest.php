@@ -454,9 +454,10 @@ class PurchaseRequest extends Model
         $purchaseRequest = self::select('purchaseRequestID as id', 'purchaseRequestCode')
             ->with(['tender_purchase_request','details.podetail'])
             ->where('approved', '-1')
-            ->where('companySystemID', $companySystemID);
+            ->where('companySystemID', $companySystemID)
+            ->whereIn('purchaseRequestID', [565,262]);
 
-        if($document_type == 0){
+      /*  if($document_type == 0){
             $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterID) {
                 $query->where(function ($subQuery) use ($tenderMasterID) {
                     $subQuery->where('tender_id', '!=', $tenderMasterID)
@@ -474,10 +475,10 @@ class PurchaseRequest extends Model
                         });
                 });
             });
-        }
+        }*/
 
-        return $purchaseRequest->whereDoesntHave('details.podetail')
-            ->get();
+        return $purchaseRequest->get(); /*$purchaseRequest->whereDoesntHave('details.podetail')
+            ->get();*/
 
     }
     public static function getPurchaseRequestForTender($tenderId, $companyId, $versionID, $editOrAmend)

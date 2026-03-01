@@ -253,5 +253,29 @@ class PurchaseRequestDetails extends Model
         return $this->hasMany('App\Models\SegmentAllocatedItem', 'documentDetailAutoID', 'purchaseRequestDetailsID');
     }
 
+    public static function getPurchaseRequestDetails($idList)
+    {
+        return PurchaseRequestDetails::whereIn('purchaseRequestID', $idList)
+            ->with(['financeCategorySub' => function($query) {
+                $query->select(
+                    'itemCategorySubID',
+                    'itemCategoryID',
+                    'financeCogsGLcodePL',
+                    'financeGLcodePL',
+                    'financeGLcodePLSystemID', // system ID
+                    'categoryDescription'
+                )
+                    ->with(['finance_gl_code_pl' => function($q) {
+                        $q->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription');
+                    }]);
+            }])
+            ->get();
+    }
+
+    public function financeCategorySub()
+    {
+        return $this->hasOne('App\Models\FinanceItemCategorySub', 'itemCategorySubID', 'itemFinanceCategorySubID');
+    }
+
 
 }
