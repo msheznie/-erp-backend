@@ -181,6 +181,7 @@ use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
+use App\Constants\DocumentCodes;
 
 /**
  * Class ProcumentOrderController
@@ -2090,6 +2091,10 @@ class ProcumentOrderAPIController extends AppBaseController
             ] : null;
         }
 
+            $output['supplierDocumentSystemID'] = DocumentMaster::where(
+                    'documentID',
+                    DocumentCodes::SUPPLIER_MASTER
+                )->value('documentSystemID');
 
         $is_specification = false;
 
