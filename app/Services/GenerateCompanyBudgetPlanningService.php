@@ -192,13 +192,12 @@ class GenerateCompanyBudgetPlanningService
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
             ->where('documentSystemID', 65)
             ->where('serviceLineSystemID', $serviceLineSystemID)
-            ->where('Year', $yearID)
+            ->where('companyFinanceYearID', $yearID)
             ->exists();
 
         if ($existsForBudgetYear) {
             throw new \Exception('Budget already generated for this budget year');
         }
-
 
         return $detailsTogenerate;
     }
