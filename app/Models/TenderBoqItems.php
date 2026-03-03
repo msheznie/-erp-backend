@@ -168,4 +168,12 @@ class TenderBoqItems extends Model
             ->where('main_work_id', $main_work_id)
             ->first();
     }
+
+    public static function getByIdsKeyed(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
 }
