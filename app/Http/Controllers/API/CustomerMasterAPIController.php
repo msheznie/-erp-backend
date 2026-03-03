@@ -1900,7 +1900,7 @@ class CustomerMasterAPIController extends AppBaseController
             $categories = array_values(array_filter(array_map('trim', $categories)));
             if (!empty($categories)) {
                 $categoryIds = CustomerMasterCategory::getCustomerCategoryIds($categories);
-                $foundDescriptions = CustomerMasterCategory::whereIn('categoryID', $categoryIds)->pluck('categoryDescription')->toArray();
+                $foundDescriptions = array_map('trim', CustomerMasterCategory::whereIn('categoryID', $categoryIds)->pluck('categoryDescription')->toArray());
                 $notFound = array_diff($categories, $foundDescriptions);
                 if (!empty($notFound)) {
                     return $this->sendError('The Customer category not matching: ' . implode(', ', $notFound), 422);

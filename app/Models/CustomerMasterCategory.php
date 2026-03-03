@@ -131,7 +131,9 @@ class CustomerMasterCategory extends Model
         if (empty($categoryDescriptions)) {
             return [];
         }
-        return CustomerMasterCategory::whereIn('categoryDescription', $categoryDescriptions)
+        $categoryDescriptions = array_values(array_unique(array_map('trim', $categoryDescriptions)));
+        $placeholders = implode(',', array_fill(0, count($categoryDescriptions), '?'));
+        return CustomerMasterCategory::whereRaw('TRIM(categoryDescription) IN (' . $placeholders . ')', $categoryDescriptions)
             ->pluck('categoryID')
             ->toArray();
     }
