@@ -9869,5 +9869,5 @@ return
     'invalid_owner_key' => 'مفتاح المالك غير صالح. يجب أن يكون واحد من: reporting_manager, hod, admin',
     'beneficiary_number' => 'رقم المستفيد',
     'commercial_registration' => 'رقم التسجيل',
-    'tender_awarded_date' => 'تاريخ ترسية المناقصة'
+    'tender_awarded_date' => 'تاريخ ترسية المناقصة / طلب العرض (RFX)'
 ];
