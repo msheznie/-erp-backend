@@ -349,7 +349,7 @@
                 <th class="text-left">{{ __('custom.uom') }}</th>
                 <th class="text-left">{{ __('custom.uom_issues') }}</th>
                 <th class="text-left">{{ __('custom.qty') }}</th>
-                <th class="text-left">{{ __('custom.cost_usd') }}</th>
+                <th class="text-left">{{ __('custom.cost') }}</th>
                 <th class="text-left">{{ __('custom.comments') }}</th>
             </tr>
             </thead>
