@@ -108,6 +108,11 @@ class SrmItemWiseTenderAwarding extends Model
         return $query;
     }
 
+    public static function getAwardedRowsForSupplier(int $tenderId, int $isNegotiation, int $supplierId)
+    {
+        return self::getAwardedRowsForTender($tenderId, $isNegotiation, $supplierId)->get();
+    }
+
     /**
      * Count total awarded lines and count lines marked is_awarded for tender.
      */

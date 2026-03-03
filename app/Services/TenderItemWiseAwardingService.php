@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\helper\email as Email;
+use App\helper\Helper;
+use App\Models\BidBoq;
+use App\Models\BidMainWork;
 use App\Models\BidSubmissionMaster;
 use App\Models\PricingScheduleDetail;
 use App\Models\SrmItemWiseTenderAwarding;
@@ -330,6 +333,8 @@ class TenderItemWiseAwardingService
 
         SrmItemWiseTenderAwarding::markSupplierLinesAsAwarded($tenderId, $isNegotiation, $supplierId);
 
+        $this->sendRegretEmailsForAwardedLines($tenderId, $isNegotiation, $supplierId);
+
         $counts = SrmItemWiseTenderAwarding::getAwardedCountsForTender($tenderId, $isNegotiation);
         $allAwarded = $counts['total'] > 0 && $counts['awarded'] >= $counts['total'];
 
@@ -452,6 +457,192 @@ class TenderItemWiseAwardingService
         Email::sendEmailSRM($dataEmail);
 
         SrmItemWiseTenderAwarding::markAwardEmailSentForSupplier($tenderId, $isNegotiation, $supplierId);
+    }
+
+    public function sendRegretEmailsForAwardedLines(
+        int $tenderId,
+        int $isNegotiation,
+        int $awardedSupplierId
+    ): void {
+
+        $tender = TenderMaster::with('company')->find($tenderId);
+        if (!$tender || (int) $tender->document_type !== 0) {
+            return;
+        }
+
+        $awardedRows = SrmItemWiseTenderAwarding::getAwardedRowsForSupplier($tenderId, $isNegotiation, $awardedSupplierId);
+
+        if ($awardedRows->isEmpty()) {
+            return;
+        }
+
+        $lineKeys = [];
+        $mainDetailIds = [];
+        $boqItemIds = [];
+        foreach ($awardedRows as $row) {
+            $key = $row->boq_item_id
+                ? 'boq_' . $row->boq_item_id
+                : 'main_' . $row->bid_format_detail_id;
+            $lineKeys[$key] = [
+                'bid_format_detail_id' => $row->bid_format_detail_id,
+                'boq_item_id' => $row->boq_item_id,
+            ];
+            if ($row->boq_item_id) {
+                $boqItemIds[] = $row->boq_item_id;
+            } else {
+                $mainDetailIds[] = $row->bid_format_detail_id;
+            }
+        }
+
+        $supplierToLines = [];
+        
+        if (!empty($mainDetailIds)) {
+            $mainBids = BidMainWork::getBidsByTenderAndDetailIds($tenderId, $mainDetailIds);
+            $bidIds = $mainBids->pluck('bid_master_id')->filter()->unique()->values()->all();
+            $bidToSupplier = BidSubmissionMaster::getSupplierIdsByTenderAndBidIds($tenderId, $bidIds);
+            foreach ($mainBids as $b) {
+                $sid = (int) ($b->supplier_registration_id ?: ($bidToSupplier[$b->bid_master_id] ?? 0));
+                if ($sid === 0 || $sid === $awardedSupplierId) {
+                    continue;
+                }
+                $key = 'main_' . $b->bid_format_detail_id;
+                if (isset($lineKeys[$key])) {
+                    $supplierToLines[$sid][$key] = true;
+                }
+            }
+        }
+
+        if (!empty($boqItemIds)) {
+            $boqBids = BidBoq::getBidsByBoqIds($boqItemIds);
+            $boqBidIds = $boqBids->pluck('bid_master_id')->filter()->unique()->values()->all();
+            $boqBidToSupplier = BidSubmissionMaster::getSupplierIdsByTenderAndBidIds($tenderId, $boqBidIds);
+            foreach ($boqBids as $b) {
+                $sid = (int) ($b->supplier_registration_id ?: ($boqBidToSupplier[$b->bid_master_id] ?? 0));
+                if ($sid === 0 || $sid === $awardedSupplierId) {
+                    continue;
+                }
+                $key = 'boq_' . $b->boq_id;
+                if (isset($lineKeys[$key])) {
+                    $supplierToLines[$sid][$key] = true;
+                }
+            }
+        }
+
+        if (empty($supplierToLines)) {
+            return;
+        }
+
+        $supplierIds = array_keys($supplierToLines);
+        $suppliers = SupplierRegistrationLink::getByIdsKeyed($supplierIds);
+
+        $boqIdsArray = collect($lineKeys)->pluck('boq_item_id')->filter()->unique()->values()->all();
+        $boqs = TenderBoqItems::getByIdsKeyed($boqIdsArray);
+
+        $detailIdsArray = collect($lineKeys)->pluck('bid_format_detail_id')->unique()->values()->all();
+        $details = PricingScheduleDetail::getByIdsKeyed($detailIdsArray);
+
+        foreach ($supplierToLines as $supplierId => $lineMap) {
+
+            $supplier = $suppliers[$supplierId] ?? null;
+
+            if (!$supplier || empty($supplier->email)) {
+                continue;
+            }
+
+            $itemLabels = [];
+
+            foreach (array_keys($lineMap) as $key) {
+
+                $line = $lineKeys[$key];
+
+                if (!empty($line['boq_item_id'])) {
+                    $label = $boqs[$line['boq_item_id']]->item_name ?? '';
+                } else {
+                    $label = $details[$line['bid_format_detail_id']]->label ?? '';
+                }
+
+                if ($label !== '') {
+                    $itemLabels[] = $label;
+                }
+            }
+
+            if (empty($itemLabels)) {
+                continue;
+            }
+
+            $itemsList = implode(', ', $itemLabels);
+
+            $body = $this->buildRegretEmailBody(
+                $supplier->name,
+                $itemsList,
+                $tender->company_id,
+                $tender->tender_code ?? '',
+                $tender->title ?? ''
+            );
+
+            $dataEmail = [
+                'empEmail' => $supplier->email,
+                'companySystemID' => $tender->company_id,
+                'alertMessage' => 'Tender Regret',
+                'emailAlertMessage' => $body,
+                'attachmentList' => [],
+                'ccEmail' => [],
+            ];
+
+            Email::sendEmailErp($dataEmail);
+        }
+    }
+    private function buildRegretEmailBody(
+        string $name,
+        string $itemsList,
+        int $companyId,
+        string $tenderCode = '',
+        string $tenderTitle = ''
+    ): string {
+        $tenderRef = '';
+        if ($tenderCode !== '' || $tenderTitle !== '') {
+            $tenderRef = '<p><strong>Tender Code:</strong> ' . ($tenderCode ?: 'N/A') . '</p>';
+            $tenderRef .= '<p><strong>Tender Title:</strong> ' . ($tenderTitle ?: 'N/A') . '</p><br>';
+        }
+
+        $body = "
+            Hi {$name}, <br><br>
+    
+            Thank you for your participation in our tender process.
+            We appreciate the effort and time you invested in your proposal.
+    
+            <br><br>
+            {$tenderRef}
+            After careful consideration, we regret to inform you that the following item(s)
+            have been awarded to another supplier:
+    
+            <br><br>
+    
+            <strong>{$itemsList}</strong>
+    
+            <br><br>
+    
+            We received several competitive proposals, making our decision a challenging one.
+            We hope for future opportunities to collaborate.
+    
+            <br><br>
+    
+            Thank you once again for your interest in working with us.
+            <br><br>
+        ";
+
+        $body .= Helper::getSupplierEmailFooter($companyId);
+
+        return $body;
+    }
+    private function getDocumentTypeLabel(int $documentType): string
+    {
+        switch ($documentType) {
+            case 1: return 'Quotation';
+            case 2: return 'Information';
+            case 3: return 'Proposal';
+            default: return 'Tender';
+        }
     }
 
     /**
