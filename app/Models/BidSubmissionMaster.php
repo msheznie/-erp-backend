@@ -183,6 +183,17 @@ class BidSubmissionMaster extends Model
         ])->first();
     }
 
+    public static function getSupplierIdsByTenderAndBidIds(int $tenderId, array $bidIds): array
+    {
+        if (empty($bidIds)) {
+            return [];
+        }
+        return self::where('tender_id', $tenderId)
+            ->whereIn('id', $bidIds)
+            ->pluck('supplier_registration_id', 'id')
+            ->toArray();
+    }
+
     public static function checkTenderBidSubmitted($tender_id){
         return self::where('tender_id', $tender_id)->exists();
     }

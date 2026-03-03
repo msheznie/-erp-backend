@@ -103,4 +103,12 @@ class SupplierRegistrationLink extends Model
             }
         ]);
     }
+
+    public static function getByIdsKeyed(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
 }
