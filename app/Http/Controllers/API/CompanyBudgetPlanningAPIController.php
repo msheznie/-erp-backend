@@ -970,181 +970,184 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
         // Return cached data if available and not forcing regenerate
         if (!$forceRegenerate) {
-            $cachedRows = CompanyBudgetPlanningGenerate::where('company_budget_planning_id', $budgetPlanningId)
+            $result = [];
+            CompanyBudgetPlanningGenerate::where('company_budget_planning_id', $budgetPlanningId)
                 ->orderBy('id')
-                ->get();
-            if ($cachedRows->isNotEmpty()) {
-                $result = $cachedRows->map(function ($row) {
-                    $payload = $row->payload ?? [];
-                    return array_merge([
-                        'rowId' => $row->row_id,
-                        'is_generated' => $row->is_generated,
-                        'budget_master_id' => $row->budget_master_id,
-                    ], $payload);
-                })->values()->all();
+                ->chunk(500, function ($cachedRows) use (&$result) {
+                    foreach ($cachedRows as $row) {
+                        $payload = $row->payload ?? [];
+                        $result[] = array_merge([
+                            'rowId' => $row->row_id,
+                            'is_generated' => $row->is_generated,
+                            'budget_master_id' => $row->budget_master_id,
+                        ], $payload);
+                    }
+                });
+            if (!empty($result)) {
                 return $this->sendResponse($result, 'Budget generate details retrieved from cache');
             }
         }
 
-        // Load all department budget plannings with details (GL-wise), segment and chart of account (only departments where type = 2)
-        $departmentBudgetPlannings = DepartmentBudgetPlanning::with([
+        // Load department budget plannings in chunks to avoid MySQL sort buffer overflow.
+        // Use join instead of whereHas to reduce subquery work and allow better use of indexes.
+        $groupKeyToData = []; // key: "segmentId|typeID" or "segmentId|3|OPEX|CAPEX"
+
+        DepartmentBudgetPlanning::with([
             'financeYear',
             'masterBudgetPlannings.workflow',
             'budgetPlanningDetails.departmentSegment.segment',
             'budgetPlanningDetails.budgetTemplateGl.chartOfAccount',
         ])
-        ->where('companyBudgetPlanningID', $budgetPlanningId)
-        ->where('confirmed_yn', 1) // Only confirmed budgets
-        ->whereHas('department', function ($query) {
-            $query->where('type', 2);
-        })
-        ->get();
+            ->join('company_departments', 'department_budget_plannings.departmentID', '=', 'company_departments.departmentSystemID')
+            ->where('department_budget_plannings.companyBudgetPlanningID', $budgetPlanningId)
+            ->where('department_budget_plannings.confirmed_yn', 1)
+            ->where('company_departments.type', 2)
+            ->select('department_budget_plannings.*')
+            ->orderBy('department_budget_plannings.id')
+            ->chunk(200, function ($departmentBudgetPlannings) use (&$groupKeyToData) {
+                foreach ($departmentBudgetPlannings as $deptBudgetPlanning) {
+                    $typeID = $deptBudgetPlanning->typeID;
+                    $budgetType = $this->getBudgetType($typeID);
 
-        // Aggregate by segment and budget type only (not by department): one row per (segment, type), GL amounts summed across all departments
-        $groupKeyToData = []; // key: "segmentId|typeID" or "segmentId|3|OPEX|CAPEX"
+                    foreach ($deptBudgetPlanning->budgetPlanningDetails ?? [] as $detail) {
+                        $segmentId = 'no_segment';
+                        $segmentDisplay = 'No Segment';
+                        $segmentCode = '';
+                        $segmentDes = 'No Segment';
+                        $serviceLineSystemID = null;
 
-        foreach ($departmentBudgetPlannings as $deptBudgetPlanning) {
-            $typeID = $deptBudgetPlanning->typeID;
-            $budgetType = $this->getBudgetType($typeID);
+                        if ($detail->departmentSegment && $detail->departmentSegment->segment) {
+                            $segment = $detail->departmentSegment->segment;
+                            $serviceLineSystemID = $segment->serviceLineSystemID;
+                            $segmentId = (string) $serviceLineSystemID;
+                            $segmentCode = $segment->ServiceLineCode ?? '';
+                            $segmentDes = $segment->ServiceLineDes ?? '';
+                            if ($segmentCode && $segmentDes) {
+                                $segmentDisplay = $segmentCode . ' - ' . $segmentDes;
+                            } elseif ($segmentDes) {
+                                $segmentDisplay = $segmentDes;
+                            } elseif ($segmentCode) {
+                                $segmentDisplay = $segmentCode;
+                            }
+                        }
 
-            foreach ($deptBudgetPlanning->budgetPlanningDetails ?? [] as $detail) {
-                $segmentId = 'no_segment';
-                $segmentDisplay = 'No Segment';
-                $segmentCode = '';
-                $segmentDes = 'No Segment';
-                $serviceLineSystemID = null;
+                        // For Common (typeID 3): split by GL type into Common - OPEX (PLI, PLE) and Common - CAPEX (BSA, BSL, BSE)
+                        $controlAccountsSystemID = null;
+                        $controlAccounts = null;
+                        if ($detail->budgetTemplateGl && $detail->budgetTemplateGl->chartOfAccount) {
+                            $coa = $detail->budgetTemplateGl->chartOfAccount;
+                            $controlAccountsSystemID = $coa->controlAccountsSystemID ?? null;
+                            $controlAccounts = $coa->controlAccounts ?? null;
+                        }
 
-                if ($detail->departmentSegment && $detail->departmentSegment->segment) {
-                    $segment = $detail->departmentSegment->segment;
-                    $serviceLineSystemID = $segment->serviceLineSystemID;
-                    $segmentId = (string) $serviceLineSystemID;
-                    $segmentCode = $segment->ServiceLineCode ?? '';
-                    $segmentDes = $segment->ServiceLineDes ?? '';
-                    if ($segmentCode && $segmentDes) {
-                        $segmentDisplay = $segmentCode . ' - ' . $segmentDes;
-                    } elseif ($segmentDes) {
-                        $segmentDisplay = $segmentDes;
-                    } elseif ($segmentCode) {
-                        $segmentDisplay = $segmentCode;
-                    }
-                }
+                        $effectiveGroupKey = $segmentId . '|' . $typeID;
+                        $effectiveBudgetType = $budgetType;
 
-                // For Common (typeID 3): split by GL type into Common - OPEX (PLI, PLE) and Common - CAPEX (BSA, BSL, BSE)
-                $controlAccountsSystemID = null;
-                $controlAccounts = null;
-                if ($detail->budgetTemplateGl && $detail->budgetTemplateGl->chartOfAccount) {
-                    $coa = $detail->budgetTemplateGl->chartOfAccount;
-                    $controlAccountsSystemID = $coa->controlAccountsSystemID ?? null;
-                    $controlAccounts = $coa->controlAccounts ?? null;
-                }
+                        if ($typeID === 3) {
+                            $subType = $this->resolveCommonGlSubType($controlAccountsSystemID, $controlAccounts);
+                            if ($subType === 'OPEX') {
+                                $effectiveGroupKey = $segmentId . '|3|OPEX';
+                                $effectiveBudgetType = 'Common - OPEX';
+                            } elseif ($subType === 'CAPEX') {
+                                $effectiveGroupKey = $segmentId . '|3|CAPEX';
+                                $effectiveBudgetType = 'Common - CAPEX';
+                            } else {
+                                continue;
+                            }
+                        }
 
-                $effectiveGroupKey = $segmentId . '|' . $typeID;
-                $effectiveBudgetType = $budgetType;
+                        $groupKey = $effectiveGroupKey;
 
-                if ($typeID === 3) {
-                    $subType = $this->resolveCommonGlSubType($controlAccountsSystemID, $controlAccounts);
-                    if ($subType === 'OPEX') {
-                        $effectiveGroupKey = $segmentId . '|3|OPEX';
-                        $effectiveBudgetType = 'Common - OPEX';
-                    } elseif ($subType === 'CAPEX') {
-                        $effectiveGroupKey = $segmentId . '|3|CAPEX';
-                        $effectiveBudgetType = 'Common - CAPEX';
-                    } else {
-                        continue;
-                    }
-                }
-
-                $groupKey = $effectiveGroupKey;
-
-                if (!isset($groupKeyToData[$groupKey])) {
-                    $financeYearDisplay = '-';
-                    if ($deptBudgetPlanning->financeYear) {
-                        $startDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->bigginingDate)->format('d/m/Y');
-                        $endDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->endingDate)->format('d/m/Y');
-                        $financeYearDisplay = $startDate . ' | ' . $endDate;
-                    }
-                    $masterBudgetPlanning = $deptBudgetPlanning->masterBudgetPlannings;
-                    $masterBudgetPlanningData = null;
-                    if ($masterBudgetPlanning) {
-                        $masterBudgetPlanningData = [
-                            'id' => $masterBudgetPlanning->id,
-                            'planningCode' => $masterBudgetPlanning->planningCode,
-                            'companySystemID' => $masterBudgetPlanning->companySystemID,
-                            'yearID' => $masterBudgetPlanning->yearID,
-                            'typeID' => $masterBudgetPlanning->typeID,
-                            'status' => $masterBudgetPlanning->status,
-                            'confirmed_yn' => $masterBudgetPlanning->confirmed_yn,
-                            'approved_yn' => $masterBudgetPlanning->approved_yn,
-                            'rejected_yn' => $masterBudgetPlanning->rejected_yn,
-                            'initiatedDate' => $masterBudgetPlanning->initiatedDate,
-                            'submissionDate' => $masterBudgetPlanning->submissionDate,
-                            'workflowID' => $masterBudgetPlanning->workflowID,
-                        ];
-                        if ($masterBudgetPlanning->workflow) {
-                            $masterBudgetPlanningData['workflow'] = [
-                                'id' => $masterBudgetPlanning->workflow->id,
-                                'method' => $masterBudgetPlanning->workflow->method,
+                        if (!isset($groupKeyToData[$groupKey])) {
+                            $financeYearDisplay = '-';
+                            if ($deptBudgetPlanning->financeYear) {
+                                $startDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->bigginingDate)->format('d/m/Y');
+                                $endDate = \Carbon\Carbon::parse($deptBudgetPlanning->financeYear->endingDate)->format('d/m/Y');
+                                $financeYearDisplay = $startDate . ' | ' . $endDate;
+                            }
+                            $masterBudgetPlanning = $deptBudgetPlanning->masterBudgetPlannings;
+                            $masterBudgetPlanningData = null;
+                            if ($masterBudgetPlanning) {
+                                $masterBudgetPlanningData = [
+                                    'id' => $masterBudgetPlanning->id,
+                                    'planningCode' => $masterBudgetPlanning->planningCode,
+                                    'companySystemID' => $masterBudgetPlanning->companySystemID,
+                                    'yearID' => $masterBudgetPlanning->yearID,
+                                    'typeID' => $masterBudgetPlanning->typeID,
+                                    'status' => $masterBudgetPlanning->status,
+                                    'confirmed_yn' => $masterBudgetPlanning->confirmed_yn,
+                                    'approved_yn' => $masterBudgetPlanning->approved_yn,
+                                    'rejected_yn' => $masterBudgetPlanning->rejected_yn,
+                                    'initiatedDate' => $masterBudgetPlanning->initiatedDate,
+                                    'submissionDate' => $masterBudgetPlanning->submissionDate,
+                                    'workflowID' => $masterBudgetPlanning->workflowID,
+                                ];
+                                if ($masterBudgetPlanning->workflow) {
+                                    $masterBudgetPlanningData['workflow'] = [
+                                        'id' => $masterBudgetPlanning->workflow->id,
+                                        'method' => $masterBudgetPlanning->workflow->method,
+                                    ];
+                                }
+                            }
+                            $groupKeyToData[$groupKey] = [
+                                'segment' => $segmentDisplay,
+                                'segmentInfo' => [
+                                    'serviceLineSystemID' => $serviceLineSystemID,
+                                    'ServiceLineCode' => $segmentCode,
+                                    'ServiceLineDes' => $segmentDes,
+                                ],
+                                'financeYearDisplay' => $financeYearDisplay,
+                                'financeYear' => $deptBudgetPlanning->financeYear ? [
+                                    'companyFinanceYearID' => $deptBudgetPlanning->financeYear->companyFinanceYearID,
+                                    'bigginingDate' => $deptBudgetPlanning->financeYear->bigginingDate,
+                                    'endingDate' => $deptBudgetPlanning->financeYear->endingDate,
+                                ] : null,
+                                'yearID' => $deptBudgetPlanning->yearID,
+                                'typeID' => $typeID,
+                                'budgetType' => $effectiveBudgetType,
+                                'master_budget_plannings' => $masterBudgetPlanningData,
+                                'glAmounts' => [], // keyed by chartOfAccountSystemID, values are summed amounts
                             ];
                         }
+
+                        $glId = $detail->budget_template_gl_id;
+                        $chartOfAccountSystemID = null;
+                        $accountCode = '';
+                        $accountDescription = '';
+                        if ($detail->budgetTemplateGl && $detail->budgetTemplateGl->chartOfAccount) {
+                            $coa = $detail->budgetTemplateGl->chartOfAccount;
+                            $chartOfAccountSystemID = $coa->chartOfAccountSystemID;
+                            $accountCode = $coa->AccountCode ?? '';
+                            $accountDescription = $coa->AccountDescription ?? '';
+                        }
+                        $glKey = $chartOfAccountSystemID ?? 'gl_' . $glId;
+
+                        if (!isset($groupKeyToData[$groupKey]['glAmounts'][$glKey])) {
+                            $groupKeyToData[$groupKey]['glAmounts'][$glKey] = [
+                                'budget_template_gl_id' => $glId,
+                                'chartOfAccountSystemID' => $chartOfAccountSystemID,
+                                'accountCode' => $accountCode,
+                                'accountDescription' => $accountDescription,
+                                'request_amount' => 0,
+                                'previous_year_budget' => 0,
+                                'current_year_budget' => 0,
+                                'amount_given_by_finance' => 0,
+                                'amount_given_by_hod' => 0,
+                                'difference_last_current_year' => 0,
+                                'difference_current_request' => 0,
+                            ];
+                        }
+                        $g = &$groupKeyToData[$groupKey]['glAmounts'][$glKey];
+                        $g['request_amount'] += (float) (($detail->request_amount/12) ?? 0);
+                        $g['previous_year_budget'] += (float) ($detail->previous_year_budget ?? 0);
+                        $g['current_year_budget'] += (float) ($detail->current_year_budget ?? 0);
+                        $g['amount_given_by_finance'] += (float) ($detail->amount_given_by_finance ?? 0);
+                        $g['amount_given_by_hod'] += (float) ($detail->amount_given_by_hod ?? 0);
+                        $g['difference_last_current_year'] += (float) ($detail->difference_last_current_year ?? 0);
+                        $g['difference_current_request'] += (float) ($detail->difference_current_request ?? 0);
                     }
-                    $groupKeyToData[$groupKey] = [
-                        'segment' => $segmentDisplay,
-                        'segmentInfo' => [
-                            'serviceLineSystemID' => $serviceLineSystemID,
-                            'ServiceLineCode' => $segmentCode,
-                            'ServiceLineDes' => $segmentDes,
-                        ],
-                        'financeYearDisplay' => $financeYearDisplay,
-                        'financeYear' => $deptBudgetPlanning->financeYear ? [
-                            'companyFinanceYearID' => $deptBudgetPlanning->financeYear->companyFinanceYearID,
-                            'bigginingDate' => $deptBudgetPlanning->financeYear->bigginingDate,
-                            'endingDate' => $deptBudgetPlanning->financeYear->endingDate,
-                        ] : null,
-                        'yearID' => $deptBudgetPlanning->yearID,
-                        'typeID' => $typeID,
-                        'budgetType' => $effectiveBudgetType,
-                        'master_budget_plannings' => $masterBudgetPlanningData,
-                        'glAmounts' => [], // keyed by chartOfAccountSystemID, values are summed amounts
-                    ];
                 }
-
-                $glId = $detail->budget_template_gl_id;
-                $chartOfAccountSystemID = null;
-                $accountCode = '';
-                $accountDescription = '';
-                if ($detail->budgetTemplateGl && $detail->budgetTemplateGl->chartOfAccount) {
-                    $coa = $detail->budgetTemplateGl->chartOfAccount;
-                    $chartOfAccountSystemID = $coa->chartOfAccountSystemID;
-                    $accountCode = $coa->AccountCode ?? '';
-                    $accountDescription = $coa->AccountDescription ?? '';
-                }
-                $glKey = $chartOfAccountSystemID ?? 'gl_' . $glId;
-
-                if (!isset($groupKeyToData[$groupKey]['glAmounts'][$glKey])) {
-                    $groupKeyToData[$groupKey]['glAmounts'][$glKey] = [
-                        'budget_template_gl_id' => $glId,
-                        'chartOfAccountSystemID' => $chartOfAccountSystemID,
-                        'accountCode' => $accountCode,
-                        'accountDescription' => $accountDescription,
-                        'request_amount' => 0,
-                        'previous_year_budget' => 0,
-                        'current_year_budget' => 0,
-                        'amount_given_by_finance' => 0,
-                        'amount_given_by_hod' => 0,
-                        'difference_last_current_year' => 0,
-                        'difference_current_request' => 0,
-                    ];
-                }
-                $g = &$groupKeyToData[$groupKey]['glAmounts'][$glKey];
-                $g['request_amount'] += (float) (($detail->request_amount/12) ?? 0);
-                $g['previous_year_budget'] += (float) ($detail->previous_year_budget ?? 0);
-                $g['current_year_budget'] += (float) ($detail->current_year_budget ?? 0);
-                $g['amount_given_by_finance'] += (float) ($detail->amount_given_by_finance ?? 0);
-                $g['amount_given_by_hod'] += (float) ($detail->amount_given_by_hod ?? 0);
-                $g['difference_last_current_year'] += (float) ($detail->difference_last_current_year ?? 0);
-                $g['difference_current_request'] += (float) ($detail->difference_current_request ?? 0);
-            }
-        }
+            });
 
         // Build result: one row per (segment, budget type) only — no department; assign rowId and persist to cache
         $result = [];
