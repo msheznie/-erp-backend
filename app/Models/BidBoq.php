@@ -134,5 +134,15 @@ class BidBoq extends Model
         
     ];
 
-    
+
+    public static function getBidsByBoqIds(array $boqItemIds)
+    {
+        if (empty($boqItemIds)) {
+            return collect();
+        }
+        return self::whereIn('boq_id', $boqItemIds)
+            ->select('bid_master_id', 'boq_id', 'supplier_registration_id')
+            ->get();
+    }
+
 }
