@@ -186,7 +186,8 @@ class GenerateCompanyBudgetPlanningService
             ->exists();
 
         if ($existsForSegmentAndType) {
-            throw new \Exception('Budget already generated for this segment and budget type');
+            $errorMsg= 'A budget already exists in Draft/Open status for '.$payload['segment'].' - '.$payload['templateDescription'].' - '.$payload['financeYearDisplay'].'. Please review or delete the existing budget before generating';
+            throw new \Exception($errorMsg);
         }
 
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
