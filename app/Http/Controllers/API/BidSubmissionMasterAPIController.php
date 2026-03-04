@@ -933,7 +933,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('doc_verifiy_status', '!=', 0)
             ->pluck('id');
 
-// 2. Get all attachments for those bids
         $attachments = DocumentAttachments::with(['bid_verify'])
             ->whereIn('documentSystemCode', $documentSystemCodes)
             ->where('documentSystemID', $documentSystemID)

@@ -224,7 +224,7 @@
                         $status = $bidStatus[$item->id] ?? '-';
                     @endphp
 
-                    @if($status === 3)
+                    @if($status == 3)
                         No
                     @elseif($status === 'Yes')
                         Yes
