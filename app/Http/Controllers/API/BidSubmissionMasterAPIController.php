@@ -908,7 +908,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }])->where('id', $tenderId)
             ->get();
 
-        $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
+       /* $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
             ->where('status', 1)
             ->where('doc_verifiy_status', '!=', 0)
             ->get()
@@ -925,9 +925,37 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->get();
             $i++;
 
+        }*/
+
+
+        $documentSystemCodes = BidSubmissionMaster::where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->where('doc_verifiy_status', '!=', 0)
+            ->pluck('id');
+
+        $attachments = DocumentAttachments::with(['bid_verify'])
+            ->whereIn('documentSystemCode', $documentSystemCodes)
+            ->where('documentSystemID', $documentSystemID)
+            ->whereIn('attachmentType', [0, 11])
+            ->where('envelopType', 3)
+            ->get();
+
+        $attachmentsByBid = $attachments->groupBy('documentSystemCode');
+
+        $bidStatus = [];
+
+        foreach ($attachmentsByBid as $bidId => $docs) {
+            // check if any status is 0 or 3
+            $notVerified = $docs->contains(function ($doc) {
+                $status = $doc->bid_verify->status ?? 0;
+                return $status == 0 || $status == 3;
+            });
+
+            $bidStatus[$bidId] = $notVerified ? 3 : 'Yes';
         }
 
-        $count = count($arr[0]);
+
+        $count = count($bidStatus);
 
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
