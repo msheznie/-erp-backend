@@ -9991,5 +9991,8 @@ return
     'product_access_value_not_matching' => 'The Product access value not matching with system',
     'user_type_not_found' => 'The User Type not Found',
     'input_value_not_matching' => 'The input value not matching',
-    'tender_awarded_date' => 'Tender/RFX Awarded Date'
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name'
 ];
