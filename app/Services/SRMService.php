@@ -1862,7 +1862,7 @@ class SRMService
             })
             ->addIndexColumn()
             ->addColumn('tenderPurchasePolicy', function ($tender) {
-                    return Helper::checkPolicy($tender->company_id, 98);
+                return Helper::checkPolicy($tender->company_id, 98);
             })
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
