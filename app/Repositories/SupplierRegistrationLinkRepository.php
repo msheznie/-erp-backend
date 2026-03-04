@@ -145,23 +145,28 @@ class SupplierRegistrationLinkRepository extends BaseRepository
             });
         }
 
-        if (!empty($request->input('approved_yn'))) {
-            $status = $request->input('approved_yn');
+        $status = $request->input('approved_yn');
 
-            if ($status == 0) {
-                $query->where('confirmed_yn', 0)
-                    ->where('approved_yn', 0);
-            }
+        if ($status !== null && $status !== '') {
 
-            if ($status == 1) {
-                $query->where('confirmed_yn', 1)
-                    ->where('approved_yn', 0)
-                    ->where('refferedBackYN', 0);
-            }
+            $status = (int) $status;
 
-            if ($status == 2) {
-                $query->where('confirmed_yn', 1)
-                    ->where('approved_yn', -1);
+            switch ($status) {
+                case 0:
+                    $query->where('confirmed_yn', 0)
+                        ->where('approved_yn', 0);
+                    break;
+
+                case 1:
+                    $query->where('confirmed_yn', 1)
+                        ->where('approved_yn', 0)
+                        ->where('refferedBackYN', 0);
+                    break;
+
+                case 2:
+                    $query->where('confirmed_yn', 1)
+                        ->where('approved_yn', -1);
+                    break;
             }
         }
 
