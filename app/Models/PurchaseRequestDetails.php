@@ -268,6 +268,9 @@ class PurchaseRequestDetails extends Model
                     ->with(['finance_gl_code_pl' => function($q) {
                         $q->select('chartOfAccountSystemID', 'AccountCode', 'AccountDescription');
                     }]);
+            }])->with(['itemMaster' => function($q) {
+                $q->select('itemCodeSystem', 'faFinanceCatID')
+                    ->with(['asset_category']);
             }])
             ->get();
     }
@@ -275,6 +278,10 @@ class PurchaseRequestDetails extends Model
     public function financeCategorySub()
     {
         return $this->hasOne('App\Models\FinanceItemCategorySub', 'itemCategorySubID', 'itemFinanceCategorySubID');
+    }
+
+    public function itemMaster(){
+        return $this->hasOne('App\Models\ItemMaster', 'itemCodeSystem', 'itemCode');
     }
 
 

@@ -3377,24 +3377,44 @@ class TenderMasterRepository extends BaseRepository
                 $categoryID = $detail->itemFinanceCategoryID;
                 $finance = $detail->financeCategorySub ?? null;
 
-                $glSystemID = null;
-                $coa = null;
-
-                if (in_array($categoryID, [1, 2, 4])) {
-                    $glSystemID = $finance->financeGLcodePLSystemID ?? null;
-                    $coa = $finance->finance_gl_code_pl ?? null;
-                } elseif ($categoryID == 3) {
+                if (!$finance) {
                     return null;
-                } else {
+                }
+
+                $id = null;
+                $accountCode = null;
+                $accountDescription = null;
+
+                // Categories 1,2,4 → Normal GL
+                if (in_array($categoryID, [1, 2, 4])) {
+
+                    $coa = $finance->finance_gl_code_pl ?? null;
+
+                    $id = $finance->financeGLcodePLSystemID ?? null;
+                    $accountCode = $coa->AccountCode ?? null;
+                    $accountDescription = $coa->AccountDescription ?? null;
+                }
+
+                elseif ($categoryID == 3) {
+
+                    $assetCategory = $detail->itemMaster->asset_category ?? null;
+
+                    $id = $assetCategory->COSTGLCODESystemID ?? null;
+                    $accountCode = $assetCategory->COSTGLCODE ?? null;
+                    $accountDescription = $assetCategory->financeCatDescription ?? null;
+                }
+
+                if (!$id) {
                     return null;
                 }
 
                 return [
-                    'id' => $glSystemID,
-                    'name' => trim(($coa->AccountCode ?? '') . ' | ' . ($coa->AccountDescription ?? '')),
+                    'id'   => $id,
+                    'name' => trim($accountCode . ' | ' . $accountDescription),
                 ];
             })
             ->filter()
+            ->unique('id')
             ->values();
 
 
