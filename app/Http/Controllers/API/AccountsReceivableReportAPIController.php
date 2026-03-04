@@ -4909,6 +4909,9 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountLocal, 0)
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
+     THEN
+        IFNULL((SELECT SUM(erp_mmd.matchedAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
         -(erp_generalledger.documentLocalAmount)
@@ -4923,9 +4926,10 @@ SELECT
                                 SUM(receiveAmountTrans) / em.companyRptCurrencyER
                         END
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -4938,9 +4942,10 @@ SELECT
                                 SUM(receiveAmountTrans) / em.companyRptCurrencyER
                         END
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -4954,9 +4959,10 @@ SELECT
                                 SUM(receiveAmountTrans) / em.companyRptCurrencyER
                         END
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -4967,6 +4973,9 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountRpt, 0)
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
+     THEN
+        IFNULL((SELECT SUM(erp_mmd.matchRptAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
          -(erp_generalledger.documentRptAmount)
@@ -4976,9 +4985,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / companyRptCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -4986,9 +4996,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / companyRptCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -4997,9 +5008,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / companyRptCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -5010,6 +5022,9 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0)
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
+     THEN
+        IFNULL((SELECT SUM(erp_mmd.matchLocalAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"  
      THEN
         -(erp_generalledger.documentTransAmount)
@@ -5019,9 +5034,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / supplierDefCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -5029,9 +5045,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / supplierDefCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -5040,9 +5057,10 @@ SELECT
                     SELECT  
                          SUM(receiveAmountTrans) / supplierDefCurrencyER
                     from erp_custreceivepaymentdet
-                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID and em.documentSystemID = erp_generalledger.documentSystemID 
+                    inner join erp_matchdocumentmaster em on em.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID
                     inner join erp_accountsreceivableledger ar on ar.arAutoID = erp_custreceivepaymentdet.arAutoID 
                     where custReceivePaymentAutoID =  erp_generalledger.documentSystemCode 
+                    AND em.documentSystemID = erp_generalledger.documentSystemID
                     AND DATE(em.matchingDocdate) <= "' . $asOfDate . '"
                     AND em.matchingConfirmedYN = 1
                     AND ar.serviceLineSystemID = erp_generalledger.serviceLineSystemID 
@@ -5076,7 +5094,7 @@ WHERE
     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
-    UNION ALL
+UNION ALL
     SELECT
     erp_generalledger.companySystemID,
     erp_generalledger.companyID,
