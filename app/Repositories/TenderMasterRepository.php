@@ -54,10 +54,12 @@ use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SrmTenderAwardingMember;
 use App\Models\SrmTenderAwardingMemberEditLog;
+use App\Models\SrmItemWiseTenderAwarding;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
 use App\Models\SrmTenderMasterEditLog;
+use App\Models\SrmTenderPo;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\SRMTenderUserAccess;
@@ -85,6 +87,7 @@ use App\Models\TenderType;
 use App\Models\YesNoSelection;
 use App\Services\GeneralService;
 use App\Services\SRMService;
+use App\Services\TenderItemWiseAwardingService;
 use App\Services\TenderConfirmationService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
@@ -357,9 +360,9 @@ class TenderMasterRepository extends BaseRepository
     }
 
 
-    public static function getTenderPOData($tenderId, $companyId)
+    public static function getTenderPOData($tenderId, $companyId, $supplierId = null)
     {
-        return TenderMaster::getTenderPOData($tenderId, $companyId);
+        return TenderMaster::getTenderPOData($tenderId, $companyId, $supplierId);
     }
     public function getPaymentProofDocumentApproval($request)
     {
@@ -3362,6 +3365,98 @@ class TenderMasterRepository extends BaseRepository
             'employee_name' => $confirmationDetail->actionByEmployee
                 ? $confirmationDetail->actionByEmployee->empFullName
                 : null
+        ];
+    }
+
+    public function getItemWiseAwardingForPO(int $tenderId): array
+    {
+        $tender = TenderMaster::select('id', 'tender_code', 'title', 'evaluation_type_id')->find($tenderId);
+        if (!$tender) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null
+            ];
+        }
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null
+            ];
+        }
+
+        $isNegotiation = TenderItemWiseAwardingService::resolveIsNegotiation($tender);
+        $rows = SrmItemWiseTenderAwarding::getAwardedRowsForTender($tenderId, $isNegotiation)
+            ->with([
+                'supplier' => function ($q) {
+                    $q->select('id', 'name');
+                },
+                'boqItem' => function ($q) {
+                    $q->select('id', 'item_name');
+                },
+                'pricingScheduleDetail' => function ($q) {
+                    $q->select('id', 'label');
+                },
+            ])
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [
+                'success' => true,
+                'message' => 'Success',
+                'data' => [
+                    'tender_code' => $tender->tender_code,
+                    'tender_title' => $tender->title,
+                    'items' => [],
+                ]
+            ];
+        }
+
+        $supplierIds = $rows->pluck('supplier_id')->filter()->unique()->values()->all();
+        $tenderPos = SrmTenderPo::getActivePOsByTenderAndSuppliers($tenderId, $supplierIds);
+
+        $poBySupplier = [];
+        foreach ($tenderPos as $po) {
+            $poBySupplier[$po->supplier_id] = [
+                'po_id' => $po->po_id,
+                'purchase_order_code' => $po->procument_order ? $po->procument_order->purchaseOrderCode : '',
+            ];
+        }
+
+        $items = [];
+        $counter = 1;
+        foreach ($rows as $row) {
+            $supplierId = $row->supplier_id;
+            $poInfo = $poBySupplier[$supplierId] ?? ['po_id' => null, 'purchase_order_code' => null];
+            $itemDisplay = null;
+            if ($row->boq_item_id && $row->boqItem) {
+                $itemDisplay = $row->boqItem->item_name;
+            } elseif ($row->bid_format_detail_id && $row->pricingScheduleDetail) {
+                $itemDisplay = $row->pricingScheduleDetail->label;
+            }
+            if ($itemDisplay === null || $itemDisplay === '') {
+                $itemDisplay = 'Item ' . $counter;
+            }
+
+            $items[] = [
+                'item_display' => $itemDisplay,
+                'supplier_id' => $supplierId,
+                'supplier_name' => $row->supplier ? $row->supplier->name : '',
+                'po_id' => $poInfo['po_id'],
+                'purchase_order_code' => $poInfo['purchase_order_code'],
+            ];
+
+            $counter++;
+        }
+        return [
+            'success' => true,
+            'message' => 'Success',
+            'data' => [
+                'tender_code' => $tender->tender_code,
+                'tender_title' => $tender->title,
+                'items' => $items,
+            ]
         ];
     }
 }
