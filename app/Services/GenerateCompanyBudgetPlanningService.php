@@ -167,14 +167,13 @@ class GenerateCompanyBudgetPlanningService
             $reportID = 2;
         }
 
-             
         $typeMap = [
             1 => "OPEX",
             2 => "CAPEX",
-            3 => explode(' - ', $payload['budgetType'])[1] ,
+            3 => (str_contains($payload['budgetType'], '-')) ? explode(' - ', $payload['budgetType'])[1] : null ,
         ];
 
-        
+       
         $type = $typeMap[(int) $payload['typeID']] ?? null;
 
         $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
