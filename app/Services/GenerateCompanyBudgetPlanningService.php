@@ -167,11 +167,25 @@ class GenerateCompanyBudgetPlanningService
             $reportID = 2;
         }
 
+             
+        $typeMap = [
+            1 => "OPEX",
+            2 => "CAPEX",
+            3 => explode(' - ', $payload['budgetType'])[1] ,
+        ];
+
+        
+        $type = $typeMap[(int) $payload['typeID']] ?? null;
+
         $budgetTemplate = ReportTemplate::where('companySystemID', $payload['master_budget_plannings']['companySystemID'])
                           ->where('isActive', 1)
                           ->where('isDefault', 1)
                           ->where('reportID', $reportID)
                           ->first();
+
+        if(empty($budgetTemplate)) {
+            throw new \Exception('Budget default template not found for '.$type);
+        }
 
         $companySystemID = $payload['master_budget_plannings']['companySystemID'];
         $yearID = $payload['yearID'];
@@ -189,6 +203,7 @@ class GenerateCompanyBudgetPlanningService
             $errorMsg= 'A budget already exists in Draft/Open status for '.$payload['segment'].' - '.$payload['templateDescription'].' - '.$payload['financeYearDisplay'].'. Please review or delete the existing budget before generating';
             throw new \Exception($errorMsg);
         }
+   
 
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
             ->where('documentSystemID', 65)
@@ -197,7 +212,7 @@ class GenerateCompanyBudgetPlanningService
             ->exists();
 
         if ($existsForBudgetYear) {
-            throw new \Exception('Budget already generated for this budget year');
+            throw new \Exception('A budget for '.$type.' already exists for the financial year '.$payload['financeYearDisplay'].'. Common budget type cannot be initiated for the same period.');
         }
 
         return $detailsTogenerate;
