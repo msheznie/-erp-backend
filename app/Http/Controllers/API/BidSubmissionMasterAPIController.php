@@ -933,6 +933,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('doc_verifiy_status', '!=', 0)
             ->pluck('id');
 
+// 2. Get all attachments for those bids
         $attachments = DocumentAttachments::with(['bid_verify'])
             ->whereIn('documentSystemCode', $documentSystemCodes)
             ->where('documentSystemID', $documentSystemID)
@@ -945,7 +946,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $bidStatus = [];
 
         foreach ($attachmentsByBid as $bidId => $docs) {
-            // check if any status is 0 or 3
+            // If any attachment is 0 (pending) or 3 (not verified), overall status = 3
             $notVerified = $docs->contains(function ($doc) {
                 $status = $doc->bid_verify->status ?? 0;
                 return $status == 0 || $status == 3;
@@ -954,12 +955,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $bidStatus[$bidId] = $notVerified ? 3 : 'Yes';
         }
 
-
-        $count = count($bidStatus);
-
+        $count = count($attachments);
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
-        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation, 'lang' => $lang);
+        $order = array('bidData' => $bidData, 'bidStatus'    => $bidStatus,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation, 'lang' => $lang);
 
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 
