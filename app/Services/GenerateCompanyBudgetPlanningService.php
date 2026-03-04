@@ -203,8 +203,12 @@ class GenerateCompanyBudgetPlanningService
             throw new \Exception($errorMsg);
         }
    
+        $templateMasterID = ($type == "CAPEX") ? 1 : 2;
 
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
+            ->whereHas('template_master', function($query) use ($templateMasterID) {
+                $query->where('reportID', $templateMasterID);
+            })
             ->where('documentSystemID', 65)
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->where('companyFinanceYearID', $yearID)
