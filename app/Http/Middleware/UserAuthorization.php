@@ -119,6 +119,7 @@ class UserAuthorization
             'api/v1/updateNotification',
             'api/v1/getThirdPartyApiLogDetail',
             'api/v1/getCurrentHomeUrl',
+            'api/v1/approvalPreCheckAllDoc',
             'api/v1/getPreDefinedWidgetData'
         ];
     }
