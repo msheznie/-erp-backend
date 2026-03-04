@@ -108,14 +108,14 @@ class SupplierRegistrationLinkRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
-                $data[$x]['Supplier Name'] = $val->name;
-                $data[$x]['Email'] = $val->email;
-                $data[$x]['Registration Number'] = $val->registration_number;
-                $data[$x]['Created At'] = Helper::dateFormat($val->created_at);
-                $data[$x]['Status'] = $this->supplierRegistrationLinkStatus($val->confirmed_yn,$val->approved_yn, $val->refferedBackYN);
-                $data[$x]['Is Linked'] = !empty($val->supplier_master_id) ? 'Yes' : 'No';
-                $data[$x]['Linked Supplier Code'] = !empty($val->supplier) ? $val->supplier->primarySupplierCode : '-';
-                $data[$x]['Linked Supplier Name'] = !empty($val->supplier) ? $val->supplier->supplierName : '-';
+                $data[$x][trans('custom.e_supplier_name')] = $val->name;
+                $data[$x][trans('custom.email')] = $val->email;
+                $data[$x][trans('custom.registration_number')] = $val->registration_number;
+                $data[$x][trans('custom.created_at')] = Helper::dateFormat($val->created_at);
+                $data[$x][trans('custom.status')] = $this->supplierRegistrationLinkStatus($val->confirmed_yn,$val->approved_yn, $val->refferedBackYN);
+                $data[$x][trans('custom.is_linked')] = !empty($val->supplier_master_id) ? 'Yes' : 'No';
+                $data[$x][trans('custom.linked_supplier_code')] = !empty($val->supplier) ? $val->supplier->primarySupplierCode : '-';
+                $data[$x][trans('custom.linked_supplier_name')] = !empty($val->supplier) ? $val->supplier->supplierName : '-';
                 $x++;
             }
         } else {

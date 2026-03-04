@@ -9971,5 +9971,8 @@ return
     'column_must_be_string' => 'Each column name must be a string',
     'column_max_length' => 'Column name cannot exceed 100 characters',
     'invalid_date_format' => 'Invalid date format',
-    'tender_awarded_date' => 'Tender/RFX Awarded Date'
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name',
 ];
