@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Models\BidBoq;
 use App\Models\BidMainWork;
 use App\Models\BidSubmissionMaster;
+use App\Models\CurrencyMaster;
 use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\SRMScenarioDetails;
@@ -536,10 +537,13 @@ class TenderItemWiseAwardingService
             return count($p) === 3 ? $p[2] . '/' . $p[1] . '/' . $p[0] : $bidSubmittedRaw;
         })() : '';
 
-        $finalCommercialPrice = $rows->sum(function ($r) {
+        $finalCommercialPriceRaw = $rows->sum(function ($r) {
             return $r->bid_amount !== null ? (float) $r->bid_amount : 0;
         });
         $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+        $decimalPlaces = CurrencyMaster::getDecimalPlaces($tender->currency_id ?? 0);
+        $finalCommercialPrice = number_format($finalCommercialPriceRaw, $decimalPlaces);
+
         $documentTypeList = ['Tender', 'Quotation', 'Information', 'Proposal'];
         $documentType = isset($tender->document_type) && isset($documentTypeList[$tender->document_type])
             ? $documentTypeList[$tender->document_type]
@@ -549,6 +553,7 @@ class TenderItemWiseAwardingService
         $emailBody = null;
         $ccEmails = [];
         $attachments = [];
+        $loaLoaEmailSent = $rows->first() && (bool) $rows->first()->loa_loa_email_sent;
 
         $saved = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_LOI_LOA);
         if ($saved) {
@@ -598,6 +603,17 @@ class TenderItemWiseAwardingService
             }
         }
 
+        $context = [
+            'supplierName' => $supplier->name ?? '',
+            'tenderCode' => $tender->tender_code,
+            'tenderTitle' => $tender->title,
+            'bidSubmisionDate' => $bidSubmisionDate,
+            'documentType' => $documentType,
+            'finalCommercialPrice' => $finalCommercialPrice,
+            'currency' => $currency,
+        ];
+        $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+
         $supplierUuid = $supplier->uuid ?? null;
         $tenderUuid = $tender->uuid ?? null;
 
@@ -616,6 +632,7 @@ class TenderItemWiseAwardingService
             'attachments' => $attachments,
             'tender_uuid' => $tenderUuid,
             'supplier_uuid' => $supplierUuid,
+            'loa_loa_email_sent' => $loaLoaEmailSent,
         ];
     }
 
@@ -651,15 +668,10 @@ class TenderItemWiseAwardingService
         $attachmentId = null
     ): void {
         $data = $this->getLoiLoaEmailData($tenderId, $supplierId, $companyId);
-        $resolvedBody = self::replaceLoiLoaPlaceholders($emailBody, [
-            'supplierName' => $data['supplierName'],
-            'tenderCode' => $data['tenderCode'],
-            'tenderTitle' => $data['tenderTitle'],
-            'bidSubmisionDate' => $data['bidSubmisionDate'],
-            'documentType' => $data['documentType'],
-            'finalCommercialPrice' => $data['finalCommercialPrice'],
-            'currency' => $data['currency'],
-        ]);
+        if (!empty($data['loa_loa_email_sent'])) {
+            throw new \RuntimeException(trans('srm_tender_rfx.loa_loa_already_sent'));
+        }
+        $resolvedBody = $emailBody;
 
         $tender = TenderMaster::find($tenderId);
         $supplier = SupplierRegistrationLink::find($supplierId);
