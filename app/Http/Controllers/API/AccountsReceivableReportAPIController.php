@@ -4909,9 +4909,6 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountLocal, 0)
-     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
-     THEN
-        IFNULL((SELECT SUM(erp_mmd.matchedAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
         -(erp_generalledger.documentLocalAmount)
@@ -4973,9 +4970,6 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountRpt, 0)
-     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
-     THEN
-        IFNULL((SELECT SUM(erp_mmd.matchRptAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
          -(erp_generalledger.documentRptAmount)
@@ -5022,9 +5016,6 @@ SELECT
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
      THEN
         IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0)
-     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentNarration NOT LIKE  "Matching %"
-     THEN
-        IFNULL((SELECT SUM(erp_mmd.matchLocalAmount) FROM erp_matchdocumentmaster erp_mmd WHERE erp_mmd.PayMasterAutoId = erp_generalledger.documentSystemCode AND erp_mmd.documentSystemID = 21 AND erp_mmd.matchingConfirmedYN = 1), 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"  
      THEN
         -(erp_generalledger.documentTransAmount)
