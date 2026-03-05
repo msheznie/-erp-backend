@@ -1618,33 +1618,27 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
 
-        if($data['budgetType'] == 3) {
-            $budgetMasterReportID = BudgetMaster::join('erp_companyreporttemplate as template_master', 'template_master.companyReportTemplateID', '=', 'erp_budgetmaster.templateMasterID')
-                ->where('erp_budgetmaster.companySystemID', $companyID)
-                ->where('erp_budgetmaster.documentSystemID', 65)
-                ->where('erp_budgetmaster.companyFinanceYearID', $data['budgetYear'])
-                ->select('template_master.reportID as reportID')
-                ->distinct()
-                ->get()->pluck('reportID')->toArray();
 
-            if (in_array(1, $budgetMasterReportID) && in_array(2, $budgetMasterReportID)) {
-                $reportType = 'OPEX AND CAPEX';
-            } elseif (in_array(2, $budgetMasterReportID)) {
-                $reportType = 'OPEX';
-            } elseif (in_array(1, $budgetMasterReportID)) {
-                $reportType = 'CAPEX';
-            } else {
-                $reportType = '';
-            }
+        $budgetMasterReportID = CompanyBudgetPlanning::where('periodID', $data['budgetPeriod'])
+        ->where('yearID', $data['budgetYear'])
+        ->distinct()
+        ->get()->pluck('typeID')->toArray();
 
-            if (!empty($budgetMasterReportID)) {
-                $budgetYear = CompanyFinanceYear::select(DB::raw("CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))->find($data['budgetYear']);
-
-                $errorMessage = 'A budget for '.$reportType.' already exists for the financial year '.$budgetYear->financeYear.'. Common budget type cannot be initiated for the same period.';
-                return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
-            }
+        if (in_array(3, $budgetMasterReportID)) {
+            $reportType = 'COMMON';
+        } elseif (in_array(2, $budgetMasterReportID)) {
+            $reportType = 'CAPEX';
+        } elseif (in_array(1, $budgetMasterReportID)) {
+            $reportType = 'OPEX';
+        } else {
+            $reportType = 'COMMON';
         }
 
+        if(!empty($budgetMasterReportID)) {  
+            $budgetYear = CompanyFinanceYear::select(DB::raw("CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))->find($data['budgetYear']);
+            $errorMessage = 'A budget for '.$reportType.' already exists for the financial year '.$budgetYear->financeYear.'. Common budget type cannot be initiated for the same period.';
+            return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
+        }
         $duplicateBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyID)
             ->where('status', 1)
             ->where('periodID', $data['budgetPeriod'])
