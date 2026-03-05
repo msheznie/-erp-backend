@@ -227,8 +227,8 @@ class BidSubmissionMaster extends Model
 
         if (!empty($negotiationIds)) {
             $query->when($isNegotiation == 1,
-                fn($q) => $q->whereIn('id', $negotiationIds),
-                fn($q) => $q->whereNotIn('id', $negotiationIds)
+                fn($q) => $q->whereIn('srm_bid_submission_master.id', $negotiationIds),
+                fn($q) => $q->whereNotIn('srm_bid_submission_master.id', $negotiationIds)
             );
         }
 
