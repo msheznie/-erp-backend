@@ -195,6 +195,7 @@ class GenerateCompanyBudgetPlanningService
             ->where('documentSystemID', 65)
             ->where('companyFinanceYearID', $yearID)
             ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('approvedYN', 0)
             ->where('templateMasterID', $templateMasterID)
             ->exists();
 
@@ -202,7 +203,23 @@ class GenerateCompanyBudgetPlanningService
             $errorMsg= 'A budget already exists in Draft/Open status for '.$payload['segment'].' - '.$payload['templateDescription'].' - '.$payload['financeYearDisplay'].'. Please review or delete the existing budget before generating';
             throw new \Exception($errorMsg);
         }
-   
+
+
+
+        $existsForSegmentAndTypeAndApproved = BudgetMaster::where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 65)
+            ->where('companyFinanceYearID', $yearID)
+            ->where('serviceLineSystemID', $serviceLineSystemID)
+            ->where('approvedYN', -1)
+            ->where('templateMasterID', $templateMasterID)
+            ->exists();
+
+        if ($existsForSegmentAndTypeAndApproved) {
+            $errorMsg= 'An '.$type.' budget already exists for this '.$payload['segment'].' for the financial year '.$payload['financeYearDisplay'];
+            throw new \Exception($errorMsg);
+        }
+
+
         $templateMasterID = ($type == "CAPEX") ? 1 : 2;
 
         $existsForBudgetYear = BudgetMaster::where('companySystemID', $companySystemID)
