@@ -228,6 +228,7 @@ Route::post('awardItemWiseSupplier', 'TenderMasterAPIController@awardItemWiseSup
 Route::post('markSupplierItemWiseAwarded', 'TenderMasterAPIController@markSupplierItemWiseAwarded')->name("Mark supplier item-wise awarded");
 Route::post('getItemWiseAwardedSuppliers', 'TenderMasterAPIController@getItemWiseAwardedSuppliers')->name("Get item-wise awarded suppliers");
 Route::post('sendItemWiseAwardEmail', 'TenderMasterAPIController@sendItemWiseAwardEmail')->name("Send item-wise award email");
+Route::post('getItemWiseAwardingForPO', 'TenderMasterAPIController@getItemWiseAwardingForPO')->name("Get item-wise awarding for PO");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
 Route::post('getContractTypes', 'TenderMasterAPIController@getContractTypes')->name("Get Contract Types");
 Route::post('createContract', 'TenderMasterAPIController@createContract')->name("Create Contract");

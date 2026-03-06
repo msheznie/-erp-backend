@@ -708,9 +708,9 @@ class TenderMaster extends Model
             ->first();
     }
 
-    public static function getTenderPOData($tenderId, $companyId)
+    public static function getTenderPOData($tenderId, $companyId, $supplierId = null)
     {
-        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id')
+        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id', 'evaluation_type_id')
             ->with(['ranking_supplier' => function ($q) {
                 $q->select('id', 'supplier_id', 'tender_id')->where('award', 1)
                     ->with(['supplier' => function ($q) {
@@ -723,6 +723,32 @@ class TenderMaster extends Model
 
         if (!$tender) {
             return null;
+        }
+
+        if ($supplierId !== null && (int) $tender->evaluation_type_id === 1) {
+            $supplierLink = SupplierRegistrationLink::with('supplier')
+                ->where('id', $supplierId)
+                ->where('company_id', $companyId)
+                ->first();
+
+            $rankingSupplier = null;
+            if ($supplierLink) {
+                $rankingSupplier = [
+                    'id' => null,
+                    'supplier_id' => $supplierLink->id,
+                    'supplier' => $supplierLink->supplier ? [
+                        'id' => $supplierLink->supplier->supplierCodeSystem,
+                        'supplier_master_id' => $supplierLink->supplier->supplierCodeSystem,
+                    ] : null,
+                ];
+            }
+
+            return [
+                'title' => $tender->title,
+                'tender_code' => $tender->tender_code,
+                'currency_id' => $tender->currency_id,
+                'ranking_supplier' => $rankingSupplier,
+            ];
         }
 
         return [

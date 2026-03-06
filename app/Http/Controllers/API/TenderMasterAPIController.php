@@ -5669,12 +5669,43 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderPOData(Request $request)
     {
         try {
-            $result = TenderMasterRepository::getTenderPOData($request['tenderUUID'], $request['companySystemID']);
+            $result = TenderMasterRepository::getTenderPOData(
+                $request['tenderUUID'],
+                $request['companySystemID'],
+                $request->input('supplierId')
+            );
 
             return $this->sendResponse($result, 'Success' );
         } catch (\Exception $e) {
             $statusCode = $e->getCode() ?: 500;
             return $this->sendError($e->getMessage(), $statusCode);
+        }
+    }
+
+    public function getItemWiseAwardingForPO(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+
+        try {
+            $response = $this->tenderMasterRepository->getItemWiseAwardingForPO($tenderId);
+            if(!$response['success']){
+                return $this->sendError($response['message'], 500);
+            }
+            return $this->sendResponse($response['data'] ?? [], trans('srm_tender_rfx.item_wise_data_retrieved_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 
