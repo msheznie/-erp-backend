@@ -964,11 +964,6 @@ class GRVMasterAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
-
-            if(!empty($gRVMaster->deliveryAppoinmentID)){
-                $this->gRVMasterRepository->sendAppointmentConfirmationEmail($input);
-            }
-
         }
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
