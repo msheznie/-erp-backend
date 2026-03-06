@@ -224,8 +224,10 @@
                     and
                     {{$entity->floatAmt}}/@if($entity->decimalPlaces == 3)1000 @else 100 @endif] only as folllow and debit the same to 
                     our above mentioned account under advice to us , with a conversion to the beneficiary currency at the prevailing exchange rate.<br>
-
-                    <br><br>
+                    <br>
+                    All Bank charges to be debited from our account.
+                    <br>
+                    <br>
                     <b>Beneficiary Name         :  </b> @if($entity->memos){{isset($entity->memos[0]->memoDetail)?$entity->memos[0]->memoDetail:''}}@endif <br>
                     <b>Beneficiary Address      :  </b> @if($entity->supplier){{$entity->supplier->address}}@endif
                     <br><br>
