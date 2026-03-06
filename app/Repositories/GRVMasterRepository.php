@@ -551,9 +551,11 @@ class GRVMasterRepository extends BaseRepository
         </tr>';
         }
 
-        $body .= '</tbody></table>';
+        $body .= '</tbody><br><br>';
 
-        $body .= "<br><br>" . trans('custom.thank_you') . "<br><br>";
+        $body .= "If you have any questions or require further clarification regarding this receipt, please feel free to contact us.<br><br>
+    Thank you for your continued cooperation.<br><br>
+    Best regards,<br><br>";
 
         $body .= Helper::getSupplierEmailFooter($GrvData['companySystemID']);
 
