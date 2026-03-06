@@ -359,4 +359,5 @@ return [
     'item_wise_supplier_not_found' => 'Supplier not found.',
     'item_wise_supplier_has_no_email' => 'Supplier has no email address.',
     'loa_loa_already_sent' => 'LOA/LOI has already been sent to this supplier.',
+    'company_is_required'=> 'Company is required'
 ];

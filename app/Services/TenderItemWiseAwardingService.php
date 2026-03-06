@@ -394,13 +394,7 @@ class TenderItemWiseAwardingService
         }
         $isNegotiation = self::resolveIsNegotiation($tender);
 
-        $awardRows = SrmItemWiseTenderAwarding::getAwardedRowsForTender($tenderId, $isNegotiation)
-            ->with([
-                'supplier' => function ($q) {
-                    $q->select('id', 'name', 'email');
-                },
-            ])
-            ->get();
+        $awardRows = SrmItemWiseTenderAwarding::getAwardRowsWithSupplier($tenderId, $isNegotiation);
 
         $rows = [];
         foreach ($awardRows as $row) {
@@ -422,7 +416,7 @@ class TenderItemWiseAwardingService
                 'supplier_id' => $row->supplier_id,
                 'supplier_name' => $supplier ? $supplier->name : '',
                 'supplier_email' => $supplier && !empty($supplier->email) ? $supplier->email : '',
-                'loa_loa_email_sent' => (bool) $row->loa_loa_email_sent,
+                'loi_loa_email_sent' => (bool) $row->loi_loa_email_sent,
             ];
         }
 
@@ -514,9 +508,7 @@ class TenderItemWiseAwardingService
         }
         $isNegotiation = self::resolveIsNegotiation($tender);
 
-        $rows = SrmItemWiseTenderAwarding::getAwardedRowsForTender($tenderId, $isNegotiation, $supplierId)
-            ->with(['supplier', 'bid_submission_master'])
-            ->get();
+        $rows = SrmItemWiseTenderAwarding::getAwardRowsWithRelations($tenderId, $isNegotiation, $supplierId);
 
         if ($rows->isEmpty()) {
             throw new \RuntimeException(trans('srm_tender_rfx.item_wise_no_awarded_items_for_supplier'));
@@ -553,7 +545,7 @@ class TenderItemWiseAwardingService
         $emailBody = null;
         $ccEmails = [];
         $attachments = [];
-        $loaLoaEmailSent = $rows->first() && (bool) $rows->first()->loa_loa_email_sent;
+        $loiLoaEmailSent = $rows->first() && (bool) $rows->first()->loi_loa_email_sent;
 
         $saved = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_LOI_LOA);
         if ($saved) {
@@ -575,7 +567,7 @@ class TenderItemWiseAwardingService
         if ($emailBody === null || $emailBody === '') {
             $scenarioId = self::getLoiLoaScenarioMasterId((int) $tender->document_system_id);
             if ($scenarioId !== null) {
-                $master = SRMScenarioMaster::where('id', $scenarioId)->where('is_active', 1)->first();
+                $master = SRMScenarioMaster::getSrmScenarioMaster($scenarioId);
                 if ($master) {
                     $details = SRMScenarioDetails::getScenarioDetailsById([
                         'scenarioId' => $scenarioId,
@@ -632,7 +624,7 @@ class TenderItemWiseAwardingService
             'attachments' => $attachments,
             'tender_uuid' => $tenderUuid,
             'supplier_uuid' => $supplierUuid,
-            'loa_loa_email_sent' => $loaLoaEmailSent,
+            'loi_loa_email_sent' => $loiLoaEmailSent,
         ];
     }
 
@@ -668,7 +660,7 @@ class TenderItemWiseAwardingService
         $attachmentId = null
     ): void {
         $data = $this->getLoiLoaEmailData($tenderId, $supplierId, $companyId);
-        if (!empty($data['loa_loa_email_sent'])) {
+        if (!empty($data['loi_loa_email_sent'])) {
             throw new \RuntimeException(trans('srm_tender_rfx.loa_loa_already_sent'));
         }
         $resolvedBody = $emailBody;
@@ -728,7 +720,7 @@ class TenderItemWiseAwardingService
         );
 
         $isNegotiation = self::resolveIsNegotiation($tender);
-        // For LOA/LOI, track email sent separately using loa_loa_email_sent
+        // For LOA/LOI, track email sent separately using loi_loa_email_sent
         SrmItemWiseTenderAwarding::markLoiLoaEmailSentForSupplier($tenderId, $isNegotiation, $supplierId);
     }
 
