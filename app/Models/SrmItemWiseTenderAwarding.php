@@ -68,6 +68,17 @@ class SrmItemWiseTenderAwarding extends Model
         return $this->belongsTo(SupplierRegistrationLink::class, 'supplier_id', 'id');
     }
 
+
+    public function boqItem()
+    {
+        return $this->belongsTo(TenderBoqItems::class, 'boq_item_id', 'id');
+    }
+
+    public function pricingScheduleDetail()
+    {
+        return $this->belongsTo(PricingScheduleDetail::class, 'bid_format_detail_id', 'id');
+    }
+
     public function scopeForTenderNegotiation($query, $tenderId, $isNegotiation)
     {
         return $query->where('tender_id', $tenderId)->where('is_negotiation', (int) $isNegotiation);
