@@ -219,19 +219,21 @@
                 <td>{{$item->bidSubmissionCode}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
                 <td>{{\Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y')}}</td>
-                <td style="text-align: center;">
-                    @php
-                        $status = $bidStatus[$item->id] ?? '-';
-                    @endphp
+                @foreach ($bidData[0]['DocumentAttachments'] as $doc)
+                    <td style="text-align: center;">
+                        @php
+                            $status = $bidStatus[$item->id] ?? '-';
+                        @endphp
 
-                    @if($status == 3)
-                        No
-                    @elseif($status === 'Yes')
-                        Yes
-                    @else
-                        -
-                    @endif
-                </td>
+                        @if($status == 3)
+                            No
+                        @elseif($status === 'Yes')
+                            Yes
+                        @else
+                            -
+                        @endif
+                    </td>
+                @endforeach
 
 
                         @if (($documentType != 0 && $count != 0) || $documentType == 0)
