@@ -2,6 +2,7 @@
 
 namespace App\helper\Workflow;
 
+use App\helper\SourcingDocsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\DocumentApproved;
@@ -1691,6 +1692,13 @@ class DocumentApprove
                                     $consoleJVData['type'] = "INTER_ASSET_DISPOSAL";
 
                                     CreateConsoleJV::dispatch($consoleJVData);
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 3){
+                                $grvMaster  = GRVMaster::find($input["documentSystemCode"]);
+                                if(!empty($grvMaster['deliveryAppoinmentID'])){
+                                  $deliveryAppointment = SourcingDocsService::sendDeliveryAppointmentConfirmationMail($grvMaster);
                                 }
                             }
 
