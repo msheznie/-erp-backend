@@ -299,7 +299,6 @@ class B2BResourceAPIController extends AppBaseController
     {
         $txtData = [];
 
-
 //        array_push($txtData, implode($reportData['header']['title'], ','));
         array_push($txtData, implode(',',Arr::flatten($reportData['header']['data'])));
 //        array_push($txtData, implode($reportData['detail']['title'], ','));
@@ -316,7 +315,9 @@ class B2BResourceAPIController extends AppBaseController
         }
         unset($dt);
 //        array_push($txtData, implode($reportData['footer']['title'], ','));
-        array_push($txtData, implode(',',Arr::flatten($reportData['footer']['data'])));
+        foreach ($reportData['footer']['data'] as $footerRow) {
+            array_push($txtData, implode(',', array_values($footerRow)));
+        }
         $txtData = implode("\n", $txtData);
 
         return $txtData;

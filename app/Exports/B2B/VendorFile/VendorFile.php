@@ -151,7 +151,6 @@ class VendorFile
 
         $bankTransfer = PaymentBankTransfer::find($bankTransferID);
         $bankTransferDetails = $bankTransfer ? $this->getPaymentsByBankTransfer((int) $bankTransferID) : [];
-        
         $sectionIndex = 0;
         foreach ($bankTransferDetails as $bankTransferDetail) {
             if (($bankTransferDetail['documentSystemID'] ?? null) != 4) {
@@ -163,8 +162,8 @@ class VendorFile
             }
             $paymentVoucher = PaySupplierInvoiceMaster::with([
                 'supplierdetail' => function ($q) {
-                    $q->whereHas('supplier_invoice', function ($q2) {
-                        $q2->where('documentType', 1);
+                    $q->where('addedDocumentSystemID',11)->whereHas('supplier_invoice', function ($q2) {
+                        $q2->where('documentType', 1)->where('approved', -1);
                     });
                 },
                 'supplierdetail.supplier_invoice',
