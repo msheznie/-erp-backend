@@ -114,4 +114,8 @@ class SRMScenarioMaster extends Model
     {
         return $this->hasOne(SRMScenarioDetails::class,'scenario_master_id', 'id');
     }
+
+    public function getSrmScenarioMaster($scenarioId){
+        return SRMScenarioMaster::where('id', $scenarioId)->where('is_active', 1)->first();
+    }
 }
