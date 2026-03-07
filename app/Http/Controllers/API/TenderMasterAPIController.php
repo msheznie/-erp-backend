@@ -12,6 +12,10 @@ use App\Http\Requests\API\ViewContractAPIRequest;
 use App\Http\Requests\CloneTenderAPIRequest;
 use App\Http\Requests\DeleteAttachmentAPIRequest;
 use App\Http\Requests\SRM\UpdateTenderCalendarDaysRequest;
+use App\Http\Requests\GetItemWiseLoiLoaRequest;
+use App\Http\Requests\GetLoiLoaEmailDataRequest;
+use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
+use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
@@ -4692,6 +4696,121 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $data = $this->itemWiseAwardingService->getAwardedSuppliersList($tenderId);
             return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get item-wise LOA/LOI list (items and awarded suppliers with LOA/LOI email status).
+     */
+    public function getItemWiseLoiLoaList(GetItemWiseLoiLoaRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_tender_not_item_wise_evaluation'));
+        }
+
+        try {
+            $data = $this->itemWiseAwardingService->getItemWiseLoiLoaRows($tenderId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get LOA/LOI email data for item-wise (tender + supplier): context, scenario template or fallback, saved draft.
+     */
+    public function getLoiLoaEmailData(GetLoiLoaEmailDataRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        try {
+            $data = $this->itemWiseAwardingService->getLoiLoaEmailData($tenderId, $supplierId, $companyId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Save LOA/LOI draft (no send) for item-wise tender + supplier.
+     */
+    public function saveItemWiseLoiLoaEmail(SaveItemWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        $emailSubject = $request->input('email_subject', '');
+        $emailBody = $request->input('email_body', '');
+
+        $ccEmails = $request->input('cc_emails', []);
+        if (is_string($ccEmails)) {
+            $ccEmails = json_decode($ccEmails, true) ?: [];
+        }
+
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $this->itemWiseAwardingService->saveLoiLoaDraft(
+                $tenderId,
+                $supplierId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            return $this->sendResponse(['success' => true], trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Send LOA/LOI email for item-wise: resolve placeholders, send, save, mark award_email_sent.
+     */
+    public function sendItemWiseLoiLoaEmail(SendItemWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        $emailSubject = $request->input('email_subject');
+        $emailBody = $request->input('email_body');
+        $ccEmails = $request->input('cc_emails', []);
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $this->itemWiseAwardingService->sendLoiLoaEmailToSupplier(
+                $tenderId,
+                $supplierId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            return $this->sendResponse(
+                ['success' => true],
+                trans('srm_tender_rfx.item_wise_award_email_sent_successfully')
+            );
         } catch (\Exception $e) {
             Log::error($this->failed($e));
             return $this->sendError($e->getMessage());
