@@ -8,7 +8,8 @@ use App\Models\PaymentBankTransfer;
 use App\Models\PaySupplierInvoiceMaster;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-
+use App\helper\Helper;
+use App\Models\CurrencyMaster;
 class VendorFile
 {
 
@@ -146,12 +147,12 @@ class VendorFile
 
     private function processFooterData($bankTransferID)
     {
-        // Process footerData to remove special characters from strings
+        // Process footerData to remove special characters from strings; group by supplier invoice to avoid duplicates
         $processedFooterData = [];
+        $seenInvoiceIds = [];
 
         $bankTransfer = PaymentBankTransfer::find($bankTransferID);
         $bankTransferDetails = $bankTransfer ? $this->getPaymentsByBankTransfer((int) $bankTransferID) : [];
-        
         $sectionIndex = 0;
         foreach ($bankTransferDetails as $bankTransferDetail) {
             if (($bankTransferDetail['documentSystemID'] ?? null) != 4) {
@@ -163,8 +164,8 @@ class VendorFile
             }
             $paymentVoucher = PaySupplierInvoiceMaster::with([
                 'supplierdetail' => function ($q) {
-                    $q->whereHas('supplier_invoice', function ($q2) {
-                        $q2->where('documentType', 1);
+                    $q->where('addedDocumentSystemID',11)->whereHas('supplier_invoice', function ($q2) {
+                        $q2->where('approved', -1);
                     });
                 },
                 'supplierdetail.supplier_invoice',
@@ -179,6 +180,14 @@ class VendorFile
                 if (!$invoice) {
                     continue;
                 }
+                $invoiceId = $invoice->bookingSuppMasInvAutoID ?? $invoice->id ?? null;
+                if ($invoiceId === null) {
+                    $invoiceId = ($invoice->bookingInvCode ?? '') . '-' . ($invoice->bookingDate ?? '');
+                }
+                if (isset($seenInvoiceIds[$invoiceId])) {
+                    continue;
+                }
+                $seenInvoiceIds[$invoiceId] = true;
                 $sectionIndex++;
                 $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
                 try {
@@ -189,13 +198,14 @@ class VendorFile
                     $bookingDateFormatted = '';
                 }
                 $invoiceDetails = (string) ($invoice->comments ?? $invoice->supplierInvoiceNo ?? '');
+                $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
                 $processedFooterData[] = [
                     'S3',
                     preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode),
                     $bookingDateFormatted,
                     preg_replace('/[^a-zA-Z0-9]/', '', $invoiceDetails),
                     // $invoice->netAmount+$invoice->invoiceAmount ?? 0,
-                    $paymentVoucher->payAmountSuppTrans ?? 0,
+                    round($paymentVoucher->payAmountSuppTrans,$currency->DecimalPlaces ?? 2) ?? 0,
                 ];
             }
         }
