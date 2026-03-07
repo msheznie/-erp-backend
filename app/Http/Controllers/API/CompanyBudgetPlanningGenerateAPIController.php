@@ -69,6 +69,12 @@ class CompanyBudgetPlanningGenerateAPIController extends AppBaseController
                 return $this->sendAPIError('Validation failed', 422, $validationErrors);
             }
 
+            $items = CompanyBudgetPlanningGenerate::where('is_generated', false)->where('company_budget_planning_id', $budgetPlanningId)->exists();
+
+           if(!$items) {
+            return $this->sendAPIError('No items to generate for this budget planning.', 404);
+           }
+
             GenerateBudget::dispatch($budgetPlanningId);
             return $this->sendResponse([], 'Budget generation job dispatched successfully.');
         }
