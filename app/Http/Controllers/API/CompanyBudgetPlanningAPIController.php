@@ -1624,20 +1624,29 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         ->distinct()
         ->get()->pluck('typeID')->toArray();
 
-        if (in_array(3, $budgetMasterReportID)) {
-            $reportType = 'COMMON';
-        } elseif (in_array(2, $budgetMasterReportID)) {
-            $reportType = 'CAPEX';
-        } elseif (in_array(1, $budgetMasterReportID)) {
-            $reportType = 'OPEX';
-        } else {
-            $reportType = 'COMMON';
-        }
+        $requestedTypeID = (int) ($data['budgetType'] ?? 0);
+        // typeID: 1=OPEX, 2=CAPEX, 3=COMMON
 
-        if(!empty($budgetMasterReportID)) {  
+        if (!empty($budgetMasterReportID)) {
             $budgetYear = CompanyFinanceYear::select(DB::raw("CONCAT(DATE_FORMAT(bigginingDate, '%d/%m/%Y'), ' | ' ,DATE_FORMAT(endingDate, '%d/%m/%Y')) as financeYear"))->find($data['budgetYear']);
-            $errorMessage = 'A budget for '.$reportType.' already exists for the financial year '.$budgetYear->financeYear.'. Common budget type cannot be initiated for the same period.';
-            return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
+            $financeYearLabel = $budgetYear->financeYear ?? '';
+
+            // COMMON already exists → cannot generate OPEX, CAPEX, or another COMMON
+            if (in_array(3, $budgetMasterReportID)) {
+                $errorMessage = 'A COMMON budget already exists for the financial year '.$financeYearLabel.'. You cannot generate OPEX, CAPEX, or another COMMON for the same period.';
+                return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
+            }
+
+            // User wants COMMON but OPEX or CAPEX already exists → cannot generate COMMON
+            if ($requestedTypeID === 3) {
+                $existingNames = array_map(function ($id) {
+                    return $id == 1 ? 'OPEX' : ($id == 2 ? 'CAPEX' : 'COMMON');
+                }, $budgetMasterReportID);
+                $errorMessage = 'A budget ('.implode(', ', $existingNames).') already exists for the financial year '.$financeYearLabel.'. COMMON budget cannot be initiated when OPEX or CAPEX already exists for the same period.';
+                return $this->sendError($errorMessage, 404, ['duplicate_budget_planning']);
+            }
+
+            // OPEX and CAPEX can coexist: if only the other type exists, allow (same-type duplicate is handled below)
         }
         $duplicateBudgetPlanning = CompanyBudgetPlanning::where('companySystemID', $companyID)
             ->where('status', 1)
