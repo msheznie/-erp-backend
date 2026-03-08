@@ -423,6 +423,8 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
             $sort = 'desc';
         }
 
+        $search = $request->input('search.value');
+
         $selectedCompanyId = $request['companySystemID'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -441,6 +443,19 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
                     $q->select('currencyID', 'DecimalPlaces');
                 }
             ]);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $budgetTransfer = $budgetTransfer->where(function ($query) use ($search) {
+                $query->where('contingencyBudgetNo', 'like', "%{$search}%")
+                    ->orWhereHas('template_master', function ($q) use ($search) {
+                        $q->where('reportName', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('segment_by', function ($q) use ($search) {
+                        $q->where('ServiceLineDes', 'like', "%{$search}%");
+                    });
+            });
+        }
 
         return \DataTables::of($budgetTransfer)
             ->order(function ($query) use ($input) {
@@ -682,8 +697,9 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $contingency = $contingency->where(function ($query) use ($search) {
-                $query->where('ServiceLineDes', 'like', "%{$search}%")
-                    ->orWhere('templateDescription', 'like', "%{$search}%");
+                $query->where('erp_budget_contingency.contingencyBudgetNo', 'like', "%{$search}%")
+                    ->orWhere('erp_companyreporttemplate.reportName', 'like', "%{$search}%")
+                    ->orWhere('serviceline.ServiceLineDes', 'like', "%{$search}%");
             });
         }
 
