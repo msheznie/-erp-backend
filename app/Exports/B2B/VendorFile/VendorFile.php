@@ -203,9 +203,9 @@ class VendorFile
                     'S3',
                     preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode),
                     $bookingDateFormatted,
-                    preg_replace('/[^a-zA-Z0-9]/', '', $invoiceDetails),
+                    '',
                     // $invoice->netAmount+$invoice->invoiceAmount ?? 0,
-                    round($paymentVoucher->payAmountSuppTrans,$currency->DecimalPlaces ?? 2) ?? 0,
+                    round($paymentVoucher->payAmountSuppTrans + $paymentVoucher->retentionVatAmount + $paymentVoucher->VATAmount,$currency->DecimalPlaces ?? 2) ?? 0,
                 ];
             }
         }
