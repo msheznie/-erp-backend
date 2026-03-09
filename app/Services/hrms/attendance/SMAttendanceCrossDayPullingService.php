@@ -75,6 +75,7 @@ class SMAttendanceCrossDayPullingService{
             $clockOutData = $this->getEachEmpClockOutData($curEmpId);
             $leaveData = $this->getLeaveData($curEmpId);
             $shiftData = $this->getShiftData($shiftId);
+            $externalMovementIds = $this->getExternalMovementIds($curEmpId, $this->prvDate);
 
             $this->reviewAttData[$key]->clockOutDate =
                 isset($clockOutData->clockOutDate) ? $clockOutData->clockOutDate : $this->prvDate;
@@ -131,6 +132,34 @@ class SMAttendanceCrossDayPullingService{
             ->whereDate('endDate', '>=',  "'$this->pullingDate'")
             ->get()
             ->last();
+    }
+
+    function getExternalMovementIds(int $empId, string $attDate): object
+    {
+        $secondment = DB::table('hr_employee_movement_master')
+            ->where('company_id', $this->companyId)
+            ->where('emp_id', $empId)
+            ->where('approved_yn', 1)
+            ->where('type', 2)
+            ->where('movement_type', 2)
+            ->whereDate('from_date', '<=', $attDate)
+            ->whereDate('to_date', '>=', $attDate)
+            ->value('id');
+
+        $assignment = DB::table('hr_employee_movement_master')
+            ->where('company_id', $this->companyId)
+            ->where('emp_id', $empId)
+            ->where('approved_yn', 1)
+            ->where('type', 2)
+            ->where('movement_type', 3)
+            ->whereDate('from_date', '<=', $attDate)
+            ->whereDate('to_date', '>=', $attDate)
+            ->value('id');
+
+        return (object) [
+            'external_secondment_movement_id' => $secondment,
+            'external_assignment_movement_id' => $assignment,
+        ];
     }
 
     function getShiftData($shiftId){
