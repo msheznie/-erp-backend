@@ -174,49 +174,67 @@ class VendorFile
             ])->find($documentSystemCode);
 
             $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
-            if (empty($supplierDetails)) {
-                continue;
-            }
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
                 ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0),
                 $decimalPlaces
             );
-            foreach ($supplierDetails as $detail) {
-                $invoice = $detail->supplier_invoice ?? null;
-                if (!$invoice) {
-                    continue;
-                }
-                $invoiceId = $invoice->bookingSuppMasInvAutoID ?? $invoice->id ?? null;
-                if ($invoiceId === null) {
-                    $invoiceId = ($invoice->bookingInvCode ?? '') . '-' . ($invoice->bookingDate ?? '');
-                }
-                if (isset($seenInvoiceIds[$invoiceId])) {
-                    continue;
-                }
-                $seenInvoiceIds[$invoiceId] = true;
 
-                $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
-                $invoiceCodes[] = preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode);
 
-                try {
-                    $invoiceDates[] = $invoice->supplierInvoiceDate
-                        ? Carbon::parse($invoice->supplierInvoiceDate)->format('d/m/Y')
-                        : '';
-                } catch (\Throwable $e) {
-                    $invoiceDates[] = '';
-                }
+            if ($supplierDetails->isEmpty()) {
+                $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID ?? null);
 
+                $invoiceCodes = [];
+                $invoiceDates = [];
                 $invoiceAmounts[] = $pvAmount;
+                continue;
+            }else {
+                foreach ($supplierDetails as $detail) {
+                    $invoice = $detail->supplier_invoice ?? null;
+                    if (!$invoice) {
+                        continue;
+                    }
+                    $invoiceId = $invoice->bookingSuppMasInvAutoID ?? $invoice->id ?? null;
+                    if ($invoiceId === null) {
+                        $invoiceId = ($invoice->bookingInvCode ?? '') . '-' . ($invoice->bookingDate ?? '');
+                    }
+                    if (isset($seenInvoiceIds[$invoiceId])) {
+                        continue;
+                    }
+                    $seenInvoiceIds[$invoiceId] = true;
+    
+                    $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
+                    $invoiceCodes[] = preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode);
+    
+                    try {
+                        $invoiceDates[] = $invoice->supplierInvoiceDate
+                            ? Carbon::parse($invoice->supplierInvoiceDate)->format('d/m/Y')
+                            : '';
+                    } catch (\Throwable $e) {
+                        $invoiceDates[] = '';
+                    }
+    
+                    $invoiceAmounts[] = $pvAmount;
+                }
             }
+
         }
+
 
         if (!empty($invoiceCodes)) {
             $processedFooterData[] = [
                 'S3',
                 implode(',', $invoiceCodes),
                 implode(',', $invoiceDates),
+                '',
+                implode(',', $invoiceAmounts),
+            ];
+        } else {
+            $processedFooterData[] = [
+                'S3',
+                '',
+                '',
                 '',
                 implode(',', $invoiceAmounts),
             ];
