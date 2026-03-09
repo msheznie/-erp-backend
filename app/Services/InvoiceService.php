@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Models\BookInvSuppMaster;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -227,7 +228,8 @@ class InvoiceService
             'confirmedYN',
             'documentType',
             'approved',
-            'deliveryAppoinmentID'
+            'deliveryAppoinmentID',
+            DB::raw("COALESCE(cancelComment, '-') as commentStatus")
         ])
             ->with([
                 'created_by:employeeSystemID,empID,empName,empFullName',
