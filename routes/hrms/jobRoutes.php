@@ -17,3 +17,4 @@ Route::get('empDesignationUpdateNotification', 'HRJobInvokeAPIController@sendEmp
 Route::post('unconfirmed-attendance-pull', 'HRJobInvokeAPIController@unConfirmedAttendancePull')->name('Unconfirmed attendance pull');
 Route::get('designation-create-update-notification', 'HRJobInvokeAPIController@designationCreateUpdateNotification')->name('Designation create update notification');
 Route::get('employee-tasking-notification', 'HRJobInvokeAPIController@sendEmployeeTaskingNotifications')->name('Employee tasking notification');
+Route::get('employee-movement-notification', 'HRJobInvokeAPIController@sendEmployeeMovementNotifications')->name('Employee movement notification');
