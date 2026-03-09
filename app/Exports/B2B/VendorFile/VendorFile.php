@@ -166,14 +166,24 @@ class VendorFile
             }
             $paymentVoucher = PaySupplierInvoiceMaster::with([
                 'supplierdetail' => function ($q) {
-                    $q->where('addedDocumentSystemID',11)->whereHas('supplier_invoice', function ($q2) {
+                    $q->where('addedDocumentSystemID', 11)->whereHas('supplier_invoice', function ($q2) {
                         $q2->where('approved', -1);
                     });
                 },
                 'supplierdetail.supplier_invoice',
-            ])->where('advancePaymentTypeID', 0)->find($documentSystemCode);
+            ])->whereIn('invoiceType', [2, 6])->find($documentSystemCode);
 
-            $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
+            if (!$paymentVoucher) {
+                continue;
+            }
+            if (!isset($paymentVoucher->supplierTransCurrencyID)) {
+                continue;
+            }
+
+            $supplierDetails = $paymentVoucher->supplierdetail ?? collect();
+            if (is_array($supplierDetails)) {
+                $supplierDetails = collect($supplierDetails);
+            }
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
