@@ -174,9 +174,6 @@ class VendorFile
             ])->where('advancePaymentTypeID', 0)->find($documentSystemCode);
 
             $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
-            if (empty($supplierDetails)) {
-                continue;
-            }
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
