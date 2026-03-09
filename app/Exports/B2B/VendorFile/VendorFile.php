@@ -171,7 +171,7 @@ class VendorFile
                     });
                 },
                 'supplierdetail.supplier_invoice',
-            ])->find($documentSystemCode);
+            ])->where('advancePaymentTypeID', 0)->find($documentSystemCode);
 
             $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
             if (empty($supplierDetails)) {
@@ -180,47 +180,53 @@ class VendorFile
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
-                ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0),
+                ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0) + ($paymentVoucher->VATAmountBank ?? 0),
                 $decimalPlaces
             );
-            foreach ($supplierDetails as $detail) {
-                $invoice = $detail->supplier_invoice ?? null;
-                if (!$invoice) {
-                    continue;
-                }
-                $invoiceId = $invoice->bookingSuppMasInvAutoID ?? $invoice->id ?? null;
-                if ($invoiceId === null) {
-                    $invoiceId = ($invoice->bookingInvCode ?? '') . '-' . ($invoice->bookingDate ?? '');
-                }
-                if (isset($seenInvoiceIds[$invoiceId])) {
-                    continue;
-                }
-                $seenInvoiceIds[$invoiceId] = true;
 
-                $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
-                $invoiceCodes[] = preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode);
-
-                try {
-                    $invoiceDates[] = $invoice->supplierInvoiceDate
-                        ? Carbon::parse($invoice->supplierInvoiceDate)->format('d/m/Y')
-                        : '';
-                } catch (\Throwable $e) {
-                    $invoiceDates[] = '';
-                }
-
+            if($supplierDetails->isEmpty()){
                 $invoiceAmounts[] = $pvAmount;
+            }else {
+                foreach ($supplierDetails as $detail) {
+                    $invoice = $detail->supplier_invoice ?? null;
+                    if (!$invoice) {
+                        continue;
+                    }
+                    $invoiceId = $invoice->bookingSuppMasInvAutoID ?? $invoice->id ?? null;
+                    if ($invoiceId === null) {
+                        $invoiceId = ($invoice->bookingInvCode ?? '') . '-' . ($invoice->bookingDate ?? '');
+                    }
+                    if (isset($seenInvoiceIds[$invoiceId])) {
+                        continue;
+                    }
+                    $seenInvoiceIds[$invoiceId] = true;
+    
+                    $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
+                    $invoiceCodes[] = preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode);
+    
+                    try {
+                        $invoiceDates[] = $invoice->supplierInvoiceDate
+                            ? Carbon::parse($invoice->supplierInvoiceDate)->format('d/m/Y')
+                            : '';
+                    } catch (\Throwable $e) {
+                        $invoiceDates[] = '';
+                    }
+    
+                    $invoiceAmounts[] = $pvAmount;
+                }
             }
+
         }
 
-        if (!empty($invoiceCodes)) {
+        // if (!empty($invoiceCodes)) {
             $processedFooterData[] = [
                 'S3',
-                implode(',', $invoiceCodes),
-                implode(',', $invoiceDates),
+                (count($invoiceCodes) > 0) ? implode(',', $invoiceCodes) : '',
+                (count($invoiceDates) > 0) ? implode(',', $invoiceDates) : '',
                 '',
-                implode(',', $invoiceAmounts),
+               (count($invoiceAmounts) > 0) ? implode(',', $invoiceAmounts) : '',
             ];
-        }
+        // }
 
         $this->footerData = $processedFooterData;
     }
