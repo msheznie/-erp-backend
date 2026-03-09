@@ -45,6 +45,8 @@ use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderCustomEmail;
+use App\Http\Requests\GetTenderRfxAwardEmailDataRequest;
+use App\Http\Requests\SaveTenderRfxAwardEmailDraftRequest;
 use App\Models\TenderDepartmentEditLog;
 use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
@@ -4739,6 +4741,62 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $data = $this->itemWiseAwardingService->getLoiLoaEmailData($tenderId, $supplierId, $companyId);
             return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get Tender/RFX Award or Regret email data for popup (subject, body, cc, attachments, recipient).
+     */
+    public function getTenderRfxAwardEmailData(GetTenderRfxAwardEmailDataRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailType = $request->input('email_type');
+        $supplierId = $request->has('supplier_id') && $request->input('supplier_id') !== null
+            ? (int) $request->input('supplier_id') : null;
+
+        try {
+            $data = $this->itemWiseAwardingService->getTenderRfxEmailData($tenderId, $companyId, $emailType, $supplierId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Save Tender/RFX Award or Regret email draft (no send).
+     */
+    public function saveTenderRfxAwardEmailDraft(SaveTenderRfxAwardEmailDraftRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailType = $request->input('email_type');
+        $supplierId = $request->has('supplier_id') && $request->input('supplier_id') !== null && $request->input('supplier_id') !== ''
+            ? (int) $request->input('supplier_id') : null;
+        $emailSubject = $request->input('email_subject', '');
+        $emailBody = $request->input('email_body', '');
+        $ccEmails = $request->input('cc_emails', []);
+        if (is_string($ccEmails)) {
+            $ccEmails = json_decode($ccEmails, true) ?: [];
+        }
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $this->itemWiseAwardingService->saveTenderRfxEmailDraft(
+                $tenderId,
+                $companyId,
+                $emailType,
+                $supplierId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+            return $this->sendResponse(['success' => true], trans('srm_tender_rfx.draft_saved_successfully'));
         } catch (\Exception $e) {
             Log::error($this->failed($e));
             return $this->sendError($e->getMessage());

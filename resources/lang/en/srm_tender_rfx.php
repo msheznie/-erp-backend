@@ -359,5 +359,12 @@ return [
     'item_wise_supplier_not_found' => 'Supplier not found.',
     'item_wise_supplier_has_no_email' => 'Supplier has no email address.',
     'loa_loa_already_sent' => 'LOA/LOI has already been sent to this supplier.',
-    'company_is_required'=> 'Company is required'
+    'company_is_required'=> 'Company is required',
+    // Award / Regret email popup
+    'awarding_email' => 'Awarding Email',
+    'regret_email' => 'Regret Email',
+    'draft_save_not_available' => 'Draft save is not available for this email type.',
+    'draft_saved_successfully' => 'Draft saved successfully.',
+    'invalid_cc_emails' => 'Invalid CC emails',
+    'supplier_required' => 'Supplier is required.',
 ];

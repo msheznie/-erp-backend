@@ -115,7 +115,20 @@ class SRMScenarioMaster extends Model
         return $this->hasOne(SRMScenarioDetails::class,'scenario_master_id', 'id');
     }
 
-    public function getSrmScenarioMaster($scenarioId){
-        return SRMScenarioMaster::where('id', $scenarioId)->where('is_active', 1)->first();
+    public static function getSrmScenarioMaster($scenarioId)
+    {
+        return self::where('id', $scenarioId)->where('is_active', 1)->first();
+    }
+
+    public static function getScenarioMasterIdByDocumentAndCode(int $documentId, string $emailScenarioCode, ?int $companyId = null): ?int
+    {
+        $query = self::where('document_id', $documentId)
+            ->where('email_scenario_code', $emailScenarioCode)
+            ->where('is_active', 1);
+        if ($companyId !== null) {
+            $query->where('company_id', $companyId);
+        }
+        $master = $query->first();
+        return $master ? (int) $master->id : null;
     }
 }

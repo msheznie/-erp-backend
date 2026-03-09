@@ -430,6 +430,7 @@ class TenderItemWiseAwardingService
 
     /**
      * Build email body data and send item-wise award email to one supplier. Marks award_email_sent = 1.
+     * Uses TENDER_AWARD / RFX_AWARD config when available.
      */
     public function sendAwardEmailToSupplier(int $tenderId, int $supplierId): void
     {
@@ -455,26 +456,52 @@ class TenderItemWiseAwardingService
             throw new \RuntimeException(trans('srm_tender_rfx.item_wise_supplier_has_no_email'));
         }
 
-        $currency = $tender->currency ? $tender->currency->CurrencyName : '';
-        $companyName = $tender->company ? $tender->company->CompanyName : '';
-        $items = $this->buildAwardEmailItems($rows);
+        $companyId = (int) $tender->company_id;
+        $body = null;
+        $subject = 'Letter of Awarding | ' . $tender->tender_code . ' | ' . $tender->title;
+        $ccEmail = [];
+        $attachmentList = [];
 
-        $body = view('email.item_wise_tender_award', [
-            'supplierName' => $supplier->name,
-            'tenderCode' => $tender->tender_code,
-            'tenderTitle' => $tender->title,
-            'items' => $items,
-            'currency' => $currency,
-            'companyName' => $companyName,
-        ])->render();
+        try {
+            $configData = $this->getTenderRfxEmailData($tenderId, $companyId, 'award', $supplierId);
+            if (!empty($configData['email_body'])) {
+                $body = $configData['email_body'];
+                $subject = $configData['email_subject'] ?? $subject;
+                $ccEmail = $configData['cc_emails'] ?? [];
+                foreach ($configData['attachments'] ?? [] as $att) {
+                    if (!empty($att['path'])) {
+                        $url = Helper::getFileUrlFromS3($att['path']);
+                        if ($url) {
+                            $attachmentList[] = $url;
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // fall back to default
+        }
+
+        if ($body === null || $body === '') {
+            $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+            $companyName = $tender->company ? $tender->company->CompanyName : '';
+            $items = $this->buildAwardEmailItems($rows);
+            $body = view('email.item_wise_tender_award', [
+                'supplierName' => $supplier->name,
+                'tenderCode' => $tender->tender_code,
+                'tenderTitle' => $tender->title,
+                'items' => $items,
+                'currency' => $currency,
+                'companyName' => $companyName,
+            ])->render();
+        }
 
         $dataEmail = [
             'empEmail' => $email,
             'companySystemID' => $tender->company_id,
-            'alertMessage' => 'Letter of Awarding | ' . $tender->tender_code . ' | ' . $tender->title,
+            'alertMessage' => $subject,
             'emailAlertMessage' => $body,
-            'ccEmail' => [],
-            'attachmentList' => [],
+            'ccEmail' => $ccEmail,
+            'attachmentList' => $attachmentList,
         ];
         Email::sendEmailSRM($dataEmail);
 
@@ -485,6 +512,15 @@ class TenderItemWiseAwardingService
      * LOA/LOI document_code for item-wise Tender/RFX.
      */
     const DOCUMENT_CODE_LOI_LOA = 'TLL';
+
+    /** Document code for item-wise award email draft. */
+    const DOCUMENT_CODE_ITEM_AWARD = 'TAI';
+
+    /** Document code for Tender regret email draft (supplier_id = 0). */
+    const DOCUMENT_CODE_REGRET_TENDER = 'TRD';
+
+    /** Document code for RFX regret email draft (supplier_id = 0). */
+    const DOCUMENT_CODE_REGRET_RFX = 'RRD';
 
     /**
      * Map tender.document_system_id to LOA/LOI scenario_master id.
@@ -649,6 +685,222 @@ class TenderItemWiseAwardingService
     }
 
     /**
+     * Get Tender/RFX Award or Regret email data for popup (from scenario config).
+     * email_type: 'award' | 'regret'
+     * supplier_id: optional; for item-wise award pass the awarded supplier id.
+     *
+     * @return array{email_subject: string, email_body: string, cc_emails: array, attachments: array, recipient_display: string, supplier_email: string|null, document_type_label: string}
+     */
+    public function getTenderRfxEmailData(int $tenderId, int $companyId, string $emailType, ?int $supplierId = null): array
+    {
+        $tender = TenderMaster::where('id', $tenderId)->with(['currency', 'company'])->first();
+        if (!$tender) {
+            throw new \RuntimeException(trans('srm_tender_rfx.tender_not_found'));
+        }
+        $documentId = (int) $tender->document_system_id;
+        $documentTypeLabel = $documentId === 108 ? 'Tender' : 'RFX';
+        $scenarioCode = $emailType === 'regret'
+            ? ($documentId === 108 ? 'TENDER_REGRET' : 'RFX_REGRET')
+            : ($documentId === 108 ? 'TENDER_AWARD' : 'RFX_AWARD');
+
+        $emailSubject = $documentTypeLabel . ($emailType === 'regret' ? ' Regret Email' : ' Awarding Email');
+        $emailBody = '';
+        $ccEmails = [];
+        $attachments = [];
+        $recipientDisplay = '';
+        $supplierEmail = null;
+
+        $scenarioMasterId = SRMScenarioMaster::getScenarioMasterIdByDocumentAndCode($documentId, $scenarioCode, null);
+        if ($scenarioMasterId) {
+            $details = SRMScenarioDetails::getScenarioDetailsById([
+                'scenarioId' => $scenarioMasterId,
+                'companyId' => $companyId,
+            ]);
+            if ($details) {
+                $emailBody = $details->email_body ?? '';
+                if (!empty($details->email_subject)) {
+                    $emailSubject = $details->email_subject;
+                }
+                if (!empty($details->cc_emails) && is_array($details->cc_emails)) {
+                    $ccEmails = $details->cc_emails;
+                }
+                if ($details->relationLoaded('attachments') && $details->attachments) {
+                    foreach ($details->attachments as $att) {
+                        $attachments[] = [
+                            'attachmentID' => $att->id,
+                            'originalFileName' => $att->original_file_name ?? $att->my_file_name ?? '',
+                            'path' => $att->path ?? '',
+                        ];
+                    }
+                }
+            }
+        }
+
+        if ($emailType === 'award') {
+            if ($supplierId) {
+                $rows = SrmItemWiseTenderAwarding::getAwardRowsWithRelations($tenderId, self::resolveIsNegotiation($tender), $supplierId);
+                if ($rows->isEmpty()) {
+                    throw new \RuntimeException(trans('srm_tender_rfx.item_wise_no_awarded_items_for_supplier'));
+                }
+                $supplier = $rows->first()->supplier;
+                if (!$supplier) {
+                    throw new \RuntimeException(trans('srm_tender_rfx.item_wise_supplier_not_found'));
+                }
+                $bidMaster = $rows->first()->bid_submission_master;
+                $bidSubmittedRaw = $bidMaster && isset($bidMaster->bidSubmittedDatetime)
+                    ? $bidMaster->bidSubmittedDatetime
+                    : ($bidMaster && $bidMaster->created_at ? $bidMaster->created_at->format('Y-m-d H:i:s') : '');
+                $bidSubmisionDate = $bidSubmittedRaw ? (function () use ($bidSubmittedRaw) {
+                    $parts = explode(' ', $bidSubmittedRaw)[0] ?? '';
+                    $p = explode('-', $parts);
+                    return count($p) === 3 ? $p[2] . '/' . $p[1] . '/' . $p[0] : $bidSubmittedRaw;
+                })() : '';
+                $finalCommercialPriceRaw = $rows->sum(fn ($r) => $r->bid_amount !== null ? (float) $r->bid_amount : 0);
+                $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+                $decimalPlaces = CurrencyMaster::getDecimalPlaces($tender->currency_id ?? 0);
+                $finalCommercialPrice = number_format($finalCommercialPriceRaw, $decimalPlaces);
+                $context = [
+                    'supplierName' => $supplier->name ?? '',
+                    'tenderCode' => $tender->tender_code ?? '',
+                    'tenderTitle' => $tender->title ?? '',
+                    'bidSubmisionDate' => $bidSubmisionDate,
+                    'documentType' => $documentTypeLabel,
+                    'finalCommercialPrice' => $finalCommercialPrice,
+                    'currency' => $currency,
+                ];
+                $recipientDisplay = ($supplier->name ?? '') . ($supplier->email ? ' <' . $supplier->email . '>' : '');
+                $supplierEmail = $supplier->email ?? null;
+                if ($emailBody !== '') {
+                    $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+                } else {
+                    $emailBody = '<br>Based on your final revised proposal submitted on ' . $bidSubmisionDate . ' we would like to inform you that we intend to award your company the ' . $tender->tender_code . ' | ' . $tender->title . ' ' . $documentTypeLabel . ' for <b>' . $finalCommercialPrice . '</b> ' . $currency . ' with all agreed conditions.</p><br/>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal.<br/><br/><p>Regards,</p><p></p>';
+                }
+                // Override with saved item-wise award draft if any
+                $itemAwardDraft = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_ITEM_AWARD);
+                if ($itemAwardDraft && $itemAwardDraft->email_body !== null && $itemAwardDraft->email_body !== '') {
+                    $emailBody = self::replaceLoiLoaPlaceholders($itemAwardDraft->email_body, $context);
+                    if (!empty($itemAwardDraft->email_subject)) {
+                        $emailSubject = $itemAwardDraft->email_subject;
+                    }
+                    if (!empty($itemAwardDraft->cc_email)) {
+                        $decoded = json_decode($itemAwardDraft->cc_email, true);
+                        if (is_array($decoded)) {
+                            $ccEmails = $decoded;
+                        }
+                    }
+                    if ($itemAwardDraft->document_id && $itemAwardDraft->attachment) {
+                        $attachments = [['attachmentID' => $itemAwardDraft->document_id, 'originalFileName' => $itemAwardDraft->attachment->originalFileName ?? '', 'path' => $itemAwardDraft->attachment->path ?? '']];
+                    } else {
+                        $attachments = [];
+                    }
+                }
+            } else {
+                $tender->load(['ranking_supplier' => function ($q) {
+                    $q->where('award', 1)->with(['supplier', 'bid_submission_master']);
+                }]);
+                $rankSup = $tender->ranking_supplier;
+                if (!$rankSup || !$rankSup->supplier) {
+                    throw new \RuntimeException(trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'));
+                }
+                $supplier = $rankSup->supplier;
+                $bidMaster = $rankSup->bid_submission_master ?? null;
+                $bidSubmittedRaw = $bidMaster && isset($bidMaster->bidSubmittedDatetime)
+                    ? $bidMaster->bidSubmittedDatetime
+                    : ($bidMaster && $bidMaster->created_at ? $bidMaster->created_at->format('Y-m-d H:i:s') : '');
+                $bidSubmisionDate = $bidSubmittedRaw ? (function () use ($bidSubmittedRaw) {
+                    $parts = explode(' ', $bidSubmittedRaw)[0] ?? '';
+                    $p = explode('-', $parts);
+                    return count($p) === 3 ? $p[2] . '/' . $p[1] . '/' . $p[0] : $bidSubmittedRaw;
+                })() : '';
+                $finalCommercialPrice = $bidMaster && isset($bidMaster->line_item_total) ? number_format((float) $bidMaster->line_item_total, 2) : '';
+                $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+                $context = [
+                    'supplierName' => $supplier->name ?? '',
+                    'tenderCode' => $tender->tender_code ?? '',
+                    'tenderTitle' => $tender->title ?? '',
+                    'bidSubmisionDate' => $bidSubmisionDate,
+                    'documentType' => $documentTypeLabel,
+                    'finalCommercialPrice' => $finalCommercialPrice,
+                    'currency' => $currency,
+                ];
+                $recipientDisplay = ($supplier->name ?? '') . ($supplier->email ? ' <' . $supplier->email . '>' : '');
+                $supplierEmail = $supplier->email ?? null;
+                if ($emailBody !== '') {
+                    $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+                } else {
+                    $emailBody = "Hi " . ($supplier->name ?? '') . ", <br><br> Based on your final revised proposal submitted on " . $bidSubmisionDate . ", we would like to inform you that we intend to award your company the " . $tender->tender_code . " | " . $tender->title . " " . $documentTypeLabel . " for <b>" . $finalCommercialPrice . "</b> " . $currency . " with all agreed conditions. <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. <br>";
+                }
+                // Override with saved schedule-wise award draft (TAE) if any
+                $scheduleAwardDraft = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $rankSup->supplier->id, 'TAE');
+                if ($scheduleAwardDraft && $scheduleAwardDraft->email_body !== null && $scheduleAwardDraft->email_body !== '') {
+                    $emailBody = self::replaceLoiLoaPlaceholders($scheduleAwardDraft->email_body, $context);
+                    if (!empty($scheduleAwardDraft->email_subject)) {
+                        $emailSubject = $scheduleAwardDraft->email_subject;
+                    }
+                    if (!empty($scheduleAwardDraft->cc_email)) {
+                        $decoded = json_decode($scheduleAwardDraft->cc_email, true);
+                        if (is_array($decoded)) {
+                            $ccEmails = $decoded;
+                        }
+                    }
+                    if ($scheduleAwardDraft->document_id && $scheduleAwardDraft->attachment) {
+                        $attachments = [['attachmentID' => $scheduleAwardDraft->document_id, 'originalFileName' => $scheduleAwardDraft->attachment->originalFileName ?? '', 'path' => $scheduleAwardDraft->attachment->path ?? '']];
+                    } else {
+                        $attachments = [];
+                    }
+                }
+            }
+        } else {
+            $recipientDisplay = 'Non-awarded suppliers';
+            if ($emailBody === '') {
+                $processText = $documentId === 113 ? 'RFX process' : 'tender process';
+                $emailBody = "Hi {supplierName}<br><br>Thank you for your participation in our " . $processText . ". We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.<br><br>We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate.<br><br>Thank you";
+            }
+            // Replace placeholders for popup preview (supplierName = generic label; actual name used per recipient when sending)
+            $context = [
+                'supplierName' => 'Supplier',
+                'tenderCode' => $tender->tender_code ?? '',
+                'tenderTitle' => $tender->title ?? '',
+                'documentType' => $documentTypeLabel,
+            ];
+            $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+            // Override with saved regret draft if any (item-wise: use supplierId = awarded supplier; schedule-wise: 0)
+            $regretCode = $documentId === 113 ? self::DOCUMENT_CODE_REGRET_RFX : self::DOCUMENT_CODE_REGRET_TENDER;
+            $regretSupplierId = $supplierId !== null ? (int) $supplierId : 0;
+            $regretDraft = TenderCustomEmail::getRegretDraftEmail($tenderId, $regretCode, $regretSupplierId);
+            if ($regretDraft && $regretDraft->email_body !== null && $regretDraft->email_body !== '') {
+                $emailBody = self::replaceLoiLoaPlaceholders($regretDraft->email_body, $context);
+                if (!empty($regretDraft->email_subject)) {
+                    $emailSubject = $regretDraft->email_subject;
+                }
+                if (!empty($regretDraft->cc_email)) {
+                    $decoded = json_decode($regretDraft->cc_email, true);
+                    if (is_array($decoded)) {
+                        $ccEmails = $decoded;
+                    }
+                }
+                if ($regretDraft->document_id && $regretDraft->attachment) {
+                    $attachments = [['attachmentID' => $regretDraft->document_id, 'originalFileName' => $regretDraft->attachment->originalFileName ?? '', 'path' => $regretDraft->attachment->path ?? '']];
+                } else {
+                    $attachments = [];
+                }
+            }
+        }
+
+        return [
+            'email_subject' => $emailSubject,
+            'email_body' => $emailBody,
+            'cc_emails' => $ccEmails,
+            'attachments' => $attachments,
+            'recipient_display' => $recipientDisplay,
+            'supplier_email' => $supplierEmail,
+            'document_type_label' => $documentTypeLabel,
+            'tender_code' => $tender->tender_code ?? '',
+            'tender_title' => $tender->title ?? '',
+        ];
+    }
+
+    /**
      * Send LOA/LOI email to supplier and persist as custom email.
      */
     public function sendLoiLoaEmailToSupplier(
@@ -751,13 +1003,180 @@ class TenderItemWiseAwardingService
         );
     }
 
+    /**
+     * Save Tender/RFX Award or Regret email draft (no send).
+     * For award: schedule-wise uses TAE + ranking_supplier id; item-wise uses TAI + supplier_id.
+     * For regret: uses TRD/RRD + supplier_id = 0.
+     */
+    public function saveTenderRfxEmailDraft(
+        int $tenderId,
+        int $companyId,
+        string $emailType,
+        ?int $supplierId,
+        string $emailSubject,
+        string $emailBody,
+        array $ccEmails = [],
+        $attachmentId = null
+    ): void {
+        $tender = TenderMaster::find($tenderId);
+        if (!$tender) {
+            throw new \RuntimeException(trans('srm_tender_rfx.tender_not_found'));
+        }
+        $documentId = (int) ($tender->document_system_id ?? 0);
+
+        if ($emailType === 'award') {
+            if ($supplierId) {
+                $docCode = self::DOCUMENT_CODE_ITEM_AWARD;
+                $supplierIdForKey = $supplierId;
+            } else {
+                $tender->load(['ranking_supplier' => function ($q) {
+                    $q->where('award', 1)->with('supplier');
+                }]);
+                $rankSup = $tender->ranking_supplier;
+                if (!$rankSup || !$rankSup->supplier) {
+                    throw new \RuntimeException(trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'));
+                }
+                $docCode = 'TAE';
+                $supplierIdForKey = $rankSup->supplier->id;
+            }
+        } else {
+            $docCode = $documentId === 113 ? self::DOCUMENT_CODE_REGRET_RFX : self::DOCUMENT_CODE_REGRET_TENDER;
+            // Item-wise regret: use awarded supplier id so draft is per line/supplier; schedule-wise: 0
+            $supplierIdForKey = $supplierId !== null ? (int) $supplierId : 0;
+        }
+
+        $updateData = [
+            'company_id' => $companyId,
+            'document_code' => $docCode,
+            'email_subject' => $emailSubject,
+            'email_body' => $emailBody,
+            'cc_email' => !empty($ccEmails) ? json_encode($ccEmails) : null,
+            'document_id' => $attachmentId,
+        ];
+        TenderCustomEmail::createOrUpdateCustomEmail(
+            ['tender_id' => $tenderId, 'supplier_id' => $supplierIdForKey],
+            $updateData
+        );
+    }
+
+    /**
+     * Send regret emails to all non-awarded suppliers who bid on this tender (item-wise line award).
+     * Uses TENDER_REGRET / RFX_REGRET email config when available.
+     */
     public function sendRegretEmailsForAwardedLines(
         int $tenderId,
         int $isNegotiation,
         int $awardedSupplierId
     ): void {
-        // Original regret email logic omitted for brevity; if your app depends on it,
-        // you can reinsert the same implementation here as before.
+        $tender = TenderMaster::where('id', $tenderId)->with('company')->first();
+        if (!$tender) {
+            throw new \RuntimeException(trans('srm_tender_rfx.tender_not_found'));
+        }
+        $documentId = (int) $tender->document_system_id;
+        $companyId = (int) $tender->company_id;
+        $regretScenarioCode = $documentId === 108 ? 'TENDER_REGRET' : 'RFX_REGRET';
+        $documentTypeLabel = $documentId === 108 ? 'Tender' : 'RFX';
+
+        $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
+            ->where('tender_id', $tenderId)
+            ->where('supplier_registration_id', '!=', $awardedSupplierId)
+            ->groupBy('supplier_registration_id')
+            ->get()
+            ->pluck('supplier_registration_id')
+            ->toArray();
+
+        if (empty($bidSubmittedSuppliers)) {
+            return;
+        }
+
+        $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')
+            ->whereIn('id', $bidSubmittedSuppliers)
+            ->get();
+
+        $regretCode = $documentId === 113 ? self::DOCUMENT_CODE_REGRET_RFX : self::DOCUMENT_CODE_REGRET_TENDER;
+        $savedDraft = TenderCustomEmail::getRegretDraftEmail($tenderId, $regretCode, $awardedSupplierId);
+        $bodyTemplate = null;
+        $subjectTemplate = $documentTypeLabel . ' Regret';
+        $ccEmails = [];
+        $attachmentList = [];
+        if ($savedDraft && $savedDraft->email_body !== null && $savedDraft->email_body !== '') {
+            $bodyTemplate = $savedDraft->email_body;
+            if (!empty($savedDraft->email_subject)) {
+                $subjectTemplate = $savedDraft->email_subject;
+            }
+            if (!empty($savedDraft->cc_email)) {
+                $decoded = json_decode($savedDraft->cc_email, true);
+                if (is_array($decoded)) {
+                    $ccEmails = $decoded;
+                }
+            }
+            if ($savedDraft->document_id && $savedDraft->attachment && !empty($savedDraft->attachment->path)) {
+                $url = Helper::getFileUrlFromS3($savedDraft->attachment->path);
+                if ($url) {
+                    $attachmentList[] = $url;
+                }
+            }
+        } else {
+            $scenarioMasterId = SRMScenarioMaster::getScenarioMasterIdByDocumentAndCode($documentId, $regretScenarioCode, null);
+            if ($scenarioMasterId) {
+                $details = SRMScenarioDetails::getScenarioDetailsById([
+                    'scenarioId' => $scenarioMasterId,
+                    'companyId' => $companyId,
+                ]);
+                if ($details) {
+                    $bodyTemplate = $details->email_body;
+                    if (!empty($details->email_subject)) {
+                        $subjectTemplate = $details->email_subject;
+                    }
+                    if (!empty($details->cc_emails) && is_array($details->cc_emails)) {
+                        $ccEmails = $details->cc_emails;
+                    }
+                    if ($details->relationLoaded('attachments') && $details->attachments) {
+                        foreach ($details->attachments as $att) {
+                            $path = $att->path ?? null;
+                            if ($path) {
+                                $url = Helper::getFileUrlFromS3($path);
+                                if ($url) {
+                                    $attachmentList[] = $url;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        foreach ($supplierDetails as $supplier) {
+            if (empty($supplier->email)) {
+                continue;
+            }
+            $context = [
+                'supplierName' => $supplier->name ?? '',
+                'tenderCode' => $tender->tender_code ?? '',
+                'tenderTitle' => $tender->title ?? '',
+                'documentType' => $documentTypeLabel,
+            ];
+            if ($bodyTemplate) {
+                $body = self::replaceLoiLoaPlaceholders($bodyTemplate, $context);
+            } else {
+                $processText = $documentId === 113 ? 'RFX process' : 'tender process';
+                $defaultRegretBody = "Hi {supplierName}<br><br>Thank you for your participation in our " . $processText . ". We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.<br><br>We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate.<br><br>Thank you";
+                $body = self::replaceLoiLoaPlaceholders($defaultRegretBody, $context);
+            }
+            // Ensure greeting uses actual supplier name (fix saved drafts that contain literal "Hi Supplier")
+            $supplierName = trim((string) ($supplier->name ?? '')) !== '' ? $supplier->name : 'Supplier';
+            $body = preg_replace('/\bHi Supplier\b/i', 'Hi ' . $supplierName, $body, 1);
+            $body .= Helper::getSupplierEmailFooter($companyId);
+            $dataEmail = [
+                'empEmail' => $supplier->email,
+                'companySystemID' => $companyId,
+                'alertMessage' => $subjectTemplate,
+                'emailAlertMessage' => $body,
+                'attachmentList' => $attachmentList,
+                'ccEmail' => $ccEmails,
+            ];
+            Email::sendEmailErp($dataEmail);
+        }
     }
 
     /**
