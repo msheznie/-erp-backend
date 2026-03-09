@@ -725,6 +725,7 @@ return
     'data_retrieved_successfully' => 'Data retrieved successfully',
     'budget_not_found' => 'Budget not found',
     'created_date' => 'Created Date',
+    'addition_document_code' => 'Addition Document Code',
     'transfer_document_code' => 'Transfer Document Code',
     'narration' => 'Narration',
     'submitted_by' => 'Submitted By',

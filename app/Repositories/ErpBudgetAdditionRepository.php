@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\ErpBudgetAddition;
 use App\Repositories\BaseRepository;
 use App\helper\Helper;
+use App\helper\StatusService;
 
 /**
  * Class ErpBudgetAdditionRepository
@@ -120,6 +121,32 @@ class ErpBudgetAdditionRepository extends BaseRepository
         }
 
         return $budgetAddition;
+    }
+
+    /**
+     * Format budget addition list query result for Excel export.
+     * Columns: Created Date, Addition Document Code, Narration, Submitted By, Status
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $dataSet
+     * @return array
+     */
+    public function setExportExcelData($dataSet)
+    {
+        $dataSet = $dataSet->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+            foreach ($dataSet as $val) {
+                $data[$x][trans('custom.created_date')] = Helper::dateFormat($val->createdDateTime);
+                $data[$x][trans('custom.addition_document_code')] = $val->additionVoucherNo ?? '';
+                $data[$x][trans('custom.narration')] = $val->comments ?? '';
+                $data[$x][trans('custom.submitted_by')] = $val->confirmed_by ? $val->confirmed_by->empName : '';
+                $data[$x][trans('custom.status')] = StatusService::getStatus(null, null, $val->confirmedYN, $val->approvedYN, $val->timesReferred ?? $val->refferedBackYN);
+                $x++;
+            }
+        } else {
+            $data = [];
+        }
+        return $data;
     }
 
     public function fetchBudgetData($id){ 

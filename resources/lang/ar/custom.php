@@ -708,6 +708,7 @@ return
     'data_retrieved_successfully' => 'تم استرداد البيانات بنجاح',
     'budget_not_found' => 'الميزانية غير موجودة',
     'created_date' => 'تاريخ الإنشاء',
+    'addition_document_code' => 'رمز مستند التعزيز',
     'transfer_document_code' => 'رمز مستند التحويل',
     'narration' => 'الرواية',
     'submitted_by' => 'تم الإرسال بواسطة',
