@@ -177,7 +177,7 @@ class VendorFile
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
-                ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0),
+                ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0) + ($paymentVoucher->VATAmountBank ?? 0),
                 $decimalPlaces
             );
 
