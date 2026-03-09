@@ -13,7 +13,7 @@ use App\Repositories\AssetFinanceCategoryRepository;
 use App\Scopes\ActiveScope;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditLogsTrait;
@@ -352,11 +352,9 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             }
 
 
-            $currentPrefix = AssetFinanceCategory::Select('formula')
-                ->where('faFinanceCatID', $input['faFinanceCatID'])
-                ->first();
-
-            $formula_arr_current = explode('~', $currentPrefix['formula']);
+            $formula_arr_current = $assetFinanceCategory->formula !== null
+                ? explode('~', $assetFinanceCategory->formula)
+                : [];
 
             if (!empty($formula_arr_current[0])) {
                 foreach ($formula_arr_current as $formula_row_current) {

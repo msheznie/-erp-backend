@@ -12,7 +12,6 @@ class ErpAttributeValues extends Model
     const UPDATED_AT = 'updated_at';
 
     protected $primaryKey = 'id';
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -41,7 +40,8 @@ class ErpAttributeValues extends Model
         'is_mendatory' => 'boolean',
         'is_active' => 'boolean',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

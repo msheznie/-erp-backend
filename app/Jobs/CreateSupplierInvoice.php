@@ -23,6 +23,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateSupplierInvoice implements ShouldQueue
 {
@@ -47,7 +48,6 @@ class CreateSupplierInvoice implements ShouldQueue
     public function handle(BookInvSuppMasterRepository $bookInvSuppMasterRepo, BookInvSuppDetRepository $bookInvSuppDetRepo,
                            GeneralLedgerRepository $generalLedgerRepo, AccountsPayableLedgerRepository $accountsPayableLedgerRepo)
     {
-        Log::useFiles(storage_path() . '/logs/create_supplier_invoice_jobs.log');
         $sr = $this->srMaster;
         $srMaster = StockReceive::where('stockReceiveAutoID', $sr->stockReceiveAutoID)->first();
         if (!empty($srMaster)) {
@@ -80,7 +80,7 @@ class CreateSupplierInvoice implements ShouldQueue
                     $supplier = SupplierMaster::where('companyLinkedToSystemID', $srMaster->companyFromSystemID)->first();
 
                     if ($toCompany) {
-                        $companyCurrencyConversion = \Helper::currencyConversion($srMaster->companyToSystemID, $toCompany->reportingCurrency, $toCompany->reportingCurrency, 0);
+                        $companyCurrencyConversion = Helper::currencyConversion($srMaster->companyToSystemID, $toCompany->reportingCurrency, $toCompany->reportingCurrency, 0);
                     }
 
                     $supplierInvoiceData['serialNo'] = $supInvLastSerialNumber;
@@ -208,8 +208,8 @@ class CreateSupplierInvoice implements ShouldQueue
                         $data['documentSystemCode'] = $bookInvSuppMaster->bookingSuppMasInvAutoID;
                         $data['documentCode'] = $bookInvSuppMaster->bookingInvCode;
                         $data['documentDate'] = $today;
-                        $data['documentYear'] = \Helper::dateYear($today);
-                        $data['documentMonth'] = \Helper::dateMonth($today);
+                        $data['documentYear'] = Helper::dateYear($today);
+                        $data['documentMonth'] = Helper::dateMonth($today);
                         $data['invoiceNumber'] = $srMaster->stockReceiveCode;
                         $data['invoiceDate'] = $today;
                         $data['documentConfirmedDate'] = $today;
@@ -322,7 +322,7 @@ class CreateSupplierInvoice implements ShouldQueue
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
-                Log::error($this->failed($e));
+                Log::channel('create_supplier_invoice_jobs')->error($this->failed($e));
             }
         }
     }

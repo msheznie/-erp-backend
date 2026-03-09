@@ -28,9 +28,10 @@ use App\Models\WarehouseMaster;
 use App\Repositories\InventoryReclassificationDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\inventory as Inventory;
 
 /**
  * Class InventoryReclassificationDetailController
@@ -252,7 +253,7 @@ class InventoryReclassificationDetailAPIController extends AppBaseController
         $data = array('companySystemID' => $reclassification->companySystemID,
             'itemCodeSystem' => $input['itemSystemCode'],
             'wareHouseId' => $reclassification->wareHouseSystemCode);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
         $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
         $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
 

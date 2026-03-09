@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\PaySupplierInvoiceMasterReferback;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PaySupplierInvoiceMasterReferbackRepository

@@ -40,9 +40,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class AssetCapitalizationController
@@ -160,7 +163,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 return $this->sendError(trans('custom.selected_asset_is_already_added_for_capitalization'), 500);
             }
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             } else {
@@ -170,7 +173,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 9;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -240,8 +243,8 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $input['assetNBVRpt'] = $nbvRpt;
             }
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
             $assetCapitalizations = $this->assetCapitalizationRepository->create($input);
             DB::commit();
@@ -386,7 +389,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             }
 
             if ($assetCapitalization->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                $companyFinanceYear = Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500, ['type' => 'confirm']);
                 } else {
@@ -396,7 +399,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
                 $inputParam = $input;
                 $inputParam["departmentSystemID"] = 9;
-                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
                 if (!$companyFinancePeriod["success"]) {
                     return $this->sendError($companyFinancePeriod["message"], 500, ['type' => 'confirm']);
                 } else {
@@ -427,7 +430,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                 }
 
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
                 }
@@ -445,8 +448,8 @@ class AssetCapitalizationAPIController extends AppBaseController
                 $input['assetNBVRpt'] = $nbvRpt;
             }
             $input['modifiedPc'] = gethostname();
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
             $assetCapitalization = $this->assetCapitalizationRepository->update($input, $id);
             DB::commit();
@@ -517,10 +520,10 @@ class AssetCapitalizationAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -528,7 +531,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId,1);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId,1);
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -570,10 +573,10 @@ class AssetCapitalizationAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -666,10 +669,10 @@ class AssetCapitalizationAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -682,10 +685,10 @@ class AssetCapitalizationAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -747,7 +750,7 @@ class AssetCapitalizationAPIController extends AppBaseController
 
             $this->assetCapitalizationRepository->update($updateInput, $id);
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $document = DocumentMaster::where('documentSystemID', $assetCapitalization->documentSystemID)->first();
 
@@ -794,7 +797,7 @@ class AssetCapitalizationAPIController extends AppBaseController
                         }
                     }
 
-                    $sendEmail = \Email::sendEmail($emails);
+                    $sendEmail = Email::sendEmail($emails);
                     if (!$sendEmail["success"]) {
                         return ['success' => false, 'message' => $sendEmail["message"]];
                     }
@@ -845,7 +848,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $capitalization = DB::table('erp_documentapproved')
@@ -891,7 +894,7 @@ class AssetCapitalizationAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $capitalization = [];
@@ -924,7 +927,7 @@ class AssetCapitalizationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $capitalization = DB::table('erp_documentapproved')
             ->select(

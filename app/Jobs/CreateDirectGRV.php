@@ -23,6 +23,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateDirectGRV implements ShouldQueue
 {
@@ -49,7 +50,6 @@ class CreateDirectGRV implements ShouldQueue
                            GRVDetailsRepository $grvDetailsRepository)
     {
         //
-        Log::useFiles(storage_path() . '/logs/create_direct_grv_jobs.log');
         $data = $this->disposalMaster;
         $dpMaster = AssetDisposalMaster::find($data['assetdisposalMasterAutoID']);
         $invoiceCode = $data['invoiceCode'];
@@ -139,7 +139,7 @@ class CreateDirectGRV implements ShouldQueue
 
                     $fromCompany = Company::where('companySystemID', $dpMaster->companySystemID)->first();
                     $toCompany = Company::where('companySystemID', $dpMaster->toCompanySystemID)->first();
-                    $companyCurrencyConversion = \Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
+                    $companyCurrencyConversion = Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->localCurrencyID, $fromCompany->localCurrencyID, 0);
 
                     $directGRV['localCurrencyID'] = $toCompany->localCurrencyID;
                     $directGRV['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
@@ -220,7 +220,7 @@ class CreateDirectGRV implements ShouldQueue
 
                             $comLocalAmountDetail = $val->sellingPriceLocal;
 
-                            $vatAmountConversion = \Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->reportingCurrency, $fromCompany->localCurrencyID, $val->vatAmount);
+                            $vatAmountConversion = Helper::currencyConversion($dpMaster->toCompanySystemID, $fromCompany->reportingCurrency, $fromCompany->localCurrencyID, $val->vatAmount);
 
                             $val->vatAmount = $vatAmountConversion['documentAmount'];
 
@@ -235,7 +235,7 @@ class CreateDirectGRV implements ShouldQueue
                                 }
                             }
 
-                            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $comLocalAmountDetail);
+                            $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $comLocalAmountDetail);
 
                             $directGRVDet['supplierDefaultCurrencyID'] = $grvMaster['supplierDefaultCurrencyID'];
                             $directGRVDet['supplierDefaultER'] = $grvMaster['supplierDefaultER'];
@@ -246,20 +246,20 @@ class CreateDirectGRV implements ShouldQueue
                             $directGRVDet['localCurrencyID'] = $grvMaster['localCurrencyID'];
                             $directGRVDet['localCurrencyER'] = $grvMaster['localCurrencyER'];
 
-                            $currencyVat = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $val->vatAmount);
+                            $currencyVat = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID, $grvMaster['grvAutoID'], $val->vatAmount);
 
                             $directGRVDet['VATPercentage'] = $val->vatPercentage;
-                            $directGRVDet['VATAmount'] = \Helper::roundValue($val->vatAmount);
+                            $directGRVDet['VATAmount'] = Helper::roundValue($val->vatAmount);
                             $directGRVDet['VATAmountLocal'] = $currencyVat['localAmount'];
                             $directGRVDet['VATAmountRpt'] = $currencyVat['reportingAmount'];
 
-                            $directGRVDet['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
-                            $directGRVDet['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount'] + $directGRVDet['VATAmount']);
-                            $directGRVDet['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($comLocalAmountDetail + $currencyVat['reportingAmount']);
-                            $directGRVDet['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
-                            $directGRVDet['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
-                            $directGRVDet['landingCost_TransCur'] = \Helper::roundValue($comLocalAmountDetail + $currencyVat['reportingAmount']);
-                            $directGRVDet['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
+                            $directGRVDet['GRVcostPerUnitLocalCur'] = Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
+                            $directGRVDet['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currency['defaultAmount'] + $directGRVDet['VATAmount']);
+                            $directGRVDet['GRVcostPerUnitSupTransCur'] = Helper::roundValue($comLocalAmountDetail + $currencyVat['reportingAmount']);
+                            $directGRVDet['GRVcostPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
+                            $directGRVDet['landingCost_LocalCur'] = Helper::roundValue($currency['localAmount'] + $currencyVat['localAmount']);
+                            $directGRVDet['landingCost_TransCur'] = Helper::roundValue($comLocalAmountDetail + $currencyVat['reportingAmount']);
+                            $directGRVDet['landingCost_RptCur'] = Helper::roundValue($currency['reportingAmount'] + $currencyVat['reportingAmount']);
 
                             $directGRVDet['vatRegisteredYN'] = $dpMaster->vatRegisteredYN;
 

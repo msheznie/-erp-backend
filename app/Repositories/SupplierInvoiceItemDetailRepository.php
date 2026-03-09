@@ -12,7 +12,7 @@ use App\Models\Company;
 use App\Models\SupplierAssigned;
 use Illuminate\Support\Facades\DB;
 use App\helper\TaxService;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierInvoiceItemDetailRepository

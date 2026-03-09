@@ -31,7 +31,6 @@ class Priority extends Model
     const UPDATED_AT = 'updated_at';
     protected $appends = ['priorityDescription'];
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -45,7 +44,8 @@ class Priority extends Model
      */
     protected $casts = [
         'priorityID' => 'integer',
-        'priorityDescription' => 'string'
+        'priorityDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

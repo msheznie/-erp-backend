@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class DocumentAttachmentsObserver
 {
@@ -24,7 +25,7 @@ class DocumentAttachmentsObserver
         
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $type = 2;
         if($obj && isset($employee))
@@ -46,7 +47,6 @@ class DocumentAttachmentsObserver
            
            if($result)
            {
-            Log::info('created successfullu');
            }
 
         }
@@ -58,7 +58,7 @@ class DocumentAttachmentsObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
      
         if($obj && isset($employee))
         {
@@ -99,7 +99,6 @@ class DocumentAttachmentsObserver
             }
             if($result)
             {
-              Log::info('updated successfully');
             }
         }
         
@@ -122,7 +121,6 @@ class DocumentAttachmentsObserver
             $result = $this->process($tender,$tenderObj,$reflogId,1);
             if($result)
             {
-             Log::info('deleted successfully');
             }
 
         }
@@ -132,7 +130,7 @@ class DocumentAttachmentsObserver
 
     public function process($tender,$tenderObj,$reflogId,$type)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         if(isset($employee))
         {
             $empId = $employee->employeeSystemID;

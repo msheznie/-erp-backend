@@ -81,9 +81,9 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -97,7 +97,7 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
-        $departments1 = collect(\Helper::getCompanyServicelineWithMaster($selectedCompanyId));
+        $departments1 = collect(Helper::getCompanyServicelineWithMaster($selectedCompanyId));
         $years = CompanyFinanceYear::selectRaw('isCurrent,DATE_FORMAT(bigginingDate,"%M %d %Y") as bigginingDate, DATE_FORMAT(endingDate,"%M %d %Y") as endingDate, companyFinanceYearID')->orderBy('companyFinanceYearID', 'desc')->where('companySystemID', $selectedCompanyId)->get();
 
 
@@ -239,9 +239,9 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -249,7 +249,7 @@ class FinancialReportAPIController extends AppBaseController
         $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup', 0)->get();
 
 
-        $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
+        $departments1 = collect(Helper::getCompanyServiceline($selectedCompanyId));
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
@@ -351,8 +351,8 @@ class FinancialReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -831,7 +831,7 @@ class FinancialReportAPIController extends AppBaseController
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $getProjectAmountsCurrencyConvertion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
         $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
 
         if ($projectAmount > 0) {
@@ -872,9 +872,9 @@ class FinancialReportAPIController extends AppBaseController
         
         $companyID = $input['comapnyID'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+        $isGroup = Helper::checkIsCompanyGroup($companyID);
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyID);
+            $childCompanies = Helper::getGroupCompany($companyID);
         } else {
             $childCompanies = [$companyID];
         }
@@ -886,7 +886,7 @@ class FinancialReportAPIController extends AppBaseController
         }
 
         // Retrieve company currency information
-        $companyCurrency = \Helper::companyCurrency($companyID);
+        $companyCurrency = Helper::companyCurrency($companyID);
         $companyName =  $companyCurrency->CompanyName;
         $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
         $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
@@ -1155,20 +1155,17 @@ class FinancialReportAPIController extends AppBaseController
             $templateName = "export_report.employee_ledger_report";
 
             $lang = app()->getLocale();
-            $fontFamily = \Helper::getExcelFontFamily($lang);
+            $fontFamily = Helper::getExcelFontFamily($lang);
 
-            return \Excel::create('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
+            return \App\Exports\CreateExcelExport::download('finance', function ($excel) use ($reportData, $templateName, $fontFamily) {
                 $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
-                    // Set default font for entire sheet
                     $sheet->setStyle([
                         'font' => [
                             'name' => $fontFamily,
                             'size' => 11,
-                        ]
+                        ],
                     ]);
                     $sheet->loadView($templateName, $reportData);
-
-                    // Apply font to all cells after loading view
                     $lastRow = $sheet->getHighestRow();
                     $lastColumn = $sheet->getHighestColumn();
                     if ($lastRow > 0 && $lastColumn) {
@@ -1179,15 +1176,32 @@ class FinancialReportAPIController extends AppBaseController
                         } catch (\Exception $e) {
                             $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                         }
+                        // Merge and center title (row 1) and company (row 2)
+                        $sheet->mergeCells('A1:' . $lastColumn . '1');
+                        $sheet->mergeCells('A2:' . $lastColumn . '2');
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
+                        // Bold title, company, period from (row 4), period to (row 5)
+                        $sheet->getStyle('A1:' . $lastColumn . '1')->getFont()->setBold(true);
+                        $sheet->getStyle('A2:' . $lastColumn . '2')->getFont()->setBold(true);
+                        $sheet->getStyle('A4:' . $lastColumn . '4')->getFont()->setBold(true);
+                        $sheet->getStyle('A5:' . $lastColumn . '5')->getFont()->setBold(true);
+                        // Bold column header row(s): any row where column A is "document_date" translation
+                        $documentDateHeader = __('custom.document_date');
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
+                        for ($r = 6; $r <= $lastRow; $r++) {
+                            if ((string) $worksheet->getCell('A' . $r)->getValue() === (string) $documentDateHeader) {
+                                $sheet->getStyle('A' . $r . ':' . $lastColumn . $r)->getFont()->setBold(true);
+                            }
+                        }
                     }
-                    
-                    // Set right-to-left for Arabic locale
+                    $sheet->setAutoSize(true);
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
                     }
                 });
-            })->download('xlsx');
+            }, 'xlsx');
         }
         else{
             return $this->sendResponse([
@@ -1226,8 +1240,8 @@ class FinancialReportAPIController extends AppBaseController
                         $data['glDescription'] = $val['AccountDescription'];
                         $data['companySystemID'] = $val['selectedCompanyID'];
                         $data['createdPCID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserID'] = Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data);
                     }
                 }
@@ -1238,7 +1252,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $companyArray = $request->companySystemID ?? [];
         $segmentArray = $request->serviceLineSystemID ?? [];
         $currency = $request->currency[0] ?? $request->currency;
@@ -1800,7 +1814,7 @@ class FinancialReportAPIController extends AppBaseController
                     $headers = $result['headers'];
                 }
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if($companyCurrency) {
                     $requestCurrencyLocal = $companyCurrency->localcurrency;
                     $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -2086,7 +2100,7 @@ class FinancialReportAPIController extends AppBaseController
                 $output = $this->getRTDReportQry($request);
 
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
 
                 if($request->currencyID == 1) {
@@ -2163,7 +2177,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2618,7 +2632,7 @@ class FinancialReportAPIController extends AppBaseController
         $headers = array();
         $company = Company::find($request->selectedCompanyID);
         $template = ReportTemplate::find($request->templateType);
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
         if ($request->dateType == 1) {
             $fromDate = Carbon::parse($request->fromDate)->startOfDay()->format('Y-m-d H:i:s');
@@ -2905,7 +2919,7 @@ class FinancialReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
 
@@ -2914,7 +2928,7 @@ class FinancialReportAPIController extends AppBaseController
                         $companyID = "";
                         $checkIsGroup = Company::find($request->companySystemID);
                         if ($checkIsGroup->isGroup) {
-                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                            $companyID = Helper::getGroupCompany($request->companySystemID);
                         } else {
                             $companyID = (array)$request->companySystemID;
                         }
@@ -2940,7 +2954,7 @@ class FinancialReportAPIController extends AppBaseController
                     else {
                         $output = $this->getTrialBalance($request);
 
-                        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                        $companyCurrency = Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
                             $requestCurrencyLocal = $companyCurrency->localcurrency;
                             $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -3050,7 +3064,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalanceDetails($request);
                 $currencyIdLocal = 1;
@@ -3089,7 +3103,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
@@ -3110,7 +3124,7 @@ class FinancialReportAPIController extends AppBaseController
                 $reportSD = $request->reportSD;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
                 $output = $this->getGeneralLedger($request);
@@ -3179,7 +3193,7 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['tem_desc'] = $val->templateDetailDescription;
                                     $data[$x]['doc_type'] = $val->documentID;
                                     $data[$x]['doc_no'] = $val->documentCode;
-                                    $data[$x]['data'] = \Helper::dateFormat($val->documentDate);
+                                    $data[$x]['data'] = Helper::dateFormat($val->documentDate);
                                     $data[$x]['doc_narration'] = $val->documentNarration;
                                     $data[$x]['documentSystemCode'] = $val->documentSystemCode;
                                     $data[$x]['documentSystemID'] = $val->documentSystemID;
@@ -3187,9 +3201,9 @@ class FinancialReportAPIController extends AppBaseController
                                     $data[$x]['severice_line'] = $val->serviceLineCode;
                                     $data[$x]['contract'] = $val->clientContractID;
                                         $data[$x]['confirmed_by'] = $val->confirmedBy;
-                                        $data[$x]['confirmed_date'] = \Helper::dateFormat($val->documentConfirmedDate);
+                                        $data[$x]['confirmed_date'] = Helper::dateFormat($val->documentConfirmedDate);
                                         $data[$x]['approved_by'] = $val->approvedBy;
-                                        $data[$x]['approved_date'] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                        $data[$x]['approved_date'] = Helper::dateFormat($val->documentFinalApprovedDate);
 
 
                                     $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
@@ -3302,7 +3316,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.template_description')] = $val->templateDetailDescription;
                             $data[$x][trans('custom.document_type')] = $val->documentID;
                             $data[$x][trans('custom.document_number')] = $val->documentCode;
-                            $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.date')] = Helper::dateFormat($val->documentDate);
                             $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                             $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                             $data[$x][trans('custom.contract')] = $val->clientContractID;
@@ -3312,7 +3326,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
@@ -3320,7 +3334,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                             }
 
                             if ($checkIsGroup->isGroup == 0) {
@@ -3344,7 +3358,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getTaxDetailQry($request);
@@ -3441,7 +3455,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x]['Company ID'] = $val->companyID;
                         //$data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x]['Document Code'] = $val->documentCode;
-                        $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                        $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.year')] = $val->YEAR;
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
@@ -3456,9 +3470,9 @@ class FinancialReportAPIController extends AppBaseController
 
                         $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                         $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
-                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                         $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
@@ -3483,7 +3497,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -4016,7 +4030,7 @@ class FinancialReportAPIController extends AppBaseController
         
         $getProjectAmounts = ProjectGlDetail::where('projectID', $projectID)->get();
         $projectAmount = collect($getProjectAmounts)->sum('amount');
-        $getProjectAmountsCurrencyConvertion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
+        $getProjectAmountsCurrencyConvertion = Helper::currencyConversion($companySystemID, $transactionCurrencyID, $documentCurrencyID, $projectAmount);
         $projectAmount = $getProjectAmountsCurrencyConvertion['reportingAmount'];
 
         if ($projectAmount > 0) {
@@ -4038,7 +4052,7 @@ class FinancialReportAPIController extends AppBaseController
 
         $closingBalance = $openingBalance - $budgetAmount;
         $output = array(
-            'companyName' => $reportingCurrency->CompanyName,
+            'companyName' => $reportingCurrency->CompanyName ?? '',
             'projectDetail' => $projectDetail,
             'projectAmount' => $projectAmount,
             'budgetConsumedData' => $budgetConsumedData,
@@ -4049,24 +4063,21 @@ class FinancialReportAPIController extends AppBaseController
             'fromDate' => $dateFrom,
             'toDate' => $dateTo,
             'reportTittle' => trans('custom.project_utilization_report'),
-            'companyReportingCurrency' => $cur_rep,
+            'companyReportingCurrency' => $reportingCurrency->reportingcurrency ?? null,
         );
 
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
-        return \Excel::create('upload_budget_template', function ($excel) use ($output, $fontFamily) {
+        return \App\Exports\CreateExcelExport::download('upload_budget_template', function ($excel) use ($output, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($output, $fontFamily) {
-                // Set default font for entire sheet
                 $sheet->setStyle([
                     'font' => [
                         'name' => $fontFamily,
                         'size' => 11,
-                    ]
+                    ],
                 ]);
                 $sheet->loadView('export_report.project_utilization_report', $output);
-
-                // Apply font to all cells after loading view
                 $lastRow = $sheet->getHighestRow();
                 $lastColumn = $sheet->getHighestColumn();
                 if ($lastRow > 0 && $lastColumn) {
@@ -4078,14 +4089,12 @@ class FinancialReportAPIController extends AppBaseController
                         $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                     }
                 }
-
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function exportReport(Request $request, ExportGeneralLedgerReportService $exportGlToExcelService)
@@ -4099,7 +4108,7 @@ class FinancialReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $currencyId =  $request->currencyID;
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
 
@@ -4108,7 +4117,7 @@ class FinancialReportAPIController extends AppBaseController
                         $companyID = "";
                         $checkIsGroup = Company::find($request->companySystemID);
                         if ($checkIsGroup->isGroup) {
-                            $companyID = \Helper::getGroupCompany($request->companySystemID);
+                            $companyID = Helper::getGroupCompany($request->companySystemID);
                         } else {
                             $companyID = (array)$request->companySystemID;
                         }
@@ -4130,16 +4139,16 @@ class FinancialReportAPIController extends AppBaseController
                             }
                         }
                         $excelFormat = [
-                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                         ];
                     }
                     else {
                         $output = $this->getTrialBalance($request);
-                        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                        $companyCurrency = Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
                             $requestCurrencyLocal = $companyCurrency->localcurrency;
                             $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -4220,12 +4229,12 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.closing_balance_reporting_currency') . ' - ' . $currencyRpt . ')'] = CurrencyService::convertNumberFormatToNumber(number_format($totalClosingBalanceRpt, $decimalPlaceRpt));
                         }
                         $excelFormat = [
-                            'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                         ];
 
@@ -4366,31 +4375,31 @@ class FinancialReportAPIController extends AppBaseController
     
                     array_push($data,$totalArray);
                     $excelFormat = [
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'W' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'X' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Y' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Z' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AA' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'AB' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
                     ];
                 }
@@ -4451,7 +4460,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getTrialBalanceDetails($request);
                 $currencyIdLocal = 1;
@@ -4507,7 +4516,7 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.company_name')] = $val->CompanyName;
                         }
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
 
                         if ($checkIsGroup->isGroup == 0) {
@@ -4537,7 +4546,7 @@ class FinancialReportAPIController extends AppBaseController
             case 'FGL':
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 if(isset($request->month)) {
                     $request->toDate = $request->month."".Carbon::parse($request->month)->endOfMonth()
@@ -4581,24 +4590,24 @@ class FinancialReportAPIController extends AppBaseController
                 if ($reportSD == "glCode_wise") {
                     $data = $this->getGlCodeWiseRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt);
                     $excelFormat = [
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 } else {
                     $data = $this->getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt);
                     $excelFormat = [
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 $exportToExcel = $exportGlToExcelService
@@ -4629,14 +4638,16 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getTaxDetailQry($request);
                 $data = array();
 
-                $selectedColumns = collect($request->selectedColumn)->pluck(['id'])->toArray();
-                $reporingCurrencyCode = ($output[0]) ? $output[0]->rptCurrencyCode : null;
+                $selectedColumns = $request->selectedColumn
+                    ? collect($request->selectedColumn)->pluck('id')->toArray()
+                    : [];
+                $reporingCurrencyCode = (! empty($output) && isset($output[0])) ? $output[0]->rptCurrencyCode : null;
 
                 $cur = null;
                 $title = 'Tax Details';
@@ -4663,17 +4674,17 @@ class FinancialReportAPIController extends AppBaseController
                 $path = 'general-ledger/report/tax_details/excel/';
                 $type = "xls";
                 $excelColumnFormat = [
-                    'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AC' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AD' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'AE' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'W' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'X' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Y' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Z' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AA' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AB' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AC' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AD' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'AE' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
                 $basePath = CreateExcel::loadView($detail_array, $type, $fileName, $path, $templateName, $excelColumnFormat);
@@ -4732,7 +4743,7 @@ class FinancialReportAPIController extends AppBaseController
                         $data[$x][trans('custom.company_id')] = $val->companyID;
                         //$data[$x]['Company Name'] = $val->CompanyName;
                         $data[$x][trans('custom.document_code')] = $val->documentCode;
-                        $data[$x][trans('custom.document_date')] = \Helper::dateFormat($val->documentDate);
+                        $data[$x][trans('custom.document_date')] = Helper::dateFormat($val->documentDate);
                         $data[$x][trans('custom.year')] = $val->YEAR;
                         $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                         if ($reportTypeID == 'JVDD') {
@@ -4748,9 +4759,9 @@ class FinancialReportAPIController extends AppBaseController
 
                         $data[$x][trans('custom.debit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->debitAmountRpt, $decimalPlaceRpt);
                         $data[$x][trans('custom.credit_reporting_currency') . ' - ' . $currencyRpt . ')'] = round($val->creditAmountRpt, $decimalPlaceRpt);
-                        $data[$x][trans('custom.confirmed_date')] = \Helper::dateFormat($val->confirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = Helper::dateFormat($val->confirmedDate);
                         $data[$x][trans('custom.confirmed_by')] = $val->confirmedByName;
-                        $data[$x][trans('custom.approved_date')] = \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = Helper::dateFormat($val->documentFinalApprovedDate);
                         $data[$x][trans('custom.approved_by')] = $val->FinalApprovedBy;
                         $x++;
                     }
@@ -4776,7 +4787,7 @@ class FinancialReportAPIController extends AppBaseController
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID','tempType','reportViewID'));
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
 
                 $output = $this->getRTDReportQry($request);
@@ -4790,7 +4801,7 @@ class FinancialReportAPIController extends AppBaseController
                 $toDate = (new Carbon($request->toDate))->format('Y-m-d');
 
 
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
 
                 if($request->currencyID == 1) {
@@ -4931,7 +4942,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
                         if (in_array('confi_date', $extraColumns)) {
-                            $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                            $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                         }
 
                         if (in_array('app_name', $extraColumns)) {
@@ -4939,7 +4950,7 @@ class FinancialReportAPIController extends AppBaseController
                         }
 
                         if (in_array('app_date', $extraColumns)) {
-                            $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                            $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                         }
                         $data[$x][trans('custom.supplier_customer')] = $val->isCustomer;
                         if ($checkIsGroup->isGroup == 0) {
@@ -5179,7 +5190,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 if (in_array('confi_date', $extraColumns)) {
-                    $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                    $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                 }
 
                 if (in_array('app_name', $extraColumns)) {
@@ -5187,7 +5198,7 @@ class FinancialReportAPIController extends AppBaseController
                 }
 
                 if (in_array('app_date', $extraColumns)) {
-                    $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                    $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                 }
 
                 if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
@@ -5284,7 +5295,7 @@ class FinancialReportAPIController extends AppBaseController
         ini_set('memory_limit', -1);
         $type = $request->type;
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+        $companyCurrency = Helper::companyCurrency($request->companySystemID);
         $checkIsGroup = Company::find($request->companySystemID);
         $data = array();
 
@@ -5403,9 +5414,9 @@ class FinancialReportAPIController extends AppBaseController
                             $data[$x][trans('custom.document_type')] = $val->documentID;
                             $data[$x][trans('custom.document_description')] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
                             $data[$x][trans('custom.document_code')] = $val->documentCode;
-                            $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                            $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                             $data[$x][trans('custom.document_narration')] = $val->documentNarration;
-                            $data[$x][trans('custom.gl_created_date')] = \Helper::dateFormat($val->createdDateTime);
+                            $data[$x][trans('custom.gl_created_date')] = Helper::dateFormat($val->createdDateTime);
                             $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                             $data[$x][trans('custom.contract')] = $val->clientContractID;
                             $data[$x][trans('custom.gl_code')] = $val->glCode;
@@ -5434,7 +5445,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('confi_date', $extraColumns)) {
-                                $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                                $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                             }
 
                             if (in_array('app_name', $extraColumns)) {
@@ -5442,7 +5453,7 @@ class FinancialReportAPIController extends AppBaseController
                             }
 
                             if (in_array('app_date', $extraColumns)) {
-                                $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                                $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                             }
                             $data[$x][trans('custom.supplier_name_customer_name')] = $val->supplierOrCustomerName;
                             $data[$x][trans('custom.supplier_code_customer_code')] = $val->supplierOrCustomerCode;
@@ -5673,9 +5684,9 @@ class FinancialReportAPIController extends AppBaseController
                     $data[$x][trans('custom.document_type')] = $val->documentID;
                     $data[$x]['Document Description'] = $val->documentNarration == "Opening Balance" ? "" : $val->documentDescription;
                     $data[$x]['Document Code'] = $val->documentCode;
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->documentDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->documentDate);
                     $data[$x][trans('custom.document_narration')] = $val->documentNarration;
-                    $data[$x]['GL created date'] = \Helper::dateFormat($val->createdDateTime);
+                    $data[$x]['GL created date'] = Helper::dateFormat($val->createdDateTime);
                     $data[$x][trans('custom.service_line')] = $val->serviceLineCode;
                     $data[$x][trans('custom.contract')] = $val->clientContractID;
                     $data[$x][trans('custom.gl_code')] = $val->glCode;
@@ -5709,7 +5720,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('confi_date', $extraColumns)) {
-                        $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentConfirmedDate);
+                        $data[$x][trans('custom.confirmed_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentConfirmedDate);
                     }
 
                     if (in_array('app_name', $extraColumns)) {
@@ -5717,7 +5728,7 @@ class FinancialReportAPIController extends AppBaseController
                     }
 
                     if (in_array('app_date', $extraColumns)) {
-                        $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : \Helper::dateFormat($val->documentFinalApprovedDate);
+                        $data[$x][trans('custom.approved_date')] = $val->documentNarration == "Opening Balance" ? "" : Helper::dateFormat($val->documentFinalApprovedDate);
                     }
                     $data[$x]['Supplier Name/Customer Name'] = $val->supplierOrCustomerName;
                     $data[$x]['Supplier Code/Customer Code'] = $val->supplierOrCustomerCode;
@@ -5891,7 +5902,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6321,7 +6332,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6773,7 +6784,7 @@ class FinancialReportAPIController extends AppBaseController
         $checkIsGroup = Company::find($request->companySystemID);
         $chartOfAccountID = $request->chartOfAccountSystemID;
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -6835,7 +6846,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7010,7 +7021,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7300,7 +7311,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7482,7 +7493,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -7655,7 +7666,7 @@ class FinancialReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -8106,7 +8117,7 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
 
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -8684,7 +8695,8 @@ AND epsim .invoiceType = 3 AND taxTotalAmount > 0';
 
         $bindings = [];
 
-        for ($i = 0; $i < 5; $i++) {
+        // 4 placeholders per UNION segment (BETWEEN ? AND ?, GROUP BY ? = 1, HAVING ? != 1) × 4 segments = 16 bindings
+        for ($i = 0; $i < 4; $i++) {
             $bindings[] = $fromDate;
             $bindings[] = $toDate;
             $bindings[] = $request->reportViewID;
@@ -8932,7 +8944,7 @@ GROUP BY id
 
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -9365,7 +9377,7 @@ GROUP BY id
 
                 $db = isset($request->db) ? $request->db : "";
 
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID])->onQueue('reporting');
 
                 return $this->sendResponse([], trans('custom.general_ledger_pdf_report'));
@@ -9381,12 +9393,12 @@ GROUP BY id
 
                 $currencyId =  $request->currencyID;
 
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
 
                 $output = $this->getTrialBalance($request);
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 if($companyCurrency) {
                     $requestCurrencyLocal = $companyCurrency->localcurrency;
                     $requestCurrencyRpt = $companyCurrency->reportingcurrency;
@@ -9430,8 +9442,8 @@ GROUP BY id
                 $lang = app()->getLocale();
                 $dataArr = array(   'output'=>$output,
                                     'employeeData'=>$employeeData,
-                                    'fromDate' => \Helper::dateFormat($request->fromDate),
-                                    'toDate' => \Helper::dateFormat($request->toDate),
+                                    'fromDate' => Helper::dateFormat($request->fromDate),
+                                    'toDate' => Helper::dateFormat($request->toDate),
                                     'companyLogo'=>$companyLogo,
                                     'companyName'=>$companyName,
                                     'totalOpeningBalanceRpt'=>$totalOpeningBalanceRpt,
@@ -9456,14 +9468,14 @@ GROUP BY id
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
 
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output(trans('custom.financial_trial_balance').'.pdf', 'I');
                 break;
 
             case 'FCT':
 
                 $companyName = $request->companySystemID[0]['CompanyName'];
-                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeID = Helper::getEmployeeSystemID();
                 $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
 
                 $reportData = $this->generateFRReport($request);
@@ -9537,13 +9549,51 @@ GROUP BY id
                 $mpdf->AddPage('P');
                 $mpdf->setAutoBottomMargin = 'stretch';
         
-                $mpdf->WriteHTML($html);
+                $this->writeHtmlChunked($mpdf, (string) $html);
                 return $mpdf->Output($templateName, 'I');
 
                 break;
 
             default:
                 return $this->sendError(trans('custom.no_report_id_found'));
+        }
+    }
+
+    /**
+     * Write HTML to mPDF in chunks to avoid pcre.backtrack_limit (1000000) exceeded.
+     * Splits at tag boundaries when possible to keep markup valid.
+     */
+    private function writeHtmlChunked(\Mpdf\Mpdf $mpdf, string $html, int $chunkSize = 500000): void
+    {
+        $len = strlen($html);
+        if ($len <= $chunkSize) {
+            $mpdf->WriteHTML($html);
+
+            return;
+        }
+        $offset = 0;
+        $boundaries = ['</tr>', '</table>', '</tbody>', '</div>', "\n"];
+        while ($offset < $len) {
+            $chunk = substr($html, $offset, $chunkSize);
+            $chunkEnd = $offset + $chunkSize;
+            if ($chunkEnd < $len) {
+                $best = -1;
+                foreach ($boundaries as $b) {
+                    $pos = strrpos($chunk, $b);
+                    if ($pos !== false && $pos > $best) {
+                        $best = $pos + strlen($b);
+                    }
+                }
+                if ($best > 0) {
+                    $chunk = substr($html, $offset, $best);
+                    $offset += $best;
+                } else {
+                    $offset += $chunkSize;
+                }
+            } else {
+                $offset = $len;
+            }
+            $mpdf->WriteHTML($chunk);
         }
     }
 
@@ -10631,7 +10681,7 @@ GROUP BY
      * @param $type
      * @return string
      */
-    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type)
+    public function columnFormulaDecode($columnLinkID, $rowValues, $columnArray, $linkedRowHead = false, $type = null)
     {
         global $globalFormula;
         $finalFormula = '';
@@ -11014,7 +11064,7 @@ GROUP BY
                 $tem = (array)$val;
 
                 $data[$x][trans('custom.document_number')] = $val->documentCode;
-                $data[$x][trans('custom.date')] = \Helper::dateFormat($val->documentDate);
+                $data[$x][trans('custom.date')] = Helper::dateFormat($val->documentDate);
                 $data[$x][trans('custom.document_narration')] = $val->documentNarration;
                 $data[$x]['Segment'] = $val->ServiceLineDes;
                 $data[$x][trans('custom.contract')] = $val->clientContractID;
@@ -11033,13 +11083,11 @@ GROUP BY
         }
 
 
-        \Excel::create('trial_balance', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('trial_balance', function ($excel) use ($data) {
             $excel->sheet('sheet name', function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
@@ -11047,9 +11095,7 @@ GROUP BY
             });
             $lastrow = $excel->getActiveSheet()->getHighestRow();
             $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
-
-        return $this->sendResponse(array(), trans('custom.success_export'));
+        }, $type);
     }
 
     function getFinancialCustomizeRptColumnQry($request, $changeSelect = false, $companyWiseTemplate = false)
@@ -11620,9 +11666,9 @@ GROUP BY
     {
         $selectedCompanyId = $request['selectedCompanyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -12768,21 +12814,18 @@ GROUP BY
         $fileName = trans('custom.finance');
 
         $lang = app()->getLocale();
-        $fontFamily = \Helper::getExcelFontFamily($lang);
+        $fontFamily = Helper::getExcelFontFamily($lang);
 
-        return \Excel::create($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
             $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $excelColumnFormat, $fontFamily) {
-                // Set default font for entire sheet
                 $sheet->setStyle([
                     'font' => [
                         'name' => $fontFamily,
                         'size' => 11,
-                    ]
+                    ],
                 ]);
                 $sheet->setColumnFormat($excelColumnFormat);
                 $sheet->loadView($templateName, $reportData);
-
-                // Apply font to all cells after loading view
                 $lastRow = $sheet->getHighestRow();
                 $lastColumn = $sheet->getHighestColumn();
                 if ($lastRow > 0 && $lastColumn) {
@@ -12792,16 +12835,30 @@ GROUP BY
                         $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                     } catch (\Exception $e) {
                         $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                        $worksheet = $sheet->getDelegate()->getActiveSheet();
                     }
+                       // Bold header section: from row 1 to the column header row (row containing "description")
+                    $descriptionLabel = trans('custom.description');
+                    $headerEndRow = 1;
+                    for ($r = 1; $r <= min($lastRow, 25); $r++) {
+                        $cellVal = (string) $worksheet->getCell('A' . $r)->getValue();
+                        if ($cellVal !== '' && (strpos($cellVal, $descriptionLabel) !== false || $cellVal === $descriptionLabel)) {
+                            $headerEndRow = $r;
+                            break;
+                        }
+                    }
+                    if ($headerEndRow < 2) {
+                        $headerEndRow = 12;
+                    }
+                    $sheet->getStyle('A1:' . $lastColumn . $headerEndRow)->getFont()->setBold(true);
                 }
-                
-                // Set right-to-left for Arabic locale
+                $sheet->setAutoSize(true);
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xlsx');
+        }, 'xlsx');
     }
 
     public function getOpeningBalanceData($fromDate,$typeID,$companyID,$employeeID) {

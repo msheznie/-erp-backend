@@ -61,10 +61,6 @@ class StockCountDetailSubJob implements ShouldQueue
 
         CommonJobService::db_switch($db);
 
-        Log::useFiles(storage_path().'/logs/stock_count_job.log');
-
-        Log::info("Starting Sub Job". $db);
-
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
 
@@ -117,7 +113,6 @@ class StockCountDetailSubJob implements ShouldQueue
 
             if (!empty($checkWhether)) {
                 $isValid = false;
-                Log::info( "Item ".$item->itemDescription." cannot be used, Since, Stock Count (" . $checkWhether->stockCountCode . ") pending for approval with this item.");
             }
 
             $data = array('companySystemID' => $companySystemID,
@@ -155,12 +150,10 @@ class StockCountDetailSubJob implements ShouldQueue
                 $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
             } else {
                 $isValid = false;
-                Log::info("Item ".$item->itemDescription." cannot be used, Since, Account code not updated.");
             }
 
             if (!isset($input['financeGLcodebBS']) || !isset($input['financeGLcodebBSSystemID']) || !isset($input['financeGLcodePL']) || !isset($input['financeGLcodePLSystemID'])) {
                 $isValid = false;
-                Log::info("Item ".$item->itemDescription." cannot be used, Since, Account code not updated.");
             }
 
             if ($input['itemFinanceCategoryID'] == 1) {
@@ -172,7 +165,6 @@ class StockCountDetailSubJob implements ShouldQueue
 
                 if ($alreadyAdded) {
                     $isValid = false;
-                    Log::info("Item ".$item->itemDescription." cannot be used, Since, Item is already added.");
                 }
             }
             if($isValid)
@@ -190,7 +182,6 @@ class StockCountDetailSubJob implements ShouldQueue
             $newCounterValue = $stockCounter->counter;
         }
 
-        Log::info('new value '.$newCounterValue);
         if ($newCounterValue == $count) {
             StockCount::where('stockCountAutoID', $stockCountAutoID)->update(['detailStatus' => 1]);
         }

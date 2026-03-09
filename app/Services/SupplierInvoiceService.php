@@ -8,6 +8,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\ItemAssigned;
 use App\Models\SupplierInvoiceDirectItem;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 class SupplierInvoiceService
 {
@@ -62,7 +63,7 @@ class SupplierInvoiceService
         $input['unitCost'] = 0;
         $input['comment'] = null;
 
-        $currency = \Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
+        $currency = Helper::currencyConversion($invoice->companySystemID,$invoice->supplierTransactionCurrencyID, $invoice->supplierTransactionCurrencyID ,$input['unitCost']);
 
         $detailArray['bookingSuppMasInvAutoID'] = $supplierInvoiceID;
         $detailArray['companySystemID'] = $invoice->companySystemID;
@@ -91,10 +92,10 @@ class SupplierInvoiceService
         $detailArray['localCurrencyID'] = $invoice->localCurrencyID;
         $detailArray['localCurrencyER'] = $invoice->localCurrencyER;
 
-        $detailArray['costPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
-        $detailArray['costPerUnitSupDefaultCur'] = \Helper::roundValue($input['unitCost']);
-        $detailArray['costPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
-        $detailArray['costPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+        $detailArray['costPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
+        $detailArray['costPerUnitSupDefaultCur'] = Helper::roundValue($input['unitCost']);
+        $detailArray['costPerUnitSupTransCur'] = Helper::roundValue($input['unitCost']);
+        $detailArray['costPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
 
         $detailArray['VATAmount'] = 0;
         if ($invoice->isVatEligible) {

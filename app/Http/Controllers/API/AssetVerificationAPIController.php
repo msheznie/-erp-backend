@@ -25,6 +25,8 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class AssetVerificationController
@@ -79,10 +81,10 @@ class AssetVerificationAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['confirmedYN', 'approved']);
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -222,8 +224,8 @@ class AssetVerificationAPIController extends AppBaseController
             $input['documentDate'] = new Carbon($input['documentDate']);
             $input['serialNo'] = $lastSerialNumber;
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
 
             $assetVerification = $this->assetVerificationRepository->create($input);
@@ -358,7 +360,7 @@ class AssetVerificationAPIController extends AppBaseController
                 'document' => $assetVerification->documentSystemID
             ];
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
@@ -432,10 +434,10 @@ class AssetVerificationAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }
@@ -470,7 +472,7 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyID'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
 
@@ -534,7 +536,7 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
         $companyId = $input['companyID'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $assetVerification = DB::table('erp_documentapproved')
@@ -586,10 +588,10 @@ class AssetVerificationAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

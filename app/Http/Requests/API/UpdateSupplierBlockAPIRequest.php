@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierBlock;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSupplierBlockAPIRequest extends APIRequest
+class UpdateSupplierBlockAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

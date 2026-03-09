@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CompanyBudgetPlanning;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class CompanyBudgetPlanningRepository

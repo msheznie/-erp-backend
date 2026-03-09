@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\SupplierEvaluationTemplateComment;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class SupplierEvaluationTemplateCommentRepository

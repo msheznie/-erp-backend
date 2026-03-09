@@ -31,7 +31,6 @@ class SupplierImportance extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -45,7 +44,8 @@ class SupplierImportance extends Model
      */
     protected $casts = [
         'supplierImportanceID' => 'integer',
-        'importanceDescription' => 'string'
+        'importanceDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

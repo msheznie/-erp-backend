@@ -8,7 +8,7 @@ use App\Models\SrmBidDocumentattachments;
 use App\Repositories\SrmBidDocumentattachmentsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Criteria\FilterTenderDocumentCriteria;
@@ -347,7 +347,7 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
                 if (isset($input['sizeInKbs'])) {
                     if ($input['sizeInKbs'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                        return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                        return $this->sendError(trans('srm_bid.max_file_size_exceeded').' '.Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
                     }
                 }
 
@@ -400,7 +400,6 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
                 $documentAttachments = $this->srmBidDocumentattachmentsRepository->update($input, $documentAttachments->id);
                 DB::commit();
-                Log::info(app()->getLocale());
                 return $this->sendResponse($documentAttachments->toArray(), trans('srm_ranking.document_attachments_saved_successfully'));
             }
 

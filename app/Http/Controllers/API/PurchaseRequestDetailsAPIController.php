@@ -37,7 +37,7 @@ use App\Repositories\PurchaseRequestDetailsRepository;
 use App\Repositories\PurchaseRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SegmentMaster;
 use App\Jobs\PrBulkBulkItem;
+use Illuminate\Support\Arr;
 /**
  * Class PurchaseRequestDetailsController
  * @package App\Http\Controllers\API
@@ -112,7 +113,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      */
     public function store(CreatePurchaseRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'uom');
+        $input = Arr::except($request->all(), 'uom');
         $input = $this->convertArrayToValue($input);
 
 
@@ -178,7 +179,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;
@@ -893,7 +894,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdatePurchaseRequestDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), 'uom');
+        $input = Arr::except($request->all(), 'uom');
         
         $input = $this->convertArrayToValue($input);
 
@@ -1179,7 +1180,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -1219,7 +1220,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
             $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
             $writer->save($filePath);
-            $formatChk = \Excel::selectSheetsByIndex(0)->load($filePath, function ($reader) {})->get();
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -1270,8 +1271,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             //     }
             // }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item_code', 'item_description', 'comment', 'qty','estimated_unit_cost'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'item_description', 'comment', 'qty', 'estimated_unit_cost']);
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
@@ -1339,10 +1339,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     public function getItemMasterPurchaseRequestHistory(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1385,10 +1385,10 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
         $type = $request['type'];
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -1455,19 +1455,16 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
             );
         }
 
-        \Excel::create('purchaseRequestHistory', function ($excel) use ($data) {
-
+        return \App\Exports\CreateExcelExport::download('purchaseRequestHistory', function ($excel) use ($data) {
             $excel->sheet(trans('custom.purchaseRequestHistory'), function ($sheet) use ($data) {
-                $sheet->fromArray($data);
+                $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse($csv, trans('custom.success_export'));
     }
@@ -1638,7 +1635,7 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
                         
    
-                        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                        $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
               
                         $request_data_details['estimatedCost'] = $itemVal->estimatedCost;
                         $request_data_details['companySystemID'] = $item->companySystemID;

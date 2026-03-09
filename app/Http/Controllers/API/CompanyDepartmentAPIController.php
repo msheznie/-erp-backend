@@ -22,7 +22,7 @@ use App\Repositories\CompanyDepartmentRepository;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Validation\Rule;
@@ -503,10 +503,10 @@ class CompanyDepartmentAPIController extends AppBaseController
         $type = $input['type'] ?? null;
         $parentDepartmentID = $input['parentDepartmentID'] ?? null;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }

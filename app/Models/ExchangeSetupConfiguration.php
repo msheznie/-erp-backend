@@ -24,16 +24,14 @@ class ExchangeSetupConfiguration extends Model
         'id' => 'integer',
         'exchangeSetupDocumentTypeId' => 'integer',
         'companyId' => 'integer',
-        'isActive' => 'Boolean',
-        'allowErChanges' => 'Boolean',
-        'allowGainOrLossCal' => 'Boolean',
-        'createdBy' => 'integer'
+        'isActive' => 'boolean',
+        'allowErChanges' => 'boolean',
+        'allowGainOrLossCal' => 'boolean',
+        'createdBy' => 'integer',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at'
-    ];
 
     /**
      * Validation rules

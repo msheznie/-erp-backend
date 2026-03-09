@@ -14,7 +14,7 @@ use App\Observers\DepreciationObserver;
 use App\Observers\AssetObserver;
 use App\Observers\DisposalObserver;
 use App\Observers\TenderObserver;
-use Carbon\Carbon;
+use Carbon\CarbonInterval;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Validator;
@@ -49,8 +49,6 @@ use App\Observers\TenderDocumentTypeObserver;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Observers\FinanceItemcategorySubAssignedObserver;
 use Storage;
-use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 class AppServiceProvider extends ServiceProvider
 {
 
@@ -118,14 +116,16 @@ class AppServiceProvider extends ServiceProvider
             return str_replace(':field', $parameters[0], $message);
         });
 
-        Passport::routes();
-        passport::$revokeOtherTokens;
-        passport::$pruneRevokedTokens;
-        Passport::tokensExpireIn(Carbon::now()->addHours(1));
-        Passport::refreshTokensExpireIn(Carbon::now()->addHours(1));
+        // Passport routes are automatically registered in Passport v13+
+        // No need to call Passport::routes() anymore
+        
+        // Configure Passport token expiration
+        // Note: tokensExpireIn and refreshTokensExpireIn accept CarbonInterval or DateInterval
+        Passport::tokensExpireIn(CarbonInterval::hours(1));
+        Passport::refreshTokensExpireIn(CarbonInterval::hours(1));
 
-        Storage::extend('sftp', function ($app, $config) {
-            return new Filesystem(new SftpAdapter($config));
-        });
+        // SFTP is natively supported in Laravel 12 with Flysystem v3
+        // No need for custom Storage::extend() - configure in config/filesystems.php instead
+        // The old League\Flysystem\Sftp\SftpAdapter is not available in Flysystem v3
     }
 }

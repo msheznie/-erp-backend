@@ -31,7 +31,6 @@ class AttendanceDataPullingService{
     private $weekendColumn;
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
 
         $this->companyId = $companyId;
         $this->pullingDate = $pullingDate;
@@ -75,7 +74,6 @@ class AttendanceDataPullingService{
 
             DB::commit();
 
-            Log::info('Data pulled successfully'.$this->log_suffix(__LINE__));
             return true;
 
         }
@@ -436,7 +434,6 @@ class AttendanceDataPullingService{
             'about to insert'=> array_column($this->data, 'empID')
         ]);
 
-        Log::info(' step-4 passed '.$this->log_suffix(__LINE__));
 
         unset($this->attData);
 
@@ -505,7 +502,6 @@ class AttendanceDataPullingService{
             ->delete();
 
         $msg = "Number of rows deleted on 'srp_erp_pay_empattendancereview' table : {$noOfRows} (date : {$this->pullingDate})";
-        Log::info($msg.$this->log_suffix(__LINE__));
     }
 
     function moreThan2RecordsExists($empId){

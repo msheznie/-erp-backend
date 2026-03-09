@@ -23,11 +23,12 @@ use App\Repositories\UnitRepository;
 use App\Repositories\UnitConversionRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Arr;
 
 /**
  * Class UnitController
@@ -251,7 +252,7 @@ class UnitAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $input['modifiedUser'] = $empId;
         $input['modifiedPc'] = gethostname();
-        $data =array_except($input, ['UnitID', 'timeStamp', 'createdDateTime']);
+        $data =Arr::except($input, ['UnitID', 'timeStamp', 'createdDateTime']);
 
         $unitMaster = $this->unitRepository->update($data, $input['UnitID']);
 

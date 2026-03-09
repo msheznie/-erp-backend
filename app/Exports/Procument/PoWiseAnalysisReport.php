@@ -3,6 +3,7 @@
 namespace App\Exports\Procument;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class PoWiseAnalysisReport
 {
@@ -73,22 +74,22 @@ class PoWiseAnalysisReport
 
     public function getColumnFormat() {
         return [
-            'E' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'W' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AA' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'AB' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'E' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'G' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'P' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Q' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'R' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'S' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'T' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'U' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'V' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'W' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'X' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Y' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'Z' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AA' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'AB' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

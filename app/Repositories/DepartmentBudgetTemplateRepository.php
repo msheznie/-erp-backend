@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DepartmentBudgetTemplate;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 class DepartmentBudgetTemplateRepository extends BaseRepository
 {

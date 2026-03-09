@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\helper\CommonJobService;
 use App\helper\Helper;
 use App\Http\Controllers\API\SegmentMasterAPIController;
+use App\helper\Workflow\DocumentApprove;
 use App\Services\DocumentAutoApproveService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Http\Request;
@@ -145,6 +146,6 @@ class ApprovePendingSegments implements ShouldQueue
         $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($documentSystemID,$serviceLineSystemID);
         $autoApproveParams['db'] = $db;
 
-        return Helper::approveDocument($autoApproveParams);
+        return DocumentApprove::approveDocument($autoApproveParams);
     }
 }

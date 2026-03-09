@@ -21,9 +21,11 @@ use App\Models\WarehouseMaster;
 use App\Repositories\WarehouseBinLocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
+use Illuminate\Support\Arr;
 
 /**
  * Class WarehouseBinLocationController
@@ -121,7 +123,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
     public function store(CreateWarehouseBinLocationAPIRequest $request)
     {
         $input = $request->all();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdBy'] = $employee->empID;
         $input = $this->convertArrayToSelectedValue($input,['warehouseSubLevelId','isActive']);
         $validator = \Validator::make($input, [
@@ -273,7 +275,7 @@ class WarehouseBinLocationAPIController extends AppBaseController
             return $this->sendError(trans('custom.bin_location_you_are_trying_to_change_is_already_a'),500);
         }
 
-        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(array_only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
+        $warehouseBinLocation = $this->warehouseBinLocationRepository->update(Arr::only($input, ['binLocationDes','warehouseSubLevelId','isActive']), $id);
 
         return $this->sendResponse($warehouseBinLocation->toArray(), trans('custom.warehousebinlocation_updated_successfully'));
     }
@@ -362,10 +364,10 @@ class WarehouseBinLocationAPIController extends AppBaseController
             $selectedCompanyId = $warehouse->companySystemID;
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

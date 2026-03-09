@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SRMTenderUserAccess;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSRMTenderUserAccessAPIRequest extends APIRequest
+class UpdateSRMTenderUserAccessAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

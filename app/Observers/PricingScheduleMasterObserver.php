@@ -13,6 +13,7 @@ use App\Models\TenderBidFormatDetail;
 use App\Models\PricingScheduleDetailEditLog;
 use App\Models\PricingScheduleDetail;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 
 class PricingScheduleMasterObserver
 {
@@ -34,7 +35,6 @@ class PricingScheduleMasterObserver
                         $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),1);
                         if($output)
                         {
-                            Log::info('created succesfully 2');
                         }
                     
             }
@@ -44,7 +44,7 @@ class PricingScheduleMasterObserver
     public function deleted(PricingScheduleMaster $tender)
     {
        
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
    
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
@@ -126,7 +126,6 @@ class PricingScheduleMasterObserver
     
                     if($result1)
                     {
-                        Log::info('deleted succesfully');
                     }
                 }
     
@@ -161,7 +160,6 @@ class PricingScheduleMasterObserver
                         $output = $this->process($tender,$reflogId,$modifyType,$tenderObj->getOriginal('tender_edit_version_id'),2);
                         if($output)
                         {
-                            Log::info('updated succesfully');
                         }
 
         }
@@ -172,7 +170,7 @@ class PricingScheduleMasterObserver
 
     public function process($tender,$reflog_id,$modify_type_val,$version_id,$type)
     {
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         if(isset($employee))
         {
@@ -225,7 +223,6 @@ class PricingScheduleMasterObserver
                         if($result1)
                         {
                            
-                            Log::info('deleted ccccccccccccccc');
                         }
         
                     }

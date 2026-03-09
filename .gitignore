@@ -19,3 +19,4 @@ composer.lock
 public/logos/
 package-lock.json
 .DS_Store
+/storage/*.key

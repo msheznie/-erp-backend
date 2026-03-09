@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SMESystemEmployeeType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateSMESystemEmployeeTypeAPIRequest extends APIRequest
+class CreateSMESystemEmployeeTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -46,6 +46,8 @@ use App\Repositories\PaySupplierInvoiceMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentConfirm;
 
 class PaymentVoucherServices
 {
@@ -118,7 +120,7 @@ class PaymentVoucherServices
 
     public static function createPaymentVoucher($input)
     {
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return [
                 'status' => false,
@@ -132,7 +134,7 @@ class PaymentVoucherServices
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 1;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return [
                 'status' => false,
@@ -218,7 +220,7 @@ class PaymentVoucherServices
             $input['supplierTransCurrencyER'] = 1;
             if ($supCurrency) {
                 $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+                $currencyConversionDefaultMaster = Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
                 if ($currencyConversionDefaultMaster) {
                     $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                 }
@@ -234,17 +236,17 @@ class PaymentVoucherServices
         $bankAccount = BankAccount::find($input['BPVAccount']);
         if ($bankAccount) {
             $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
-            $currencyConversionDefaultMaster = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
+            $currencyConversionDefaultMaster = Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
             if ($currencyConversionDefaultMaster) {
                 $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
             }
         }
 
-        $companyCurrency = \Helper::companyCurrency($input['companySystemID']);
+        $companyCurrency = Helper::companyCurrency($input['companySystemID']);
         if ($companyCurrency) {
             $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
             $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
             if ($companyCurrencyConversion) {
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
@@ -347,8 +349,8 @@ class PaymentVoucherServices
             $input['createdUserSystemID'] = $employee->employeeSystemID;
         }
         else{
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
         }
 
         $input['payment_mode'] = $input['paymentMode'];
@@ -365,13 +367,10 @@ class PaymentVoucherServices
             $checkRegisterDetails = ChequeRegisterDetail::where('id',$input['BPVchequeNoDropdown'])
                 ->where('company_id',$input['companySystemID'])
                 ->first();
-            Log::info($checkRegisterDetails);
             if($checkRegisterDetails) {
 
                 $cheque_no = $checkRegisterDetails->cheque_no;
 
-                Log::info('$cheque_no');
-                Log::info($cheque_no);
 
                 /*update cheque detail table */
                 $checkRegisterDetails->document_id = $paySupplierInvoiceMasters->PayMasterAutoId;
@@ -380,7 +379,6 @@ class PaymentVoucherServices
                 $checkRegisterDetails->save();
 
 
-                Log::info($checkRegisterDetails->cheque_no);
 
                 PaySupplierInvoiceMaster::find($paySupplierInvoiceMasters->PayMasterAutoId)->update([
                     'BPVchequeNo' => $checkRegisterDetails->cheque_no
@@ -505,15 +503,15 @@ class PaymentVoucherServices
                 $Voucherdetail['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $input['companySystemID']);
             }
 
-            $currency = \Helper::currencyConversion($input['companySystemID'], $Voucherdetail['supplierTransCurrencyID'], $Voucherdetail['supplierTransCurrencyID'], $row['amount']);
-            $Voucherdetail['DPAmount'] = \Helper::roundValue($row['amount']);
-            $Voucherdetail['localAmount'] = \Helper::roundValue($currency['localAmount']);
-            $Voucherdetail['comRptAmount'] = \Helper::roundValue($currency['reportingAmount']);
-            $Voucherdetail['bankAmount'] = \Helper::roundValue($row['amount']);
+            $currency = Helper::currencyConversion($input['companySystemID'], $Voucherdetail['supplierTransCurrencyID'], $Voucherdetail['supplierTransCurrencyID'], $row['amount']);
+            $Voucherdetail['DPAmount'] = Helper::roundValue($row['amount']);
+            $Voucherdetail['localAmount'] = Helper::roundValue($currency['localAmount']);
+            $Voucherdetail['comRptAmount'] = Helper::roundValue($currency['reportingAmount']);
+            $Voucherdetail['bankAmount'] = Helper::roundValue($row['amount']);
 
-            $Voucherdetail['netAmount'] = \Helper::roundValue($row['amount']);
-            $Voucherdetail['netAmountLocal'] = \Helper::roundValue($currency['localAmount']);
-            $Voucherdetail['netAmountRpt'] = \Helper::roundValue($currency['reportingAmount']);
+            $Voucherdetail['netAmount'] = Helper::roundValue($row['amount']);
+            $Voucherdetail['netAmountLocal'] = Helper::roundValue($currency['localAmount']);
+            $Voucherdetail['netAmountRpt'] = Helper::roundValue($currency['reportingAmount']);
 
             DirectPaymentDetails::create($Voucherdetail);
             $a++;
@@ -569,7 +567,7 @@ class PaymentVoucherServices
                 $input['supplierTransCurrencyER'] = 1;
                 if ($supCurrency) {
                     $input['supplierDefCurrencyID'] = $supCurrency->currencyID;
-                    $currencyConversionDefaultMaster = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
+                    $currencyConversionDefaultMaster = Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $supCurrency->currencyID, 0);
                     if ($currencyConversionDefaultMaster) {
                         $input['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
                     }
@@ -663,7 +661,7 @@ class PaymentVoucherServices
         $bankAccount = BankAccount::find($input['BPVAccount']);
         if ($bankAccount) {
             $input['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
-            $currencyConversionDefaultMaster = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
+            $currencyConversionDefaultMaster = Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $bankAccount->accountCurrencyID, 0);
             if (!isset($paySupplierInvoiceMaster->BPVbankCurrencyER)) {
                 if($currencyConversionDefaultMaster){
                     $input['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
@@ -679,11 +677,11 @@ class PaymentVoucherServices
             $input['BPVbankCurrencyER'] = 0;
         }
 
-        $companyCurrency = \Helper::companyCurrency($companySystemID);
+        $companyCurrency = Helper::companyCurrency($companySystemID);
         if ($companyCurrency) {
             $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
             $input['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $companyCurrencyConversion = \Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($companySystemID, $input['supplierTransCurrencyID'], $input['supplierTransCurrencyID'], 0);
             if ($companyCurrencyConversion) {
                 $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                     ->where('companyPolicyCategoryID', 67)
@@ -840,7 +838,6 @@ class PaymentVoucherServices
 
         $input['BPVdate'] = new Carbon($input['BPVdate']);
         $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
-        Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
 
         $changeChequeNoBaseOnPolicy = false;
         $is_exist_policy_GCNFCR = Helper::checkPolicy($companySystemID, 35);
@@ -894,7 +891,7 @@ class PaymentVoucherServices
                     $vatCategoreis[] = $tax->vat_categories;
                 }
 
-                if(count($vatCategoreis) > 0 && count(collect(array_flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0 && $paySupplierInvoiceMaster->directdetail->where('vatSubCategoryID',3)->count() > 0)
+                if(count($vatCategoreis) > 0 && count(collect(Arr::flatten($vatCategoreis))->where('subCatgeoryType',3)) == 0 && $paySupplierInvoiceMaster->directdetail->where('vatSubCategoryID',3)->count() > 0)
                 {
                     return [
                         'status' => false,
@@ -1002,7 +999,7 @@ class PaymentVoucherServices
             if(($input['isSupplierBlocked']) && ($paySupplierInvoiceMaster->invoiceType == 2))
             {
 
-                $validatorResult = \Helper::checkBlockSuppliers($input['BPVdate'],$supplier_id);
+                $validatorResult = Helper::checkBlockSuppliers($input['BPVdate'],$supplier_id);
                 if (!$validatorResult['success']) {
                     return [
                         'status' => false,
@@ -1097,7 +1094,7 @@ class PaymentVoucherServices
                 $masterLocalAmountTotal = $si->localAmount + $bankCharge->localAmount;
                 $masterRptAmountTotal = $si->rptAmount + $bankCharge->comRptAmount;
 
-                $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $masterTransAmountTotal);
+                $convertAmount = Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $masterTransAmountTotal);
 
                 $transAmountTotal = $masterTransAmountTotal;
                 $localAmountTotal = $convertAmount["localAmount"];
@@ -1134,7 +1131,7 @@ class PaymentVoucherServices
 
 
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return [
                     'status' => false,
@@ -1149,7 +1146,7 @@ class PaymentVoucherServices
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 1;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return [
                     'status' => false,
@@ -1845,7 +1842,7 @@ class PaymentVoucherServices
                     ->first();
 
                 if ($totalAmountForApprovalData) {
-                    $currencyConversionRetAmount = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->retentionVatAmount);
+                    $currencyConversionRetAmount = Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->retentionVatAmount);
 
                     $retLocal = $currencyConversionRetAmount['localAmount'];
 
@@ -1883,8 +1880,10 @@ class PaymentVoucherServices
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
 
+                $employeeID = (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']) ? UserTypeService::getSystemEmployee()->empID : null;
+
                 $object = new ChartOfAccountValidationService();
-                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"], $employeeID);
 
                 if (isset($result) && !empty($result["accountCodes"])) {
                     return [
@@ -1905,7 +1904,7 @@ class PaymentVoucherServices
                 'amount' => $amountForApproval,
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument'])
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,
@@ -1986,9 +1985,6 @@ class PaymentVoucherServices
                             $bankAccount->chquePrintedStartingNo = $nextChequeNo;
                             $bankAccount->save();
 
-                            Log::info('Cheque No:' . $input['BPVchequeNo']);
-                            Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-                            Log::info('-------------------------------------------------------');
                         }
                     } else {
                         $chkCheque = PaySupplierInvoiceMaster::where('companySystemID', $paySupplierInvoice->companySystemID)->where('BPVchequeNo', '>', 0)->where('chequePaymentYN', 0)->where('confirmedYN', 1)->where('PayMasterAutoId', '<>', $paySupplierInvoice->PayMasterAutoId)->orderBY('BPVchequeNo', 'DESC')->first();
@@ -2026,28 +2022,28 @@ class PaymentVoucherServices
             $supplierPaymentAmount = $totalAmount->supplierPaymentAmount + $bankChargeTotal->dpAmount;
             if (!empty($supplierPaymentAmount)) {
                 if ($paySupplierInvoiceMaster->BPVbankCurrency == $paySupplierInvoiceMaster->supplierTransCurrencyID) {
-                    $input['payAmountBank'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount + $bankChargeTotal->localAmount);
-                    $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount + $bankChargeTotal->comRptAmount);
-                    $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
+                    $input['payAmountBank'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['payAmountSuppTrans'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['payAmountSuppDef'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['payAmountCompLocal'] = Helper::roundValue($totalAmount->paymentLocalAmount + $bankChargeTotal->localAmount);
+                    $input['payAmountCompRpt'] = Helper::roundValue($totalAmount->paymentComRptAmount + $bankChargeTotal->comRptAmount);
+                    $input['suppAmountDocTotal'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['retentionVatAmount'] = Helper::roundValue($totalAmount->retentionVatAmount);
                 } else {
-                    $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
-                    $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
-                    $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
-                    $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                    $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
-                    $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
+                    $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
+                    $input['payAmountBank'] = Helper::roundValue($bankAmount["defaultAmount"]);
+                    $input['payAmountSuppTrans'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['payAmountSuppDef'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['payAmountCompLocal'] = Helper::roundValue($bankAmount["localAmount"]);
+                    $input['payAmountCompRpt'] = Helper::roundValue($bankAmount["reportingAmount"]);
+                    $input['suppAmountDocTotal'] = Helper::roundValue($supplierPaymentAmount);
+                    $input['retentionVatAmount'] = Helper::roundValue($totalAmount->retentionVatAmount);
 
                 }
-                $exchangeAmount =\Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
+                $exchangeAmount =Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                 $input['payAmountBank'] = $exchangeAmount["defaultAmount"];
-                $input['payAmountCompLocal'] = \Helper::roundValue($exchangeAmount["localAmount"]);
-                $input['payAmountCompRpt'] = \Helper::roundValue($exchangeAmount["reportingAmount"]);
+                $input['payAmountCompLocal'] = Helper::roundValue($exchangeAmount["localAmount"]);
+                $input['payAmountCompRpt'] = Helper::roundValue($exchangeAmount["reportingAmount"]);
             } else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
@@ -2088,13 +2084,13 @@ class PaymentVoucherServices
             $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
             if (!empty($totalAmount->supplierTransAmount)) {
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
+                $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierTransAmount);
                 $input['payAmountBank'] = $bankAmount["defaultAmount"];
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->supplierTransAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->supplierDefaultAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
-                $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierTransAmount);
+                $input['payAmountSuppTrans'] = Helper::roundValue($totalAmount->supplierTransAmount);
+                $input['payAmountSuppDef'] = Helper::roundValue($totalAmount->supplierDefaultAmount);
+                $input['payAmountCompLocal'] = Helper::roundValue($bankAmount["localAmount"]);
+                $input['payAmountCompRpt'] = Helper::roundValue($bankAmount["reportingAmount"]);
+                $input['suppAmountDocTotal'] = Helper::roundValue($totalAmount->supplierTransAmount);
             } else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
@@ -2111,13 +2107,13 @@ class PaymentVoucherServices
             $bankChargeAmount = $bankChargeTotal && isset($bankChargeTotal->dpAmount) ? $bankChargeTotal->dpAmount : 0;
             $supplierPaymentAmount = ($totalAmount ? $totalAmount->paymentAmount : 0) + $bankChargeAmount;
             if (!empty($totalAmount->paymentAmount)) {
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
+                $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $supplierPaymentAmount);
                 $input['payAmountBank'] = $bankAmount["defaultAmount"];
-                $input['payAmountSuppTrans'] = \Helper::roundValue($supplierPaymentAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($supplierPaymentAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
-                $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($supplierPaymentAmount);
+                $input['payAmountSuppTrans'] = Helper::roundValue($supplierPaymentAmount);
+                $input['payAmountSuppDef'] = Helper::roundValue($supplierPaymentAmount);
+                $input['payAmountCompLocal'] = Helper::roundValue($bankAmount["localAmount"]);
+                $input['payAmountCompRpt'] = Helper::roundValue($bankAmount["reportingAmount"]);
+                $input['suppAmountDocTotal'] = Helper::roundValue($supplierPaymentAmount);
             } else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
@@ -2131,13 +2127,13 @@ class PaymentVoucherServices
         if($paySupplierInvoiceMaster->invoiceType == 8) {
             $totalAmount = PayCreditNoteDetail::selectRaw("SUM(creditNotePaymentAmount) as creditNotePaymentAmount")->where('PayMasterAutoId', $id)->first();
             if ($totalAmount && $totalAmount->creditNotePaymentAmount > 0) {
-                $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->creditNotePaymentAmount);
+                $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $totalAmount->creditNotePaymentAmount);
                 $input['payAmountBank'] = $bankAmount["defaultAmount"];
-                $input['payAmountSuppTrans'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
-                $input['payAmountSuppDef'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
-                $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
-                $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
-                $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountSuppTrans'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountSuppDef'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
+                $input['payAmountCompLocal'] = Helper::roundValue($bankAmount["localAmount"]);
+                $input['payAmountCompRpt'] = Helper::roundValue($bankAmount["reportingAmount"]);
+                $input['suppAmountDocTotal'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
             }
             else {
                 $input['payAmountBank'] = 0;
@@ -2158,13 +2154,10 @@ class PaymentVoucherServices
             $input['modifiedUserSystemID'] = $employee->employeeSystemID;
         }
         else{
-            $input['modifiedUser'] = \Helper::getEmployeeID();
-            $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['modifiedUser'] = Helper::getEmployeeID();
+            $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
         }
 
-        Log::info('Cheque No:' . $input['BPVchequeNo']);
-        Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-        Log::info('beforeUpdate______________________________________________________');
 
 
         if(isset($input['BPVAccount']))
@@ -2205,10 +2198,6 @@ class PaymentVoucherServices
         $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($id);
         $paySupplierInvoiceMaster->update($input);
 
-        Log::info('Cheque No:' . $input['BPVchequeNo']);
-        Log::info('PV Code:' . $paySupplierInvoiceMaster->BPVcode);
-        Log::info($paySupplierInvoiceMaster);
-        Log::info('afterUpdate______________________________________________________');
 
         if ($input['payeeType'] == 1) {
             $bankMemoSupplier = BankMemoPayee::where('documentSystemCode', $id)->delete();
@@ -2383,7 +2372,7 @@ class PaymentVoucherServices
             $account = BankAccount::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->where('companySystemID', $input['companySystemID'])->first();
             if($account) {
                 $input['bankCurrencyID'] = $account->accountCurrencyID;
-                $conversionAmount = \Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
+                $conversionAmount = Helper::currencyConversion($input['companySystemID'], $bankAccount->accountCurrencyID, $account->accountCurrencyID, 0);
                 $input['bankCurrencyER'] = $conversionAmount["transToDocER"];
             }else{
                 return [
@@ -2484,7 +2473,7 @@ class PaymentVoucherServices
     }
 
     public static function updateDirectPaymentDetails($id, $input): array {
-        $input = array_except($input, ['segment', 'chartofaccount','to_bank']);
+        $input = Arr::except($input, ['segment', 'chartofaccount','to_bank']);
         $serviceLineError = array('type' => 'serviceLine');
 
         $directPaymentDetails = DirectPaymentDetails::find($id);
@@ -2571,11 +2560,11 @@ class PaymentVoucherServices
             $input['serviceLineCode'] = null;
         }
 
-        $conversionAmount = \Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
+        $conversionAmount = Helper::convertAmountToLocalRpt(202, $input["directPaymentDetailsID"], ABS($input['DPAmount']));
 
-        $input['localAmount'] = \Helper::roundValue($conversionAmount['localAmount']);
-        $input['comRptAmount'] = \Helper::roundValue($conversionAmount['reportingAmount']);
-        $input['bankAmount'] = \Helper::roundValue($conversionAmount['defaultAmount']);
+        $input['localAmount'] = Helper::roundValue($conversionAmount['localAmount']);
+        $input['comRptAmount'] = Helper::roundValue($conversionAmount['reportingAmount']);
+        $input['bankAmount'] = Helper::roundValue($conversionAmount['defaultAmount']);
 
 
         $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
@@ -2615,27 +2604,27 @@ class PaymentVoucherServices
                     ->first();
                 $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['vatAmount']);
+                $currencyConversionVAT = Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['vatAmount']);
                 if ($policy == true) {
-                    $input['VATAmountLocal'] = \Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
-                    $input['VATAmountRpt'] = \Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
+                    $input['VATAmountLocal'] = Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
+                    $input['VATAmountRpt'] = Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
                 }
                 if ($policy == false) {
-                    $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                    $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                    $input['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $input['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                 }
-                $input['vatAmount'] = \Helper::roundValue($input['vatAmount']);
+                $input['vatAmount'] = Helper::roundValue($input['vatAmount']);
 
-                $input['netAmount'] = isset($input['netAmount']) ? \Helper::stringToFloat($input['netAmount']) : 0;
-                $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
+                $input['netAmount'] = isset($input['netAmount']) ? Helper::stringToFloat($input['netAmount']) : 0;
+                $totalCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
 
                 if ($policy == true) {
-                    $input['netAmountLocal'] = \Helper::roundValue($input['netAmount'] / $payMaster->localCurrencyER);
-                    $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
+                    $input['netAmountLocal'] = Helper::roundValue($input['netAmount'] / $payMaster->localCurrencyER);
+                    $input['netAmountRpt'] = Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
                 }
                 if ($policy == false) {
-                    $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
-                    $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
+                    $input['netAmountLocal'] = Helper::roundValue($totalCurrencyConversion['localAmount']);
+                    $input['netAmountRpt'] = Helper::roundValue($totalCurrencyConversion['reportingAmount']);
                 }
             }
         }
@@ -2645,7 +2634,7 @@ class PaymentVoucherServices
         if ($directPaymentDetails->glCodeIsBank) {
             if($payMaster->expenseClaimOrPettyCash == 15 && $payMaster->invoiceType == 3 && abs($directPaymentDetails->interBankAmount - $input['interBankAmount']) > $epsilon &&  abs($directPaymentDetails->bankCurrencyER - $input['bankCurrencyER']) < 0.000001)
             {
-                if(\Helper::roundValue(floatval($input['interBankAmount'])) == 0)
+                if(Helper::roundValue(floatval($input['interBankAmount'])) == 0)
                 {
                     return [
                         'status' => false,
@@ -2653,11 +2642,11 @@ class PaymentVoucherServices
                     ];
                 }
 
-                $input["bankCurrencyER"] = \Helper::roundValue($input['DPAmount'] / \Helper::roundValue(floatval($input['interBankAmount'])));
+                $input["bankCurrencyER"] = Helper::roundValue($input['DPAmount'] / Helper::roundValue(floatval($input['interBankAmount'])));
                 $isBankChanges = true;
             }
         }
-        if(\Helper::roundValue(floatval($input['bankCurrencyER'])) == 0)
+        if(Helper::roundValue(floatval($input['bankCurrencyER'])) == 0)
         {
             return [
                 'status' => false,
@@ -2687,47 +2676,47 @@ class PaymentVoucherServices
             }
 
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->localCurrency) {
-                $input['localAmount'] = \Helper::roundValue($bankAmount);
+                $input['localAmount'] = Helper::roundValue($bankAmount);
                 $input['localCurrencyER'] = $input["bankCurrencyER"];
             }else{
                 $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->localCurrency)->first();
                 if ($conversion->conversion > 1) {
                     if ($conversion->conversion > 1) {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                        $input['localAmount'] = Helper::roundValue($bankAmount / $conversion->conversion);
                     } else {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                        $input['localAmount'] = Helper::roundValue($bankAmount * $conversion->conversion);
                     }
                 } else {
                     if ($conversion->conversion > 1) {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                        $input['localAmount'] = Helper::roundValue($bankAmount * $conversion->conversion);
                     } else {
-                        $input['localAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                        $input['localAmount'] = Helper::roundValue($bankAmount / $conversion->conversion);
                     }
                 }
             }
 
             if ($directPaymentDetails->bankCurrencyID == $directPaymentDetails->comRptCurrency) {
-                $input['comRptAmount'] = \Helper::roundValue($bankAmount);
+                $input['comRptAmount'] = Helper::roundValue($bankAmount);
                 $input['comRptCurrencyER'] = $input["bankCurrencyER"];
             }else{
                 $conversion = CurrencyConversion::where('masterCurrencyID', $directPaymentDetails->bankCurrencyID)->where('subCurrencyID', $directPaymentDetails->comRptCurrency)->first();
                 if ($conversion->conversion > 1) {
                     if ($conversion->conversion > 1) {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                        $input['comRptAmount'] = Helper::roundValue($bankAmount / $conversion->conversion);
                     } else {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                        $input['comRptAmount'] = Helper::roundValue($bankAmount * $conversion->conversion);
                     }
                 } else {
                     if ($conversion->conversion > 1) {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount * $conversion->conversion);
+                        $input['comRptAmount'] = Helper::roundValue($bankAmount * $conversion->conversion);
                     } else {
-                        $input['comRptAmount'] = \Helper::roundValue($bankAmount / $conversion->conversion);
+                        $input['comRptAmount'] = Helper::roundValue($bankAmount / $conversion->conversion);
                     }
                 }
             }
 
-            $input['bankAmount'] = \Helper::roundValue($bankAmount);
-            $input['interBankAmount'] = \Helper::roundValue($bankAmount);
+            $input['bankAmount'] = Helper::roundValue($bankAmount);
+            $input['interBankAmount'] = Helper::roundValue($bankAmount);
         }
 
         if ($directPaymentDetails->toBankCurrencyID) {
@@ -2759,14 +2748,14 @@ class PaymentVoucherServices
             }
 
             if ($payMaster->interCompanyToSystemID) {
-                $companyCurrencyConversion = \Helper::currencyConversion($payMaster->interCompanyToSystemID, $directPaymentDetails->toBankCurrencyID, $directPaymentDetails->toBankCurrencyID, $bankAmount2);
+                $companyCurrencyConversion = Helper::currencyConversion($payMaster->interCompanyToSystemID, $directPaymentDetails->toBankCurrencyID, $directPaymentDetails->toBankCurrencyID, $bankAmount2);
 
                 $input['toCompanyLocalCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $input['toCompanyLocalCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                $input['toCompanyLocalCurrencyAmount'] = Helper::roundValue($companyCurrencyConversion['localAmount']);
                 $input['toCompanyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['toCompanyRptCurrencyAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                $input['toCompanyRptCurrencyAmount'] = Helper::roundValue($companyCurrencyConversion['reportingAmount']);
                 $input['toBankCurrencyER'] = $conversion;
-                $input['toBankAmount'] = \Helper::roundValue($bankAmount2);
+                $input['toBankAmount'] = Helper::roundValue($bankAmount2);
             }
         }
 
@@ -2779,7 +2768,7 @@ class PaymentVoucherServices
             $input['exempt_vat_portion']
         );
 
-        DirectPaymentDetails::where('directPaymentDetailsID',$id)->update(array_except($input, ['isAutoCreateDocument']));
+        DirectPaymentDetails::where('directPaymentDetailsID',$id)->update(Arr::except($input, ['isAutoCreateDocument']));
 
         // update master table
         PaySupplier::updateMaster($input['directPaymentAutoID']);

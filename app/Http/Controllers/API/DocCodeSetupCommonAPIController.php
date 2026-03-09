@@ -15,7 +15,7 @@ use App\Models\DocumentCodeMaster;
 use App\Models\DocumentCodePrefix;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Services\DocumentCodeConfigurationService;
 use Response;

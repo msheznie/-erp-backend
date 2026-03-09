@@ -37,7 +37,6 @@ class AccessTokens extends Model
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
-    protected $dates = ['deleted_at'];
 
     protected $dispatchesEvents = [
         //'created' => logHistory::class
@@ -101,7 +100,8 @@ class AccessTokens extends Model
         'revoked' => 'boolean',
         'created_at' => 'string',
         'updated_at' => 'string',
-        'session_id' => 'string'
+        'session_id' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

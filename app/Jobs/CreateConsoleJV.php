@@ -31,6 +31,7 @@ use App\Models\ConsoleJVDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
 
 class CreateConsoleJV implements ShouldQueue
 {
@@ -54,7 +55,6 @@ class CreateConsoleJV implements ShouldQueue
      * @return void
      */
     public function handle() {
-        Log::useFiles(storage_path() . '/logs/create_console_jv_jobs.log');
 
         DB::beginTransaction();
 
@@ -77,7 +77,7 @@ class CreateConsoleJV implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::channel('create_console_jv_jobs')->error($this->failed($e));
         }
     }
 
@@ -200,19 +200,19 @@ class CreateConsoleJV implements ShouldQueue
         }
         $consoleJVMasterData['serialNo'] = $lastSerialNumber;
 
-        $companyCurrency = \Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
+        $companyCurrency = Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
         if ($companyCurrency) {
             $consoleJVMasterData['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
             $consoleJVMasterData['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-            $companyCurrencyConversion = \Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
+            $companyCurrencyConversion = Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
             if ($companyCurrencyConversion) {
                 $consoleJVMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 $consoleJVMasterData['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
             }
         }
 
-        $consoleJVMasterData['createdUserID'] = \Helper::getEmployeeID();
-        $consoleJVMasterData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $consoleJVMasterData['createdUserID'] = Helper::getEmployeeID();
+        $consoleJVMasterData['createdUserSystemID'] = Helper::getEmployeeSystemID();
         $consoleJVMasterData['createdPcID'] = gethostname();
 
         $jvMaster = ConsoleJVMaster::create($consoleJVMasterData);
@@ -231,8 +231,8 @@ class CreateConsoleJV implements ShouldQueue
             'rptDebitAmount' => 0,
             'localCreditAmount' => 0,
             'rptCreditAmount' => 0,
-            'createdUserSystemID' => \Helper::getEmployeeSystemID(),
-            'createdUserID' => \Helper::getEmployeeID(),
+            'createdUserSystemID' => Helper::getEmployeeSystemID(),
+            'createdUserID' => Helper::getEmployeeID(),
             'createdPcID' => gethostname()
         ];
 
@@ -294,7 +294,7 @@ class CreateConsoleJV implements ShouldQueue
         }
 
         $consoleJVDetailData['debitAmount'] = $debitAmount;
-        $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+        $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
         $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
         $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
         $consoleJVDetailData['creditAmount'] = 0;
@@ -318,7 +318,7 @@ class CreateConsoleJV implements ShouldQueue
                 }
 
                 $consoleJVDetailData['creditAmount'] = $creditAmount;
-                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                 $consoleJVDetailData["localCreditAmount"] = $conversionAmount["localAmount"];
                 $consoleJVDetailData["rptCreditAmount"] = $conversionAmount["reportingAmount"];
                 $consoleJVDetailData['debitAmount'] = 0;
@@ -351,7 +351,7 @@ class CreateConsoleJV implements ShouldQueue
                     $consoleJVDetailData['glAccountDescription'] = ChartOfAccount::getAccountDescription($value->financeGLcodePLSystemID);
 
                     $consoleJVDetailData['creditAmount'] = $creditAmount;
-                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                     $consoleJVDetailData["localCreditAmount"] = $conversionAmount["localAmount"];
                     $consoleJVDetailData["rptCreditAmount"] = $conversionAmount["reportingAmount"];
                     $consoleJVDetailData['debitAmount'] = 0;
@@ -376,7 +376,7 @@ class CreateConsoleJV implements ShouldQueue
                 }
 
                 $consoleJVDetailData['creditAmount'] = $creditAmount;
-                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                 $consoleJVDetailData["localCreditAmount"] = $conversionAmount["localAmount"];
                 $consoleJVDetailData["rptCreditAmount"] = $conversionAmount["reportingAmount"];
                 $consoleJVDetailData['debitAmount'] = 0;
@@ -436,19 +436,19 @@ class CreateConsoleJV implements ShouldQueue
             }
             $consoleJVMasterData['serialNo'] = $lastSerialNumber;
 
-            $companyCurrency = \Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
+            $companyCurrency = Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
             if ($companyCurrency) {
                 $consoleJVMasterData['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                 $consoleJVMasterData['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $companyCurrencyConversion = \Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
+                $companyCurrencyConversion = Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
                 if ($companyCurrencyConversion) {
                     $consoleJVMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $consoleJVMasterData['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                 }
             }
 
-            $consoleJVMasterData['createdUserID'] = \Helper::getEmployeeID();
-            $consoleJVMasterData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $consoleJVMasterData['createdUserID'] = Helper::getEmployeeID();
+            $consoleJVMasterData['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $consoleJVMasterData['createdPcID'] = gethostname();
 
             $jvMaster = ConsoleJVMaster::create($consoleJVMasterData);
@@ -465,8 +465,8 @@ class CreateConsoleJV implements ShouldQueue
                 'rptDebitAmount' => 0,
                 'localCreditAmount' => 0,
                 'rptCreditAmount' => 0,
-                'createdUserSystemID' => \Helper::getEmployeeSystemID(),
-                'createdUserID' => \Helper::getEmployeeID(),
+                'createdUserSystemID' => Helper::getEmployeeSystemID(),
+                'createdUserID' => Helper::getEmployeeID(),
                 'createdPcID' => gethostname()
             ];
 
@@ -483,7 +483,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData['glAccountDescription'] = $paymentVoucherDetail->glCodeDes;
 
                 $consoleJVDetailData['debitAmount'] = $paymentVoucherDetail->DPAmount;
-                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                 $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                 $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
 
@@ -505,7 +505,7 @@ class CreateConsoleJV implements ShouldQueue
                 $consoleJVDetailData["localDebitAmount"] = 0;
                 $consoleJVDetailData["rptDebitAmount"] = 0;
                 $consoleJVDetailData['creditAmount'] = $receiptVocherDetail->DRAmount;
-                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                 $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                 $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
 
@@ -608,19 +608,19 @@ class CreateConsoleJV implements ShouldQueue
             }
             $consoleJVMasterData['serialNo'] = $lastSerialNumber;
 
-            $companyCurrency = \Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
+            $companyCurrency = Helper::companyCurrency($fromCompany->masterCompanySystemIDReorting);
             if ($companyCurrency) {
                 $consoleJVMasterData['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
                 $consoleJVMasterData['rptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                $companyCurrencyConversion = \Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
+                $companyCurrencyConversion = Helper::currencyConversion($fromCompany->masterCompanySystemIDReorting, $consoleJVMasterData['currencyID'], $consoleJVMasterData['currencyID'], 0);
                 if ($companyCurrencyConversion) {
                     $consoleJVMasterData['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                     $consoleJVMasterData['rptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                 }
             }
 
-            $consoleJVMasterData['createdUserID'] = \Helper::getEmployeeID();
-            $consoleJVMasterData['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $consoleJVMasterData['createdUserID'] = Helper::getEmployeeID();
+            $consoleJVMasterData['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $consoleJVMasterData['createdPcID'] = gethostname();
 
             $jvMaster = ConsoleJVMaster::create($consoleJVMasterData);
@@ -637,8 +637,8 @@ class CreateConsoleJV implements ShouldQueue
                 'rptDebitAmount' => 0,
                 'localCreditAmount' => 0,
                 'rptCreditAmount' => 0,
-                'createdUserSystemID' => \Helper::getEmployeeSystemID(),
-                'createdUserID' => \Helper::getEmployeeID(),
+                'createdUserSystemID' => Helper::getEmployeeSystemID(),
+                'createdUserID' => Helper::getEmployeeID(),
                 'createdPcID' => gethostname()
             ];
 
@@ -664,7 +664,7 @@ class CreateConsoleJV implements ShouldQueue
 
                                 if ($difference > 0) {
                                     $consoleJVDetailData['debitAmount'] = ABS($difference);
-                                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                                     $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                                     $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
                                     $consoleJVDetailData['creditAmount'] = 0;
@@ -690,7 +690,7 @@ class CreateConsoleJV implements ShouldQueue
 
                                             if ($difference > 0) {
                                                 $consoleJVDetailData['creditAmount'] = ABS($difference);
-                                                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                                                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                                                 $consoleJVDetailData['localCreditAmount'] = $conversionAmount["localAmount"];
                                                 $consoleJVDetailData['rptCreditAmount'] = $conversionAmount["reportingAmount"];
                                                 $consoleJVDetailData['debitAmount'] = 0;
@@ -699,7 +699,7 @@ class CreateConsoleJV implements ShouldQueue
                                             }
                                             else {
                                                 $consoleJVDetailData['debitAmount'] = ABS($difference);
-                                                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                                                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                                                 $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                                                 $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
                                                 $consoleJVDetailData['creditAmount'] = 0;
@@ -713,7 +713,7 @@ class CreateConsoleJV implements ShouldQueue
                                 }
                                 else {
                                     $consoleJVDetailData['creditAmount'] = ABS($difference);
-                                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                                     $consoleJVDetailData['localCreditAmount'] = $conversionAmount["localAmount"];
                                     $consoleJVDetailData['rptCreditAmount'] = $conversionAmount["reportingAmount"];
                                     $consoleJVDetailData['debitAmount'] = 0;
@@ -739,7 +739,7 @@ class CreateConsoleJV implements ShouldQueue
 
                                             if ($difference > 0) {
                                                 $consoleJVDetailData['creditAmount'] = ABS($difference);
-                                                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                                                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                                                 $consoleJVDetailData['localCreditAmount'] = $conversionAmount["localAmount"];
                                                 $consoleJVDetailData['rptCreditAmount'] = $conversionAmount["reportingAmount"];
                                                 $consoleJVDetailData['debitAmount'] = 0;
@@ -748,7 +748,7 @@ class CreateConsoleJV implements ShouldQueue
                                             }
                                             else {
                                                 $consoleJVDetailData['debitAmount'] = ABS($difference);
-                                                $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                                                $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                                                 $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                                                 $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
                                                 $consoleJVDetailData['creditAmount'] = 0;
@@ -778,7 +778,7 @@ class CreateConsoleJV implements ShouldQueue
                     }
 
                     $consoleJVDetailData['creditAmount'] = $transactionAmount;
-                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                     $consoleJVDetailData['localCreditAmount'] = $conversionAmount["localAmount"];
                     $consoleJVDetailData['rptCreditAmount'] = $conversionAmount["reportingAmount"];
                     $consoleJVDetailData['debitAmount'] = 0;
@@ -798,7 +798,7 @@ class CreateConsoleJV implements ShouldQueue
                     }
 
                     $consoleJVDetailData['debitAmount'] = $transactionAmount;
-                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                     $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                     $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
                     $consoleJVDetailData['creditAmount'] = 0;
@@ -822,7 +822,7 @@ class CreateConsoleJV implements ShouldQueue
                     }
 
                     $consoleJVDetailData['creditAmount'] = $transactionAmount;
-                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
+                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['creditAmount']);
                     $consoleJVDetailData['localCreditAmount'] = $conversionAmount["localAmount"];
                     $consoleJVDetailData['rptCreditAmount'] = $conversionAmount["reportingAmount"];
                     $consoleJVDetailData['debitAmount'] = 0;
@@ -842,7 +842,7 @@ class CreateConsoleJV implements ShouldQueue
                     }
 
                     $consoleJVDetailData['debitAmount'] = $transactionAmount;
-                    $conversionAmount = \Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
+                    $conversionAmount = Helper::convertAmountToLocalRpt(69, $jvMaster->consoleJvMasterAutoId, $consoleJVDetailData['debitAmount']);
                     $consoleJVDetailData["localDebitAmount"] = $conversionAmount["localAmount"];
                     $consoleJVDetailData["rptDebitAmount"] = $conversionAmount["reportingAmount"];
                     $consoleJVDetailData['creditAmount'] = 0;

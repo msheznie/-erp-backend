@@ -155,7 +155,6 @@ class MaterialIssueService
             self::errorLogUpdate($validatedItems['errorLog'], $materialIssue['itemIssueAutoID']);
         }
 
-        Log::info(trans('custom.add_material_issue_multiple_items_end'));
         $materialIssue = ItemIssueMaster::find($materialIssue['itemIssueAutoID']);
         $materialIssue->upload_job_status = 1;
         $materialIssue->isBulkItemJobRun = 0;

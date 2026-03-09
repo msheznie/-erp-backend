@@ -14,10 +14,11 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use Illuminate\Support\Arr;
 
 /**
  * Class TenderMainWorksController
@@ -298,7 +299,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('item'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         //$priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();
         $priceBidDetail = PricingScheduleDetail::where('id',$input['item'])->first();
 
@@ -359,7 +360,7 @@ class TenderMainWorksAPIController extends AppBaseController
         try {
             $input = $request->all();
             $excelUpload = $input['itemExcelUpload'];
-            $input = array_except($request->all(), 'itemExcelUpload');
+            $input = Arr::except($request->all(), 'itemExcelUpload');
             $input = $this->convertArrayToValue($input);
 
             $decodeFile = base64_decode($excelUpload[0]['file']);
@@ -382,8 +383,7 @@ class TenderMainWorksAPIController extends AppBaseController
             Storage::disk($disk)->put($originalFileName, $decodeFile);
 
             $finalData = [];
-            $formatChk = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->get()->toArray();
+            $formatChk = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0);
 
             $uniqueData = array_filter(collect($formatChk)->toArray());
 
@@ -414,8 +414,7 @@ class TenderMainWorksAPIController extends AppBaseController
                 return $this->sendError(trans('srm_tender_rfx.items_null_values'), 500);
             }
 
-            $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('item', 'description'))->get()->toArray();
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item', 'description']);
 
 
             $uploadSerialNumber = array_filter(collect($record)->toArray());
@@ -430,7 +429,7 @@ class TenderMainWorksAPIController extends AppBaseController
                         return $this->sendError(trans('srm_tender_rfx.item_duplicate'), 500);
                     }
                 }
-                $employee = \Helper::getEmployeeInfo();
+                $employee = Helper::getEmployeeInfo();
                 foreach ($record as $vl){
                     $data['tender_id']=$input['tender_id'];
                     $data['schedule_id']=$input['schedule_id'];

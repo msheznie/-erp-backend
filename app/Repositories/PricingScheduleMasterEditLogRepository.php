@@ -11,7 +11,7 @@ use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderBoqItemsEditLog;
 use App\Models\TenderBoqItems;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class PricingScheduleMasterEditLogRepository

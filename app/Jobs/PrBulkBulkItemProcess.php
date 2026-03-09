@@ -22,6 +22,7 @@ use App\Models\GRVDetails;
 use App\Models\ErpItemLedger;
 use App\Models\PurchaseRequestDetails;
 use App\Models\PurchaseRequest;
+use App\helper\Helper;
 
 class PrBulkBulkItemProcess implements ShouldQueue
 {
@@ -55,7 +56,6 @@ class PrBulkBulkItemProcess implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
         CommonJobService::db_switch($db);
 
         $companyId = $this->companyId;
@@ -103,7 +103,7 @@ class PrBulkBulkItemProcess implements ShouldQueue
                 if ($item) {
                     if($item->wacValueLocalCurrencyID != 0)
                     {
-                        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+                        $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
     
                         $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $item->companySystemID)
                             ->where('mainItemCategoryID', $item->financeCategoryMaster)
@@ -121,7 +121,7 @@ class PrBulkBulkItemProcess implements ShouldQueue
                                 } 
                             } 
     
-                            $group_companies = \Helper::getSimilarGroupCompanies($companyId);
+                            $group_companies = Helper::getSimilarGroupCompanies($companyId);
                             $poQty = PurchaseOrderDetails::whereHas('order', function ($query) use ($group_companies) {
                                                         $query->whereIn('companySystemID', $group_companies)
                                                             ->where('approved', -1)

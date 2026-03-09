@@ -312,7 +312,7 @@
                     @endforeach
                 @endforeach
                 @if($columnTemplateID == 2 && $header['itemType'] == 3)
-                    <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $header), $decimalPlaces)}}</td>
+                    <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $header), $decimalPlaces)}}</td>
                 @endif
             </tr>
             @endif
@@ -362,7 +362,7 @@
                             @endforeach
                         @endforeach
                         @if($columnTemplateID == 2)
-                            <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data), $decimalPlaces)}}</td>
+                            <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data), $decimalPlaces)}}</td>
                         @endif
                     @endif
                     @if($data['isFinalLevel'] == 0)
@@ -425,7 +425,7 @@
                         @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data2), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data2), $decimalPlaces)}}</td>
                     @endif
                 </tr>
                 @endif
@@ -491,7 +491,7 @@
                         @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubTwo), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubTwo), $decimalPlaces)}}</td>
                     @endif
                     @endif
                     @if($dataSubTwo['isFinalLevel'] == 0)
@@ -549,7 +549,7 @@
                     @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data23), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data23), $decimalPlaces)}}</td>
                     @endif
                 </tr>
                 @endif
@@ -612,7 +612,7 @@
                     @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubThree), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubThree), $decimalPlaces)}}</td>
                     @endif
                     @endif
                     @if($dataSubThree['isFinalLevel'] == 0)
@@ -658,7 +658,7 @@
                     @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data24), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data24), $decimalPlaces)}}</td>
                     @endif
                 </tr>
                 @endif
@@ -703,7 +703,7 @@
                     @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubFour), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubFour), $decimalPlaces)}}</td>
                     @endif
                     @endif
                     @if($dataSubFour['isFinalLevel'] == 0)
@@ -745,7 +745,7 @@
                     @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data25), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data25), $decimalPlaces)}}</td>
                     @endif
                 </tr>
                 @endif
@@ -785,7 +785,7 @@
                         @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $openingBalance), $decimalPlaces)}}</td>
+                        <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $openingBalance), $decimalPlaces)}}</td>
                     @endif
                 </tr>
                 <tr>
@@ -812,7 +812,7 @@
                         @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
-                        <td>{{number_format(\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $closingBalance), $decimalPlaces)}}</td>
+                        <td>{{number_format(\App\helper\Helper::rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $closingBalance), $decimalPlaces)}}</td>
                     @endif
                 </tr>
             @endif
@@ -843,7 +843,7 @@
                     @endforeach
                 @endforeach
                 @if($columnTemplateID == 2)
-                    <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
+                    <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
                 @endif
             </tr>
             @endif
@@ -865,12 +865,12 @@
                 @foreach ($companyHeaderData as $company)
                     @foreach ($columns as $column)
                     <td style="font-weight: bold; text-align:right;">
-                        {{number_format(\Helper::grandTotalValueOfReportTemplate($company['companyCode'], $column, $grandTotalUncatArr), $decimalPlaces)}}
+                        {{number_format(\App\helper\Helper::grandTotalValueOfReportTemplate($company['companyCode'], $column, $grandTotalUncatArr), $decimalPlaces)}}
                     </td>
                     @endforeach
                 @endforeach
                     @if($columnTemplateID == 2)
-                    <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $grandTotalUncatArr), $decimalPlaces)}}</td>
+                    <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $grandTotalUncatArr), $decimalPlaces)}}</td>
                 @endif
             </tr>
             @endif
@@ -901,7 +901,7 @@
                 @endforeach
                 @endforeach
                 @if($columnTemplateID == 2)
-                    <td style="text-align:right;">{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
+                    <td style="text-align:right;">{{number_format(\App\helper\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $uncategorize), $decimalPlaces)}}</td>
                 @endif
             </tr>
             @endif

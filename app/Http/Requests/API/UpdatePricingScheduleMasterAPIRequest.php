@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PricingScheduleMaster;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePricingScheduleMasterAPIRequest extends APIRequest
+class UpdatePricingScheduleMasterAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

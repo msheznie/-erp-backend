@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BidDocumentVerification;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BidDocumentVerificationRepository

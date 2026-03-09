@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DirectReceiptDetail;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateDirectReceiptDetailAPIRequest extends APIRequest
+class UpdateDirectReceiptDetailAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

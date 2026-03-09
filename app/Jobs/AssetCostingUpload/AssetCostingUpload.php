@@ -71,7 +71,6 @@ class AssetCostingUpload implements ShouldQueue
         $db = $this->db;
         CommonJobService::db_switch($db);
 
-        Log::useFiles(storage_path().'/logs/asset_costing_bulk_insert.log');
 
         $logUploadAssetCosting = $uploadData['logUploadAssetCosting'];
 

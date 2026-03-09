@@ -33,7 +33,6 @@ class YesNoSelectionForMinus extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -47,7 +46,8 @@ class YesNoSelectionForMinus extends Model
      */
     protected $casts = [
         'ID' => 'integer',
-        'selection' => 'string'
+        'selection' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

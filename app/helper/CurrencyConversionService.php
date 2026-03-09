@@ -48,7 +48,7 @@ class CurrencyConversionService
 	public static function localAndReportingConversionByER($transactionCurrencyID, $documentCurrencyID, $transactionAmount, $transER)
     {
         $trasToSuppER = 1;
-        $transactionAmount = \Helper::stringToFloat($transactionAmount);
+        $transactionAmount = Helper::stringToFloat($transactionAmount);
         $documentAmount = 0;
         if ($documentCurrencyID) {
             $transToDocER = $transER;

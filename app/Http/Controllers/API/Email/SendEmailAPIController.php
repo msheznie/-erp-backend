@@ -38,11 +38,7 @@ class SendEmailAPIController extends AppBaseController
                     if (!isset($d['attachmentFileName'])) {
                         $d['attachmentFileName'] = '';
                     }
-                    Log::info('API Email send start');
-                    Log::info('API Email processing');
                     Mail::to($d['empEmail'])->send(new EmailForQueuing($d['alertMessage'], $d['emailAlertMessage'], $d['attachmentFileName'], [], '#C23C32', 'GEARS', 'GEARS', app()->getLocale()));
-                    Log::info('API email sent success fully to :' . $d['empEmail']);
-                    Log::info('API Email send end');
                     $count = $count + 1;
                 }
             }

@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\YesNoSelection;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class YesNoSelectionRepository

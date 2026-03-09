@@ -20,11 +20,12 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\FinanceItemcategorySubAssignedRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditLogsTrait;
+use App\helper\Helper;
 
 /**
  * Class FinanceItemcategorySubAssignedController
@@ -69,10 +70,10 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -228,10 +229,10 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }

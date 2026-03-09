@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PoCutoffJobData;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePoCutoffJobDataAPIRequest extends APIRequest
+class CreatePoCutoffJobDataAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

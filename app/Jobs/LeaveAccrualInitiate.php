@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
 
 class LeaveAccrualInitiate implements ShouldQueue
 {
@@ -30,10 +31,16 @@ class LeaveAccrualInitiate implements ShouldQueue
      */
     public function __construct($dispatch_db, $debugDate = null, $debug = false)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatch_db = $dispatch_db;
@@ -49,7 +56,6 @@ class LeaveAccrualInitiate implements ShouldQueue
     public function handle()
     {
         $path = CommonJobService::get_specific_log_file('leave-accrual');
-        Log::useFiles($path);
         $db = $this->dispatch_db;
         
         CommonJobService::db_switch( $db );
@@ -57,7 +63,7 @@ class LeaveAccrualInitiate implements ShouldQueue
         $company_list = CommonJobService::company_list();
 
         if($company_list->count() == 0){
-            Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::channel('notification_service')->error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ ." \tline no :".__LINE__);
         }
         else{
             
@@ -101,7 +107,7 @@ class LeaveAccrualInitiate implements ShouldQueue
                     if(count($groups) > 0){
                         $this->groupId = '';
                         foreach ($groups as $group){
-                            $group = array_only($group, ['leaveGroupID', 'description']);
+                            $group = Arr::only($group, ['leaveGroupID', 'description']);
                             $this->groupId .= $group['leaveGroupID'].', ' ?? null;
                             $seconds += 30;
                            

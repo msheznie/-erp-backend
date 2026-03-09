@@ -17,6 +17,7 @@ use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
 use ZipArchive;
 use File;
+use App\helper\Helper;
 
 class AccountsReceivablePdfJob implements ShouldQueue
 {
@@ -32,10 +33,16 @@ class AccountsReceivablePdfJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $request, $userId, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->requestData = $request;
@@ -52,7 +59,6 @@ class AccountsReceivablePdfJob implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        Log::useFiles(storage_path() . '/logs/account_recivable_report.log'); 
         $request = $this->requestData;
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
@@ -82,7 +88,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $companyID = "";
             $checkIsGroup = Company::find($request->companySystemID);
             if ($checkIsGroup->isGroup) {
-                $companyID = \Helper::getGroupCompany($request->companySystemID);
+                $companyID = Helper::getGroupCompany($request->companySystemID);
             } else {
                 $companyID = (array)$request->companySystemID;
             }
@@ -414,7 +420,7 @@ class AccountsReceivablePdfJob implements ShouldQueue
             $companyID = "";
             $checkIsGroup = Company::find($request->companySystemID);
             if ($checkIsGroup->isGroup) {
-                $companyID = \Helper::getGroupCompany($request->companySystemID);
+                $companyID = Helper::getGroupCompany($request->companySystemID);
             } else {
                 $companyID = (array)$request->companySystemID;
             }

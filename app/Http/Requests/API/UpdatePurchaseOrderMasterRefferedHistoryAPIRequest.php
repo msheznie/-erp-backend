@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PurchaseOrderMasterRefferedHistory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePurchaseOrderMasterRefferedHistoryAPIRequest extends APIRequest
+class UpdatePurchaseOrderMasterRefferedHistoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -33,6 +33,7 @@ use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
 use App\Traits\AuditTrial;
 use Response;
+use App\helper\email as Email;
 
 class PurcahseRequestDetail
 {
@@ -111,7 +112,7 @@ class PurcahseRequestDetail
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;
@@ -534,7 +535,7 @@ class PurcahseRequestDetail
         //$input['estimatedCost'] = $item->wacValueLocal;
 
         if (!$itemNotound) {
-            $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
+            $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $purchaseRequest->currency, $item->wacValueLocal);
             $input['estimatedCost'] = $currencyConversion['documentAmount'];
             $input['companySystemID'] = $item->companySystemID;
             $input['companyID'] = $item->companyID;
@@ -952,7 +953,7 @@ class PurcahseRequestDetail
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

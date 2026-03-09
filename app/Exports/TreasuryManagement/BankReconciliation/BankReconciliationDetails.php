@@ -2,6 +2,8 @@
 
 namespace App\Exports\TreasuryManagement\BankReconciliation;
 
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+
 class BankReconciliationDetails
 {
     public $companyID;
@@ -18,10 +20,10 @@ class BankReconciliationDetails
     public function getCloumnFormat()
     {
         return [
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'H' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'J' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 

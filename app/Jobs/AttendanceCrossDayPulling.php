@@ -22,10 +22,16 @@ class AttendanceCrossDayPulling implements ShouldQueue{
 
     public function __construct($dispatchDb, $companyId, $attDate)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->dispatchDb = $dispatchDb;
@@ -38,7 +44,6 @@ class AttendanceCrossDayPulling implements ShouldQueue{
     {
 
 
-        Log::useFiles( CommonJobService::get_specific_log_file('attendance-cross-day-clockOut') );
 
         CommonJobService::db_switch($this->dispatchDb);
 
@@ -49,7 +54,7 @@ class AttendanceCrossDayPulling implements ShouldQueue{
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
         if(!$isShiftModule){
-            return Log::error("cannot proceed in old shift module");
+            return Log::channel('attendance_cross_day_job_service')->error("cannot proceed in old shift module");
         }
 
         $obj = new SMAttendanceCrossDayPullingService($this->companyId, $this->attDate);

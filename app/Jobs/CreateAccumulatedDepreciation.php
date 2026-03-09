@@ -23,6 +23,10 @@ use Carbon\Carbon;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\GeneralLedger;
+use App\helper\Helper;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
+
 class CreateAccumulatedDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -49,7 +53,6 @@ class CreateAccumulatedDepreciation implements ShouldQueue
     public function handle()
     {
      
-        Log::useFiles(storage_path() . '/logs/accumulated_dep_job.log');
 
         try {
 
@@ -67,7 +70,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                     $accumulated_month= date('m', strtotime($accumulated_date));
                     $companyFinanceYearID = '';
                     $companyFinancePeriodID = '';
-                    $companyFinanceYear = \Helper::companyFinanceYear($faMaster->companySystemID,1);
+                    $companyFinanceYear = Helper::companyFinanceYear($faMaster->companySystemID,1);
                     $doc_id = 23;    
                     $documentMaster = DocumentMaster::find($doc_id);
 
@@ -88,9 +91,9 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $finance_data['companyFinanceYearID'] = $companyFinanceYearID;
                             $finance_data['companySystemID'] = $faMaster->companySystemID;
                             
-                            $companyFinanceYear = \Helper::companyFinanceYearCheck($finance_data);
+                            $companyFinanceYear = Helper::companyFinanceYearCheck($finance_data);
                             if (!$companyFinanceYear["success"]) {
-                                Log::error($companyFinanceYear["message"]);
+                                Log::channel('accumulated_dep_job')->error($companyFinanceYear["message"]);
                             } else {
                                 $dep_data['FYBiggin'] = $companyFinanceYear["message"]->bigginingDate;
                                 $dep_data['FYEnd'] = $companyFinanceYear["message"]->endingDate;
@@ -100,10 +103,10 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $inputParam["departmentSystemID"] = 9;
                             $inputParam["companyFinancePeriodID"] = $companyFinancePeriodID;
                             
-                            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
 
                             if (!$companyFinancePeriod["success"]) {
-                                Log::error('company finance period not found');
+                                Log::channel('accumulated_dep_job')->error('company finance period not found');
                             } else {
                                 $dep_data['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                                 $dep_data['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
@@ -167,8 +170,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $dep_data['depLocalCur'] = $company->localCurrencyID;
                             $dep_data['depRptCur'] = $company->reportingCurrency;
                             $dep_data['createdPCID'] = gethostname();
-                            $dep_data['createdUserID'] =  \Helper::getEmployeeID();
-                            $dep_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                            $dep_data['createdUserID'] =  Helper::getEmployeeID();
+                            $dep_data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                             //$dep_data['approved'] = -1;
                             $dep_data['is_acc_dep'] = true;
 
@@ -218,8 +221,8 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     $data['costUnitRpt'] = $faMaster->costUnitRpt;
                                     $data['depDoneYN'] = -1;
                                     $data['createdPCid'] = gethostname();
-                                    $data['createdBy'] = \Helper::getEmployeeID();
-                                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                                    $data['createdBy'] = Helper::getEmployeeID();
+                                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                                     $data['depMonthYear'] = $depMaster->depMonthYear;
                                     $data['depMonth'] = $faMaster->depMonth;
                                     $data['depAmountLocalCurr'] = $depMaster->depLocalCur;
@@ -266,11 +269,10 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     'isAutoCreateDocument' => true
                                 );
 
-                                Log::info("on confirm depreciation");
 
 
 
-                                $confirm = \Helper::confirmDocument($params);
+                                $confirm = DocumentConfirm::confirmDocument($params);
                                 if (!$confirm["success"]) {
                                     Log::error($confirm['message']);
                                 }
@@ -282,7 +284,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     if($this->isDocumentUpload == true){
                                         $documentApproved["isDocumentUpload"] = true;
                                     }
-                                    $approve = \Helper::approveDocument($documentApproved);
+                                    $approve = DocumentApprove::approveDocument($documentApproved);
                                     if (!$approve["success"]) {
                                         Log::error($approve['message']);
                                     }

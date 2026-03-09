@@ -11,11 +11,14 @@ use App\Repositories\StockCountDetailRepository;
 use App\Repositories\StockCountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class StockCountDetailController
@@ -259,7 +262,7 @@ class StockCountDetailAPIController extends AppBaseController
     public function update($id, UpdateStockCountDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['uom', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($input, ['uom', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToValue($input);
 
         /** @var StockCountDetail $stockCountDetail */
@@ -283,7 +286,7 @@ class StockCountDetailAPIController extends AppBaseController
             return $this->sendError(trans('custom.item_not_found'));
         }
 
-        $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,
+        $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,
             $stockCountDetail->currentWacLocalCurrencyID,
             $stockCountDetail->currentWacLocalCurrencyID,
             $input['wacAdjLocal']);
@@ -304,7 +307,7 @@ class StockCountDetailAPIController extends AppBaseController
                         'itemCodeSystem' => $input['itemCodeSystem'],
                         'wareHouseId' => $stockCount->location);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $input['systemQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
             $input['adjustedQty'] = $input['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
 
@@ -312,7 +315,7 @@ class StockCountDetailAPIController extends AppBaseController
             $input['currentWacRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
 
 
-            $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+            $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
 
             $input['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
             $input['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];

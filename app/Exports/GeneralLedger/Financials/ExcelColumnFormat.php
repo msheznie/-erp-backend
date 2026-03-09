@@ -5,6 +5,8 @@ namespace App\Exports\GeneralLedger\Financials;
 use App\Models\ReportTemplateColumns;
 use phpDocumentor\Reflection\Types\Collection;
 use PhpParser\Node\Expr\Array_;
+use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ExcelColumnFormat
 {
@@ -142,7 +144,7 @@ class ExcelColumnFormat
         $collection_data->put('CYM1-008',0);
 
         foreach ($collection_data as $key=>$value) {
-            if(str_contains($key,'-'))
+            if(Str::contains($key,'-'))
             {
                 $count++;
 
@@ -172,7 +174,7 @@ class ExcelColumnFormat
                     $current = $start;
 
                     while ($current != $end) {
-                        $columns[$current] = \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
+                        $columns[$current] = NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
                         $current++;
                     }
 

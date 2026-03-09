@@ -23,10 +23,16 @@ class SentCustomerLedger implements ShouldQueue
      */
     public function __construct($input, $db, $languageCode)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->input = $input;
@@ -43,7 +49,6 @@ class SentCustomerLedger implements ShouldQueue
     {
         $db = $this->db;
         CommonJobService::db_switch($db);
-        Log::info('Starting sendCustomerLedger Job');
         $input = $this->input;
         $customers = $input['customers'];
         $errorMessage = [];
@@ -56,9 +61,7 @@ class SentCustomerLedger implements ShouldQueue
             SentCustomerLedgerSubJob::dispatch($db, $input, $languageCode);
         }
         if (count($errorMessage) > 0) {
-            Log::info($errorMessage);
         } else {
-            Log::info('Customer ledger report sent');
         }
     }
 }

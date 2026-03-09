@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class FixedAssetDisposalGlService
 {
@@ -111,8 +112,8 @@ class FixedAssetDisposalGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->disposalDocumentCode;
             $data['documentDate'] = $validatePostedDate['postedDate'];
-            $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
-            $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
+            $data['documentYear'] = Helper::dateYear($validatePostedDate['postedDate']);
+            $data['documentMonth'] = Helper::dateMonth($validatePostedDate['postedDate']);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confimedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confimedByEmpSystemID;
@@ -127,11 +128,11 @@ class FixedAssetDisposalGlService
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
             $data['contraYN'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
 
             $depRptAmountTotal = 0;
             $depLocalAmountTotal = 0;

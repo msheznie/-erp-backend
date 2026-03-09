@@ -13,6 +13,7 @@ use App\Models\PricingScheduleDetailEditLog;
 use App\Models\PricingScheduleMaster;
 use App\Models\TenderBidFormatDetail;
 use App\helper\TenderDetails;
+use App\helper\Helper;
 class PricingScheduleDetailObserver
 {
     /**
@@ -24,7 +25,7 @@ class PricingScheduleDetailObserver
     public function updated(PricingScheduleDetail $tender)
     {   
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $modifyType = 2;
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
@@ -106,7 +107,6 @@ class PricingScheduleDetailObserver
                         
                                         if($result1)
                                         {
-                                            Log::info('updated succefully');
                         
                                         }
                         
@@ -131,7 +131,7 @@ class PricingScheduleDetailObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
        
         $versionId = $tenderObj->getOriginal('tender_edit_version_id');
         $modifyType = 2;
@@ -164,7 +164,6 @@ class PricingScheduleDetailObserver
                 if($result1)
                 {
                    
-                    Log::info('creted succesfully');
                 }
     
          

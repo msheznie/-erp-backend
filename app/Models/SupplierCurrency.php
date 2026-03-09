@@ -37,7 +37,6 @@ class SupplierCurrency extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'supplierCurrencyID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -60,7 +59,8 @@ class SupplierCurrency extends Model
         'currencyID' => 'integer',
         'bankMemo' => 'string',
         'isAssigned' => 'integer',
-        'isDefault' => 'integer'
+        'isDefault' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

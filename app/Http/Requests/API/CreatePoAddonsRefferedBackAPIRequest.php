@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PoAddonsRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePoAddonsRefferedBackAPIRequest extends APIRequest
+class CreatePoAddonsRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

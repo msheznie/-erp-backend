@@ -38,7 +38,6 @@ class SupplierContactDetails extends Model
     const UPDATED_AT = 'timestamp';
     protected $primaryKey  = 'supplierContactID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -65,7 +64,8 @@ class SupplierContactDetails extends Model
         'contactPersonTelephone' => 'string',
         'contactPersonFax' => 'string',
         'contactPersonEmail' => 'string',
-        'isDefault' => 'integer'
+        'isDefault' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -8,13 +8,15 @@ use App\Models\WarehouseRights;
 use App\Repositories\WarehouseRightsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
+use Illuminate\Support\Arr;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use App\Models\EmployeeNavigation;
 use Illuminate\Support\Facades\DB;
+use App\helper\Helper;
 
 /**
  * Class WarehouseRightsController
@@ -126,8 +128,8 @@ class WarehouseRightsAPIController extends AppBaseController
         $company = isset($input['companyID']) ? $input['companyID'] : null;
         $warehouseSelectedItems = isset($input['warehouseSelectedItems'])?$input['warehouseSelectedItems']:false;
         $employeeSystemID =  isset($input['employeeSystemID'])?$input['employeeSystemID']:false;
-        $warehouse = array_pluck($warehouseSelectedItems, 'id');
-        $employee = array_pluck($employeeSystemID, 'employeeSystemID');
+        $warehouse = Arr::pluck($warehouseSelectedItems, 'id');
+        $employee = Arr::pluck($employeeSystemID, 'employeeSystemID');
 
 
         $arr = [];
@@ -367,7 +369,7 @@ class WarehouseRightsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->findWithoutFail($id);
         $employee = EmployeeNavigation::select('companyID')->where('employeeSystemID', $user->employee_id)->get();
-        $companiesByGroup = array_pluck($employee, 'companyID');
+        $companiesByGroup = Arr::pluck($employee, 'companyID');
 
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -383,10 +385,10 @@ class WarehouseRightsAPIController extends AppBaseController
                 $company = $companiesByGroup;
 
                 $globalCompanyID = (isset($input['globalCompanyID'])) ? $input['globalCompanyID'] : 0;
-                $isGroup = \Helper::checkIsCompanyGroup($globalCompanyID);
+                $isGroup = Helper::checkIsCompanyGroup($globalCompanyID);
 
                 if($isGroup){
-                    $company = \Helper::getGroupCompany($globalCompanyID);
+                    $company = Helper::getGroupCompany($globalCompanyID);
                 }else{
                     $company = [$globalCompanyID];
                 }

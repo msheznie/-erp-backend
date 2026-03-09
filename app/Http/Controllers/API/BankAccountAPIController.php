@@ -39,9 +39,13 @@ use App\Repositories\BankAccountRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class BankAccountController
@@ -86,7 +90,7 @@ class BankAccountAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCID'] = gethostname();
         $input['createdEmpID'] = $employee->empID;
@@ -221,11 +225,11 @@ class BankAccountAPIController extends AppBaseController
     public function update($id, UpdateBankAccountAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'chart_of_account', 'amounts',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'chart_of_account', 'amounts',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'currency']);
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPCID'] = gethostname();
         $input['modifiedByEmpID'] = $employee->empID;
@@ -337,7 +341,7 @@ class BankAccountAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -419,10 +423,10 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -491,10 +495,10 @@ class BankAccountAPIController extends AppBaseController
 
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -560,18 +564,16 @@ class BankAccountAPIController extends AppBaseController
             $data[$x][trans('custom.status')] = $status;
         }
 
-        \Excel::create('bank_accounts', function ($excel) use ($data) {
+        return \App\Exports\CreateExcelExport::download('bank_accounts', function ($excel) use ($data) {
             $excel->sheet(trans('custom.bank_accounts_excel_tab'), function ($sheet) use ($data) {
                 $sheet->fromArray($data, null, 'A1', true);
                 $sheet->setAutoSize(true);
-                
-                // Set right-to-left for Arabic locale
                 if (app()->getLocale() == 'ar') {
                     $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
+        }, 'xls');
 
         return $this->sendResponse([], trans('custom.supplier_masters_export_to_csv_successfully'));
     }
@@ -678,7 +680,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankAccount = DB::table('erp_documentapproved')
@@ -749,7 +751,7 @@ class BankAccountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankAccount = DB::table('erp_documentapproved')
@@ -797,7 +799,7 @@ class BankAccountAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $bankAccount = [];
@@ -826,7 +828,7 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        $bankAccount->docRefNo = \Helper::getCompanyDocRefNo($bankAccount->companySystemID, $bankAccount->documentSystemID);
+        $bankAccount->docRefNo = Helper::getCompanyDocRefNo($bankAccount->companySystemID, $bankAccount->documentSystemID);
 
         return $this->sendResponse($bankAccount->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_accounts')]));
     }
@@ -859,7 +861,7 @@ class BankAccountAPIController extends AppBaseController
 
         $this->bankAccountRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $bankAccount->documentSystemID)->first();
 
@@ -910,7 +912,7 @@ class BankAccountAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -979,10 +981,10 @@ class BankAccountAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

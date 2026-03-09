@@ -11,7 +11,7 @@ use App\Repositories\EmployeeMobileBillMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 
@@ -413,13 +413,11 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
                 $data[$x]['Personal Amount'] = round($val->personalAmount,3);
             }
 
-            \Excel::create('employee_mobile_bill_report', function ($excel) use ($data) {
+            return \App\Exports\CreateExcelExport::download('employee_mobile_bill_report', function ($excel) use ($data) {
                 $excel->sheet('sheet name', function ($sheet) use ($data) {
                     $sheet->fromArray($data, null, 'A1', true);
                     $sheet->setAutoSize(true);
                     $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    
-                    // Set right-to-left for Arabic locale
                     if (app()->getLocale() == 'ar') {
                         $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                         $sheet->setRightToLeft(true);
@@ -427,9 +425,7 @@ class EmployeeMobileBillMasterAPIController extends AppBaseController
                 });
                 $lastrow = $excel->getActiveSheet()->getHighestRow();
                 $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download($type);
-
-            return $this->sendResponse(array(), trans('custom.success_export'));
+            }, $type);
         }
         return $this->sendError( 'No Records Found');
 

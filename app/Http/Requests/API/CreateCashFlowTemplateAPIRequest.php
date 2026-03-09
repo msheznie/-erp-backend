@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CashFlowTemplate;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateCashFlowTemplateAPIRequest extends APIRequest
+class CreateCashFlowTemplateAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -34,7 +34,7 @@ use App\Repositories\SalesReturnRepository;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
@@ -44,6 +44,11 @@ use App\helper\TaxService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class SalesReturnController
@@ -359,7 +364,7 @@ class SalesReturnAPIController extends AppBaseController
             return $this->sendError(trans('custom.sales_return_not_found'));
         }
         $input = $this->convertArrayToSelectedValue($input, array('transactionCurrencyID','confirmedYN','customerID','returnType','salesPersonID','serviceLineSystemID','wareHouseSystemCode','companyFinancePeriodID'));
-        $input = array_except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
+        $input = Arr::except($input,['finance_period_by','finance_year_by','transaction_currency','customer','detail','segment','warehouse']);
 
         if($salesReturn->transactionCurrencyID != $input['transactionCurrencyID']){
             $companyCurrency = Helper::companyCurrency($input['companySystemID']);
@@ -638,9 +643,9 @@ class SalesReturnAPIController extends AppBaseController
                     'category' => '',
                     'amount' => $amount
                 );
-                $update = array_except($input,['confirmedYN']);
+                $update = Arr::except($input,['confirmedYN']);
                 $salesReturn = $this->salesReturnRepository->update($update, $id);
-                $confirm = Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 } else {
@@ -1046,8 +1051,8 @@ class SalesReturnAPIController extends AppBaseController
 
                             $totalNetcost = ($new['unitTransactionAmount'] - $new['discountAmount']) * $new['noQty'];
 
-                            $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
-                            $invDetail_arr['unitTransactionAmount'] = \Helper::roundValue($invDetail_arr['unitTransactionAmount']);
+                            $invDetail_arr['transactionAmount'] = Helper::roundValue($totalNetcost);
+                            $invDetail_arr['unitTransactionAmount'] = Helper::roundValue($invDetail_arr['unitTransactionAmount']);
                             
                             $item = SalesReturnDetail::create($invDetail_arr);
 
@@ -1199,7 +1204,7 @@ class SalesReturnAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
         $totalDetail = SalesReturnDetail::select(DB::raw("SUM(transactionAmount) as amount"))
                                           ->where('salesReturnID', $salesReturnID)
@@ -1222,7 +1227,7 @@ class SalesReturnAPIController extends AppBaseController
             return ['status' => false, 'message' => 'VAT Detail Already exist.'];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -1265,7 +1270,7 @@ class SalesReturnAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -1284,7 +1289,7 @@ class SalesReturnAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
        
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
@@ -1498,8 +1503,8 @@ class SalesReturnAPIController extends AppBaseController
 
                             $totalNetcost = $new['sellingCostAfterMargin'] * $new['noQty'];
 
-                            $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
-                            $invDetail_arr['unitTransactionAmount'] = \Helper::roundValue($invDetail_arr['unitTransactionAmount']);
+                            $invDetail_arr['transactionAmount'] = Helper::roundValue($totalNetcost);
+                            $invDetail_arr['unitTransactionAmount'] = Helper::roundValue($invDetail_arr['unitTransactionAmount']);
                             
                             $item = SalesReturnDetail::create($invDetail_arr);
 
@@ -1805,7 +1810,8 @@ class SalesReturnAPIController extends AppBaseController
 
         $disk = Helper::policyWiseDisk($do->company->masterCompanySystemIDReorting, 'local_public');
 
-        $logoExists = Storage::disk($disk)->exists($do->company->logoPath);
+        $logoPath = $do->company->logoPath ?? null;
+        $logoExists = !empty($logoPath) && Storage::disk($disk)->exists($logoPath);
         if ($logoExists) {
             $do->logoExists = true;
             $do->companyLogo = $companyLogo;
@@ -1944,7 +1950,7 @@ class SalesReturnAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -2026,7 +2032,7 @@ class SalesReturnAPIController extends AppBaseController
 
     public function approveSalesReturn(Request $request)
     {
-        $approve = Helper::approveDocument($request);
+        $approve = DocumentApprove::approveDocument($request);
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
@@ -2037,7 +2043,7 @@ class SalesReturnAPIController extends AppBaseController
 
     public function rejectSalesReturn(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {

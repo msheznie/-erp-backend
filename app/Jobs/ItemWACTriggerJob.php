@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\helper\inventory as Inventory;
 use App\Models\ItemAssigned;
 use App\Models\ThirdPartyIntegrationKeys;
 use GuzzleHttp\Client;
@@ -26,10 +27,16 @@ class ItemWACTriggerJob implements ShouldQueue
      */
     public function __construct($tenantDb)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->tenantDb = $tenantDb;
@@ -42,7 +49,6 @@ class ItemWACTriggerJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('item-wac-amount') );
         try {
 
         CommonJobService::db_switch($this->tenantDb);
@@ -63,7 +69,7 @@ class ItemWACTriggerJob implements ShouldQueue
                     'itemCodeSystem' => $item->itemCodeSystem,
                     'wareHouseId' => null);
 
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 return [
                     'itemAutoID' => $item->itemCodeSystem,
                     'wacAmount' => $itemCurrentCostAndQty['wacValueLocal'],

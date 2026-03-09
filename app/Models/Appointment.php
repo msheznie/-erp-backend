@@ -120,17 +120,17 @@ class Appointment extends Model
         'status' => 'integer',
         'supplier_id' => 'integer',
         'tenat_id' => 'integer',
-        'document_id' => 'varchar',
+        'document_id' => 'string',
         'document_system_id' => 'integer',
         'serial_no' => 'integer',
-        'primary_code' => 'varchar',
+        'primary_code' => 'string',
         'confirmed_by_emp_id' => 'integer',
-        'confirmedByName' => 'varchar',
-        'confirmedByEmpID' => 'varchar',
+        'confirmedByName' => 'string',
+        'confirmedByEmpID' => 'string',
         'confirmed_date' => 'datetime',
         'approved_yn' => 'integer',
         'approved_date' => 'datetime',
-        'approved_by_emp_name' => 'varchar',
+        'approved_by_emp_name' => 'string',
         'approved_by_emp_id' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'timesReferred' => 'integer',
@@ -139,8 +139,8 @@ class Appointment extends Model
         'cancelYN' => 'integer',
         'canceledDate' => 'datetime',
         'canceledByEmpId' => 'integer',
-        'canceledReason' => 'varchar',
-        'canceledByName' => 'varchar'
+        'canceledReason' => 'string',
+        'canceledByName' => 'string'
     ];
 
     /**

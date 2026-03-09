@@ -41,10 +41,16 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
      */
     public function __construct($dispatch_db, $depMasterAutoID, $reportCount, $userId, $outputData, $outputChunkData, $rootPath, $languageCode, $totalRecords, $grandTotalDepAmountLocal = null, $grandTotalDepAmountRpt = null)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->depMasterAutoID = $depMasterAutoID;
@@ -219,12 +225,10 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                     $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
 
                     if ($fileMoved) {
-                        Log::info("ZIP file uploaded to S3 successfully: {$zipPath}");
                         // Delete the local ZIP file from public directory
                         if (file_exists($zipFullPath)) {
                             $fileDeleted = @unlink($zipFullPath);
                             if ($fileDeleted) {
-                                Log::info("Local ZIP file deleted: {$zipFileName}");
                             } else {
                                 Log::warning("Failed to delete local ZIP file: {$zipFullPath}");
                             }
@@ -244,12 +248,9 @@ class GenerateAssetDepreciationPdf implements ShouldQueue
                 ];
 
                 $notificationResult = WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds, $db);
-                Log::info("Send report to user id: " . json_encode((array) $this->userIds));
                 if (Storage::disk('local_public')->exists($rootPaths)) {
                     Storage::disk('local_public')->deleteDirectory($rootPaths);
-                    Log::info("Temporary folder deleted: $rootPaths");
                 }
-                Log::info("Report sent");
             } else {
                 Log::error("ZIP file does not exist after creation: {$zipFullPath}");
             }

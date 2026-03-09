@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\DepartmentBudgetTemplate;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateDepartmentBudgetTemplateAPIRequest extends APIRequest
+class CreateDepartmentBudgetTemplateAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,6 +3,7 @@
 namespace App\Exports\Procument;
 
 use App\helper\Helper;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class PoToPaymentReport
 {
@@ -30,16 +31,16 @@ class PoToPaymentReport
 
     public function getColumnFormat() {
         return [
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'O' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'R' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'S' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'F' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'O' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'P' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'R' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'S' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'T' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 

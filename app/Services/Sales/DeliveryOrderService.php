@@ -15,6 +15,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseReturn;
 use App\Models\StockTransfer;
+use App\helper\Helper;
 
 class DeliveryOrderService
 {
@@ -265,9 +266,9 @@ class DeliveryOrderService
         $itemData['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
         $itemData['budgetYear'] = $deliveryOrder->budgetYear;
 
-        $currencyConversion = \Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, $item->wacValueLocal);
+        $currencyConversion = Helper::currencyConversion($item->companySystemID, $item->wacValueLocalCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, $item->wacValueLocal);
 
-        $itemData['unitCost'] =  \Helper::roundValue($currencyConversion['documentAmount']);
+        $itemData['unitCost'] =  Helper::roundValue($currencyConversion['documentAmount']);
 
         $itemData['localCurrencyID'] = $deliveryOrder->localCurrencyID;
         $itemData['localCurrencyER'] = $deliveryOrder->localCurrencyER;
@@ -291,7 +292,7 @@ class DeliveryOrderService
             if ($itemData['unitCost'] > 0) {
                 $itemData['VATAmount'] = (($itemData['unitCost'] / 100) * $vatDetails['percentage']);
             }
-            $currencyConversionVAT = \Helper::currencyConversion($deliveryOrder->companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, 0);
+            $currencyConversionVAT = Helper::currencyConversion($deliveryOrder->companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, 0);
 
             $itemData['VATAmount'] = 0;
             $itemData['VATAmountLocal'] = 0;
@@ -302,22 +303,22 @@ class DeliveryOrderService
         $grvCost = $itemData['unitCost'];
 
         if ($grvCost > 0) {
-            $currencyConversion = \Helper::currencyConversion($companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, $grvCost);
+            $currencyConversion = Helper::currencyConversion($companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierTransactionCurrencyID, $grvCost);
 
-            $itemData['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
+            $itemData['GRVcostPerUnitLocalCur'] = Helper::roundValue($currencyConversion['localAmount']);
             $itemData['GRVcostPerUnitSupTransCur'] = $grvCost;
-            $itemData['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+            $itemData['GRVcostPerUnitComRptCur'] = Helper::roundValue($currencyConversion['reportingAmount']);
 
-            $itemData['purchaseRetcostPerUnitLocalCur'] = \Helper::roundValue($currencyConversion['localAmount']);
+            $itemData['purchaseRetcostPerUnitLocalCur'] = Helper::roundValue($currencyConversion['localAmount']);
             $itemData['purchaseRetcostPerUnitTranCur'] = $itemData['unitCost'];
-            $itemData['purchaseRetcostPerUnitRptCur'] = \Helper::roundValue($currencyConversion['reportingAmount']);
+            $itemData['purchaseRetcostPerUnitRptCur'] = Helper::roundValue($currencyConversion['reportingAmount']);
         }
 
         // adding supplier Default CurrencyID base currency conversion
         if ($grvCost > 0) {
-            $currencyConversionDefault = \Helper::currencyConversion($companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierDefaultCurrencyID, $grvCost);
-            $itemData['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
-            $itemData['purchaseRetcostPerUniSupDefaultCur'] = \Helper::roundValue($currencyConversionDefault['documentAmount']);
+            $currencyConversionDefault = Helper::currencyConversion($companySystemID, $deliveryOrder->supplierTransactionCurrencyID, $deliveryOrder->supplierDefaultCurrencyID, $grvCost);
+            $itemData['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
+            $itemData['purchaseRetcostPerUniSupDefaultCur'] = Helper::roundValue($currencyConversionDefault['documentAmount']);
         }
 
         $itemData['deliveryOrderID'] = $deliveryOrderID;
@@ -333,7 +334,7 @@ class DeliveryOrderService
         $itemData['serviceLineSystemID'] = $deliveryOrder->serviceLineSystemID;
         $itemData['serviceLineCode'] = $deliveryOrder->serviceLine;
         $itemData['companySystemID'] = $item->companySystemID;
-        $itemData['companyID'] =  \Helper::getCompanyById($item->companySystemID);
+        $itemData['companyID'] =  Helper::getCompanyById($item->companySystemID);
 
         $itemData['createdPcID'] = gethostname();
         $itemData['createdUserID'] = $empID;

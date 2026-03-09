@@ -3,7 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\BankReconciliationRules;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
+use App\helper\Helper;
 
 /**
  * Class BankReconciliationRulesRepository
@@ -53,9 +54,9 @@ class BankReconciliationRulesRepository extends BaseRepository
 
     public function getBankStatementUploadRules($bankAccountId, $searchValue, $companyId)
     {
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($companyId);
+            $subCompanies = Helper::getGroupCompany($companyId);
         } else {
             $subCompanies = [$companyId];
         }

@@ -31,13 +31,15 @@ use App\Models\WarehouseMaster;
 use App\Repositories\ItemReturnDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use Illuminate\Support\Arr;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
+use App\helper\Helper;
 /**
  * Class ItemReturnDetailsController
  * @package App\Http\Controllers\API
@@ -421,7 +423,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
        
        
         $api_key = $request['api_key'];
-        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
+        $input = Arr::except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         
@@ -445,7 +447,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         {
             $bytes = random_bytes(10);
             $hashKey = bin2hex($bytes);
-            $empID = \Helper::getEmployeeSystemID();
+            $empID = Helper::getEmployeeSystemID();
 
 
             $item_issue = ItemIssueMaster::find($isse_code);

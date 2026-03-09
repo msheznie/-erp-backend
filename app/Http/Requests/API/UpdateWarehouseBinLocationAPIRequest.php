@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\WarehouseBinLocation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateWarehouseBinLocationAPIRequest extends APIRequest
+class UpdateWarehouseBinLocationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -52,7 +52,6 @@ class EmployeesDepartment extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey = 'employeesDepartmentsID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -123,7 +122,8 @@ class EmployeesDepartment extends Model
         'removedByEmpID' => 'string',
         'createdDate' => 'string',
         'removedByEmpSystemID' => 'integer',
-        'removedDate' => 'string'
+        'removedDate' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

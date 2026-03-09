@@ -14,7 +14,7 @@ use App\Models\StockTransferDetails;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use Illuminate\Http\Request;
 
@@ -334,7 +334,7 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '', $grvLocation, $serviceLineSystemID, $projectID) {
+    public function grvListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);

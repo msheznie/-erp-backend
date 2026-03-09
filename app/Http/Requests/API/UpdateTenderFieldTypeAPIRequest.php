@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\TenderFieldType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateTenderFieldTypeAPIRequest extends APIRequest
+class UpdateTenderFieldTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -160,7 +160,7 @@ class DepartmentBudgetPlanning extends Model
         'status' => 'integer',
         'planningCode' => 'string',
         'workStatus' => 'string',
-        'financeTeamStatus' => 'integer',
+        'financeTeamStatus' => 'string',
         'confirmed_yn' => 'integer',
         'confirmed_by' => 'integer',
         'confirmed_date' => 'date',

@@ -134,7 +134,6 @@ class ServiceLine extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-   /* protected $dates = ['deleted_at'];*/
 
 
     public $fillable = [
@@ -184,7 +183,8 @@ class ServiceLine extends Model
         'createdUserSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'documentSystemID' => 'integer',
-        'modifiedUserSystemID' => 'integer'
+        'modifiedUserSystemID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

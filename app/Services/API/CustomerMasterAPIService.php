@@ -30,6 +30,9 @@ use App\Models\CustomerContactDetails;
 use App\Models\SupplierContactType;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
+use Illuminate\Support\Arr;
 
 class CustomerMasterAPIService
 {
@@ -290,13 +293,13 @@ class CustomerMasterAPIService
                     $previousValue = $customerMaster->toArray();
                     $newValue = $input;
 
-                    $updateResult = CustomerMaster::where('customerCodeSystem',$customerId)->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
+                    $updateResult = CustomerMaster::where('customerCodeSystem',$customerId)->update(Arr::only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo','custAdvanceAccountSystemID','custAdvanceAccount']));
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(Arr::only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID','custAdvanceAccountSystemID','custAdvanceAccount']));
 
                     if($updateResult){
                         $customerMaster = CustomerMaster::where('customerCodeSystem',$customerId)->first();
-                        $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
-                        $modified_array = array_only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
+                        $old_array = Arr::only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
+                        $modified_array = Arr::only($input,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
 
                         foreach ($old_array as $key => $old){
                             if($old != $modified_array[$key]){
@@ -331,7 +334,7 @@ class CustomerMasterAPIService
                 'isAutoCreateDocument' => $input['isAutoCreateDocument']
             );
 
-            $confirm = Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return [
                     'status' => false,
@@ -462,7 +465,7 @@ class CustomerMasterAPIService
                 $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
                 $autoApproveParams['db'] = $db;
 
-                $approveDocument = Helper::approveDocument($autoApproveParams);
+                $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
                 if (!$approveDocument["success"]) {
                     DB::rollBack();
                     return [
@@ -487,10 +490,6 @@ class CustomerMasterAPIService
             ];
         } catch (\Exception $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error File: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
             return [
                 'status' => false,
                 'message' => $e->getMessage(),
@@ -610,7 +609,7 @@ class CustomerMasterAPIService
         $autoApproveParams = DocumentAutoApproveService::getAutoApproveParams($updateCustomerMaster['data']->documentSystemID,$updateCustomerMaster['data']->customerCodeSystem);
         $autoApproveParams['db'] = $db;
 
-        $approveDocument = Helper::approveDocument($autoApproveParams);
+        $approveDocument = DocumentApprove::approveDocument($autoApproveParams);
         if (!$approveDocument["success"]) {
             if ($manageTransaction) {
                 DB::rollBack();

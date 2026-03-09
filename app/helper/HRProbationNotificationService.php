@@ -54,7 +54,6 @@ class HRProbationNotificationService
 
         $this->expired_docs = $data->toArray();
 
-        Log::info( count($this->expired_docs)." end of probation employees found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
 
         $users_setup = NotificationUser::get_notification_users_setup($this->comScenarioID);
@@ -92,7 +91,6 @@ class HRProbationNotificationService
         }
 
 
-        Log::info( $this->sent_mail_count. " expired contract mails send \t on file: " . __CLASS__ ." \tline no :".__LINE__ );
 
         return true;
     }

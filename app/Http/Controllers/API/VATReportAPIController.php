@@ -18,6 +18,7 @@ use App\Services\GeneralLedger\Reports\VatReportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Response;
+use App\helper\Helper;
 
 class VATReportAPIController extends AppBaseController
 {
@@ -31,7 +32,7 @@ class VATReportAPIController extends AppBaseController
 /*
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -386,7 +387,7 @@ class VATReportAPIController extends AppBaseController
                 ];
                 break;
             case 87: // sales return
-                $currencyConversionAmount = \Helper::currencyConversion($row->sales_return->companySystemID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionAmount);
+                $currencyConversionAmount = Helper::currencyConversion($row->sales_return->companySystemID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionCurrencyID, $row->sales_return->transactionAmount);
 
                 $output= [
                     'localAmount'=> isset($currencyConversionAmount['localAmount'])?number_format($currencyConversionAmount['localAmount'],$localDecimal):number_format(0,$localDecimal),

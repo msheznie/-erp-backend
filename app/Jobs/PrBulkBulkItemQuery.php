@@ -122,7 +122,6 @@ class PrBulkBulkItemQuery implements ShouldQueue
                                 ->get()
                                 ->toArray();
 
-            Log::info('PR Bulk Item Query: '. count($output));
 
 
             if (count($output) > 0) {

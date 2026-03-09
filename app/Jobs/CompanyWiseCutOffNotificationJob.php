@@ -32,10 +32,16 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
      */
     public function __construct($dispatch_db, $compAssignScenarioData)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->dispatch_db = $dispatch_db;
         $this->compAssignScenarioData = $compAssignScenarioData;
@@ -48,7 +54,6 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $compAssignScenario = $this->compAssignScenarioData;
         CommonJobService::db_switch($db);
@@ -66,7 +71,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
 
         $partiallyRecivedPos = $partiallyRecivedPos->toArray();
         if (count($compAssignScenario['notification_day_setup']) == 0) {
-            Log::error('Notification day setup not exist in '.$db);
+            Log::channel('budget_cutoff_po')->error('Notification day setup not exist in '.$db);
         } else {
             foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
                 $beforeAfter = $notDaySetup['beforeAfter'];
@@ -74,7 +79,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::error("User setup not found for scenario");
+                    Log::channel('budget_cutoff_po')->error("User setup not found for scenario");
                     continue;
                 }
 

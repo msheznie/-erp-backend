@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\POSTransErrorLog;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreatePOSTransErrorLogAPIRequest extends APIRequest
+class CreatePOSTransErrorLogAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

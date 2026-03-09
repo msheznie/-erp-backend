@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\HRMSLeaveAccrualPolicyType;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateHRMSLeaveAccrualPolicyTypeAPIRequest extends APIRequest
+class UpdateHRMSLeaveAccrualPolicyTypeAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

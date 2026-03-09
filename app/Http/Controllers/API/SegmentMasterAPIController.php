@@ -59,7 +59,7 @@ use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\ErpItemLedger;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Validation\Rule;
@@ -67,6 +67,9 @@ use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use App\Traits\AuditLogsTrait;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class SegmentMasterController
@@ -163,7 +166,7 @@ class SegmentMasterAPIController extends AppBaseController
 
             if(isset($input['confirmed_yn']) && $input['confirmed_yn'] == 1) {
                 $params = array('autoID' => $segmentMasters->serviceLineSystemID, 'company' => $input["companySystemID"], 'document' => 132);
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
@@ -688,10 +691,10 @@ class SegmentMasterAPIController extends AppBaseController
         $isActive = $input['isActive'];
         $approvalStatus = $input['approved_yn'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }
@@ -776,10 +779,10 @@ class SegmentMasterAPIController extends AppBaseController
     {
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -993,7 +996,7 @@ class SegmentMasterAPIController extends AppBaseController
                 'document' => 132,
                 'isAutoCreateDocument' => isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']
             );
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
                     return [
@@ -1021,7 +1024,7 @@ class SegmentMasterAPIController extends AppBaseController
             $input['confirmed_date'] = $input['timeStamp'];
         }
 
-        $data = array_except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
+        $data = Arr::except($input, ['serviceLineSystemID', 'createdUserGroup', 'createdPcID', 'createdUserID', 'sub_levels_count', 'isAutoCreateDocument']);
 
         $segmentMaster = SegmentMaster::withoutGlobalScope('final_level')
                                       ->where('serviceLineSystemID', $input['serviceLineSystemID'])
@@ -1044,10 +1047,10 @@ class SegmentMasterAPIController extends AppBaseController
 
         $isDeletedShow = ($input['isDeletedShow'] == 'false') ? 0 : 1;
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId,true);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId,true);
 
             $companyData = Company::find($selectedCompanyId);
             $segmenntData = [];
@@ -1144,15 +1147,15 @@ class SegmentMasterAPIController extends AppBaseController
 
         $companyId = $request->selectedCompanyID;
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $companyID = \Helper::getGroupCompany($companyId);
+            $companyID = Helper::getGroupCompany($companyId);
         } else {
             $companyID = [$companyId];
         }
 
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $values = implode(',', array_map(function($value)
         {
             return trim($value, ',');
@@ -1198,7 +1201,7 @@ class SegmentMasterAPIController extends AppBaseController
                 GROUP BY serviceline.serviceLineSystemID 
                 ORDER BY documentApprovedID";
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         $segments = DB::select($sql);
         if ($isEmployeeDischarched == 'true') {
@@ -1234,7 +1237,7 @@ class SegmentMasterAPIController extends AppBaseController
 
     public function rejectSegmentMaster(Request $request)
     {
-        $reject = Helper::rejectDocument($request);
+        $reject = DocumentReject::rejectDocument($request);
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
@@ -1267,10 +1270,10 @@ class SegmentMasterAPIController extends AppBaseController
         $isActive = $input['isActive'];
         $approvalStatus = $input['approved_yn'];
 
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if($isGroup){
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         }else{
             $childCompanies = [$companyId];
         }

@@ -69,18 +69,22 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
+use Illuminate\Support\Arr;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 use App\Models\ErpItemLedger;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Exports\Inventory\MaterialIssueRegister;
+use App\helper\inventory as Inventory;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -181,20 +185,20 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCid'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             return $this->sendError($companyFinanceYear["message"], 500);
         }
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             return $this->sendError($companyFinancePeriod["message"], 500);
         } else {
@@ -424,7 +428,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $api_key = $request['api_key'];
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by','api_key']);
 
         $input = $this->convertArrayToValue($input);
@@ -569,7 +573,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-            $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+            $companyFinanceYear = Helper::companyFinanceYearCheck($input);
             if (!$companyFinanceYear["success"]) {
                 return $this->sendError($companyFinanceYear["message"], 500);
             }
@@ -585,7 +589,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             {
                 $bytes = random_bytes(10);
                 $hashKey = bin2hex($bytes);
-                $empID = \Helper::getEmployeeSystemID();
+                $empID = Helper::getEmployeeSystemID();
 
                 Carbon::now()->addDays(1);
                 $insertData = [
@@ -626,7 +630,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
-            $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+            $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
             } else {
@@ -702,7 +706,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $data = array('companySystemID' => $itemIssueMaster->companySystemID,
                     'itemCodeSystem' => $updateItem->itemCodeSystem,
                     'wareHouseId' => $itemIssueMaster->wareHouseFrom);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                 $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                 $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
@@ -765,14 +769,14 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'amount' => $amount
             );
 
-             $confirm = \Helper::confirmDocument($params);
+             $confirm = DocumentConfirm::confirmDocument($params);
              if (!$confirm["success"]) {
                  return $this->sendError($confirm["message"], 500);
              }
         }
 
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $employee->empID;
@@ -904,7 +908,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $itemIssueMaster = DB::table('erp_documentapproved')
@@ -1001,7 +1005,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $itemIssueMaster = DB::table('erp_documentapproved')
@@ -1084,7 +1088,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $itemIssueMaster = [];
@@ -1188,13 +1192,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId);
+        $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
         $contracts = "";
 
         $units = Unit::all();
 
-        $companyCurrency = \Helper::companyCurrency($companyId);
+        $companyCurrency = Helper::companyCurrency($companyId);
 
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $companyId)
@@ -1246,9 +1250,9 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1279,7 +1283,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
-        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+        $materielIssue->docRefNo = Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
         return $this->sendResponse($materielIssue->toArray(), trans('custom.materiel_issue_retrieved_successfully'));
     }
@@ -1293,7 +1297,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
-        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+        $materielIssue->docRefNo = Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
 
         $company = Company::where('companySystemID', $materielIssue->companySystemID)->first();
 
@@ -1351,7 +1355,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
-        $materielIssue->docRefNo = \Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
+        $materielIssue->docRefNo = Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
         $lang = app()->getLocale();
         $array = array('entity' => $materielIssue);
         $time = strtotime("now");
@@ -1425,7 +1429,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $this->itemIssueMasterRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $itemIssueMaster->documentSystemID)->first();
 
@@ -1476,7 +1480,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -1645,7 +1649,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'itemCodeSystem' => $issueDetail->itemCodeSystem,
                     'wareHouseId' => $location);
 
-                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                     $issueDetail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                     $issueDetail['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -1672,7 +1676,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $bytes = random_bytes(10);
         $hashKey = bin2hex($bytes);
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
         $api_key = $request['api_key'];
         $companyId = $request['companyId'];
         $segmentId = $request['segmentId'];
@@ -2057,7 +2061,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $data = array('companySystemID' => $companySystemID,
                 'itemCodeSystem' => $detail['itemCodeSystem'],
                 'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
             $detail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
@@ -2108,10 +2112,10 @@ class ItemIssueMasterAPIController extends AppBaseController
 
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -2579,10 +2583,10 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $data = json_decode($this->generateMIRReport($request)->getContent())->data;
         $excelColumnFormat = [
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
         ];
 
@@ -2649,10 +2653,10 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     public function getMIRReportData($input)
     {
-        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+        $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($input['companySystemID']);
+            $subCompanies = Helper::getGroupCompany($input['companySystemID']);
         }
         else {
             $subCompanies = [$input['companySystemID']];

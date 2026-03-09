@@ -22,12 +22,14 @@ use App\Repositories\EmployeeNavigationRepository;
 use App\Traits\AuditLogsTrait;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
+use Illuminate\Support\Arr;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use App\Models\EmployeeNavigationAccess;
+use App\helper\Helper;
 
 /**
  * Class EmployeeNavigationController
@@ -269,7 +271,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         } else {
             $companiesByGroup = "";
             if(isset($input['globalCompanyId'])) {
-                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                if (!Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
                     $companiesByGroup = $input['globalCompanyId'];
                     $userGroup->where('srp_erp_employeenavigation.companyID', $companiesByGroup);
                 }
@@ -317,15 +319,15 @@ class EmployeeNavigationAPIController extends AppBaseController
         $selectedCompanyId = (isset($request['selectedCompanyId'])) ? $request['selectedCompanyId'] : 0;
         
         $employee= EmployeeNavigation::select('companyID')->where('employeeSystemID',$user->employee_id)->get();
-        $companiesByGroup = array_pluck($employee, 'companyID');
+        $companiesByGroup = Arr::pluck($employee, 'companyID');
 
         $groupCompany = Company::whereIN('companySystemID',$companiesByGroup)->where('isGroup',0);
 
         if ($selectedCompanyId > 0) {
-           $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+           $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
             if($isGroup){
-                $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+                $subCompanies = Helper::getGroupCompany($selectedCompanyId);
             }else{
                 $subCompanies = [$selectedCompanyId];
             }

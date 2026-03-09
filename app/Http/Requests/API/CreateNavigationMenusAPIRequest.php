@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\NavigationMenus;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateNavigationMenusAPIRequest extends APIRequest
+class CreateNavigationMenusAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

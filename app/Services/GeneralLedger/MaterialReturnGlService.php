@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class MaterialReturnGlService
 {
@@ -110,8 +111,8 @@ class MaterialReturnGlService
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->itemReturnCode;
             $data['documentDate'] = $postedDateGl;
-            $data['documentYear'] = \Helper::dateYear($postedDateGl);
-            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
+            $data['documentYear'] = Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = Helper::dateMonth($postedDateGl);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -128,11 +129,11 @@ class MaterialReturnGlService
             $data['holdingShareholder'] = null;
             $data['holdingPercentage'] = 0;
             $data['nonHoldingPercentage'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
-            $data['timestamp'] = \Helper::currentDateTime();
+            $data['timestamp'] = Helper::currentDateTime();
 
             if ($bs) {
                 $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
@@ -145,7 +146,7 @@ class MaterialReturnGlService
                 $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
                 $data['documentRptCurrencyER'] = 1;
                 $data['documentRptAmount'] = ABS($bs->rptAmount);
-                $data['timestamp'] = \Helper::currentDateTime();
+                $data['timestamp'] = Helper::currentDateTime();
                 array_push($finalData, $data);
             }
 
@@ -161,7 +162,7 @@ class MaterialReturnGlService
                     $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = 1;
                     $data['documentRptAmount'] = ABS($val->rptAmount) * -1;
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
             }

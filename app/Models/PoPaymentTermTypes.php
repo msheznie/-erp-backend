@@ -33,7 +33,6 @@ class PoPaymentTermTypes extends Model
 
     protected $primaryKey = 'paymentTermsCategoryID';
 
-    protected $dates = ['deleted_at'];
 
     protected $appends = ['categoryDescription'];
 
@@ -48,7 +47,8 @@ class PoPaymentTermTypes extends Model
      */
     protected $casts = [
         'paymentTermsCategoryID' => 'integer',
-        'categoryDescription' => 'string'
+        'categoryDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -33,7 +33,6 @@ class YesNoSelection extends Model
     const UPDATED_AT = 'updated_at';
 
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -47,7 +46,8 @@ class YesNoSelection extends Model
      */
     protected $casts = [
         'idyesNoselection' => 'integer',
-        'YesNo' => 'string'
+        'YesNo' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

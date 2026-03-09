@@ -8,6 +8,7 @@ use App\Models\ReportTemplate;
 use App\Models\ReportTemplateLinks;
 use App\Models\ReportTemplateDetails;
 use App\Models\ChartOfAccountsAssigned;
+use App\helper\Helper;
 
 class ChartOfAccountDependency
 {
@@ -57,8 +58,8 @@ class ChartOfAccountDependency
 			                $data3['companySystemID'] = $value2->companySystemID;
 			                $data3['companyID'] = $value2->companyID;
 			                $data3['createdPCID'] = gethostname();
-			                $data3['createdUserID'] = \Helper::getEmployeeID();
-			                $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+			                $data3['createdUserID'] = Helper::getEmployeeID();
+			                $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
 			                ReportTemplateLinks::create($data3);
 
 
@@ -143,8 +144,8 @@ class ChartOfAccountDependency
                         }
                     }
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateLinks = ReportTemplateLinks::create($data);
                 }
             }

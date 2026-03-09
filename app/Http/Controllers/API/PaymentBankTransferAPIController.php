@@ -39,10 +39,14 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Maatwebsite\Excel\Facades\Excel;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class PaymentBankTransferController
@@ -144,7 +148,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
@@ -373,7 +377,7 @@ class PaymentBankTransferAPIController extends AppBaseController
     public function update($id, UpdatePaymentBankTransferAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'confirmedByEmpID', 'confirmedDate',
             'confirmed_by', 'confirmedByEmpSystemID']);
 
         /** @var PaymentBankTransfer $paymentBankTransfer */
@@ -405,7 +409,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -512,10 +516,10 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -594,7 +598,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankTransfer = DB::table('erp_documentapproved')
@@ -642,7 +646,7 @@ class PaymentBankTransferAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $bankTransfer = [];
@@ -675,7 +679,7 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $bankTransfer = DB::table('erp_documentapproved')
@@ -815,9 +819,9 @@ class PaymentBankTransferAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $paymentBankTransfer->companySystemID;
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1091,28 +1095,19 @@ class PaymentBankTransferAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = trans('custom.payment_bank_transfer_prefix') . $input['paymentBankTransferID'] . '_' . $time;
 
-         Excel::create($fileName, function ($excel) use ($data,$columnArray) {
-            $excel->sheet(trans('custom.firstsheet'), function ($sheet) use ($data,$columnArray) {
+        return \App\Exports\CreateExcelExport::download($fileName, function ($excel) use ($data, $columnArray) {
+            $excel->sheet(trans('custom.firstsheet'), function ($sheet) use ($data, $columnArray) {
                 $sheet->setColumnFormat($columnArray);
                 $sheet->fromArray($data, null, 'A1', true);
-                // $sheet->setAutoSize(true);
-                //$sheet->getStyle('A')->getAlignment()->setWrapText(true);
                 $sheet->setAutoSize(true);
-
                 if (app()->getLocale() == 'ar') {
                     $sheet->setRightToLeft(true);
                     $sheet->getStyle('A1:Z1000')
-                          ->getAlignment()
-                          ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        ->getAlignment()
+                        ->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                 }
-
-                //$sheet->setWidth('A', 50);
             });
-            //$lastrow = $excel->getActiveSheet()->getHighestRow();
-            //$excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download('xls');
-
-        return $this->sendResponse([], trans('custom.payment_bank_transfer_export_to_csv_successfully'));
+        }, 'xls');
     }
 
     public function paymentBankTransferReopen(Request $request)
@@ -1143,7 +1138,7 @@ class PaymentBankTransferAPIController extends AppBaseController
 
         $this->paymentBankTransferRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $bankTransfer->documentSystemID)->first();
 
@@ -1194,7 +1189,7 @@ class PaymentBankTransferAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }

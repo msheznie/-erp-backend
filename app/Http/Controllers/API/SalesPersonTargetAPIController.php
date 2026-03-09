@@ -23,9 +23,10 @@ use App\Models\Company;
 use App\Repositories\SalesPersonTargetRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class SalesPersonTargetController
@@ -124,7 +125,7 @@ class SalesPersonTargetAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $masterData = SalesPersonMaster::find($input['salesPersonID']);
 

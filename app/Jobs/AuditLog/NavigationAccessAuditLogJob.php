@@ -93,7 +93,7 @@ class NavigationAccessAuditLogJob implements ShouldQueue
                 StoreAuditLogJob::dispatch($eventData)->onQueue('audit-logs');
             }
         } catch (\Exception $e) {
-            Log::error('Failed to write to audit log: ' . $e->getMessage());
+            Log::channel('audit')->error('Failed to write to audit log: ' . $e->getMessage());
         }
     }
 }

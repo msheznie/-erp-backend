@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AttachmentSME;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateAttachmentSMEAPIRequest extends APIRequest
+class UpdateAttachmentSMEAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

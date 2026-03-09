@@ -86,7 +86,7 @@ class VictoriaLogsStrategy implements LogStorageStrategyInterface
             ]);
             
             $statusCode = $response->getStatusCode();
-            
+
             if ($statusCode === 200 || $statusCode === 204) {
                
             }

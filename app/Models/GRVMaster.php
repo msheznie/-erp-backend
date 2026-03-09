@@ -104,7 +104,6 @@ class GRVMaster extends Model
 
     protected $primaryKey  = 'grvAutoID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -279,7 +278,8 @@ class GRVMaster extends Model
         'modifiedUserSystemID' => 'integer',
         'stampDate' => 'string',
         'approvedByUserID' => 'string',
-        'approvedByUserSystemID' => 'integer'
+        'approvedByUserSystemID' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

@@ -8,9 +8,10 @@ use App\Models\BudgetControlLink;
 use App\Repositories\BudgetControlLinkRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class BudgetControlLinkController
@@ -154,8 +155,8 @@ class BudgetControlLinkAPIController extends AppBaseController
                         $data['glDescription'] = $val['AccountDescription'];
                         $data['companySystemID'] = $input['companySystemID'];
                         $data['createdPCID'] = gethostname();
-                        $data['createdUserID'] = \Helper::getEmployeeID();
-                        $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data['createdUserID'] = Helper::getEmployeeID();
+                        $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         $budgetControlLink = $this->budgetControlLinkRepository->create($data);
                     }
                 }

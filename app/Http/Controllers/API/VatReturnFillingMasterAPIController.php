@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\API;
 
-use App\helper\email;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateVatReturnFillingMasterAPIRequest;
 use App\Http\Requests\API\UpdateVatReturnFillingMasterAPIRequest;
@@ -27,11 +26,13 @@ use App\Services\ValidateDocumentAmend;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class VatReturnFillingMasterController
@@ -339,7 +340,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                 'amount' => 0
             );
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
             }
@@ -433,10 +434,10 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         }
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -621,7 +622,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
 
         $this->vatReturnFillingMasterRepository->update($updateInput, $id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $vatReturnFillingMaster->documentSystemID)->first();
 
@@ -673,7 +674,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -700,7 +701,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -757,7 +758,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $budgets = DB::table('erp_documentapproved')
@@ -809,7 +810,7 @@ class VatReturnFillingMasterAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $budgets = [];

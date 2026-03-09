@@ -47,7 +47,6 @@ class ChartOfAccountsAssigned extends Model
     const UPDATED_AT = 'timeStamp';
 
 
-    protected $dates = ['deleted_at'];
     protected $primaryKey = 'chartOfAccountsAssignedID';
 
     public $fillable = [
@@ -92,7 +91,8 @@ class ChartOfAccountsAssigned extends Model
         'isAssigned' => 'integer',
         'isBank' => 'integer',
         'AllocationID' => 'integer',
-        'relatedPartyYN' => 'integer'
+        'relatedPartyYN' => 'integer',
+        'deleted_at' => 'datetime',
     ];
 
     /**

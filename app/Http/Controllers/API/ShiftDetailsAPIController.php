@@ -87,10 +87,14 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Log;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use DB;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
+use App\helper\Workflow\DocumentConfirm;
 
 /**
  * Class ShiftDetailsController
@@ -212,7 +216,7 @@ class ShiftDetailsAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $counterCheck = ShiftDetails::where('isClosed',0)
                                         ->where('wareHouseID',$input['wareHouseID'])
@@ -234,7 +238,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_start_new_shift_already_a_shift_is_goin').$shift->counter->counterCode.' ]',500);
         }
 
-        $input['companyCode'] = \Helper::getCompanyById($input['companyID']);
+        $input['companyCode'] = Helper::getCompanyById($input['companyID']);
 
         $company  = Company::with(['localcurrency','reportingcurrency'])->find($input['companyID']);
         if(empty($company)){
@@ -267,7 +271,7 @@ class ShiftDetailsAPIController extends AppBaseController
             $input['companyReportingCurrency'] = $company->reportingcurrency->CurrencyCode;
         }
 
-        $currencyCon = \Helper::currencyConversion($input['companyID'],$input['transactionCurrencyID'],$input['transactionCurrencyID'],$input['startingBalance_transaction']);
+        $currencyCon = Helper::currencyConversion($input['companyID'],$input['transactionCurrencyID'],$input['transactionCurrencyID'],$input['startingBalance_transaction']);
 
         $input['startingBalance_reporting'] = round($currencyCon['reportingAmount'],$input['companyReportingCurrencyDecimalPlaces']);
         $input['transactionExchangeRate'] = $currencyCon['trasToLocER'];
@@ -385,7 +389,7 @@ class ShiftDetailsAPIController extends AppBaseController
     public function update($id, UpdateShiftDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['user', 'counter','outlet']);
+        $input = Arr::except($request->all(), ['user', 'counter','outlet']);
         $input = $this->convertArrayToValue($input);
 
         $messages = array(
@@ -421,7 +425,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $input['endingBalance_local'] =  $input['endingBalance_transaction'];
 
 
-        $currencyConvert = \Helper::convertAmountToLocalRpt(207,$shiftDetails->shiftID,$input['endingBalance_transaction']);
+        $currencyConvert = Helper::convertAmountToLocalRpt(207,$shiftDetails->shiftID,$input['endingBalance_transaction']);
         $input['endingBalance_reporting'] = round($currencyConvert['reportingAmount'],$shiftDetails->companyReportingCurrencyDecimalPlaces);
 
         $input['different_transaction'] = round(($input['endingBalance_transaction'] - $shiftDetails->startingBalance_transaction),$shiftDetails->transactionCurrencyDecimalPlaces);
@@ -429,7 +433,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $input['different_local_reporting'] = round(($input['endingBalance_reporting'] - $shiftDetails->startingBalance_reporting),$shiftDetails->companyReportingCurrencyDecimalPlaces);
 
         $input['endTime'] = now();
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['modifiedPCID'] = gethostname();
         $input['modifiedUserID'] = $employee->empID;
@@ -796,7 +800,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         if($shiftDetails->posType == 1) {
 
-            $logged_user = \Helper::getEmployeeSystemID();
+            $logged_user = Helper::getEmployeeSystemID();
 
             $masterData = ['documentSystemID' => 110, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
 
@@ -849,7 +853,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $wareHouseID = $wareHouse->wareHouseID;
                     }
 
-                    $companyCurrency = \Helper::companyCurrency($shiftDetails->companyID);
+                    $companyCurrency = Helper::companyCurrency($shiftDetails->companyID);
 
                     $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No: " . $invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => $serviceLineSystemID, 'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => 1, 'bankID' => 2];
 
@@ -951,12 +955,12 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
                     $input['isPOS'] = 1;
-                    $input['createdUserID'] = \Helper::getEmployeeID();
+                    $input['createdUserID'] = Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
-                    $input['modifiedUser'] = \Helper::getEmployeeID();
+                    $input['modifiedUser'] = Helper::getEmployeeID();
                     $input['modifiedPc'] = getenv('COMPUTERNAME');
-                    $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                    $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+                    $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
 
                     $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
@@ -1243,9 +1247,9 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $detailAmount = CustomerInvoiceItemDetails::select(\Illuminate\Support\Facades\DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt),0) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $customerInvoiceDirects->custInvoiceDirectAutoID)->first();
 
-                    $input['bookingAmountTrans'] = \Helper::roundValue($detailAmount->bookingAmountTrans);
-                    $input['bookingAmountLocal'] = \Helper::roundValue($detailAmount->bookingAmountLocal);
-                    $input['bookingAmountRpt'] = \Helper::roundValue($detailAmount->bookingAmountRpt);
+                    $input['bookingAmountTrans'] = Helper::roundValue($detailAmount->bookingAmountTrans);
+                    $input['bookingAmountLocal'] = Helper::roundValue($detailAmount->bookingAmountLocal);
+                    $input['bookingAmountRpt'] = Helper::roundValue($detailAmount->bookingAmountRpt);
 
                     $customerInvoiceDirect = $this->customerInvoiceDirectRepository->update($input, $customerInvoiceDirects->custInvoiceDirectAutoID);
 
@@ -1258,7 +1262,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -1270,7 +1274,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
                         $documentApproved["db"] = $db;
-                        $approve = \Helper::approveDocument($documentApproved);
+                        $approve = DocumentApprove::approveDocument($documentApproved);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
@@ -1545,8 +1549,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
                                     $totalNetcost = $cusInvDetail->sellingCost * $cusInvDetail->noQty;
 
-                                    $invDetail_arr['transactionAmount'] = \Helper::roundValue($totalNetcost);
-                                    $invDetail_arr['unitTransactionAmount'] = \Helper::roundValue($invDetail_arr['unitTransactionAmount']);
+                                    $invDetail_arr['transactionAmount'] = Helper::roundValue($totalNetcost);
+                                    $invDetail_arr['unitTransactionAmount'] = Helper::roundValue($invDetail_arr['unitTransactionAmount']);
 
                                     $itemReturnDetail = SalesReturnDetail::create($invDetail_arr);
 
@@ -1661,7 +1665,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -1673,7 +1677,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
                         $documentApproved["db"] = $db;
-                        $approve = \Helper::approveDocument($documentApproved);
+                        $approve = DocumentApprove::approveDocument($documentApproved);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
@@ -1715,7 +1719,7 @@ class ShiftDetailsAPIController extends AppBaseController
         }
 
         else if ($shiftDetails->posType == 2){
-            $logged_user = \Helper::getEmployeeSystemID();
+            $logged_user = Helper::getEmployeeSystemID();
 
             $masterData = ['documentSystemID' => 111, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
 
@@ -1768,7 +1772,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $wareHouseID = $wareHouse->wareHouseID;
                     }
 
-                    $companyCurrency = \Helper::companyCurrency($shiftDetails->companyID);
+                    $companyCurrency = Helper::companyCurrency($shiftDetails->companyID);
 
                     $bank = DB::table('pos_source_menusalesmaster')
                         ->selectRaw('erp_bankaccount.bankAccountAutoID as bankAccountID, erp_bankaccount.bankmasterAutoID as bankID')
@@ -1905,12 +1909,12 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
                     $input['isPOS'] = 1;
-                    $input['createdUserID'] = \Helper::getEmployeeID();
+                    $input['createdUserID'] = Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
-                    $input['modifiedUser'] = \Helper::getEmployeeID();
+                    $input['modifiedUser'] = Helper::getEmployeeID();
                     $input['modifiedPc'] = getenv('COMPUTERNAME');
-                    $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                    $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
+                    $input['modifiedUserSystemID'] = Helper::getEmployeeSystemID();
 
 
                     $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
@@ -2240,7 +2244,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     );
 
 
-                    $confirm = \Helper::confirmDocument($params);
+                    $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
 
                         return $this->sendError($confirm["message"], 500);
@@ -2249,7 +2253,6 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
 
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                    Log::useFiles(storage_path() . '/logs/approval_setup.log');
                     $documentApproval = array();
                     foreach ($documentApproveds as $documentApproved) {
 
@@ -2262,11 +2265,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
                         $documentApproval["db"] = $db;
                         
-                        $approve = \Helper::approveDocument($documentApproval);
+                        $approve = DocumentApprove::approveDocument($documentApproval);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
-                        Log::info('---- Doc Approval -----' . $documentApproveds);
+                        Log::channel('approval_setup')->info('---- Doc Approval -----' . $documentApproveds);
 
                     }
 
@@ -2369,7 +2372,7 @@ class ShiftDetailsAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->transactionCurrencyID);
 
         $totalDetail = SalesReturnDetail::select(\Illuminate\Support\Facades\DB::raw("SUM(transactionAmount) as amount"))
             ->where('salesReturnID', $salesReturnID)
@@ -2392,7 +2395,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return ['status' => false, 'message' => 'VAT Detail Already exist.'];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->transactionCurrencyID, $master->transactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -2435,7 +2438,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -2454,7 +2457,7 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
 
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
@@ -2543,7 +2546,7 @@ class ShiftDetailsAPIController extends AppBaseController
         }
 
         $totalAmount = 0;
-        $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
+        $decimal = Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
         $totalDetail = CustomerInvoiceItemDetails::select(\Illuminate\Support\Facades\DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         if (!empty($totalDetail)) {
@@ -2562,7 +2565,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return ['status' => false, 'message' => 'VAT Detail Already exist.'];
         }
 
-        $currencyConversion = \Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
+        $currencyConversion = Helper::currencyConversion($master->companySystemID, $master->custTransactionCurrencyID, $master->custTransactionCurrencyID, $totalVATAmount);
 
 
         $_post['taxMasterAutoID'] = $taxMasterAutoID;
@@ -2605,7 +2608,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 }
             }
         }
-        $_post["rptAmount"] = \Helper::roundValue($MyRptAmount);
+        $_post["rptAmount"] = Helper::roundValue($MyRptAmount);
         if ($_post['currency'] == $_post['localCurrencyID']) {
             $MyLocalAmount = $totalVATAmount;
         } else {
@@ -2624,7 +2627,7 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
-        $_post["localAmount"] = \Helper::roundValue($MyLocalAmount);
+        $_post["localAmount"] = Helper::roundValue($MyLocalAmount);
 
         Taxdetail::create($_post);
         $company = Company::select('vatOutputGLCode', 'vatOutputGLCodeSystemID')->where('companySystemID', $master->companySystemID)->first();
@@ -3781,7 +3784,7 @@ class ShiftDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
         $validator = \Validator::make($input, [
             'companyId' => 'required'
         ]);

@@ -2,7 +2,7 @@
 
 namespace App\Services\ExchangeSetup;
 use App\Models\CurrencyConversion;
-use ExchangeSetupConfig;
+use App\helper\ExchangeSetupConfig;
 use Illuminate\Support\Arr;
 
 class ExchangeSetupGlService

@@ -53,7 +53,6 @@ class CustomerAssigned extends Model
     const UPDATED_AT = 'timeStamp';
     protected $primaryKey  = 'customerAssignedID';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -124,7 +123,8 @@ class CustomerAssigned extends Model
         'vatEligible' => 'integer',
         'vatNumber' => 'string',
         'vendorCode' => 'string',
-        'vatPercentage' => 'integer'
+        'vatPercentage' => 'integer',
+        'deleted_at' => 'datetime'
     ];
 
     /**
@@ -156,6 +156,10 @@ class CustomerAssigned extends Model
         return $this->belongsTo('App\Models\CountryMaster','customerCountry','countryID');
     }
     public function customer_master(){
+        return $this->belongsTo('App\Models\CustomerMaster','customerCodeSystem','customerCodeSystem');
+    }
+
+    public function master(){
         return $this->belongsTo('App\Models\CustomerMaster','customerCodeSystem','customerCodeSystem');
     }
 

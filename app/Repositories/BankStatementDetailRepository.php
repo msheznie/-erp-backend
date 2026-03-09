@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\BankStatementDetail;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class BankStatementDetailRepository

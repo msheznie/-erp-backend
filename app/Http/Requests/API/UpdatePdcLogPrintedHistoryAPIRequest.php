@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\PdcLogPrintedHistory;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePdcLogPrintedHistoryAPIRequest extends APIRequest
+class UpdatePdcLogPrintedHistoryAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

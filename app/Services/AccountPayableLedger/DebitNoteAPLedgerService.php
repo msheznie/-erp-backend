@@ -20,6 +20,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class DebitNoteAPLedgerService
 {
@@ -56,22 +57,22 @@ class DebitNoteAPLedgerService
             $data['supplierInvoiceAmount'] = ABS($masterData->detail[0]->transAmount) * -1;
             $data['supplierDefaultCurrencyID'] = $masterData->supplierTransactionCurrencyID;
             $data['supplierDefaultCurrencyER'] = $masterData->supplierTransactionCurrencyER;
-            $data['supplierDefaultAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount) * -1);
+            $data['supplierDefaultAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount) * -1);
             $data['localCurrencyID'] = $masterData->localCurrencyID;
             $data['localER'] = $masterData->localCurrencyER;
-            $data['localAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount) * -1);
+            $data['localAmount'] = Helper::roundValue(ABS($masterData->detail[0]->localAmount) * -1);
             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['comRptER'] = $masterData->companyReportingER;
-            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount) * -1);
+            $data['comRptAmount'] = Helper::roundValue(ABS($masterData->detail[0]->rptAmount) * -1);
             $data['isInvoiceLockedYN'] = 0;
             $data['invoiceType'] = $masterData->documentType;
             $data['selectedToPaymentInv'] = 0;
             $data['fullyInvoice'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdPcID'] = gethostname();
-            $data['timeStamp'] = \Helper::currentDateTime();
+            $data['timeStamp'] = Helper::currentDateTime();
             array_push($finalData, $data);
         }
 

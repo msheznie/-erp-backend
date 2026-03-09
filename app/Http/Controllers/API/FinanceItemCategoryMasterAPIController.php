@@ -29,7 +29,7 @@ use App\Models\ErpAttributes;
 use App\Models\ErpAttributesDropdown;
 use App\Models\ErpAttributesFieldType;
 use Error;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;

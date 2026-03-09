@@ -32,7 +32,6 @@ class SupplierImportanceTranslation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'supplierImportanceID',
@@ -49,7 +48,8 @@ class SupplierImportanceTranslation extends Model
         'id' => 'integer',
         'supplierImportanceID' => 'integer',
         'languageCode' => 'string',
-        'importanceDescription' => 'string'
+        'importanceDescription' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

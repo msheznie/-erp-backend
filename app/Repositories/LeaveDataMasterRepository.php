@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Models\Employee;
 use App\Models\LeaveDataDetail;
 use App\Models\LeaveDataMaster;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class LeaveDataMasterRepository

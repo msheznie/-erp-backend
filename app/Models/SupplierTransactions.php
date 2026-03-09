@@ -33,7 +33,6 @@ class SupplierTransactions extends Model
     const UPDATED_AT = 'updated_at';
     protected $primaryKey  = 'id';
 
-    protected $dates = ['deleted_at'];
 
 
     public $fillable = [
@@ -72,8 +71,8 @@ class SupplierTransactions extends Model
         'confirmedBy' => 'string',
         'lastApprovedBy' => 'string',
         'transactionCurrency' => 'string',
-        'amount' => 'float'
-
+        'amount' => 'float',
+        'deleted_at' => 'datetime'
     ];
 
 

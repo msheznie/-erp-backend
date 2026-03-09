@@ -40,7 +40,6 @@ class BudgetSubmissionDeadlineReachedNotification extends Command
      */
     public function handle()
     {
-        Log::useFiles(storage_path() . '/logs/budget-submission-deadline-reached-notification.log');
 
         $tenants = CommonJobService::tenant_list();
         if (count($tenants) == 0) {
@@ -52,7 +51,5 @@ class BudgetSubmissionDeadlineReachedNotification extends Command
             $tenant_database = $tenant->database;
             BudgetSubmissionDeadlineReachedNotificationJob::dispatch($tenant_database);
         }
-
-        $this->info('Budget submission deadline reached notification jobs dispatched for ' . count($tenants) . ' tenant(s)');
     }
 }

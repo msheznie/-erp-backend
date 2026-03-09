@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\SupplierEvaluationTemplateSectionTable;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateSupplierEvaluationTemplateSectionTableAPIRequest extends APIRequest
+class UpdateSupplierEvaluationTemplateSectionTableAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

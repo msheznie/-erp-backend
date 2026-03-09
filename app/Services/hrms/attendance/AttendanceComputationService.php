@@ -60,7 +60,6 @@ class AttendanceComputationService
 
     public function __construct($data, $companyId)
     {
-        Log::useFiles(CommonJobService::get_specific_log_file('attendance-clockIn'));
 
         $this->data = $data;
         $this->companyId = $companyId;

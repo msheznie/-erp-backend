@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use App\helper\Helper;
 
 /**
  * @SWG\Definition(
@@ -441,14 +442,14 @@ class CustomerInvoiceItemDetails extends Model
 
     public function getIssueCostTransAttribute()
     {
-        $currencyConversion = \Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocal);
+        $currencyConversion = Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocal);
 
         return isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0;
     }
 
     public function getIssueCostTransTotalAttribute()
     {
-        $currencyConversion = \Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocalTotal);
+        $currencyConversion = Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocalTotal);
 
         return isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0;
     }

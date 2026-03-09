@@ -13,6 +13,7 @@ use App\Models\ErpItemLedger;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\SalesReturnDetail;
 use Carbon\Carbon;
+use App\helper\email as Email;
 
 class DeliveryOrderServices
 {
@@ -159,7 +160,7 @@ class DeliveryOrderServices
             }
         }
 
-        $sendEmail = \Email::sendEmail($emails);
+        $sendEmail = Email::sendEmail($emails);
         if (!$sendEmail["success"]) {
             return ['status' => false,'message'=>$sendEmail["message"]];
         }

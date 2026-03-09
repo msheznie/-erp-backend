@@ -32,7 +32,6 @@ class AllocationMasterTranslation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $dates = ['deleted_at'];
 
     public $fillable = [
         'AutoID',
@@ -49,7 +48,8 @@ class AllocationMasterTranslation extends Model
         'id' => 'integer',
         'AutoID' => 'integer',
         'languageCode' => 'string',
-        'Desciption' => 'string'
+        'Desciption' => 'string',
+        'deleted_at' => 'datetime',
     ];
 
     /**

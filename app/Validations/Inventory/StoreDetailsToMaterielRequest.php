@@ -20,6 +20,7 @@ use App\Models\StockTransfer;
 use App\Models\WarehouseMaster;
 use App\Services\Inventory\MaterialIssueService;
 use Illuminate\Http\Request;
+use App\helper\inventory as Inventory;
 
 class StoreDetailsToMaterielRequest extends AppBaseController
 {
@@ -256,7 +257,7 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         $data = array('companySystemID' => $companySystemID,
             'itemCodeSystem' => $detail['itemCodeSystem'],
             'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
 
         $detail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];

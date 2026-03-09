@@ -72,7 +72,6 @@ class ExportPODetailExcel {
         $this->output = $this->getMasterData();
         $this->processExportData();
         $basePath = CreateExcel::processDetailExport($this->data, $this->companyCode);
-        Log::info('Export completed', ['result' => $basePath]);
         $this->sendNotification($basePath);
 
         if($basePath == '') {
@@ -256,7 +255,7 @@ class ExportPODetailExcel {
             trans('custom.company_name') => optional($val->company)->CompanyName,
             trans('custom.order_code') => $val->purchaseOrderCode,
             trans('custom.segment') => optional($val->segment)->ServiceLineDes,
-            trans('custom.created_at') => \Helper::dateFormat($val->createdDateTime),
+            trans('custom.created_at') => Helper::dateFormat($val->createdDateTime),
             trans('custom.created_by') => optional($val->created_by)->empName,
             trans('custom.category') => optional($val->fcategory)->categoryDescription ?? trans('custom.other'),
             trans('custom.narration') => $val->narration ?: '-',
@@ -264,14 +263,14 @@ class ExportPODetailExcel {
             trans('custom.supplier_name') => $val->supplierName,
             trans('custom.credit_period') => $val->creditPeriod,
             trans('custom.supplier_country') => optional($val->supplier->country)->countryName,
-            trans('custom.expected_delivery_date') => \Helper::dateFormat($val->expectedDeliveryDate),
+            trans('custom.expected_delivery_date') => Helper::dateFormat($val->expectedDeliveryDate),
             trans('custom.delivery_terms') => $val->deliveryTerms,
             trans('custom.penalty_terms') => $val->panaltyTerms,
             trans('custom.confirmed_status') => $val->poConfirmedYN == 1 ? trans('custom.yes') : trans('custom.no'),
-            trans('custom.confirmed_date') => \Helper::dateFormat($val->poConfirmedDate),
+            trans('custom.confirmed_date') => Helper::dateFormat($val->poConfirmedDate),
             trans('custom.confirmed_by') => $val->poConfirmedByName,
             trans('custom.approved_status') => $val->approved == -1 ? trans('custom.yes') : trans('custom.no'),
-            trans('custom.approved_date') => \Helper::dateFormat($val->approvedDate),
+            trans('custom.approved_date') => Helper::dateFormat($val->approvedDate),
             trans('custom.transaction_currency') => optional($val->currency)->CurrencyCode,
             trans('custom.transaction_amount') => $val->poTotalSupplierTransactionCurrency,
             trans('custom.local_amount') => $val->poTotalLocalCurrency,

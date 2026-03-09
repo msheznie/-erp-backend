@@ -80,7 +80,6 @@ class LeaveAccrualService
         }
 
         if($this->debug){
-            Log::info( $this->pending_accruals );
         }
 
         return $this->pending_accruals;
@@ -127,7 +126,6 @@ class LeaveAccrualService
         if($getCount) {
             $count = $emp_arr[0]->emp_count;
             if($this->debug) {
-                Log::info("{$count} employees found for {$leave_group} (leave group) ". $this->log_suffix());
             }
             return ($count > 0);
         }
@@ -267,7 +265,6 @@ class LeaveAccrualService
 
             DB::commit();
 
-            Log::info("successfully created the accrual [ ".$master_data['doc_code']. " ]" . $this->log_suffix());
 
             return true;
         }
@@ -362,7 +359,6 @@ class LeaveAccrualService
         if (empty($detail) || !is_array($detail)) {
             DB::rollBack();
 
-            Log::info('No accrual details found');
             return;
         }
 

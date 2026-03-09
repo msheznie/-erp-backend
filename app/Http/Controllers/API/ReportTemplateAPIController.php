@@ -29,9 +29,11 @@ use App\Repositories\ReportTemplateRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class ReportTemplateController
@@ -159,8 +161,8 @@ class ReportTemplateAPIController extends AppBaseController
 
             $input['isActive'] = 1;
             $input['createdPCID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $reportTemplates = $this->reportTemplateRepository->create($input);
 
             if ($input['reportID'] == 1) {
@@ -171,8 +173,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data['companySystemID'] = $input['companySystemID'];
                 $data['companyID'] = $input['companyID'];
                 $data['createdPCID'] = gethostname();
-                $data['createdUserID'] = \Helper::getEmployeeID();
-                $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data['createdUserID'] = Helper::getEmployeeID();
+                $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetailsMaster = ReportTemplateDetails::create($data);
 
                 $data2['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
@@ -183,8 +185,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data2['companySystemID'] = $input['companySystemID'];
                 $data2['companyID'] = $input['companyID'];
                 $data2['createdPCID'] = gethostname();
-                $data2['createdUserID'] = \Helper::getEmployeeID();
-                $data2['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data2['createdUserID'] = Helper::getEmployeeID();
+                $data2['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetails = ReportTemplateDetails::create($data2);
 
                 $chartofaccount = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'PL')->get();
@@ -199,8 +201,8 @@ class ReportTemplateAPIController extends AppBaseController
                         $data4['companySystemID'] = $input['companySystemID'];
                         $data4['companyID'] = $input['companyID'];
                         $data4['createdPCID'] = gethostname();
-                        $data4['createdUserID'] = \Helper::getEmployeeID();
-                        $data4['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data4['createdUserID'] = Helper::getEmployeeID();
+                        $data4['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data4);
                     }
 
@@ -216,8 +218,8 @@ class ReportTemplateAPIController extends AppBaseController
                     $data3['companySystemID'] = $input['companySystemID'];
                     $data3['companyID'] = $input['companyID'];
                     $data3['createdPCID'] = gethostname();
-                    $data3['createdUserID'] = \Helper::getEmployeeID();
-                    $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data3['createdUserID'] = Helper::getEmployeeID();
+                    $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateDetails3 = ReportTemplateDetails::create($data3);
                 }
                 else {
@@ -229,8 +231,8 @@ class ReportTemplateAPIController extends AppBaseController
                     $data3['companySystemID'] = $input['companySystemID'];
                     $data3['companyID'] = $input['companyID'];
                     $data3['createdPCID'] = gethostname();
-                    $data3['createdUserID'] = \Helper::getEmployeeID();
-                    $data3['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data3['createdUserID'] = Helper::getEmployeeID();
+                    $data3['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateDetailsRetained = ReportTemplateDetails::create($data3);
 
                     $chartofaccountRetained = ChartOfAccount::where('isApproved', 1)->where('catogaryBLorPL', 'BS')->where('is_retained_earnings',1)->first();
@@ -244,8 +246,8 @@ class ReportTemplateAPIController extends AppBaseController
                         $data5['companySystemID'] = $input['companySystemID'];
                         $data5['companyID'] = $input['companyID'];
                         $data5['createdPCID'] = gethostname();
-                        $data5['createdUserID'] = \Helper::getEmployeeID();
-                        $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                        $data5['createdUserID'] = Helper::getEmployeeID();
+                        $data5['createdUserSystemID'] = Helper::getEmployeeSystemID();
                         ReportTemplateLinks::create($data5);
 
                         $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateDetailsRetained->detID)->update(['isFinalLevel' => 1]);
@@ -261,8 +263,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data5['companySystemID'] = $input['companySystemID'];
                 $data5['companyID'] = $input['companyID'];
                 $data5['createdPCID'] = gethostname();
-                $data5['createdUserID'] = \Helper::getEmployeeID();
-                $data5['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data5['createdUserID'] = Helper::getEmployeeID();
+                $data5['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetails1 = ReportTemplateDetails::create($data5);
             }
             if ($input['reportID'] == 4) {
@@ -283,8 +285,8 @@ class ReportTemplateAPIController extends AppBaseController
                     $data['companySystemID'] = $input['companySystemID'];
                     $data['companyID'] = $input['companyID'];
                     $data['createdPCID'] = gethostname();
-                    $data['createdUserID'] = \Helper::getEmployeeID();
-                    $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $data['createdUserID'] = Helper::getEmployeeID();
+                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
                     $reportTemplateDetails = ReportTemplateDetails::create($data);
                 }
 
@@ -299,8 +301,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data6['companySystemID'] = $input['companySystemID'];
                 $data6['companyID'] = $input['companyID'];
                 $data6['createdPCID'] = gethostname();
-                $data6['createdUserID'] = \Helper::getEmployeeID();
-                $data6['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data6['createdUserID'] = Helper::getEmployeeID();
+                $data6['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetails2 = ReportTemplateDetails::create($data6);
 
 
@@ -312,8 +314,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data7['companySystemID'] = $input['companySystemID'];
                 $data7['companyID'] = $input['companyID'];
                 $data7['createdPCID'] = gethostname();
-                $data7['createdUserID'] = \Helper::getEmployeeID();
-                $data7['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data7['createdUserID'] = Helper::getEmployeeID();
+                $data7['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetails3 = ReportTemplateDetails::create($data7);
 
                 $data8['companyReportTemplateID'] = $reportTemplates->companyReportTemplateID;
@@ -324,8 +326,8 @@ class ReportTemplateAPIController extends AppBaseController
                 $data8['companySystemID'] = $input['companySystemID'];
                 $data8['companyID'] = $input['companyID'];
                 $data8['createdPCID'] = gethostname();
-                $data8['createdUserID'] = \Helper::getEmployeeID();
-                $data8['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                $data8['createdUserID'] = Helper::getEmployeeID();
+                $data8['createdUserSystemID'] = Helper::getEmployeeSystemID();
                 $reportTemplateDetails4 = ReportTemplateDetails::create($data8);
             }
 
@@ -437,7 +439,7 @@ class ReportTemplateAPIController extends AppBaseController
     public function update($id, UpdateReportTemplateAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['template_type', 'Actions', 'DT_Row_Index']);
+        $input = Arr::except($input, ['template_type', 'Actions', 'DT_Row_Index']);
         $input = $this->convertArrayToValue($input);
         
         /** @var ReportTemplate $reportTemplate */
@@ -665,10 +667,10 @@ class ReportTemplateAPIController extends AppBaseController
         $input = $request->all();
 
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -684,10 +686,10 @@ class ReportTemplateAPIController extends AppBaseController
     {
         $input = $request->all();
         $selectedCompanyId = $input['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -728,7 +730,8 @@ class ReportTemplateAPIController extends AppBaseController
 
         $templateData = ReportTemplateDetails::with(['subcategory' => function ($query) {
                                                 $query->where('itemType', 2)
-                                                      ->orderBy('serialLength', 'sortOrder');
+                                                      ->orderBy('serialLength')
+                                                      ->orderBy('sortOrder');
                                             }])->find($input['templateDetailID']);
 
         return $this->sendResponse($templateData, trans('custom.report_template_retrieved_successfully'));

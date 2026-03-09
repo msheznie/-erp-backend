@@ -23,6 +23,9 @@ use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UserToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\Helper;
+use App\helper\Workflow\API\DocumentApproveApi;
+use App\helper\Workflow\DocumentConfirm;
 
 class HRMSAPIController extends AppBaseController
 {
@@ -49,7 +52,7 @@ class HRMSAPIController extends AppBaseController
                         return $this->sendError(trans('custom.company_not_found'));
                     }
 
-                    $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+                    $companyCurrency = Helper::companyCurrency($dt['companySystemID']);
 
                     if (empty($dt['comments'])) {
                         return $this->sendError(trans('custom.narration_field_is_required'));
@@ -118,9 +121,9 @@ class HRMSAPIController extends AppBaseController
                         $myCurr = $supplierCurr->currencyID;
                     }
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
-                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+                    $companyCurrencyConversion = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $companyCurrencyConversionTrans = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $companyCurrencyConversionVat = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
 
 
 
@@ -158,9 +161,9 @@ class HRMSAPIController extends AppBaseController
                         'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
                         'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
                         'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
-                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
-                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                        'bookingAmountTrans' => Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                         'documentType' => 1,
                         'createdPcID' => gethostname(),
                         'createdUserID' => $employee->empID,
@@ -184,10 +187,10 @@ class HRMSAPIController extends AppBaseController
                             return $this->sendError(trans('custom.employee_field_is_required'));
                     }
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
-                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $companyCurrencyConversion = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $companyCurrencyConversionTrans = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
 
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+                    $companyCurrencyConversionVat = Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
 
                     $employee = Employee::where('employeeSystemID', $dt['employeeID'])->first();
                     if (empty($employee)) {
@@ -228,9 +231,9 @@ class HRMSAPIController extends AppBaseController
                         'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
                         'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
                         'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
-                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
-                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                        'bookingAmountTrans' => Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                         'documentType' => 4,
                         'employeeID' => $dt['employeeID'],
                         'employeeControlAcID' => $checkEmployeeControlAccount,
@@ -255,10 +258,10 @@ class HRMSAPIController extends AppBaseController
                         if ($supplierCurr) {
                             $myCurr = $supplierCurr->currencyID;
                         }
-                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
-                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
-                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
-                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+                        $companyCurrencyConversion = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
 
                         $suppInvoiceDetArray[] = array(
                             'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
@@ -293,10 +296,10 @@ class HRMSAPIController extends AppBaseController
                     if ($bookInvSupp->documentType == 4) {
                         $myCurr = $dt['currency'];
 
-                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
-                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
-                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
-                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+                        $companyCurrencyConversion = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
 
                         $suppInvoiceDetArray[] = array(
                             'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
@@ -344,7 +347,7 @@ class HRMSAPIController extends AppBaseController
             );
 
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
             }
@@ -354,7 +357,7 @@ class HRMSAPIController extends AppBaseController
                 foreach ($documentApproveds as $documentApproved) {
                     $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
                     $documentApproved["db"] = $db;
-                    \Helper::approveDocumentForApi($documentApproved);
+                    DocumentApproveApi::approveDocumentForApi($documentApproved);
 
                 }
             }
@@ -370,10 +373,6 @@ class HRMSAPIController extends AppBaseController
         }
         catch(\Exception $e){
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error File: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
             return $this->sendError($e->getMessage(),500);
         }
 }

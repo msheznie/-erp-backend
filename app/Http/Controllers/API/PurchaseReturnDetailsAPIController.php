@@ -30,12 +30,14 @@ use App\Repositories\PurchaseReturnDetailsRepository;
 use App\Repositories\PurchaseReturnRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\helper\ItemTracking;
 use App\Models\PurchaseReturnLogistic;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
 
 /**
  * Class PurchaseReturnDetailsController
@@ -269,7 +271,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
         $data = array('companySystemID' => $purchaseReturn->companySystemID,
             'itemCodeSystem' => $purchaseReturnDetails->itemCode,
             'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
-        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
         if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
             $this->purchaseReturnDetailsRepository->update(['noQty' => 0,'netAmount' => 0,'netAmountLocal' => 0,'netAmountRpt' => 0], $id);
@@ -460,7 +462,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         /** @var PurchaseReturn $purchaseReturn */
         $purchaseReturn = $this->purchaseReturnRepository->findWithoutFail($input['purhaseReturnAutoID']);
@@ -554,7 +556,7 @@ class PurchaseReturnDetailsAPIController extends AppBaseController
                 $data = array('companySystemID' => $purchaseReturn->companySystemID,
                     'itemCodeSystem' => $new['itemCode'],
                     'wareHouseId' => $purchaseReturn->purchaseReturnLocation);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 if ($itemCurrentCostAndQty['currentWareHouseStockQty'] <= 0) {
                     array_push($finalError['currentStockQty_zero'], $new['itemPrimaryCode']);

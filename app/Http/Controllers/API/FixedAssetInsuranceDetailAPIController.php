@@ -10,9 +10,10 @@ use App\Repositories\FixedAssetInsuranceDetailRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class FixedAssetInsuranceDetailController
@@ -142,8 +143,8 @@ class FixedAssetInsuranceDetailAPIController extends AppBaseController
             }
         }
 
-        $input['createdByUserID'] = \Helper::getEmployeeID();
-        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+        $input['createdByUserID'] = Helper::getEmployeeID();
+        $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
 
         $fixedAssetInsuranceDetails = $this->fixedAssetInsuranceDetailRepository->create($input);
 

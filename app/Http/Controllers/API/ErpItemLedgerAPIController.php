@@ -29,7 +29,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\Company;
@@ -37,6 +37,7 @@ use App\Models\ItemMaster;
 use App\Models\Unit;
 use App\helper\CreateExcel;
 use App\Models\ItemCategoryTypeMaster;
+use App\helper\Helper;
 
 /**
  * Class ErpItemLedgerController
@@ -310,10 +311,10 @@ class ErpItemLedgerAPIController extends AppBaseController
 
 
         $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -397,10 +398,10 @@ public function generateStockLedger(Request $request)
     $ItemMaster = ItemMaster::where('itemCodeSystem',$request['Items'][0]['itemSystemCode'])->select('itemCodeSystem','unit')->first();
     $unit = Unit::where('UnitID',$ItemMaster->unit)->first();
 
-    $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+    $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
  
     if ($isGroup) {
-        $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        $subCompanies = Helper::getGroupCompany($selectedCompanyId);
     } else {
         $subCompanies = [$selectedCompanyId];
     }
@@ -619,10 +620,10 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         }
 
  
-        \Excel::create('itemTransactionHistory', function ($excel) use ($data_obj) {
+        return \App\Exports\CreateExcelExport::download('itemTransactionHistory', function ($excel) use ($data_obj) {
 
             $excel->sheet(trans('custom.itemTransactionHistory'), function ($sheet) use ($data_obj) {
-                $sheet->fromArray($data_obj);
+                $sheet->fromArray($data_obj, null, 'A1', true);
                 $sheet->setAutoSize(true);
                 
                 // Set right-to-left for Arabic locale
@@ -631,10 +632,7 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
                     $sheet->setRightToLeft(true);
                 }
             });
-        })->download('xls');
-        
-
-        return $this->sendResponse($csv, trans('custom.success_export'));
+        }, 'xls');
     }
     else if($type == 2)
     {
@@ -660,10 +658,10 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
         $selectedCompanyId = $request['companySystemID'];
 
 
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -831,11 +829,11 @@ WHERE
 
         $requestCurrency = null;
         $excelColumnFormat = [
-            'H' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
 
         ];
         $fileName = trans('custom.stock_ledger_report');
@@ -943,10 +941,10 @@ WHERE
     {
 
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -979,10 +977,10 @@ WHERE
 
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1141,10 +1139,10 @@ WHERE
         $to_date =  $input['date'];
 
         $selectedCompanyId = $request->companySystemID;
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1256,10 +1254,10 @@ WHERE
         $cur = NULL;
         $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
         $excelColumnFormat = [
-            'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
 
 
@@ -1305,10 +1303,10 @@ WHERE
         }
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1521,10 +1519,10 @@ GROUP BY
         $date = $date->format('Y-m-d');
 
         $selectedCompanyId = $request['companySystemID'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1785,10 +1783,10 @@ GROUP BY
             $selectedCompanyId = $request['company_id'];
         }
        
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }
@@ -1909,10 +1907,10 @@ GROUP BY
 
         $category = (array)$request['category'];
         $category = collect($category)->pluck('id');
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $subCompanies = [$selectedCompanyId];
         }

@@ -22,10 +22,13 @@ use App\Repositories\ItemAssignedRepository;
 use App\Repositories\ItemMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\CreateExcel;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
 /**
  * Class ItemAssignedController
  * @package App\Http\Controllers\API
@@ -73,7 +76,7 @@ class ItemAssignedAPIController extends AppBaseController
         $companies = $input['companySystemID'];
         unset($input['companySystemID']);
         unset($input['specification']);
-        $input = array_except($input,['finance_sub_category']);
+        $input = Arr::except($input,['finance_sub_category']);
         unset($input['company']);
         unset($input['final_approved_by']);
 
@@ -112,7 +115,7 @@ class ItemAssignedAPIController extends AppBaseController
             {
 
               
-                $validatorResult = \Helper::checkCompanyForMasters($companie['id'], $itemId, 'item');
+                $validatorResult = Helper::checkCompanyForMasters($companie['id'], $itemId, 'item');
                 if (!$validatorResult['success']) {
                     return $this->sendError($validatorResult['message']);
                 }
@@ -175,7 +178,7 @@ class ItemAssignedAPIController extends AppBaseController
      */
     public function update($id, UpdateItemAssignedAPIRequest $request)
     {
-        $input = array_except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
+        $input = Arr::except($request->all(), ['unit', 'financeMainCategory', 'financeSubCategory', 'local_currency', 'rpt_currency']);
         $input = $this->convertArrayToSelectedValue($input,['itemMovementCategory']);
 
         /** @var ItemAssigned $itemAssigned */
@@ -194,7 +197,7 @@ class ItemAssignedAPIController extends AppBaseController
             $rules = ['sellingCost' => 'required|numeric|min:0.001'];
         }
 
-        $updateColumns = array_only($input, $updateColumns);
+        $updateColumns = Arr::only($input, $updateColumns);
 
         $validator = \Validator::make($updateColumns, $rules);
         if ($validator->fails()) {
@@ -261,7 +264,7 @@ class ItemAssignedAPIController extends AppBaseController
                 $data = array('companySystemID' => $row->companySystemID,
                     'itemCodeSystem' => $row->itemCodeSystem,
                     'wareHouseId' => null);
-                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+                $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
                 $array = array('local' => $itemCurrentCostAndQty['wacValueLocal'],
                     'rpt' => $itemCurrentCostAndQty['wacValueReporting'],
@@ -280,7 +283,7 @@ class ItemAssignedAPIController extends AppBaseController
         ini_set('memory_limit', -1);
         $input = $request->all();
         $data = array();
-        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'DES')->get();
+        $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'desc')->get();
         $output = $this->getCurrentCostAndQty($output);
         $type = $request->type;
         if (!empty($output)) {
@@ -377,7 +380,7 @@ class ItemAssignedAPIController extends AppBaseController
             $data = array('companySystemID' => $item->companySystemID,
                 'itemCodeSystem' => $item->itemCodeSystem,
                 'wareHouseId' => null);
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
             $item->totalQty = $itemCurrentCostAndQty['currentStockQty'];
             $item->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
             $item->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
@@ -392,10 +395,10 @@ class ItemAssignedAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('financeCategoryMaster', 'financeCategorySub', 'isActive'));
 
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -466,10 +469,10 @@ class ItemAssignedAPIController extends AppBaseController
             $sort = 'desc';
         }
         $companyId = $input['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        $isGroup = Helper::checkIsCompanyGroup($companyId);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($companyId);
+            $childCompanies = Helper::getGroupCompany($companyId);
         } else {
             $childCompanies = [$companyId];
         }
@@ -531,10 +534,10 @@ class ItemAssignedAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['companySystemID']);
+        $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($input['companySystemID']);
+            $childCompanies = Helper::getGroupCompany($input['companySystemID']);
         } else {
             $childCompanies = [$input['companySystemID']];
         }
@@ -584,10 +587,10 @@ class ItemAssignedAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $isGroup = \Helper::checkIsCompanyGroup($input['selectedCompanyId']);
+        $isGroup = Helper::checkIsCompanyGroup($input['selectedCompanyId']);
 
         if ($isGroup) {
-            $childCompanies = \Helper::getGroupCompany($input['selectedCompanyId']);
+            $childCompanies = Helper::getGroupCompany($input['selectedCompanyId']);
         } else {
             $childCompanies = [$input['selectedCompanyId']];
         }

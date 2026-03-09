@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class FixedAssetDipreciationGlService
 {
@@ -125,8 +126,8 @@ class FixedAssetDipreciationGlService
                     $data['documentSystemCode'] = $masterModel["autoID"];
                     $data['documentCode'] = $masterData->depCode;
                     $data['documentDate'] = $validatePostedDate['postedDate'];
-                    $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
-                    $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
+                    $data['documentYear'] = Helper::dateYear($validatePostedDate['postedDate']);
+                    $data['documentMonth'] = Helper::dateMonth($validatePostedDate['postedDate']);
                     $data['documentConfirmedDate'] = $masterData->confirmedDate;
                     $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                     $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -153,11 +154,11 @@ class FixedAssetDipreciationGlService
                     $data['holdingShareholder'] = null;
                     $data['holdingPercentage'] = 0;
                     $data['nonHoldingPercentage'] = 0;
-                    $data['createdDateTime'] = \Helper::currentDateTime();
+                    $data['createdDateTime'] = Helper::currentDateTime();
                     $data['createdUserID'] = $empID->empID;
                     $data['createdUserSystemID'] = $empID->employeeSystemID;
                     $data['createdUserPC'] = gethostname();
-                    $data['timestamp'] = \Helper::currentDateTime();
+                    $data['timestamp'] = Helper::currentDateTime();
                     array_push($finalData, $data);
                 }
 
@@ -173,8 +174,8 @@ class FixedAssetDipreciationGlService
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $masterData->depCode;
                         $data['documentDate'] = $validatePostedDate['postedDate'];
-                        $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
-                        $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
+                        $data['documentYear'] = Helper::dateYear($validatePostedDate['postedDate']);
+                        $data['documentMonth'] = Helper::dateMonth($validatePostedDate['postedDate']);
                         $data['documentConfirmedDate'] = $masterData->confirmedDate;
                         $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -201,11 +202,11 @@ class FixedAssetDipreciationGlService
                         $data['holdingShareholder'] = null;
                         $data['holdingPercentage'] = 0;
                         $data['nonHoldingPercentage'] = 0;
-                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdDateTime'] = Helper::currentDateTime();
                         $data['createdUserID'] = $empID->empID;
                         $data['createdUserSystemID'] = $empID->employeeSystemID;
                         $data['createdUserPC'] = gethostname();
-                        $data['timestamp'] = \Helper::currentDateTime();
+                        $data['timestamp'] = Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
                 }
@@ -233,8 +234,8 @@ class FixedAssetDipreciationGlService
             $gl_data['documentSystemCode'] = $masterData->depMasterAutoID;
             $gl_data['documentCode'] = $masterData->depCode;
             $gl_data['documentDate'] = $masterData->depDate;
-            $gl_data['documentYear'] = \Helper::dateYear($masterData->depDate);
-            $gl_data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
+            $gl_data['documentYear'] = Helper::dateYear($masterData->depDate);
+            $gl_data['documentMonth'] = Helper::dateMonth($masterData->depDate);
 
 
 
@@ -265,11 +266,11 @@ class FixedAssetDipreciationGlService
             $gl_data['holdingShareholder'] = null;
             $gl_data['holdingPercentage'] = 0;
             $gl_data['nonHoldingPercentage'] = 0;
-            $gl_data['createdDateTime'] = \Helper::currentDateTime();
+            $gl_data['createdDateTime'] = Helper::currentDateTime();
             $gl_data['createdUserID'] = 8888;
-            $gl_data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $gl_data['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $gl_data['createdUserPC'] = gethostname();
-            $gl_data['timestamp'] = \Helper::currentDateTime();
+            $gl_data['timestamp'] = Helper::currentDateTime();
 
             if($accumulate_Dep->postToGLYN)
             {

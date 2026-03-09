@@ -23,11 +23,13 @@ use App\Models\Company;
 use App\Repositories\BankMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
 
 /**
  * Class BankMasterController
@@ -224,7 +226,7 @@ class BankMasterAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422 );
         }
 
-        $data =array_except($input, ['bankmasterAutoID', 'TimeStamp', 'createdByEmpID', 'createdDateTime']);
+        $data =Arr::except($input, ['bankmasterAutoID', 'TimeStamp', 'createdByEmpID', 'createdDateTime']);
 
         $bankMaster = $this->bankMasterRepository->update($data, $input['bankmasterAutoID']);
 
@@ -243,10 +245,10 @@ class BankMasterAPIController extends AppBaseController
     {
         $bankId = $request['bankmasterAutoID'];
         $selectedCompanyId = $request['companyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }
@@ -286,10 +288,10 @@ class BankMasterAPIController extends AppBaseController
     {
         $bankId = $request['bankmasterAutoID'];
          $selectedCompanyId = $request['selectedCompanyId'];
-        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if($isGroup){
-            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
         }else{
             $subCompanies = [$selectedCompanyId];
         }

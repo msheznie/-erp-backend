@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\helper\Helper;
 
 class SalesReturnARLedgerService
 {
@@ -58,25 +59,25 @@ class SalesReturnARLedgerService
             $data['InvoiceDate'] = null;
             $data['custTransCurrencyID'] = $masterData->transactionCurrencyID;
             $data['custTransER'] = $masterData->transactionCurrencyER;
-            $data['custInvoiceAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->transAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0)) * -1;
+            $data['custInvoiceAmount'] = Helper::roundValue(ABS($masterData->detail[0]->transAmount) + ((!is_null($masterData->VATAmount)) ? $masterData->VATAmount : 0)) * -1;
             $data['custDefaultCurrencyID'] = 0;
             $data['custDefaultCurrencyER'] = 0;
             $data['custDefaultAmount'] = 0;
             $data['localCurrencyID'] = $masterData->companyLocalCurrencyID;
             $data['localER'] = $masterData->companyLocalCurrencyER;
-            $data['localAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->localAmount) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0)) * -1;
+            $data['localAmount'] = Helper::roundValue(ABS($masterData->detail[0]->localAmount) + ((!is_null($masterData->VATAmountLocal)) ? $masterData->VATAmountLocal : 0)) * -1;
             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['comRptER'] = $masterData->companyReportingCurrencyER;
-            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->detail[0]->rptAmount) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0)) * -1;
+            $data['comRptAmount'] = Helper::roundValue(ABS($masterData->detail[0]->rptAmount) + ((!is_null($masterData->VATAmountRpt)) ? $masterData->VATAmountRpt : 0)) * -1;
             $data['isInvoiceLockedYN'] = 0;
             $data['documentType'] = null;
             $data['selectedToPaymentInv'] = 0;
             $data['fullyInvoiced'] = 0;
-            $data['createdDateTime'] = \Helper::currentDateTime();
+            $data['createdDateTime'] = Helper::currentDateTime();
             $data['createdUserID'] = $empID->empID;
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdPcID'] = gethostname();
-            $data['timeStamp'] = \Helper::currentDateTime();
+            $data['timeStamp'] = Helper::currentDateTime();
             array_push($finalData, $data);
         }
 

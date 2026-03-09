@@ -39,12 +39,18 @@ use App\Repositories\StockCountRepository;
 use App\Repositories\StockCountDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Traits\AuditTrial;
 use App\Jobs\StockCount\StockCountDetailJob;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
+use App\helper\Helper;
+use App\helper\inventory as Inventory;
+
+use App\helper\email as Email;
+use App\helper\Workflow\DocumentConfirm;
 /**
  * Class StockCountController
  * @package App\Http\Controllers\API
@@ -148,13 +154,13 @@ class StockCountAPIController extends AppBaseController
 
         $input = $this->convertArrayToValue($input);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $input['createdPCid'] = gethostname();
         $input['createdUserID'] = $employee->empID;
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
-        $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+        $companyFinanceYear = Helper::companyFinanceYearCheck($input);
         if (!$companyFinanceYear["success"]) {
             DB::rollBack();
             return $this->sendError($companyFinanceYear["message"], 500);
@@ -162,7 +168,7 @@ class StockCountAPIController extends AppBaseController
 
         $inputParam = $input;
         $inputParam["departmentSystemID"] = 10;
-        $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+        $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
         if (!$companyFinancePeriod["success"]) {
             DB::rollBack();
             return $this->sendError($companyFinancePeriod["message"], 500);
@@ -425,7 +431,7 @@ class StockCountAPIController extends AppBaseController
     public function update($id, UpdateStockCountAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by',
             'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
 
         $input = $this->convertArrayToValue($input);
@@ -476,14 +482,14 @@ class StockCountAPIController extends AppBaseController
 
             if ($stockCount->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
-                $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
+                $companyFinanceYear = Helper::companyFinanceYearCheck($input);
                 if (!$companyFinanceYear["success"]) {
                     return $this->sendError($companyFinanceYear["message"], 500);
                 }
 
                 $inputParam = $input;
                 $inputParam["departmentSystemID"] = 10;
-                $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
+                $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
                 if (!$companyFinancePeriod["success"]) {
                     return $this->sendError($companyFinancePeriod["message"], 500);
                 } else {
@@ -536,13 +542,13 @@ class StockCountAPIController extends AppBaseController
                     'amount' => 0
                 );
 
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500);
                 }
             }
 
-            $employee = \Helper::getEmployeeInfo();
+            $employee = Helper::getEmployeeInfo();
 
             $input['modifiedPc'] = gethostname();
             $input['modifiedUser'] = $employee->empID;
@@ -569,7 +575,7 @@ class StockCountAPIController extends AppBaseController
                         'itemCodeSystem' => $value->itemCodeSystem,
                         'wareHouseId' => $stockCount->location);
 
-            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+            $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
             $updateData = [
                 'currenctStockQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
@@ -584,7 +590,7 @@ class StockCountAPIController extends AppBaseController
                                 ->first();
 
             if ($item) {
-                $companyCurrencyConversion = \Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
+                $companyCurrencyConversion = Helper::currencyConversion($stockCount->companySystemID,$item->wacValueReportingCurrencyID,$item->wacValueReportingCurrencyID,$itemCurrentCostAndQty['wacValueReporting']);
                 $updateData['currentWaclocal'] = $companyCurrencyConversion['localAmount'];
                 $updateData['wacAdjLocal'] = $companyCurrencyConversion['localAmount'];
                 $updateData['wacAdjRptER'] = $companyCurrencyConversion['trasToRptER'];
@@ -717,7 +723,7 @@ class StockCountAPIController extends AppBaseController
 
         $this->stockCountRepository->update($updateInput,$id);
 
-        $employee = \Helper::getEmployeeInfo();
+        $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $stockCount->documentSystemID)->first();
 
@@ -773,7 +779,7 @@ class StockCountAPIController extends AppBaseController
                     }
                 }
 
-                $sendEmail = \Email::sendEmail($emails);
+                $sendEmail = Email::sendEmail($emails);
                 if (!$sendEmail["success"]) {
                     return ['success' => false, 'message' => $sendEmail["message"]];
                 }
@@ -800,7 +806,7 @@ class StockCountAPIController extends AppBaseController
             return $this->sendError(trans('custom.stock_count_not_found'));
         }
 
-        $stockCount->docRefNo = \Helper::getCompanyDocRefNo($stockCount->companySystemID, $stockCount->documentSystemID);
+        $stockCount->docRefNo = Helper::getCompanyDocRefNo($stockCount->companySystemID, $stockCount->documentSystemID);
 
         return $this->sendResponse($stockCount->toArray(), trans('custom.stock_count_retrieved_successfully'));
     }
@@ -817,7 +823,7 @@ class StockCountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
@@ -893,7 +899,7 @@ class StockCountAPIController extends AppBaseController
         }
 
         $companyId = $input['companyId'];
-        $empID = \Helper::getEmployeeSystemID();
+        $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
         $purchaseReturnMaster = DB::table('erp_documentapproved')
@@ -964,7 +970,7 @@ class StockCountAPIController extends AppBaseController
             });
         }
 
-        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+        $isEmployeeDischarched = Helper::checkEmployeeDischarchedYN();
 
         if ($isEmployeeDischarched == 'true') {
             $purchaseReturnMaster = [];

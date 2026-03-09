@@ -3,7 +3,7 @@
 namespace App\Http\Requests\API;
 
 use App\Models\CreditNoteReceipt;
-use InfyOm\Generator\Request\APIRequest;
+use App\Http\Requests\APIRequest;
 
 class UpdateCreditNoteReceiptAPIRequest extends APIRequest
 {

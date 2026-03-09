@@ -50,13 +50,12 @@ class ExportDetailedORList implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/po_detail_excel_export.log');
         CommonJobService::db_switch($db);
 
         try {
             (new ExportORDetailExcel($this->data,$this->code, $this->userId))->export();
         } catch (\Exception $e) {
-            Log::error('Export failed.', [
+            Log::channel('po_detail_excel_export')->error('Export failed.', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);

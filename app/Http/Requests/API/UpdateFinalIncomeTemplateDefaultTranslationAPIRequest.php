@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\FinalIncomeTemplateDefaultTranslation;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateFinalIncomeTemplateDefaultTranslationAPIRequest extends APIRequest
+class UpdateFinalIncomeTemplateDefaultTranslationAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

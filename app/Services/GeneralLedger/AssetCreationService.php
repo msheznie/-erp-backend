@@ -27,6 +27,9 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Arr;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentConfirm;
 
 class AssetCreationService extends AppBaseController
 {
@@ -41,14 +44,13 @@ class AssetCreationService extends AppBaseController
 
     public function assetUploadErrorLog($errorLine, $logMessage, $assetCostingUploadID){
 
-        Log::useFiles(storage_path() . '/logs/asset_costing_bulk_insert.log');
 
         DB::beginTransaction();
         try {
             $assetLog = [
                 'isFailed' => 1,
                 'errorLine' => $errorLine,
-                'logMessage' => \Helper::handleErrorData($logMessage)
+                'logMessage' => Helper::handleErrorData($logMessage)
             ];
 
             DB::commit();
@@ -57,9 +59,9 @@ class AssetCreationService extends AppBaseController
             UploadAssetCosting::where('id', $assetCostingUploadID)->update(['uploadStatus' => 0]);
             DB::commit();
         } catch (\Exception $e) {
-            Log::error('Exception caught: ' . $e->getMessage());
-            Log::error('Error Line No: ' . $e->getLine());
-            Log::error('Error File: ' . $e->getFile());
+            Log::channel('asset_costing_bulk_insert')->error('Exception caught: ' . $e->getMessage());
+            Log::channel('asset_costing_bulk_insert')->error('Error Line No: ' . $e->getLine());
+            Log::channel('asset_costing_bulk_insert')->error('Error File: ' . $e->getFile());
             DB::rollBack();
         }
     }
@@ -99,9 +101,9 @@ class AssetCreationService extends AppBaseController
 
     public function assetCreation(array $input)
     {
-        $itemImgaeArr = $input['itemImage'];
-        $itemPicture = $input['itemPicture'];
-        $input = array_except($input, 'itemImage');
+        $itemImgaeArr = $input['itemImage'] ?? [];
+        $itemPicture = $input['itemPicture'] ?? null;
+        $input = Arr::except($input, 'itemImage');
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
         
         $input = $this->convertArrayToValue($input);
@@ -229,8 +231,8 @@ class AssetCreationService extends AppBaseController
 
 
             $input['createdPcID'] = gethostname();
-            $input['createdUserID'] = \Helper::getEmployeeID();
-            $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            $input['createdUserID'] = Helper::getEmployeeID();
+            $input['createdUserSystemID'] = Helper::getEmployeeSystemID();
             $input['createdDateAndTime'] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
@@ -276,7 +278,7 @@ class AssetCreationService extends AppBaseController
             );
 
 
-            $confirm = \Helper::confirmDocument($params);
+            $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
 
                 return $this->sendJsonResponse(false,$confirm['message']);
@@ -287,7 +289,7 @@ class AssetCreationService extends AppBaseController
                 $documentApproved["db"] = $db;
                 $documentApproved["isAutoCreateDocument"] = true;
                 $documentApproved["isDocumentUpload"] = true;
-                $approve = \Helper::approveDocument($documentApproved);
+                $approve = DocumentApprove::approveDocument($documentApproved);
                 if (!$approve["success"]) {
 
                     return $this->sendJsonResponse(false,$approve['message']);
@@ -297,5 +299,6 @@ class AssetCreationService extends AppBaseController
 
         }
 
+        return $this->sendJsonResponse(true, 'Asset approval completed');
     }
 }

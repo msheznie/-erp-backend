@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Laravel\Passport\Passport;
+use Illuminate\Support\Facades\Auth;
+use App\Auth\Guards\KeycloakGuard;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -26,6 +28,15 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+
+        // Register custom Keycloak guard
+        Auth::extend('keycloak', function ($app, $name, array $config) {
+            return new KeycloakGuard(
+                Auth::createUserProvider($config['provider']),
+                $app['request'],
+                $config
+            );
+        });
 
         if ($this->app->resolved(\League\OAuth2\Server\AuthorizationServer::class)) {
             $server = $this->app->make(\League\OAuth2\Server\AuthorizationServer::class);

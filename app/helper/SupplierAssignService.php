@@ -6,6 +6,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Company;
+use Illuminate\Support\Arr;
 
 class SupplierAssignService
 {
@@ -21,7 +22,7 @@ class SupplierAssignService
 					                                    ->first();
 
 
-         $supData = array_except($supplierMaster->toArray(),'isSUPDAmendAccess');
+         $supData = Arr::except($supplierMaster->toArray(),'isSUPDAmendAccess');
 		 if ($checkSupplierAssignPolicy && $checkSupplierAssignPolicy->isYesNO == 1) {
 			$allCompanies = Company::where('isGroup', 0)
 								    ->where('isActive', 1)

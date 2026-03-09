@@ -37,10 +37,16 @@ class mrBulkUploadItem implements ShouldQueue
      */
     public function __construct($record, $mrRequest, $db, $authID)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->record = $record;
@@ -56,7 +62,6 @@ class mrBulkUploadItem implements ShouldQueue
     public function handle()
     {
         $db = $this->db;
-        Log::useFiles(storage_path() . '/logs/mr_bulk_item.log');
         CommonJobService::db_switch($db);
         $record = $this->record;
         $mrRequest = $this->mrRequest;
@@ -68,7 +73,6 @@ class mrBulkUploadItem implements ShouldQueue
 
         $validateItem = self::validateItemUpload($record, $mrRequest, $this->authID);
 
-        Log::info('Add Multiple Items End');
         $materialRequest = MaterielRequest::find($mrRequest['RequestID']);
         $materialRequest->isBulkItemJobRun = 0;
         $materialRequest->successDetailsCount = $validateItem['successCount'];

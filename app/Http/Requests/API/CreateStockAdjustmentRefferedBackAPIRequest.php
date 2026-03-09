@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\StockAdjustmentRefferedBack;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class CreateStockAdjustmentRefferedBackAPIRequest extends APIRequest
+class CreateStockAdjustmentRefferedBackAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

@@ -3,9 +3,9 @@
 namespace App\Http\Requests\API;
 
 use App\Models\AppointmentDetails;
-use InfyOm\Generator\Request\APIRequest;
+use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateAppointmentDetailsAPIRequest extends APIRequest
+class UpdateAppointmentDetailsAPIRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.

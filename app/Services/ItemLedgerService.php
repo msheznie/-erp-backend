@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
 use App\Models\Employee;
 use Exception;
 use App\Models\ErpItemLedger;
@@ -456,7 +457,6 @@ class ItemLedgerService
                                     } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
                                         if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
                                             $data[$i][$column] = 1;
-                                            Log::info('qty is' . $data[$i][$column]);
                                         } else {
                                             $data[$i][$column] = $detail[$value];
                                         }
@@ -465,11 +465,10 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                         if ($masterRec['stockCountType'] == 2) {       // cost count
                                             $data[$i][$column] = 1;
-                                            Log::info('qty is' . $data[$i][$column]);
                                         } else {
                                             $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                         }
@@ -487,9 +486,9 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
-                                        $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+                                        $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
                                         $data[$i][$column] = $companyCurrencyConversion['localAmount'];
                                     } else {
@@ -506,7 +505,7 @@ class ItemLedgerService
                                             'itemCodeSystem' => $detail['itemCodeSystem'],
                                             'wareHouseId' => $masterRec['location']);
 
-                                        $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                        $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                         $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
                                     } else {
@@ -534,7 +533,6 @@ class ItemLedgerService
                 }
                 else{
                     foreach ($masterRec[$docInforArr["childRelation"]] as $detail) {
-                        Log::info($detail . date('H:i:s'));
 
                         foreach ($detailColumnArray as $column => $value) {
                             if($masterModel["documentSystemID"] == 13 || $masterModel["documentSystemID"] == 10)
@@ -551,7 +549,6 @@ class ItemLedgerService
                                 } else if ($masterModel["documentSystemID"] == 7) {    // stock adjustment
                                     if ($masterRec['stockAdjustmentType'] == 2) {       // cost adjustment
                                         $data[$i][$column] = 1;
-                                        Log::info('qty is' . $data[$i][$column]);
                                     } else {
                                         $data[$i][$column] = $detail[$value];
                                     }
@@ -560,11 +557,10 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     if ($masterRec['stockCountType'] == 2) {       // cost count
                                         $data[$i][$column] = 1;
-                                        Log::info('qty is' . $data[$i][$column]);
                                     } else {
                                         $data[$i][$column] = $detail['noQty'] - $itemCurrentCostAndQty['currentWareHouseStockQty'];
                                     }
@@ -593,9 +589,9 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
-                                    $companyCurrencyConversion = \Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
+                                    $companyCurrencyConversion = Helper::currencyConversion($masterRec['companySystemID'], $detail['wacValueReportingCurrencyID'], $detail['wacValueReportingCurrencyID'], $itemCurrentCostAndQty['wacValueReporting']);
 
                                     $data[$i][$column] = $companyCurrencyConversion['localAmount'];
                                 }
@@ -618,7 +614,7 @@ class ItemLedgerService
                                         'itemCodeSystem' => $detail['itemCodeSystem'],
                                         'wareHouseId' => $masterRec['location']);
 
-                                    $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($stockCountWacData);
+                                    $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($stockCountWacData);
 
                                     $data[$i][$column] = $itemCurrentCostAndQty['wacValueReporting'];
                                 } 
@@ -696,11 +692,9 @@ class ItemLedgerService
 
                 }
                 if($data){
-                    Log::info($data);
                     $items = collect($data)->pluck("itemSystemCode")->toArray();
                     $itemLedgerInsert = ErpItemLedger::insert($data);
                     if($items) {
-                        Log::info($items);
                         $masterModel["items"] = $items;
                         $itemassignInsert = \App\Jobs\ItemAssignInsert::dispatch($masterModel);
                     }

@@ -36,9 +36,10 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
 use Illuminate\Support\Facades\DB;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Arr;
 
 /**
  * Class CustomerInvoiceItemDetailsController
@@ -246,7 +247,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
     public function update($id, Request $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
+        $input = Arr::except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
         $input = $this->convertArrayToValue($input);
         $input['customerItemDetailID'] = $id;
 
@@ -1310,10 +1311,10 @@ WHERE
                                 if ($unitCostForCalculation > 0) {
                                     $invDetail_arr['VATAmount'] = (($unitCostForCalculation / 100) * $vatDetails['percentage']);
                                 }
-                                $currencyConversionVAT = \Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
+                                $currencyConversionVAT = Helper::currencyConversion($customerInvoioce->companySystemID, $customerInvoioce->custTransactionCurrencyID, $customerInvoioce->custTransactionCurrencyID, $invDetail_arr['VATAmount']);
 
-                                $invDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
-                                $invDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                                $invDetail_arr['VATAmountLocal'] = Helper::roundValue($currencyConversionVAT['localAmount']);
+                                $invDetail_arr['VATAmountRpt'] = Helper::roundValue($currencyConversionVAT['reportingAmount']);
                             } else {
                                 $invDetail_arr['VATPercentage'] = $new['VATPercentage'];
                                 $invDetail_arr['VATAmount'] = $new['VATAmount'];

@@ -20,11 +20,13 @@ use App\Repositories\SegmentRightsRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use App\Criteria\LimitOffsetCriteria;
+use Illuminate\Support\Arr;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
+use App\helper\Helper;
 
 /**
  * Class SegmentRightsController
@@ -81,8 +83,8 @@ class SegmentRightsAPIController extends AppBaseController
         $company = $input['companyID'];
         $segmentSelectedItems = isset($input['segmentSelectedItems'])?$input['segmentSelectedItems']:false;
         $employeeSystemID =  isset($input['employeeSystemID'])?$input['employeeSystemID']:false;
-        $segement = array_pluck($segmentSelectedItems, 'id');
-        $employee = array_pluck($employeeSystemID, 'employeeSystemID');
+        $segement = Arr::pluck($segmentSelectedItems, 'id');
+        $employee = Arr::pluck($employeeSystemID, 'employeeSystemID');
 
 
         $arr = [];
@@ -228,7 +230,7 @@ class SegmentRightsAPIController extends AppBaseController
         $id = Auth::id();
         $user = $this->userRepository->findWithoutFail($id);
         $employee = EmployeeNavigation::select('companyID')->where('employeeSystemID', $user->employee_id)->get();
-        $companiesByGroup = array_pluck($employee, 'companyID');
+        $companiesByGroup = Arr::pluck($employee, 'companyID');
 
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -244,10 +246,10 @@ class SegmentRightsAPIController extends AppBaseController
                 $company = $companiesByGroup;
 
                 $globalCompanyID = (isset($input['globalCompanyID'])) ? $input['globalCompanyID'] : 0;
-                $isGroup = \Helper::checkIsCompanyGroup($globalCompanyID);
+                $isGroup = Helper::checkIsCompanyGroup($globalCompanyID);
 
                 if($isGroup){
-                    $company = \Helper::getGroupCompany($globalCompanyID);
+                    $company = Helper::getGroupCompany($globalCompanyID);
                 }else{
                     $company = [$globalCompanyID];
                 }

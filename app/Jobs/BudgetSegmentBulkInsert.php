@@ -54,7 +54,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
         $db = $this->db;
 
         CommonJobService::db_switch($db);
-        Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
 
         DB::beginTransaction();
         try {

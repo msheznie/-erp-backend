@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\ChequeTemplateBank;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 
 /**
  * Class ChequeTemplateBankRepository

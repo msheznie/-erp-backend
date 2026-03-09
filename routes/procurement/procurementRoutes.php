@@ -69,14 +69,14 @@ Route::group([], function() {
 
     Route::resource('pulled-mr-details', 'PulledItemFromMRController');
     Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
-    Route::post('purchase_request_details_update/{id}', 'PurchaseRequestDetailsAPIController@update');
-    Route::post('update_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@update');
-    Route::post('delete_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@destroy');
-    Route::post('purchase_request_details_delete/{id}', 'PurchaseRequestDetailsAPIController@destroy');
-    Route::post('purchase_requests/{id}', 'PurchaseRequestAPIController@update');
+    Route::post('purchase_request_details_update/{id}', 'PurchaseRequestDetailsAPIController@update')->name('Purchase request details update');
+    Route::post('update_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@update')->name('Update segment allocated items');
+    Route::post('delete_segment_allocated_items/{id}', 'SegmentAllocatedItemAPIController@destroy')->name('Delete segment allocated items');
+    Route::post('purchase_request_details_delete/{id}', 'PurchaseRequestDetailsAPIController@destroy')->name('Purchase request details delete');
+    Route::post('purchase_requests/{id}', 'PurchaseRequestAPIController@update')->name('Purchase request update');
     Route::resource('purchase_requests', 'PurchaseRequestAPIController');
     Route::resource('item-specification', 'ItemSpecificationController');
-    Route::get('item-specification-portal/{id}', 'ItemSpecificationController@show');
+    Route::get('item-specification-portal/{id}', 'ItemSpecificationController@show')->name('Item specification portal');
     Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
     Route::get('getItemsForOpenRequest', 'PurchaseRequestAPIController@getItemsForOpenRequest')->name('Get items for open request');
@@ -96,7 +96,6 @@ Route::group([], function() {
 Route::group([], function() {
     Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv')->name('Po check detail exist in grv');
     Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck')->name('Amend procurement order precheck');
-    Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment')->name('Get projects by segment');
     Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder')->name('Get items by procurement order');
     Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder')->name('Get items option for procurement order');
     Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails')->name('Get shipping and invoice details');
@@ -106,7 +105,6 @@ Route::group([], function() {
     Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView')->name('Po payment terms advance detail view');
     Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic')->name('Get logistics items by procurement order');
     Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier')->name('Check EOS policy and supplier');
-    Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData')->name('Get vat category form data');
     Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate')->name('Download procurement order item upload template');
     Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO')->name('Get purchase request for procurement order');
     Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO')->name('Get purchase request detail for procurement order');
@@ -121,7 +119,6 @@ Route::group([], function() {
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder')->name('Get all status by purchase order');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck')->name('destroy precheck');
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
-    Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
     Route::get('procumentOrderTotals', 'ProcumentOrderAPIController@procumentOrderTotals')->name('Procurement order totals');
     Route::get('getItemBulkUploadError', 'PoBulkUploadErrorLogAPIController@getItemBulkUploadError')->name('Procurement order totals');
 
@@ -164,7 +161,7 @@ Route::group([], function() {
     Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail')->name('Purchase order statuses send email');
     Route::post('purchaseOrderValidateItem', 'PurchaseOrderDetailsAPIController@purchaseOrderValidateItem')->name('Procurement order validate item');
     Route::post('purchaseOrderDetailsAddAllItems', 'PurchaseOrderDetailsAPIController@purchaseOrderDetailsAddAllItems')->name('Procurement order add all item');
-    Route::post('deletePoItemUploadErrorLog/{id}', 'PoBulkUploadErrorLogAPIController@deletePoItemUploadErrorLog');
+    Route::post('deletePoItemUploadErrorLog/{id}', 'PoBulkUploadErrorLogAPIController@deletePoItemUploadErrorLog')->name('Delete PO item upload error log');
 
     Route::resource('po_detail_expected_delivery_dates', 'PoDetailExpectedDeliveryDateAPIController');
     Route::resource('procurement-order', 'ProcumentOrderAPIController');

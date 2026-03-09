@@ -8,7 +8,7 @@ class AssetCostingException extends Exception
     private $excelRow;
     private $assetCostingUploadID;
 
-    public function __construct($message, $assetCostingUploadID, $excelRow = null,$code = 0, Exception $previous = null)
+    public function __construct($message, $assetCostingUploadID, $excelRow = null,$code = 0, ?Exception $previous = null)
     {
         $this->excelRow = $excelRow;
         $this->assetCostingUploadID = $assetCostingUploadID;

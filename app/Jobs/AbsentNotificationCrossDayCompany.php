@@ -25,10 +25,16 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
 
     public function __construct($tenantDb, $companyId, $companyName, $companyScenarioId, $debug = false)
     {        
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
+        if (env('QUEUE_DRIVER_CHANGE','database') == 'database') {
+            if (env('IS_MULTI_TENANCY',false)) {
+                self::onConnection('database_main');
+            }
+            else {
+                self::onConnection('database');
+            }
+        }
+        else {
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
 
         $this->tenantDb = $tenantDb;
@@ -40,7 +46,6 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
 
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('absent-notification') );
              
         CommonJobService::db_switch( $this->tenantDb );
 
@@ -48,7 +53,7 @@ class AbsentNotificationCrossDayCompany implements ShouldQueue
         $msg .= "{$this->tenantDb} DB";
 
         if($this->debug){ 
-            Log::info( $msg ); 
+            Log::channel('absent_notification')->info( $msg ); 
         }
 
         $now = Carbon::now();

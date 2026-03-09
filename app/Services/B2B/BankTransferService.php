@@ -8,7 +8,6 @@ use App\Models\PaymentBankTransfer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use League\Flysystem\Filesystem;
-use League\Flysystem\Sftp\SftpAdapter;
 use Illuminate\Support\Facades\File;
 
 class BankTransferService
@@ -32,7 +31,7 @@ class BankTransferService
     }
 
 
-    public function generateBatchNo($companyID, $documentCode = null, $documentDate, $field, $bankTransferID)
+    public function generateBatchNo($companyID, $documentCode = null, $documentDate = null, $field = null, $bankTransferID = null)
     {
         if (!isset($bankTransferID))
             return new \Exception("Cannot generate Doc Code");

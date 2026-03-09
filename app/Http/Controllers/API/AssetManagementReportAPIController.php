@@ -61,8 +61,8 @@ class AssetManagementReportAPIController extends AppBaseController
     {
         $selectedCompanyId = $request['selectedCompanyId'];
         $companiesByGroup = "";
-        if (\Helper::checkIsCompanyGroup($selectedCompanyId)) {
-            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        if (Helper::checkIsCompanyGroup($selectedCompanyId)) {
+            $companiesByGroup = Helper::getGroupCompany($selectedCompanyId);
         } else {
             $companiesByGroup = (array)$selectedCompanyId;
         }
@@ -315,7 +315,7 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
 
                     $sort = 'asc';
                     return \DataTables::of($output)
@@ -375,7 +375,7 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
 
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
     
                     $sort = 'asc';
 
@@ -442,7 +442,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $output['nbvQry'][] = $nbv;
                     $output['nbvQry'][] = $nbvEnd;
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     return array('reportData' => $output, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'date' => Carbon::parse($financePeriod->dateTo)->format('Y-m-d'), 'companyName' => $companyCurrency->CompanyName);
 
@@ -453,7 +453,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     //return phpinfo();
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
                     $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
 
@@ -497,7 +497,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     $output = $this->getAssetRegisterDetail($request);
 
@@ -539,7 +539,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $companyCurrency = \Helper::groupCompaniesCurrency($request->companySystemID);
+                $companyCurrency = Helper::groupCompaniesCurrency($request->companySystemID);
 
                 return array('reportData' => $outputArr, 'assetCostLocal' => $assetCostLocal, 'assetCostRpt' => $assetCostRpt, 'companyCurrency' => $companyCurrency);
 
@@ -560,7 +560,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 $companyID = "";
                 $checkIsGroup = Company::find($request->companySystemID);
                 if ($checkIsGroup->isGroup) {
-                    $companyID = \Helper::getGroupCompany($request->companySystemID);
+                    $companyID = Helper::getGroupCompany($request->companySystemID);
                 } else {
                     $companyID = [$request->companySystemID];
                 }
@@ -577,7 +577,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
                 }
 
-                $currency = \Helper::companyCurrency($request->companySystemID);
+                $currency = Helper::companyCurrency($request->companySystemID);
                 $companyCurrency = $outputArr2;
            
                 $total = array();
@@ -619,7 +619,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -660,7 +660,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -698,7 +698,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $grandTotalArr['prevYearDepAmount'] = array_sum($prevYearDepAmount);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -735,7 +735,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $grandTotalArr['prevYearDepAmount'] = array_sum($prevYearDepAmount);
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -776,7 +776,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $decimalPlaces = 2;
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($companyCurrency) {
                         if ($request->currencyID == 2) {
                             $decimalPlaces = $companyCurrency->localcurrency->DecimalPlaces;
@@ -791,7 +791,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                 $output = $this->getAssetCWIPQRY($request);
                 return array('reportData' => $output, 'companyName' => $companyCurrency->CompanyName, 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID);
@@ -847,14 +847,15 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
                     $excelColumnFormat = [
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_00,       // dep %
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,   // date acquired
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,   // dep start date
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     $title = trans('custom.asset_register_detail_report');
                     $fileName = trans('custom.asset_register_detail');
@@ -899,7 +900,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $totDisPro = 0;
                     $data = [];
 
-                    $companyData = \Helper::companyCurrency($request->companySystemID);
+                    $companyData = Helper::companyCurrency($request->companySystemID);
 
                     $decimalPlaces = ($request->currencyID == 3) ? $companyData->reportingcurrency->DecimalPlaces : $companyData->localcurrency->DecimalPlaces;
                     $currencyCode = ($request->currencyID == 3) ? $companyData->reportingcurrency->CurrencyCode : $companyData->localcurrency->CurrencyCode;
@@ -917,10 +918,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             $data[$x][trans('custom.serial_number')] = $value->faUnitSerialNo;
                             $data[$x][trans('custom.location')] = $value->locationName;
                             $data[$x][trans('custom.sub_location')] = $value->ServiceLineDes;
-                            $data[$x][trans('custom.acquisition_date')] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateAQ)) : null;
+                            $data[$x][trans('custom.acquisition_date')] = ($value->dateAQ) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($value->dateAQ)) : null;
                             $data[$x][trans('custom.supplier_name')] = $value->supplierName;
                             $data[$x][trans('custom.acquisition_cost')." (".$currencyCode.")"] = CurrencyService::convertNumberFormatToNumber(round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces));
-                            $data[$x][trans('custom.place_in_service_date')] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($value->dateDEP)) : null;
+                            $data[$x][trans('custom.place_in_service_date')] = ($value->dateDEP) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($value->dateDEP)) : null;
                             $data[$x][trans('custom.useful_life')] = $value->depMonth;
                             $data[$x][trans('custom.remaining_life')] = $value->depMonth - $value->depreciatedMonths;
                             $data[$x][trans('custom.depr_type')] = "SL";
@@ -981,14 +982,14 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $companyCode = isset($companyData->CompanyID)?$companyData->CompanyID:'common';
                     $excelColumnFormat = [
-                        'H' =>  \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'K' =>  \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' =>  \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'K' =>  \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     $detail_array = array(
@@ -1015,7 +1016,7 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                     $output = $this->getAssetRegisterDetail2($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
                         $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
                         $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
@@ -1164,16 +1165,16 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                     $excelColumnFormat = [
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                     $title = trans('custom.asset_register_detail2_report');
                     $fileName = trans('custom.asset_register_detail2_report');
@@ -1253,7 +1254,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $currencyCode = '';
                     $currencyDecimalPlace = 2;
 
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     if ($request->currencyID == 2) {
                         $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
                         $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
@@ -1283,13 +1284,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['costQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
                     
@@ -1300,13 +1302,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['depQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
                     
@@ -1317,42 +1320,43 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                     foreach ($output['nbvQry'] as $val) {
                         $row = array();
-                        $row[trans('custom.description')] = $val['description'];
+                        $row[trans('custom.description')] = data_get($val, 'description', '');
                         if (count($assetCategory) > 0) {
                             foreach ($assetCategory as $val2) {
-                                $row[$val2['financeCatDescription']] = CurrencyService::convertNumberFormatToNumber(round($val[$val2['financeCatDescription']], $currencyDecimalPlace));
+                                $key = $val2['financeCatDescription'];
+                                $row[$key] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, $key, 0), $currencyDecimalPlace));
                             }
                         }
-                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round($val['total'], $currencyDecimalPlace));
+                        $row[trans('custom.total')] = CurrencyService::convertNumberFormatToNumber(round((float) data_get($val, 'total', 0), $currencyDecimalPlace));
                         $data[] = $row;
                     }
 
 
                     $excelColumnFormat = [
-                        'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'C' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'X' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Y' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Z' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'X' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Y' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Z' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
 
                     $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
@@ -1388,7 +1392,7 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
-                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                     $final = $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
                     $outputArr = $final['reportData'];
@@ -1585,14 +1589,14 @@ class AssetManagementReportAPIController extends AppBaseController
                     $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
 
                     $excelColumnFormat = [
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                     $title = trans('custom.asset_register_grouped_detail_report');
                     $fileName = trans('custom.asset_register_grouped_detail');
@@ -1676,9 +1680,9 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 $excelColumnFormat = [
-                    'I' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                    'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                    'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
                 $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
@@ -1712,7 +1716,7 @@ class AssetManagementReportAPIController extends AppBaseController
                     $data[$x][trans('custom.company_id')] = $val->companyID;
                     $data[$x][trans('custom.company_name')] = $val->CompanyName;
 
-                    $data[$x][trans('custom.disposal_date')] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(\Helper::dateFormat($val->disposalDate)): null;
+                    $data[$x][trans('custom.disposal_date')] = ($val->disposalDate) ? \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel(Helper::dateFormat($val->disposalDate)): null;
                     $data[$x][trans('custom.doc_code')] = $val->disposalDocumentCode;
                     $data[$x][trans('custom.narration')] = $val->narration;
                     $data[$x][trans('custom.category')] = $val->AssetCategory;
@@ -1744,17 +1748,17 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 $excelColumnFormat = [
-                    'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_DDMMYYYY,
-                    'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'P' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+                    'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                    'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                 ];
 
                 $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
@@ -1796,18 +1800,18 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                     $excelColumnFormat = [
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
                     ];
                 }
                 else if ($reportTypeID == 'ADDM') { //Asset Depreciation Detail Monthly
@@ -1835,22 +1839,22 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $excelColumnFormat = [
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'V' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'V' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 else if ($reportTypeID == 'ADDS') { //Depreciation Detail Summary
@@ -1875,12 +1879,12 @@ class AssetManagementReportAPIController extends AppBaseController
                     }
 
                     $excelColumnFormat = [
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 else if ($reportTypeID == 'ADCS') { //Depreciation Category Summary
@@ -1901,11 +1905,11 @@ class AssetManagementReportAPIController extends AppBaseController
 
 
                     $excelColumnFormat = [
-                        'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
                 else if ($reportTypeID == 'ADCSM') { //Depreciation Category Monthly Summary
@@ -1927,21 +1931,21 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                     $excelColumnFormat = [
-                        'B' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'D' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'E' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'G' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'H' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'I' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'J' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'K' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'L' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+                        'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'G' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'H' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'I' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'J' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'K' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
                     ];
                 }
 
@@ -1970,7 +1974,7 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMACWIP': //Asset CWIP
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'year', 'month', 'typeID'));
                 $decimalPlaces = 2;
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                $companyCurrency = Helper::companyCurrency($request->companySystemID);
 
                 $output = $this->getAssetCWIPQRY($request);
                 if (count($output) > 0) {
@@ -2102,20 +2106,17 @@ class AssetManagementReportAPIController extends AppBaseController
                 $name = trans('custom.finance');
 
                 $lang = app()->getLocale();
-                $fontFamily = \Helper::getExcelFontFamily($lang);
+                $fontFamily = Helper::getExcelFontFamily($lang);
 
-                return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                return \App\Exports\CreateExcelExport::download($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
                     $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
-                        // Set default font for entire sheet
                         $sheet->setStyle([
                             'font' => [
                                 'name' => $fontFamily,
                                 'size' => 11,
-                            ]
+                            ],
                         ]);
                         $sheet->loadView($templateName, $reportData);
-
-                        // Apply font to all cells after loading view
                         $lastRow = $sheet->getHighestRow();
                         $lastColumn = $sheet->getHighestColumn();
                         if ($lastRow > 0 && $lastColumn) {
@@ -2123,18 +2124,22 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $spreadsheet = $sheet->getDelegate();
                                 $worksheet = $spreadsheet->getActiveSheet();
                                 $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                if ($templateName === 'export_report.asset_expenses') {
+                                    $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'));
+                                }
+                                if ($templateName === 'export_report.asset_wise_expenses') {
+                                    $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.account_code'));
+                                }
                             } catch (\Exception $e) {
                                 $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                             }
                         }
-                        
-                        // Set right-to-left for Arabic locale
                         if (app()->getLocale() == 'ar') {
                             $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                             $sheet->setRightToLeft(true);
                         }
                     });
-                })->download('xlsx');
+                }, 'xlsx');
                 break;
             case 'ATR':
                 $output = $this->getAssetTrackingQRY($request);
@@ -2148,19 +2153,17 @@ class AssetManagementReportAPIController extends AppBaseController
                     $name = trans('custom.finance');
 
                     $lang = app()->getLocale();
-                    $fontFamily = \Helper::getExcelFontFamily($lang);
+                    $fontFamily = Helper::getExcelFontFamily($lang);
 
-                    return \Excel::create($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
+                    return \App\Exports\CreateExcelExport::download($name, function ($excel) use ($reportData, $templateName, $fontFamily) {
                         $excel->sheet(trans('custom.new_sheet'), function ($sheet) use ($reportData, $templateName, $fontFamily) {
-                            // Set default font for entire sheet
                             $sheet->setStyle([
                                 'font' => [
                                     'name' => $fontFamily,
                                     'size' => 11,
-                                ]
+                                ],
                             ]);
                             $sheet->loadView($templateName, $reportData);
-
                             $lastRow = $sheet->getHighestRow();
                             $lastColumn = $sheet->getHighestColumn();
                             if ($lastRow > 0 && $lastColumn) {
@@ -2168,16 +2171,19 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $spreadsheet = $sheet->getDelegate();
                                     $worksheet = $spreadsheet->getActiveSheet();
                                     $worksheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
+                                    if ($templateName === 'export_report.asset_tracking') {
+                                        $this->setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, trans('custom.asset_code'), true);
+                                    }
                                 } catch (\Exception $e) {
                                     $sheet->getStyle('A1:' . $lastColumn . $lastRow)->getFont()->setName($fontFamily);
                                 }
                             }
-                             if (app()->getLocale() == 'ar') {
+                            if (app()->getLocale() == 'ar') {
                                 $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
                                 $sheet->setRightToLeft(true);
                             }
                         });
-                    })->download('xlsx');
+                    }, 'xlsx');
                 }
                 break;
             default:
@@ -2197,7 +2203,7 @@ class AssetManagementReportAPIController extends AppBaseController
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2269,7 +2275,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2373,7 +2379,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2444,7 +2450,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2508,7 +2514,7 @@ FROM
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2610,7 +2616,7 @@ erp_fa_asset_master.faID';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2790,7 +2796,7 @@ erp_fa_asset_master.faID;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -2993,7 +2999,7 @@ erp_fa_asset_master.faID;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3153,7 +3159,7 @@ erp_fa_asset_master.AUDITCATOGARY;';
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = (array)$request->companySystemID;
         }
@@ -3437,7 +3443,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -3524,7 +3530,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3638,7 +3644,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3783,7 +3789,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [$request->companySystemID];
         }
@@ -3918,15 +3924,15 @@ WHERE
 
             if ($request->subType == 3) {
                 if ($request->catType == 1) {
-                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->disposedDate);
                 } else {
-                    $data[$x][trans('custom.disposal_date')] = \Helper::dateFormat($val->asset_by->disposedDate);
+                    $data[$x][trans('custom.disposal_date')] = Helper::dateFormat($val->asset_by->disposedDate);
                 }
             } else {
                 if ($request->catType == 1) {
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->postedDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->postedDate);
                 } else {
-                    $data[$x][trans('custom.posted_date')] = \Helper::dateFormat($val->asset_by->postedDate);
+                    $data[$x][trans('custom.posted_date')] = Helper::dateFormat($val->asset_by->postedDate);
                 }
             }
 
@@ -3954,12 +3960,12 @@ WHERE
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
 
         $excelColumnFormat = [
-            'A' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
-            'B' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
-            'C' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_YYYYMMDD2,
-            'D' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
-            'E' => \PHPExcel_Style_NumberFormat::FORMAT_GENERAL,
-            'F' => \PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+            'A' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL,
+            'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL,
+            'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_YYYYMMDD2,
+            'D' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL,
+            'E' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_GENERAL,
+            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
 
         $title = "";
@@ -4010,7 +4016,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4080,7 +4086,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4134,7 +4140,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4345,7 +4351,7 @@ WHERE
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
         if ($checkIsGroup->isGroup) {
-            $companyID = \Helper::getGroupCompany($request->companySystemID);
+            $companyID = Helper::getGroupCompany($request->companySystemID);
         } else {
             $companyID = [(int)$request->companySystemID];
         }
@@ -4457,6 +4463,34 @@ WHERE
         $output = \DB::select($qry);
 
         return $output;
+    }
+
+    /**
+     * Set bold on header rows for asset expenses / asset wise expenses / asset tracking export.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $worksheet
+     * @param int $lastRow
+     * @param string $lastColumn
+     * @param string|null $columnHeaderLabel First column header text (e.g. trans('custom.asset_code') or trans('custom.account_code'))
+     * @param bool $onlyColumnHeaderRow When true, bold only the row where column A equals $columnHeaderLabel (e.g. asset_tracking)
+     * @return void
+     */
+    private function setAssetExpensesExportBold($worksheet, $lastRow, $lastColumn, $columnHeaderLabel = null, $onlyColumnHeaderRow = false)
+    {
+        $columnHeaderLabel = $columnHeaderLabel ?? trans('custom.asset_code');
+
+        for ($row = 1; $row <= $lastRow; $row++) {
+            $cellA = $worksheet->getCell('A' . $row)->getValue();
+            $isHeaderRow = $onlyColumnHeaderRow
+                ? (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel)
+                : ($row <= 6)
+                    || (is_string($cellA) && str_contains($cellA, ' - '))
+                    || (is_string($cellA) && trim((string) $cellA) === $columnHeaderLabel);
+
+            if ($isHeaderRow) {
+                $worksheet->getStyle('A' . $row . ':' . $lastColumn . $row)->getFont()->setBold(true);
+            }
+        }
     }
 
     private function getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency){

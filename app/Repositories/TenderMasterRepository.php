@@ -88,12 +88,14 @@ use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use InfyOm\Generator\Common\BaseRepository;
+use App\Repositories\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Arr;
 use App\Services\SrmDocumentModifyService;
 use mysql_xdevapi\Exception;
+use App\helper\Workflow\DocumentApprove;
+use App\helper\Workflow\DocumentReject;
 
 /**
  * Class TenderMasterRepository
@@ -337,7 +339,19 @@ class TenderMasterRepository extends BaseRepository
 
         $opening_date_comp = $tender->stage === 1 ? $tender->bid_opening_date : $tender->technical_bid_opening_date;
         $opening_date_comp_end = $tender->stage === 1 ? $tender->bid_opening_end_date : $tender->technical_bid_closing_date;
-        return $current_date->gt($opening_date_comp) && ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
+
+        if ($opening_date_comp_end !== null) {
+            $opening_date_comp_end = Carbon::parse($opening_date_comp_end);
+        }
+
+        if ($tender->document_system_id == 113 && $opening_date_comp === null) {
+            return true;
+        }
+
+        $opening_date_comp = Carbon::parse($opening_date_comp);
+
+        return $current_date->gt($opening_date_comp) &&
+            ($opening_date_comp_end === null || $opening_date_comp_end->gt($current_date));
     }
 
 
@@ -355,7 +369,7 @@ class TenderMasterRepository extends BaseRepository
         }
 
         $companyId = $input['companyId'];
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $tenderPaymentProof =  SRMTenderPaymentProof::getTenderPaymentReview($companyId,$empId);
 
         $search = $request->input('search.value');
@@ -384,7 +398,7 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierWiseProofNotApproved($request)
     {
         $input = $request->all();
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $companyId = $input['companyId'];
         $tenderUuid = $input['uuid'];
         $tenderData = TenderMaster::getTenderByUuid($tenderUuid);
@@ -421,7 +435,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['approvedComments']);
         $data['approvedComments'] = ($input['approvedComments']) ?? null;
 
-        $approve = \Helper::approveDocument($data);
+        $approve = DocumentApprove::approveDocument($data);
 
         if ($approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
             $this->purchaseTender($request);
@@ -453,7 +467,7 @@ class TenderMasterRepository extends BaseRepository
         unset($data['rejectedComments']);
         $data['rejectedComments'] = ($input['rejectedComments']) ?? null;
 
-        $approve = \Helper::rejectDocument($data);
+        $approve = DocumentReject::rejectDocument($data);
 
         if($approve['success'])
         {
@@ -482,7 +496,7 @@ class TenderMasterRepository extends BaseRepository
     public function getSupplierWiseProofApproved($request)
     {
         $input = $request->all();
-        $empId = \Helper::getEmployeeSystemID();
+        $empId = Helper::getEmployeeSystemID();
         $companyId = $input['companyId'];
         $tenderUuid = $input['uuid'];
         $tenderData = TenderMaster::getTenderByUuid($tenderUuid);
@@ -531,7 +545,9 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
-
+            if(!$updatedData['success']){
+                return $updatedData;
+            }
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -807,7 +823,7 @@ class TenderMasterRepository extends BaseRepository
 
         }
 
-        $technicalBidOpened = $currentDateFormatted->gt($bidOpeningStartDate);
+        $technicalBidOpened = $currentDateFormatted->gt(Carbon::parse($bidOpeningStartDate));
 
         if ($bidOpeningEndDate == null) {
             $result4 = true;
@@ -868,7 +884,7 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
-            $sort = $calendarDatesExists['sort'] ? $calendarDatesExists['sort'] + 1 : 1;
+            $sort = ($calendarDatesExists['sort'] ?? 0) + 1;
 
 
             $logData = [];
