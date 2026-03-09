@@ -147,13 +147,15 @@ class VendorFile
 
     private function processFooterData($bankTransferID)
     {
-        // Process footerData to remove special characters from strings; group by supplier invoice to avoid duplicates
+        // One S3 row: S3, comma-separated invoice codes, comma-separated dates (dd/mm/yyyy), blank detail, comma-separated bank amounts (invoice order)
         $processedFooterData = [];
         $seenInvoiceIds = [];
+        $invoiceCodes = [];
+        $invoiceDates = [];
+        $invoiceAmounts = [];
 
         $bankTransfer = PaymentBankTransfer::find($bankTransferID);
         $bankTransferDetails = $bankTransfer ? $this->getPaymentsByBankTransfer((int) $bankTransferID) : [];
-        $sectionIndex = 0;
         foreach ($bankTransferDetails as $bankTransferDetail) {
             if (($bankTransferDetail['documentSystemID'] ?? null) != 4) {
                 continue;
@@ -175,6 +177,12 @@ class VendorFile
             if (empty($supplierDetails)) {
                 continue;
             }
+            $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
+            $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
+            $pvAmount = round(
+                ($paymentVoucher->payAmountBank ?? 0) + ($paymentVoucher->retentionVatAmount ?? 0),
+                $decimalPlaces
+            );
             foreach ($supplierDetails as $detail) {
                 $invoice = $detail->supplier_invoice ?? null;
                 if (!$invoice) {
@@ -188,28 +196,31 @@ class VendorFile
                     continue;
                 }
                 $seenInvoiceIds[$invoiceId] = true;
-                $sectionIndex++;
+
                 $bookingInvCode = (string) ($invoice->bookingInvCode ?? '');
+                $invoiceCodes[] = preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode);
+
                 try {
-                    $bookingDateFormatted = $invoice->bookingDate
-                        ? Carbon::parse($invoice->bookingDate)->format('Ymd')
+                    $invoiceDates[] = $invoice->supplierInvoiceDate
+                        ? Carbon::parse($invoice->supplierInvoiceDate)->format('d/m/Y')
                         : '';
                 } catch (\Throwable $e) {
-                    $bookingDateFormatted = '';
+                    $invoiceDates[] = '';
                 }
-                $invoiceDetails = (string) ($invoice->comments ?? $invoice->supplierInvoiceNo ?? '');
-                $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
-                $processedFooterData[] = [
-                    'S3',
-                    preg_replace('/[^a-zA-Z0-9]/', '', $bookingInvCode),
-                    $bookingDateFormatted,
-                    '',
-                    // $invoice->netAmount+$invoice->invoiceAmount ?? 0,
-                    round($paymentVoucher->payAmountSuppTrans + $paymentVoucher->retentionVatAmount + $paymentVoucher->VATAmount,$currency->DecimalPlaces ?? 2) ?? 0,
-                ];
+
+                $invoiceAmounts[] = $pvAmount;
             }
         }
 
+        if (!empty($invoiceCodes)) {
+            $processedFooterData[] = [
+                'S3',
+                implode(',', $invoiceCodes),
+                implode(',', $invoiceDates),
+                '',
+                implode(',', $invoiceAmounts),
+            ];
+        }
 
         $this->footerData = $processedFooterData;
     }
