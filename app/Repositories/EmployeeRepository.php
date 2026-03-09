@@ -123,6 +123,14 @@ class EmployeeRepository extends BaseRepository
         ];
     }
 
+    public function normalizeMultiValue($input)
+    {
+        if (!is_array($input)) {
+            return [];
+        }
+        return array_values(array_filter(array_map('trim', $input)));
+    }
+
     public function buildUserResponseItem($employee, $accessMap = [])
     {
         $user = $employee->user_data;
@@ -240,31 +248,68 @@ class EmployeeRepository extends BaseRepository
         return $accessMap;
     }
 
-    public function getEmployeeIDsByProductAccess($productName)
+    public function getEmployeeIDsByProductAccess($productNameOrNames)
     {
-        if (strtolower($productName) === 'self service') {
-            $otherProducts = array_diff($this->getProductNames(), ['Self Service']);
-
-            $employeesWithProducts = EmployeeNavigation::withProducts($otherProducts)
-                ->distinct()
-                ->pluck('srp_erp_employeenavigation.employeeSystemID')
-                ->toArray();
-
-            $allPortalEmployees = EmployeeNavigation::portalUsers()
-                ->distinct()
-                ->pluck('srp_erp_employeenavigation.employeeSystemID')
-                ->toArray();
-
-            return array_values(array_diff($allPortalEmployees, $employeesWithProducts));
-        }
-
-        if (!in_array($productName, $this->getProductNames())) {
+        $productNames = is_array($productNameOrNames)
+            ? array_values(array_filter(array_map('trim', $productNameOrNames)))
+            : [trim((string) $productNameOrNames)];
+        $productNames = array_filter($productNames);
+        if (empty($productNames)) {
             return [];
         }
 
-        return EmployeeNavigation::withProduct($productName)
-            ->distinct()
-            ->pluck('srp_erp_employeenavigation.employeeSystemID')
-            ->toArray();
+        $validProducts = $this->getProductNames();
+        $productMap = collect($validProducts)->mapWithKeys(fn($p) => [strtolower($p) => $p])->all();
+
+        if (count($productNames) === 1) {
+            $productName = $productMap[strtolower($productNames[0])] ?? null;
+            if ($productName === null) {
+                return [];
+            }
+            if (strtolower($productName) === 'self service') {
+                $otherProducts = array_diff($this->getProductNames(), ['Self Service']);
+                $employeesWithProducts = EmployeeNavigation::withProducts($otherProducts)
+                    ->distinct()
+                    ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                    ->toArray();
+                $allPortalEmployees = EmployeeNavigation::portalUsers()
+                    ->distinct()
+                    ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                    ->toArray();
+                return array_values(array_diff($allPortalEmployees, $employeesWithProducts));
+            }
+            return EmployeeNavigation::withProduct($productName)
+                ->distinct()
+                ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                ->toArray();
+        }
+
+        $normalized = [];
+        foreach ($productNames as $name) {
+            $matched = $productMap[strtolower($name)] ?? null;
+            if ($matched !== null) {
+                $normalized[] = $matched;
+            }
+        }
+        $normalized = array_unique($normalized);
+        if (empty($normalized)) {
+            return [];
+        }
+
+        $hasSelfService = in_array('Self Service', $normalized);
+        $others = array_values(array_diff($normalized, ['Self Service']));
+
+        $employeeIDs = [];
+        if (!empty($others)) {
+            $employeeIDs = EmployeeNavigation::withProducts($others)
+                ->distinct()
+                ->pluck('srp_erp_employeenavigation.employeeSystemID')
+                ->toArray();
+        }
+        if ($hasSelfService) {
+            $selfServiceIds = $this->getEmployeeIDsByProductAccess('Self Service');
+            $employeeIDs = array_values(array_unique(array_merge($employeeIDs, $selfServiceIds)));
+        }
+        return $employeeIDs;
     }
 }
