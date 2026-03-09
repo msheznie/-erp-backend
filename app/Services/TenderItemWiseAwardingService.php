@@ -17,6 +17,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBoqItems;
 use App\Models\TenderConfirmationDetail;
 use App\Models\TenderCustomEmail;
+use App\Services\TenderConfirmationService;
 use App\Models\TenderMaster;
 use App\Models\TenderNegotiation;
 use Illuminate\Http\Request;
@@ -243,7 +244,7 @@ class TenderItemWiseAwardingService
                     $tenderNegotiationId = $latestNegotiation->id ?? null;
                 }
 
-                TenderConfirmationDetail::saveConfirmationDetails(
+                TenderConfirmationService::saveConfirmationDetails(
                     $tenderId,
                     $tenderId,
                     TenderConfirmationDetail::MODULE_COMBINED_RANKING,
@@ -323,7 +324,7 @@ class TenderItemWiseAwardingService
                 'final_tender_awarded' => 1,
                 'final_tender_award_comment' => $commentToSave,
             ]);
-            TenderConfirmationDetail::saveConfirmationDetails(
+            TenderConfirmationService::saveConfirmationDetails(
                 (int) $tenderId,
                 (int) $tenderId,
                 TenderConfirmationDetail::MODULE_AWARDED,
