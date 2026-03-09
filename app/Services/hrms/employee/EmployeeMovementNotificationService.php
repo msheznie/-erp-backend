@@ -4,6 +4,8 @@ namespace App\Services\hrms\employee;
 
 use App\Models\Employee;
 use Carbon\Carbon;
+use App\enums\hrms\JobProcedureType;
+use App\enums\hrms\NotificationScenario;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
 use App\Models\SrpEmployeeDetails;
@@ -19,8 +21,6 @@ class EmployeeMovementNotificationService
     private $isScenarioActive;
     private $notifyList;
     private $masterDet;
-
-    const SCENARIO_ID = 55;
 
     public function __construct($companyId, $id, $masterDet)
     {
@@ -78,17 +78,19 @@ class EmployeeMovementNotificationService
 
     public function getScenarioEmployees($getEmployees = false)
     {
+        $jobProcedureType = $this->getJobProcedureType($this->masterDet['typeId'],$this->masterDet['movementTypeId']);
         $getScenarioEmployees = NotificationCompanyScenario::select('id')
             ->where([
-                'scenarioID' => self::SCENARIO_ID,
+                'scenarioID' => NotificationScenario::EMPLOYEE_MOVEMENT,
                 'companyID' => $this->companyId,
                 'isActive' => 1
             ]);
 
         if ($getEmployees) {
-            $getScenarioEmployees = $getScenarioEmployees->with(['user' => function ($q) {
+            $getScenarioEmployees = $getScenarioEmployees->with(['user' => function ($q) use ($jobProcedureType) {
                 $q->select('id', 'empID', 'companyScenarionID', 'isActive', 'applicableCategoryID')
                     ->where('isActive', '=', 1)
+                    ->where('emp_movement_type', $jobProcedureType)
                     ->with(['employee' => function ($q3) {
                         $q3->select('employeeSystemID', 'empFullName', 'empEmail', 'empID', 'isEmailVerified');
                     }]);
@@ -139,7 +141,7 @@ class EmployeeMovementNotificationService
                 $isEmailSentAssignedReportingManager = true;
                 $assignedManagerInfo = $this->getActiveReportingManagerInfo();
                 if (!empty($assignedManagerInfo)) {
-                    $applicableCatDesc = 'Exis Reporting Manager';
+                    $applicableCatDesc = 'Existing Reporting Manager';
                     $mailTo = $assignedManagerInfo['EEmail'];
                     $name = $assignedManagerInfo['Ename2'];
                     $empCode = $assignedManagerInfo['ECode'];
@@ -244,6 +246,7 @@ class EmployeeMovementNotificationService
         $movementType = $this->masterDet['movementType'] ?? '';
         $classification = $this->masterDet['type'] ?? '';
         $empName = $this->masterDet['empName'] ?? '';
+
         return "Employee Movement Approved - {$movementType} ({$classification}) - {$empName}";
     }
 
@@ -295,12 +298,46 @@ class EmployeeMovementNotificationService
             'company_id' => $this->companyId,
             'module' => 'HRMS',
             'description' => 'Employee movement notification scenario',
-            'scenario_id' => self::SCENARIO_ID,
+            'scenario_id' => NotificationScenario::EMPLOYEE_MOVEMENT,
             'processed_for' => $this->date,
             'logged_at' => $this->date,
             'log_type' => $logType,
             'log_data' => $logData,
         ];
         DB::table('job_logs')->insert($data);
+    }
+
+    private function getJobProcedureType($typeId, $movementTypeId)
+    {
+        $jobProcedureType = null;
+
+        if ($typeId == JobProcedureType::Internal) {
+            switch ($movementTypeId) {
+                case JobProcedureType::Transfer:
+                    $jobProcedureType = JobProcedureType::Internal_Transfer;
+                    break;
+                case JobProcedureType::Secondment:
+                    $jobProcedureType = JobProcedureType::Internal_Secondment;
+                    break; 
+                case JobProcedureType::Assignment:
+                    $jobProcedureType = JobProcedureType::Internal_Assignment;
+                    break;
+            }
+        }
+        
+        if ($typeId == JobProcedureType::External) {
+            switch ($movementTypeId) {
+                case JobProcedureType::Transfer:
+                    $jobProcedureType = JobProcedureType::External_Transfer;
+                    break;
+                case JobProcedureType::Secondment:
+                    $jobProcedureType = JobProcedureType::External_Secondment;
+                    break;
+                case JobProcedureType::Assignment:
+                    $jobProcedureType = JobProcedureType::External_Assignment;
+                    break;
+            }
+        }
+        return $jobProcedureType;
     }
 }
