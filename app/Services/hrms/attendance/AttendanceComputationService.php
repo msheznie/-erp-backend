@@ -157,6 +157,18 @@ class AttendanceComputationService
             return;
         }
 
+        if (!empty($this->data['external_secondment_movement_id'])) {
+            $this->presentAbsentType = AbsentType::EXTERNAL_SECONDMENT;
+            $this->isClockInOutSet = false;
+            return;
+        }
+
+        if (!empty($this->data['external_assignment_movement_id'])) {
+            $this->presentAbsentType = AbsentType::EXTERNAL_ASSIGNMENT;
+            $this->isClockInOutSet = false;
+            return;
+        }
+
         if($this->data['typeId']) {
             $this->presentTypeSwitch();
             return;
