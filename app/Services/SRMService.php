@@ -1757,7 +1757,7 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date',
-                'negotiation_code', 'document_type', 'tender_document_fee', 'company_id')
+                'negotiation_code', 'document_type', 'tender_document_fee', 'company_id', 'evaluation_type_id')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
@@ -1795,6 +1795,10 @@ class SRMService
                     },
                     'awardedSupplier' => function ($query) use ($supplierRegId) {
                         $query->select('tender_id', 'id')
+                            ->where('supplier_id', $supplierRegId);
+                    },
+                    'itemWiseAwardingForSupplier' => function ($query) use ($supplierRegId) {
+                        $query->select('id', 'tender_id', 'supplier_id', 'is_awarded', 'is_negotiation')
                             ->where('supplier_id', $supplierRegId);
                     },
                     'DocumentAttachments' => function ($q) use ($documentId) {
