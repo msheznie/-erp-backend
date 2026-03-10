@@ -1,5 +1,8 @@
 <?php
 namespace App\Services\hrms\attendance;
+
+use App\enums\hrms\EmployeeMovementType;
+use App\enums\hrms\MovementType;
 use App\helper\CommonJobService;
 use App\Services\hrms\attendance\computation\SMCrossDayOnlyComputation;
 use Carbon\Carbon;
@@ -75,6 +78,7 @@ class SMAttendanceCrossDayPullingService{
             $clockOutData = $this->getEachEmpClockOutData($curEmpId);
             $leaveData = $this->getLeaveData($curEmpId);
             $shiftData = $this->getShiftData($shiftId);
+            $externalMovementIds = $this->getExternalMovementIds($curEmpId, $this->prvDate);
 
             $this->reviewAttData[$key]->clockOutDate =
                 isset($clockOutData->clockOutDate) ? $clockOutData->clockOutDate : $this->prvDate;
@@ -131,6 +135,31 @@ class SMAttendanceCrossDayPullingService{
             ->whereDate('endDate', '>=',  "'$this->pullingDate'")
             ->get()
             ->last();
+    }
+
+    function getExternalMovementIds(int $empId, string $attDate): object
+    {
+        $row = DB::table('hr_employee_movement_master')
+            ->where([
+                ['company_id', '=', $this->companyId],
+                ['emp_id', '=', $empId],
+                ['approved_yn', '=', 1],
+                ['type', '=', EmployeeMovementType::EXTERNAL],
+                [DB::raw('DATE(from_date)'), '<=', $attDate],
+                [DB::raw('DATE(to_date)'), '>=', $attDate],
+            ])
+            ->whereIn('movement_type', [MovementType::SECONDMENT, MovementType::ASSIGNMENT])
+            ->selectRaw(
+                'MAX(CASE WHEN movement_type = ? THEN id END) AS external_secondment_movement_id, 
+                MAX(CASE WHEN movement_type = ? THEN id END) AS external_assignment_movement_id',
+                [MovementType::SECONDMENT, MovementType::ASSIGNMENT]
+            )
+            ->first();
+
+        return (object) [
+            'external_secondment_movement_id' => $row->external_secondment_movement_id ?? null,
+            'external_assignment_movement_id' => $row->external_assignment_movement_id ?? null,
+        ];
     }
 
     function getShiftData($shiftId){
