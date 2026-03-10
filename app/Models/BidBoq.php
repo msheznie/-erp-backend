@@ -145,4 +145,18 @@ class BidBoq extends Model
             ->get();
     }
 
+    /**
+     * Find BidBoq by boq_id (TenderBoqItems id) and bid_master_id.
+     *
+     * @param int $boqId
+     * @param int $bidMasterId
+     * @return self|null
+     */
+    public static function findByBoqAndBid(int $boqId, int $bidMasterId)
+    {
+        return self::where('boq_id', $boqId)
+            ->where('bid_master_id', $bidMasterId)
+            ->first();
+    }
+
 }
