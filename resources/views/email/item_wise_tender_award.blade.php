@@ -4,17 +4,15 @@
 
 <p>Below are the details of the items awarded to your company:</p>
 
-<p><strong>Tender Code:</strong> {{ $tenderCode }}</p>
-<p><strong>Tender Title:</strong> {{ $tenderTitle }}</p>
-<p><strong>Supplier Name:</strong> {{ $supplierName }}</p>
+<p>Tender Code: {{ $tenderCode }}</p>
+<p>Tender Title: {{ $tenderTitle }}</p>
+<p>Supplier Name: {{ $supplierName }}</p>
 
-<p><strong>Items Awarded:</strong></p>
+<p>Items Awarded:</p>
 @if(!empty($items))
-<ol>
 @foreach($items as $index => $item)
-<li>{{ $item['description'] ?? '-' }}, Quantity: {{ $item['quantity'] ?? '-' }}, Price: {{ $item['price'] ?? '-' }} {{ $currency ?? '' }}</li>
+<p>Item {{ $index + 1 }}: {{ $item['description'] ?? '-' }}, Quantity: {{ $item['quantity'] ?? '-' }}, Price: {{ $item['price'] ?? '-' }} {{ $currency ?? '' }}</p>
 @endforeach
-</ol>
 @else
 <p>No items.</p>
 @endif
@@ -25,6 +23,6 @@
 
 <p>Once again, congratulations on winning the tender, and we look forward to a successful partnership.</p>
 
-<p>Best regards,<br />
-Procurement Department.<br />
-{{ $companyName }}</p>
+<p>Best regards,</p>
+<p>Procurement Department.</p>
+<p>{{ $companyName }}</p>
