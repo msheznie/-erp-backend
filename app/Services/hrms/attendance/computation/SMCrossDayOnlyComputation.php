@@ -176,6 +176,18 @@ class SMCrossDayOnlyComputation{
             return;
         }
 
+        if (!empty($this->data->external_secondment_movement_id ?? null)) {
+            $this->presentAbsentType = AbsentType::EXTERNAL_SECONDMENT;
+            $this->isClockInOutSet = false;
+            return;
+        }
+
+        if (!empty($this->data->external_assignment_movement_id ?? null)) {
+            $this->presentAbsentType = AbsentType::EXTERNAL_ASSIGNMENT;
+            $this->isClockInOutSet = false;
+            return;
+        }
+
         if ($this->isClockInOutSet) {
             $this->presentAbsentType = AbsentType::ON_TIME;
             return;
