@@ -661,6 +661,13 @@ class TenderMaster extends Model
         return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id')->where('award', 1);
     }
 
+    
+    public function itemWiseAwardingForSupplier()
+    {
+        return $this->hasOne(SrmItemWiseTenderAwarding::class, 'tender_id', 'id')
+            ->orderByRaw('is_negotiation DESC, id DESC');
+    }
+
     public function srmTenderMasterSuppliers()
     {
         return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
