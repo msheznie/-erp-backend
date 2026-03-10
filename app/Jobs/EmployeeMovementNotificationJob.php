@@ -55,13 +55,12 @@ class EmployeeMovementNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        if (empty($this->dbName)) {
-           Log::channel('employee-tasking-notification')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-
-        } else {
+        if (!empty($this->dbName)) {
             CommonJobService::db_switch($this->dbName);
             $obj = new EmployeeMovementNotificationService($this->companyId, $this->id, $this->masterDetails);
             $obj->execute();
         }
+
+        return true;
     }
 }
