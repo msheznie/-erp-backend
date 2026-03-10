@@ -56,7 +56,7 @@ class EmployeeMovementNotificationJob implements ShouldQueue
     public function handle()
     {
         if (empty($this->dbName)) {
-           Log::channel('employee_movement_notification')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+           Log::channel('employee-tasking-notification')->error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
 
         } else {
             CommonJobService::db_switch($this->dbName);
