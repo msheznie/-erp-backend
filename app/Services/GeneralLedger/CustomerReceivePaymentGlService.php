@@ -218,24 +218,24 @@ class CustomerReceivePaymentGlService
 
                     $serviceLineSystemIDs = collect($receiptDetails)->pluck('serviceLineSystemID')->toArray();
                     $firstReceiptDetail = $receiptDetails->first();
+                    $sourceLocal = Helper::roundValue($receiptDetails->sum('receiveAmountLocal'));
+                    $sourceRpt = Helper::roundValue($receiptDetails->sum('receiveAmountRpt'));
 
                     if ($receiptDetails->count() === 1) {
                         $valueRe = $receiptDetails->first();
                         $arTrans = Helper::roundValue($cpd->transAmount) * -1;
-                        $arConv = Helper::convertAmountToLocalRpt(21, $masterModel["autoID"], abs($cpd->transAmount));
                         $data['documentTransAmount'] = $arTrans;
-                        $data['documentLocalAmount'] = Helper::roundValue($arConv['localAmount']) * -1;
-                        $data['documentRptAmount'] = Helper::roundValue($arConv['reportingAmount']) * -1;
+                        $data['documentLocalAmount'] = $sourceLocal * -1;
+                        $data['documentRptAmount'] = $sourceRpt * -1;
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                         $data['serviceLineCode'] = $valueRe->serviceLineCode;
                         array_push($finalData, $data);
                     } else {
                         $valueRe = $receiptDetails->first();
                         $arTrans = Helper::roundValue($cpd->transAmount) * -1;
-                        $arConv = Helper::convertAmountToLocalRpt(21, $masterModel["autoID"], abs($cpd->transAmount));
                         $data['documentTransAmount'] = $arTrans;
-                        $data['documentLocalAmount'] = Helper::roundValue($arConv['localAmount']) * -1;
-                        $data['documentRptAmount'] = Helper::roundValue($arConv['reportingAmount']) * -1;
+                        $data['documentLocalAmount'] = $sourceLocal * -1;
+                        $data['documentRptAmount'] = $sourceRpt * -1;
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                         $data['serviceLineCode'] = $valueRe->serviceLineCode;
                         array_push($finalData, $data);
