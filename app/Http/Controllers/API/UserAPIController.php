@@ -331,11 +331,14 @@ class UserAPIController extends AppBaseController
             $input = $request->all();
 
             $validator = \Validator::make($input, [
-                'page'           => 'sometimes|integer|min:1',
-                'per_page'       => 'sometimes|integer|min:1|max:500',
-                'company'        => 'sometimes|string',
-                'user_type'      => 'sometimes|string',
-                'product_access' => 'sometimes|string',
+                'page'             => 'sometimes|integer|min:1',
+                'per_page'         => 'sometimes|integer|min:1|max:500',
+                'company'          => 'sometimes|array',
+                'company.*'        => 'string',
+                'user_type'        => 'sometimes|array',
+                'user_type.*'      => 'string',
+                'product_access'   => 'sometimes|array',
+                'product_access.*' => 'string',
             ]);
 
             if ($validator->fails()) {
@@ -344,49 +347,84 @@ class UserAPIController extends AppBaseController
 
             $companySystemIDs = null;
             if ($request->has('company')) {
-                $companyName = $request->get('company');
-                $company = Company::where('CompanyName', $companyName)->first();
-
-                if (!$company) {
+                $companyNames = $this->employeeRepository->normalizeMultiValue($request->get('company'));
+                if (empty($companyNames)) {
                     return $this->sendError(trans('custom.input_value_not_matching'), 422);
                 }
 
-                $isGroup = Helper::checkIsCompanyGroup($company->companySystemID);
-                if ($isGroup) {
-                    $companySystemIDs = Helper::getGroupCompany($company->companySystemID);
-                } else {
-                    $companySystemIDs = [$company->companySystemID];
+                $companies = $this->companyRepository->findByCompanyNames($companyNames);
+                if ($companies->count() !== count(array_unique(array_map('strtolower', $companyNames)))) {
+                    return $this->sendError(trans('custom.input_value_not_matching'), 422);
                 }
+
+                $companySystemIDs = [];
+                foreach ($companies as $company) {
+                    $isGroup = Helper::checkIsCompanyGroup($company->companySystemID);
+                    if ($isGroup) {
+                        $companySystemIDs = array_merge(
+                            $companySystemIDs,
+                            Helper::getGroupCompany($company->companySystemID)
+                        );
+                    } else {
+                        $companySystemIDs[] = $company->companySystemID;
+                    }
+                }
+                $companySystemIDs = array_values(array_unique($companySystemIDs));
             }
 
-            $userTypeId = null;
+            $userTypeIds = null;
             if ($request->has('user_type')) {
-                $inputType = $request->get('user_type');
-
-                $aliases = $this->employeeRepository->getUserTypeAliases();
-                $mappedType = collect($aliases)->first(
-                    fn($dbVal, $alias) => strtolower($alias) === strtolower($inputType)
-                );
-
-                $searchType = $mappedType ?? $inputType;
-                $userType = UserType::whereRaw('LOWER(userType) = ?', [strtolower($searchType)])->first();
-
-                if (!$userType) {
+                $userTypeInputs = $this->employeeRepository->normalizeMultiValue($request->get('user_type'));
+                if (empty($userTypeInputs)) {
                     return $this->sendError(trans('custom.user_type_not_found'), 422);
                 }
-                $userTypeId = $userType->id;
+
+                $aliases = $this->employeeRepository->getUserTypeAliases();
+                $aliasMap = collect($aliases)->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->all();
+
+                $searchTypes = [];
+                foreach ($userTypeInputs as $inputType) {
+                    $searchTypes[] = $aliasMap[strtolower($inputType)] ?? $inputType;
+                }
+                $searchTypes = array_unique($searchTypes);
+                $lowerSearchTypes = array_map('strtolower', $searchTypes);
+
+                $userTypes = UserType::whereIn(DB::raw('LOWER(userType)'), $lowerSearchTypes)->get();
+                $userTypeMap = $userTypes->keyBy(fn($ut) => strtolower($ut->userType));
+
+                $userTypeIds = [];
+                foreach ($userTypeInputs as $inputType) {
+                    $searchType = $aliasMap[strtolower($inputType)] ?? $inputType;
+                    $ut = $userTypeMap->get(strtolower($searchType));
+                    if (!$ut) {
+                        return $this->sendError(trans('custom.user_type_not_found'), 422);
+                    }
+                    $userTypeIds[] = $ut->id;
+                }
+                $userTypeIds = array_values(array_unique($userTypeIds));
             }
 
             $productAccessFilter = null;
             if ($request->has('product_access')) {
-                $inputProduct = $request->get('product_access');
+                $productAccessList = $this->employeeRepository->normalizeMultiValue($request->get('product_access'));
+                if (empty($productAccessList)) {
+                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                }
+
                 $validProducts = $this->employeeRepository->getProductNames();
+                $productMap = collect($validProducts)->mapWithKeys(fn($p) => [strtolower($p) => $p])->all();
+                $validProductAccessList = [];
+                foreach ($productAccessList as $name) {
+                    $matched = $productMap[strtolower($name)] ?? null;
+                    if ($matched !== null) {
+                        $validProductAccessList[] = $matched;
+                    } else {
+                        return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                    }
+                }
 
-                $productAccessFilter = collect($validProducts)->first(
-                    fn($name) => strtolower($name) === strtolower($inputProduct)
-                );
-
-                if (!$productAccessFilter) {
+                $productAccessFilter = $this->employeeRepository->getEmployeeIDsByProductAccess($validProductAccessList);
+                if (empty($productAccessFilter)) {
                     return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
                 }
             }
@@ -424,20 +462,14 @@ class UserAPIController extends AppBaseController
             if ($companySystemIDs !== null) {
                 $query->whereIn('empCompanySystemID', $companySystemIDs);
             }
-            if ($userTypeId !== null) {
-                $query->whereHas('user_data', function ($q) use ($userTypeId) {
-                    $q->where('userType', $userTypeId);
+            if ($userTypeIds !== null) {
+                $query->whereHas('user_data', function ($q) use ($userTypeIds) {
+                    $q->whereIn('userType', $userTypeIds);
                 });
             }
 
             if ($productAccessFilter !== null) {
-                $employeeIDs = $this->employeeRepository->getEmployeeIDsByProductAccess($productAccessFilter);
-
-                if (empty($employeeIDs)) {
-                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
-                }
-
-                $query->whereIn('employeeSystemID', $employeeIDs);
+                $query->whereIn('employeeSystemID', $productAccessFilter);
             }
 
             if ($request->has('page')) {
