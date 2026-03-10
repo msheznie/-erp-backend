@@ -14,4 +14,6 @@ class AbsentType{
     const MANDATE = 12;
     const SECONDMENT = 13;
     const ON_TRIP = 14;
+    const EXTERNAL_SECONDMENT = 17;
+    const EXTERNAL_ASSIGNMENT = 18;
 }

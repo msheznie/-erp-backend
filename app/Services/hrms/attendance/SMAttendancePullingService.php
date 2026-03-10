@@ -1,6 +1,8 @@
 <?php
 namespace App\Services\hrms\attendance;
 
+use App\enums\hrms\EmployeeMovementType;
+use App\enums\hrms\MovementType;
 use App\enums\shift\Shifts;
 use App\helper\CommonJobService;
 use App\helper\SME;
@@ -354,6 +356,8 @@ class SMAttendancePullingService{
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, {$this->weekendColumn} AS isWeekend, shd.gracePeriod,
         shd.isFlexyHour, shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
         t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime,
+        emv_sec.id AS external_secondment_movement_id,
+        emv_assign.id AS external_assignment_movement_id,
         IF(wrd.typeId,wrd.typeId,trd.typeId) as typeId, wrd.detailId
         FROM attendance_temporary_tbl AS t
         JOIN (
@@ -375,7 +379,17 @@ class SMAttendancePullingService{
             SELECT req_emp_id_confirmed AS emp_id, 5 as typeId, date_travel, date_return 
             FROM hr_trip_request_master 
             WHERE company_id = {$this->companyId} AND rpt_manager_confirmed_yn = 1
-        ) AS trd ON trd.emp_id = t.emp_id AND t.att_date BETWEEN trd.date_travel AND trd.date_return 
+        ) AS trd ON trd.emp_id = t.emp_id AND t.att_date BETWEEN trd.date_travel AND trd.date_return
+        LEFT JOIN (
+            SELECT id, emp_id, from_date, to_date
+            FROM hr_employee_movement_master
+            WHERE company_id = {$this->companyId} AND approved_yn = 1 AND type = ".EmployeeMovementType::EXTERNAL." AND movement_type = ".MovementType::SECONDMENT."
+        ) AS emv_sec ON emv_sec.emp_id = t.emp_id AND t.att_date BETWEEN emv_sec.from_date AND emv_sec.to_date
+        LEFT JOIN (
+            SELECT id, emp_id, from_date, to_date
+            FROM hr_employee_movement_master
+            WHERE company_id = {$this->companyId} AND approved_yn = 1 AND type = ".EmployeeMovementType::EXTERNAL." AND movement_type = ".MovementType::ASSIGNMENT."
+        ) AS emv_assign ON emv_assign.emp_id = t.emp_id AND t.att_date BETWEEN emv_assign.from_date AND emv_assign.to_date
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
             AND fulldate = '{$this->pullingDate}'
