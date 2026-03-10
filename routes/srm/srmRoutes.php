@@ -231,6 +231,8 @@ Route::post('sendItemWiseAwardEmail', 'TenderMasterAPIController@sendItemWiseAwa
 Route::post('getItemWiseAwardingForPO', 'TenderMasterAPIController@getItemWiseAwardingForPO')->name("Get item-wise awarding for PO");
 Route::post('getItemWiseLoiLoaList', 'TenderMasterAPIController@getItemWiseLoiLoaList')->name("Get item-wise LOA/LOI list");
 Route::post('getLoiLoaEmailData', 'TenderMasterAPIController@getLoiLoaEmailData')->name("Get LOA/LOI email data");
+Route::post('getTenderRfxAwardEmailData', 'TenderMasterAPIController@getTenderRfxAwardEmailData')->name("Get Tender/RFX award or regret email data");
+Route::post('saveTenderRfxAwardEmailDraft', 'TenderMasterAPIController@saveTenderRfxAwardEmailDraft')->name("Save Tender/RFX award or regret email draft");
 Route::post('saveItemWiseLoiLoaEmail', 'TenderMasterAPIController@saveItemWiseLoiLoaEmail')->name("Save item-wise LOA/LOI email draft");
 Route::post('sendItemWiseLoiLoaEmail', 'TenderMasterAPIController@sendItemWiseLoiLoaEmail')->name("Send item-wise LOA/LOI email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
