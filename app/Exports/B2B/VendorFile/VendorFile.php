@@ -166,14 +166,24 @@ class VendorFile
             }
             $paymentVoucher = PaySupplierInvoiceMaster::with([
                 'supplierdetail' => function ($q) {
-                    $q->where('addedDocumentSystemID',11)->whereHas('supplier_invoice', function ($q2) {
+                    $q->where('addedDocumentSystemID', 11)->whereHas('supplier_invoice', function ($q2) {
                         $q2->where('approved', -1);
                     });
                 },
                 'supplierdetail.supplier_invoice',
-            ])->find($documentSystemCode);
+            ])->whereIn('invoiceType', [2, 6])->find($documentSystemCode);
 
-            $supplierDetails = $paymentVoucher ? ($paymentVoucher->supplierdetail ?? []) : [];
+            if (!$paymentVoucher) {
+                continue;
+            }
+            if (!isset($paymentVoucher->supplierTransCurrencyID)) {
+                continue;
+            }
+
+            $supplierDetails = $paymentVoucher->supplierdetail ?? collect();
+            if (is_array($supplierDetails)) {
+                $supplierDetails = collect($supplierDetails);
+            }
             $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID);
             $decimalPlaces = $currency ? (int) $currency->DecimalPlaces : 2;
             $pvAmount = round(
@@ -181,14 +191,8 @@ class VendorFile
                 $decimalPlaces
             );
 
-
-            if ($supplierDetails->isEmpty()) {
-                $currency = CurrencyMaster::find($paymentVoucher->supplierTransCurrencyID ?? null);
-
-                $invoiceCodes = [];
-                $invoiceDates = [];
+            if($supplierDetails->isEmpty()){
                 $invoiceAmounts[] = $pvAmount;
-                continue;
             }else {
                 foreach ($supplierDetails as $detail) {
                     $invoice = $detail->supplier_invoice ?? null;
@@ -221,24 +225,15 @@ class VendorFile
 
         }
 
-
-        if (!empty($invoiceCodes)) {
+        // if (!empty($invoiceCodes)) {
             $processedFooterData[] = [
                 'S3',
-                implode(',', $invoiceCodes),
-                implode(',', $invoiceDates),
+                (count($invoiceCodes) > 0) ? implode(',', $invoiceCodes) : '',
+                (count($invoiceDates) > 0) ? implode(',', $invoiceDates) : '',
                 '',
-                implode(',', $invoiceAmounts),
+               (count($invoiceAmounts) > 0) ? implode(',', $invoiceAmounts) : '',
             ];
-        } else {
-            $processedFooterData[] = [
-                'S3',
-                '',
-                '',
-                '',
-                implode(',', $invoiceAmounts),
-            ];
-        }
+        // }
 
         $this->footerData = $processedFooterData;
     }
