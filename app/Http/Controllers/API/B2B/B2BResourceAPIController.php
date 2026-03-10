@@ -350,7 +350,7 @@ class B2BResourceAPIController extends AppBaseController
                 'password' => $config['connectionDetails']['password'] ?? '',
                 'port' => $config['connectionDetails']['port'] ?? 22,
                 'root' => $config['connectionDetails']['root'] ?? '/',
-                'timeout' => 50,
+                'timeout' => 1500,
             ];
             config(['filesystems.disks.sftp' => $configDetails]);
             $storage = \Storage::disk('sftp');
