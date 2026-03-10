@@ -192,7 +192,7 @@ class SegmentMasterAPIController extends AppBaseController
                             'description' => $segment->ServiceLineDes,
                             'isActive' => ($segment->isActive == 1) ? trans('custom.yes') : trans('custom.no'),
                             'type' => $type,
-                            'parent' => $segment->parent ? $segment->parent->ServiceLineCode : '',
+                            'parent' => is_null($segment->masterID) ? ($segment->company ? $segment->company->CompanyName : '') : ($segment->parent ? $segment->parent->ServiceLineCode : ''),
                             'isPublic' => ($segment->isPublic == 1) ? trans('custom.yes') : trans('custom.no'),
                         ];
                     });
