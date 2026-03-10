@@ -38,6 +38,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Facades\Storage;
+use App\Exports\CreateExcelExport;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 /**
  * Class DepartmentBudgetPlanningDetailController
@@ -2184,6 +2187,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             });
 
+            // Prepend header row (column labels) so Excel has headers in row 1
+            if (!empty($data)) {
+                $firstRow = reset($data);
+                $headerLabels = array_keys(is_array($firstRow) ? $firstRow : (array) $firstRow);
+                $headerRow = array_combine($headerLabels, $headerLabels);
+                $data = array_merge([0 => $headerRow], $data);
+            }
+
             // Ensure data array is not empty and has valid structure
             if (empty($data) || !is_array($data)) {
                 throw new \Exception(trans('custom.no_data_to_export'));
@@ -2198,16 +2209,82 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'company_code' => $companyCode,
             );
 
+            $lang = app()->getLocale();
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $disk = 's3';
             $fileName = 'budget_planning_details';
-            $path = 'system/budget_planning_details/excel/';
-            $type = 'xls';
-            $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+            $path_dir = 'budget_planning/budget_planning_details/excel/';
+            $type = 'xlsx';
+            $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
+                $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
+    
+                    $rowNum = 1;
+                    $knownHeaders = [
+                        trans('custom.excel_company_id'),
+                        trans('custom.excel_order_details'),
+                        trans('custom.excel_item_code'),
+                        trans('custom.excel_pr_number'),
+                        trans('custom.excel_logistics_details'),
+                        trans('custom.excel_category'),
+                        trans('custom.excel_addon_details'),
+                    ];
+    
+                    $maxColumns = 0;
+                    foreach ($data as $row) {
+                        $maxColumns = max($maxColumns, count($row));
+                    }
+    
+                    // Build indexed rows so PhpSpreadsheet writes columns in order (associative keys break export)
+                    $indexedData = [];
+                    foreach ($data as $row) {
+                        $rowValues = array_values(is_array($row) ? $row : (array) $row);
+                        $indexedData[] = array_pad($rowValues, $maxColumns, '');
+                    }
+    
+                    if (!empty($indexedData)) {
+                        // Write all data starting at A1
+                        $sheet->fromArray($indexedData, null, 'A1', true);
 
-            if ($basePath == '') {
-                throw new \Exception('Unable to export excel');
+                        // Make first row (header row) bold
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns);
+                        $sheet->cells("A1:{$highestColumn}1", function($cells) use ($fontFamily) {
+                            $cells->setFont([
+                                'bold' => true,
+                                'size' => 12,
+                                'name' => $fontFamily
+                            ]);
+                        });
+                    }
+    
+                    // Auto-size columns to fit content (after data is written)
+                    $sheet->setAutoSize(true);
+    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+                });
+            }, 'xlsx');
+            $excel_content = $excelExport->getContent();
+
+            $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+            $path = $companyCode.'/'.$path_dir.$full_name;
+            $result = Storage::disk($disk)->put($path, $excel_content);
+            $basePath = '';
+            if ($result) {
+                if (Storage::disk($disk)->exists($path)) {
+                    $basePath = Helper::getFileUrlFromS3($path);
+                }
             }
 
-            return $basePath;
+            return $path;
         } catch (\Exception $e) {
             throw $e;
         }
