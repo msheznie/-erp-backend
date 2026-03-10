@@ -4049,7 +4049,7 @@ class TenderMasterAPIController extends AppBaseController
 
         foreach ($bidMasterId as $key => $val) {
 
-            $total = 0;
+            /*$total = 0;
 
 
             foreach ($line_item_values as $item) {
@@ -4082,9 +4082,11 @@ class TenderMasterAPIController extends AppBaseController
                         $total += $item->value;
                     }
                 }
-            }
+            }*/
+
+            $combinedRankingTot = ScheduleBidFormatDetails::getCombinedRanTot($val);
             $results = BidSubmissionMaster::find($val)
-                ->update(['line_item_total' => $total]);
+                ->update(['line_item_total' => $combinedRankingTot['value']]);
         }
     }
 
