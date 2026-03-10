@@ -2284,7 +2284,13 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            return $path;
+            if(empty($source))
+            {
+                return $basePath;
+            }else {
+                return $path;
+            }
+
         } catch (\Exception $e) {
             throw $e;
         }
