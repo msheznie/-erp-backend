@@ -1,5 +1,8 @@
 <?php
 namespace App\Services\hrms\attendance;
+
+use App\enums\hrms\EmployeeMovementType;
+use App\enums\hrms\MovementType;
 use App\helper\CommonJobService;
 use App\Services\hrms\attendance\computation\SMCrossDayOnlyComputation;
 use Carbon\Carbon;
@@ -136,29 +139,26 @@ class SMAttendanceCrossDayPullingService{
 
     function getExternalMovementIds(int $empId, string $attDate): object
     {
-        $secondment = DB::table('hr_employee_movement_master')
-            ->where('company_id', $this->companyId)
-            ->where('emp_id', $empId)
-            ->where('approved_yn', 1)
-            ->where('type', 2)
-            ->where('movement_type', 2)
-            ->whereDate('from_date', '<=', $attDate)
-            ->whereDate('to_date', '>=', $attDate)
-            ->value('id');
-
-        $assignment = DB::table('hr_employee_movement_master')
-            ->where('company_id', $this->companyId)
-            ->where('emp_id', $empId)
-            ->where('approved_yn', 1)
-            ->where('type', 2)
-            ->where('movement_type', 3)
-            ->whereDate('from_date', '<=', $attDate)
-            ->whereDate('to_date', '>=', $attDate)
-            ->value('id');
+        $row = DB::table('hr_employee_movement_master')
+            ->where([
+                ['company_id', '=', $this->companyId],
+                ['emp_id', '=', $empId],
+                ['approved_yn', '=', 1],
+                ['type', '=', EmployeeMovementType::EXTERNAL],
+                [DB::raw('DATE(from_date)'), '<=', $attDate],
+                [DB::raw('DATE(to_date)'), '>=', $attDate],
+            ])
+            ->whereIn('movement_type', [MovementType::SECONDMENT, MovementType::ASSIGNMENT])
+            ->selectRaw(
+                'MAX(CASE WHEN movement_type = ? THEN id END) AS external_secondment_movement_id, 
+                MAX(CASE WHEN movement_type = ? THEN id END) AS external_assignment_movement_id',
+                [MovementType::SECONDMENT, MovementType::ASSIGNMENT]
+            )
+            ->first();
 
         return (object) [
-            'external_secondment_movement_id' => $secondment,
-            'external_assignment_movement_id' => $assignment,
+            'external_secondment_movement_id' => $row->external_secondment_movement_id ?? null,
+            'external_assignment_movement_id' => $row->external_assignment_movement_id ?? null,
         ];
     }
 

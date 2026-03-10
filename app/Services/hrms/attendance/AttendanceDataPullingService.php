@@ -1,6 +1,8 @@
 <?php
 namespace App\Services\hrms\attendance;
 
+use App\enums\hrms\EmployeeMovementType;
+use App\enums\hrms\MovementType;
 use App\enums\modules\Modules;
 use App\enums\shift\Shifts;
 use App\helper\SME;
@@ -344,13 +346,16 @@ class AttendanceDataPullingService{
         LEFT JOIN (
             SELECT id, emp_id, from_date, to_date
             FROM hr_employee_movement_master
-            WHERE company_id = {$this->companyId} AND approved_yn = 1 AND type = 2 AND movement_type = 2
+            WHERE company_id = {$this->companyId} AND approved_yn = 1 
+              AND type = ".EmployeeMovementType::EXTERNAL." AND movement_type = ".MovementType::SECONDMENT."
         ) AS emv_sec ON emv_sec.emp_id = t.emp_id AND t.att_date BETWEEN emv_sec.from_date AND emv_sec.to_date
         LEFT JOIN (
             SELECT id, emp_id, from_date, to_date
             FROM hr_employee_movement_master
-            WHERE company_id = {$this->companyId} AND approved_yn = 1 AND type = 2 AND movement_type = 3
-        ) AS emv_assign ON emv_assign.emp_id = t.emp_id AND t.att_date BETWEEN emv_assign.from_date AND emv_assign.to_date
+            WHERE company_id = {$this->companyId} AND approved_yn = 1 
+            AND type = ".EmployeeMovementType::EXTERNAL." AND movement_type = ".MovementType::ASSIGNMENT."
+        ) AS emv_assign ON emv_assign.emp_id = t.emp_id AND t.att_date 
+            BETWEEN emv_assign.from_date AND emv_assign.to_date
         LEFT JOIN ( 
             SELECT * FROM srp_erp_calender WHERE companyID = {$this->companyId} 
             AND fulldate = '{$this->pullingDate}'
