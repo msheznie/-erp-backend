@@ -51,7 +51,6 @@ class ExportCompanyBudgetPlanningDetailsJob implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/budget_planning_export.log');
         if ($db) {
             CommonJobService::db_switch($db);
         }
