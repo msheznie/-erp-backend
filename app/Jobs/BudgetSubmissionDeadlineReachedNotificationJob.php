@@ -81,9 +81,11 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
         ->get();
 
 
+
         if ($departmentBudgetPlannings->isEmpty()) {
             return;
         }
+
 
         foreach ($departmentBudgetPlannings as $budgetPlanning) {
             try {
@@ -97,6 +99,7 @@ class BudgetSubmissionDeadlineReachedNotificationJob implements ShouldQueue
                 // Find active notification details for this company
                 $notificationDetail = BudgetNotificationDetail::with('notification')
                     ->where('isActive', 1)
+                    ->where('notification_id', 5)
                     ->where('companySystemID', $companySystemID)
                     ->first();
 
