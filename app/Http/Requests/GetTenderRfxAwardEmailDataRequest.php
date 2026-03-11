@@ -24,7 +24,7 @@ class GetTenderRfxAwardEmailDataRequest extends FormRequest
         return [
             'tender_id'  => 'required|integer|min:1',
             'company_id' => 'required|integer|min:1',
-            'email_type' => 'required|in:award',
+            'email_type' => 'required|in:award,loi_loa',
             'supplier_id'=> 'nullable|integer|min:1',
         ];
     }
@@ -35,7 +35,7 @@ class GetTenderRfxAwardEmailDataRequest extends FormRequest
             'tender_id.required'  => trans('srm_tender_rfx.item_wise_tender_id_required'),
             'company_id.required' => trans('srm_tender_rfx.company_is_required'),
             'email_type.required' => 'Email type is required.',
-            'email_type.in'       => 'Only schedule-wise award email data is supported.',
+            'email_type.in'       => 'Email type must be award or loi_loa.',
         ];
     }
 }

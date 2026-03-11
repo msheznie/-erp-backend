@@ -31,6 +31,11 @@ class InvoiceService
         $deliveryAppoinmentID = $request->input('extra.deliveryAppoinmentID') ?? null;
         $query = $this->buildInvoiceQuery($supplierID, $search, $filters, $deliveryAppoinmentID);
         return DataTables::eloquent($query)
+            ->editColumn('commentStatus', function ($row) {
+                $value = $row->commentStatus ?? '';
+                return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            })
+            ->rawColumns(['commentStatus'])
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
