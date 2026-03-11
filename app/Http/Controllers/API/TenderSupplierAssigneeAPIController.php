@@ -360,11 +360,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             if (count($getSupplierAssignedData) > 0) {
                 foreach ($getSupplierAssignedData as $val) {
                     $token = md5(Carbon::now()->format('YmdHisu'));
-                    $name = (!is_null($val['supplierAssigned']['supplierName'])) ? $val['supplierAssigned']['supplierName'] : $val['supplier_name'];
-                    $email = (!is_null($val['supplierAssigned']['supEmail'])) ? $val['supplierAssigned']['supEmail'] : $val['supplier_email'];
-                    $regNo = (!is_null($val['supplierAssigned']['registrationNumber'])) ? $val['supplierAssigned']['registrationNumber'] : $val['registration_number'];
-                    $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
-
+                    $name = data_get($val, 'supplierAssigned.supplierName') ?? $val['supplier_name'];
+                    $email = data_get($val, 'supplierAssigned.supEmail') ?? $val['supplier_email'];
+                    $regNo = data_get($val, 'supplierAssigned.registrationNumber') ?? $val['registration_number'];
+                    $isBidTender = data_get($val, 'supplierAssigned.registrationNumber') !== null ? 0 : 1;
+                    
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('email', $email)
                         ->where('registration_number', $regNo)

@@ -235,6 +235,7 @@ Route::post('getTenderRfxAwardEmailData', 'TenderMasterAPIController@getTenderRf
 Route::post('saveTenderRfxAwardEmailDraft', 'TenderMasterAPIController@saveTenderRfxAwardEmailDraft')->name("Save Tender/RFX award or regret email draft");
 Route::post('saveItemWiseLoiLoaEmail', 'TenderMasterAPIController@saveItemWiseLoiLoaEmail')->name("Save item-wise LOA/LOI email draft");
 Route::post('sendItemWiseLoiLoaEmail', 'TenderMasterAPIController@sendItemWiseLoiLoaEmail')->name("Send item-wise LOA/LOI email");
+Route::post('sendScheduleWiseLoiLoaEmail', 'TenderMasterAPIController@sendScheduleWiseLoiLoaEmail')->name("Send schedule-wise LOA/LOI email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
 Route::post('getContractTypes', 'TenderMasterAPIController@getContractTypes')->name("Get Contract Types");
 Route::post('createContract', 'TenderMasterAPIController@createContract')->name("Create Contract");

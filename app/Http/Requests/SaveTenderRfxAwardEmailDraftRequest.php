@@ -24,7 +24,7 @@ class SaveTenderRfxAwardEmailDraftRequest extends FormRequest
         return [
             'tender_id'     => 'required|integer|min:1',
             'company_id'    => 'required|integer|min:1',
-            'email_type'    => 'required|in:award,regret',
+            'email_type'    => 'required|in:award,regret,loi_loa',
             'supplier_id'   => 'nullable|integer|min:0',
             'email_subject' => 'nullable|string',
             'email_body'    => 'nullable|string',
@@ -39,8 +39,8 @@ class SaveTenderRfxAwardEmailDraftRequest extends FormRequest
         return [
             'tender_id.required'  => trans('srm_tender_rfx.item_wise_tender_id_required'),
             'company_id.required' => trans('srm_tender_rfx.company_is_required'),
-            'email_type.required' => 'Email type (award or regret) is required.',
-            'email_type.in'       => 'Email type must be award or regret.',
+            'email_type.required' => 'Email type (award, regret or loi_loa) is required.',
+            'email_type.in'       => 'Email type must be award, regret or loi_loa.',
         ];
     }
 }
