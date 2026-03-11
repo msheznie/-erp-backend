@@ -10744,7 +10744,8 @@ GROUP BY
                         $replaceVal = '#IFNULL(SUM(`' . $val->shortCode . '-' . $val->columnLinkID . '`),0)';
                     }
 
-                    $globalFormula = str_replace_first($searchVal, $replaceVal, $globalFormula);
+                    // $globalFormula = str_replace_first($searchVal, $replaceVal, $globalFormula);
+                    $globalFormula = Str::replaceFirst($searchVal, $replaceVal, $globalFormula);
                     /*$replaceVal = '/'.$columnArray[$val['shortCode']].'/';
                     $globalFormula = preg_replace($searchVal, $replaceVal, $globalFormula,1);*/
                 }
