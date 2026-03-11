@@ -9870,4 +9870,8 @@ return
     'invalid_owner_key' => 'مفتاح المالك غير صالح. يجب أن يكون واحد من: reporting_manager, hod, admin',
     'beneficiary_number' => 'رقم المستفيد',
     'commercial_registration' => 'رقم التسجيل',
+    'wareHouse_code_must_be_array' => 'رمز المستودع يجب أن يكون مصفوفة',
+    'item_code_must_be_a_array' => 'رمز العنصر يجب أن يكون مصفوفة',
+    'wareHouse_code_must_be_a_string' => 'رمز المستودع يجب أن يكون نص',
+    'item_code_must_be_a_string' => 'رمز العنصر يجب أن يكون نص',
 ];
