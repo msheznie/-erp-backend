@@ -364,7 +364,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $email = data_get($val, 'supplierAssigned.supEmail') ?? $val['supplier_email'];
                     $regNo = data_get($val, 'supplierAssigned.registrationNumber') ?? $val['registration_number'];
                     $isBidTender = data_get($val, 'supplierAssigned.registrationNumber') !== null ? 0 : 1;
-
+                    
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('email', $email)
                         ->where('registration_number', $regNo)
