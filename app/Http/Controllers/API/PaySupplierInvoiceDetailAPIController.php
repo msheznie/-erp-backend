@@ -368,7 +368,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         }
 
                 }
-                else if($bookInvMaster->documentType == 0) {
+                else if($bookInvMaster->documentType == 0 || $bookInvMaster->documentType == 2) {
                     if (TaxService::isSupplierInvoiceRcmActivated($bookInvMaster->bookingSuppMasInvAutoID)) {
                         $input["retentionVatAmount"] = ($input["supplierPaymentAmount"] / $bookInvMaster->retentionAmount) * $bookInvMaster->retentionVatAmount;
                     } else {
@@ -1301,12 +1301,16 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 
                 // check supplier invoice has VAT
                 $allRecordsHaveVAT = false;
-                $supplierInvoiceMaster  = BookInvSuppMaster::find($itemExist['bookingInvSystemCode']);
+                $supplierInvoiceMaster  = BookInvSuppMaster::with('detail')->find($itemExist['bookingInvSystemCode']);
                 if(!empty($supplierInvoiceMaster->directdetail))
                 {
                     $allRecordsHaveVAT = $supplierInvoiceMaster->directdetail->pluck('VATAmount')->every(function ($vatAmount) {
                         return $vatAmount > 0;
                     });
+                }
+                elseif ($supplierInvoiceMaster && in_array($supplierInvoiceMaster->documentType, [0, 2])) {
+                    // PO-based (0) and Invoice for Direct GRV (2) use detail (BookInvSuppDet)
+                    $allRecordsHaveVAT = $supplierInvoiceMaster->detail && $supplierInvoiceMaster->detail->sum('VATAmount') > 0;
                 }
 
 
@@ -1444,6 +1448,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                                 } else if ($supplierInvoice && $supplierInvoice->documentType == 1) {
                                     $checkVATTypeOfSI = DirectInvoiceDetails::select('vatMasterCategoryID', 'vatSubCategoryID')
                                                                     ->where('directInvoiceAutoID', $tempArray["bookingInvSystemCode"])
+                                                                    ->whereNotNull('vatMasterCategoryID')
+                                                                    ->whereNotNull('vatSubCategoryID')
+                                                                    ->groupBy('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->get();
+                                } else if ($supplierInvoice && $supplierInvoice->documentType == 2) {
+                                    // Invoice for Direct GRV - same VAT category source as PO-based (SupplierInvoiceItemDetail)
+                                    $checkVATTypeOfSI = SupplierInvoiceItemDetail::select('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->where('bookingSuppMasInvAutoID', $tempArray["bookingInvSystemCode"])
                                                                     ->whereNotNull('vatMasterCategoryID')
                                                                     ->whereNotNull('vatSubCategoryID')
                                                                     ->groupBy('vatMasterCategoryID', 'vatSubCategoryID')
@@ -1690,6 +1702,16 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                         $supplierInvoiceVAT = (($supplierInvoice->VATAmount / $input['supplierInvoiceAmount']) * $input['supplierPaymentAmount']);
                         $supplierInvoiceVATLocal = (($supplierInvoice->VATAmountLocal / $input['localAmount']) * $input['paymentLocalAmount']);
                         $supplierInvoiceVATRpt = (($supplierInvoice->VATAmountRpt / $input['comRptAmount']) * $input['paymentComRptAmount']);
+                    } else if ($supplierInvoice && $supplierInvoice->documentType == 2) {
+                        // Invoice for Direct GRV - same VAT calculation as PO-based (processPoBasedSupllierInvoiceVAT)
+                        $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingInvSystemCode']);
+                        $totalVATAmount = isset($vatDetails['totalVAT']) ? $vatDetails['totalVAT'] : 0;
+                        $totalVATAmountLocal = isset($vatDetails['totalVATLocal']) ? $vatDetails['totalVATLocal'] : 0;
+                        $totalVATAmountRpt = isset($vatDetails['totalVATRpt']) ? $vatDetails['totalVATRpt'] : 0;
+
+                        $supplierInvoiceVAT = (($totalVATAmount / $input['supplierInvoiceAmount']) * $input['supplierPaymentAmount']);
+                        $supplierInvoiceVATLocal = (($totalVATAmountLocal / $input['localAmount']) * $input['paymentLocalAmount']);
+                        $supplierInvoiceVATRpt = (($totalVATAmountRpt / $input['comRptAmount']) * $input['paymentComRptAmount']);
                     }
 
                     $input['VATAmount'] = $supplierInvoiceVAT;
