@@ -611,6 +611,9 @@ class TenderItemWiseAwardingService
                     ]);
                     if ($details) {
                         $emailBody = $details->email_body;
+                        if (!empty($details->email_subject)) {
+                            $emailSubject = $details->email_subject;
+                        }
                         if (empty($ccEmails) && !empty($details->cc_emails)) {
                             $ccEmails = is_array($details->cc_emails) ? $details->cc_emails : [];
                         }
@@ -641,6 +644,9 @@ class TenderItemWiseAwardingService
             'currency' => $currency,
         ];
         $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+        if (!empty($emailSubject)) {
+            $emailSubject = self::replaceLoiLoaPlaceholders($emailSubject, $context);
+        }
 
         $supplierUuid = $supplier->uuid ?? null;
         $tenderUuid = $tender->uuid ?? null;
@@ -684,18 +690,18 @@ class TenderItemWiseAwardingService
     }
 
     /**
-     * Get Tender/RFX Award or Regret email data for popup (from scenario config).
-     * email_type: 'award' | 'regret'
+     * Get Tender/RFX Award or Regret or LOI/LOA email data for popup (from scenario config).
+     * email_type: 'award' | 'regret' | 'loi_loa'
      * supplier_id: optional; for item-wise award pass the awarded supplier id.
      *
      * @return array{success: bool, message?: string, data?: array}
      */
     public function getTenderRfxEmailData(int $tenderId, int $companyId, string $emailType, ?int $supplierId = null): array
     {
-        if ($emailType !== 'award' || $supplierId !== null) {
+        if (($emailType !== 'award' && $emailType !== 'loi_loa') || $supplierId !== null) {
             return [
                 'success' => false,
-                'message' => 'Only schedule-wise award email data is supported.',
+                'message' => 'Only schedule-wise award or LOI/LOA email data is supported.',
                 'data' => null,
             ];
         }
@@ -709,15 +715,20 @@ class TenderItemWiseAwardingService
         }
         $documentId = (int) $tender->document_system_id;
         $documentTypeLabel = $documentId === 108 ? 'Tender' : 'RFX';
-        $scenarioCode = $documentId === 108 ? 'TENDER_AWARD' : 'RFX_AWARD';
-        $emailSubject = $documentTypeLabel . ' Awarding Email';
+        if ($emailType === 'loi_loa') {
+            $scenarioMasterId = self::getLoiLoaScenarioMasterId($documentId);
+            $emailSubject = 'Letter of Awarding |' . ($tender->tender_code ?? '') . ' | ' . ($tender->title ?? '');
+        } else {
+            $scenarioCode = $documentId === 108 ? 'TENDER_AWARD' : 'RFX_AWARD';
+            $scenarioMasterId = SRMScenarioMaster::getScenarioMasterIdByDocumentAndCode($documentId, $scenarioCode, null);
+            $emailSubject = $documentTypeLabel . ' Awarding Email';
+        }
         $emailBody = '';
         $ccEmails = [];
         $attachments = [];
         $recipientDisplay = '';
         $supplierEmail = null;
 
-        $scenarioMasterId = SRMScenarioMaster::getScenarioMasterIdByDocumentAndCode($documentId, $scenarioCode, null);
         if ($scenarioMasterId) {
             $details = SRMScenarioDetails::getScenarioDetailsById([
                 'scenarioId' => $scenarioMasterId,
@@ -743,8 +754,8 @@ class TenderItemWiseAwardingService
             }
         }
 
-        // Schedule-wise only: award email data (no item-wise / regret popup support)
-        if ($emailType === 'award' && $supplierId === null) {
+        // Schedule-wise only: award or LOI/LOA email data
+        if (($emailType === 'award' || $emailType === 'loi_loa') && $supplierId === null) {
             $tender->load(['ranking_supplier' => function ($q) {
                     $q->where('award', 1)->with(['supplier', 'bid_submission_master']);
                 }]);
@@ -784,8 +795,9 @@ class TenderItemWiseAwardingService
                 } else {
                     $emailBody = "Hi " . ($supplier->name ?? '') . ", <br><br> Based on your final revised proposal submitted on " . $bidSubmisionDate . ", we would like to inform you that we intend to award your company the " . $tender->tender_code . " | " . $tender->title . " " . $documentTypeLabel . " for <b>" . $finalCommercialPrice . "</b> " . $currency . " with all agreed conditions. <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. <br>";
                 }
-                // Override with saved schedule-wise award draft (TAE) if any
-                $scheduleAwardDraft = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $rankSup->supplier->id, 'TAE');
+                // Override with saved schedule-wise draft: TAE for award, TLL for LOI/LOA
+                $draftDocCode = $emailType === 'loi_loa' ? self::DOCUMENT_CODE_LOI_LOA : 'TAE';
+                $scheduleAwardDraft = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $rankSup->supplier->id, $draftDocCode);
                 if ($scheduleAwardDraft && $scheduleAwardDraft->email_body !== null && $scheduleAwardDraft->email_body !== '') {
                     $emailBody = self::replaceLoiLoaPlaceholders($scheduleAwardDraft->email_body, $context);
                     if (!empty($scheduleAwardDraft->email_subject)) {
@@ -802,6 +814,9 @@ class TenderItemWiseAwardingService
                     } elseif (!$scheduleAwardDraft->document_id) {
                         $attachments = [];
                     }
+                }
+                if (!empty($emailSubject)) {
+                    $emailSubject = self::replaceLoiLoaPlaceholders($emailSubject, $context);
                 }
         }
 
@@ -900,6 +915,91 @@ class TenderItemWiseAwardingService
     }
 
     /**
+     * Send schedule-wise LOI/LOA email to ranking supplier and set final_tender_award_email.
+     * Does not use item-wise awarding table (no markLoiLoaEmailSentForSupplier).
+     */
+    public function sendScheduleWiseLoiLoaEmail(
+        int $tenderId,
+        int $companyId,
+        string $emailSubject,
+        string $emailBody,
+        array $ccEmails = [],
+        $attachmentId = null
+    ) {
+        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
+            $q->where('award', 1)->with('supplier');
+        }])->first();
+        if (!$tender) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null,
+            ];
+        }
+        $rankSup = $tender->ranking_supplier;
+        if (!$rankSup || !$rankSup->supplier) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'),
+                'data' => null,
+            ];
+        }
+        $supplier = $rankSup->supplier;
+        $supplierId = $supplier->id;
+        $email = $supplier->email ?? null;
+        if (!$email) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.item_wise_supplier_has_no_email'),
+                'data' => null,
+            ];
+        }
+
+        $attachmentList = [];
+        if ($attachmentId) {
+            $docAtt = DocumentAttachments::find($attachmentId);
+            if ($docAtt && !empty($docAtt->path)) {
+                $url = Helper::getFileUrlFromS3($docAtt->path);
+                if ($url) {
+                    $attachmentList[] = $url;
+                }
+            }
+        }
+
+        $dataEmail = [
+            'empEmail' => $email,
+            'companySystemID' => $companyId,
+            'alertMessage' => $emailSubject,
+            'emailAlertMessage' => $emailBody,
+            'ccEmail' => $ccEmails,
+            'attachmentList' => $attachmentList,
+        ];
+        Email::sendEmailSRM($dataEmail);
+
+        $updateData = [
+            'company_id' => $companyId,
+            'document_code' => self::DOCUMENT_CODE_LOI_LOA,
+            'email_subject' => $emailSubject,
+            'email_body' => $emailBody,
+            'cc_email' => !empty($ccEmails) ? json_encode($ccEmails) : null,
+            'document_id' => $attachmentId,
+        ];
+        TenderCustomEmail::createOrUpdateCustomEmail(
+            ['tender_id' => $tenderId, 'supplier_id' => $supplierId],
+            $updateData
+        );
+
+        $tender->final_tender_award_email = 1;
+        $tender->save();
+
+        return [
+            'success' => true,
+            'message' => null,
+            'data' => null,
+        ];
+    }
+
+    /**
      * Save LOA/LOI draft only.
      */
     public function saveLoiLoaDraft(
@@ -951,7 +1051,7 @@ class TenderItemWiseAwardingService
         }
         $documentId = (int) ($tender->document_system_id ?? 0);
 
-        if ($emailType === 'award') {
+        if ($emailType === 'award' || $emailType === 'loi_loa') {
             $tender->load(['ranking_supplier' => function ($q) {
                 $q->where('award', 1)->with('supplier');
             }]);
@@ -963,7 +1063,7 @@ class TenderItemWiseAwardingService
                     'data' => null,
                 ];
             }
-            $docCode = 'TAE';
+            $docCode = $emailType === 'loi_loa' ? self::DOCUMENT_CODE_LOI_LOA : 'TAE';
             $supplierIdForKey = $rankSup->supplier->id;
         } else {
             $docCode = $documentId === 113 ? self::DOCUMENT_CODE_REGRET_RFX : self::DOCUMENT_CODE_REGRET_TENDER;

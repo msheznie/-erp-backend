@@ -16,6 +16,7 @@ use App\Http\Requests\GetItemWiseLoiLoaRequest;
 use App\Http\Requests\GetLoiLoaEmailDataRequest;
 use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
+use App\Http\Requests\SendScheduleWiseLoiLoaEmailRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
@@ -4409,9 +4410,6 @@ class TenderMasterAPIController extends AppBaseController
             }, 'company'])->first();
 
 
-            $tender->final_tender_award_email = 1;
-            $tender->save();
-
             //Get the Custom email Template
             $file = array();
             $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $tender->ranking_supplier->supplier->id, 'TAE');
@@ -4877,6 +4875,42 @@ class TenderMasterAPIController extends AppBaseController
                 $ccEmails,
                 $attachmentId
             );
+
+            return $this->sendResponse(
+                ['success' => true],
+                trans('srm_tender_rfx.item_wise_award_email_sent_successfully')
+            );
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Send schedule-wise LOI/LOA email to ranking supplier and set final_tender_award_email.
+     */
+    public function sendScheduleWiseLoiLoaEmail(SendScheduleWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailSubject = $request->input('email_subject');
+        $emailBody = $request->input('email_body');
+        $ccEmails = $request->input('cc_emails', []);
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $result = $this->itemWiseAwardingService->sendScheduleWiseLoiLoaEmail(
+                $tenderId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            if (isset($result['success']) && $result['success'] === false) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
+            }
 
             return $this->sendResponse(
                 ['success' => true],
