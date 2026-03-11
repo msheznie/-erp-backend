@@ -280,5 +280,4 @@ class GenerateCompanyBudgetPlanningService
             }
         }
     }
-    
 }
