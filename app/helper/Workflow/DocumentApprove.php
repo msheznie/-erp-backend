@@ -1017,7 +1017,7 @@ class DocumentApprove
                                         }
                                     }
                                     else {
-                                        return ['success' => false, 'message' => trans('custom.employee_id_is_required')];
+                                        $employeeID = null;
                                     }
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
@@ -1073,7 +1073,7 @@ class DocumentApprove
                                         }
                                     }
                                     else {
-                                        return ['success' => false, 'message' => trans('custom.employee_id_is_required')];
+                                        $employeeID = null;
                                     }
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
