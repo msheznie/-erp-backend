@@ -2879,7 +2879,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 AND md.companySystemID = employee_ledger.companySystemID 
                 LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
             WHERE
-                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                employee_ledger.invoiceType IN ( 0, 1, 2, 4, 7 ) 
                 AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
                 AND employee_ledger.selectedToPaymentInv = 0 
                 AND employee_ledger.fullyInvoice <> 2 
@@ -2961,7 +2961,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         AND md.companySystemID = employee_ledger.companySystemID 
                         LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
                 WHERE
-                    employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                    employee_ledger.invoiceType IN ( 0, 1, 2, 4, 7 ) 
                     AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
                     AND employee_ledger.selectedToPaymentInv = 0 
                     AND employee_ledger.fullyInvoice <> 2 
@@ -3087,7 +3087,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     AND md.companySystemID = erp_accountspayableledger.companySystemID
                     LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID
                 WHERE
-                    erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 )
+                    erp_accountspayableledger.invoiceType IN ( 0, 1, 2, 4, 7 )
                     AND DATE_FORMAT(erp_accountspayableledger.documentDate,'%Y-%m-%d') <= '{$matchingDocdate}'
                     {$filter}
                     AND erp_accountspayableledger.selectedToPaymentInv = 0
