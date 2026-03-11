@@ -361,6 +361,11 @@ class QuotationDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID', 'serviceLineSystemID']);
+
+        if (array_key_exists('segment', $input)) {
+            unset($input['segment']);
+        }
+
         $employee = Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
