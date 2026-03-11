@@ -488,11 +488,11 @@ class CreateReceiptMatching implements ShouldQueue
                                             SUM(erp_creditnotedetails.creditAmount) AS SumOfreceiveAmountTrans,
                                             erp_creditnotedetails.serviceLineSystemID AS serviceLineSystemID,
                                             (
-                                                SUM(erp_creditnotedetails.creditAmount) - (
-                                                    (IFNULL(
-                                                        receipt.SumOfreceiptAmount,
-                                                        0
-                                                    )* -1) + IFNULL(advd.SumOfmatchingAmount, 0)
+                                                SUM(erp_creditnotedetails.creditAmount) - 
+                                                (
+                                                    (IFNULL(receipt.SumOfreceiptAmount, 0)* -1) + 
+                                                    IFNULL(advd.SumOfmatchingAmount, 0) + 
+                                                    IFNULL(pcnd.SumOfcreditNotePaymentAmount, 0)
                                                 )
                                             ) AS BalanceAmt
                                         FROM
@@ -549,6 +549,25 @@ class CreateReceiptMatching implements ShouldQueue
                                             AND erp_creditnote.documentSystemiD = advd.documentSystemID
                                             AND erp_creditnote.companySystemID = advd.companySystemID
                                             AND erp_creditnotedetails.serviceLineSystemID = advd.serviceLineSystemID
+                                        )
+                                        LEFT JOIN (
+                                            SELECT
+                                                erp_paycreditnotedetails.creditNoteAutoID,
+                                                erp_paycreditnotedetails.companySystemID,
+                                                COALESCE (
+                                                    SUM(
+                                                        erp_paycreditnotedetails.creditNotePaymentAmount
+                                                    ),
+                                                    0
+                                                ) AS SumOfcreditNotePaymentAmount
+                                            FROM
+                                                erp_paycreditnotedetails
+                                            GROUP BY
+                                                erp_paycreditnotedetails.creditNoteAutoID,
+                                                erp_paycreditnotedetails.companySystemID
+                                        ) AS pcnd ON (
+                                            erp_creditnote.creditNoteAutoID = pcnd.creditNoteAutoID
+                                            AND erp_creditnote.companySystemID = pcnd.companySystemID
                                         )
                                         WHERE
                                             erp_creditnote.companySystemID = " . $companySystemID . "

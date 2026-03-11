@@ -77,6 +77,7 @@ use App\helper\Helper;
 use App\helper\email as Email;
 use App\helper\TenderDetails;
 use App\helper\SendEmailForDocument;
+use App\Models\User;
 
 class DocumentApprove
 {
@@ -1001,7 +1002,23 @@ class DocumentApprove
 
                                 if ($supplierInvMaster->documentType == 1 || $supplierInvMaster->documentType == 3 || $supplierInvMaster->documentType == 4) {
                                     $object = new ChartOfAccountValidationService();
-                                    $employeeID = (isset($input['employeeID']) && $input['employeeID']) ? $input['employeeID'] : null;
+                                    if(isset($input['employeeID']) && $input['employeeID']) {
+                                        if(gettype($input['employeeID']) == 'integer'){
+                                            $employeeID = $input['employeeID'];
+                                        }
+                                        else {
+                                            $user = User::where('empID', $input['employeeID'])->first();
+                                            if(isset($user) && $user->employee_id){
+                                                $employeeID = $user->employee_id;
+                                            }
+                                            else {
+                                                return ['success' => false, 'message' => trans('custom.employee_id_is_required')];
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        $employeeID = null;
+                                    }
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
@@ -1041,7 +1058,23 @@ class DocumentApprove
 
                                 if ($paySupplierMaster->invoiceType == 3) {
                                     $object = new ChartOfAccountValidationService();
-                                    $employeeID = (isset($input['employeeID']) && $input['employeeID']) ? $input['employeeID'] : null;
+                                    if(isset($input['employeeID']) && $input['employeeID']) {
+                                        if(gettype($input['employeeID']) == 'integer'){
+                                            $employeeID = $input['employeeID'];
+                                        }
+                                        else {
+                                            $user = User::where('empID', $input['employeeID'])->first();
+                                            if(isset($user) && $user->employee_id){
+                                                $employeeID = $user->employee_id;
+                                            }
+                                            else {
+                                                return ['success' => false, 'message' => trans('custom.employee_id_is_required')];
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        $employeeID = null;
+                                    }
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $employeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
@@ -1935,7 +1968,7 @@ class DocumentApprove
             //RollBackApproval::dispatch($data);
             Log::channel('document_approval')->error($e->getMessage());
             Log::channel('document_approval')->error($e->getFile());
-
+            Log::channel('document_approval')->error($e->getLine());
 
             $msg = 'Error Occurred';
             if (in_array($e->getCode(), [404, 500])) {

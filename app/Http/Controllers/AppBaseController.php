@@ -7,20 +7,22 @@
  */
 
 namespace App\Http\Controllers;
-use Illuminate\Routing\Controller as BaseController;
-use App\Utils\ResponseUtil;
-use Response;
 use App\helper\Helper;
+use App\Utils\ResponseUtil;
+use Illuminate\Routing\Controller as BaseController;
+use Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 
 class AppBaseController extends BaseController
 {
 
-    public function  sendResponse($result, $message)
+    public function sendResponse($result, $message, int $code = HttpResponse::HTTP_OK)
     {
-        return Response::json(ResponseUtil::makeResponse($message, $result));
+        return Response::json(ResponseUtil::makeResponse($message, $result), $code);
     }
-    public function sendError($error, $code = 404,$errorType = array('type' => ''))
+    
+    public function sendError($error, $code = HttpResponse::HTTP_NOT_FOUND, $errorType = [])
     {
         return Response::json(ResponseUtil::makeError($error,$errorType), $code);
     }

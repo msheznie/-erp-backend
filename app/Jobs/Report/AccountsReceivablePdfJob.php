@@ -222,13 +222,13 @@ class AccountsReceivablePdfJob implements ShouldQueue
                 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
                 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
                     (
-                    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) 
+                    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
                     ) AS balanceRpt,
                     (
-                    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) 
+                    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
                     ) AS balanceLocal,
                     (
-                    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) 
+                    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
                     ) AS balanceTrans,
                     mainQuery.CustomerName,
                     mainQuery.creditDays,
@@ -288,6 +288,19 @@ class AccountsReceivablePdfJob implements ShouldQueue
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                     GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                     ) AS mainQuery
+                    LEFT JOIN (
+                    SELECT
+                        creditNoteAutoID,
+                        companySystemID,
+                        SUM(creditNotePaymentAmount) AS sumCreditNotePaymentAmount,
+                        SUM(creditNotePaymentAmountLocal) AS sumCreditNotePaymentAmountLocal,
+                        SUM(creditNotePaymentAmountRpt) AS sumCreditNotePaymentAmountRpt
+                    FROM erp_paycreditnotedetails
+                    WHERE companySystemID IN (' . join(',', $companyID) . ')
+                    GROUP BY creditNoteAutoID, companySystemID
+                    ) AS cnRefund ON mainQuery.documentSystemID = 19
+                    AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
+                    AND mainQuery.companySystemID = cnRefund.companySystemID
                     LEFT JOIN (
                     SELECT
                         erp_matchdocumentmaster.companySystemID,
@@ -412,7 +425,8 @@ class AccountsReceivablePdfJob implements ShouldQueue
     
             return ['data' => $output, 'aging' => $aging];
 
-        } elseif ($request->reportTypeID == 'CAD') {
+        } 
+        elseif ($request->reportTypeID == 'CAD') {
 
             $asOfDate = new Carbon($request->fromDate);
             $asOfDate = $asOfDate->format('Y-m-d');
@@ -579,23 +593,23 @@ class AccountsReceivablePdfJob implements ShouldQueue
             IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
             IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
                 (
-                mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) )
+                mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
                 ) AS balanceRpt,
                 (
-                mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) )
+                mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
                 ) AS balanceLocal,
                 (
-                mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) )
+                mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
                 ) AS balanceTrans,
             
                 (
-                mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0))
+                mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
                 ) AS balanceSubsequentCollectionRpt,
                 (
-                mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0))
+                mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
                 ) AS balanceSubsequentCollectionLocal,
                 (
-                mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0))
+                mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) ) + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
                 ) AS balanceSubsequentCollectionTrans,
             
                 mainQuery.customerName,
@@ -678,6 +692,19 @@ class AccountsReceivablePdfJob implements ShouldQueue
                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                 ) AS mainQuery
+                LEFT JOIN (
+                SELECT
+                    creditNoteAutoID,
+                    companySystemID,
+                    SUM(creditNotePaymentAmount) AS sumCreditNotePaymentAmount,
+                    SUM(creditNotePaymentAmountLocal) AS sumCreditNotePaymentAmountLocal,
+                    SUM(creditNotePaymentAmountRpt) AS sumCreditNotePaymentAmountRpt
+                FROM erp_paycreditnotedetails
+                WHERE companySystemID IN (' . join(',', $companyID) . ')
+                GROUP BY creditNoteAutoID, companySystemID
+                ) AS cnRefund ON mainQuery.documentSystemID = 19
+                AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
+                AND mainQuery.companySystemID = cnRefund.companySystemID
                 LEFT JOIN (
                 SELECT
                     erp_matchdocumentmaster.companySystemID,

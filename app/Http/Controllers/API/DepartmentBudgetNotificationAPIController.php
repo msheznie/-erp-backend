@@ -557,9 +557,6 @@ class DepartmentBudgetNotificationAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $budgetPlanningNotificationService = new BudgetNotificationService();
-        $budgetPlanningNotificationService->sendNotification(8,'extension-request-submitted',1,Auth::user()->employee_id);
-
         /** @var BudgetNotificationDetail $detail */
         $detail = BudgetNotificationDetail::find($id);
 

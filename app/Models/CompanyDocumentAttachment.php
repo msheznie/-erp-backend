@@ -125,6 +125,10 @@ class CompanyDocumentAttachment extends Model
         return $this->hasMany(AttachmentTypeConfiguration::class ,'document_attachment_id','companyDocumentAttachmentID');
     }
 
+    public function documentAccessRole(){
+        return $this->hasOne('App\Models\DocumentAccessRole', 'document_attachment_id', 'companyDocumentAttachmentID');
+    }
+
     public static function getCompanyDocumentAttachmentList($documentSystemID, $companySystemID){
         $documentAttachment = self::with(['attachmentTypeConfiguration'])
             ->where('companySystemID', $companySystemID)

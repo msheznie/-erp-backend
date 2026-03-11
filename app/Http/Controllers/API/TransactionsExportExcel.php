@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Models\Company;
 use App\Repositories\RecurringVoucherSetupRepository;
+use App\Repositories\ErpBudgetAdditionRepository;
 use Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -79,6 +80,7 @@ class TransactionsExportExcel extends AppBaseController
     private $fixedAssetDepreciationMasterRepository;
     private $pdcLogRepository;
     private $recurringVoucherSetupRepository;
+    private $erpBudgetAdditionRepository;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -113,7 +115,8 @@ class TransactionsExportExcel extends AppBaseController
         FixedAssetMasterRepository $fixedAssetMasterRepo,
         FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
         PdcLogRepository $pdcLogRepository,
-        RecurringVoucherSetupRepository $recurringVoucherSetupRepository
+        RecurringVoucherSetupRepository $recurringVoucherSetupRepository,
+        ErpBudgetAdditionRepository $erpBudgetAdditionRepository
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -149,6 +152,7 @@ class TransactionsExportExcel extends AppBaseController
         $this->fixedAssetDepreciationMasterRepository = $fixedAssetDepreciationMasterRepo;
         $this->pdcLogRepository = $pdcLogRepository;
         $this->recurringVoucherSetupRepository = $recurringVoucherSetupRepository;
+        $this->erpBudgetAdditionRepository = $erpBudgetAdditionRepository;
     }
 
     public function exportRecord(Request $request) { 
@@ -503,6 +507,11 @@ class TransactionsExportExcel extends AppBaseController
                 $dataQry = $this->recurringVoucherSetupRepository->rrvMasterListQuery($request, $input, $search);
                 $data = $this->recurringVoucherSetupRepository->setExportExcelData($dataQry);
                 break;
+            case '102':
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year', 'createdBy'));
+                $dataQry = $this->erpBudgetAdditionRepository->budgetAdditionFormListQuery($request, $input, $search);
+                $data = $this->erpBudgetAdditionRepository->setExportExcelData($dataQry);
+                break;
             default:
                 return $this->sendResponse(array(), trans('custom.export_failed'));
         }
@@ -538,6 +547,7 @@ class TransactionsExportExcel extends AppBaseController
         if($translatedFileName !== 'exportExcelFile.'.$input['docName']) {
             $fileName = $translatedFileName;
         } 
+
 
         $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 

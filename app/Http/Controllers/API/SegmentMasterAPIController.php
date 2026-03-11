@@ -105,6 +105,105 @@ class SegmentMasterAPIController extends AppBaseController
         return $this->sendResponse($segmentMasters->toArray(), trans('custom.segment_masters_retrieved_successfully'));
     }
 
+    public function pullSegment(Request $request)
+    {
+        try {
+            $input = $request->all();
+            $company_id = $request->get('company_id');
+            
+            // Validate pagination parameters only if page parameter is provided
+            if ($request->has('page')) {
+                $validator = \Validator::make($input, [
+                    'page' => 'required|integer|min:1',
+                    'per_page' => 'sometimes|integer|min:1|max:500',
+                ], [
+                    'page.required' => 'page parameter is required',
+                    'page.integer' => 'page must be an integer',
+                    'page.min' => 'page must be at least 1',
+                    'per_page.integer' => 'per_page must be an integer',
+                    'per_page.min' => 'per_page must be at least 1',
+                    'per_page.max' => 'per_page cannot exceed 500',
+                ]);
+
+                if ($validator->fails()) {
+                    $errorMessage = $validator->errors()->first();
+                    return $this->sendError($errorMessage, 422);
+                }
+            }
+            
+            // Validate type parameter if provided
+            if ($request->has('type')) {
+                $type = $request->get('type');
+                $isValid = false;
+                if ($type === '0' || $type === '1' || $type === 0 || $type === 1) {
+                    $isValid = true;
+                }
+                
+                if (!$isValid) {
+                    return $this->sendError(trans('custom.type_input_value_is_incorrect'), 422);
+                }
+            } else {
+                $type = null;
+            }
+
+            $query = SegmentMaster::with(['company', 'parent'])
+                ->withoutGlobalScope('final_level')
+                ->where('companySystemID', '=', $company_id)
+                ->where('approved_yn', 1)
+                ->where('isActive', 1)
+                ->whereHas('assignedSegments', function ($query) use ($company_id) {
+                    $query->where('companySystemID', $company_id);
+                });
+
+            if ($request->has('type')) {
+                $query->where('isFinalLevel', (int) $type);
+            }
+
+            // Apply pagination only if page parameter is provided
+            if ($request->has('page')) {
+                $page = $request->get('page', 1);
+                $perPage = $request->get('per_page', 10);
+                
+                $segments = $query->paginate($perPage, ['*'], 'page', $page);
+                
+                // Map paginated results
+                $segments->getCollection()->transform(function ($segment) {
+                    $type = ($segment->isFinalLevel == 1) ? trans('custom.final') : trans('custom.parent');
+
+                    return [
+                        'company' => $segment->company ? $segment->company->CompanyName : '',
+                        'segmentCode' => $segment->ServiceLineCode,
+                        'description' => $segment->ServiceLineDes,
+                        'isActive' => ($segment->isActive == 1) ? trans('custom.yes') : trans('custom.no'),
+                        'type' => $type,
+                        'parent' => is_null($segment->masterID) ? ($segment->company ? $segment->company->CompanyName : '') : ($segment->parent ? $segment->parent->ServiceLineCode : ''),
+                        'isPublic' => ($segment->isPublic == 1) ? trans('custom.yes') : trans('custom.no'),
+                    ];
+                });
+            } else {
+                // No pagination - return all results
+                $segments = $query->get()
+                    ->map(function ($segment) {
+                        $type = ($segment->isFinalLevel == 1) ? trans('custom.final') : trans('custom.parent');
+
+                        return [
+                            'company' => $segment->company ? $segment->company->CompanyName : '',
+                            'segmentCode' => $segment->ServiceLineCode,
+                            'description' => $segment->ServiceLineDes,
+                            'isActive' => ($segment->isActive == 1) ? trans('custom.yes') : trans('custom.no'),
+                            'type' => $type,
+                            'parent' => is_null($segment->masterID) ? ($segment->company ? $segment->company->CompanyName : '') : ($segment->parent ? $segment->parent->ServiceLineCode : ''),
+                            'isPublic' => ($segment->isPublic == 1) ? trans('custom.yes') : trans('custom.no'),
+                        ];
+                    });
+            }
+
+            return $this->sendResponse($segments, trans('custom.data_retrieved_successfully_3'));
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     /**
      * Store a newly created SegmentMaster in storage.
      * POST /segmentMasters

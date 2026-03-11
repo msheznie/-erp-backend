@@ -1175,4 +1175,17 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
         $employees = Employee::where('discharegedYN', 0)->where('empCompanySystemID', $companyId)->get();
         return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
     }
+
+    public function getDelegatedEmployees(Request $request)
+    {
+        $currentEmployee = Helper::getEmployeeInfo();
+        $input = $request->all();
+        $companyId = $input['companySystemID'];
+        $employees = Employee::where('empCompanySystemID', $companyId)
+            ->where('discharegedYN', 0)
+            ->where('employeeSystemID', '!=', $currentEmployee->employeeSystemID)
+            ->get();
+
+        return $this->sendResponse($employees->toArray(), trans('custom.data_retrieved_successfully'));
+    }
 }

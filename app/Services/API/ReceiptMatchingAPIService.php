@@ -1190,6 +1190,8 @@ class ReceiptMatchingAPIService extends AppBaseController
 
                                 $customerMatchingDetails = CustomerReceivePaymentDetail::with(['ar_data'])->selectRaw("SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt,arAutoID")
                                                     ->where('custReceivePaymentAutoID', $input["PayMasterAutoId"])
+                                                    ->where('matchingDocID', $id)
+                                                    ->groupBy('arAutoID')
                                                     ->get();
 
                                 $taxConfigData = TaxService::getOutputVATGLAccount($input["companySystemID"]);
