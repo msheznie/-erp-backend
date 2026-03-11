@@ -4906,9 +4906,9 @@ SELECT
     customermaster.CustomerName,
     CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
     CASE
-     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
-        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountLocal, 0)
+        IFNULL(cn_pulled_amounts.creditNotePaymentAmountLocal, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
         -(erp_generalledger.documentLocalAmount)
@@ -4967,9 +4967,9 @@ SELECT
         END
     END AS receivedAmountLocal,
     CASE
-     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
-        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmountRpt, 0)
+        IFNULL(cn_pulled_amounts.creditNotePaymentAmountRpt, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"
      THEN
          -(erp_generalledger.documentRptAmount)
@@ -5013,9 +5013,9 @@ SELECT
         END 
     END AS receivedAmountRpt,
     CASE
-     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND pv_refund.PayMasterAutoId IS NOT NULL
+     WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
-        IFNULL(erp_paycreditnotedetails.creditNotePaymentAmount, 0)
+        IFNULL(cn_pulled_amounts.creditNotePaymentAmount, 0)
      WHEN erp_generalledger.documentNarration LIKE  "Matching %"  
      THEN
         -(erp_generalledger.documentTransAmount)
@@ -5072,13 +5072,22 @@ LEFT JOIN erp_custinvoicedirect ON
 LEFT JOIN erp_creditnote ON erp_generalledger.documentSystemID = 19 
     AND erp_generalledger.documentSystemCode = erp_creditnote.creditNoteAutoID
     AND erp_generalledger.companySystemID = erp_creditnote.companySystemID
-LEFT JOIN erp_paycreditnotedetails ON erp_creditnote.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
+LEFT JOIN (
+    SELECT
+        erp_paycreditnotedetails.creditNoteAutoID,
+        erp_paycreditnotedetails.companySystemID,
+        SUM(erp_paycreditnotedetails.creditNotePaymentAmount) AS creditNotePaymentAmount,
+        SUM(erp_paycreditnotedetails.creditNotePaymentAmountLocal) AS creditNotePaymentAmountLocal,
+        SUM(erp_paycreditnotedetails.creditNotePaymentAmountRpt) AS creditNotePaymentAmountRpt
+    FROM erp_paycreditnotedetails
+    INNER JOIN erp_paysupplierinvoicemaster pv ON erp_paycreditnotedetails.PayMasterAutoId = pv.PayMasterAutoId
+        AND pv.invoiceType = 8
+        AND pv.refundType = 3
+        AND pv.companySystemID = erp_paycreditnotedetails.companySystemID
+    GROUP BY erp_paycreditnotedetails.creditNoteAutoID, erp_paycreditnotedetails.companySystemID
+) AS cn_pulled_amounts ON erp_creditnote.creditNoteAutoID = cn_pulled_amounts.creditNoteAutoID
     AND erp_creditnote.type = 3
-    AND erp_creditnote.companySystemID = erp_paycreditnotedetails.companySystemID
-LEFT JOIN erp_paysupplierinvoicemaster pv_refund ON erp_paycreditnotedetails.PayMasterAutoId = pv_refund.PayMasterAutoId
-    AND pv_refund.invoiceType = 8
-    AND pv_refund.refundType = 3
-    AND pv_refund.companySystemID = erp_paycreditnotedetails.companySystemID
+    AND erp_creditnote.companySystemID = cn_pulled_amounts.companySystemID
 WHERE
     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
