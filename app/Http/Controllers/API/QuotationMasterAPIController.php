@@ -1703,13 +1703,14 @@ class QuotationMasterAPIController extends AppBaseController
 
         $detail = DB::select('SELECT
                                 quotationdetails.*,
-                                erp_quotationmaster.serviceLineSystemID,
                                 "" AS isChecked,
                                 "" AS noQty,
-                                IFNULL(sodetails.soTakenQty,0) as soTakenQty 
+                                IFNULL(sodetails.soTakenQty,0) as soTakenQty,
+                                sl.ServiceLineDes as segmentDescription
                             FROM
                                 erp_quotationdetails quotationdetails
                                 INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+                                LEFT JOIN serviceline sl ON quotationdetails.serviceLineSystemID = sl.serviceLineSystemID
                                 LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty * userQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
                             WHERE
                                 quotationdetails.quotationMasterID = ' . $id . ' 

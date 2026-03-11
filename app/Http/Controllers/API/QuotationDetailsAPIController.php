@@ -645,8 +645,11 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::leftjoin('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
-              ->skip($input['skip'])->take($input['limit'])->get();
+        $items = QuotationDetails::with('segment')
+              ->leftjoin('units','UnitID','unitOfMeasureID')
+              ->where('quotationMasterID', $quotationMasterID)
+              ->skip($input['skip'])->take($input['limit'])
+              ->get();
 
         $index = $input['skip'] + 1;
         foreach($items as $item) {
@@ -1067,7 +1070,6 @@ WHERE
                             unset($new['userRequestedQty']);
                             unset($new['requestedUnitQty']);
                             unset($new['unitQty']);
-                            unset($new['serviceLineSystemID']);
                             $new['soQuotationDetailID'] = $new['quotationDetailsID'];
                             
                             $new['createdPCID'] = gethostname();
