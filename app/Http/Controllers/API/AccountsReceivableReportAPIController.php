@@ -5086,6 +5086,7 @@ LEFT JOIN (
         AND pv.companySystemID = erp_paycreditnotedetails.companySystemID
     GROUP BY erp_paycreditnotedetails.creditNoteAutoID, erp_paycreditnotedetails.companySystemID
 ) AS cn_pulled_amounts ON erp_creditnote.creditNoteAutoID = cn_pulled_amounts.creditNoteAutoID
+    AND erp_creditnote.type = 3
     AND erp_creditnote.companySystemID = cn_pulled_amounts.companySystemID
 WHERE
     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
