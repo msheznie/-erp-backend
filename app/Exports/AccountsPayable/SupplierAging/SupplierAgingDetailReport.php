@@ -36,7 +36,9 @@ class SupplierAgingDetailReport
             'O' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'P' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'Q' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-            'R' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
+            'R' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'S' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'T' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
         ];
     }
     public function getHeader($typeAging, $header) :Array {
@@ -58,6 +60,7 @@ class SupplierAgingDetailReport
                 $header,
                 [
                 trans('custom.advance_unallocated_amount'),
+                trans('custom.debit_note_unallocated_amount'),
                 trans('custom.total')
             ]);
         }else {
@@ -77,6 +80,7 @@ class SupplierAgingDetailReport
                 $header,
                 [
                 trans('custom.advance_unallocated_amount'),
+                trans('custom.debit_note_unallocated_amount'),
                 trans('custom.total')
             ]);
         }
