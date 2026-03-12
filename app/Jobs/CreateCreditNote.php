@@ -15,6 +15,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerMaster;
@@ -96,8 +97,8 @@ class CreateCreditNote implements ShouldQueue
 
         CommonJobService::db_switch($this->db);
 
-        $fieldErrors = $masterDatasets = $detailsDataSets = $errorDocuments = $successDocuments = [];
-        $headerData = $detailData = ['status' => false , 'errors' => []];
+        $fieldErrors = $masterDatasets = $detailsDataSets = $receiptVoucherDataSets = $errorDocuments = $successDocuments = [];
+        $headerData = $detailData = $receiptVoucherData = ['status' => false , 'errors' => []];
         $commentTracker = [];
         $masterIndex = 0;
         $creditNotes = $this->input['credit_notes'];
@@ -106,20 +107,19 @@ class CreateCreditNote implements ShouldQueue
             
             $creditNote['company_id'] = $this->input['company_id'];
 
-                // Validate comment uniqueness in the input array
-                if (!empty($creditNote['comments'])) {
-                    if (in_array($creditNote['comments'], $commentTracker)) {
-                        $headerData['errors'][] = [
-                            'field' => "comments",
-                            'message' => ["The Comments should be unique."]
-                        ];
-                    } else {
-                        $commentTracker[] = $creditNote['comments'];
-                    }
+            // Validate comment uniqueness in the input array
+            if (!empty($creditNote['comments'])) {
+                if (in_array($creditNote['comments'], $commentTracker)) {
+                    $headerData['errors'][] = [
+                        'field' => "comments",
+                        'message' => ["The Comments should be unique."]
+                    ];
+                } else {
+                    $commentTracker[] = $creditNote['comments'];
                 }
+            }
 
             $datasetMaster = self::validateCNMasterData($creditNote, $masterIndex);
-
 
             if (!$datasetMaster['status']) {
                 $fieldErrors = $datasetMaster['fieldErrors'];
@@ -150,8 +150,46 @@ class CreateCreditNote implements ShouldQueue
                 }
             }
 
-            if (empty($headerData['errors']) && empty($detailData['errors']) && empty($fieldErrors)) {
-                $masterDatasets[] = Arr::add($datasetMaster['data'],'details',$detailsDataSets[$masterIndex]);
+            $receiptVoucherIndex = 0;
+            $receiptVoucherDetails = $creditNote['receipt_voucher_details'] ?? null;
+
+            if (($datasetMaster['data']['creditNoteType'] == 3) && !is_null($receiptVoucherDetails)) {
+                foreach ($receiptVoucherDetails as $reciptVoucherDetail) {
+                    $datasetReceiptVoucher = self::validateCNReceiptVoucherDetailsData($creditNote, $reciptVoucherDetail, $datasetMaster);
+
+                    if ($datasetReceiptVoucher['status']) {
+                        $receiptVoucherDataSets[$masterIndex][] = $datasetReceiptVoucher['data'];
+                    } else {
+                        $receiptVoucherData['errors'][] = [
+                            'index' => $receiptVoucherIndex + 1,
+                            'error' => $datasetReceiptVoucher['data'],
+                        ];
+                        unset($receiptVoucherDataSets[$masterIndex]);
+                    }
+
+                    $receiptVoucherIndex++;
+                }
+            }
+
+            // Validate refund total matches credit note line total for refund type credit note
+            if (($datasetMaster['data']['creditNoteType'] == 3) && isset($receiptVoucherDataSets[$masterIndex])) {
+                $totalMatchValidation = self::validateRefundAmountWithCreditNoteAmount($detailsDataSets[$masterIndex], $receiptVoucherDataSets[$masterIndex]);
+                if (!$totalMatchValidation['status']) {
+                    $headerData['errors'] = [
+                        'field' => "details",
+                        'message' => $totalMatchValidation['message']
+                    ];
+                }
+            }
+
+            if (empty($headerData['errors']) && empty($detailData['errors']) && empty($receiptVoucherData['errors']) && empty($fieldErrors)) {
+                $dataWithDetails = Arr::add($datasetMaster['data'], 'details', $detailsDataSets[$masterIndex]);
+
+                if (($datasetMaster['data']['creditNoteType'] == 3) && !is_null($receiptVoucherDetails)) {
+                    $dataWithDetails = Arr::add($dataWithDetails, 'receipt_voucher_details', $receiptVoucherDataSets[$masterIndex]);
+                }
+
+                $masterDatasets[] = $dataWithDetails;
             }
             else {
                 if (empty($headerData['errors'])) {
@@ -162,16 +200,22 @@ class CreateCreditNote implements ShouldQueue
                     $detailData['status'] = true;
                 }
 
+                if (empty($receiptVoucherData['errors'])) {
+                    $receiptVoucherData['status'] = true;
+                }
+
                 $errorDocuments[] = self::createErrorResponseDataArray(
                     $creditNote['comments'] ?? "",
                     $masterIndex,
                     $fieldErrors,
                     $headerData,
-                    $detailData
+                    $detailData,
+                    !is_null($receiptVoucherDetails),
+                    $receiptVoucherData
                 );
 
                 $fieldErrors = [];
-                $headerData = $detailData = ['status' => false , 'errors' => []];
+                $headerData = $detailData = $receiptVoucherData = ['status' => false , 'errors' => []];
             }
 
             $masterIndex++;
@@ -180,13 +224,18 @@ class CreateCreditNote implements ShouldQueue
         if(!empty($masterDatasets)) {
             DB::beginTransaction();
 
-            $headerData = $detailData = ['status' => true , 'errors' => []];
+            $headerData = $detailData = $receiptVoucherDetailData = ['status' => true , 'errors' => []];
 
             foreach ($masterDatasets as $masterDataset) {
                 $documentStatus = true;
                 try {
                     $detailsData = $masterDataset['details'];
                     unset($masterDataset['details']);
+                    $receiptVoucherDetailsData = [];
+                    if (isset($masterDataset['receipt_voucher_details'])) {
+                        $receiptVoucherDetailsData = $masterDataset['receipt_voucher_details'];
+                        unset($masterDataset['receipt_voucher_details']);
+                    }
 
                     $customerID = $masterDataset['customerID'];
                     $isVATEligible = TaxService::checkCompanyVATEligible($masterDataset['customerID']);
@@ -211,7 +260,7 @@ class CreateCreditNote implements ShouldQueue
                             if (!$detailInsert['status']) {
                                 $documentStatus = false;
                                 DB::rollBack();
-                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                                 $error['headerData'] = $detailInsert['message'];
                                 $errorDocuments[] = $error;
                                 break 2;
@@ -222,13 +271,39 @@ class CreateCreditNote implements ShouldQueue
                             if (!$updateCreditNoteDetails['status']) {
                                 $documentStatus = false;
                                 DB::rollBack();
-                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                                 $error['headerData'] = $updateCreditNoteDetails['message'];
                                 $errorDocuments[] = $error;
                                 break 2;
+                            }                            
+                        }
+
+                        if ($documentStatus && ($masterDataset['creditNoteType'] == 3) && !empty($receiptVoucherDetailsData)) {
+                            
+                            $receiptVoucherFinalData = [];
+                            foreach ($receiptVoucherDetailsData as $rvItem) {
+                                $receiptVoucherFinalData[] = [
+                                    'creditNoteAutoID' => $cnMasterAutoId,
+                                    'custReceivePaymentAutoID' => $rvItem['autoID'],
+                                    'refundAmount' => $rvItem['refund_amount'],
+                                ];
                             }
 
-                            
+                            $receiptVoucherStoreData = [
+                                'companySystemID' => $masterDataset['companySystemID'],
+                                'selectedVouchers' => $receiptVoucherFinalData,
+                            ];
+
+                            $createdReceipts = CreditNoteAPIService::storeCreditNoteReceiptVouchers($receiptVoucherStoreData);
+
+                            if(empty($createdReceipts)) {
+                                $documentStatus = false;
+                                DB::rollBack();
+                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
+                                $error['headerData'] = "Failed to store receipt vouchers";
+                                $errorDocuments[] = $error;
+                                break;
+                            }
                         }
 
                         if($documentStatus) {
@@ -255,14 +330,14 @@ class CreateCreditNote implements ShouldQueue
                                 }
                                 else {
                                     DB::rollBack();
-                                    $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                    $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                                     $error['headerData'] = $approveDocument['message'];
                                     $errorDocuments[] = $error;
                                 }
                             }
                             else {
                                 DB::rollBack();
-                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                                $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                                 $error['headerData'] = $cnUpdateData['message'];
                                 $errorDocuments[] = $error;
                             }
@@ -270,7 +345,7 @@ class CreateCreditNote implements ShouldQueue
                     }
                     else {
                         DB::rollBack();
-                        $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                        $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                         $error['headerData'][] = [
                             'field' => "",
                             'message' => [$masterInsert['message']]
@@ -280,7 +355,7 @@ class CreateCreditNote implements ShouldQueue
                 }
                 catch (\Exception $e) {
                     DB::rollBack();
-                    $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData);
+                    $error = self::createErrorResponseDataArray($masterDataset['comments'], $masterDataset['initialIndex'], [], $headerData, $detailData, !empty($receiptVoucherDetailsData), $receiptVoucherDetailData);
                     $error['headerData'][] = [
                         'field' => "",
                         'message' => [$e->getMessage()]
@@ -353,8 +428,8 @@ class CreateCreditNote implements ShouldQueue
         }
     }
 
-    public static function createErrorResponseDataArray($narration,$masterIndex,$fieldErrors, $headerData, $detailData): array {
-        return [
+    public static function createErrorResponseDataArray($narration, $masterIndex, $fieldErrors, $headerData, $detailData, $hasReceiptVoucherDetails = false, $receiptVoucherData = null): array {
+        $data = [
             'identifier' => [
                 'unique-key' => $narration,
                 'index' => $masterIndex + 1
@@ -363,6 +438,12 @@ class CreateCreditNote implements ShouldQueue
             'headerData' => [$headerData],
             'detailData' => [$detailData]
         ];
+
+        if ($hasReceiptVoucherDetails && $receiptVoucherData !== null) {
+            $data['receiptVoucherData'] = [$receiptVoucherData];
+        }
+
+        return $data;
     }
 
     public static function createSuccessResponseDataArray($narration,$masterIndex,$code): array {
@@ -378,6 +459,35 @@ class CreateCreditNote implements ShouldQueue
         $errorData = $fieldErrors = [];
 
         $companyId = $request['company_id'] ?? null;
+
+        $validTypes = [2, 3];
+        if (array_key_exists('credit_note_type', $request)) {
+            if (in_array($request['credit_note_type'], $validTypes)) {
+                $creditNoteType = $request['credit_note_type'];
+            }
+            else {
+                $errorData[] = [
+                    'field' => 'credit_note_type',
+                    'message' => ["Invalid credit note type selected. Please choose a valid type."],
+                ];
+            }
+        }
+        else {
+            $creditNoteType = 2;
+        }
+
+        // Validate Receipt Voucher Details (Refund type only)
+        if ($creditNoteType == 3) {
+            $receiptVoucherDetails = $request['receipt_voucher_details'] ?? null;
+
+            if (!isset($receiptVoucherDetails) || !is_array($receiptVoucherDetails) || count($receiptVoucherDetails) == 0) {
+                $errorData[] = [
+                    'field' => 'receipt_voucher_details',
+                    'message' => ["Refund type credit note receipt_voucher_details is required"],
+                ];
+            }
+        }
+        
         // Validate Customer
         if (isset($request['customer'])) {
             $approvedCustomer = CustomerMaster::where(function ($query) use ($request) {
@@ -662,6 +772,7 @@ class CreateCreditNote implements ShouldQueue
                     'isVATApplicable' => $request['vat_applicable'],
                     'companySystemID' => $companyId,
                     'documentSystemID' => 19,
+                    'creditNoteType' => $creditNoteType,
                     'isAutoCreateDocument' => true,
                     'initialIndex' => $index
                 ]
@@ -1038,6 +1149,169 @@ class CreateCreditNote implements ShouldQueue
         }
 
         return $returnData;
+    }
+
+    private static function validateCNReceiptVoucherDetailsData($masterData, $request, $datasetMaster): array
+    {
+        $errorData = [];
+
+        $companyId = $masterData['company_id'] ?? null;
+
+        $totalPayAmount = null;
+        $usedRefundAmount = null;
+        $balanceAmount = null;
+
+        if(isset($request['receipt_voucher_code']) && $request['receipt_voucher_code'] != '') {
+            $code = $request['receipt_voucher_code'];
+
+            $receiptVoucher = CustomerReceivePayment::where('companySystemID', $companyId)
+                ->where('approved', -1)
+                ->where('custPaymentReceiveCode', $code)
+                ->first();
+
+            if ($receiptVoucher) {
+                if ($receiptVoucher->documentType != 13) {
+                    $errorData[] = [
+                        'field' => 'receipt_voucher_code',
+                        'message' => ["Receipt Voucher is not a valid customer invoice receipt for refund."],
+                    ];
+                }
+
+                if ($receiptVoucher->pdcChequeYN == 1) {
+                    $errorData[] = [
+                        'field' => 'receipt_voucher_code',
+                        'message' => ["Receipt Vouchers of type PDC cheque cannot be used for refund credit notes."],
+                    ];
+                }
+
+                $creditNoteCustomerId = $datasetMaster['data']['customerID'];
+                if ($receiptVoucher->customerID != $creditNoteCustomerId) {
+                    $errorData[] = [
+                        'field' => 'receipt_voucher_code',
+                        'message' => ["Receipt Voucher customer does not match with credit note customer."],
+                    ];
+                }
+
+                $creditNoteCurrencyId = $datasetMaster['data']['customerCurrencyID'];
+                if ($receiptVoucher->custTransactionCurrencyID != $creditNoteCurrencyId) {
+                    $errorData[] = [
+                        'field' => 'receipt_voucher_code',
+                        'message' => ["Receipt Voucher currency does not match with credit note currency."],
+                    ];
+                }
+
+                if (empty($errorData)) {
+                    $amounts = CustomerReceivePayment::selectRaw('ROUND(ABS(IFNULL(erp_customerreceivepayment.receivedAmount, 0)), IFNULL(currencymaster.DecimalPlaces, 2)) as totalPayAmountBank')
+                        ->selectRaw('ROUND(IFNULL(refund_sum.usedRefundAmount, 0), IFNULL(currencymaster.DecimalPlaces, 2)) as usedRefundAmount')
+                        ->selectRaw('ROUND((ABS(IFNULL(erp_customerreceivepayment.receivedAmount, 0)) - IFNULL(refund_sum.usedRefundAmount, 0)), IFNULL(currencymaster.DecimalPlaces, 2)) as balanceAmount')
+                        ->leftJoin('currencymaster', 'currencymaster.currencyID', '=', 'erp_customerreceivepayment.custTransactionCurrencyID')
+                        ->leftJoin(DB::raw('(SELECT 
+                            erp_creditnote_receipts.custReceivePaymentAutoID,
+                            ABS(SUM(erp_creditnote_receipts.refundAmount)) as usedRefundAmount
+                            FROM erp_creditnote_receipts
+                            WHERE erp_creditnote_receipts.companySystemID = ' . $companyId . '
+                            GROUP BY erp_creditnote_receipts.custReceivePaymentAutoID) as refund_sum'), function ($join) {
+                            $join->on('refund_sum.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
+                        })
+                        ->where('erp_customerreceivepayment.custReceivePaymentAutoID', $receiptVoucher->custReceivePaymentAutoID)
+                        ->first();
+
+                    if ($amounts) {
+                        $totalPayAmount = $amounts->totalPayAmountBank;
+                        $usedRefundAmount = $amounts->usedRefundAmount;
+                        $balanceAmount = $amounts->balanceAmount;
+
+                        if ($balanceAmount <= 0) {
+                            $errorData[] = [
+                                'field' => 'receipt_voucher_code',
+                                'message' => ["The selected Receipt Voucher is already fully refunded."],
+                            ];
+                        }
+                    }
+                }
+            } 
+            else {
+                $errorData[] = [
+                    'field' => 'receipt_voucher_code',
+                    'message' => ["Receipt voucher code is not approved or not exist"],
+                ];
+            }
+        }
+        else {
+            $errorData[] = [
+                'field' => 'receipt_voucher_code',
+                'message' => ["Receipt voucher code is required"],
+            ];
+        }        
+
+        if(isset($request['refund_amount']) && $request['refund_amount'] != '') {
+            $refundAmount = $request['refund_amount'];
+            
+            if ($refundAmount <= 0) {
+                $errorData[] = [
+                    'field' => 'refund_amount',
+                    'message' => ["Refund amount is mandatory and should be greater than zero."],
+                ];
+            }
+
+            if (!is_null($balanceAmount)) {
+                if ($refundAmount > $balanceAmount) {
+                    $errorData[] = [
+                        'field' => 'refund_amount',
+                        'message' => ["Refund amount cannot be greater than Receipt Voucher balance amount."],
+                    ];
+                }
+            }
+        }
+        else{
+            $errorData[] = [
+                'field' => 'refund_amount',
+                'message' => ["Refund amount is required"],
+            ];
+        }
+
+        if (!empty($errorData)) {
+            return [
+                'status' => false,
+                'data' => $errorData,
+            ];
+        }
+
+        $returnDataset = [
+            'autoID' => $receiptVoucher->custReceivePaymentAutoID,
+            'receipt_voucher_code' => $request['receipt_voucher_code'],
+            'refund_amount' => $request['refund_amount'],
+        ];
+
+        return [
+            'status' => true,
+            'data' => $returnDataset,
+        ];
+    }
+
+    private static function validateRefundAmountWithCreditNoteAmount(array $details, array $receiptVoucherDetails): array
+    {
+        $totalLineNetAmount = collect($details)->sum('netAmount');
+        $totalRefundAmount = collect($receiptVoucherDetails)->sum('refund_amount');
+
+        $totalLineNetAmount = Helper::roundValue($totalLineNetAmount);
+        $totalRefundAmount = Helper::roundValue($totalRefundAmount);
+
+        if ($totalLineNetAmount > $totalRefundAmount) {
+            return [
+                'status' => false,
+                'message' => ['The total amount of the credit note cannot be greater than the total refund amount.'],
+            ];
+        }
+
+        if ($totalLineNetAmount < $totalRefundAmount) {
+            return [
+                'status' => false,
+                'message' => ['The total amount of the credit note cannot be less than the total refund amount.'],
+            ];
+        }
+
+        return ['status' => true];
     }
 
 }
