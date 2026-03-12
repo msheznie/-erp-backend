@@ -2,11 +2,7 @@
 
 namespace App\Http\Requests\API;
 
-use App\Utils\ResponseUtil;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
-use Response;
 
 class PullBankMasterRequest extends FormRequest
 {
@@ -52,20 +48,5 @@ class PullBankMasterRequest extends FormRequest
             'per_page.min' => trans('custom.per_page_must_be_at_least_1'),
             'per_page.max' => trans('custom.per_page_cannot_exceed_500'),
         ];
-    }
-
-    /**
-     * Handle a failed validation attempt (return same format as sendError).
-     *
-     * @param Validator $validator
-     * @return void
-     * @throws HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        $errorMessage = $validator->errors()->first();
-        throw new HttpResponseException(
-            Response::json(ResponseUtil::makeError($errorMessage, ['type' => '']), 422)
-        );
     }
 }

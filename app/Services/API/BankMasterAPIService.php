@@ -8,9 +8,8 @@ use App\Repositories\BankAccountRepository;
 use App\Repositories\BankMasterRepository;
 use App\Utils\ServiceResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Symfony\Component\HttpFoundation\Response;
 
-class BankMasterPullService
+class BankMasterAPIService
 {
     public function __construct(
         private BankMasterRepository $bankMasterRepository,
@@ -21,20 +20,12 @@ class BankMasterPullService
     {
         $companyId = $input['company_id'] ?? null;
         if (empty($companyId)) {
-            return ServiceResponse::failure(
-                trans('custom.companySystemID_is_required'),
-                [],
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            return ServiceResponse::failure(trans('custom.companySystemID_is_required'));
         }
 
         $company = Company::find($companyId);
         if (!$company) {
-            return ServiceResponse::failure(
-                trans('custom.company_not_found'),
-                [],
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            return ServiceResponse::failure(trans('custom.company_not_found'));
         }
 
         $companySystemIDs = Helper::checkIsCompanyGroup($companyId)
@@ -48,11 +39,7 @@ class BankMasterPullService
             $normalizedExisting = $existingCodes->map(fn ($c) => strtolower((string) $c))->unique()->values();
             $missing = $normalizedInputs->diff($normalizedExisting)->values()->all();
             if (!empty($missing)) {
-                return ServiceResponse::failure(
-                    trans('custom.input_value_not_matching'),
-                    [],
-                    Response::HTTP_UNPROCESSABLE_ENTITY
-                );
+                return ServiceResponse::failure(trans('custom.input_value_not_matching'));
             }
             $bankShortCodes = $existingCodes->values()->all();
         }
@@ -83,11 +70,7 @@ class BankMasterPullService
             $data = $banks;
         }
 
-        return ServiceResponse::success(
-            $data,
-            trans('custom.data_retrieved_successfully_3'),
-            Response::HTTP_OK
-        );
+        return ServiceResponse::success($data, trans('custom.data_retrieved_successfully_3'));
     }
 
     private function normalizeBankShortCodes(array $input): ?array
