@@ -18,6 +18,7 @@ use App\Models\ErpItemLedger;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\CompanyPolicyMaster;
 use App\Models\PurchaseRequestDetails;
+use App\Services\Procurement\CategoryValidationService;
 use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\helper\PurcahseRequestDetail;
@@ -82,24 +83,11 @@ class PrBulkBulkItem implements ShouldQueue
         $budgetYear = $purchaseRequest->budgetYear;
         $companyID = $purchaseRequest->companyID;
             
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                                                    ->where('companySystemID', $purchaseRequest->companySystemID)
-                                                    ->first();
-
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-            if ($policy == 0) {
-                if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                    return ['status' => false , 'message' => 'Category is not found.'];
-                }
-                $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                    ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
-                    ->first();
-                if ($pRDetailExistSameItem) {
-                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return ['status' => false , 'message' => 'You cannot add different category item'];
-                    }
-                }
+        if (CategoryValidationService::shouldEnforceSingleCategory($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+            if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                Log::channel('pr_bulk_item')->error('PR bulk item: Category not found. PurchaseRequestID=' . $purchaseRequest->purchaseRequestID);
+                PurchaseRequest::where('purchaseRequestID', $purchaseRequest->purchaseRequestID)->update(['isBulkItemJobRun' => 0, 'counter' => 0]);
+                return;
             }
         }
            
