@@ -121,6 +121,46 @@ class BankAccountRepository extends BaseRepository
         return $logistics;
     }
 
+    public function getApprovedActiveForCompanies(array $companySystemIDs, ?array $bankShortCodes = null)
+    {
+        $accountColumns = [
+            'bankAccountAutoID',
+            'bankmasterAutoID',
+            'companySystemID',
+            'AccountNo',
+            'AccountName',
+            'accountSwiftCode',
+            'accountIBAN#',
+            'glCodeLinked',
+            'isAccountActive',
+            'isDefault',
+            'isManualActive',
+            'bankShortCode',
+            'bankName',
+            'accountCurrencyID',
+        ];
+
+        $query = BankAccount::select($accountColumns)
+            ->whereIn('companySystemID', $companySystemIDs)
+            ->isApprove()
+            ->when(!empty($bankShortCodes), function ($q) use ($bankShortCodes) {
+                $q->whereIn('bankShortCode', $bankShortCodes);
+            })
+            ->with([
+                'bank' => function ($q) {
+                    $q->select('bankmasterAutoID', 'bankShortCode', 'bankName');
+                },
+                'company' => function ($q) {
+                    $q->select('companySystemID', 'CompanyName');
+                },
+                'currency' => function ($q) {
+                    $q->select('currencyID', 'CurrencyCode');
+                },
+            ]);
+
+        return $query;
+    }
+
     public function setExportExcelData($dataSet) {
 
         $dataSet = $dataSet->get();
