@@ -15,6 +15,7 @@ use App\Models\GRVDetails;
 use App\Models\ErpItemLedger;
 use App\helper\Helper;
 use App\Repositories\BaseRepository;
+use App\Services\Procurement\CategoryValidationService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -260,29 +261,18 @@ class PurchaseRequestDetailsRepository extends BaseRepository
                                 $insertData['itemCategoryID'] = 0;
 
 
-                                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                                                                        ->where('companySystemID', $purchaseRequest->companySystemID)
-                                                                        ->first();
+                                if (CategoryValidationService::shouldEnforceSingleCategory($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+                                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                                        $notUploadCount[] = $input['item_code'];
+                                        $lineError = true;
+                                    } else {
+                                        $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                                            ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+                                            ->first();
 
-                                if ($allowFinanceCategory) {
-                                    $policy = $allowFinanceCategory->isYesNO;
-
-                                    if ($policy == 0) {
-                                        if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
+                                        if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
                                             $notUploadCount[] = $input['item_code'];
                                             $lineError = true;
-                                        }
-
-                                        //checking if item category is same or not
-                                        $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                                                                                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
-                                                                                        ->first();
-
-                                        if ($pRDetailExistSameItem) {
-                                            if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                                $notUploadCount[] = $input['item_code'];
-                                                $lineError = true;
-                                            }
                                         }
                                     }
                                 }

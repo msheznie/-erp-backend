@@ -176,6 +176,7 @@ use App\Models\DocumentCodeMaster;
 use App\Models\DocumentCodeTransaction;
 use App\Models\SupplierBlock;
 use App\Services\DocumentCodeConfigurationService;
+use App\Services\Procurement\CategoryValidationService;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
@@ -1061,34 +1062,41 @@ class ProcumentOrderAPIController extends AppBaseController
                 }
             }
 
-            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $procumentOrder->companySystemID)
-                ->first();
-
-
-            if ($allowFinanceCategory) {
-                $policy = $allowFinanceCategory->isYesNO;
-                //checking if item category is same or not
+            if (CategoryValidationService::shouldEnforceSingleCategory($procumentOrder->companySystemID, (int) $procumentOrder->documentSystemID)) {
                 $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                     ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
                     ->get();
-                if ($policy == 0) {
-                    if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
-                        return $this->sendError(trans('custom.category_not_found'), 500);
-                    }
 
-                    if (sizeof($pRDetailExistSameItem) > 1) {
-                        return $this->sendError(trans('custom.cannot_add_different_category_item'), 500);
-                    }
-                } else {
-                    if (sizeof($pRDetailExistSameItem) == 1) {
-                        $updateFinanceCategory = $pRDetailExistSameItem[0]['itemFinanceCategoryID'];
+                if (sizeof($pRDetailExistSameItem) > 1) {
+                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($procumentOrder->companySystemID, (int) $procumentOrder->documentSystemID), 500);
+                }
+            } else {
+                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                    ->where('companySystemID', $procumentOrder->companySystemID)
+                    ->first();
+
+                if ($allowFinanceCategory) {
+                    $policy = $allowFinanceCategory->isYesNO;
+                    $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                        ->get();
+
+                    if ($policy == 0) {
+                        if ($procumentOrder->financeCategory == null || $procumentOrder->financeCategory == 0) {
+                            return $this->sendError(trans('custom.category_not_found'), 500);
+                        }
+                        if (sizeof($pRDetailExistSameItem) > 1) {
+                            return $this->sendError(trans('custom.cannot_add_different_category_item'), 500);
+                        }
                     } else {
-                        $updateFinanceCategory = null;
+                        if (sizeof($pRDetailExistSameItem) == 1) {
+                            $updateFinanceCategory = $pRDetailExistSameItem[0]['itemFinanceCategoryID'];
+                        } else {
+                            $updateFinanceCategory = null;
+                        }
+                        ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)
+                            ->update(['financeCategory' => $updateFinanceCategory]);
                     }
-
-                    ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)
-                        ->update(['financeCategory' => $updateFinanceCategory]);
                 }
             }
 

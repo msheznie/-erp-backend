@@ -28,6 +28,7 @@ use App\Models\PurchaseRequestDetails;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
 use App\Models\CompanyDocumentAttachment;
+use App\Services\Procurement\CategoryValidationService;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\EmployeesDepartment;
@@ -173,31 +174,13 @@ class PurcahseRequestDetail
 
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
             
-            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                    ->where('companySystemID', $purchaseRequest->companySystemID)
+            if (CategoryValidationService::shouldEnforceSingleCategory($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+                $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
                     ->first();
 
-            if ($allowFinanceCategory) {
-                $policy = $allowFinanceCategory->isYesNO;
-
-                if ($policy == 0) {
-                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                        // return $this->sendError('Category is not found.', 500);
-                        return ['status' => false , 'message' => trans('custom.category_is_not_found')];
-
-                    }
-
-                    //checking if item category is same or not
-                    $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
-                        ->first();
-
-                    if ($pRDetailExistSameItem) {
-                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return ['status' => false , 'message' => trans('custom.you_cannot_add_different_category_item')];
-                            // return $this->sendError('You cannot add different category item', 500);
-                        }
-                    }
+                if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                    return ['status' => false , 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)];
                 }
             }
 
@@ -586,30 +569,14 @@ class PurcahseRequestDetail
 
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
             
-            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                    ->where('companySystemID', $purchaseRequest->companySystemID)
+            if (CategoryValidationService::shouldEnforceSingleCategory($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+                $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
                     ->first();
 
-            if ($allowFinanceCategory) {
-                $policy = $allowFinanceCategory->isYesNO;
-
-                if ($policy == 0) {
-                    if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-                        // return $this->sendError('Category is not found.', 500);
-                        return ['status' => false , 'message' => trans('custom.category_is_not_found')];
-
-                    }
-
-                    //checking if item category is same or not
-                    $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
-                        ->first();
-
-                    if ($pRDetailExistSameItem) {
-                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return ['status' => false , 'message' => trans('custom.you_cannot_add_different_category_item')];
-                            // return $this->sendError('You cannot add different category item', 500);
-                        }
+                if ($pRDetailExistSameItem) {
+                    if ($item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                        return ['status' => false , 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)];
                     }
                 }
             }

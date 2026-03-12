@@ -15,6 +15,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
 use App\Models\SegmentAllocatedItem;
+use App\Services\Procurement\CategoryValidationService;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -125,28 +126,13 @@ class AssetTransferService
 						}
 					}
 
-					$allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-						->where('companySystemID', $purchaseRequest->companySystemID)
-						->first();
+					if (CategoryValidationService::shouldEnforceSingleCategory($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+						$pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+							->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
+							->first();
 
-					if ($allowFinanceCategory) {
-						$policy = $allowFinanceCategory->isYesNO;
-
-						if ($policy == 0) {
-							if ($purchaseRequest->financeCategory == null || $purchaseRequest->financeCategory == 0) {
-
-								return ['status' => false, 'message' => 'Category is not found.'];
-							}
-
-							$pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-								->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
-								->first();
-
-							if ($pRDetailExistSameItem) {
-								if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-									return ['status' => false, 'message' => 'You cannot add different category item.'];
-								}
-							}
+						if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+							return ['status' => false, 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)];
 						}
 					}
 

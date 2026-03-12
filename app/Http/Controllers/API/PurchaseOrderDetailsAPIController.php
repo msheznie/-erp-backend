@@ -28,6 +28,7 @@ use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use App\Models\ItemMaster;
 use App\Services\ProcurementOrder\ProcurementOrderService;
+use App\Services\Procurement\CategoryValidationService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
 use App\Models\ProcumentOrderDetail;
@@ -371,26 +372,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-            ->where('companySystemID', $purchaseOrder->companySystemID)
-            ->first();
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-            if ($policy == 0) {
-                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError(trans('custom.category_is_not_found'), 500);
-                }
+        if (CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+            $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                ->first();
 
-                //checking if item category is same or not
-                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                    ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                    ->first();
-
-                if ($pRDetailExistSameItem) {
-                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
-                    }
-                }
+            if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 422);
             }
         }
 
@@ -595,21 +583,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.request_department_is_different_from_order'));
         }
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-            ->where('companySystemID', $purchaseOrder->companySystemID)
-            ->first();
-
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-
-
-            if ($policy == 0) {
-                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError(trans('custom.category_is_not_found'), 500);
-                }
-            }
-        }
-
         //check PO segment is correct with PR pull segment
 
         foreach ($input['detailTable'] as $itemExist) {
@@ -633,6 +606,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        $enforceSingleCategory = CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID);
+        $existingPOCategory = null;
+        $allowedCategoryInRequest = null;
+        if ($enforceSingleCategory) {
+            $existingRow = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('purchaseOrderMasterID', $purchaseOrderID)
+                ->first();
+            $existingPOCategory = $existingRow ? $existingRow->itemFinanceCategoryID : null;
+        }
+
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {
@@ -647,6 +630,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 if (empty($prDetailExist)) {
 
                     if ($new['isChecked'] && $new['poQty'] > 0) {
+
+                        if ($enforceSingleCategory) {
+                            if ($existingPOCategory !== null) {
+                                if ($new['itemFinanceCategoryID'] != $existingPOCategory) {
+                                    DB::rollBack();
+                                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 500);
+                                }
+                            } else {
+                                if ($allowedCategoryInRequest === null) {
+                                    $allowedCategoryInRequest = $new['itemFinanceCategoryID'];
+                                } elseif ($new['itemFinanceCategoryID'] != $allowedCategoryInRequest) {
+                                    DB::rollBack();
+                                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 500);
+                                }
+                            }
+                        }
 
                         //checking the fullyOrdered or partial in po
                         $totalAddedQty = PurchaseOrderDetails::RequestDetailSum($new['purchaseRequestDetailsID']);
@@ -1743,29 +1742,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 if (empty($purchaseOrder)) {
                     return $this->sendError(trans('custom.purchase_order_not_found'), 500);
                 }
-                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                    ->where('companySystemID', $purchaseOrder->companySystemID)
-                    ->first();
-                if ($allowFinanceCategory) {
-                    $policy = $allowFinanceCategory->isYesNO;
-                    if ($policy == 0) {
-                        if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                            return $this->sendError(trans('custom.category_is_not_found_1'), 500);
-                        }
-
-                        //checking if item category is same or not
-                        $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                            ->first();
-
-                        if ($pRDetailExistSameItem) {
-                            if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
-                            }
-                        }
-                    }
-                }
-
+                // Category validation for bulk add is done inside PoAddBulkItemJob (filter by single category when enforcement is on)
 
                 $data['isBulkItemJobRun'] = 1;
 
@@ -1777,6 +1754,32 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 DB::beginTransaction();
                 try {
                     $invalidItems = [];
+                    $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
+                    // When category enforcement is on: ensure all selected items are same category (or match existing PO)
+                    if (!empty($input['itemArray']) && $purchaseOrder && CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+                        $existingPOCategory = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                            ->first();
+                        $allowedCategory = $existingPOCategory ? $existingPOCategory->itemFinanceCategoryID : null;
+                        foreach ($input['itemArray'] as $value) {
+                            $item = ItemAssigned::where('itemCodeSystem', $value['itemCodeSystem'])
+                                ->where('companySystemID', $input['companySystemID'])
+                                ->first();
+                            if (!$item) {
+                                continue;
+                            }
+                            if ($allowedCategory === null) {
+                                $allowedCategory = $item->financeCategoryMaster;
+                            }
+                            if ($item->financeCategoryMaster != $allowedCategory) {
+                                $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)];
+                            }
+                        }
+                        if (!empty($invalidItems)) {
+                            $message = CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID);
+                            return $this->sendError($message, 500);
+                        }
+                    }
                     foreach ($input['itemArray'] as $key => $value) {
                         $res = ProcurementOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
 

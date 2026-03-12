@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\Auth;
 use App\helper\CommonJobService;
 use App\helper\NotificationService;
 use App\helper\RolReachedNotification;
+use App\Services\Procurement\CategoryValidationService;
 
 class ReOrderItemPR implements ShouldQueue
 {
@@ -253,30 +254,18 @@ class ReOrderItemPR implements ShouldQueue
                                     $request_data_details['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
 
-                                    $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                                        ->where('companySystemID', $companySystemID)
-                                        ->first();
+                                    if (CategoryValidationService::shouldEnforceSingleCategory($companySystemID, (int) $new_purchaseRequests->documentSystemID)) {
+                                        $newPr = PurchaseRequest::find($new_purchaseRequests->purchaseRequestID);
 
-
-                                    if ($allowFinanceCategory) {
-                                        $policy = $allowFinanceCategory->isYesNO;
-
-                                        if ($policy == 0) {
-                                            $newPr = PurchaseRequest::find($new_purchaseRequests->purchaseRequestID);
-
-                                            if ($newPr && isset($newPr->financeCategory) && ($newPr->financeCategory == null || $newPr->financeCategory == 0)) {
-                                                $is_failed = true;
-                                            }
-
-                                            //checking if item category is same or not
+                                        if ($newPr && ($newPr->financeCategory == null || $newPr->financeCategory == 0)) {
+                                            $is_failed = true;
+                                        } else {
                                             $pRDetailExistSameItem = PurchaseRequestDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
                                                 ->where('purchaseRequestID', $new_purchaseRequests->purchaseRequestID)
                                                 ->first();
 
-                                            if ($pRDetailExistSameItem) {
-                                                if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                                    $is_failed = true;
-                                                }
+                                            if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                                                $is_failed = true;
                                             }
                                         }
                                     }
