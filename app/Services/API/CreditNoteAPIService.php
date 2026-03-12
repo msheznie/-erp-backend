@@ -22,6 +22,7 @@ use App\Services\UserTypeService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\helper\Workflow\DocumentConfirm;
+use App\Models\CreditNoteReceipt;
 
 class CreditNoteAPIService extends AppBaseController
 {
@@ -92,7 +93,7 @@ class CreditNoteAPIService extends AppBaseController
         $input['customerGLCodeSystemID'] = $customer->custGLAccountSystemID;
         $input['customerGLCode'] = $customer->custGLaccount;
         $input['documentType'] = 12;
-        $input['type'] = 2;
+        $input['type'] = $input['creditNoteType'];
 
         $documentDate = $input['creditNoteDate'];
         $monthBegin = $input['FYPeriodDateFrom'];
@@ -684,6 +685,18 @@ class CreditNoteAPIService extends AppBaseController
             ];
         }
 
+    }
+
+    public static function storeCreditNoteReceiptVouchers($input) {
+        $createdReceipts = [];
+        foreach ($input['selectedVouchers'] as $receiptData) {
+            $receiptData['companySystemID'] = $input['companySystemID'];
+            
+            $creditNoteReceipt = CreditNoteReceipt::create($receiptData);
+            $createdReceipts[] = $creditNoteReceipt->toArray();
+        }
+
+        return $createdReceipts;
     }
 
 }
