@@ -2351,10 +2351,11 @@ class SupplierMasterAPIController extends AppBaseController
                 $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                 if ($isUpdated) {
                     if($isExistingSupplier){
-                        $body = "Dear ". $request->input('name') .","."<br /><br />"." We are pleased to grant you access to our supplier portal. Please use link provided below to create your account. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />". $companyName ."<br /><b>";
+                        $body = "Dear ". $request->input('name') .","."<br /><br />"." We are pleased to grant you access to our supplier portal. Please use link provided below to create your account. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                     } else {
-                        $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
+                        $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                     }
+                    $body .= \Helper::getSupplierEmailFooter($companyId);
 
                     $dataEmail['companySystemID'] = $companyId;
                     $dataEmail['alertMessage'] = "Registration Link";
@@ -2372,10 +2373,11 @@ class SupplierMasterAPIController extends AppBaseController
             $isCreated = $this->registrationLinkRepository->save($request, $token);
             if ($isCreated['status'] == true) {
                 if($isExistingSupplier){
-                    $body = "Dear ". $request->input('name') . ","."<br /><br />"." We are pleased to grant you access to our supplier portal. Please use link provided below to create your account. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />". $companyName ."<br /><b>";
+                    $body = "Dear ". $request->input('name') . ","."<br /><br />"." We are pleased to grant you access to our supplier portal. Please use link provided below to create your account. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                 } else {
-                    $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
+                    $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
                 }
+                $body .= Helper::getSupplierEmailFooter($companyId);
 
                 $dataEmail['companySystemID'] = $companyId;
                 $dataEmail['alertMessage'] = "Registration Link";
@@ -2425,7 +2427,8 @@ class SupplierMasterAPIController extends AppBaseController
                     $dataEmail['companySystemID'] = $request->companySystemId;
                     $dataEmail['alertMessage'] = "Registration Link";
                     $dataEmail['empEmail'] = $email;
-                    $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>";
+                    $body = "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br />";
+                    $body .= Helper::getSupplierEmailFooter($request->companySystemId);
                     $dataEmail['emailAlertMessage'] = $body;
                     $sendEmail = Email::sendEmailErp($dataEmail);
 

@@ -94,4 +94,21 @@ class SupplierRegistrationLink extends Model
             ->where('company_id', $companySystemId)
             ->first();
     }
+
+    public static function getSupplierRegData()
+    {
+        return SupplierRegistrationLink::with([
+            'supplier' => function ($q) {
+                $q->select('supplierCodeSystem', 'supplierName', 'primarySupplierCode');
+            }
+        ]);
+    }
+
+    public static function getByIdsKeyed(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
 }

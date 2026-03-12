@@ -493,6 +493,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 $po['po_id'] = $procumentOrders->purchaseOrderID;
                 $po['tender_id'] = $tender->id;
                 $po['company_id'] = $input["companySystemID"];
+                $po['supplier_id'] = $input['supplierId'] ?? null;
                 $po['status'] = 1;
                 $this->tenderPoRepository->create($po);
             }

@@ -60,7 +60,7 @@ class TenderBoqItemsRepository extends BaseRepository
         $itemDrop = ItemAssigned::with(['item_master'])->where('companySystemID',$input['companySystemID'])->get();
 
         $items = [];
-        foreach($itemDrop as $key => $val){
+        foreach ($itemDrop as $key => $val) {
             $items[$key]['id'] = $val['itemCodeSystem'];
             $items[$key]['label'] = $val->item_master ? $val->item_master->itemShortDescription : '';
         }

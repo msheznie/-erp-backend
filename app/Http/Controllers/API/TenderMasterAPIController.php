@@ -12,6 +12,11 @@ use App\Http\Requests\API\ViewContractAPIRequest;
 use App\Http\Requests\CloneTenderAPIRequest;
 use App\Http\Requests\DeleteAttachmentAPIRequest;
 use App\Http\Requests\SRM\UpdateTenderCalendarDaysRequest;
+use App\Http\Requests\GetItemWiseLoiLoaRequest;
+use App\Http\Requests\GetLoiLoaEmailDataRequest;
+use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
+use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
+use App\Http\Requests\SendScheduleWiseLoiLoaEmailRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
@@ -21,6 +26,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
+use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\Employee;
@@ -30,6 +36,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SRMDocumentMaster;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
@@ -39,6 +46,8 @@ use App\Models\SupplierTenderNegotiation;
 use App\Models\SystemConfigurationAttributes;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderCustomEmail;
+use App\Http\Requests\GetTenderRfxAwardEmailDataRequest;
+use App\Http\Requests\SaveTenderRfxAwardEmailDraftRequest;
 use App\Models\TenderDepartmentEditLog;
 use App\Models\TenderMasterReferred;
 use App\Models\TenderNegotiation;
@@ -61,6 +70,7 @@ use App\Models\TenderPurchaseRequestEditLog;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\SrmTenderAwardingMember;
 use App\Models\YesNoSelection;
 use App\Models\SrmTenderMasterEditLog;
 use App\Repositories\TenderMasterRepository;
@@ -94,11 +104,14 @@ use App\Models\BidBoq;
 use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
+use App\Models\SrmItemWiseTenderAwarding;
 use App\Models\TenderConfirmationDetail;
 use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
 use App\Services\TenderConfirmationService;
+use App\Services\TenderCommercialBidService;
+use App\Services\TenderItemWiseAwardingService;
 use App\Repositories\DocumentModifyRequestRepository;
 use App\Services\SrmDocumentModifyService;
 use App\Services\SrmTenderEditAmendService;
@@ -123,7 +136,12 @@ class TenderMasterAPIController extends AppBaseController
     private $documentModifyRequestRepository;
     private $documentModifyService;
     private $srmTenderEditAmendService;
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService)
+    /** @var TenderCommercialBidService */
+    private $tenderCommercialBidService;
+    /** @var TenderItemWiseAwardingService */
+    private $itemWiseAwardingService;
+
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService, TenderCommercialBidService $tenderCommercialBidService, TenderItemWiseAwardingService $itemWiseAwardingService)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
@@ -132,6 +150,8 @@ class TenderMasterAPIController extends AppBaseController
         $this->documentModifyRequestRepository = $documentModifyRequestRepo;
         $this->documentModifyService = $documentModifyService;
         $this->srmTenderEditAmendService = $srmTenderEditAmendService;
+        $this->tenderCommercialBidService = $tenderCommercialBidService;
+        $this->itemWiseAwardingService = $itemWiseAwardingService;
     }
 
     /**
@@ -336,7 +356,41 @@ class TenderMasterAPIController extends AppBaseController
             return $this->sendError('Tender Master not found');
         }
 
+        $isItemWise = (int) $tenderMaster->evaluation_type_id === 1;
+        $isNegotiation = ($tenderMaster->negotiation_code != '' && $tenderMaster->negotiation_code !== null) ? 1 : 0;
+
+        if (!empty($input['final_tender_awarded']) && (int) $input['final_tender_awarded'] === 1 && $isItemWise && !empty($input['item_wise_selections'])) {
+            try {
+                DB::beginTransaction();
+                $userId = $request->user()->id ?? null;
+                $this->itemWiseAwardingService->persistItemWiseSelections(
+                    $id,
+                    $isNegotiation,
+                    $input['item_wise_selections'],
+                    $userId
+                );
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return $this->sendError($e->getMessage());
+            }
+            unset($input['final_tender_awarded'], $input['final_tender_award_comment']);
+        }
+
+        unset($input['item_wise_selections']);
         $tenderMaster = $this->tenderMasterRepository->update($input, $id);
+
+        if (!empty($input['final_tender_awarded']) && (int) $input['final_tender_awarded'] === 1) {
+            $comment = $input['final_tender_award_comment'] ?? null;
+            TenderConfirmationService::saveConfirmationDetails(
+                (int) $id,
+                (int) $id,
+                TenderConfirmationDetail::MODULE_AWARDED,
+                null,
+                $comment
+            );
+        }
 
         return $this->sendResponse($tenderMaster->toArray(), 'TenderMaster updated successfully');
     }
@@ -609,10 +663,35 @@ class TenderMasterAPIController extends AppBaseController
             $data['serial_number'] = $lastSerialNumber;
             $data['document_type'] = isset($input['rfx']) ? $input['document_type'] : 0;
             $data['isDelegation'] = $input['isDelegation'] ?? 0;
+            $data['commercial_weightage'] = isset($input['rfx']) && $input['document_type'] == 1 ? 100 : 0;
+            $params = ['masterData' => true, 'docSystemId' => $document_system_id];
+            $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
             $result = TenderMaster::create($data);
-
             if ($result) {
                 DB::commit();
+                if (!empty( $getDocumentMasterData)) {
+                    foreach ($getDocumentMasterData as $doc) {
+                        $documentAttachment = [
+                            'companySystemID'      => $data['company_id'],
+                            'isAutoCreateDocument'      => 1,
+                            'documentParentID'      => $doc['id'],
+                            'documentSystemCode'   => $result->id,
+                            'companyID'            => $company->CompanyID,
+                            'documentSystemID'     => $document_system_id,
+                            'documentID'           => $documentMaster['documentID'],
+                            'attachmentDescription'=> $doc['document_name'],
+                            'path'                 => $doc['path'],
+                            'originalFileName'     => $doc['original_file_name'],
+                            'myFileName'           => $doc['my_file_name'],
+                            'attachmentType'       => $doc['document_area'],
+                            'sizeInKbs'            => $doc['size_in_kbs'],
+                            'isUploaded'           => 1,
+                            'envelopType'          => $doc['envelope_type']
+                        ];
+
+                        DocumentAttachments::create($documentAttachment);
+                    }
+                }
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_saved'), 'data' => $result];
             }
         } catch (\Exception $e) {
@@ -700,6 +779,13 @@ class TenderMasterAPIController extends AppBaseController
 
         if (!$checkMinApprovalBidOpening['success']) {
             return ['status' => false, 'message' => $checkMinApprovalBidOpening['message']];
+        }
+
+        // Check awarding members validation
+        $checkMinApprovalAwarding = $this->tenderMasterRepository->checkTenderAwardingMembersAdded($input['id'], $editOrAmend, $amdID, $versionID);
+
+        if (!$checkMinApprovalAwarding['success']) {
+            return ['status' => false, 'message' => $checkMinApprovalAwarding['message']];
         }
 
         if ($input['addCalendarDates'] === 0) {
@@ -2195,7 +2281,8 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['companySystemID'] = $request->input('company_id');
             $dataEmail['alertMessage'] = "Registration Link";
             $dataEmail['empEmail'] = $email;
-            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            $body = "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br />";
+            $body .= \Helper::getSupplierEmailFooter($request->input('company_id'));
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = Email::sendEmailErp($dataEmail);
 
@@ -2774,22 +2861,32 @@ class TenderMasterAPIController extends AppBaseController
                 $data['commercial_eval_status'] = $val;
                 $data['commercial_eval_remarks'] = $comments;
             } else if ($type == 3) {
-                $data['tender_award_commite_mem_status'] = $val;
-                $data['tender_award_commite_mem_comment'] = $comments;
+                $awardingMember = SrmTenderAwardingMember::getAwardingMember($tender_id, $emp_id);
+                
+                if ($awardingMember) {
+                    // Update in new table
+                    $awardingMember->status = $val;
+                    $awardingMember->awarding_remarks = $comments;
+                    $awardingMember->save();
+                }
             }
 
-            $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
-
+            if($type != 3){
+                $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
+            }
 
             if ($type == 3) {
-                $min_Approval = $input['min_approval'];
+                $tender = TenderMaster::find($tender_id);
+                $minApprovalForAwarding = $tender->min_approval_awarding ?? 1;
 
-                $results = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 1)->count();
-                $pending = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 0)->count();
+                $results = SrmTenderAwardingMember::getApprovedAwardingMembers($tender_id);
+                $pending = SrmTenderAwardingMember::where('tender_id', $tender_id)
+                    ->where('status', 0)
+                    ->count();
 
-                $need = $min_Approval - $results;
+                $need = $minApprovalForAwarding - $results;
                 $status = 0;
-                if ($min_Approval <= $results) {
+                if ($minApprovalForAwarding <= $results) {
                     $status = 1;
                 } else if ($need > $pending) {
                     $status = 2;
@@ -3558,9 +3655,9 @@ class TenderMasterAPIController extends AppBaseController
         $tenderId = $request['tenderMasterId'];
         $isNegotiation = $request['isNegotiation'];
 
-        $bidMasterId = $this->getCommercialBids($tenderId, $isNegotiation);
+        $bidMasterId = $this->tenderCommercialBidService->getCommercialBids($tenderId, $isNegotiation);
         $data['bids'] = $bidMasterId;
-        $items = $this->getPricingItems($bidMasterId, $tenderId);
+        $items = $this->tenderCommercialBidService->getPricingItems($bidMasterId, $tenderId);
 
         foreach ($items[0]->pricing_shedule_details as $key => $val) {
 
@@ -3608,22 +3705,34 @@ class TenderMasterAPIController extends AppBaseController
         return $this->sendResponse($data, 'data retrieved successfully');
     }
 
-    public function getPricingItems($bidMasterId, $tenderId)
-    {
-        if (!empty($bidMasterId)) {
-            BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId, $bidMasterId);
+        /**
+         * Item-wise awarding data for Combined Ranking (evaluation_type_id = 1).
+         */
+        public function getItemWiseAwardingData(Request $request)
+        {
+            $tenderId = $request['tenderMasterId'];
+            $isNegotiation = (int) ($request['isNegotiation'] ?? 0);
+            $data = $this->itemWiseAwardingService->buildItemWiseAwardingData($tenderId, $isNegotiation);
+            return $this->sendResponse($data, trans('srm_tender_rfx.item_wise_data_retrieved_successfully'));
         }
 
-        return PricingScheduleMaster::with(['tender_bid_format_master', 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
-            $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
-                $q->whereIn('bid_master_id', $bidMasterId);
-            }, 'bid_format_detail' => function ($q) use ($bidMasterId) {
-                $q->whereIn('bid_master_id', $bidMasterId);
-                $q->orWhere('bid_master_id', null);
-            }, 'tender_boq_items' => function ($q) {
-                $q->with(['bid_boqs', 'ranking_items']);
-            }, 'ranking_items'])->whereNotIn('field_type', [4]);;
-        }])->where('tender_id', $tenderId)->get();
+        /**
+         * Confirm item-wise combined ranking: save one supplier per item and set combined_ranking_status.
+         */
+        public function confirmItemWiseCombinedRanking(Request $request)
+        {
+            try {
+                $this->itemWiseAwardingService->confirmItemWiseCombinedRanking($request);
+                return $this->sendResponse(['success' => true], trans('srm_tender_rfx.successfully_updated'));
+            } catch (\Exception $e) {
+                Log::error($this->failed($e));
+                return $this->sendError($e->getMessage());
+            }
+        }
+
+    public function getPricingItems($bidMasterId, $tenderId)
+    {
+        return $this->tenderCommercialBidService->getPricingItems($bidMasterId, $tenderId);
     }
 
     public function updateBidLineItem(Request $request)
@@ -3660,7 +3769,7 @@ class TenderMasterAPIController extends AppBaseController
                 }
             }
 
-            $bidMasterId = $this->getCommercialBids($tenderId,$isNegotiation);
+            $bidMasterId = $this->tenderCommercialBidService->getCommercialBids($tenderId, $isNegotiation);
 
             $line_item_values =  CommercialBidRankingItems::where('tender_id', $tenderId)->where('status', 1)->get();
             $this->updateLineItem($bidMasterId, $line_item_values, $tenderId);
@@ -3941,7 +4050,7 @@ class TenderMasterAPIController extends AppBaseController
 
         foreach ($bidMasterId as $key => $val) {
 
-            $total = 0;
+            /*$total = 0;
 
 
             foreach ($line_item_values as $item) {
@@ -3974,68 +4083,17 @@ class TenderMasterAPIController extends AppBaseController
                         $total += $item->value;
                     }
                 }
-            }
+            }*/
+
+            $combinedRankingTot = ScheduleBidFormatDetails::getCombinedRanTot($val);
             $results = BidSubmissionMaster::find($val)
-                ->update(['line_item_total' => $total]);
+                ->update(['line_item_total' => $combinedRankingTot['value']]);
         }
     }
 
-    function getCommercialBids($tenderId, $isNegotiation)
+    public function getCommercialBids($tenderId, $isNegotiation)
     {
-        $tender= TenderMaster::select('id')->withCount(['criteriaDetails',
-            'criteriaDetails AS go_no_go_count' => function ($query) {
-                $query->where('critera_type_id', 1);
-            },
-            'criteriaDetails AS technical_count' => function ($query) {
-                $query->where('critera_type_id', 2);
-            }
-        ])->withCount(['DocumentAttachments'=>function($q){
-            $q->where('envelopType',3);
-        }])->where('id', $tenderId)->first();
-
-        $tenderBidNegotiations = TenderNegotiation::tenderBidNegotiationList($tenderId, $isNegotiation);
-
-        if ($tenderBidNegotiations->count() > 0) {
-            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
-        } else {
-            $bidSubmissionMasterIds = [];
-        }
-
-        if($tender->technical_count == 0)
-        {
-            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-                ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-                ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-                ->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId);
-
-            if ($isNegotiation == 1) {
-                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            } else {
-                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            }
-
-            return $query->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('id');
-        }
-        else
-        {
-            $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-                ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-                ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-                ->havingRaw('weightage >= passing_weightage')
-                ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1);
-
-            if ($isNegotiation == 1) {
-                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            } else {
-                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            }
-
-            return $query->orderBy('srm_bid_submission_master.id', 'asc')->pluck('id');
-        }
-
+        return $this->tenderCommercialBidService->getCommercialBids($tenderId, $isNegotiation);
     }
 
     public function getRankingCompletedTenderList(Request $request)
@@ -4141,10 +4199,15 @@ class TenderMasterAPIController extends AppBaseController
             $bidSubmissionMasterIds = [];
         }
 
-        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+        $getNegotiationCode = TenderMaster::select('negotiation_code', 'evaluation_type_id')->where('id', $tenderId)->first();
+        $isNegotiation = ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' && $getNegotiationCode->negotiation_code != null)) ? 1 : 0;
 
-        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
-            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+        $tender = TenderMaster::
+            with(['tenderAwardedDetails' => function ($q) {
+            $q->with(['actionByEmployee']);
+            }])
+            ->where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+            if ($getNegotiationCode && ($getNegotiationCode->negotiation_code != '' || $getNegotiationCode->negotiation_code != null)) {
                 $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
             $q->where('award', 1)->with([
@@ -4158,6 +4221,14 @@ class TenderMasterAPIController extends AppBaseController
             ]);
         }])->first();
 
+        if ($tender) {
+            $tender->min_approval_awarding = $tender->min_approval_awarding ?? 1;
+            if ((int) $tender->evaluation_type_id === 1) {
+                $tender->item_wise_awarding_data = $this->itemWiseAwardingService->buildItemWiseAwardingData($tenderId, $isNegotiation);
+                $tender->evaluation_type_id = (int) $tender->evaluation_type_id;
+            }
+        }
+
         return $this->sendResponse($tender, 'data retrieved successfully');
     }
 
@@ -4170,7 +4241,18 @@ class TenderMasterAPIController extends AppBaseController
             $tenderId = $request['tender_id'];
             $status = $request['final_tender_comment_status'];
             $comment = $request['final_tender_award_comment'];
-            $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+            // Get awarding members from new table, fallback to old table
+            $awardingMembers = SrmTenderAwardingMember::getAwardingMembers($tenderId);
+
+            // Transform to format expected by email sending
+            $emails = $awardingMembers->map(function ($member) {
+                return (object) [
+                    'employee' => $member->employee ?? null,
+                ];
+            })->filter(function ($member) {
+                return $member->employee !== null;
+            });
 
             $redirectUrl =  $this->checkDomain($tenderId);
 
@@ -4295,6 +4377,18 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $tenderId = $request['tender_id'];
 
+            $tender = TenderMaster::where('id', $tenderId)->with(['company', 'currency'])->first();
+            if (!$tender) {
+                DB::rollback();
+                return $this->sendError('Tender not found');
+            }
+
+            if ((int) $tender->evaluation_type_id === 1) {
+                $this->sendItemWiseTenderAwardEmails($tender);
+                DB::commit();
+                return $this->sendResponse($tender, 'Email Send successfully');
+            }
+
             // Get Negotiated Bid list
             $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
                 ->where('tender_id', $tenderId)
@@ -4316,9 +4410,6 @@ class TenderMasterAPIController extends AppBaseController
             }, 'company'])->first();
 
 
-            $tender->final_tender_award_email = 1;
-            $tender->save();
-
             //Get the Custom email Template
             $file = array();
             $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $tender->ranking_supplier->supplier->id, 'TAE');
@@ -4334,13 +4425,14 @@ class TenderMasterAPIController extends AppBaseController
             $dataEmail['ccEmail'] = [];
             $dataEmail['attachmentList'] = [];
             if ($tenderCustomEmail) {
-                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . $company . '</p>';
+                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . '</p>';
                 $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
             } else {
                 $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
                     <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
-                    <br><br> Regards,<br>$company.";
+                    <br>";
             }
+            $body .= Helper::getSupplierEmailFooter($tender->company_id);
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
@@ -4369,9 +4461,9 @@ class TenderMasterAPIController extends AppBaseController
             if (sizeof($supplierDetails) > 0 && $tender->document_type === 0) {
                 foreach ($supplierDetails as $bid) {
                     $name = $bid->name;
-                    $company = $tender->company->CompanyName;
                     $documentType = $this->getDocumentType($tender->document_type);
-                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
+                    $body .= Helper::getSupplierEmailFooter($tender->company_id);
                     $dataEmail['empEmail'] = $bid->email;
                     $dataEmail['companySystemID'] = $tender->company_id;
                     $dataEmail['alertMessage'] = "$documentType Regret";
@@ -4386,6 +4478,486 @@ class TenderMasterAPIController extends AppBaseController
             return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
             DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+        /**
+         * GSUP 1200 Send one award email per supplier for item-wise tenders (evaluation_type_id = 1).
+         */
+        private function sendItemWiseTenderAwardEmails(TenderMaster $tender)
+        {
+            $tenderId = $tender->id;
+            $isNegotiation = ($tender->negotiation_code != '' && $tender->negotiation_code !== null) ? 1 : 0;
+            $rows = SrmItemWiseTenderAwarding::where('tender_id', $tenderId)->where('is_negotiation', $isNegotiation)->where('award', 1)->with('supplier')->get();
+            $bySupplier = $rows->groupBy('supplier_id');
+
+            $companyName = $tender->company ? $tender->company->CompanyName : '';
+            $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+            $documentType = $this->getDocumentType($tender->document_type);
+
+            foreach ($bySupplier as $supplierId => $supplierRows) {
+                $first = $supplierRows->first();
+                $supplier = $first->supplier;
+                if (!$supplier || !$supplier->email) continue;
+
+                $items = [];
+                foreach ($supplierRows as $row) {
+                    $itemLabel = '';
+                    if ($row->boq_item_id) {
+                        $boq = TenderBoqItems::find($row->boq_item_id);
+                        $itemLabel = $boq ? $boq->item_name : '';
+                    } else {
+                        $detail = PricingScheduleDetail::find($row->bid_format_detail_id);
+                        $itemLabel = $detail ? $detail->label : '';
+                    }
+                    $qty = isset($row->quantity) ? $row->quantity : '-';
+                    $price = $row->bid_amount !== null ? number_format((float) $row->bid_amount, 3) : '-';
+                    $items[] = [
+                        'description' => $itemLabel,
+                        'quantity' => $qty,
+                        'price' => $price,
+                    ];
+                }
+
+                $name = $supplier->name;
+                $body = view('email.item_wise_tender_award', [
+                    'supplierName' => $name,
+                    'tenderCode' => $tender->tender_code,
+                    'tenderTitle' => $tender->title,
+                    'items' => $items,
+                    'currency' => $currency,
+                    'companyName' => $companyName,
+                ])->render();
+                $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+
+                $dataEmail = [
+                    'empEmail' => $supplier->email,
+                    'companySystemID' => $tender->company_id,
+                    'alertMessage' => "Letter of Awarding | $tender->tender_code | $tender->title",
+                    'emailAlertMessage' => $body,
+                    'ccEmail' => [],
+                    'attachmentList' => [],
+                ];
+                \Email::sendEmailSRM($dataEmail);
+            }
+
+            $awardedSupplierIds = $bySupplier->keys()->toArray();
+            $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
+                ->where('tender_id', $tenderId)
+                ->whereNotIn('supplier_registration_id', $awardedSupplierIds)
+                ->groupBy('supplier_registration_id')
+                ->get()
+                ->pluck('supplier_registration_id')
+                ->toArray();
+            $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')->whereIn('id', $bidSubmittedSuppliers)->get();
+            foreach ($supplierDetails as $bid) {
+                $body = "Hi $bid->name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br>";
+                $body .= \Helper::getSupplierEmailFooter($tender->company_id);
+                $dataEmail = [
+                    'empEmail' => $bid->email,
+                    'companySystemID' => $tender->company_id,
+                    'alertMessage' => $documentType . ' Regret',
+                    'emailAlertMessage' => $body,
+                    'attachmentList' => [],
+                    'ccEmail' => [],
+                ];
+                \Email::sendEmailErp($dataEmail);
+            }
+ 
+            $tender->final_tender_award_email = 1;
+            $tender->save();
+        }
+
+    /**
+     * Award item-wise tender: persist item_wise_selections when provided.
+     */
+    public function awardItemWiseSupplier(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+            'supplier_id' => 'required|integer|min:1',
+            'item_wise_selections' => 'nullable|array',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+            'supplier_id.required' => trans('srm_tender_rfx.item_wise_supplier_id_required'),
+            'supplier_id.integer' => trans('srm_tender_rfx.item_wise_supplier_id_integer'),
+            'supplier_id.min' => trans('srm_tender_rfx.item_wise_supplier_id_min'),
+            'item_wise_selections.array' => trans('srm_tender_rfx.item_wise_selections_array'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $itemWiseSelections = $request->input('item_wise_selections', []);
+
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_action_only_for_item_wise_evaluation'));
+        }
+
+        if ((int) $tender->final_tender_awarded !== 1 && empty($itemWiseSelections)) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'));
+        }
+
+        try {
+            DB::beginTransaction();
+            if ((int) $tender->final_tender_awarded !== 1 && !empty($itemWiseSelections)) {
+                $isNegotiation = TenderItemWiseAwardingService::resolveIsNegotiation($tender);
+                $userId = $request->user()->id ?? null;
+                $this->itemWiseAwardingService->persistItemWiseSelections($tenderId, $isNegotiation, $itemWiseSelections, $userId);
+            }
+            DB::commit();
+            return $this->sendResponse(['success' => true], trans('srm_tender_rfx.item_wise_award_saved_successfully'));
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Mark all line items for a supplier as awarded. Set final_tender_awarded when all lines awarded.
+     */
+    public function markSupplierItemWiseAwarded(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+            'supplier_id' => 'required|integer|min:1',
+            'final_tender_award_comment' => 'nullable|string',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+            'supplier_id.required' => trans('srm_tender_rfx.item_wise_supplier_id_required'),
+            'supplier_id.integer' => trans('srm_tender_rfx.item_wise_supplier_id_integer'),
+            'supplier_id.min' => trans('srm_tender_rfx.item_wise_supplier_id_min'),
+            'final_tender_award_comment.string' => trans('srm_tender_rfx.item_wise_final_comment_string'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $comment = (string) $request->input('final_tender_award_comment', '');
+
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_action_only_for_item_wise_evaluation'));
+        }
+
+        try {
+            DB::beginTransaction();
+            $result = $this->itemWiseAwardingService->markSupplierAsAwarded($tenderId, $supplierId, $comment);
+            DB::commit();
+            return $this->sendResponse([
+                'success' => $result['success'],
+                'all_awarded' => $result['all_awarded'],
+            ], trans('srm_tender_rfx.item_wise_supplier_marked_awarded_successfully'));
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get list of awarded suppliers for item-wise tender (for Send Email modal).
+     */
+    public function getItemWiseAwardedSuppliers(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_tender_not_item_wise_evaluation'));
+        }
+
+        try {
+            $data = $this->itemWiseAwardingService->getAwardedSuppliersList($tenderId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get item-wise LOA/LOI list (items and awarded suppliers with LOA/LOI email status).
+     */
+    public function getItemWiseLoiLoaList(GetItemWiseLoiLoaRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return $this->sendError(trans('srm_tender_rfx.item_wise_tender_not_item_wise_evaluation'));
+        }
+
+        try {
+            $data = $this->itemWiseAwardingService->getItemWiseLoiLoaRows($tenderId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get LOA/LOI email data for item-wise (tender + supplier): context, scenario template or fallback, saved draft.
+     */
+    public function getLoiLoaEmailData(GetLoiLoaEmailDataRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        try {
+            $data = $this->itemWiseAwardingService->getLoiLoaEmailData($tenderId, $supplierId, $companyId);
+            return $this->sendResponse($data, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Get Tender/RFX Award or Regret email data for popup (subject, body, cc, attachments, recipient).
+     */
+    public function getTenderRfxAwardEmailData(GetTenderRfxAwardEmailDataRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailType = $request->input('email_type');
+        $supplierId = $request->has('supplier_id') && $request->input('supplier_id') !== null
+            ? (int) $request->input('supplier_id') : null;
+
+        try {
+            $result = $this->itemWiseAwardingService->getTenderRfxEmailData($tenderId, $companyId, $emailType, $supplierId);
+            if (isset($result['success']) && $result['success'] === false) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
+            }
+            return $this->sendResponse($result['data'] ?? $result, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Save Tender/RFX Award or Regret email draft (no send).
+     */
+    public function saveTenderRfxAwardEmailDraft(SaveTenderRfxAwardEmailDraftRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailType = $request->input('email_type');
+        $supplierId = $request->has('supplier_id') && $request->input('supplier_id') !== null && $request->input('supplier_id') !== ''
+            ? (int) $request->input('supplier_id') : null;
+        $emailSubject = $request->input('email_subject', '');
+        $emailBody = $request->input('email_body', '');
+        $ccEmails = $request->input('cc_emails', []);
+        if (is_string($ccEmails)) {
+            $ccEmails = json_decode($ccEmails, true) ?: [];
+        }
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $result = $this->itemWiseAwardingService->saveTenderRfxEmailDraft(
+                $tenderId,
+                $companyId,
+                $emailType,
+                $supplierId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+            if (isset($result['success']) && $result['success'] === false) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
+            }
+            return $this->sendResponse($result['data'] ?? ['success' => true], trans('srm_tender_rfx.draft_saved_successfully'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Save LOA/LOI draft (no send) for item-wise tender + supplier.
+     */
+    public function saveItemWiseLoiLoaEmail(SaveItemWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        $emailSubject = $request->input('email_subject', '');
+        $emailBody = $request->input('email_body', '');
+
+        $ccEmails = $request->input('cc_emails', []);
+        if (is_string($ccEmails)) {
+            $ccEmails = json_decode($ccEmails, true) ?: [];
+        }
+
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $this->itemWiseAwardingService->saveLoiLoaDraft(
+                $tenderId,
+                $supplierId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            return $this->sendResponse(['success' => true], trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Send LOA/LOI email for item-wise: resolve placeholders, send, save, mark award_email_sent.
+     */
+    public function sendItemWiseLoiLoaEmail(SendItemWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $companyId = (int) $request->input('company_id');
+
+        $emailSubject = $request->input('email_subject');
+        $emailBody = $request->input('email_body');
+        $ccEmails = $request->input('cc_emails', []);
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $this->itemWiseAwardingService->sendLoiLoaEmailToSupplier(
+                $tenderId,
+                $supplierId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            return $this->sendResponse(
+                ['success' => true],
+                trans('srm_tender_rfx.item_wise_award_email_sent_successfully')
+            );
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Send schedule-wise LOI/LOA email to ranking supplier and set final_tender_award_email.
+     */
+    public function sendScheduleWiseLoiLoaEmail(SendScheduleWiseLoiLoaEmailRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $emailSubject = $request->input('email_subject');
+        $emailBody = $request->input('email_body');
+        $ccEmails = $request->input('cc_emails', []);
+        $attachmentId = $request->input('document_id');
+
+        try {
+            $result = $this->itemWiseAwardingService->sendScheduleWiseLoiLoaEmail(
+                $tenderId,
+                $companyId,
+                $emailSubject,
+                $emailBody,
+                $ccEmails,
+                $attachmentId
+            );
+
+            if (isset($result['success']) && $result['success'] === false) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
+            }
+
+            return $this->sendResponse(
+                ['success' => true],
+                trans('srm_tender_rfx.item_wise_award_email_sent_successfully')
+            );
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    /**
+     * Send item-wise award email to one supplier.
+     */
+    public function sendItemWiseAwardEmail(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+            'supplier_id' => 'required|integer|min:1',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+            'supplier_id.required' => trans('srm_tender_rfx.item_wise_supplier_id_required'),
+            'supplier_id.integer' => trans('srm_tender_rfx.item_wise_supplier_id_integer'),
+            'supplier_id.min' => trans('srm_tender_rfx.item_wise_supplier_id_min'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+        $supplierId = (int) $request->input('supplier_id');
+        $tender = TenderMaster::where('id', $tenderId)->first();
+        if (!$tender) {
+            return $this->sendError(trans('srm_tender_rfx.tender_not_found'));
+        }
+
+        try {
+            $result = $this->itemWiseAwardingService->sendAwardEmailToSupplier($tenderId, $supplierId);
+            if (isset($result['success']) && $result['success'] === false) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
+            }
+            return $this->sendResponse($result['data'] ?? ['success' => true], trans('srm_tender_rfx.item_wise_award_email_sent_successfully'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
             return $this->sendError($e->getMessage());
         }
     }
@@ -5324,12 +5896,43 @@ class TenderMasterAPIController extends AppBaseController
     public function getTenderPOData(Request $request)
     {
         try {
-            $result = TenderMasterRepository::getTenderPOData($request['tenderUUID'], $request['companySystemID']);
+            $result = TenderMasterRepository::getTenderPOData(
+                $request['tenderUUID'],
+                $request['companySystemID'],
+                $request->input('supplierId')
+            );
 
             return $this->sendResponse($result, 'Success' );
         } catch (\Exception $e) {
             $statusCode = $e->getCode() ?: 500;
             return $this->sendError($e->getMessage(), $statusCode);
+        }
+    }
+
+    public function getItemWiseAwardingForPO(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'tender_id' => 'required|integer|min:1',
+        ], [
+            'tender_id.required' => trans('srm_tender_rfx.item_wise_tender_id_required'),
+            'tender_id.integer' => trans('srm_tender_rfx.item_wise_tender_id_integer'),
+            'tender_id.min' => trans('srm_tender_rfx.item_wise_tender_id_min'),
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError(implode(' ', $validator->errors()->all()), 422);
+        }
+
+        $tenderId = (int) $request->input('tender_id');
+
+        try {
+            $response = $this->tenderMasterRepository->getItemWiseAwardingForPO($tenderId);
+            if(!$response['success']){
+                return $this->sendError($response['message'], 500);
+            }
+            return $this->sendResponse($response['data'] ?? [], trans('srm_tender_rfx.item_wise_data_retrieved_successfully'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 
