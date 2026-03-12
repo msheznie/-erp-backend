@@ -107,89 +107,22 @@ class EmployeeMovementNotificationService
     {
         $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'] ?? '',
             'Message' => 'Email Function Triggered']);
-        $msg = '';
-        $logType = 'info';
+        
         $inValidEmails = [];
-
+        $isTransfer = (stripos((string) $this->masterDet['movementType'], 'Transfer') !== false);
+        
         foreach ($this->notifyList as $val) {
-            $mailTo = '';
-            $name = '';
-            $applicableCatDesc = '';
-            $isEmailVerified = '';
-            $empCode = '';
-            $isEmailSentAssignedReportingManager = false;
-            if ($val['applicableCategoryID'] == 7) { // Reporting manager
-                $applicableCatDesc = 'Reporting manager';
-                $manageInfo = $this->getReportingManagerInfo();
-                if (empty($manageInfo)) {
-                    $msg = 'Manager details not found for employee movement notification';
-                    $this->insertToLogTb(['Employee' => $this->masterDet['empId'] ?? '',
-                        'Message' => $msg], 'error');
-                } else {
-                    $empCode = $manageInfo['ECode'];
-                    $isEmailVerified = $this->checkIsEmailVerified($manageInfo['EIdNo']);
-                    $mailTo = $manageInfo['EEmail'];
-                    $name = $manageInfo['Ename2'];
-                }
-            } else if ($val['applicableCategoryID'] == 9) { // Applicable Employee (employee who moved)
-                $applicableCatDesc = 'Applicable Employee';
-                $mailTo = $this->masterDet['empEmail'] ?? '';
-                $name = $this->masterDet['empName'] ?? '';
-                $isEmailVerified = $this->checkIsEmailVerified($this->masterDet['empId'] ?? null);
-                $empCode = $this->masterDet['empCode'] ?? '';
-            } else if($this->masterDet['type'] == 'Internal' && !$isEmailSentAssignedReportingManager) {
-                $isEmailSentAssignedReportingManager = true;
-                $assignedManagerInfo = $this->getActiveReportingManagerInfo();
-                if (!empty($assignedManagerInfo)) {
-                    $applicableCatDesc = 'Existing Reporting Manager';
-                    $mailTo = $assignedManagerInfo['EEmail'];
-                    $name = $assignedManagerInfo['Ename2'];
-                    $empCode = $assignedManagerInfo['ECode'];
-                    $isEmailVerified = $this->checkIsEmailVerified($assignedManagerInfo['EIdNo']);
-                }
-            } else { // Employee
-                $applicableCatDesc = 'Employee';
-                $mailTo = $val['employee']['empEmail'];
-                $name = $val['employee']['empFullName'];
-                $isEmailVerified = $val['employee']['isEmailVerified'];
-                $empCode = $val['employee']['empID'];
-            }
-
+            $recipientData = $this->getRecipientData($val);
             
-            if (!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) {
-                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Invalid email format)';
-            } elseif ($isEmailVerified === null) {
-                $this->insertToLogTb([
-                    'Employee Id' => $this->masterDet['empId'] ?? '',
-                    'Message' => "Email verification status unknown (null) for {$applicableCatDesc} {$name} ({$mailTo}) - Employee record may not exist"
-                ], 'warning');
-            } elseif ($isEmailVerified == 0) {
-                $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Email not verified)';
-            } else {
-                $mailBody = "Dear {$name},<br/><br/>";
-                $mailBody .= $this->emailBody();
-
-                $subject = $this->emailSubject();
-
-                $emails = [
-                    'companySystemID' => $this->companyId,
-                    'alertMessage' => $subject,
-                    'empEmail' => $mailTo,
-                    'emailAlertMessage' => $mailBody
-                ];
-                $sendEmail = Email::sendEmailErp($emails);
-
-                if (!$sendEmail["success"]) {
-                    $msg = "Employee movement notification not sent for {$applicableCatDesc} {$name} ";
-                    $logType = 'error';
-                    $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'] ?? '',
-                        'Message' => $msg], $logType);
-                } else {
-                    $msg = "Employee movement notification sent for {$applicableCatDesc} {$name} ";
-                    $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'] ?? '',
-                        'Message' => $msg]);
-                }
+            if ($recipientData === null) {
+                continue;
             }
+            
+            $this->processEmailRecipient($recipientData, $inValidEmails);
+        }
+
+        if ($isTransfer) {
+            $this->processTransferReportingManager($inValidEmails);
         }
 
         if (!empty($inValidEmails)) {
@@ -200,6 +133,136 @@ class EmployeeMovementNotificationService
                 ],
                 'data'
             );
+        }
+    }
+
+    private function getRecipientData($val)
+    {
+        $recipient = [
+            'applicableCatDesc' => '',
+            'mailTo' => '',
+            'name' => '',
+            'empCode' => '',
+            'isEmailVerified' => null
+        ];
+
+        switch ($val['applicableCategoryID']) {
+            case 7: // Reporting manager
+                $recipient['applicableCatDesc'] = 'Reporting manager';
+                $manageInfo = $this->getReportingManagerInfo();
+                
+                if (empty($manageInfo)) {
+                    $msg = 'Manager details not found for employee movement notification';
+                    $this->insertToLogTb(['Employee' => $this->masterDet['empId'] ?? '',
+                        'Message' => $msg], 'error');
+                    return null;
+                }
+                 
+                $recipient['empCode'] = $manageInfo['ECode'];
+                $recipient['isEmailVerified'] = $this->checkIsEmailVerified($manageInfo['EIdNo']);
+                $recipient['mailTo'] = $manageInfo['EEmail'];
+                $recipient['name'] = $manageInfo['Ename2'];
+
+                break;
+
+            case 9: // Applicable Employee (employee who moved)
+                $recipient['applicableCatDesc'] = 'Applicable Employee';
+                $recipient['mailTo'] = $this->masterDet['empEmail'] ?? '';
+                $recipient['name'] = $this->masterDet['empName'] ?? '';
+                $recipient['isEmailVerified'] = $this->checkIsEmailVerified($this->masterDet['empId'] ?? null);
+                $recipient['empCode'] = $this->masterDet['empCode'] ?? '';
+
+                break;
+
+            case 1: // Employee
+                $recipient['applicableCatDesc'] = 'Employee';
+                $recipient['mailTo'] = $val['employee']['empEmail'];
+                $recipient['name'] = $val['employee']['empFullName'];
+                $recipient['isEmailVerified'] = $val['employee']['isEmailVerified'];
+                $recipient['empCode'] = $val['employee']['empID'];
+                
+                break;
+
+            default:
+                return null;
+        }
+
+        return $recipient;
+    }
+
+    private function processEmailRecipient($recipient, &$inValidEmails)
+    {
+        $mailTo = $recipient['mailTo'];
+        $name = $recipient['name'];
+        $applicableCatDesc = $recipient['applicableCatDesc'];
+        $isEmailVerified = $recipient['isEmailVerified'];
+        $empCode = $recipient['empCode'];
+
+        if (!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) {
+            $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Invalid email format) ' . $this->masterDet['documentCode'] . '';
+        } elseif ($isEmailVerified === null) {
+            $this->insertToLogTb([
+                'Employee Id' => $this->masterDet['empId'] ?? '',
+                'Message' => "Email verification status unknown (null) for {$applicableCatDesc} {$name} {$this->masterDet['documentCode']} ({$mailTo}) - Employee record may not exist"
+            ], 'warning');
+        } elseif ($isEmailVerified == 0) {
+            $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Email not verified) ' . $this->masterDet['documentCode'] . '';
+        } else {
+            $this->sendEmailToRecipient($mailTo, $name, $applicableCatDesc);
+        }
+    }
+
+    private function sendEmailToRecipient($mailTo, $name, $applicableCatDesc)
+    {
+        $mailBody = "Dear {$name},<br/><br/>" . $this->emailBody();
+        $subject = $this->emailSubject();
+
+        $emails = [
+            'companySystemID' => $this->companyId,
+            'alertMessage' => $subject,
+            'empEmail' => $mailTo,
+            'emailAlertMessage' => $mailBody
+        ];
+        
+        $sendEmail = Email::sendEmailErp($emails);
+
+        if (!$sendEmail["success"]) {
+            $logType = 'error';
+            $msg = "Employee movement notification not sent for {$applicableCatDesc} {$name} {$this->masterDet['documentCode']} ";
+            $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'] ?? '',
+                'Message' => $msg], $logType);
+        } else {
+            $msg = "Employee movement notification sent for {$applicableCatDesc} {$name} {$this->masterDet['documentCode']} ";
+            $this->insertToLogTb(['Employee Id' => $this->masterDet['empId'] ?? '',
+                'Message' => $msg]);
+        }
+    }
+
+    private function processTransferReportingManager(&$inValidEmails)// Assigned Reporting manager
+    {
+        $assignedManagerInfo = $this->getAssignedReportingManagerInfo();
+
+        if (empty($assignedManagerInfo)) {
+            return;
+        }
+
+        $mailTo = $assignedManagerInfo['EEmail'];
+        $name = $assignedManagerInfo['Ename2'];
+        $empCode = $assignedManagerInfo['ECode'];
+        $isEmailVerified = $this->checkIsEmailVerified($assignedManagerInfo['EIdNo']);
+        $applicableCatDesc = 'Assigned Reporting Manager';
+
+        if (!filter_var($mailTo, FILTER_VALIDATE_EMAIL)) {
+            $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Invalid email format) ' . $this->masterDet['documentCode'] . '';
+        } elseif ($isEmailVerified === null) {
+            $this->insertToLogTb([
+                'Employee Id' => $this->masterDet['empId'] ?? '',
+                'Message' => "Email verification status unknown (null) for {$applicableCatDesc} {$name} {$this->masterDet['documentCode']} ({$mailTo}) - Employee record may not exist"
+            ], 'warning');
+        } elseif ($isEmailVerified == 0) {
+            $inValidEmails[] = $empCode . ' - ' . $mailTo . ' (Email not verified) ' . $this->masterDet['documentCode'] . '';
+        } else {
+            $this->sendEmailToRecipient($mailTo, $name, $applicableCatDesc);
         }
     }
 
@@ -220,7 +283,7 @@ class EmployeeMovementNotificationService
         return !empty($manager) ? $manager['info'] : [];
     }
 
-    public function getActiveReportingManagerInfo()
+    public function getAssignedReportingManagerInfo()
     {
         $empId = $this->masterDet['assignedReportingManager'] ?? null;
         if (empty($empId)) {
@@ -338,6 +401,7 @@ class EmployeeMovementNotificationService
                     break;
             }
         }
+
         return $jobProcedureType;
     }
 }
