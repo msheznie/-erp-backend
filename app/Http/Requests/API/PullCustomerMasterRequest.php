@@ -52,19 +52,4 @@ class PullCustomerMasterRequest extends FormRequest
             'per_page.max' => trans('custom.per_page_cannot_exceed_50'),
         ];
     }
-
-    /**
-     * Handle a failed validation attempt (return same format as sendError).
-     *
-     * @param Validator $validator
-     * @return void
-     * @throws HttpResponseException
-     */
-    protected function failedValidation(Validator $validator)
-    {
-        $errorMessage = $validator->errors()->first();
-        throw new HttpResponseException(
-            Response::json(ResponseUtil::makeError($errorMessage, ['type' => '']), 422)
-        );
-    }
 }

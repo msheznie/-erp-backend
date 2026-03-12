@@ -1889,8 +1889,15 @@ class CustomerMasterAPIController extends AppBaseController
         ];
     }
 
-    public function pullCustomerMaster(PullCustomerMasterRequest $request)
+    public function pullCustomerMaster(Request $request)
     {
+
+        $formRequest = new PullCustomerMasterRequest();
+        $validator = Validator::make($request->all(), $formRequest->rules(), $formRequest->messages());
+        if ($validator->fails()) {
+            return $this->sendError($validator->errors()->first(), 422);
+        }
+        
         $input = $request->all();
         $companySystemID = $input['company_id'];
         $categories = isset($input['category']) && is_array($input['category']) ? $input['category'] : [];
