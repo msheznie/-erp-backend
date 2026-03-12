@@ -11,7 +11,9 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
 use App\Models\ItemMaster;
 use App\Models\ProcumentOrder;
+use App\Models\ProcumentOrderDetail;
 use App\Services\ProcurementOrder\ProcurementOrderService;
+use App\Services\Procurement\CategoryValidationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -76,6 +78,21 @@ class PoAddBulkItemJob implements ShouldQueue
                                      })
                                      ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
                                      ->get();
+
+            // When single-category enforcement is on: only add items of one category (existing PO category or first item's category)
+            $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
+            if ($purchaseOrder && CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+                $existingRow = ProcumentOrderDetail::select(\DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                    ->first();
+                $allowedCategory = $existingRow ? $existingRow->itemFinanceCategoryID : null;
+                if ($allowedCategory === null && $itemMasters->isNotEmpty()) {
+                    $allowedCategory = $itemMasters->first()->financeCategoryMaster;
+                }
+                if ($allowedCategory !== null) {
+                    $itemMasters = $itemMasters->where('financeCategoryMaster', $allowedCategory);
+                }
+            }
 
             $invalidItems = [];
             foreach ($itemMasters as $key => $value) {

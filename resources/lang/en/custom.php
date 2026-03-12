@@ -9996,4 +9996,6 @@ return
     'item_code_must_be_a_array' => 'Item code must be an array',
     'wareHouse_code_must_be_a_string' => 'Warehouse code must be a string',
     'item_code_must_be_a_string' => 'Item code must be a string',
+
+    'category_approval_mixed_category_blocked' => 'Multiple item categories cannot be added when Category-Based Approval is enabled.',
 ];

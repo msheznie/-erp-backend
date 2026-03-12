@@ -34,6 +34,7 @@ use App\Models\PurchaseReturn;
 use App\Models\ProcumentOrder;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
+use App\Services\Procurement\CategoryValidationService;
 use App\Models\PurchaseReturnDetails;
 use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
@@ -1017,25 +1018,14 @@ class GRVDetailsAPIController extends AppBaseController
 
                     //checking if item category is same or not
 
-                    $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                                                                ->where('companySystemID', $GRVMaster->companySystemID)
-                                                                ->first();
+                    if (CategoryValidationService::shouldEnforceSingleCategory($GRVMaster->companySystemID, 3)) {
+                        $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('grvAutoID', $grvAutoID)
+                            ->first();
 
-                    if ($allowFinanceCategory) {
-                        $policy = $allowFinanceCategory->isYesNO;
-
-                        if ($policy == 0) {
-                            $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                                ->where('grvAutoID', $grvAutoID)
-                                ->first();
-
-                            if ($grvDetailExistSameItem) {
-                                if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                                    return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
-                                }
-                            }
-
-                         }
+                        if ($grvDetailExistSameItem && $new['itemFinanceCategoryID'] != $grvDetailExistSameItem['itemFinanceCategoryID']) {
+                            return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($GRVMaster->companySystemID, 3), 500);
+                        }
                     }
 
                     //checking if item is inventory item cannot be added more than one
@@ -1355,24 +1345,13 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.item_not_assigned'));
             }
 
-            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $grvMaster->companySystemID)
-                ->first();
+            if (CategoryValidationService::shouldEnforceSingleCategory($grvMaster->companySystemID, 3)) {
+                $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                    ->where('grvAutoID', $grvAutoID)
+                    ->first();
 
-            if ($allowFinanceCategory) {
-                $policy = $allowFinanceCategory->isYesNO;
-
-                if ($policy == 0) {
-                    //checking if item category is same or not
-                    $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                        ->where('grvAutoID', $grvAutoID)
-                        ->first();
-
-                    if ($grvDetailExistSameItem) {
-                        if ($itemAssign->financeCategoryMaster != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
-                        }
-                    }
+                if ($grvDetailExistSameItem && $itemAssign->financeCategoryMaster != $grvDetailExistSameItem['itemFinanceCategoryID']) {
+                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($grvMaster->companySystemID, 3), 500);
                 }
             }
 
@@ -1997,13 +1976,13 @@ class GRVDetailsAPIController extends AppBaseController
 
                     //checking if item category is same or not
 
-                    $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                                                        ->where('grvAutoID', $grvAutoID)
-                                                        ->first();
+                    if (CategoryValidationService::shouldEnforceSingleCategory($GRVMaster->companySystemID, 3)) {
+                        $grvDetailExistSameItem = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('grvAutoID', $grvAutoID)
+                            ->first();
 
-                    if ($grvDetailExistSameItem) {
-                        if ($new['itemFinanceCategoryID'] != $grvDetailExistSameItem["itemFinanceCategoryID"]) {
-                            return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 422);
+                        if ($grvDetailExistSameItem && $new['itemFinanceCategoryID'] != $grvDetailExistSameItem['itemFinanceCategoryID']) {
+                            return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($GRVMaster->companySystemID, 3), 500);
                         }
                     }
 

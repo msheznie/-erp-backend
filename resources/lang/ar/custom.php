@@ -9874,4 +9874,6 @@ return
     'item_code_must_be_a_array' => 'رمز العنصر يجب أن يكون مصفوفة',
     'wareHouse_code_must_be_a_string' => 'رمز المستودع يجب أن يكون نص',
     'item_code_must_be_a_string' => 'رمز العنصر يجب أن يكون نص',
+
+    'category_approval_mixed_category_blocked' => 'لا يمكن إضافة فئات أصناف متعددة عند تفعيل الموافقة حسب الفئة.',
 ];
