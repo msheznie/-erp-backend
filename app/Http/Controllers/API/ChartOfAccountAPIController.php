@@ -16,6 +16,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateChartOfAccountAPIRequest;
+use App\Http\Requests\API\PullChartofAccountAPIRequest;
 use App\Http\Requests\API\UpdateChartOfAccountAPIRequest;
 use App\Models\AllocationMaster;
 use App\helper\ReopenDocument;
@@ -33,6 +34,7 @@ use App\Models\ReportTemplateLinks;
 use App\Models\YesNoSelection;
 use App\Models\ReportTemplateDetails;
 use App\Models\GeneralLedger;
+use App\Services\ChartOfAccountService;
 use App\Repositories\ChartOfAccountRepository;
 use App\Traits\UserActivityLogger;
 use Illuminate\Http\Request;
@@ -53,9 +55,11 @@ use App\Traits\AuditLogsTrait;
 use App\Models\ReportTemplate;
 use App\Models\CashFlowTemplateDetail;
 use Illuminate\Support\Arr;
+use Illuminate\Pagination\LengthAwarePaginator;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Class ChartOfAccountController
@@ -66,12 +70,18 @@ class ChartOfAccountAPIController extends AppBaseController
     /** @var  ChartOfAccountRepository */
     private $chartOfAccountRepository;
     private $userRepository;
+    private $chartOfAccountService;
     use AuditLogsTrait;
 
-    public function __construct(ChartOfAccountRepository $chartOfAccountRepo, UserRepository $userRepo)
+    public function __construct(
+        ChartOfAccountRepository $chartOfAccountRepo,
+        UserRepository $userRepo,
+        ChartOfAccountService $chartOfAccountService
+    )
     {
         $this->chartOfAccountRepository = $chartOfAccountRepo;
         $this->userRepository = $userRepo;
+        $this->chartOfAccountService = $chartOfAccountService;
     }
 
     /**
@@ -1204,6 +1214,21 @@ class ChartOfAccountAPIController extends AppBaseController
         } catch (\Exception $e) {
             \Log::error('mPDF Error in printChartOfAccount: ' . $e->getMessage());
             return $this->sendError(trans('custom.pdf_generation_failed') . $e->getMessage());
+        }
+    }
+
+    public function pullChartOfAccounts(Request $request)
+    {
+        try {
+            $formRequest = new PullChartofAccountAPIRequest();
+            $validator = Validator::make($request->all(), $formRequest->rules(), $formRequest->messages());
+            if ($validator->fails()) {
+                return $this->sendError($validator->errors()->first(), 422);
+            }
+            $data = $this->chartOfAccountService->pullChartOfAccounts($request);
+            return $this->sendResponse($data, trans('custom.record_retrieved_successfully_1'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
         }
     }
 }
