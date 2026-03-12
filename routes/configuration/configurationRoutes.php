@@ -114,6 +114,10 @@ Route::group([], function() {
 Route::group([], function() {
     Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions')->name('Get company document filter options');
     Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
+    Route::post('getDocumentAccessRole', 'CompanyDocumentAttachmentAPIController@getDocumentAccessRole')->name('Get document access role');
+    Route::post('saveDocumentAccessRole', 'CompanyDocumentAttachmentAPIController@saveDocumentAccessRole')->name('Save document access role');
+    Route::post('updateDocumentAccessRoleToggle', 'CompanyDocumentAttachmentAPIController@updateDocumentAccessRoleToggle')->name('Update document access role toggle');
+    Route::post('deleteDocumentAccessEmployee', 'CompanyDocumentAttachmentAPIController@deleteDocumentAccessEmployee')->name('Delete document access employee');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('attachment_type_configurations', 'AttachmentTypeConfigurationAPIController');
     Route::post('getAttachmentTypeConfig', 'AttachmentTypeConfigurationAPIController@getAttachmentTypeConfig')->name('Get all attachment type config ');

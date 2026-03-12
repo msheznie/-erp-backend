@@ -125,4 +125,16 @@ class CustomerMasterCategory extends Model
      public function category_assigned(){
         return $this->hasMany('App\Models\CustomerMasterCategoryAssigned','customerMasterCategoryID','categoryID');
     }
+
+    public static function getCustomerCategoryIds($categoryDescriptions)
+    {
+        if (empty($categoryDescriptions)) {
+            return [];
+        }
+        $categoryDescriptions = array_values(array_unique(array_map('trim', $categoryDescriptions)));
+        $placeholders = implode(',', array_fill(0, count($categoryDescriptions), '?'));
+        return CustomerMasterCategory::whereRaw('TRIM(categoryDescription) IN (' . $placeholders . ')', $categoryDescriptions)
+            ->pluck('categoryID')
+            ->toArray();
+    }
 }

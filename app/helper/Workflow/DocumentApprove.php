@@ -1976,7 +1976,7 @@ class DocumentApprove
             //RollBackApproval::dispatch($data);
             Log::channel('document_approval')->error($e->getMessage());
             Log::channel('document_approval')->error($e->getFile());
-
+            Log::channel('document_approval')->error($e->getLine());
 
             $msg = 'Error Occurred';
             if (in_array($e->getCode(), [404, 500])) {

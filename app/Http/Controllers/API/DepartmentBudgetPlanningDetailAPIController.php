@@ -29,6 +29,7 @@ use App\Services\ChartOfAccountService;
 use App\Traits\AuditLogsTrait;
 use App\Models\User;
 use App\helper\CreateExcel;
+use App\Jobs\ExportCompanyBudgetPlanningDetailsJob;
 use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -37,6 +38,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\Helper;
+use Illuminate\Support\Facades\Storage;
+use App\Exports\CreateExcelExport;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 
 /**
  * Class DepartmentBudgetPlanningDetailController
@@ -190,7 +194,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
         $employeeID =  Helper::getEmployeeSystemID();
 
-//        $employeeID = 110;
         $newRequest = new Request();
         $newRequest->replace([
             'companyId' => $request->input('companySystemID'),
@@ -287,27 +290,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 });
             }
 
-            // Get selected status early so we can apply segment/department filters only when relevant for the view
+            // Get selected status early so we can apply segment/department filters
             // Status 1=Details, 2=Department, 3=Segment, 4=GL Based, 5=Category
             $selectedStatus = (int) $request->input('selectedStatus', 1);
 
-            // Handle segment filtering (only when segment is relevant: Details or Segment view)
-            // Department view (2), GL view (4), Category view (5) do not show segment - do not apply segment filter
-            if ($selectedStatus != 2 && $selectedStatus != 4 && $selectedStatus != 5) {
-                $segments = $request->input('segments');
-                if (!empty($segments) && is_array($segments)) {
-                    if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
-                        $segmentIds = array_column($segments, 'id');
-                    } else {
-                        $segmentIds = $segments;
-                    }
-                    if (!empty($segmentIds)) {
-                        $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
-                            $q->whereHas('segment', function ($q2) use ($segmentIds) {
-                                $q2->whereIn('serviceLineSystemID', $segmentIds);
-                            });
+            // Handle segment filtering: apply whenever user selects segments (all report types), so grouped result is filtered by segment
+            $segments = $request->input('segments');
+            if (!empty($segments) && is_array($segments)) {
+                if (isset($segments[0]) && is_array($segments[0]) && isset($segments[0]['id'])) {
+                    $segmentIds = array_column($segments, 'id');
+                } else {
+                    $segmentIds = $segments;
+                }
+                if (!empty($segmentIds)) {
+                    $query->whereHas('departmentSegment', function ($q) use ($segmentIds) {
+                        $q->whereHas('segment', function ($q2) use ($segmentIds) {
+                            $q2->whereIn('serviceLineSystemID', $segmentIds);
                         });
-                    }
+                    });
                 }
             }
 
@@ -366,14 +366,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 }
             }
 
-            // Handle Department filtering (only when department is relevant: Details or Department view, and isCompany)
-            // Segment view (3), GL view (4), Category view (5) do not show department - do not apply department filter
-            if (($selectedStatus == 1 || $selectedStatus == 2) && ($isCompany === true || $isCompany === 'true')) {
+            // Handle Department filtering: apply whenever user selects departments in company view (all report types)
+            // So e.g. Report Type Segment + Department filter = group by segment, but only include data from selected department(s)
+            if ($isCompany === true || $isCompany === 'true') {
                 $departments = $request->input('departments');
                 if (!empty($departments) && is_array($departments)) {
-                    $query->whereHas('departmentBudgetPlanning', function ($q) use ($departments) {
-                        $q->whereIn('departmentID', $departments);
-                    });
+                    $deptIds = [];
+                    foreach ($departments as $d) {
+                        if (is_array($d) && isset($d['id'])) {
+                            $deptIds[] = $d['id'];
+                        } elseif (is_numeric($d)) {
+                            $deptIds[] = (int) $d;
+                        }
+                    }
+                    if (!empty($deptIds)) {
+                        $query->whereHas('departmentBudgetPlanning', function ($q) use ($deptIds) {
+                            $q->whereIn('departmentID', $deptIds);
+                        });
+                    }
                 }
             }
 
@@ -1729,12 +1739,27 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
     public function exportBudgetPlanningDetails(Request $request)
     {
         try {
+            $basePath = $this->runExportBudgetPlanningDetails($request);
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Run export logic and return the file path (for use by controller response or job).
+     * @param Request $request
+     * @return string File path on success
+     * @throws \Exception
+     */
+    public function runExportBudgetPlanningDetails(Request $request)
+    {
+        try {
             $input = $request->all();
             $departmentPlanningId = $request->input('budgetPlanningId');
 
-
             if (!$departmentPlanningId) {
-                return $this->sendError(trans('custom.department_planning_id_is_required'));
+                throw new \Exception(trans('custom.department_planning_id_is_required'));
             }
 
             $employeeID = Helper::getEmployeeSystemID();
@@ -2145,74 +2170,34 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $dataset = collect($dataset);
             }
 
+            $columnSlugs = $request->input('columnSlugs');
+            $isColumnSlugsArray = !empty($columnSlugs) && is_array($columnSlugs);
+
             $data = array();
             $x = 0;
-            foreach ($dataset as $val) {
-                $x++;
-                $data[$x]['#'] = $x;
-                
-                // Include Segment column based on selectedStatus
-                // Status 1 (Details): Show segment column if not GL based
-                // Status 2 (Department): No segment column
-                // Status 3 (Segment): Show segment column
-                // Status 4 (GL Based): No segment column
-                // Status 5 (Category): No segment column
-                if (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3) {
-                    $data[$x]['Segment'] = $val->departmentSegment && $val->departmentSegment->segment 
-                        ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes) 
-                        : '';
+            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $selectedStatus, $isGLBased, $columnSlugs, $isColumnSlugsArray) {
+                foreach ($chunk as $val) {
+                    $x++;
+                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $selectedStatus, $isGLBased);
+                    if ($isColumnSlugsArray) {
+                        $data[$x] = $this->filterExportRowByColumnSlugs($rowBySlug, $columnSlugs);
+                    } else {
+                        $data[$x] = $this->exportRowSlugToHeader($rowBySlug);
+                    }
                 }
-                
-                // Include Department column based on selectedStatus
-                // Status 1 (Details): Show department column if not GL based
-                // Status 2 (Department): Show department column
-                // Status 3 (Segment): No department column
-                // Status 4 (GL Based): No department column
-                // Status 5 (Category): No department column
-                if (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2) {
-                    $data[$x]['Department'] = $val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department 
-                        ? $val->departmentBudgetPlanning->department->departmentDescription 
-                        : '';
-                }
-                
-                // Include GL Type, Parent GL, and GL Description based on selectedStatus
-                // Status 5 (Category): No GL columns, show Category instead
-                // Other statuses: Show GL columns
-                if ($selectedStatus != 5) {
-                    $data[$x]['GL Type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
-                        ? $val->budgetTemplateGl->chartOfAccount->controlAccounts 
-                        : '';
-                    $data[$x]['Parent GL'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
-                        ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
-                        : '';
-                    $data[$x]['GL Description'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount 
-                        ? ($val->budgetTemplateGl->chartOfAccount->AccountCode . ' - ' . $val->budgetTemplateGl->chartOfAccount->AccountDescription) 
-                        : '';
-                } else {
-                    // Status 5: Show Category column instead
-                    $data[$x]['Category'] = $val->category 
-                        ? $val->category->description 
-                        : ($val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails 
-                            ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description 
-                            : '');
-                }
-                
-                $data[$x]['Responsible Person'] = $val->responsiblePerson 
-                    ? $val->responsiblePerson->empName 
-                    : '';
-                $data[$x]['Request Amount'] = number_format($val->request_amount ?? 0, 2);
-                $data[$x]['Time for Submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
-                $data[$x]['Previous Year Budget'] = number_format($val->previous_year_budget ?? 0, 2);
-                $data[$x]['Current Year Budget'] = number_format($val->current_year_budget ?? 0, 2);
-                $data[$x]['Difference from last year & current year'] = $val->difference_last_current_year;
-                $data[$x]['Amount Given by Finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
-                $data[$x]['Amount Given by HOD'] = number_format($val->amount_given_by_hod ?? 0, 2);
-                // $data[$x]['Internal Status'] = $this->getInternalStatusLabel($val->internal_status ?? 0);
+            });
+
+            // Prepend header row (column labels) so Excel has headers in row 1
+            if (!empty($data)) {
+                $firstRow = reset($data);
+                $headerLabels = array_keys(is_array($firstRow) ? $firstRow : (array) $firstRow);
+                $headerRow = array_combine($headerLabels, $headerLabels);
+                $data = array_merge([0 => $headerRow], $data);
             }
 
             // Ensure data array is not empty and has valid structure
             if (empty($data) || !is_array($data)) {
-                return $this->sendError(trans('custom.no_data_to_export'));
+                throw new \Exception(trans('custom.no_data_to_export'));
             }
 
             // Re-index array to start from 0 (CreateExcel expects $data[0] to exist)
@@ -2224,25 +2209,96 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 'company_code' => $companyCode,
             );
 
+            $lang = app()->getLocale();
+            $fontFamily = Helper::getExcelFontFamily($lang);
+            $disk = 's3';
             $fileName = 'budget_planning_details';
-            $path = 'system/budget_planning_details/excel/';
-            $type = 'xls';
-            $basePath = CreateExcel::process($data, $type, $fileName, $path, $detail_array);
+            $path_dir = 'budget_planning/budget_planning_details/excel/';
+            $type = 'xlsx';
+            $excelExport = new CreateExcelExport(function($excel) use ($data, $fontFamily) {
+                $excel->sheet(trans('custom.excel_sheet_name'), function($sheet) use ($data, $fontFamily) {
+                    $sheet->setStyle([
+                        'font' => [
+                            'name' => $fontFamily,
+                            'size' => 11,
+                        ]
+                    ]);
+    
+                    $rowNum = 1;
+                    $knownHeaders = [
+                        trans('custom.excel_company_id'),
+                        trans('custom.excel_order_details'),
+                        trans('custom.excel_item_code'),
+                        trans('custom.excel_pr_number'),
+                        trans('custom.excel_logistics_details'),
+                        trans('custom.excel_category'),
+                        trans('custom.excel_addon_details'),
+                    ];
+    
+                    $maxColumns = 0;
+                    foreach ($data as $row) {
+                        $maxColumns = max($maxColumns, count($row));
+                    }
+    
+                    // Build indexed rows so PhpSpreadsheet writes columns in order (associative keys break export)
+                    $indexedData = [];
+                    foreach ($data as $row) {
+                        $rowValues = array_values(is_array($row) ? $row : (array) $row);
+                        $indexedData[] = array_pad($rowValues, $maxColumns, '');
+                    }
+    
+                    if (!empty($indexedData)) {
+                        // Write all data starting at A1
+                        $sheet->fromArray($indexedData, null, 'A1', true);
 
-            if ($basePath == '') {
-                return $this->sendError('Unable to export excel');
-            } else {
-                return $this->sendResponse($basePath, trans('custom.success_export'));
+                        // Make first row (header row) bold
+                        $highestColumn = Coordinate::stringFromColumnIndex($maxColumns);
+                        $sheet->cells("A1:{$highestColumn}1", function($cells) use ($fontFamily) {
+                            $cells->setFont([
+                                'bold' => true,
+                                'size' => 12,
+                                'name' => $fontFamily
+                            ]);
+                        });
+                    }
+    
+                    // Auto-size columns to fit content (after data is written)
+                    $sheet->setAutoSize(true);
+    
+                    // Set right-to-left for Arabic locale
+                    if (app()->getLocale() == 'ar') {
+                        $sheet->getStyle('A1:Z1000')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
+                        $sheet->setRightToLeft(true);
+                    }
+                });
+            }, 'xlsx');
+            $excel_content = $excelExport->getContent();
+
+            $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+            $path = $companyCode.'/'.$path_dir.$full_name;
+            $result = Storage::disk($disk)->put($path, $excel_content);
+            $basePath = '';
+            if ($result) {
+                if (Storage::disk($disk)->exists($path)) {
+                    $basePath = Helper::getFileUrlFromS3($path);
+                }
+            }
+
+            if(empty($source))
+            {
+                return $basePath;
+            }else {
+                return $path;
             }
 
         } catch (\Exception $e) {
-            return $this->sendError(trans('custom.error_exporting_excel') . ': ' . $e->getMessage(), 500);
+            throw $e;
         }
     }
 
     /**
      * Export all department budget planning details of a company budget planning to Excel (no pagination).
-     * Same format as exportBudgetPlanningDetails. Use for company-level "download all" export.
+     * Dispatches a job so large exports (e.g. 1000+ records) run in background; user is notified when ready.
      *
      * @param Request $request (budgetPlanningId = CompanyBudgetPlanning ID, companySystemID, optional filters)
      * @return Response
@@ -2253,7 +2309,139 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             'source' => 'from_approval',
             'isCompany' => true,
         ]);
-        return $this->exportBudgetPlanningDetails($request);
+        $userId = Helper::getEmployeeSystemID();
+        $db = $request->input('db', '');
+        ExportCompanyBudgetPlanningDetailsJob::dispatch($db, $request->all(), $userId);
+        return $this->sendResponse('', trans('custom.budget_planning_export_in_progress'));
+    }
+
+    /**
+     * Slug to Excel header label map for export
+     *
+     * @return array
+     */
+    private function getExportSlugToHeaderMap()
+    {
+        return [
+            '#' => '#',
+            'segment' => 'Segment',
+            'department' => 'Department',
+            'gl_type' => 'GL Type',
+            'parent_gl' => 'Parent GL',
+            'gl_description' => 'GL Description',
+            'category' => 'Category',
+            'responsible_person' => 'Responsible Person',
+            'request_amount' => 'Request Amount',
+            'time_for_submission' => 'Time for Submission',
+            'previous_year_budget' => 'Previous Year Budget',
+            'current_year_budget' => 'Current Year Budget',
+            'difference_last_year_and_current_year' => 'Difference from last year & current year',
+            'amount_given_by_finance' => 'Amount Given by Finance',
+            'amount_given_by_hod' => 'Amount Given by HOD',
+            'difference_from_current_year_and_request_amount' => 'Difference from current year and request amount',
+        ];
+    }
+
+    /**
+     * Build one export row keyed by slug (for filtering by selected columns)
+     *
+     * @param \Illuminate\Database\Eloquent\Model $val
+     * @param int $rowIndex
+     * @param int $selectedStatus
+     * @param bool $isGLBased
+     * @return array
+     */
+    private function buildExportRowBySlug($val, $rowIndex, $selectedStatus, $isGLBased)
+    {
+        $row = [];
+        $row['#'] = $rowIndex;
+
+        $row['segment'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3
+            ? ($val->departmentSegment && $val->departmentSegment->segment
+                ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes)
+                : '')
+            : '';
+        $row['department'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2
+            ? ($val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department
+                ? $val->departmentBudgetPlanning->department->departmentDescription
+                : '')
+            : '';
+        if ($selectedStatus != 5) {
+            $row['gl_type'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount
+                ? $val->budgetTemplateGl->chartOfAccount->controlAccounts
+                : '';
+            $row['parent_gl'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails
+                ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description
+                : '';
+            $row['gl_description'] = $val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount
+                ? ($val->budgetTemplateGl->chartOfAccount->AccountCode . ' - ' . $val->budgetTemplateGl->chartOfAccount->AccountDescription)
+                : '';
+            $row['category'] = '';
+        } else {
+            $row['gl_type'] = '';
+            $row['parent_gl'] = '';
+            $row['gl_description'] = '';
+            $row['category'] = $val->category
+                ? $val->category->description
+                : ($val->budgetTemplateGl && $val->budgetTemplateGl->chartOfAccount && $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails
+                    ? $val->budgetTemplateGl->chartOfAccount->templateCategoryDetails->description
+                    : '');
+        }
+
+        $row['responsible_person'] = $val->responsiblePerson ? $val->responsiblePerson->empName : '';
+        $row['request_amount'] = number_format($val->request_amount ?? 0, 2);
+        $row['time_for_submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
+        $row['previous_year_budget'] = number_format($val->previous_year_budget ?? 0, 2);
+        $row['current_year_budget'] = number_format($val->current_year_budget ?? 0, 2);
+        $row['difference_last_year_and_current_year'] = $val->difference_last_current_year ?? '';
+        $row['amount_given_by_finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
+        $row['amount_given_by_hod'] = number_format($val->amount_given_by_hod ?? 0, 2);
+        $row['difference_from_current_year_and_request_amount'] = $val->difference_current_request ?? '';
+
+        return $row;
+    }
+
+    /**
+     * Filter row by selected column slugs and return with Excel header keys (in order of columnSlugs)
+     *
+     * @param array $rowBySlug
+     * @param array $columnSlugs
+     * @return array
+     */
+    private function filterExportRowByColumnSlugs(array $rowBySlug, array $columnSlugs)
+    {
+        $slugToHeader = $this->getExportSlugToHeaderMap();
+        $result = [];
+        foreach ($columnSlugs as $slug) {
+            $slug = is_string($slug) ? trim($slug) : $slug;
+            if ($slug === '' || $slug === null) {
+                continue;
+            }
+            if (array_key_exists($slug, $rowBySlug)) {
+                $header = isset($slugToHeader[$slug]) ? $slugToHeader[$slug] : $slug;
+                $result[$header] = $rowBySlug[$slug];
+            } elseif ($slug === '#' && array_key_exists('#', $rowBySlug)) {
+                $result['#'] = $rowBySlug['#'];
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Convert row keyed by slug to row keyed by Excel header (for backward compatibility when no columnSlugs sent)
+     *
+     * @param array $rowBySlug
+     * @return array
+     */
+    private function exportRowSlugToHeader(array $rowBySlug)
+    {
+        $slugToHeader = $this->getExportSlugToHeaderMap();
+        $result = [];
+        foreach ($rowBySlug as $slug => $value) {
+            $header = isset($slugToHeader[$slug]) ? $slugToHeader[$slug] : $slug;
+            $result[$header] = $value;
+        }
+        return $result;
     }
 
     /**

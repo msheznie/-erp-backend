@@ -243,8 +243,12 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             return $this->sendError('Pay Credit Note Detail not found');
         }
 
+        $transAmount = Helper::convertAmountToLocalRpt(203, $payCreditNoteDetail["PayMasterAutoId"], $input['creditNotePaymentAmount'] ?? 0);
+
         $data = [
-            'creditNotePaymentAmount' => $input['creditNotePaymentAmount']
+            'creditNotePaymentAmount' => $input['creditNotePaymentAmount'],
+            'creditNotePaymentAmountLocal' => $transAmount['localAmount'] ?? 0,
+            'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0
         ];
 
         $payCreditNoteDetail = $this->payCreditNoteDetailRepository->update($data, $id);
@@ -319,29 +323,50 @@ class PayCreditNoteDetailAPIController extends AppBaseController
         $companySystemID = $paymentVocher->companySystemID;
         
         $companySystemIDInt = (int) $companySystemID;
+
+        $creditNoteAmountSubquery = "
+            IFNULL((SELECT SUM(refundAmount)
+                FROM erp_creditnote_receipts
+                WHERE erp_creditnote_receipts.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
+                  AND erp_creditnote_receipts.companySystemID = ?), 0)
+        ";
+
+        $paymentVoucherAmountSubquery = "
+            IFNULL((SELECT SUM(creditNotePaymentAmount)
+                FROM erp_paycreditnotedetails pcd
+                WHERE pcd.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
+                  AND pcd.companySystemID = ?), 0)
+        ";
+
+        $receiptMatchingAmountSubquery = "
+            IFNULL((SELECT SUM(mdm.matchingAmount)
+                FROM erp_matchdocumentmaster mdm
+                WHERE mdm.PayMasterAutoId = erp_paycreditnotedetails.creditNoteAutoID
+                  AND mdm.documentSystemID = 19
+                  AND mdm.matchingConfirmedYN = 1
+                  AND mdm.companySystemID = ?), 0)
+        ";
+
+        $receiptVoucherAmountSubquery = "
+            IFNULL((SELECT SUM(ecrd.receiveAmountTrans)
+                FROM erp_custreceivepaymentdet ecrd
+                INNER JOIN erp_customerreceivepayment ecrp
+                    ON ecrd.custReceivePaymentAutoID = ecrp.custReceivePaymentAutoID
+                    AND ecrp.approved = -1
+                WHERE ecrd.addedDocumentSystemID = 19
+                  AND ecrd.bookingInvCodeSystem = erp_paycreditnotedetails.creditNoteAutoID
+                  AND ecrd.matchingDocID = 0
+                  AND ecrd.companySystemID = ?), 0)
+        ";
+
+        $totalPaidAmount = "({$paymentVoucherAmountSubquery} + {$receiptMatchingAmountSubquery} - {$receiptVoucherAmountSubquery})";
+
         $creditNotePaymentDetails = PayCreditNoteDetail::with(['creditnote'])
             ->select('erp_paycreditnotedetails.*')
-            ->selectRaw($decimalPlaces . ' as DecimalPlaces')
-            ->selectRaw('IFNULL((SELECT SUM(refundAmount) FROM erp_creditnote_receipts 
-                         WHERE erp_creditnote_receipts.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND erp_creditnote_receipts.companySystemID = ' . $companySystemIDInt . '), 0) as creditNoteAmount')
-            ->selectRaw('(IFNULL((SELECT SUM(creditNotePaymentAmount) FROM erp_paycreditnotedetails pcd 
-                         WHERE pcd.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND pcd.companySystemID = ' . $companySystemIDInt . '), 0) + 
-                         IFNULL((SELECT SUM(mdm.matchingAmount) FROM erp_matchdocumentmaster mdm 
-                         WHERE mdm.PayMasterAutoId = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND mdm.documentSystemID = 19 AND mdm.matchingConfirmedYN = 1 
-                         AND mdm.companySystemID = ' . $companySystemIDInt . '), 0)) as totalPaidAmount')
-            ->selectRaw('(IFNULL((SELECT SUM(refundAmount) FROM erp_creditnote_receipts 
-                         WHERE erp_creditnote_receipts.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND erp_creditnote_receipts.companySystemID = ' . $companySystemIDInt . '), 0) - 
-                         (IFNULL((SELECT SUM(creditNotePaymentAmount) FROM erp_paycreditnotedetails pcd 
-                         WHERE pcd.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND pcd.companySystemID = ' . $companySystemIDInt . '), 0) + 
-                         IFNULL((SELECT SUM(mdm.matchingAmount) FROM erp_matchdocumentmaster mdm 
-                         WHERE mdm.PayMasterAutoId = erp_paycreditnotedetails.creditNoteAutoID 
-                         AND mdm.documentSystemID = 19 AND mdm.matchingConfirmedYN = 1 
-                         AND mdm.companySystemID = ' . $companySystemIDInt . '), 0))) as paymentBalancedAmount')
+            ->selectRaw('? as DecimalPlaces', [$decimalPlaces])
+            ->selectRaw("{$creditNoteAmountSubquery} as creditNoteAmount", [$companySystemIDInt])
+            ->selectRaw("{$totalPaidAmount} as totalPaidAmount", array_fill(0, 3, $companySystemIDInt))
+            ->selectRaw("({$creditNoteAmountSubquery} - {$totalPaidAmount}) as paymentBalancedAmount", array_fill(0, 4, $companySystemIDInt))
             ->where('erp_paycreditnotedetails.PayMasterAutoId', $payMasterAutoId)
             ->where('erp_paycreditnotedetails.companySystemID', $companySystemID)
             ->get();
@@ -381,8 +406,8 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             )
             ->selectRaw($decimalPlaces . ' as DecimalPlaces')
             ->selectRaw('IFNULL(erp_creditnote.creditAmountTrans, 0) as creditNoteAmount')
-            ->selectRaw('(IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0)) as totalPaidAmount')
-            ->selectRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - (IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0))) as paymentBalancedAmount')
+            ->selectRaw('(IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0)) as totalPaidAmount')
+            ->selectRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - (IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0))) as paymentBalancedAmount')
             ->selectRaw('GROUP_CONCAT(DISTINCT erp_customerreceivepayment.custPaymentReceiveCode SEPARATOR "|") as receiptVoucherCode')
             ->selectRaw('(SELECT COUNT(*) > 0 FROM erp_paycreditnotedetails pcd 
                          INNER JOIN erp_paysupplierinvoicemaster pvm ON pcd.PayMasterAutoId = pvm.PayMasterAutoId 
@@ -417,6 +442,21 @@ class PayCreditNoteDetailAPIController extends AppBaseController
                 GROUP BY erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.companySystemID) as match_sum'), function($join) use ($companySystemID) {
                 $join->on('match_sum.PayMasterAutoId', '=', 'erp_creditnote.creditNoteAutoID')
                      ->where('match_sum.companySystemID', '=', $companySystemID);
+            })
+            ->leftJoin(DB::raw('(SELECT 
+                erp_custreceivepaymentdet.bookingInvCodeSystem as creditNoteAutoID,
+                erp_custreceivepaymentdet.companySystemID,
+                SUM(erp_custreceivepaymentdet.receiveAmountTrans) AS totalReceiptVoucherAmount
+                FROM erp_custreceivepaymentdet
+                INNER JOIN erp_customerreceivepayment ON erp_custreceivepaymentdet.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
+                    AND erp_customerreceivepayment.approved = -1
+                WHERE erp_custreceivepaymentdet.addedDocumentSystemID = 19
+                AND erp_custreceivepaymentdet.bookingInvCodeSystem > 0
+                AND erp_custreceivepaymentdet.matchingDocID = 0
+                AND erp_custreceivepaymentdet.companySystemID = ' . (int) $companySystemID . '
+                GROUP BY erp_custreceivepaymentdet.bookingInvCodeSystem, erp_custreceivepaymentdet.companySystemID) as rv_sum'), function($join) use ($companySystemID) {
+                $join->on('rv_sum.creditNoteAutoID', '=', 'erp_creditnote.creditNoteAutoID')
+                     ->where('rv_sum.companySystemID', '=', $companySystemID);
             })
             ->where('erp_creditnote.approved', -1)
             ->where('erp_creditnote.type', 3)
@@ -453,11 +493,14 @@ class PayCreditNoteDetailAPIController extends AppBaseController
         try {
             foreach ($input['detailTable'] as $item) {
                 if (isset($item['isChecked']) && $item['isChecked']) {
-                    $payCreditNoteDetail = $this->payCreditNoteDetailRepository->create([
+                    $transAmount = Helper::convertAmountToLocalRpt(203, $input["payMasterAutoId"], $item['creditNotePaymentAmount'] ?? 0);
+                    $this->payCreditNoteDetailRepository->create([
                         'PayMasterAutoId' => $input["payMasterAutoId"],
                         'creditNoteAutoID' => $item['creditNoteAutoID'],
                         'companySystemID' => $payMaster->companySystemID,
-                        'creditNotePaymentAmount' => $item['creditNotePaymentAmount'] ?? 0
+                        'creditNotePaymentAmount' => $item['creditNotePaymentAmount'] ?? 0,
+                        'creditNotePaymentAmountLocal' => $transAmount['localAmount'] ?? 0,
+                        'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0
                     ]);
                 }
             }

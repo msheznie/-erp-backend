@@ -59,6 +59,7 @@ class AuditRoutesTenantService
             'api/v1/pull_customer_category',
             'api/v1/pull_location',
             'api/v1/pull_segment',
+            'api/v1/segments/search',
             'api/v1/pull_chart_of_account',
             'api/v1/pull_chart_of_account_master',
             'api/v1/pull_unit_of_measure',
@@ -115,6 +116,7 @@ class AuditRoutesTenantService
             'api/v1/userGroups/{userGroup}',
             'api/v1/employee_navigations',
             'api/v1/employee_navigations/{employee_navigation}',
+            'api/v1/integrations/users/search',
         ];
 
         return $lokiTenantRoutes;
