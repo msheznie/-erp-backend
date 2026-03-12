@@ -17,10 +17,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBankMasterAPIRequest;
 use App\Http\Requests\API\UpdateBankMasterAPIRequest;
+use App\Http\Requests\API\PullBankMasterRequest;
 use App\Models\BankMaster;
 use App\Models\BankAssign;
 use App\Models\Company;
 use App\Repositories\BankMasterRepository;
+use App\Services\API\BankMasterAPIService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
@@ -30,6 +32,8 @@ use App\Repositories\UserRepository;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 /**
  * Class BankMasterController
@@ -38,14 +42,15 @@ use App\helper\Helper;
 
 class BankMasterAPIController extends AppBaseController
 {
-    /** @var  BankMasterRepository */
     private $bankMasterRepository;
     private $userRepository;
+    private $bankMasterAPIService;
 
-    public function __construct(BankMasterRepository $bankMasterRepo, UserRepository $userRepo)
+    public function __construct(BankMasterRepository $bankMasterRepo, UserRepository $userRepo, BankMasterAPIService $bankMasterAPIService)
     {
         $this->bankMasterRepository = $bankMasterRepo;
         $this->userRepository = $userRepo;
+        $this->bankMasterAPIService = $bankMasterAPIService;
     }
 
     /**
@@ -62,6 +67,29 @@ class BankMasterAPIController extends AppBaseController
         $bankMasters = $this->bankMasterRepository->all();
 
         return $this->sendResponse($bankMasters->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.bank_masters')]));
+    }
+
+    public function pullBankMaster(Request $request)
+    {
+        $formRequest = new PullBankMasterRequest();
+        $validator = Validator::make($request->all(), $formRequest->rules(), $formRequest->messages());
+
+        if ($validator->fails()) {
+            $message = $validator->errors()->first();
+            $message = Str::startsWith($message, 'custom.') ? trans($message) : $message;
+            return $this->sendError($message, 422, ['type' => '']);
+        }
+
+        $input = $validator->validated();
+        $input['company_id'] = $request->get('company_id') ?? $input['company_id'] ?? null;
+
+        $response = $this->bankMasterAPIService->pullBankMaster($input);
+
+        if (!$response->isSuccess()) {
+            return $this->sendError($response->getMessage(), $response->getStatusCode());
+        }
+
+        return $this->sendResponse($response->getData(), $response->getMessage());
     }
 
     /**
