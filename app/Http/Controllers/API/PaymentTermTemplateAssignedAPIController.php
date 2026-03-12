@@ -378,6 +378,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
             ->where('companySystemID', $companySystemID)
             ->where('isActive', true)
             ->where('isBlocked', false)
+            ->where('isAssigned', -1)
             ->select('supplierCodeSytem as supplierCodeSystem', 'primarySupplierCode', 'supplierName')
             ->get();
 
