@@ -59,5 +59,5 @@ Route::prefix('integrations')->group(function () {
     Route::post('customers/search', 'CustomerMasterAPIController@pullCustomerMaster');
     Route::post('users/search', 'UserAPIController@pullUserDetails');
     Route::post('banks/search', 'BankMasterAPIController@pullBankMaster');
-    Route::post('chart-of-accounts/search', 'ChartOfAccountsAPIController@pullChartOfAccounts');
+    Route::post('chart-of-accounts/search', 'ChartOfAccountAPIController@pullChartOfAccounts');
 });
