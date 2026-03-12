@@ -26,6 +26,7 @@ use App\Models\GroupParents;
 use App\Models\ReportCustomColumn;
 use App\Services\ConsolidationReportService;
 use App\Services\Currency\CurrencyService;
+use App\Services\GeneralLedgerReportService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -76,6 +77,14 @@ class FinancialReportAPIController extends AppBaseController
     protected $globalFormula; //keep whole formula ro replace
     protected $subAssociateJVCompanies = []; 
     protected $accJvCompanies = []; //keep whole formula ro replace
+
+    /** @var GeneralLedgerReportService */
+    protected $generalLedgerReportService;
+
+    public function __construct(GeneralLedgerReportService $generalLedgerReportService)
+    {
+        $this->generalLedgerReportService = $generalLedgerReportService;
+    }
 
     public function getFRFilterData(Request $request)
     {
@@ -1888,6 +1897,8 @@ class FinancialReportAPIController extends AppBaseController
                 break;
             case 'FGL': // General Ledger
 
+                $sortKey = $request->input('sortKey');
+                $sortDir = $request->input('sortDir');
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
 
@@ -1937,6 +1948,10 @@ class FinancialReportAPIController extends AppBaseController
                         array_push($result,$ou);
                     }
                     $output = $result;
+                }
+
+                if ($sortKey && $sortDir) {
+                    $output = $this->generalLedgerReportService->sortGeneralLedgerCollection($output, $sortKey, $sortDir);
                 }
                 
                 $sort = 'asc';
@@ -4545,6 +4560,8 @@ class FinancialReportAPIController extends AppBaseController
                 break;
             case 'FGL':
                 $type = $request->type;
+                $sortKey = $request->input('sortKey');
+                $sortDir = $request->input('sortDir');
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $companyCurrency = Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
@@ -4553,6 +4570,9 @@ class FinancialReportAPIController extends AppBaseController
                     ->format('d').",2022";
                 }
                 $output = $this->getGeneralLedger($request);
+                if ($sortKey && $sortDir && $request->reportSD !== 'glCode_wise') {
+                    $output = $this->generalLedgerReportService->sortGeneralLedgerCollection($output, $sortKey, $sortDir);
+                }
                 $currencyIdLocal = 1;
                 $currencyIdRpt = 2;
                 $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
@@ -5139,6 +5159,7 @@ class FinancialReportAPIController extends AppBaseController
 
         return $data;
     }
+
     private function getGLAllRecordsToExport($output,$request,$extraColumns,$checkIsGroup,$currencyLocal,$currencyRpt,$decimalPlaceLocal,$decimalPlaceRpt): Array {
         $data = array();
         $x = 0;
