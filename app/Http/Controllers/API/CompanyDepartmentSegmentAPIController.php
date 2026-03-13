@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCompanyDepartmentSegmentAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDepartmentSegmentAPIRequest;
 use App\Models\CompanyDepartmentSegment;
+use App\Models\CompanyDepartment;
 use App\Models\SegmentMaster;
 use App\Models\SegmentAssigned;
 use App\Repositories\CompanyDepartmentSegmentRepository;
@@ -17,16 +18,17 @@ use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\AuditLogsTrait;
-
+use App\Services\BudgetPermissionService;
 class CompanyDepartmentSegmentAPIController extends AppBaseController
 {
     use AuditLogsTrait;
 
     private $companyDepartmentSegmentRepository;
-
-    public function __construct(CompanyDepartmentSegmentRepository $companyDepartmentSegmentRepo)
+    private $budgetPermissionService;
+    public function __construct(CompanyDepartmentSegmentRepository $companyDepartmentSegmentRepo, BudgetPermissionService $budgetPermissionService)
     {
         $this->companyDepartmentSegmentRepository = $companyDepartmentSegmentRepo;
+        $this->budgetPermissionService = new BudgetPermissionService();
     }
 
     /**
@@ -97,7 +99,12 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $input = $request->all();
 
         $departmentSystemID = $request->get('departmentSystemID');
+        $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $input['companySystemID'],
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
 
+      
         if (!$departmentSystemID) {
             return $this->sendError(trans('custom.department_id_is_required'));
         }
@@ -108,9 +115,30 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+        if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
+            // Restrict to departments the current user's employee belongs to (same logic as CompanyBudgetPlanningAPIController)
+            $companyId = $input['companySystemID'] ?? null;
+            $allowedDepartmentIds = [];
+            if ($companyId) {
+                $allowedDepartmentIds = CompanyDepartment::where('companySystemID', $companyId)
+                    ->whereHas('employees', function ($q) {
+                        $q->where('employeeSystemID', Auth::user()->employee_id);
+                    })
+                    ->pluck('departmentSystemID')
+                    ->toArray();
+            }
+
+            $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+                ->whereIn('departmentSystemID', $allowedDepartmentIds)
+                ->with(['segment', 'department'])
+                ->orderBy('departmentSegmentSystemID', $sort);
+        } else {
+            $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
             ->with(['segment', 'department'])
             ->orderBy('departmentSegmentSystemID', $sort);
+        }
+
+
 
         $search = $request->input('search.value');
 
