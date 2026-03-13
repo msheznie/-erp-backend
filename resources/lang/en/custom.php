@@ -4430,6 +4430,8 @@ return
     'recurring_voucher_amend_saved_successfully' => 'Recurring voucher amend saved successfully',
     'recurring_voucher_confirmed_successfully' => 'Recurring Voucher confirmed successfully',
     'recurring_voucher_created_successfully' => 'Recurring voucher created successfully',
+    'recurring_voucher_start_date_outside_finance_year' => 'Start date does not fall within any company finance year (biggining date – ending date).',
+    'recurring_voucher_end_date_outside_finance_year' => 'End date does not fall within any company finance year (biggining date – ending date).',
     'recurring_voucher_not_found' => 'Recurring Voucher not found',
     'recurring_voucher_not_found_1' => 'Recurring voucher not found',
     'recurring_voucher_setup_detail_deleted_successfull' => 'Recurring Voucher Setup Detail deleted successfully',
