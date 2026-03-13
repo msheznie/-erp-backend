@@ -60,6 +60,7 @@ class CompanyDocumentAttachment extends Model
         'blockYN',
         'timeStamp',
         'isCategoryApproval',
+        'isSubcategoryApproval',
         'enableAttachmentAfterApproval',
         'isPRTypeApproval'
     ];
@@ -84,6 +85,7 @@ class CompanyDocumentAttachment extends Model
         'isServiceLineApproval' => 'integer',
         'blockYN' => 'integer',
         'isCategoryApproval' => 'integer',
+        'isSubcategoryApproval' => 'integer',
         'enableAttachmentAfterApproval' => 'integer',
         'isPRTypeApproval' => 'integer',
         'deleted_at' => 'datetime',
