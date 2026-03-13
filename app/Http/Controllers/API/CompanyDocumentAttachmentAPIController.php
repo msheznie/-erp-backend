@@ -123,7 +123,36 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        if(($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']) || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])) {
+        if ((int) $companyDocumentAttachment->documentSystemID === 3) {
+            $inputCategory = $input['isCategoryApproval'] ?? $companyDocumentAttachment->isCategoryApproval;
+            $inputSubcategory = $input['isSubcategoryApproval'] ?? $companyDocumentAttachment->isSubcategoryApproval;
+            $categoryEnabled = $this->isApprovalEnabled($inputCategory);
+            $subcategoryEnabled = $this->isApprovalEnabled($inputSubcategory);
+
+            if ($subcategoryEnabled && !$categoryEnabled) {
+                $input['isSubcategoryApproval'] = 0;
+                return $this->sendAPIError(
+                    trans('custom.subcategory_approval_requires_category_enabled'),
+                    500,
+                    ['isSubcategoryApproval' => [trans('custom.subcategory_approval_requires_category_enabled')]]
+                );
+            }
+            $disablingCategory = array_key_exists('isCategoryApproval', $input)
+                && !$this->isApprovalEnabled($input['isCategoryApproval']);
+            if ($disablingCategory && $subcategoryEnabled) {
+                return $this->sendAPIError(
+                    trans('custom.disable_subcategory_before_category'),
+                    500,
+                    ['isCategoryApproval' => [trans('custom.disable_subcategory_before_category')]]
+                );
+            }
+            if (!$categoryEnabled) {
+                $input['isSubcategoryApproval'] = 0;
+            }
+        }
+
+        if(($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']) || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])
+        || (isset($input['isSubcategoryApproval']) && $companyDocumentAttachment->isSubcategoryApproval != $input['isSubcategoryApproval'])) {
             $checkForActiveApprovalLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
                 ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
                 ->where('isActive', -1)
@@ -137,6 +166,25 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);
 
         return $this->sendResponse($companyDocumentAttachment->toArray(), trans('custom.update', ['attribute' => trans('custom.company_document_attachments')]));
+    }
+
+    /**
+     *
+     * @param mixed $value
+     * @return bool
+     */
+    private function isApprovalEnabled($value)
+    {
+        if ($value === null) {
+            return false;
+        }
+        if ($value === true || $value === -1 || $value === 1) {
+            return true;
+        }
+        if (is_string($value) && ($value === '1' || $value === 'true' || $value === '-1')) {
+            return true;
+        }
+        return false;
     }
 
     /**
