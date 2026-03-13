@@ -473,7 +473,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $id = $input['custInvoiceDirectAutoID'];
 
         $items = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
-            ->with(['uom_default', 'uom_issuing','item_by','delivery_order','sales_quotation'])
+            ->with(['uom_default', 'uom_issuing','item_by','delivery_order','sales_quotation','segment'])
             ->get();
 
         foreach ($items as $item) {
@@ -1289,7 +1289,7 @@ WHERE
                         if ($requestedQty >= $new['noQty']) {
 
                             $invDetail_arr['custInvoiceDirectAutoID'] = $custInvoiceDirectAutoID;
-
+                            $invDetail_arr['serviceLineSystemID'] = $new['serviceLineSystemID'];
                             $invDetail_arr['quotationMasterID'] = $new['quotationMasterID'];
                             $invDetail_arr['quotationDetailsID'] = $new['quotationDetailsID'];
                             $invDetail_arr['itemCodeSystem'] = $new['itemAutoID'];

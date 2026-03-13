@@ -677,13 +677,27 @@
                 @endif
         @else
             @if ($request->template <> 1 && !$request->line_invoiceDetails)
+                    @php
+                        // Show segment column only when:
+                        // - invoice is created from Sales Order (4) or Quotation (5)
+                        // - invoice is subscription (salesType == 3)
+                        // - and document master's isSegmentPolicyOn flag is ON (1).
+                        $showSegmentColumn = isset($request->isPerforma)
+                            && in_array($request->isPerforma, [4, 5])
+                            && isset($request->salesType)
+                            && $request->salesType == 3
+                            && isset($request->isSegmentPolicyOn)
+                            && $request->isSegmentPolicyOn == 1;
+                    @endphp
                     <table class="table table-bordered" style="width: 100%;">
                         <thead>
                         <tr class="theme-tr-head">
                             <th style="width:3%"></th>
                             <th style="width:10%;text-align: center">GL Code</th>
                             <th style="width:40%;text-align: center">GL Code Description</th>
-                            <th style="width:20%;text-align: center">Segment</th>
+                            @if($showSegmentColumn)
+                                <th style="width:20%;text-align: center">Segment</th>
+                            @endif
                             <th style="width:10%;text-align: center">UoM</th>
                             <th style="width:10%;text-align: center">QTY</th>
                             <th style="width:10%;text-align: center">Unit Rate</th>
@@ -699,7 +713,9 @@
                                 <td>{{$x}}</td>
                                 <td class="text-left">{{$item->glCode}}</td>
                                 <td class="text-left">{{$item->glCodeDes}}</td>
-                                <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
+                                @if($showSegmentColumn)
+                                    <td class="text-left">{{isset($item->department->ServiceLineDes)?$item->department->ServiceLineDes:''}}</td>
+                                @endif
                                 <td class="text-left">{{$item->unit->UnitShortCode}}</td>
                                 <td class="text-right">{{number_format($item->invoiceQty,2)}}</td>
                                 <td class="text-right">{{number_format($item->unitCost, $decimalPlaces)}}</td>

@@ -733,7 +733,7 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $detail = DB::select('SELECT
 	quotationdetails.*,
-	erp_quotationmaster.serviceLineSystemID,
+	COALESCE(NULLIF(quotationdetails.serviceLineSystemID, 0), erp_quotationmaster.serviceLineSystemID) AS serviceLineSystemID,
 	erp_quotationmaster.salesType,
 	"" AS isChecked,
 	"" AS noQty,

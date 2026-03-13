@@ -427,18 +427,9 @@
                 @endif
                 <th>{{ __('custom.uom') }}</th>
                 @php
-                    $hasSegmentData = false;
-                    if(isset($masterdata->detail) && $masterdata->detail->count() > 0) {
-                        foreach($masterdata->detail as $det) {
-                            if(($det->serviceLineSystemID != null && $det->serviceLineSystemID !== '') ||
-                               ($det->segment != null && isset($det->segment))) {
-                                $hasSegmentData = true;
-                                break;
-                            }
-                        }
-                    }
-                    $showSegmentColumn = (isset($masterdata->salesType) && $masterdata->salesType == 2 && isset($masterdata->isSegmentPolicyOn) && $masterdata->isSegmentPolicyOn) ||
-                                         (isset($masterdata->salesType) && $masterdata->salesType == 2 && $hasSegmentData);
+                    $showSegmentColumn = isset($masterdata->salesType)
+                        && $masterdata->salesType == 2
+                        && $masterdata->isSegmentPolicyOn;
                 @endphp
                 @if($showSegmentColumn)
                 <th>{{ __('custom.segments') }}</th>
