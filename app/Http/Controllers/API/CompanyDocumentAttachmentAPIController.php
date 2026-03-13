@@ -128,6 +128,17 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             $inputSubcategory = $input['isSubcategoryApproval'] ?? $companyDocumentAttachment->isSubcategoryApproval;
             $categoryEnabled = $this->isApprovalEnabled($inputCategory);
             $subcategoryEnabled = $this->isApprovalEnabled($inputSubcategory);
+            $categoryWasOn = $this->isApprovalEnabled($companyDocumentAttachment->isCategoryApproval);
+
+            $userDisablingCategory = array_key_exists('isCategoryApproval', $input)
+                && !$this->isApprovalEnabled($input['isCategoryApproval']);
+            if ($userDisablingCategory && $categoryWasOn && $subcategoryEnabled) {
+                return $this->sendAPIError(
+                    trans('custom.disable_subcategory_before_category'),
+                    500,
+                    ['isCategoryApproval' => [trans('custom.disable_subcategory_before_category')]]
+                );
+            }
 
             if ($subcategoryEnabled && !$categoryEnabled) {
                 $input['isSubcategoryApproval'] = 0;
@@ -135,15 +146,6 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                     trans('custom.subcategory_approval_requires_category_enabled'),
                     500,
                     ['isSubcategoryApproval' => [trans('custom.subcategory_approval_requires_category_enabled')]]
-                );
-            }
-            $disablingCategory = array_key_exists('isCategoryApproval', $input)
-                && !$this->isApprovalEnabled($input['isCategoryApproval']);
-            if ($disablingCategory && $subcategoryEnabled) {
-                return $this->sendAPIError(
-                    trans('custom.disable_subcategory_before_category'),
-                    500,
-                    ['isCategoryApproval' => [trans('custom.disable_subcategory_before_category')]]
                 );
             }
             if (!$categoryEnabled) {
