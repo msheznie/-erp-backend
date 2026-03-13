@@ -53,6 +53,22 @@ class ChartOfAccountService
             if (!empty($invalidCodes)) {
                 throw new \Exception('The Account Code not matching: ' . implode(', ', $invalidCodes));
             }
+
+            $assignedCodes = ChartOfAccount::where('primaryCompanySystemID', $companySystemID)
+                ->where('isApproved', 1)
+                ->where('isActive', 1)
+                ->whereHas('chartofaccount_assigned', function ($q) use ($companySystemID) {
+                    $q->where('companySystemID', $companySystemID)
+                        ->where('isActive', 1)
+                        ->where('isAssigned', -1);
+                })
+                ->pluck('AccountCode')
+                ->toArray();
+
+            $unassignedCodes = array_diff($accountCodeFilter, $assignedCodes);
+            if (!empty($unassignedCodes)) {
+                throw new \Exception('The account is not assigned: ' . implode(', ', $unassignedCodes));
+            }
         }
 
         $controlAccountYNFilter = null;
