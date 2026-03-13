@@ -91,6 +91,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Pagination\LengthAwarePaginator;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * Class CustomerMasterController
