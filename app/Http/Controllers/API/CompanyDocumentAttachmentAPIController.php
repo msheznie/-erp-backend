@@ -18,7 +18,6 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyDocumentAttachmentAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDocumentAttachmentAPIRequest;
 use App\Models\Company;
-use App\Models\ApprovalLevel;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentMaster;
 use App\Models\DocumentAccessRole;
@@ -136,16 +135,9 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         }
         $input = $result['input'];
 
-        if(($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']) || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])
-        || (isset($input['isSubcategoryApproval']) && $companyDocumentAttachment->isSubcategoryApproval != $input['isSubcategoryApproval'])) {
-            $checkForActiveApprovalLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
-                ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
-                ->where('isActive', -1)
-                ->first();
-
-            if ($checkForActiveApprovalLevel) {
-             return $this->sendError(trans('custom.there_is_an_approval_level_created_for_this_docume'), 500);
-            }
+        $approvalResult = $this->companyDocumentAttachmentService->validateApprovalConfigChange($companyDocumentAttachment, $input);
+        if (!$approvalResult['allowed']) {
+            return $this->sendError($approvalResult['message'], $approvalResult['status']);
         }
 
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);

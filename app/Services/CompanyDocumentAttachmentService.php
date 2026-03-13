@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ApprovalLevel;
 use App\Models\CompanyDocumentAttachment;
 
 class CompanyDocumentAttachmentService
@@ -53,6 +54,40 @@ class CompanyDocumentAttachmentService
         }
 
         return ['valid' => true, 'input' => $input];
+    }
+
+    /**
+     *
+     * @param CompanyDocumentAttachment $companyDocumentAttachment
+     * @param array $input
+     * @return array{allowed: bool, message?: string, status?: int}
+     */
+    public function validateApprovalConfigChange(CompanyDocumentAttachment $companyDocumentAttachment, array $input): array
+    {
+        $approvalChanged = $companyDocumentAttachment->isServiceLineApproval != ($input['isServiceLineApproval'] ?? $companyDocumentAttachment->isServiceLineApproval)
+            || $companyDocumentAttachment->isAmountApproval != ($input['isAmountApproval'] ?? $companyDocumentAttachment->isAmountApproval)
+            || $companyDocumentAttachment->isCategoryApproval != ($input['isCategoryApproval'] ?? $companyDocumentAttachment->isCategoryApproval)
+            || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])
+            || (isset($input['isSubcategoryApproval']) && $companyDocumentAttachment->isSubcategoryApproval != $input['isSubcategoryApproval']);
+
+        if (!$approvalChanged) {
+            return ['allowed' => true];
+        }
+
+        $activeLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
+            ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
+            ->where('isActive', -1)
+            ->first();
+
+        if ($activeLevel) {
+            return [
+                'allowed' => false,
+                'message' => trans('custom.there_is_an_approval_level_created_for_this_docume'),
+                'status' => self::ERROR_STATUS,
+            ];
+        }
+
+        return ['allowed' => true];
     }
 
     /**
