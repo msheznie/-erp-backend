@@ -25,6 +25,7 @@ use App\Models\DocumentAccessRole;
 use App\Models\DocumentAccessEmployee;
 use App\Models\Employee;
 use App\Repositories\CompanyDocumentAttachmentRepository;
+use App\Services\CompanyDocumentAttachmentService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
@@ -42,9 +43,15 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
     /** @var  CompanyDocumentAttachmentRepository */
     private $companyDocumentAttachmentRepository;
 
-    public function __construct(CompanyDocumentAttachmentRepository $companyDocumentAttachmentRepo)
-    {
+    /** @var  CompanyDocumentAttachmentService */
+    private $companyDocumentAttachmentService;
+
+    public function __construct(
+        CompanyDocumentAttachmentRepository $companyDocumentAttachmentRepo,
+        CompanyDocumentAttachmentService $companyDocumentAttachmentService
+    ) {
         $this->companyDocumentAttachmentRepository = $companyDocumentAttachmentRepo;
+        $this->companyDocumentAttachmentService = $companyDocumentAttachmentService;
     }
 
     /**
@@ -123,35 +130,11 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        if ((int) $companyDocumentAttachment->documentSystemID === 3) {
-            $inputCategory = $input['isCategoryApproval'] ?? $companyDocumentAttachment->isCategoryApproval;
-            $inputSubcategory = $input['isSubcategoryApproval'] ?? $companyDocumentAttachment->isSubcategoryApproval;
-            $categoryEnabled = $this->isApprovalEnabled($inputCategory);
-            $subcategoryEnabled = $this->isApprovalEnabled($inputSubcategory);
-            $categoryWasOn = $this->isApprovalEnabled($companyDocumentAttachment->isCategoryApproval);
-
-            $userDisablingCategory = array_key_exists('isCategoryApproval', $input)
-                && !$this->isApprovalEnabled($input['isCategoryApproval']);
-            if ($userDisablingCategory && $categoryWasOn && $subcategoryEnabled) {
-                return $this->sendAPIError(
-                    trans('custom.disable_subcategory_before_category'),
-                    500,
-                    ['isCategoryApproval' => [trans('custom.disable_subcategory_before_category')]]
-                );
-            }
-
-            if ($subcategoryEnabled && !$categoryEnabled) {
-                $input['isSubcategoryApproval'] = 0;
-                return $this->sendAPIError(
-                    trans('custom.subcategory_approval_requires_category_enabled'),
-                    500,
-                    ['isSubcategoryApproval' => [trans('custom.subcategory_approval_requires_category_enabled')]]
-                );
-            }
-            if (!$categoryEnabled) {
-                $input['isSubcategoryApproval'] = 0;
-            }
+        $result = $this->companyDocumentAttachmentService->validateAndNormalizeGrvApprovalUpdate($companyDocumentAttachment, $input);
+        if (!$result['valid']) {
+            return $this->sendAPIError($result['message'], $result['status'], $result['errors']);
         }
+        $input = $result['input'];
 
         if(($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']) || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])
         || (isset($input['isSubcategoryApproval']) && $companyDocumentAttachment->isSubcategoryApproval != $input['isSubcategoryApproval'])) {
@@ -168,25 +151,6 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);
 
         return $this->sendResponse($companyDocumentAttachment->toArray(), trans('custom.update', ['attribute' => trans('custom.company_document_attachments')]));
-    }
-
-    /**
-     *
-     * @param mixed $value
-     * @return bool
-     */
-    private function isApprovalEnabled($value)
-    {
-        if ($value === null) {
-            return false;
-        }
-        if ($value === true || $value === -1 || $value === 1) {
-            return true;
-        }
-        if (is_string($value) && ($value === '1' || $value === 'true' || $value === '-1')) {
-            return true;
-        }
-        return false;
     }
 
     /**
