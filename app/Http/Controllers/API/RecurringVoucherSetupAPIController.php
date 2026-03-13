@@ -186,12 +186,23 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         if(!$company)
             return $this->sendError(trans('custom.company_details_not_found'));
 
+        $startDate = $this->parseRequestDate($input['startDate']);
+        $endDate = $this->parseRequestDate($input['endDate']);
+        $processDate = $this->parseRequestDate($input['processDate']);
 
-        if(!isset($input['companyFinanceYearID']))
+        $financeYearForStart = CompanyFinanceYear::getActiveFinanceYearByDate($input['companySystemID'], $startDate);
+        $financeYearForEnd = CompanyFinanceYear::getActiveFinanceYearByDate($input['companySystemID'], $endDate);
+
+        if (!$financeYearForStart || !$financeYearForEnd) {
             return $this->sendError(trans('custom.company_finance_year_not_found'));
+        }
+        $input['companyFinanceYearID'] = $financeYearForStart->companyFinanceYearID;
+
+        // if(!isset($input['companyFinanceYearID']))
+        //     return $this->sendError(trans('custom.company_finance_year_not_found'));
 
 
-        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->where('companySystemID', $input['companySystemID'])->first();
+        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $financeYearForStart->companyFinanceYearID)->where('companySystemID', $input['companySystemID'])->first();
 
         if ($companyfinanceyear) {
             $startYear = $companyfinanceyear['bigginingDate'];
@@ -1119,5 +1130,17 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         AuditTrial::createAuditTrial($rrvMasterData->documentSystemID,$rrvMasterAutoId,$input['reopenComments'],'Reopened');
 
         return $this->sendResponse($rrvMasterData->toArray(), trans('custom.rrv_reopened_successfully'));
+    }
+
+    private function parseRequestDate($date)
+    {
+        if ($date instanceof Carbon) {
+            return $date;
+        }
+        $parsed = Carbon::createFromFormat('d/m/Y', $date);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+        return new Carbon($date);
     }
 }
