@@ -499,7 +499,8 @@ class QuotationMaster extends Model
         'leadTime',
         'isBulkItemJobRun',
         'isDelegation',
-        'salesType'
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**
@@ -600,7 +601,8 @@ class QuotationMaster extends Model
         'is_return' => 'boolean',
         'leadTime' => 'float',
         'isBulkItemJobRun' => 'integer',
-        'salesType' => 'integer'
+        'salesType' => 'integer',
+        'isSegmentPolicyOn' => 'boolean'
     ];
 
     /**

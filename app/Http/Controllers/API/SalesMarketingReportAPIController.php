@@ -1970,7 +1970,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $headerSegment = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
                 $headerSegmentID = isset($data['serviceLineSystemID'])?$data['serviceLineSystemID']:null;
                 
-                $useDetailSegments = $isSegmentPolicyOn && isset($data['salesType']) && $data['salesType'] == 2;
+                $useDetailSegments = $isSegmentPolicyOn && $data['isSegmentPolicyOn'] && isset($data['salesType']) && $data['salesType'] == 2;
                 
                 if($useDetailSegments && isset($data['detail']) && count($data['detail'])> 0){
                     $segmentGroups = [];
