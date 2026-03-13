@@ -754,9 +754,23 @@ class JournalVoucherService
             }
 
             DB::beginTransaction();
-            
-            $rrvSchedule->update(['isInProccess' => 1]);
 
+            $financeYearForStart = CompanyFinanceYear::getActiveFinanceYearByDate($rrvSchedule->master->companySystemID, $rrvSchedule->processDate);
+
+            if($financeYearForStart){
+                $financePeriod = CompanyFinancePeriod::where('companySystemID',$rrvSchedule->master->companySystemID)
+                                ->where('companyFinanceYearID',$financeYearForStart->companyFinanceYearID)
+                                ->whereMonth('dateFrom',$rrvSchedule->processDate->month)
+                                ->whereMonth('dateTo',$rrvSchedule->processDate->month)
+                                ->where('departmentSystemID',5)
+                                ->first();
+                if($financePeriod){                
+                    $rrvSchedule->update(['companyFinanceYearID' => $financeYearForStart->companyFinanceYearID, 'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID]);
+                }
+            }
+            $rrvSchedule->update(['isInProccess' => 1]);
+            $rrvSchedule = RecurringVoucherSetupSchedule::where('rrvSetupScheduleAutoID', $rrvSetupScheduleAutoID)
+                                                 ->with('master')->first();
             $request = new Request();
             $request->replace([
                 'companySystemID' => $rrvSchedule->master->companySystemID,

@@ -4372,6 +4372,8 @@ return
     'recurring_voucher_amend_saved_successfully' => 'تم حفظ تعديل الإيصال المتكرر بنجاح',
     'recurring_voucher_confirmed_successfully' => 'تم تأكيد الإيصال المتكرر بنجاح',
     'recurring_voucher_created_successfully' => 'تم إنشاء الإيصال المتكرر بنجاح',
+    'recurring_voucher_start_date_outside_finance_year' => 'تاريخ البدء لا يقع ضمن أي سنة مالية للشركة (تاريخ البدء – تاريخ الانتهاء).',
+    'recurring_voucher_end_date_outside_finance_year' => 'تاريخ الانتهاء لا يقع ضمن أي سنة مالية للشركة (تاريخ البدء – تاريخ الانتهاء).',
     'recurring_voucher_not_found' => 'الإيصال المتكرر غير موجود',
     'recurring_voucher_not_found_1' => 'الإيصال المتكرر غير موجود',
     'recurring_voucher_setup_detail_deleted_successfull' => 'تم حذف تفاصيل إعداد الإيصال المتكرر بنجاح',

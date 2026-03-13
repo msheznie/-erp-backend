@@ -75,7 +75,8 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 
                 for($i = 0; $i < $noOfDayMonthYear; $i++){
                     $processDate = $i == 0 ? $processDate : $processDate->addMonth();
-                    $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)->first();
+                    //$financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)->first();
+                    $financeYear = CompanyFinanceYear::getActiveFinanceYearByDate($recurringVoucher->companySystemID, $processDate);
 
                     $financePeriod = CompanyFinancePeriod::where('companySystemID',$recurringVoucher->companySystemID)
                         ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
