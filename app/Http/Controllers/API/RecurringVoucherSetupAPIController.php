@@ -39,7 +39,6 @@ use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
-
 /**
  * Class RecurringVoucherSetupController
  * @package App\Http\Controllers\API
@@ -148,7 +147,6 @@ class RecurringVoucherSetupAPIController extends AppBaseController
     public function store(CreateRecurringVoucherSetupAPIRequest $request)
     {
         $input = $request->all();
-
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($input, [
@@ -186,13 +184,14 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         if(!$company)
             return $this->sendError(trans('custom.company_details_not_found'));
 
-        $startDate = $this->parseRequestDate($input['startDate']);
-        $endDate = $this->parseRequestDate($input['endDate']);
-        $processDate = $this->parseRequestDate($input['processDate']);
+        $startDate = Helper::parseRequestDate($input['startDate']);
+        $endDate = Helper::parseRequestDate($input['endDate']);
+        $processDate = Helper::parseRequestDate($input['processDate']);
 
-        $financeYearForStart = CompanyFinanceYear::getActiveFinanceYearByDate($input['companySystemID'], $startDate);
-        $financeYearForEnd = CompanyFinanceYear::getActiveFinanceYearByDate($input['companySystemID'], $endDate);
+        $financeYearForStart = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $startDate);
+        $financeYearForEnd = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $endDate);
 
+        
         if (!$financeYearForStart || !$financeYearForEnd) {
             return $this->sendError(trans('custom.company_finance_year_not_found'));
         }
@@ -1132,15 +1131,4 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         return $this->sendResponse($rrvMasterData->toArray(), trans('custom.rrv_reopened_successfully'));
     }
 
-    private function parseRequestDate($date)
-    {
-        if ($date instanceof Carbon) {
-            return $date;
-        }
-        $parsed = Carbon::createFromFormat('d/m/Y', $date);
-        if ($parsed !== false) {
-            return $parsed;
-        }
-        return new Carbon($date);
-    }
 }

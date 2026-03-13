@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\helper\StatusService;
+use App\Models\CompanyFinanceYear;
 use App\Models\RecurringVoucherSetup;
 use App\Repositories\BaseRepository;
 use App\helper\Helper;
@@ -139,5 +140,15 @@ class RecurringVoucherSetupRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function getActiveFinanceYearByDate($companySystemID, $date)
+    {
+        return CompanyFinanceYear::where('companySystemID', $companySystemID)
+            ->whereDate('bigginingDate', '<=', $date)
+            ->whereDate('endingDate', '>=', $date)
+            ->where('isActive', -1)
+            ->where('isDeleted', 0)
+            ->first();
     }
 }

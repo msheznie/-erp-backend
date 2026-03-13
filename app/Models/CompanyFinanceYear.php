@@ -273,14 +273,5 @@ class CompanyFinanceYear extends Model
             ->first();
     }
 
-    public static function getActiveFinanceYearByDate($companySystemID, $date)
-    {
-        return self::where('companySystemID', $companySystemID)
-            ->whereDate('bigginingDate', '<=', $date)
-            ->whereDate('endingDate', '>=', $date)
-            ->where('isActive', -1)
-            ->where('isDeleted', 0)
-            ->first();
-    }
 
 }
