@@ -6327,9 +6327,11 @@ class SRMService
         }
         return ['status' => true, 'message' => 'Success'];
     }
+    
     public function getCurrentServerDateTime()
     {
-        $currentdate = Carbon::now();
+        $timezone = config('app.timezone');
+        $currentdate = Carbon::now($timezone)->format('Y-m-d H:i:s');
 
         return [
             'success' => true,
