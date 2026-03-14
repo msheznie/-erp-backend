@@ -99,7 +99,8 @@ class QuotationMasterRefferedbackRepository extends BaseRepository
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'salesType'
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**

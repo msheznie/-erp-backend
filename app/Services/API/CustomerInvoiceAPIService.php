@@ -850,6 +850,8 @@ class CustomerInvoiceAPIService extends AppBaseController
         $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
         $input['documentType'] = 11;
 
+        $input['isSegmentPolicyOn'] = Helper::checkPolicy($input['companySystemID'], 106) ? 1 : 0;
+
         if(!isset($input['isAutoCreateDocument'])){
             $input['createdUserID'] = Helper::getEmployeeID();
             $input['modifiedUser'] = Helper::getEmployeeID();
