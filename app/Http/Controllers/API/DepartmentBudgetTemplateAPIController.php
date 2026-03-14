@@ -60,9 +60,10 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
             return $this->sendError(trans('custom.budget_template_not_found'));
         }
 
-        // Check if department already has an active template of the same type
-        $hasActiveTemplateOfType = $this->departmentBudgetTemplateRepository
-            ->hasActiveTemplateOfType($input['departmentSystemID'], $budgetTemplate->type);
+        // Check if department already has a template of the same type (do not allow duplicate type)
+        if ($this->departmentBudgetTemplateRepository->hasTemplateOfType($input['departmentSystemID'], $budgetTemplate->type)) {
+            return $this->sendError(trans('custom.budget_template_type_already_assigned_to_department'));
+        }
 
         $input['isActive'] = 0;
         // // If there's already an active template of this type, set new template as inactive
