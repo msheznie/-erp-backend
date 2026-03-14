@@ -360,10 +360,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             if (count($getSupplierAssignedData) > 0) {
                 foreach ($getSupplierAssignedData as $val) {
                     $token = md5(Carbon::now()->format('YmdHisu'));
-                    $name = (!is_null($val['supplierAssigned']['supplierName'])) ? $val['supplierAssigned']['supplierName'] : $val['supplier_name'];
-                    $email = (!is_null($val['supplierAssigned']['supEmail'])) ? $val['supplierAssigned']['supEmail'] : $val['supplier_email'];
-                    $regNo = (!is_null($val['supplierAssigned']['registrationNumber'])) ? $val['supplierAssigned']['registrationNumber'] : $val['registration_number'];
-                    $isBidTender =  (!is_null($val['supplierAssigned']['registrationNumber'])) ? 0 : 1;
+                    $name = data_get($val, 'supplierAssigned.supplierName') ?? $val['supplier_name'];
+                    $email = data_get($val, 'supplierAssigned.supEmail') ?? $val['supplier_email'];
+                    $regNo = data_get($val, 'supplierAssigned.registrationNumber') ?? $val['registration_number'];
+                    $isBidTender = data_get($val, 'supplierAssigned.registrationNumber') !== null ? 0 : 1;
 
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('email', $email)
@@ -446,10 +446,16 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         try {
             $token = md5(Carbon::now()->format('YmdHisu'));
             $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
-            $name = (!is_null($getSupplierAssignedData['supplierAssigned']['supplierName'])) ? $getSupplierAssignedData['supplierAssigned']['supplierName'] : $getSupplierAssignedData['supplier_name'];
-            $email = (!is_null($getSupplierAssignedData['supplierAssigned']['supEmail'])) ? $getSupplierAssignedData['supplierAssigned']['supEmail'] : $getSupplierAssignedData['supplier_email'];
-            $regNo = (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? $getSupplierAssignedData['supplierAssigned']['registrationNumber'] : $getSupplierAssignedData['registration_number'];
-            $isBidTender =  (!is_null($getSupplierAssignedData['supplierAssigned']['registrationNumber'])) ? 0 : 1;
+            $name  = optional($getSupplierAssignedData->supplierAssigned)->supplierName
+                ?? $getSupplierAssignedData->supplier_name;
+
+            $email = optional($getSupplierAssignedData->supplierAssigned)->supEmail
+                ?? $getSupplierAssignedData->supplier_email;
+
+            $regNo = optional($getSupplierAssignedData->supplierAssigned)->registrationNumber
+                ?? $getSupplierAssignedData->registration_number;
+
+            $isBidTender = optional($getSupplierAssignedData->supplierAssigned)->registrationNumber ? 0 : 1;
             $isExist = SupplierRegistrationLink::select('id','STATUS', 'token')
                 ->where('company_id', $companySystemId)
                 ->where('email', $email)
