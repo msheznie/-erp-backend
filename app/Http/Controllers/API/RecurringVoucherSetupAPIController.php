@@ -374,6 +374,19 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         if ($prevRrvConfirmedYN == 0 && $rrvConfirmedYN == 1) {
 
+
+            $startDate = Helper::parseRequestDate($input['startDate']);
+            $endDate = Helper::parseRequestDate($input['endDate']);
+            $processDate = Helper::parseRequestDate($input['processDate']);
+    
+            $financeYearForStart = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $startDate);
+            $financeYearForEnd = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $endDate);
+    
+            
+            if (!$financeYearForStart || !$financeYearForEnd) {
+                return $this->sendError(trans('custom.company_finance_year_not_found'));
+            }
+
             $validator = \Validator::make($input, [
                 'companyFinanceYearID' => 'required|numeric|min:1',
                 'startDate' => 'required',
