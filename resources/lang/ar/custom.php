@@ -9888,4 +9888,8 @@ return
     'category_approval_mixed_category_blocked' => 'لا يمكن إضافة فئات أصناف متعددة عند تفعيل الموافقة حسب الفئة.',
     'subcategory_approval_requires_category_enabled' => 'لا يمكن تفعيل الإعتماد بناءاً على الفئة الفرعية لأن الإعتماد بناءاً على الفئة غير مفعّل. يرجى تفعيل الإعتماد بناءاً على الفئة أولاً.',
     'disable_subcategory_before_category' => 'لا يمكن إلغاء تفعيل الإعتماد بناءاً على الفئة لأن الإعتماد بناءاً على الفئة الفرعية مفعّل حالياً. يرجى إلغاء تفعيل الإعتماد بناءاً على الفئة الفرعية أولاً.',
+    'rolls_created_cannot_edit' => 'تم إنشاء الأدوار، لا يمكن التعديل.',
+    'subcategory_is_required_for_grv_approval' => 'الفئة الفرعية مطلوبة عند تفعيل الموافقة حسب الفئة والفقرة الفرعية لـ GRV.',
+    'approval_setup_uses_this_category_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
+    'approval_setup_uses_this_subcategory_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل الفرعية هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
 ];
