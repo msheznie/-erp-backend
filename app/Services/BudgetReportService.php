@@ -108,7 +108,7 @@ class BudgetReportService
                 else {
                     $commitments = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)->where('approved',-1)
-                        ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->endDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
@@ -120,7 +120,7 @@ class BudgetReportService
                     $currentOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)
                         ->where('approved',-1)
-                        ->where('budgetYear',Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear',Carbon::parse($currentFinanicalYear->endDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
@@ -130,7 +130,7 @@ class BudgetReportService
                     $prvOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)
                         ->where('approved',-1)
-                        ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->endDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
                         })
@@ -142,7 +142,7 @@ class BudgetReportService
                         ->Where('erp_purchaseordermaster.approved', -1)
                         ->join('erp_grvdetails', 'erp_grvdetails.purchaseOrderMastertID', '=', 'erp_purchaseordermaster.purchaseOrderID') // Join the grv_details table
                         ->join('erp_grvmaster', 'erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID') // Ensure the GRV master exists
-                        ->where('budgetYear','<', Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear','<', Carbon::parse($currentFinanicalYear->endDate)->year)
                         ->where('erp_grvmaster.approved',-1)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
@@ -157,7 +157,7 @@ class BudgetReportService
 
                     $grvTotalAmountCurrYear = ProcumentOrder::with(['detail'])->whereIn('erp_purchaseordermaster.serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
                         ->Where('erp_purchaseordermaster.approved', -1)
-                        ->where('budgetYear',Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear',Carbon::parse($currentFinanicalYear->endDate)->year)
                         ->join('erp_grvdetails', 'erp_grvdetails.purchaseOrderMastertID', '=', 'erp_purchaseordermaster.purchaseOrderID') // Join the grv_details table
                         ->join('erp_grvmaster', 'erp_grvmaster.grvAutoID', '=', 'erp_grvdetails.grvAutoID') // Ensure the GRV master exists
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
