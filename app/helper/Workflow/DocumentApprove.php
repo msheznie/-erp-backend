@@ -85,7 +85,7 @@ class DocumentApprove
     {
 
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
-
+        
         $dataBase = (isset($input['db'])) ? $input['db'] : "";
         $budgetBlockOveride = (isset($input['budgetBlockOveride'])) ? $input['budgetBlockOveride'] : false;
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
@@ -1446,48 +1446,55 @@ class DocumentApprove
 
                             if ($input["documentSystemID"] == 61) { //create fixed asset
                                 $fixeAssetDetail = InventoryReclassificationDetail::with(['master'])->where('inventoryreclassificationID', $input["documentSystemCode"])->get();
-                                $qtyRangeArr = [];
-                                if ($fixeAssetDetail) {
+                                if ($fixeAssetDetail && $fixeAssetDetail->count() > 0) {
                                     $lastSerialNumber = 1;
                                     $lastSerial = FixedAssetMaster::selectRaw('MAX(serialNo) as serialNo')->first();
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
+                                    //Due to the large number of records, we are using chunking to insert the data in batches of 500 records at a time.
+                                    $insertBatch = [];
+                                    $chunkSize = 500;
                                     foreach ($fixeAssetDetail as $val) {
-                                        if ($val["currentStockQty"]) {
-                                            $qtyRange = range(1, $val["currentStockQty"]);
-                                            if ($qtyRange) {
-                                                foreach ($qtyRange as $qty) {
-                                                    $documentCode = ($val["master"]["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
-                                                    $data["departmentID"] = 'AM';
-                                                    $data["departmentSystemID"] = null;
-                                                    $data["serviceLineSystemID"] = $val["master"]["serviceLineSystemID"];
-                                                    $data["serviceLineCode"] = $val["master"]["serviceLineCode"];
-                                                    $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
-                                                    $data["docOrigin"] = $val["master"]["documentCode"];
-                                                    $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
-                                                    $data["companySystemID"] = $val["master"]["companySystemID"];
-                                                    $data["companyID"] = $val["master"]["companyID"];
-                                                    $data["documentSystemID"] = 22;
-                                                    $data["documentID"] = 'FA';
-                                                    $data["serialNo"] = $lastSerialNumber;
-                                                    $data["itemCode"] = $val["itemSystemCode"];
-                                                    $data["faCode"] = $documentCode;
-                                                    $data["assetDescription"] = $val["itemDescription"];
-                                                    $data["COSTUNIT"] = $val["unitCostLocal"];
-                                                    $data["costUnitRpt"] = $val["unitCostRpt"];
-                                                    $data["assetType"] = 1;
-                                                    $data['createdPcID'] = gethostname();
-                                                    $data['createdUserID'] = Helper::getEmployeeID();
-                                                    $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
-                                                    $data["timestamp"] = date('Y-m-d H:i:s');
-                                                    $qtyRangeArr[] = $data;
-                                                    $lastSerialNumber++;
-                                                }
+                                        $qty = (int)($val["currentStockQty"] ?? 0);
+                                        for ($i = 0; $i < $qty; $i++) {
+                                            $documentCode = ($val["master"]["companyID"] . '\\FA' . str_pad($lastSerialNumber, 8, '0', STR_PAD_LEFT));
+                                            $data = [];
+                                            $data["departmentID"] = 'AM';
+                                            $data["departmentSystemID"] = null;
+                                            $data["serviceLineSystemID"] = $val["master"]["serviceLineSystemID"];
+                                            $data["serviceLineCode"] = $val["master"]["serviceLineCode"];
+                                            $data["docOriginSystemCode"] = $val["inventoryreclassificationID"];
+                                            $data["docOrigin"] = $val["master"]["documentCode"];
+                                            $data["docOriginDetailID"] = $val["inventoryReclassificationDetailID"];
+                                            $data["companySystemID"] = $val["master"]["companySystemID"];
+                                            $data["companyID"] = $val["master"]["companyID"];
+                                            $data["documentSystemID"] = 22;
+                                            $data["documentID"] = 'FA';
+                                            $data["serialNo"] = $lastSerialNumber;
+                                            $data["itemCode"] = $val["itemSystemCode"];
+                                            $data["faCode"] = $documentCode;
+                                            $data["assetDescription"] = $val["itemDescription"];
+                                            $data["COSTUNIT"] = $val["unitCostLocal"];
+                                            $data["costUnitRpt"] = $val["unitCostRpt"];
+                                            $data["assetType"] = 1;
+                                            $data['createdPcID'] = gethostname();
+                                            $data['createdUserID'] = Helper::getEmployeeID();
+                                            $data['createdUserSystemID'] = Helper::getEmployeeSystemID();
+                                            $data["timestamp"] = date('Y-m-d H:i:s');
+
+                                            $insertBatch[] = $data;
+                                            $lastSerialNumber++;
+
+                                            if (count($insertBatch) >= $chunkSize) {
+                                                FixedAssetMaster::insert($insertBatch);
+                                                $insertBatch = [];
                                             }
                                         }
                                     }
-                                    $fixedAsset = FixedAssetMaster::insert($qtyRangeArr);
+                                    if (!empty($insertBatch)) {
+                                        FixedAssetMaster::insert($insertBatch);
+                                    }
                                 }
                             }
 
