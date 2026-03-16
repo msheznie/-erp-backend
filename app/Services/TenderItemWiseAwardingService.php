@@ -955,6 +955,37 @@ class TenderItemWiseAwardingService
             ];
         }
 
+        /**
+         * If no schedule-wise LOI/LOA email is already saved in tender_custom_emails,
+         * pull Subject / Body / CC / Attachment from Email configuration.
+         */
+        $existingCustom = TenderCustomEmail::getSupplierCustomEmailBody(
+            $tenderId,
+            $supplierId,
+            self::DOCUMENT_CODE_LOI_LOA
+        );
+        if (!$existingCustom) {
+            $configResult = $this->getTenderRfxEmailData($tenderId, $companyId, 'loi_loa', null);
+            if (isset($configResult['success']) && $configResult['success'] === true) {
+                $configData = $configResult['data'] ?? [];
+                if (!empty($configData['email_subject'])) {
+                    $emailSubject = $configData['email_subject'];
+                }
+                if (!empty($configData['email_body'])) {
+                    $emailBody = $configData['email_body'];
+                }
+                if (!empty($configData['cc_emails']) && is_array($configData['cc_emails'])) {
+                    $ccEmails = $configData['cc_emails'];
+                }
+                if (!$attachmentId && !empty($configData['attachments']) && is_array($configData['attachments'])) {
+                    $firstAtt = $configData['attachments'][0];
+                    if (!empty($firstAtt['attachmentID'])) {
+                        $attachmentId = $firstAtt['attachmentID'];
+                    }
+                }
+            }
+        }
+
         $attachmentList = [];
         if ($attachmentId) {
             $docAtt = DocumentAttachments::find($attachmentId);
