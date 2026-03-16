@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ApprovalLevel;
 use App\Models\ApprovalRole;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\FinanceItemcategorySubAssigned;
 
 class ApprovalLevelService
 {
@@ -111,5 +112,32 @@ class ApprovalLevelService
             ->where('subcategoryID', $subcategoryID)
             ->where('companySystemID', $companySystemID)
             ->exists();
+    }
+
+    /**
+     * Get assigned and active subcategories for a company + main category.
+     *
+     * @param int $companySystemID
+     * @param int $categoryID
+     * @return array<int, array{value:int,label:string}>
+     */
+    public function getAssignedActiveSubcategories(int $companySystemID, int $categoryID): array
+    {
+        $assigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+            ->where('mainItemCategoryID', $categoryID)
+            ->where('isAssigned', -1)
+            ->where('isActive', 1)
+            ->whereHas('finance_item_category_sub', function ($q) {
+                $q->where('isActive', 1);
+            })
+            ->with('finance_item_category_sub:itemCategorySubID,categoryDescription')
+            ->get();
+
+        return $assigned->map(function ($row) {
+            return [
+                'value' => $row->itemCategorySubID,
+                'label' => $row->finance_item_category_sub ? $row->finance_item_category_sub->categoryDescription : $row->categoryDescription,
+            ];
+        })->values()->toArray();
     }
 }

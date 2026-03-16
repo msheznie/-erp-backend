@@ -316,29 +316,14 @@ class ApprovalLevelAPIController extends AppBaseController
 
     public function getSubcategoriesByCategory(Request $request)
     {
-        $companySystemID = $request->input('companySystemID');
-        $categoryID = $request->input('categoryID');
+        $companySystemID = (int) $request->input('companySystemID');
+        $categoryID = (int) $request->input('categoryID');
 
-        if (empty($companySystemID) || empty($categoryID)) {
+        if ($companySystemID <= 0 || $categoryID <= 0) {
             return $this->sendResponse([], trans('custom.retrieve', ['attribute' => trans('custom.record')]));
         }
 
-        $assigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
-            ->where('mainItemCategoryID', $categoryID)
-            ->where('isAssigned', -1)
-            ->where('isActive', 1)
-            ->whereHas('finance_item_category_sub', function ($q) {
-                $q->where('isActive', 1);
-            })
-            ->with('finance_item_category_sub:itemCategorySubID,categoryDescription')
-            ->get();
-
-        $subcategories = $assigned->map(function ($row) {
-            return [
-                'value' => $row->itemCategorySubID,
-                'label' => $row->finance_item_category_sub ? $row->finance_item_category_sub->categoryDescription : $row->categoryDescription,
-            ];
-        })->values()->toArray();
+        $subcategories = $this->approvalLevelService->getAssignedActiveSubcategories($companySystemID, $categoryID);
 
         return $this->sendResponse($subcategories, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
