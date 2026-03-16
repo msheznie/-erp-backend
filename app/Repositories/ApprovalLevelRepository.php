@@ -38,6 +38,7 @@ class ApprovalLevelRepository extends BaseRepository
         'valueTo',
         'isCategoryWiseApproval',
         'categoryID',
+        'subcategoryID',
         'isActive',
         'timeStamp'
     ];

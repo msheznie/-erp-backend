@@ -18,6 +18,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\Company;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\FinanceItemcategorySubAssignedRepository;
+use App\Services\ApprovalLevelService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
@@ -35,11 +36,14 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 {
     /** @var  FinanceItemcategorySubAssignedRepository */
     private $financeItemcategorySubAssignedRepository;
+    /** @var ApprovalLevelService */
+    private $approvalLevelService;
     use AuditLogsTrait;
 
-    public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
+    public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo, ApprovalLevelService $approvalLevelService)
     {
         $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+        $this->approvalLevelService = $approvalLevelService;
     }
 
     /**
@@ -167,6 +171,14 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             if (empty($financeItemCategorySubAssigned)) {
                 return $this->sendError(trans('custom.company_assigned_not_found'));
             }
+
+            $newAssigned = array_key_exists('isAssigned', $input) ? $input['isAssigned'] : null;
+            $newActive = array_key_exists('isActive', $input) ? $input['isActive'] : null;
+            $willUnassignOrInactivate = ($newAssigned !== null && $newAssigned != -1 && $newAssigned != 1) || ($newActive !== null && !$newActive);
+            if ($willUnassignOrInactivate && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->itemCategorySubID, (int) $financeItemCategorySubAssigned->companySystemID)) {
+                return $this->sendError(trans('custom.approval_setup_uses_this_subcategory_cannot_inactivate'), 422);
+            }
+
             $previousValue = $financeItemCategorySubAssigned->toArray();
 
             foreach ($input as $key => $value) {
