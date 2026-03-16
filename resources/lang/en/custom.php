@@ -9056,7 +9056,7 @@ return
     'trial_balance_details' => 'trial_balance_details',
     'inter_company_stock_transfer' => 'inter_company_stock_transfer',
     'asset_register_detail' => 'asset_register_detail',
-    'asset_register_detail_3' => 'asset_register_detail_3',
+    'asset_register_detail_3' => 'Asset Register Detail 3 Report',
     'asset_addition' => 'asset_addition',
     'asset_depreciation_register' => 'asset_depreciation_register',
     'asset_cwip' => 'asset_cwip',
@@ -10016,6 +10016,10 @@ return
     'category_approval_mixed_category_blocked' => 'Multiple item categories cannot be added when Category-Based Approval is enabled.',
     'subcategory_approval_requires_category_enabled' => 'Subcategory-Based Approval cannot be enabled because Category-Based Approval is not enabled. Please enable Category-Based Approval first.',
     'disable_subcategory_before_category' => 'Category-Based Approval cannot be disabled because Subcategory-Based Approval is currently enabled. Please disable Subcategory-Based Approval first.',
+
+    // Asset Register Export Queue
+    'asset_register_report_has_been_sent_to_queue' => 'Success! Asset Register report has been sent to queue',
+    'asset_register_report_generated' => 'Asset Register Report has been generated.',
     'rolls_created_cannot_edit' => 'Roles created. Cannot edit.',
     'subcategory_is_required_for_grv_approval' => 'Subcategory is required when Category and Subcategory approval are enabled for GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'An active approval setup uses this Item Finance Category. Cannot inactivate or unassign.',

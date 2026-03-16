@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
 use App\Models\AppearanceSettings;
 
@@ -66,15 +67,32 @@ class EmailForQueuing extends Mailable implements ShouldQueue
                             ],
                         ],
                     ]);
-        if($this->mailAttachmentList && is_array($this->mailAttachmentList)) {
-            foreach ($this->mailAttachmentList as  $key => $attachment) {
-                $mail->attach($attachment, array('as' => $key));
+        if ($this->mailAttachmentList && is_array($this->mailAttachmentList)) {
+            foreach ($this->mailAttachmentList as $key => $attachment) {
+                $mail->attach($attachment, ['as' => $key]);
             }
         }
-        if($this->mailAttachment){
-           $mail->attach($this->mailAttachment);
-       }
 
-       return $mail;
+        if ($this->mailAttachment) {
+            if (file_exists($this->mailAttachment)) {
+                $mail->attach($this->mailAttachment);
+            } else {
+                try {
+                    $storage = Storage::disk('s3');
+                    if ($storage->exists($this->mailAttachment)) {
+                        $content = $storage->get($this->mailAttachment);
+                        $filename = basename($this->mailAttachment);
+                        $mail->attachData($content, $filename);
+                    }
+                } catch (\Throwable $e) {
+                    Log::warning('EmailForQueuing: S3 attachment failed', [
+                        'path' => $this->mailAttachment,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        }
+
+        return $mail;
     }
 }
