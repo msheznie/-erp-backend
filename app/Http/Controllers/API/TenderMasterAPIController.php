@@ -4470,7 +4470,7 @@ class TenderMasterAPIController extends AppBaseController
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = [];
                     $dataEmail['ccEmail'] = [];
-                    $sendEmail = Email::sendEmailErp($dataEmail);
+                    $sendEmail = Email::sendEmailSRM($dataEmail);
                 }
             }
 
@@ -4562,7 +4562,7 @@ class TenderMasterAPIController extends AppBaseController
                     'attachmentList' => [],
                     'ccEmail' => [],
                 ];
-                \Email::sendEmailErp($dataEmail);
+                \Email::sendEmailSRM($dataEmail);
             }
  
             $tender->final_tender_award_email = 1;
