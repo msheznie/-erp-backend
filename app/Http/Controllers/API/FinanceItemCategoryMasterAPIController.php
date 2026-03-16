@@ -22,6 +22,7 @@ use App\Models\YesNoSelection;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\FinanceItemCategorySub;
 use App\Repositories\FinanceItemCategoryMasterRepository;
+use App\Services\ApprovalLevelService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -44,11 +45,16 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 {
     /** @var  FinanceItemCategoryMasterRepository */
     private $financeItemCategoryMasterRepository;
+    /** @var ApprovalLevelService */
+    private $approvalLevelService;
     use AuditLogsTrait;
     
-    public function __construct(FinanceItemCategoryMasterRepository $financeItemCategoryMasterRepo)
-    {
+    public function __construct(
+        FinanceItemCategoryMasterRepository $financeItemCategoryMasterRepo,
+        ApprovalLevelService $approvalLevelService
+    ) {
         $this->financeItemCategoryMasterRepository = $financeItemCategoryMasterRepo;
+        $this->approvalLevelService = $approvalLevelService;
     }
 
     /**
@@ -360,6 +366,15 @@ class FinanceItemCategoryMasterAPIController extends AppBaseController
 
         if (empty($financeItemCategoryMaster)) {
             return $this->sendError(trans('custom.finance_item_category_master_not_found'));
+        }
+
+        if (isset($input['isActive']) && !$input['isActive']) {
+            if ($this->approvalLevelService->isCategoryUsedInActiveApprovalLevel((int) $id)) {
+                return $this->sendError(
+                    trans('custom.approval_setup_uses_this_category_cannot_inactivate'),
+                    422
+                );
+            }
         }
 
         $financeItemCategoryMaster = $this->financeItemCategoryMasterRepository->update($input, $id);

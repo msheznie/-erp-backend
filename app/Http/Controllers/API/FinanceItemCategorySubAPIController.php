@@ -48,6 +48,7 @@ use Artisan;
 use GuzzleHttp\Client;
 use Carbon\Carbon;
 use App\Services\AuditLog\ItemFinanceCategoryAuditService;
+use App\Services\ApprovalLevelService;
 use Illuminate\Support\Arr;
 
 use Illuminate\Support\Facades\Validator;
@@ -62,14 +63,18 @@ class FinanceItemCategorySubAPIController extends AppBaseController
     private $financeItemCategorySubRepository;
     private $userRepository;
     private $financeItemcategorySubAssignedRepository;
+    /** @var ApprovalLevelService */
+    private $approvalLevelService;
 
     use AuditLogsTrait;
-    public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo,UserRepository $userRepo,
-                                FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
+    public function __construct(FinanceItemCategorySubRepository $financeItemCategorySubRepo, UserRepository $userRepo,
+                                FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo,
+                                ApprovalLevelService $approvalLevelService)
     {
         $this->financeItemCategorySubRepository = $financeItemCategorySubRepo;
         $this->userRepository = $userRepo;
         $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+        $this->approvalLevelService = $approvalLevelService;
     }
 
     /**
@@ -501,6 +506,12 @@ class FinanceItemCategorySubAPIController extends AppBaseController
 
         if (empty($financeItemCategorySub)) {
             return $this->sendError(trans('custom.finance_item_category_sub_not_found'));
+        }
+
+        if (isset($input['isActive']) && !$input['isActive']) {
+            if ($this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevel((int) $id)) {
+                return $this->sendError(trans('custom.approval_setup_uses_this_subcategory_cannot_inactivate'), 422);
+            }
         }
 
         $previosValue = $financeItemCategorySub->toArray();
