@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
 use App\helper\Workflow\DocumentConfirm;
+use App\Repositories\RecurringVoucherSetupRepository;
 
 class JournalVoucherService
 {
@@ -755,7 +756,7 @@ class JournalVoucherService
 
             DB::beginTransaction();
 
-            $financeYearForStart = CompanyFinanceYear::getActiveFinanceYearByDate($rrvSchedule->master->companySystemID, $rrvSchedule->processDate);
+            $financeYearForStart = app(RecurringVoucherSetupRepository::class)->getActiveFinanceYearByDate($rrvSchedule->master->companySystemID, $rrvSchedule->processDate);
 
             if($financeYearForStart){
                 $financePeriod = CompanyFinancePeriod::where('companySystemID',$rrvSchedule->master->companySystemID)
