@@ -4383,69 +4383,64 @@ class TenderMasterAPIController extends AppBaseController
                 return $this->sendError('Tender not found');
             }
 
+            // Item-wise tenders continue to use the dedicated flow.
             if ((int) $tender->evaluation_type_id === 1) {
                 $this->sendItemWiseTenderAwardEmails($tender);
                 DB::commit();
                 return $this->sendResponse($tender, 'Email Send successfully');
             }
 
-            // Get Negotiated Bid list
-            $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
-                ->where('tender_id', $tenderId)
-                ->get();
+            // Use central Tender/RFX email configuration + draft (tender_custom_emails) for schedule-wise award.
+            $emailConfigResult = $this->itemWiseAwardingService->getTenderRfxEmailData(
+                (int) $tenderId,
+                (int) $tender->company_id,
+                'award',
+                null
+            );
 
-            if ($tenderBidNegotiations->count() > 0) {
-                $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
-            } else {
-                $bidSubmissionMasterIds = [];
+            if (!isset($emailConfigResult['success']) || $emailConfigResult['success'] === false) {
+                DB::rollback();
+                $message = $emailConfigResult['message'] ?? trans('srm_tender_rfx.tender_not_found');
+                return $this->sendError($message);
             }
 
-            $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+            $emailData = $emailConfigResult['data'] ?? [];
+            $emailSubject = $emailData['email_subject'] ?? ("Letter of Awarding | " . ($tender->tender_code ?? '') . " | " . ($tender->title ?? ''));
+            $emailBody = $emailData['email_body'] ?? '';
+            $ccEmails = $emailData['cc_emails'] ?? [];
+            $attachments = $emailData['attachments'] ?? [];
+            $supplierEmail = $emailData['supplier_email'] ?? null;
 
-            $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
-                if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
-                    $q->whereIn('bid_id', $bidSubmissionMasterIds);
+            if (!$supplierEmail) {
+                DB::rollback();
+                return $this->sendError(trans('srm_tender_rfx.item_wise_supplier_has_no_email'));
+            }
+
+            // Build attachment URL list from configuration / draft attachments.
+            $attachmentList = [];
+            if (!empty($attachments) && is_array($attachments)) {
+                foreach ($attachments as $att) {
+                    $path = $att['path'] ?? null;
+                    if ($path) {
+                        $url = Helper::getFileUrlFromS3($path);
+                        if ($url) {
+                            $attachmentList[] = $url;
+                        }
+                    }
                 }
-                $q->where('award', 1)->with('supplier');
-            }, 'company'])->first();
-
-
-            //Get the Custom email Template
-            $file = array();
-            $tenderCustomEmail = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $tender->ranking_supplier->supplier->id, 'TAE');
-            if ($tenderCustomEmail && $tenderCustomEmail->attachment) {
-                $file[$tenderCustomEmail->attachment->originalFileName] = Helper::getFileUrlFromS3($tenderCustomEmail->attachment->path);
             }
-            $name = $tender->ranking_supplier->supplier->name;
-            $company = $tender->company->CompanyName;
-            $currency = $tender->currency->CurrencyName;
-            $bid_submision_date = \Carbon\Carbon::parse($tender->ranking_supplier->bid_submission_master->bidSubmittedDatetime)->format('d/m/Y');
-            $finalcommercialprice = $tender->ranking_supplier->bid_submission_master->line_item_total;
-            $documentType = $this->getDocumentType($tender->document_type);
-            $dataEmail['ccEmail'] = [];
-            $dataEmail['attachmentList'] = [];
-            if ($tenderCustomEmail) {
-                $body =  "<p>Hi " . $name . $tenderCustomEmail->email_body . '</p>';
-                $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
-            } else {
-                $body = "Hi $name, <br><br> Based on your final revised proposal submitted on $bid_submision_date, we would like to inform you that we intend to award your company the $tender->tender_code | $tender->title $documentType for <b>$finalcommercialprice</b> $currency with all agreed conditions.
-                    <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. 
-                    <br>";
-            }
-            $body .= Helper::getSupplierEmailFooter($tender->company_id);
-            $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
+
+            // Append standard supplier footer.
+            $emailBody .= Helper::getSupplierEmailFooter($tender->company_id);
+
+            $dataEmail = [];
+            $dataEmail['empEmail'] = $supplierEmail;
             $dataEmail['companySystemID'] = $tender->company_id;
-            $dataEmail['alertMessage'] = ($tenderCustomEmail && $tenderCustomEmail->email_subject) ? $tenderCustomEmail->email_subject : "Letter of Awarding | $tender->tender_code | $tender->title";
-            $dataEmail['emailAlertMessage'] = $body;
-
-            if (!empty($ccEmails)) {
-                $dataEmail['ccEmail'] = $ccEmails;
-            }
-
-            if (!empty($tenderCustomEmail->attachment)) {
-                $dataEmail['attachmentList'] = $file;
-            }
-
+            $dataEmail['alertMessage'] = $emailSubject;
+            $dataEmail['emailAlertMessage'] = $emailBody;
+            $dataEmail['ccEmail'] = $ccEmails ?: [];
+            $dataEmail['attachmentList'] = $attachmentList;
+            
             $sendEmail = Email::sendEmailSRM($dataEmail);
 
             $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
