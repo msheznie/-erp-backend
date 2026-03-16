@@ -1186,7 +1186,7 @@ class TenderItemWiseAwardingService
                 'attachmentList' => $attachmentList,
                 'ccEmail' => $ccEmails,
             ];
-            Email::sendEmailErp($dataEmail);
+            Email::sendEmailSRM($dataEmail);
         }
     }
 
