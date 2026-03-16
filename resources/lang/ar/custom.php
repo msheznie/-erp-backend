@@ -9935,4 +9935,5 @@ return
     'grv_multiple_subcategories' => 'لا يمكن أن يحتوي إشعار استلام البضاعة على عناصر من فئات فرعية متعددة تحت نفس الفئة الرئيسية. يرجى اختيار عناصر من فئة فرعية واحدة.',
     'subcategory_approval_disabled_enable_before_activate' => 'الموافقة حسب الفئة الفرعية معطلة حالياً في إعدادات المستند. يرجى تفعيل الموافقة حسب الفئة الفرعية قبل تفعيل إعداد موافقة حسب الفئة الفرعية.',
     'payment_voucher_interbank_transfer' => 'سند صرف - تحويل بين البنوك',
+    'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'لا يمكن حذف الموظف لأن تخطيط الميزانية قيد التنفيذ',
 ];

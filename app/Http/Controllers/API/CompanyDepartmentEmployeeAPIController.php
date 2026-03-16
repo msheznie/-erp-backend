@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Services\BudgetPlanningValidationService;
 use Response;
 use App\Traits\AuditLogsTrait;
 use Yajra\DataTables\DataTables;
@@ -38,9 +39,16 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
     /** @var  CompanyDepartmentEmployeeRepository */
     private $companyDepartmentEmployeeRepository;
 
-    public function __construct(CompanyDepartmentEmployeeRepository $companyDepartmentEmployeeRepo)
+    /** @var  BudgetPlanningValidationService */
+    private $budgetPlanningValidationService;
+
+    public function __construct(
+        CompanyDepartmentEmployeeRepository $companyDepartmentEmployeeRepo,
+        BudgetPlanningValidationService $budgetPlanningValidationService
+    )
     {
         $this->companyDepartmentEmployeeRepository = $companyDepartmentEmployeeRepo;
+        $this->budgetPlanningValidationService = $budgetPlanningValidationService;
     }
 
     /**
@@ -398,6 +406,12 @@ class CompanyDepartmentEmployeeAPIController extends AppBaseController
         }
 
         try {
+            
+            $budgetPlanningInProgress = $this->budgetPlanningValidationService->checkBudgetPlanningInProgress($id);
+            if ($budgetPlanningInProgress) {
+                return $this->sendError(trans('custom.employee_cannot_be_removed_because_budget_planning_is_in_progress'));
+            }
+
             $previousValue = $companyDepartmentEmployee->toArray();
 
             if ($companyDepartmentEmployee->isHOD == 1) {

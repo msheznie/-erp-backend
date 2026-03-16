@@ -3,6 +3,8 @@
 namespace App\Repositories;
 
 use App\Models\BudgetTemplateColumn;
+use App\Models\DepartmentBudgetPlanning;
+use App\Models\DepartmentBudgetPlanningDetail;
 use App\Repositories\BaseRepository;
 
 class BudgetTemplateColumnRepository extends BaseRepository
@@ -51,6 +53,8 @@ class BudgetTemplateColumnRepository extends BaseRepository
      */
     public function removeFromTemplate($budgetTemplateID, $preColumnID)
     {
+        $this->assertTemplateColumnModificationAllowed($budgetTemplateID);
+
         return BudgetTemplateColumn::where('budgetTemplateID', $budgetTemplateID)
             ->where('preColumnID', $preColumnID)
             ->delete();
@@ -61,6 +65,8 @@ class BudgetTemplateColumnRepository extends BaseRepository
      */
     public function addToTemplate($data)
     {
+        $this->assertTemplateColumnModificationAllowed($data['budgetTemplateID']);
+
         // Get the next sort order
         $maxSortOrder = BudgetTemplateColumn::where('budgetTemplateID', $data['budgetTemplateID'])
             ->max('sortOrder');
@@ -106,5 +112,22 @@ class BudgetTemplateColumnRepository extends BaseRepository
                       ->orWhere('formulaColumnIDs', 'LIKE', '%,' . $referencedColumnID . ',%');
             })
             ->get();
+    }
+
+    /**
+     * Common validation to ensure template columns can be modified
+     * (no related budget planning in progress or not submitted).
+     */
+    public function assertTemplateColumnModificationAllowed(int $budgetTemplateID): void
+    {
+        $hasInProgressOrNotStartedPlanning = DepartmentBudgetPlanningDetail::forBudgetTemplate($budgetTemplateID)
+            ->whereHas('departmentBudgetPlanning', function ($q) {
+                $q->where('workStatus', '!=', DepartmentBudgetPlanning::WORK_STATUS_SUBMITTED);
+            })
+            ->exists();
+
+        if ($hasInProgressOrNotStartedPlanning) {
+            throw new \Exception('Cannot modify columns for this template because there is budget planning in progress or not submitted yet.');
+        }
     }
 } 
