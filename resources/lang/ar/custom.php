@@ -9892,4 +9892,16 @@ return
     'subcategory_is_required_for_grv_approval' => 'الفئة الفرعية مطلوبة عند تفعيل الموافقة حسب الفئة والفقرة الفرعية لـ GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
     'approval_setup_uses_this_subcategory_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل الفرعية هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
+
+    // Payment Voucher Print
+    'transaction_details' => 'تفاصيل المعاملة',
+    'transfer_amount' => 'مبلغ التحويل',
+    'bank_charge_details' => 'تفاصيل رسوم البنك',
+    'beneficiary_bank_details' => 'تفاصيل بنك المستفيد',
+    'paying_bank_details' => 'تفاصيل بنك الدافع',
+    'paying_bank_name' => 'اسم بنك الدافع',
+    'company_account_number' => 'رقم حساب الشركة',
+    'iban' => 'رقم الآيبان',
+    'bank_charges_and_others' => 'رسوم البنك وأخرى',
+    'glaccount' => 'حساب الأستاذ العام',
 ];
