@@ -1452,6 +1452,7 @@ class DocumentApprove
                                     if ($lastSerial) {
                                         $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                                     }
+                                    //Due to the large number of records, we are using chunking to insert the data in batches of 500 records at a time.
                                     $insertBatch = [];
                                     $chunkSize = 500;
                                     foreach ($fixeAssetDetail as $val) {
