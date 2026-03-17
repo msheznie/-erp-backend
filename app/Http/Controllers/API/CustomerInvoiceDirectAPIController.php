@@ -1409,7 +1409,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }]);
             },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_default', 'uom_issuing', 'project']);
+                $query->with(['uom_default', 'uom_issuing', 'project', 'segment']);
             }
 
         ])->findWithoutFail($id);
@@ -2543,9 +2543,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->exists();
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
-            $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
+            $detail = CustomerInvoiceItemDetails::with('segment')->where('custInvoiceDirectAutoID', $id)->first();
         } else {
-            $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
+            $detail = CustomerInvoiceDirectDetail::with('segment')->where('custInvoiceDirectID', $id)->first();
         }
 
         $customerInvoice = (object)[];
