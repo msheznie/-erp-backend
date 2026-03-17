@@ -251,6 +251,13 @@
         </table>
     @endif
 
+        @php
+            $showSegmentColumn = isset($request->isPerforma)
+                && in_array($request->isPerforma, [4, 5])
+                && isset($request->isSegmentPolicyOn)
+                && (int) $request->isSegmentPolicyOn === 1;
+        @endphp
+
         @if ($request->template <> 1 && !$request->line_invoiceDetails && !$request->item_invoice)
         <table class="table"  style="border: 1px solid !important;">
             <thead>
@@ -258,6 +265,9 @@
                 <th colspan="1">Item</th>
                 <th colspan="1">GL Code</th>
                 <th colspan="2">Description</th>
+                @if($showSegmentColumn)
+                    <th colspan="1">Segment</th>
+                @endif
                 <th colspan="1">QTY</th>
                 <th colspan="1">Unit Rate</th>
                 <th colspan="2">Total Amount</th>
@@ -275,6 +285,15 @@
                     <td colspan="1">{{$x}}</td>
                     <td colspan="1">{{$item->glCode}}</td>
                     <td colspan="2">{{$item->glCodeDes}}</td>
+                    @if($showSegmentColumn)
+                        <td colspan="1">
+                            @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                                {{$item->department->ServiceLineDes}}
+                            @else
+                                {{$item->serviceLineCode ?? ''}}
+                            @endif
+                        </td>
+                    @endif
                     <td colspan="1">{{number_format($item->invoiceQty,2)}}</td>
                     <td colspan="1">{{number_format($item->unitCost,$numberFormatting)}}</td>
                     <td colspan="2">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
@@ -322,6 +341,9 @@
                     <tr style="border: 1px solid;">
                         <th colspan="1"></th>
                         <th colspan="2" >Item</th>
+                        @if($showSegmentColumn)
+                            <th colspan="2">Segment</th>
+                        @endif
                         <th colspan="1" style="text-align: center">UOM</th>
                         <th colspan="1" style="text-align: center">QTY</th>
                         <th colspan="1" style="text-align: center">unit Cost</th>
@@ -344,6 +366,15 @@
                             <tr style="border: 1px solid;">
                                 <td colspan="1">{{$x}}</td>
                                 <td colspan="2" style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                @if($showSegmentColumn)
+                                    <td colspan="2">
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td colspan="1" style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td colspan="1" style="text-align: right;">{{$item->qtyIssued}}</td>
                                 <td colspan="1" style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
