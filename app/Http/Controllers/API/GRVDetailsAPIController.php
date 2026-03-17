@@ -32,8 +32,10 @@ use App\Models\ItemMaster;
 use App\Models\PoAdvancePayment;
 use App\Models\PurchaseReturn;
 use App\Models\ProcumentOrder;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
+use App\Services\CompanyDocumentAttachmentService;
 use App\Services\Procurement\CategoryValidationService;
 use App\Models\PurchaseReturnDetails;
 use App\Models\PurchaseOrderDetails;
@@ -952,12 +954,23 @@ class GRVDetailsAPIController extends AppBaseController
                         }
                     }
 
+                    $docConfigGrv = CompanyDocumentAttachment::where('companySystemID', $GRVMaster->companySystemID)->where('documentSystemID', 3)->first();
+                    if ($docConfigGrv && CompanyDocumentAttachmentService::isApprovalEnabled($docConfigGrv->isSubcategoryApproval ?? 0)) {
+                        $grvDetailExistSub = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategorySubID) as itemFinanceCategorySubID'))
+                            ->where('grvAutoID', $grvAutoID)
+                            ->whereNotNull('itemFinanceCategorySubID')
+                            ->first();
+                        if ($grvDetailExistSub && isset($new['itemFinanceCategorySubID']) && (int) $new['itemFinanceCategorySubID'] !== (int) $grvDetailExistSub['itemFinanceCategorySubID']) {
+                            return $this->sendError(trans('custom.grv_multiple_subcategories'), 422);
+                        }
+                    }
+
                     //checking if item is inventory item cannot be added more than one
 
                     $grvDetailExistSameItem = GRVDetails::select(DB::raw('itemCode'))
-                        ->where('grvAutoID', $grvAutoID)
-                        ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
-                        ->first();
+                            ->where('grvAutoID', $grvAutoID)
+                            ->where('purchaseOrderDetailsID', $new['purchaseOrderDetailsID'])
+                            ->first();
 
                     if ($grvDetailExistSameItem) {
                         return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_order'), 422);
@@ -1276,6 +1289,17 @@ class GRVDetailsAPIController extends AppBaseController
 
                 if ($grvDetailExistSameItem && $itemAssign->financeCategoryMaster != $grvDetailExistSameItem['itemFinanceCategoryID']) {
                     return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($grvMaster->companySystemID, 3), 500);
+                }
+            }
+
+            $docConfigGrv = CompanyDocumentAttachment::where('companySystemID', $grvMaster->companySystemID)->where('documentSystemID', 3)->first();
+            if ($docConfigGrv && CompanyDocumentAttachmentService::isApprovalEnabled($docConfigGrv->isSubcategoryApproval ?? 0)) {
+                $grvDetailExistSub = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategorySubID) as itemFinanceCategorySubID'))
+                    ->where('grvAutoID', $grvAutoID)
+                    ->whereNotNull('itemFinanceCategorySubID')
+                    ->first();
+                if ($grvDetailExistSub && $itemAssign->financeCategorySub && (int) $itemAssign->financeCategorySub !== (int) $grvDetailExistSub['itemFinanceCategorySubID']) {
+                    return $this->sendError(trans('custom.grv_multiple_subcategories'), 422);
                 }
             }
 
