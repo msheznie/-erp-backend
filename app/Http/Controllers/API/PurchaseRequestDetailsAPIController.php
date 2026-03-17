@@ -45,6 +45,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SegmentMaster;
 use App\Jobs\PrBulkBulkItem;
+use App\Services\DecimalPrecisionService;
 use App\Services\Procurement\CategoryValidationService;
 use Illuminate\Support\Arr;
 /**
@@ -57,12 +58,15 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
     private $purchaseRequestDetailsRepository;
     private $segmentAllocatedItemRepository;
     private $purchaseRequestRepository;
+    /** @var DecimalPrecisionService */
+    private $decimalPrecisionService;
 
-    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, PurchaseRequestRepository $purchaseRequestRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
+    public function __construct(PurchaseRequestDetailsRepository $purchaseRequestDetailsRepo, PurchaseRequestRepository $purchaseRequestRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, DecimalPrecisionService $decimalPrecisionService)
     {
         $this->purchaseRequestDetailsRepository = $purchaseRequestDetailsRepo;
         $this->purchaseRequestRepository = $purchaseRequestRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -916,6 +920,14 @@ class PurchaseRequestDetailsAPIController extends AppBaseController
 
         if (empty($input['estimatedCost'])) {
             $input['estimatedCost'] = 0;
+        }
+
+        $currencyID = $purchaseRequest->currency ?? $purchaseRequest->supplierTransactionCurrencyID ?? null;
+        $unitID = $input['unitOfMeasure'] ?? $purchaseRequestDetails->unitOfMeasure ?? null;
+        $input['quantityRequested'] = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $input['quantityRequested'], $unitID);
+        $input['estimatedCost'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['estimatedCost'], $currencyID);
+        if (isset($input['totalCost'])) {
+            $input['totalCost'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision($input['quantityRequested'] * $input['estimatedCost'], $currencyID);
         }
 
         DB::beginTransaction();

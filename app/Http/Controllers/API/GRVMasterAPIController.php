@@ -90,6 +90,7 @@ use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
+use App\Services\DecimalPrecisionService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
@@ -107,11 +108,14 @@ class GRVMasterAPIController extends AppBaseController
     /** @var  GRVMasterRepository */
     private $gRVMasterRepository;
     private $userRepository;
+    /** @var DecimalPrecisionService */
+    private $decimalPrecisionService;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, DecimalPrecisionService $decimalPrecisionService)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->userRepository = $userRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -519,11 +523,10 @@ class GRVMasterAPIController extends AppBaseController
             ->where('grvAutoID', $input['grvAutoID'])
             ->first();
 
-        $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
-        $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
-        $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
-        $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
-
+        $input['grvTotalSupplierTransactionCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['transactionTotalSum'], $gRVMaster->supplierTransactionCurrencyID ?? null);
+        $input['grvTotalComRptCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['reportingTotalSum'], $gRVMaster->companyReportingCurrencyID ?? null);
+        $input['grvTotalLocalCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['localTotalSum'], $gRVMaster->localCurrencyID ?? null);
+        $input['grvTotalSupplierDefaultCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['defaultTotalSum'], $gRVMaster->supplierDefaultCurrencyID ?? null);
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
             if ($gRVMaster->grvTypeID == 1) {
@@ -768,10 +771,10 @@ class GRVMasterAPIController extends AppBaseController
                 ->first();
 
 
-            $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
-            $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
-            $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
-            $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
+            $input['grvTotalSupplierTransactionCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['transactionTotalSum'], $gRVMaster->supplierTransactionCurrencyID ?? null);
+            $input['grvTotalComRptCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['reportingTotalSum'], $gRVMaster->companyReportingCurrencyID ?? null);
+            $input['grvTotalLocalCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['localTotalSum'], $gRVMaster->localCurrencyID ?? null);
+            $input['grvTotalSupplierDefaultCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['defaultTotalSum'], $gRVMaster->supplierDefaultCurrencyID ?? null);
 
             //updating logistic details in grv details table
             $fetchAllGrvDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])
