@@ -9892,8 +9892,6 @@ return
     'subcategory_is_required_for_grv_approval' => 'الفئة الفرعية مطلوبة عند تفعيل الموافقة حسب الفئة والفقرة الفرعية لـ GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
     'approval_setup_uses_this_subcategory_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل الفرعية هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
-
-    // Payment Voucher Print
     'transaction_details' => 'تفاصيل المعاملة',
     'transfer_amount' => 'مبلغ التحويل',
     'bank_charge_details' => 'تفاصيل رسوم البنك',
