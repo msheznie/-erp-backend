@@ -20,7 +20,6 @@ use App\Services\Currency\CurrencyService;
 use App\Services\Excel\ExportVatDetailReportService;
 use App\Exports\AssetManagement\AssetRegister\AssetRegisterDetail2;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use App\Mail\EmailForQueuing;
@@ -126,14 +125,14 @@ class AssetRegisterExportJob implements ShouldQueue
                         if ($reportTypeID === 'ARD2' && isset($request->fromDate) && isset($request->toDate)) {
                             $fromDate = Carbon::parse($request->fromDate)->format('d-m-Y');
                             $toDate = Carbon::parse($request->toDate)->format('d-m-Y');
-                            $body = '<p>Dear User,</p>'
-                                . '<p>Kindly find the attached Asset Register Report (' . $reportTypeName . ') from ' . $fromDate . ' to ' . $toDate . '.</p>'
-                                . '<p>Regards,</p>'
+                            $body = '<p>' . trans('custom.asset_register_email_dear_user') . '</p>'
+                                . '<p>' . trans('custom.asset_register_email_body_with_dates', ['reportTypeName' => $reportTypeName, 'fromDate' => $fromDate, 'toDate' => $toDate]) . '</p>'
+                                . '<p>' . trans('custom.asset_register_email_regards') . '</p>'
                                 . '<p>' . $companyName . '</p>';
                         } else {
-                            $body = '<p>Dear User,</p>'
-                                . '<p>Kindly find the attached Asset Register Report (' . $reportTypeName . ').</p>'
-                                . '<p>Regards,</p>'
+                            $body = '<p>' . trans('custom.asset_register_email_dear_user') . '</p>'
+                                . '<p>' . trans('custom.asset_register_email_body', ['reportTypeName' => $reportTypeName]) . '</p>'
+                                . '<p>' . trans('custom.asset_register_email_regards') . '</p>'
                                 . '<p>' . $companyName . '</p>';
                         }
 
@@ -144,10 +143,10 @@ class AssetRegisterExportJob implements ShouldQueue
                         );
                     }
                 } catch (\Exception $emailException) {
-                    Log::warning('AssetRegisterExportJob email failed', [
-                        'error' => $emailException->getMessage(),
-                        'reportTypeID' => $this->requestData['reportTypeID'] ?? null,
-                    ]);
+                   sendError('AssetRegisterExportJob: failed to send email', [
+                    'error' => $emailException->getMessage(),
+                    'trace' => $emailException->getTraceAsString(),
+                   ]);
                 }
             }
 

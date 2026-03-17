@@ -10020,6 +10020,10 @@ return
     // Asset Register Export Queue
     'asset_register_report_has_been_sent_to_queue' => 'Success! Asset Register report has been sent to queue',
     'asset_register_report_generated' => 'Asset Register Report has been generated.',
+    'asset_register_email_dear_user' => 'Dear User,',
+    'asset_register_email_body_with_dates' => 'Kindly find the attached Asset Register Report (:reportTypeName) from :fromDate to :toDate.',
+    'asset_register_email_body' => 'Kindly find the attached Asset Register Report (:reportTypeName).',
+    'asset_register_email_regards' => 'Regards,',
     'rolls_created_cannot_edit' => 'Roles created. Cannot edit.',
     'subcategory_is_required_for_grv_approval' => 'Subcategory is required when Category and Subcategory approval are enabled for GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'An active approval setup uses this Item Finance Category. Cannot inactivate or unassign.',

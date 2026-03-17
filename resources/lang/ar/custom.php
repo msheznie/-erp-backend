@@ -9898,6 +9898,10 @@ return
     // Asset Register Export Queue
     'asset_register_report_has_been_sent_to_queue' => 'تم إرسال تقرير سجل الأصول إلى قائمة الانتظار بنجاح',
     'asset_register_report_generated' => 'تم إنشاء تقرير سجل الأصول.',
+    'asset_register_email_dear_user' => 'عزيزي المستخدم،',
+    'asset_register_email_body_with_dates' => 'يرجى الاطلاع على تقرير سجل الأصول المرفق (:reportTypeName) من :fromDate إلى :toDate.',
+    'asset_register_email_body' => 'يرجى الاطلاع على تقرير سجل الأصول المرفق (:reportTypeName).',
+    'asset_register_email_regards' => 'مع التحية،',
     'rolls_created_cannot_edit' => 'تم إنشاء الأدوار، لا يمكن التعديل.',
     'subcategory_is_required_for_grv_approval' => 'الفئة الفرعية مطلوبة عند تفعيل الموافقة حسب الفئة والفقرة الفرعية لـ GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
