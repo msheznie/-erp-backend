@@ -73,4 +73,20 @@ class SRMTenderTechnicalEvaluationAttachment extends Model
 
         return $evaluationData;
     }
+    public function created_user(){
+        return $this->hasOne(Employee::class, 'employeeSystemID', 'created_by');
+    }
+    public static function getOriginalTenderData($tenderId, $companyId){
+        return self::with([
+            'DocumentAttachment' => function ($q) {
+                $q->select('attachmentID', 'attachmentDescription', 'originalFileName');
+            }, 'created_user' => function ($q) {
+                $q->select('employeeSystemID', 'empName', 'empFullName');
+            }
+        ])
+            ->select('id', 'comment', 'tender_id', 'company_id', 'created_by', 'created_at')
+            ->where('tender_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+    }
 }
