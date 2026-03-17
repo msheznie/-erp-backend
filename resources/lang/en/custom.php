@@ -10014,8 +10014,6 @@ return
     'subcategory_is_required_for_grv_approval' => 'Subcategory is required when Category and Subcategory approval are enabled for GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'An active approval setup uses this Item Finance Category. Cannot inactivate or unassign.',
     'approval_setup_uses_this_subcategory_cannot_inactivate' => 'An active approval setup uses this Item Finance Subcategory. Cannot inactivate or unassign.',
-
-    // Payment Voucher Print
     'beneficiary_bank_details' => 'Beneficiary Bank Details',
     'bank_charges_and_others' => 'Bank Charges & Others',
     'paying_bank_details' => 'Paying Bank Details',
