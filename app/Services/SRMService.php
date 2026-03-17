@@ -1388,6 +1388,13 @@ class SRMService
                 },
                 'slot_detail' => function ($query) {
                     $query->select('id','slot_master_id', 'company_id');
+                },
+                'detail' => function ($query) {
+                    $query->select('appointment_id', 'po_master_id')
+                        ->distinct()
+                        ->with(['po_master' => function ($query) {
+                            $query->select('purchaseOrderID', 'purchaseOrderCode');
+                        }]);
                 }
             ]);
 
@@ -1422,6 +1429,12 @@ class SRMService
         $data = DataTables::of($query)
             ->addColumn('attachmentPolicyEnabled', function ($row) {
                 return Helper::checkPolicy($row->company_id, 104);
+            })
+            ->addColumn('purchase_orders', function ($row) {
+                return $row->detail
+                    ->pluck('po_master.purchaseOrderCode')
+                    ->filter()
+                    ->implode(', ');
             })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
