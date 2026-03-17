@@ -95,7 +95,7 @@ class CreateCreditNote implements ShouldQueue
     public function handle()
     {
 
-        CommonJobService::db_switch($this->db);
+        // CommonJobService::db_switch($this->db);
 
         $fieldErrors = $masterDatasets = $detailsDataSets = $receiptVoucherDataSets = $errorDocuments = $successDocuments = [];
         $headerData = $detailData = $receiptVoucherData = ['status' => false , 'errors' => []];
@@ -153,7 +153,7 @@ class CreateCreditNote implements ShouldQueue
             $receiptVoucherIndex = 0;
             $receiptVoucherDetails = $creditNote['receipt_voucher_details'] ?? null;
 
-            if (!is_null($receiptVoucherDetails)) {
+            if (!is_null($receiptVoucherDetails) && $datasetMaster['status']) {
                 foreach ($receiptVoucherDetails as $reciptVoucherDetail) {
                     $datasetReceiptVoucher = self::validateCNReceiptVoucherDetailsData($creditNote, $reciptVoucherDetail, $datasetMaster);
 
@@ -385,8 +385,10 @@ class CreateCreditNote implements ShouldQueue
             ];
         }
 
+        Log::info($returnData);
+
         // Dispatch webhook job
-        $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
+        /* $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
             $this->db,
             $this->apiExternalKey,
@@ -398,7 +400,7 @@ class CreateCreditNote implements ShouldQueue
             $this->input['company_id'],
             $this->input['log_id'],
             $this->input['thirdPartyIntegrationKeyId']
-        );
+        ); */
     }
 
 
@@ -461,6 +463,7 @@ class CreateCreditNote implements ShouldQueue
         $companyId = $request['company_id'] ?? null;
 
         $validTypes = [2, 3];
+        $creditNoteType = null;
         if (array_key_exists('credit_note_type', $request)) {
             if (in_array($request['credit_note_type'], $validTypes)) {
                 $creditNoteType = $request['credit_note_type'];
@@ -477,7 +480,7 @@ class CreateCreditNote implements ShouldQueue
         }
 
         // Validate Receipt Voucher Details (Refund type only)
-        if ($creditNoteType == 3) {
+        if (!is_null($creditNoteType) && $creditNoteType == 3) {
             $receiptVoucherDetails = $request['receipt_voucher_details'] ?? null;
 
             if (!isset($receiptVoucherDetails) || !is_array($receiptVoucherDetails) || count($receiptVoucherDetails) == 0) {
