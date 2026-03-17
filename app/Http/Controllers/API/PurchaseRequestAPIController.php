@@ -820,7 +820,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                     $data[$x][trans('custom.supplier_name')] = '';
                                 }
 
-                                $data[$x][trans('custom.po_qty')] = $poDetail->manuallyClosed == 1 ?  round($poDetail->receivedQty,2) :  round($poDetail->noQty,2);
+                                $qtyDecimals = $poDetail->unit ? ($poDetail->unit->displayRoundOff ?? $poDetail->unit->decimalPrecision ?? 2) : 2;
+                                $data[$x][trans('custom.po_qty')] = $poDetail->manuallyClosed == 1 ? round($poDetail->receivedQty, $qtyDecimals) : round($poDetail->noQty, $qtyDecimals);
 
                                 if ($poDetail->reporting_currency) {
                                     $data[$x][trans('custom.currency')] = $poDetail->reporting_currency->CurrencyCode;
@@ -829,7 +830,8 @@ class PurchaseRequestAPIController extends AppBaseController
                                 }
 
 
-                                $data[$x][trans('custom.po_cost')] = round($poDetail->GRVcostPerUnitComRptCur, 2);
+                                $costDecimals = $poDetail->reporting_currency ? ($poDetail->reporting_currency->DecimalPlaces ?? 2) : 2;
+                                $data[$x][trans('custom.po_cost')] = round($poDetail->GRVcostPerUnitComRptCur, $costDecimals);
 
                                 if ($poDetail->order) {
                                     $data[$x][trans('custom.po_confirmed_date')] = Helper::dateFormat($poDetail->order->poConfirmedDate);

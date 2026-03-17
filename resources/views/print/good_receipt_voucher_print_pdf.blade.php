@@ -393,10 +393,10 @@
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td>{{$det->itemDescription}}</td>
                     <td>{{$det->supplierPartNumber}}</td>
-                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->noQty, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '') }}</td>
-                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->unitCost, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
-                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->discountAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
-                    <td class="text-right">{{!is_null($det->unit->displayRoundOff) ? number_format($det->netAmount, $det->unit->displayRoundOff, '.', '') : number_format($det->noQty, 5, '.', '')}}</td>
+                    <td class="text-right">{{ $det->unit ? number_format($det->noQty, $det->unit->displayRoundOff ?? $det->unit->decimalPrecision ?? 5, '.', '') : number_format($det->noQty, 5, '.', '') }}</td>
+                    <td class="text-right">{{ $grvData->currency_by ? number_format($det->unitCost, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->unitCost, 2, '.', '') }}</td>
+                    <td class="text-right">{{ $grvData->currency_by ? number_format($det->discountAmount, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->discountAmount, 2, '.', '') }}</td>
+                    <td class="text-right">{{ $grvData->currency_by ? number_format($det->netAmount, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->netAmount, 2, '.', '') }}</td>
                 </tr>
                 {{ $x++ }}
             @endforeach
@@ -407,8 +407,8 @@
                     <td style="border-bottom-color:white !important;border-left-color:white !important; border-right-color:white !important"></td>
                 @endif
                 <td colspan="6" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span style="font-weight: bold">{{ __('custom.total') }}</span></td>
-                <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{ number_format($discountAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
-                <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{number_format($netAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
+                <td class="text-right" style="border: 1px solid black;"><span style="font-weight: bold">{{ number_format($discountAmount, $grvData->currency_by ? $grvData->currency_by->DecimalPlaces : 2, '.', '') }}</span></td>
+                <td class="text-right" style="border: 1px solid black;"><span style="font-weight: bold">{{ number_format($netAmount, $grvData->currency_by ? $grvData->currency_by->DecimalPlaces : 2, '.', '') }}</span></td>
             </tr>
             </tfoot>
         </table>
