@@ -95,7 +95,7 @@ class CreateCreditNote implements ShouldQueue
     public function handle()
     {
 
-        // CommonJobService::db_switch($this->db);
+        CommonJobService::db_switch($this->db);
 
         $fieldErrors = $masterDatasets = $detailsDataSets = $receiptVoucherDataSets = $errorDocuments = $successDocuments = [];
         $headerData = $detailData = $receiptVoucherData = ['status' => false , 'errors' => []];
@@ -385,10 +385,8 @@ class CreateCreditNote implements ShouldQueue
             ];
         }
 
-        Log::info($returnData);
-
         // Dispatch webhook job
-        /* $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
+        $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
             $this->db,
             $this->apiExternalKey,
@@ -400,7 +398,7 @@ class CreateCreditNote implements ShouldQueue
             $this->input['company_id'],
             $this->input['log_id'],
             $this->input['thirdPartyIntegrationKeyId']
-        ); */
+        );
     }
 
 
