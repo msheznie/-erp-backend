@@ -1606,7 +1606,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
                 'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
                     $query->with(['project','segment','to_bank' => function ($query) {
-                        $query->with('currency');
+                        $query->select('bankAccountAutoID', 'bankName', 'AccountNo', 'bankBranch', 'accountIBAN#', 'accountCurrencyID')
+                            ->with(['currency' => function ($q) {
+                                $q->select('currencyID', 'CurrencyCode');
+                            }]);
                     }]);
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
@@ -1620,7 +1623,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by','pdc_cheque' => function ($q) {
                     $q->where('documentSystemID', 4);
-                }, 'bank_charge' ])->first();
+                }])->first();
 
         $output['isProjectBase'] = false;
         if ($output) {
@@ -3099,19 +3102,25 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
             ->with(['project','supplier','customer', 'creditnotedetail.creditnote', 'bank_charge'=> function ($query) {
                 $query->with('segment');
-            }, 'bankaccount' => function ($q) { $q->with('currency'); }, 'transactioncurrency', 'paymentmode',
+            }, 'bankaccount' => function ($q) { $q->with(['currency' => function ($q) {
+                $q->select('currencyID', 'CurrencyCode');
+            }]); 
+            }, 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
                     $query->with(['project','segment','to_bank' => function ($query) {
-                        $query->with('currency');
+                        $query->select('bankAccountAutoID', 'bankName', 'AccountNo', 'bankBranch', 'accountIBAN#', 'accountCurrencyID')
+                            ->with(['currency' => function ($q) {
+                                $q->select('currencyID', 'CurrencyCode');
+                            }]);
                     }]);
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
                 }, 'created_by', 'cancelled_by','pdc_cheque' => function ($q) {
                     $q->where('documentSystemID', 4);
-                }, 'bank_charge' ])->first();
+                }])->first();
 
         if (empty($output)) {
             return $this->sendError(trans('custom.customer_receive_payment_not_found'));
