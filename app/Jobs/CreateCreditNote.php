@@ -153,7 +153,7 @@ class CreateCreditNote implements ShouldQueue
             $receiptVoucherIndex = 0;
             $receiptVoucherDetails = $creditNote['receipt_voucher_details'] ?? null;
 
-            if (!is_null($receiptVoucherDetails)) {
+            if (!is_null($receiptVoucherDetails) && $datasetMaster['status']) {
                 foreach ($receiptVoucherDetails as $reciptVoucherDetail) {
                     $datasetReceiptVoucher = self::validateCNReceiptVoucherDetailsData($creditNote, $reciptVoucherDetail, $datasetMaster);
 
@@ -461,6 +461,7 @@ class CreateCreditNote implements ShouldQueue
         $companyId = $request['company_id'] ?? null;
 
         $validTypes = [2, 3];
+        $creditNoteType = null;
         if (array_key_exists('credit_note_type', $request)) {
             if (in_array($request['credit_note_type'], $validTypes)) {
                 $creditNoteType = $request['credit_note_type'];
@@ -477,7 +478,7 @@ class CreateCreditNote implements ShouldQueue
         }
 
         // Validate Receipt Voucher Details (Refund type only)
-        if ($creditNoteType == 3) {
+        if (!is_null($creditNoteType) && $creditNoteType == 3) {
             $receiptVoucherDetails = $request['receipt_voucher_details'] ?? null;
 
             if (!isset($receiptVoucherDetails) || !is_array($receiptVoucherDetails) || count($receiptVoucherDetails) == 0) {
