@@ -62,6 +62,7 @@ use App\Models\SrmTenderMasterEditLog;
 use App\Models\SrmTenderPo;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
+use App\Models\SrmTenderTechnicalEvaluationHistory;
 use App\Models\SRMTenderUserAccess;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierAssigned;
@@ -76,6 +77,7 @@ use App\Models\TenderDocumentTypeAssignLog;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderNegotiation;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderPurchaseRequest;
 use App\Models\TenderPurchaseRequestEditLog;
@@ -1255,6 +1257,7 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
+        $isNegotiation = isset($input['isNegotiation']) ? (int)$input['isNegotiation'] : 0;
 
         $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
         if (empty($tenderData)) {
@@ -1271,14 +1274,53 @@ class TenderMasterRepository extends BaseRepository
 
         try {
             DB::transaction(function () use ($input, $companySystemID, $documentSystemID, $documentSystemCode,
-                $documentID, $companyID) {
+                $documentID, $companyID, $isNegotiation, $tenderData) {
 
+                $createdAttachmentId = null;
                 if (isset($input['Attachment']) && !empty($input['Attachment'])) {
 
                     $getAttachmentData = self::getAttachmentData($input['Attachment'], $companySystemID,
                         $documentSystemID, $documentSystemCode, $documentID, $companyID);
 
-                    DocumentAttachments::create($getAttachmentData);
+                    $created = DocumentAttachments::create($getAttachmentData);
+                    $createdAttachmentId = $created ? ($created->attachmentID ?? null) : null;
+                }
+
+                if ((int)$isNegotiation === 1) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($documentSystemCode);
+                    $roundNo = $latestNegotiation ? (int)$latestNegotiation->version : null;
+                    $negotiationId = $latestNegotiation ? (int)$latestNegotiation->id : null;
+                    $negotiationCode = $tenderData['negotiation_code'] ?? null;
+
+                    $comment = $input['comment'] ?? '';
+                    $hasAnyData = (($comment !== null && $comment !== '') || ($createdAttachmentId !== null));
+
+                    if ($hasAnyData) {
+                        $existing = SrmTenderTechnicalEvaluationHistory::checkExistHistory($documentSystemCode, $companySystemID, $negotiationId, $roundNo);
+                        $payload = [
+                            'tender_id' => $documentSystemCode,
+                            'company_id' => $companySystemID,
+                            'negotiation_id' => $negotiationId,
+                            'negotiation_code' => $negotiationCode,
+                            'round_no' => $roundNo,
+                            'comment' => $comment,
+                            'attachment_id' => $createdAttachmentId,
+                        ];
+
+                        if ($existing) {
+                            $payload['updated_by'] = Helper::getEmployeeSystemID();
+                            // Only overwrite attachment if a new one was uploaded.
+                            if ($createdAttachmentId === null) {
+                                unset($payload['attachment_id']);
+                            }
+                            SrmTenderTechnicalEvaluationHistory::where('id', $existing->id)->update($payload);
+                        } else {
+                            $payload['created_by'] = Helper::getEmployeeSystemID();
+                            SrmTenderTechnicalEvaluationHistory::create($payload);
+                        }
+                    }
+
+                    return;
                 }
 
                 $evaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationData(
@@ -1390,6 +1432,7 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
         $attachmentId = $input['attachmentId'];
+        $isNegotiation = isset($input['isNegotiation']) ? (int)$input['isNegotiation'] : 0;
 
         $attachment = DocumentAttachments::documentAttachmentById($attachmentId);
         if (!$attachment) {
@@ -1404,6 +1447,21 @@ class TenderMasterRepository extends BaseRepository
         }
 
         $attachment->delete();
+
+        if ((int)$isNegotiation === 1) {
+            $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+            if (!empty($tenderData)) {
+                $tenderId = $tenderData['id'];
+                SrmTenderTechnicalEvaluationHistory::where('tender_id', $tenderId)
+                    ->where('company_id', $companySystemID)
+                    ->where('attachment_id', $attachmentId)
+                    ->update([
+                        'attachment_id' => null,
+                        'updated_by' => Helper::getEmployeeSystemID(),
+                        'updated_at' => now(),
+                    ]);
+            }
+        }
 
         return [
             'success' => true,
