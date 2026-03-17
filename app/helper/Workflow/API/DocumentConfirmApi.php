@@ -639,6 +639,7 @@ class DocumentConfirmApi
                             if ($policy) {
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
+                                $isSubcategoryWise = !empty($policy->isSubcategoryApproval);
                                 $isValueWise = $policy->isAmountApproval;
                                 $isAttachment = $policy->isAttachmentYN;
                                 //check for attachment is uploaded if attachment policy is set to must
@@ -679,6 +680,14 @@ class DocumentConfirmApi
                                     }
                                 } else {
                                     return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
+                                }
+                            }
+
+                            if ($isSubcategoryWise) {
+                                if (array_key_exists('subCategory', $params) && $params['subCategory']) {
+                                    $approvalLevel->where('subcategoryID', $params['subCategory']);
+                                } else {
+                                    return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                 }
                             }
 
