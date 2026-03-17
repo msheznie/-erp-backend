@@ -78,6 +78,8 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\UserRepository;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\GRVConfirmValidationService;
+use App\Services\CompanyDocumentAttachmentService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -107,11 +109,14 @@ class GRVMasterAPIController extends AppBaseController
     /** @var  GRVMasterRepository */
     private $gRVMasterRepository;
     private $userRepository;
+    /** @var GRVConfirmValidationService */
+    private $grvConfirmValidationService;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->userRepository = $userRepo;
+        $this->grvConfirmValidationService = $grvConfirmValidationService;
     }
 
     /**
@@ -956,9 +961,27 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError($result["errorMsg"]);
             }
 
+            // Part 3: GRV subcategory approval validations (only when subcategory approval is enabled)
+            $grvValidation = $this->grvConfirmValidationService->validateForConfirmation((int) $input["companySystemID"], (int) $id);
+            if (!$grvValidation['valid']) {
+                return $this->sendError($grvValidation['message'], 422);
+            }
 
+            $docConfig = CompanyDocumentAttachment::where('companySystemID', $input["companySystemID"])
+                ->where('documentSystemID', (int) $input["documentSystemID"])
+                ->first();
+            $isSubcategoryApproval = $docConfig && CompanyDocumentAttachmentService::isApprovalEnabled($docConfig->isSubcategoryApproval ?? 0);
+            $resolved = $this->grvConfirmValidationService->resolveCategoryAndSubcategoryForParams((int) $id, $isSubcategoryApproval);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => $input["serviceLineSystemID"],
+                'category' => $resolved['category'] ?? '',
+                'subCategory' => $resolved['subCategory'] ?? '',
+                'amount' => $grvMasterSum['masterTotalSum']
+            );
             $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {
