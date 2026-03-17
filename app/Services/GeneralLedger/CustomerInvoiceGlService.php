@@ -112,8 +112,8 @@ class CustomerInvoiceGlService
         
         if ($masterData->isPerforma == 2 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) {   // item sales invoice || from sales order || from sales quotation
             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
-            
-            $proccessData = Self::generateCustomerDirectInvoiceDetailsGL($masterData,$finalData,$masterDocumentDate,$empID);
+
+            $proccessData = self::generateCustomerDirectInvoiceDetailsGL($masterData, $finalData, $masterDocumentDate, $empID);
 
             $time = Carbon::now();
 
@@ -124,7 +124,6 @@ class CustomerInvoiceGlService
             $data['documentSystemID'] = $masterData->documentSystemiD;
             $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
             $data['documentCode'] = $masterData->bookingInvCode;
-
             $data['documentDate'] = $masterDocumentDate;
             $data['documentYear'] = Helper::dateYear($masterDocumentDate);
             $data['documentMonth'] = Helper::dateMonth($masterDocumentDate);
@@ -136,138 +135,427 @@ class CustomerInvoiceGlService
             $data['documentFinalApprovedDate'] = $masterData->approvedDate;
             $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
             $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-
-            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
-            $data['serviceLineCode'] = $masterData->serviceLineCode;
-
-            // from customer invoice master table
-            $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
-            $data['glCode'] = $chartOfAccount->AccountCode;
-            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
             $data['documentNarration'] = $masterData->comments;
             $data['clientContractID'] = 'X';
             $data['contractUID'] = 159;
             $data['supplierCodeSystem'] = $masterData->customerID;
-
-            if($masterData->isPerforma == 2){
-                $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->get();
-                $cusTotal = isset($cusTotal[0]->total)?$cusTotal[0]->total:0;
-            }
-            $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-            $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-            $data['documentTransAmount'] = (($masterData->isPerforma == 2) ? $cusTotal + $masterData->VATAmount : $masterData->bookingAmountTrans + $masterData->VATAmount) + ($proccessData['_documentTransAmount']);
-
-            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-            $data['documentLocalAmount'] = (($masterData->isPerforma == 2) ? ($cusTotal / $masterData->localCurrencyER)  + $masterData->VATAmountLocal : $masterData->bookingAmountLocal + $masterData->VATAmountLocal)  + ($proccessData['_documentLocalAmount']);
-
-            $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-            $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-            $data['documentRptAmount'] = (($masterData->isPerforma == 2) ? ($cusTotal / $masterData->companyReportingER) + $masterData->VATAmountRpt: $masterData->bookingAmountRpt + $masterData->VATAmountRpt)  + ($proccessData['_documentRptAmount']);
-
             $data['documentType'] = 11;
-
             $data['createdUserSystemID'] = $empID->empID;
             $data['createdDateTime'] = $time;
             $data['createdUserID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = getenv('COMPUTERNAME');
             $data['timestamp'] = $time;
-            array_push($finalData, $data);
 
-            if($masterData->salesType == 3){
-                $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
-            }else{
-                $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
-            }
-            //get pnl account
-            if($masterData->salesType == 3){
-                $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
-            }else{
-                $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
-            }
-            //get revenue account
-            if($masterData->salesType == 3){
-                $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt * userQty) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
-            }else{
-                $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
-            }
+            if ($masterData->isPerforma == 2) {
+                // Existing behavior for direct item invoice (not SO/Quotation)
+                $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                $data['serviceLineCode'] = $masterData->serviceLineCode;
 
-            if ($bs) {
-                foreach ($bs as $val) {
-                    $currencyConversion = Helper::currencyConversionByER($val->localCurrencyID, $masterData->custTransactionCurrencyID, $val->localAmount, $val->localCurrencyER);
+                $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                $data['glCode'] = $chartOfAccount->AccountCode;
+                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                    $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
-                    $data['glCode'] = $val->financeGLcodebBS;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->get();
+                $cusTotal = isset($cusTotal[0]->total) ? $cusTotal[0]->total : 0;
 
-                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                    $data['documentTransAmount'] = ABS((isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0)) * -1;
+                $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                $data['documentTransAmount'] = $cusTotal + $masterData->VATAmount + $proccessData['_documentTransAmount'];
 
-                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                    $data['documentLocalAmount'] = ABS($val->localAmount) * -1;
+                $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                $data['documentLocalAmount'] = ($cusTotal / $masterData->localCurrencyER) + $masterData->VATAmountLocal + $proccessData['_documentLocalAmount'];
 
-                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
-                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                    $data['documentRptAmount'] = ABS($val->rptAmount) * -1;
+                $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                $data['documentRptCurrencyER'] = $masterData->companyReportingER;
+                $data['documentRptAmount'] = ($cusTotal / $masterData->companyReportingER) + $masterData->VATAmountRpt + $proccessData['_documentRptAmount'];
 
-                    array_push($finalData, $data);
-                }
-            }
+                array_push($finalData, $data);
 
-            if ($pl) {
-                foreach ($pl as $item) {
-                    $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
-                    $data['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
-                    $data['glCode'] = $item->financeCogsGLcodePL;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
-                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                    $data['documentTransAmount'] = ABS((isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0));
-
-                    $data['documentLocalCurrencyID'] = $item->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = ABS($item->localAmount);
-
-                    $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
-                    $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
-                    $data['documentRptAmount'] = ABS($item->rptAmount);
-
-                    array_push($finalData, $data);
-                }
-            }
-
-            if ($revenue) {
-
-                foreach ($revenue as $item) {
-                    $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
-
-                    $data['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
-                    $data['glCode'] = $item->financeGLcodeRevenue;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
-                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                    $data['documentTransAmount'] = ABS((isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0)) * -1;
-
-                    $data['documentLocalCurrencyID'] = $item->localCurrencyID;
-                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = ABS($item->localAmount) * -1;
-
-                    $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
-                    $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
-                    $data['documentRptAmount'] = ABS($item->rptAmount) * -1;
-
-                    array_push($finalData, $data);
+                if ($masterData->salesType == 3) {
+                    $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
+                } else {
+                    $bs = CustomerInvoiceItemDetails::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
                 }
 
+                if ($masterData->salesType == 3) {
+                    $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
+                } else {
+                    $pl = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,financeCogsGLcodePLSystemID,financeCogsGLcodePL,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->where('itemFinanceCategoryID', '!=', 2)->whereNotNull('financeCogsGLcodePLSystemID')->where('financeCogsGLcodePLSystemID', '>', 0)->groupBy('financeCogsGLcodePLSystemID')->get();
+                }
+
+                if ($masterData->salesType == 3) {
+                    $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal * userQty) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt * userQty) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
+                } else {
+                    $revenue = CustomerInvoiceItemDetails::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->where('custInvoiceDirectAutoID', $masterModel['autoID'])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
+                }
+
+                if ($bs) {
+                    foreach ($bs as $val) {
+                        $currencyConversion = Helper::currencyConversionByER($val->localCurrencyID, $masterData->custTransactionCurrencyID, $val->localAmount, $val->localCurrencyER);
+
+                        $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                        $data['glCode'] = $val->financeGLcodebBS;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $data['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0) * -1;
+
+                        $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                        $data['documentLocalAmount'] = abs($val->localAmount) * -1;
+
+                        $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                        $data['documentRptAmount'] = abs($val->rptAmount) * -1;
+
+                        array_push($finalData, $data);
+                    }
+                }
+
+                if ($pl) {
+                    foreach ($pl as $item) {
+                        $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+                        $data['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
+                        $data['glCode'] = $item->financeCogsGLcodePL;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $data['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0);
+
+                        $data['documentLocalCurrencyID'] = $item->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                        $data['documentLocalAmount'] = abs($item->localAmount);
+
+                        $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
+                        $data['documentRptAmount'] = abs($item->rptAmount);
+
+                        array_push($finalData, $data);
+                    }
+                }
+
+                if ($revenue) {
+                    foreach ($revenue as $item) {
+                        $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+
+                        $data['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
+                        $data['glCode'] = $item->financeGLcodeRevenue;
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $data['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0) * -1;
+
+                        $data['documentLocalCurrencyID'] = $item->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                        $data['documentLocalAmount'] = abs($item->localAmount) * -1;
+
+                        $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
+                        $data['documentRptAmount'] = abs($item->rptAmount) * -1;
+
+                        array_push($finalData, $data);
+                    }
+                }
+            } else {
+                // isPerforma 4 or 5 (from SO / Quotation) - all entries segment-wise
+                // AR per segment
+                $arSegments = CustomerInvoiceItemDetails::selectRaw("
+                        serviceLineSystemID,
+                        SUM(sellingTotal) as sellingTotal,
+                        SUM(VATAmountLocal) as vatLocal,
+                        SUM(VATAmountRpt) as vatRpt
+                    ")
+                    ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                    ->groupBy('serviceLineSystemID')
+                    ->get();
+
+                foreach ($arSegments as $segmentRow) {
+                    $segmentData = $data;
+                    $segmentData['serviceLineSystemID'] = $segmentRow->serviceLineSystemID;
+                    $segment = SegmentMaster::find($segmentRow->serviceLineSystemID);
+                    $segmentData['serviceLineCode'] = $segment ? $segment->ServiceLineCode : null;
+
+                    $segmentData['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                    $segmentData['glCode'] = $chartOfAccount->AccountCode;
+                    $segmentData['glAccountType'] = ChartOfAccount::getGlAccountType($segmentData['chartOfAccountSystemID']);
+                    $segmentData['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($segmentData['chartOfAccountSystemID']);
+
+                    $segmentData['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                    $segmentData['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                    $segmentData['documentTransAmount'] = $segmentRow->sellingTotal + ($segmentRow->vatLocal / max(1, $masterData->localCurrencyER));
+
+                    $segmentData['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                    $segmentData['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                    $segmentData['documentLocalAmount'] = ($segmentRow->sellingTotal / max(1, $masterData->localCurrencyER)) + $segmentRow->vatLocal;
+
+                    $segmentData['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                    $segmentData['documentRptCurrencyER'] = $masterData->companyReportingER;
+                    $segmentData['documentRptAmount'] = ($segmentRow->sellingTotal / max(1, $masterData->companyReportingER)) + $segmentRow->vatRpt;
+
+                    array_push($finalData, $segmentData);
+                }
+
+                // BS, COGS, Revenue per GL + segment
+                if ($masterData->salesType == 3) {
+                    $bs = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,
+                            financeGLcodebBSSystemID,
+                            financeGLcodebBS,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->where('itemFinanceCategoryID', '!=', 2)
+                        ->whereNotNull('financeGLcodebBSSystemID')
+                        ->where('financeGLcodebBSSystemID', '>', 0)
+                        ->groupBy(
+                            'financeGLcodebBSSystemID',
+                            'financeGLcodebBS',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                } else {
+                    $bs = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,
+                            financeGLcodebBSSystemID,
+                            financeGLcodebBS,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->where('itemFinanceCategoryID', '!=', 2)
+                        ->whereNotNull('financeGLcodebBSSystemID')
+                        ->where('financeGLcodebBSSystemID', '>', 0)
+                        ->groupBy(
+                            'financeGLcodebBSSystemID',
+                            'financeGLcodebBS',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                }
+
+                if ($masterData->salesType == 3) {
+                    $pl = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostLocal * userQty) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostRpt * userQty) as rptAmount,
+                            financeCogsGLcodePLSystemID,
+                            financeCogsGLcodePL,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->where('itemFinanceCategoryID', '!=', 2)
+                        ->whereNotNull('financeCogsGLcodePLSystemID')
+                        ->where('financeCogsGLcodePLSystemID', '>', 0)
+                        ->groupBy(
+                            'financeCogsGLcodePLSystemID',
+                            'financeCogsGLcodePL',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                } else {
+                    $pl = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostLocal) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * issueCostRpt) as rptAmount,
+                            financeCogsGLcodePLSystemID,
+                            financeCogsGLcodePL,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->where('itemFinanceCategoryID', '!=', 2)
+                        ->whereNotNull('financeCogsGLcodePLSystemID')
+                        ->where('financeCogsGLcodePLSystemID', '>', 0)
+                        ->groupBy(
+                            'financeCogsGLcodePLSystemID',
+                            'financeCogsGLcodePL',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                }
+
+                if ($masterData->salesType == 3) {
+                    $revenue = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal * userQty) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt * userQty) as rptAmount,
+                            financeGLcodeRevenueSystemID,
+                            financeGLcodeRevenue,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->whereNotNull('financeGLcodeRevenueSystemID')
+                        ->where('financeGLcodeRevenueSystemID', '>', 0)
+                        ->groupBy(
+                            'financeGLcodeRevenueSystemID',
+                            'financeGLcodeRevenue',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                } else {
+                    $revenue = CustomerInvoiceItemDetails::selectRaw("
+                            0 as transAmount,
+                            SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount,
+                            SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,
+                            financeGLcodeRevenueSystemID,
+                            financeGLcodeRevenue,
+                            serviceLineSystemID,
+                            localCurrencyID,
+                            localCurrencyER,
+                            reportingCurrencyER,
+                            reportingCurrencyID
+                        ")
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->whereNotNull('financeGLcodeRevenueSystemID')
+                        ->where('financeGLcodeRevenueSystemID', '>', 0)
+                        ->groupBy(
+                            'financeGLcodeRevenueSystemID',
+                            'financeGLcodeRevenue',
+                            'serviceLineSystemID',
+                            'localCurrencyID',
+                            'localCurrencyER',
+                            'reportingCurrencyID',
+                            'reportingCurrencyER'
+                        )
+                        ->get();
+                }
+
+                if ($bs) {
+                    foreach ($bs as $val) {
+                        $currencyConversion = Helper::currencyConversionByER($val->localCurrencyID, $masterData->custTransactionCurrencyID, $val->localAmount, $val->localCurrencyER);
+
+                        $lineData = $data;
+                        $lineData['serviceLineSystemID'] = $val->serviceLineSystemID;
+                        $segment = SegmentMaster::find($val->serviceLineSystemID);
+                        $lineData['serviceLineCode'] = $segment ? $segment->ServiceLineCode : null;
+                        $lineData['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                        $lineData['glCode'] = $val->financeGLcodebBS;
+                        $lineData['glAccountType'] = ChartOfAccount::getGlAccountType($lineData['chartOfAccountSystemID']);
+                        $lineData['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($lineData['chartOfAccountSystemID']);
+
+                        $lineData['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $lineData['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $lineData['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0) * -1;
+
+                        $lineData['documentLocalCurrencyID'] = $val->localCurrencyID;
+                        $lineData['documentLocalCurrencyER'] = $val->localCurrencyER;
+                        $lineData['documentLocalAmount'] = abs($val->localAmount) * -1;
+
+                        $lineData['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                        $lineData['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                        $lineData['documentRptAmount'] = abs($val->rptAmount) * -1;
+
+                        array_push($finalData, $lineData);
+                    }
+                }
+
+                if ($pl) {
+                    foreach ($pl as $item) {
+                        $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+
+                        $lineData = $data;
+                        $lineData['serviceLineSystemID'] = $item->serviceLineSystemID;
+                        $segment = SegmentMaster::find($item->serviceLineSystemID);
+                        $lineData['serviceLineCode'] = $segment ? $segment->ServiceLineCode : null;
+                        $lineData['chartOfAccountSystemID'] = $item->financeCogsGLcodePLSystemID;
+                        $lineData['glCode'] = $item->financeCogsGLcodePL;
+                        $lineData['glAccountType'] = ChartOfAccount::getGlAccountType($lineData['chartOfAccountSystemID']);
+                        $lineData['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($lineData['chartOfAccountSystemID']);
+
+                        $lineData['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $lineData['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $lineData['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0);
+
+                        $lineData['documentLocalCurrencyID'] = $item->localCurrencyID;
+                        $lineData['documentLocalCurrencyER'] = $item->localCurrencyER;
+                        $lineData['documentLocalAmount'] = abs($item->localAmount);
+
+                        $lineData['documentRptCurrencyID'] = $item->reportingCurrencyID;
+                        $lineData['documentRptCurrencyER'] = $item->reportingCurrencyER;
+                        $lineData['documentRptAmount'] = abs($item->rptAmount);
+
+                        array_push($finalData, $lineData);
+                    }
+                }
+
+                if ($revenue) {
+                    foreach ($revenue as $item) {
+                        $currencyConversion = Helper::currencyConversionByER($item->localCurrencyID, $masterData->custTransactionCurrencyID, $item->localAmount, $item->localCurrencyER);
+
+                        $lineData = $data;
+                        $lineData['serviceLineSystemID'] = $item->serviceLineSystemID;
+                        $segment = SegmentMaster::find($item->serviceLineSystemID);
+                        $lineData['serviceLineCode'] = $segment ? $segment->ServiceLineCode : null;
+                        $lineData['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
+                        $lineData['glCode'] = $item->financeGLcodeRevenue;
+                        $lineData['glAccountType'] = ChartOfAccount::getGlAccountType($lineData['chartOfAccountSystemID']);
+                        $lineData['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($lineData['chartOfAccountSystemID']);
+
+                        $lineData['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                        $lineData['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                        $lineData['documentTransAmount'] = abs(isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0) * -1;
+
+                        $lineData['documentLocalCurrencyID'] = $item->localCurrencyID;
+                        $lineData['documentLocalCurrencyER'] = $item->localCurrencyER;
+                        $lineData['documentLocalAmount'] = abs($item->localAmount) * -1;
+
+                        $lineData['documentRptCurrencyID'] = $item->reportingCurrencyID;
+                        $lineData['documentRptCurrencyER'] = $item->reportingCurrencyER;
+                        $lineData['documentRptAmount'] = abs($item->rptAmount) * -1;
+
+                        array_push($finalData, $lineData);
+                    }
+                }
             }
 
             $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)

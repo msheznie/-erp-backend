@@ -60,6 +60,8 @@ use App\Models\SupplierCurrency;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
+use App\Services\DecimalPrecisionService;
+use App\Services\POReceivedQtyUpdateService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -77,18 +79,26 @@ class GRVDetailsAPIController extends AppBaseController
     private $gRVMasterRepository;
     private $userRepository;
     private $expenseAssetAllocationRepo;
+    /** @var DecimalPrecisionService */
+    private $decimalPrecisionService;
+    /** @var POReceivedQtyUpdateService */
+    private $poReceivedQtyUpdateService;
 
     public function __construct(
         GRVDetailsRepository $gRVDetailsRepo,
         UserRepository $userRepo,
         GRVMasterRepository $gRVMasterRepository,
-        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
+        DecimalPrecisionService $decimalPrecisionService,
+        POReceivedQtyUpdateService $poReceivedQtyUpdateService
     )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
         $this->gRVMasterRepository = $gRVMasterRepository;
         $this->userRepository = $userRepo;
         $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
+        $this->poReceivedQtyUpdateService = $poReceivedQtyUpdateService;
     }
 
     /**
@@ -231,29 +241,11 @@ class GRVDetailsAPIController extends AppBaseController
                     $detailPOSUM = GRVDetails::WHERE('purhaseReturnAutoID', $input['purhaseReturnAutoID'])->WHERE('companySystemID', $grvMaster->companySystemID)->WHERE('purhasereturnDetailID', $input['purhasereturnDetailID'])->sum('noQty');
                     $masterPOSUM = GRVDetails::WHERE('purhaseReturnAutoID', $input['purhaseReturnAutoID'])->WHERE('companySystemID', $grvMaster->companySystemID)->sum('noQty');
 
-                    $receivedQty = 0;
-                    $goodsRecievedYN = 0;
-                    $GRVSelectedYN = 0;
-                    if ($detailPOSUM > 0) {
-                        $receivedQty = $detailPOSUM;
-                    }
-
-                    $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-                    if ($receivedQty == 0) {
-                        $goodsRecievedYN = 0;
-                        $GRVSelectedYN = 0;
-                    } else {
-                        if ($checkQuantity == 0) {
-                            $goodsRecievedYN = 2;
-                            $GRVSelectedYN = 1;
-                        } else {
-                            $goodsRecievedYN = 1;
-                            $GRVSelectedYN = 0;
-                        }
-                    }
+                    $receivedQtyRaw = $detailPOSUM > 0 ? (float) $detailPOSUM : 0;
+                    $status = $this->poReceivedQtyUpdateService->computeReceivedQtyAndStatus($detailExistPODetail, $receivedQtyRaw);
 
                     $updateDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $detailExistPODetail->purhasereturnDetailID)
-                        ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+                        ->update(['GRVSelectedYN' => $status['GRVSelectedYN'], 'goodsRecievedYN' => $status['goodsRecievedYN'], 'receivedQty' => $status['receivedQty']]);
 
                     $balanceQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')->WHERE('purhaseReturnAutoID', $input['purhaseReturnAutoID'])->first();
 
@@ -302,29 +294,11 @@ class GRVDetailsAPIController extends AppBaseController
                                              })
                                              ->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
-                    $receivedQty = 0;
-                    $goodsRecievedYN = 0;
-                    $GRVSelectedYN = 0;
-                    if ($detailPOSUM->newNoQty > 0) {
-                        $receivedQty = $detailPOSUM->newNoQty;
-                    }
-
-                    $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-                    if ($receivedQty == 0) {
-                        $goodsRecievedYN = 0;
-                        $GRVSelectedYN = 0;
-                    } else {
-                        if ($checkQuantity == 0) {
-                            $goodsRecievedYN = 2;
-                            $GRVSelectedYN = 1;
-                        } else {
-                            $goodsRecievedYN = 1;
-                            $GRVSelectedYN = 0;
-                        }
-                    }
+                    $receivedQtyRaw = $detailPOSUM && $detailPOSUM->newNoQty > 0 ? (float) $detailPOSUM->newNoQty : 0;
+                    $status = $this->poReceivedQtyUpdateService->computeReceivedQtyAndStatus($detailExistPODetail, $receivedQtyRaw);
 
                     $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
-                        ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+                        ->update(['GRVSelectedYN' => $status['GRVSelectedYN'], 'goodsRecievedYN' => $status['goodsRecievedYN'], 'receivedQty' => $status['receivedQty']]);
 
                     $balanceQty = PurchaseOrderDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')->WHERE('purchaseOrderMasterID', $input['purchaseOrderMastertID'])->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
@@ -395,34 +369,15 @@ class GRVDetailsAPIController extends AppBaseController
             $masterPOSUM = GrvDetailsPrn::whereIn('purhasereturnDetailID', $prnDetailsIds)
                                         ->sum('prnQty');
          
-            $receivedQty = 0;
-            $goodsRecievedYN = 0;
-            $GRVSelectedYN = 0;
-            if ($detailPOSUM > 0) {
-                $receivedQty = $detailPOSUM;
-            }
-
-            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-            if ($receivedQty == 0) {
-                $goodsRecievedYN = 0;
-                $GRVSelectedYN = 0;
-            } else {
-                if ($checkQuantity == 0) {
-                    $goodsRecievedYN = 2;
-                    $GRVSelectedYN = 1;
-                } else {
-                    $goodsRecievedYN = 1;
-                    $GRVSelectedYN = 0;
-                }
-            }
+            $receivedQtyRaw = $detailPOSUM > 0 ? (float) $detailPOSUM : 0;
+            $status = $this->poReceivedQtyUpdateService->computeReceivedQtyAndStatus($detailExistPODetail, $receivedQtyRaw);
 
             $updateDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $detailExistPODetail->purhasereturnDetailID)
-                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+                ->update(['GRVSelectedYN' => $status['GRVSelectedYN'], 'goodsRecievedYN' => $status['goodsRecievedYN'], 'receivedQty' => $status['receivedQty']]);
 
             $balanceQty = PurchaseReturnDetails::selectRaw('SUM(noQty) as noQty,SUM(receivedQty) as receivedQty,SUM(noQty) - SUM(receivedQty) as balanceQty')->WHERE('purhaseReturnAutoID', $detailExistPODetail->purhaseReturnAutoID)->first();
 
-
-            if ($balanceQty["balanceQty"] == 0) {
+            if ($this->poReceivedQtyUpdateService->isMasterFullyReceived((float) $balanceQty['noQty'], (float) $balanceQty['receivedQty'])) {
                 $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
                     ->update(['prClosedYN' => 1, 'grvRecieved' => 2]);
             } else {
@@ -604,31 +559,13 @@ class GRVDetailsAPIController extends AppBaseController
                                              })
                                               ->WHERE('companySystemID', $grvMaster->companySystemID)->first();
 
-                    $receivedQty = 0;
-                    $goodsRecievedYN = 0;
-                    $GRVSelectedYN = 0;
-                    if ($detailPOSUM->newNoQty > 0) {
-                        $receivedQty = $detailPOSUM->newNoQty;
-                    }
-
-                    $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-                    if ($receivedQty == 0) {
-                        $goodsRecievedYN = 0;
-                        $GRVSelectedYN = 0;
-                    } else {
-                        if ($checkQuantity == 0) {
-                            $goodsRecievedYN = 2;
-                            $GRVSelectedYN = 1;
-                        } else {
-                            $goodsRecievedYN = 1;
-                            $GRVSelectedYN = 0;
-                        }
-                    }
+                    $receivedQtyRaw = $detailPOSUM && $detailPOSUM->newNoQty > 0 ? (float) $detailPOSUM->newNoQty : 0;
+                    $status = $this->poReceivedQtyUpdateService->computeReceivedQtyAndStatus($detailExistPODetail, $receivedQtyRaw);
 
                     $updateDetail = PurchaseOrderDetails::where('purchaseOrderDetailsID', $detailExistPODetail->purchaseOrderDetailsID)
-                        ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+                        ->update(['GRVSelectedYN' => $status['GRVSelectedYN'], 'goodsRecievedYN' => $status['goodsRecievedYN'], 'receivedQty' => $status['receivedQty']]);
 
-                    if ($masterPOSUM->newNoQty > 0) {
+                    if ($masterPOSUM && $masterPOSUM->newNoQty > 0) {
                         $updatePO = ProcumentOrder::find($gRVDetails->purchaseOrderMastertID)
                             ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
                     } else {
@@ -674,29 +611,11 @@ class GRVDetailsAPIController extends AppBaseController
                                         ->whereIn('purhasereturnDetailID', $prnDetailsIds)
                                         ->sum('prnQty');
 
-            $receivedQty = 0;
-            $goodsRecievedYN = 0;
-            $GRVSelectedYN = 0;
-            if ($detailPOSUM > 0) {
-                $receivedQty = $detailPOSUM;
-            }
-
-            $checkQuantity = $detailExistPODetail->noQty - $receivedQty;
-            if ($receivedQty == 0) {
-                $goodsRecievedYN = 0;
-                $GRVSelectedYN = 0;
-            } else {
-                if ($checkQuantity == 0) {
-                    $goodsRecievedYN = 2;
-                    $GRVSelectedYN = 1;
-                } else {
-                    $goodsRecievedYN = 1;
-                    $GRVSelectedYN = 0;
-                }
-            }
+            $receivedQtyRaw = $detailPOSUM > 0 ? (float) $detailPOSUM : 0;
+            $status = $this->poReceivedQtyUpdateService->computeReceivedQtyAndStatus($detailExistPODetail, $receivedQtyRaw);
 
             $updateDetail = PurchaseReturnDetails::where('purhasereturnDetailID', $value->purhasereturnDetailID)
-                ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $receivedQty]);
+                ->update(['GRVSelectedYN' => $status['GRVSelectedYN'], 'goodsRecievedYN' => $status['goodsRecievedYN'], 'receivedQty' => $status['receivedQty']]);
 
             if ($masterPOSUM > 0) {
                 $updatePO = PurchaseReturn::find($detailExistPODetail->purhaseReturnAutoID)
@@ -990,19 +909,24 @@ class GRVDetailsAPIController extends AppBaseController
 
                     $new['receivedQty'] = $grvDetailItem['receivedQty'];
 
+                    $currencyID = $GRVMaster->supplierTransactionCurrencyID ?? null;
+                    $unitID = $new['unitOfMeasure'] ?? null;
+                    $noQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $new['noQty'], $unitID);
+                    $poQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $new['poQty'], $unitID);
+                    $receivedQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $new['receivedQty'], $unitID);
+                    $balanceQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision($new['poQty'] - $new['receivedQty'], $unitID);
+
                     if (($new['noQty'] == '' || $new['noQty'] == 0)) {
                         return $this->sendError(trans('custom.qty_cannot_be_zero'), 422);
                     } else {
                         if ($POMaster->partiallyGRVAllowed == 0) {
-                            // pre check for all items qty pulled
-                            if ($new['isChecked'] && ((float)$new['noQty'] != ($new['poQty'] - (float)$new['receivedQty']))) {
+                            if ($new['isChecked'] && !$this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision((float) $new['noQty'], $new['poQty'] - (float) $new['receivedQty'], $unitID)) {
                                 return $this->sendError(trans('custom.full_order_quantity_should_received'), 422);
                             }
                         }
                     }
 
-                    $epsilon = 0.000001;
-                    if ($new['noQty'] - ($new['poQty'] - $new['receivedQty']) > $epsilon) {
+                    if ($noQtyRounded > $balanceQtyRounded + 1e-6) {
                         return $this->sendError(trans('custom.quantity_greater_received_qty_item', ['item' => $new['itemPrimaryCode'], 'description' => $new['itemDescription']]), 422);
                     }
 
@@ -1052,9 +976,9 @@ class GRVDetailsAPIController extends AppBaseController
                         return $this->sendError(trans('custom.selected_item_is_already_added_from_the_same_order'), 422);
                     }
 
-                    $totalAddedQty = $new['noQty'] + $new['receivedQty'];
+                    $totalAddedQty = $this->decimalPrecisionService->roundQuantityToUnitPrecision($noQtyRounded + $receivedQtyRounded, $unitID);
 
-                    if ($new['poQty'] == $totalAddedQty) {
+                    if ($this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision($new['poQty'], $totalAddedQty, $unitID)) {
                         $goodsRecievedYN = 2;
                         $GRVSelectedYN = 1;
                     } else {
@@ -1132,22 +1056,22 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['includePLForGRVYN'] = $new['includePLForGRVYN'];
                         $GRVDetail_arr['supplierPartNumber'] = $new['supplierPartNumber'];
                         $GRVDetail_arr['unitOfMeasure'] = $new['unitOfMeasure'];
-                        $GRVDetail_arr['noQty'] = $new['noQty'];
+                        $GRVDetail_arr['noQty'] = $noQtyRounded;
                         $GRVDetail_arr['wasteQty'] = 0;
 
                         $itemMaster = ItemMaster::find($new['itemCode']);
 
                         $GRVDetail_arr['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
-                        $GRVDetail_arr['prvRecievedQty'] = $new['receivedQty'];
-                        $GRVDetail_arr['poQty'] = $new['poQty'];
+                        $GRVDetail_arr['prvRecievedQty'] = $receivedQtyRounded;
+                        $GRVDetail_arr['poQty'] = $poQtyRounded;
                         $grvMaster = GRVMaster::find($grvAutoID);
 
+                        $unitCostRounded = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $new['GRVcostPerUnitSupTransCur'], $currencyID);
+                        $totalNetcost = $this->decimalPrecisionService->roundAmountToCurrencyPrecision($unitCostRounded * $noQtyRounded, $currencyID);
 
-                        $totalNetcost = $new['GRVcostPerUnitSupTransCur'] * $new['noQty'];
-
-                        $GRVDetail_arr['unitCost'] = $new['GRVcostPerUnitSupTransCur'];
+                        $GRVDetail_arr['unitCost'] = $unitCostRounded;
                         $GRVDetail_arr['discountPercentage'] = $new['discountPercentage'];
-                        $GRVDetail_arr['discountAmount'] = $new['discountAmount'];
+                        $GRVDetail_arr['discountAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) ($new['discountAmount'] ?? 0), $currencyID);
                         $GRVDetail_arr['netAmount'] = $totalNetcost;
                         $GRVDetail_arr['comment'] = $new['comment'];
                         $GRVDetail_arr['supplierDefaultCurrencyID'] = $new['supplierDefaultCurrencyID'];
@@ -1207,8 +1131,8 @@ class GRVDetailsAPIController extends AppBaseController
                     ->where('purchaseOrderMasterID', $new['purchaseOrderMasterID'])
                     ->first();
 
-                // Updating PO Master Table After All Detail Table records updated
-                if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
+                // Updating PO Master Table After All Detail Table records updated (tolerance-based comparison)
+                if ($this->poReceivedQtyUpdateService->isMasterFullyReceived((float) $purchaseOrderDetailTotalAmount['detailQty'], (float) $purchaseOrderDetailTotalAmount['receivedQty'])) {
                     $updatePO = ProcumentOrder::find($new['purchaseOrderMasterID'])
                         ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
                 } else {
@@ -1606,12 +1530,17 @@ class GRVDetailsAPIController extends AppBaseController
             $user = Helper::getEmployeeInfo();
             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
-            // checking the qty request is matching with sum total
+            // checking the qty request is matching with sum total (round to unit/currency precision)
+            $currencyID = $grvMaster->supplierTransactionCurrencyID ?? null;
+            $unitID = $input['unitOfMeasure'] ?? null;
+            $noQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $input['noQty'], $unitID);
+            $wasteQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) ($input['wasteQty'] ?? 0), $unitID);
+            $unitCostRounded = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['unitCost'], $currencyID);
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
-            $GRVDetail_arr['noQty'] = $input['noQty'];
-            $GRVDetail_arr['wasteQty'] = $input['wasteQty'];
-            $totalNetcost = (floatval($input['unitCost']) + floatval($input['VATAmount'])) * $input['noQty'];
-            $GRVDetail_arr['unitCost'] = $input['unitCost'];
+            $GRVDetail_arr['noQty'] = $noQtyRounded;
+            $GRVDetail_arr['wasteQty'] = $wasteQtyRounded;
+            $totalNetcost = $this->decimalPrecisionService->roundAmountToCurrencyPrecision(($unitCostRounded + (float) ($input['VATAmount'] ?? 0)) * $noQtyRounded, $currencyID);
+            $GRVDetail_arr['unitCost'] = $unitCostRounded;
             $GRVDetail_arr['netAmount'] = $totalNetcost;
             $GRVDetail_arr['comment'] = $input['comment'];
 

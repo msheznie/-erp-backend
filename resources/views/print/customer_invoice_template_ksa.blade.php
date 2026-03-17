@@ -616,12 +616,20 @@
             @endif
 
             @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
-
+                @php
+                    $showSegmentColumn = isset($request->isPerforma)
+                        && in_array($request->isPerforma, [4, 5])
+                        && isset($request->isSegmentPolicyOn)
+                        && (int) $request->isSegmentPolicyOn === 1;
+                @endphp
                     <table class="table">
                         <thead>
                         <tr style="background-color: #6798da;">
                             <th style="width:5%;"></th>
                             <th style="width:40%;">Item<br>رقم المنتج</th>
+                            @if($showSegmentColumn)
+                                <th style="width:15%;text-align: center">Segment<br>القطاع</th>
+                            @endif
                             <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
                             <th style="width:15%;text-align: center">QTY<br>الكمية</th>
                             <th style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
@@ -644,6 +652,15 @@
                                     <tr style="border: 1px solid !important;">
                                         <td>{{$x}}</td>
                                         <td style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                        @if($showSegmentColumn)
+                                            <td>
+                                                @if(isset($item->segment) && $item->segment)
+                                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                                @else
+                                                    {{$item->serviceLineCode ?? ''}}
+                                                @endif
+                                            </td>
+                                        @endif
                                         <td style="text-align: left;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                         <td style="text-align: right;">{{$item->qtyIssued}}</td>
                                         <td style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
@@ -658,7 +675,7 @@
                         <tbody>
                         <tr>
                             <td></td>
-                            <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
+                            <td colspan="{{ $showSegmentColumn ? 4 : 3 }}" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
                             <td style="text-align: left; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                             <td class="text-right">@if ($request->invoicedetails)
                                     {{number_format($directTraSubTotal, $numberFormatting)}}
@@ -669,20 +686,20 @@
                             {{$directTraSubTotal+=$totalVATAmount}}
                             <tr>
                                 <td></td>
-                                <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% (ضريبة القيمة المضافة )</b></td>
+                                <td colspan="{{ $showSegmentColumn ? 4 : 3 }}" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}}% (ضريبة القيمة المضافة )</b></td>
                                 <td style="text-align: left; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                                 <td class="text-right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
                             </tr>
 
                             <tr>
                                 <td></td>
-                                <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
+                                <td colspan="{{ $showSegmentColumn ? 4 : 3 }}" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                                 <td style="text-align: left; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                                 <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</b>
+                                <td colspan="{{ $showSegmentColumn ? 4 : 3 }}" style="text-align: left; border-right: none !important;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</b>
                                 </td>
                                 <td colspan="2" style="text-align: left; border-left: none !important;">
                                     <b>

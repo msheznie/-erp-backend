@@ -604,10 +604,20 @@
                         </th>
                     </tr>
                 </thead>
+                @php
+                    $showSegmentColumn = isset($request->isPerforma)
+                        && in_array($request->isPerforma, [4, 5])
+                        && isset($request->isSegmentPolicyOn)
+                        && (int) $request->isSegmentPolicyOn === 1;
+                @endphp
+
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%">#</th>
                     <th style="text-align: center">{{ __('custom.description') }}</th>
+                    @if($showSegmentColumn)
+                        <th style="text-align: center">{{ __('custom.segments') }}</th>
+                    @endif
                     @if($request->isProjectBase && $request->isPerforma == 2)
                         <th style="text-align: center">{{ __('custom.project') }}</th>
                     @endif
@@ -641,6 +651,15 @@
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}<br>
                                     {{$item->comments}}
                                 </td>
+                                @if($showSegmentColumn)
+                                    <td>
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 @if($request->isProjectBase && $request->isPerforma == 2)
                                     <td>
                                         @if(isset($item->project) && $item->project != null)

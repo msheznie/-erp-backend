@@ -33,6 +33,7 @@ use App\Models\PurchaseReturnDetails;
 use App\Models\GrvDetailsPrn;
 use App\Models\PurchaseReturn;
 use App\helper\Helper;
+use App\Services\POReceivedQtyUpdateService;
 
 
 class DeliveryAppoinmentGRV implements ShouldQueue
@@ -54,7 +55,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
      *
      * @return void
      */
-    public function handle(GRVMasterRepository $grvMasterRepo,GRVDetailsRepository $gRVDetailsRepo)
+    public function handle(GRVMasterRepository $grvMasterRepo, GRVDetailsRepository $gRVDetailsRepo, POReceivedQtyUpdateService $poReceivedQtyUpdateService)
     {
 
         DB::beginTransaction();
@@ -224,14 +225,11 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                         $po_details =  PurchaseOrderDetails::find($val->po_detail_id);
                         $POMaster = ProcumentOrder::find($val->po_master_id);
 
-                        $totalAddedQty = $val->qty + $po_details->receivedQty;
-                        if ($po_details->noQty == $totalAddedQty) {
-                            $goodsRecievedYN = 2;
-                            $GRVSelectedYN = 1;
-                        } else {
-                            $goodsRecievedYN = 1;
-                            $GRVSelectedYN = 0;
-                        }
+                        $totalAddedQtyRaw = $val->qty + $po_details->receivedQty;
+                        $status = $poReceivedQtyUpdateService->computeReceivedQtyAndStatus($po_details, $totalAddedQtyRaw);
+                        $totalAddedQty = $status['receivedQty'];
+                        $goodsRecievedYN = $status['goodsRecievedYN'];
+                        $GRVSelectedYN = $status['GRVSelectedYN'];
 
                         $detail['grvAutoID'] = $grvAutoID;
                         $detail['companySystemID'] = $GRVMaster->companySystemID;
@@ -346,7 +344,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                             ->where('purchaseOrderMasterID', $val->po_master_id)
                             ->first();
 
-                        if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
+                        if ($poReceivedQtyUpdateService->isMasterFullyReceived((float) $purchaseOrderDetailTotalAmount['detailQty'], (float) $purchaseOrderDetailTotalAmount['receivedQty'])) {
                             $updatePO = ProcumentOrder::find($val->po_master_id)
                                 ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
                         } else {
