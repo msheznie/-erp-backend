@@ -101,6 +101,12 @@
 
 
     <div class="row">
+        @php
+            $showSegmentColumn = isset($request->isPerforma)
+                && in_array($request->isPerforma, [4, 5])
+                && isset($request->isSegmentPolicyOn)
+                && (int) $request->isSegmentPolicyOn === 1;
+        @endphp
         @if ($request->template==1)
             <table class="table">
                 <thead>
@@ -109,6 +115,9 @@
                     <th colspan="3" style="width:20%; text-align: center">Our Reference<br>المرجع</th>
                     <th colspan="2" style="width:20%;text-align: center">Client Reference<br>مرجع العميل</th>
                     <th colspan="3" style="width:30%;text-align: center">Item Description<br>وصف السلعة</th>
+                    @if($showSegmentColumn)
+                        <th colspan="2" style="width:15%;text-align: center">Segment<br>القطاع</th>
+                    @endif
                     <th colspan="2" style="width:5%;text-align: center">QTY<br>الكمية</th>
                     <th colspan="2" style="width:10%;text-align: center">Unit Rate<br> سعر الوحده</th>
                     <th colspan="2" style="width:10%;text-align: center">Total Amount<br>القيمة الكلية</th>
@@ -129,6 +138,15 @@
                                 <td colspan="3" style="word-wrap:break-word;">{{$item->OurRef}}</td>
                                 <td colspan="2" style="word-wrap:break-word;">{{$item->ClientRef}}</td>
                                 <td colspan="3" style="word-wrap:break-word;">{{$item->assetDescription}}</td>
+                                @if($showSegmentColumn)
+                                    <td colspan="2">
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td colspan="2" style="text-align: right;">{{$item->qty}}</td>
                                 <td colspan="2" style="text-align: right;">{{number_format($item->rate,$numberFormatting)}}</td>
                                 <td colspan="2" style="text-align: right;">{{number_format($item->amount,$numberFormatting)}}</td>

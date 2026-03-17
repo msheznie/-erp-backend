@@ -262,10 +262,19 @@
     <br>
     <div class="row">
         @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
+            @php
+                $showSegmentColumn = isset($request->isPerforma)
+                    && in_array($request->isPerforma, [4, 5])
+                    && isset($request->isSegmentPolicyOn)
+                    && (int) $request->isSegmentPolicyOn === 1;
+            @endphp
             <table class="table" style="width: 100%">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th style="width:80%;">Description</th>
+                        <th style="width:{{ $showSegmentColumn ? '65' : '80' }}%;">Description</th>
+                        @if($showSegmentColumn)
+                            <th style="width:15%;">Segment</th>
+                        @endif
                         <th style="width:20%;text-align: center">Total Amount<br>({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                     </tr>
                 </thead>
@@ -284,6 +293,15 @@
 
                             <tr style="border-bottom: none !important;">
                                 <td style="word-wrap:break-word;border-bottom: none !important;">{{$item->itemDescription}}</td>
+                                @if($showSegmentColumn)
+                                    <td style="border-bottom: none !important;">
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-right" style="border-left: 1px solid !important">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                             </tr>
                             {{ $x++ }}

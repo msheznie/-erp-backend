@@ -10,11 +10,13 @@ use App\Models\CreditNoteDetails;
 use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Employee;
 use App\Models\Taxdetail;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\SegmentMaster;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -93,11 +95,53 @@ class CustomerInvoiceARLedgerService
             $data['createdPcID'] = gethostname();
             $data['timeStamp'] = Helper::currentDateTime();
     
-            if($masterData->isPerforma == 3|| $masterData->isPerforma == 4|| $masterData->isPerforma == 5){// item sales invoice
-                $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
-                $data['localAmount'] = Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
-                $data['comRptAmount'] = Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
-                array_push($finalData, $data);
+            if ($masterData->isPerforma == 3 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) { // item sales invoice
+                if (in_array($masterData->isPerforma, [4, 5], true) && $masterData->isSegmentPolicyOn) {
+                    $segmentTotals = CustomerInvoiceItemDetails::selectRaw('serviceLineSystemID, SUM(sellingTotal) as sellingTotal')
+                        ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
+                        ->whereNotNull('serviceLineSystemID')
+                        ->groupBy('serviceLineSystemID')
+                        ->get();
+
+                    $totalSelling = (float) $segmentTotals->sum('sellingTotal');
+
+                    $remainingTaxTrans = (float) $taxTrans;
+                    $remainingTaxLocal = (float) $taxLocal;
+                    $remainingTaxRpt = (float) $taxRpt;
+
+                    foreach ($segmentTotals as $index => $row) {
+                        $segmentData = $data;
+                        $segmentData['serviceLineSystemID'] = $row->serviceLineSystemID;
+                        $segment = SegmentMaster::find($row->serviceLineSystemID);
+                        $segmentData['serviceLineCode'] = $segment ? $segment->ServiceLineCode : null;
+
+                        $segmentShare = $totalSelling > 0 ? ((float) $row->sellingTotal / $totalSelling) : 0.0;
+
+                        $allocatedTaxTrans = $index === ($segmentTotals->count() - 1) ? $remainingTaxTrans : ($taxTrans * $segmentShare);
+                        $allocatedTaxLocal = $index === ($segmentTotals->count() - 1) ? $remainingTaxLocal : ($taxLocal * $segmentShare);
+                        $allocatedTaxRpt = $index === ($segmentTotals->count() - 1) ? $remainingTaxRpt : ($taxRpt * $segmentShare);
+
+                        $remainingTaxTrans -= $allocatedTaxTrans;
+                        $remainingTaxLocal -= $allocatedTaxLocal;
+                        $remainingTaxRpt -= $allocatedTaxRpt;
+
+                        // Use booking amounts proportionally by sellingTotal for segment AR ledger
+                        $segmentBookingTrans = $totalSelling > 0 ? ($masterData->bookingAmountTrans * $segmentShare) : 0.0;
+                        $segmentBookingLocal = $totalSelling > 0 ? ($masterData->bookingAmountLocal * $segmentShare) : 0.0;
+                        $segmentBookingRpt = $totalSelling > 0 ? ($masterData->bookingAmountRpt * $segmentShare) : 0.0;
+
+                        $segmentData['custInvoiceAmount'] = abs($segmentBookingTrans + $allocatedTaxTrans);
+                        $segmentData['localAmount'] = Helper::roundValue(abs($segmentBookingLocal + $allocatedTaxLocal));
+                        $segmentData['comRptAmount'] = Helper::roundValue(abs($segmentBookingRpt + $allocatedTaxRpt));
+
+                        array_push($finalData, $segmentData);
+                    }
+                } else {
+                    $data['custInvoiceAmount'] = abs($masterData->bookingAmountTrans + $taxTrans);
+                    $data['localAmount'] = Helper::roundValue(abs($masterData->bookingAmountLocal + $taxLocal));
+                    $data['comRptAmount'] = Helper::roundValue(abs($masterData->bookingAmountRpt + $taxRpt));
+                    array_push($finalData, $data);
+                }
             }else if($masterData->isPerforma == 2) {
                 $processData = self::performDirectInvoiceDetails($masterModel,$data);
                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans+$processData['_documentTransAmount']);

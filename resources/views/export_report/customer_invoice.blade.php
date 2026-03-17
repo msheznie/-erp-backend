@@ -317,14 +317,23 @@
                 @if ($request)
                     <table class="table table-bordered" style="width: 100%;">
                         <thead>
+                        @php
+                            $showSegmentColumn = isset($request->isPerforma)
+                                && in_array($request->isPerforma, [4, 5])
+                                && isset($request->isSegmentPolicyOn)
+                                && (int) $request->isSegmentPolicyOn === 1;
+                        @endphp
                         <tr>
-                            <th colspan="5" style="text-align: center">Item Details</th>
+                            <th colspan="{{ $showSegmentColumn ? 6 : 5 }}" style="text-align: center">Item Details</th>
                             <th colspan="8" style="text-align: center">Price ({{ $currencyCode }})</th>
                         </tr>
                         <tr class="theme-tr-head">
                             <th style="text-align: center">#</th>
                             <th style="text-align: center">Description</th>
                             <th style="text-align: center">Project</th>
+                            @if($showSegmentColumn)
+                                <th style="text-align: center">Segment</th>
+                            @endif
                             <th style="text-align: center">Ref No</th>
                             <th style="text-align: center">UOM</th>
                             <th style="text-align: center">QTY</th>
@@ -348,6 +357,15 @@
                                 <td class="text-left">  @if($item->project)
                                         {{$item->project->projectCode.' - '.$item->project->description}} @else - @endif
                                 </td>
+                                @if($showSegmentColumn)
+                                    <td class="text-left">
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-left">{{$item->part_no}}</td>
                                 <td class="text-left">{{$item->uom_issuing->UnitShortCode}}</td>
                                 <td class="text-right">{{$item->qtyIssuedDefaultMeasure}}</td>
