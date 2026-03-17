@@ -10024,4 +10024,6 @@ return
     'transfer_amount' => 'Transfer Amount',
     'bank_charge_details' => 'Bank Charge Details',
     'glaccount' => 'GL Account',
+    'grv_mixed_category_types' => 'GRV cannot contain items from multiple Item Finance Category Types. Please ensure all items belong to the same category.',
+    'grv_multiple_subcategories' => 'GRV cannot contain items from multiple subcategories under the same main category. Please select items from a single subcategory.',
 ];
