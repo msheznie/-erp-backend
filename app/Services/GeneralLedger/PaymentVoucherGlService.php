@@ -82,6 +82,7 @@ use App\Jobs\TaxLedgerInsert;
 use App\Models\PayCreditNoteDetail;
 use App\Services\GeneralLedger\GlPostedDateService;
 use App\helper\ExchangeSetupConfig;
+use App\Models\PayAdvanceReceiptDetail;
 
 class PaymentVoucherGlService
 {
@@ -1432,7 +1433,12 @@ class PaymentVoucherGlService
             if ($masterData->invoiceType == 8) {
                 $customer = CustomerMaster::find($masterData->BPVcustomerID);
 
-                $payCreditNoteDetails = PayCreditNoteDetail::with('creditnote')->where('payMasterAutoId', $masterModel["autoID"])->where('companySystemID', $masterData->companySystemID)->get();
+                if ($masterData->refundType == 1) {
+                    $payAdvanceReceiptDetails = PayAdvanceReceiptDetail::with('advanceReceipt')->where('payMasterAutoId', $masterModel["autoID"])->where('companySystemID', $masterData->companySystemID)->get();
+                }
+                else {
+                    $payCreditNoteDetails = PayCreditNoteDetail::with('creditnote')->where('payMasterAutoId', $masterModel["autoID"])->where('companySystemID', $masterData->companySystemID)->get();
+                }
 
                 // credit to bank account
                 $data['supplierCodeSystem'] = $masterData->BPVcustomerID;
@@ -1459,29 +1465,62 @@ class PaymentVoucherGlService
 
                 // debit to customer account
                 if ($customer) {
-                    foreach ($payCreditNoteDetails as $payCreditNoteDetail) {
-                        $data['serviceLineSystemID'] = 24;
-                        $data['serviceLineCode'] = 'X';
-                        $data['chartOfAccountSystemID'] = $customer->custGLAccountSystemID;
-                        $data['glCode'] = $customer->custGLaccount;
-                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['timestamp'] = Helper::currentDateTime();
+                    if ($masterData->refundType == 1) {
+                        foreach ($payAdvanceReceiptDetails as $payAdvanceReceiptDetail) {
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $customer->custAdvanceAccountSystemID;
+                            $data['glCode'] = $customer->custAdvanceAccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['timestamp'] = Helper::currentDateTime();
+    
+                            if ($payAdvanceReceiptDetail->advanceReceipt) {
+                                $advanceReceipt = $payAdvanceReceiptDetail->advanceReceipt;
+                                $data['documentTransCurrencyID'] = $advanceReceipt->custTransactionCurrencyID;
+                                $data['documentTransCurrencyER'] = $advanceReceipt->custTransactionCurrencyER;
+                                $data['documentTransAmount'] = Helper::roundValue($payAdvanceReceiptDetail->advanceReceiptAmount);
 
-                        if ($payCreditNoteDetail->creditnote) {
-                            $creditNote = $payCreditNoteDetail->creditnote;
-                            $data['documentTransCurrencyID'] = $creditNote->customerCurrencyID;
-                            $data['documentTransCurrencyER'] = $creditNote->customerCurrencyER;
-                            $data['documentTransAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount);
+                                $conversion = Helper::convertAmountToLocalRpt(21, $advanceReceipt->custReceivePaymentAutoID, $payAdvanceReceiptDetail->advanceReceiptAmount);
+    
+                                $data['documentLocalCurrencyID'] = $advanceReceipt->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $advanceReceipt->localCurrencyER;
+                                $data['documentLocalAmount'] = $conversion['localAmount'];
+    
+                                $data['documentRptCurrencyID'] = $advanceReceipt->companyRptCurrencyID;
+                                $data['documentRptCurrencyER'] = $advanceReceipt->companyRptCurrencyER;
+                                $data['documentRptAmount'] = $conversion['reportingAmount'];
+                                array_push($finalData, $data);
+                            }
+                        }
+                    }
+                    else {
+                        foreach ($payCreditNoteDetails as $payCreditNoteDetail) {
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = $customer->custGLAccountSystemID;
+                            $data['glCode'] = $customer->custGLaccount;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['timestamp'] = Helper::currentDateTime();
+    
+                            if ($payCreditNoteDetail->creditnote) {
+                                $creditNote = $payCreditNoteDetail->creditnote;
+                                $data['documentTransCurrencyID'] = $creditNote->customerCurrencyID;
+                                $data['documentTransCurrencyER'] = $creditNote->customerCurrencyER;
+                                $data['documentTransAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount);
 
-                            $data['documentLocalCurrencyID'] = $creditNote->localCurrencyID;
-                            $data['documentLocalCurrencyER'] = $creditNote->localCurrencyER;
-                            $data['documentLocalAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->localCurrencyER);
-
-                            $data['documentRptCurrencyID'] = $creditNote->companyReportingCurrencyID;
-                            $data['documentRptCurrencyER'] = $creditNote->companyReportingER;
-                            $data['documentRptAmount'] = Helper::roundValue($payCreditNoteDetail->creditNotePaymentAmount / $creditNote->companyReportingER);
-                            array_push($finalData, $data);
+                                $conversion = Helper::convertAmountToLocalRpt(19, $creditNote->creditNoteAutoID, $payCreditNoteDetail->creditNotePaymentAmount);
+    
+                                $data['documentLocalCurrencyID'] = $creditNote->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $creditNote->localCurrencyER;
+                                $data['documentLocalAmount'] = $conversion['localAmount'];
+    
+                                $data['documentRptCurrencyID'] = $creditNote->companyReportingCurrencyID;
+                                $data['documentRptCurrencyER'] = $creditNote->companyReportingER;
+                                $data['documentRptAmount'] = $conversion['reportingAmount'];
+                                array_push($finalData, $data);
+                            }
                         }
                     }
                 }
