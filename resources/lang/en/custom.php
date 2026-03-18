@@ -10020,6 +10020,7 @@ return
     'subcategory_is_required_for_grv_approval' => 'Subcategory is required when Category and Subcategory approval are enabled for GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'An active approval setup uses this Item Finance Category. Cannot inactivate or unassign.',
     'approval_setup_uses_this_subcategory_cannot_inactivate' => 'An active approval setup uses this Item Finance Subcategory. Cannot inactivate or unassign.',
+    'item_finance_category_used_in_active_approval_setup_for_company' => 'This Item Finance Category is currently used in an active approval setup for :company. Please remove or deactivate the approval setup before making this change.',
     'beneficiary_bank_details' => 'Beneficiary Bank Details',
     'bank_charges_and_others' => 'Bank Charges & Others',
     'paying_bank_details' => 'Paying Bank Details',
