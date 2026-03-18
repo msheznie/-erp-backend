@@ -1450,15 +1450,23 @@ class FinancialReportAPIController extends AppBaseController
 
         if(!empty($grandTotal) && count($outputDetail) > 0)
         {
-            $numericKeys = collect($outputDetail->first())
-                ->keys()
-                ->filter(function($key) { return Str::contains($key, '-'); });
+            $firstGrandTotalRow = collect($grandTotal)->first();
+            $firstGrandTotalRowArr = is_array($firstGrandTotalRow) ? $firstGrandTotalRow : (is_object($firstGrandTotalRow) ? (array)$firstGrandTotalRow : null);
+            $isSegmentWiseGrandTotal = is_array($firstGrandTotalRowArr) && array_key_exists('serviceLineID', $firstGrandTotalRowArr);
 
-            $grandTotalComputed = $numericKeys->mapWithKeys(function($key) use ($outputDetail) {
-                return [$key => $outputDetail->sum($key)];
-            });
+            // If grand total is already returned per serviceLineID (segment-wise), do NOT overwrite it
+            // with a single overall sum; that breaks segment-wise totals.
+            if (!$isSegmentWiseGrandTotal) {
+                $numericKeys = collect($outputDetail->first())
+                    ->keys()
+                    ->filter(function($key) { return Str::contains($key, '-'); });
 
-           $grandTotal[0] = $grandTotalComputed;
+                $grandTotalComputed = $numericKeys->mapWithKeys(function($key) use ($outputDetail) {
+                    return [$key => $outputDetail->sum($key)];
+                });
+
+                $grandTotal[0] = $grandTotalComputed;
+            }
         }
 
         $outputOpeningBalance = '';
