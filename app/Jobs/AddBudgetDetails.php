@@ -58,7 +58,9 @@ class AddBudgetDetails implements ShouldQueue
                 'budjetAmtLocal' => 0,
                 'budjetAmtRpt' => 0,
                 'createdByUserSystemID' => $budgetMasters->createdByUserSystemID,
-                'createdByUserID' => $budgetMasters->createdByUserID
+                'createdByUserID' => $budgetMasters->createdByUserID,
+                'createdDateTime' => now(),
+                'timestamp' => now(),
             ];
 
             foreach ($months as $month) {
