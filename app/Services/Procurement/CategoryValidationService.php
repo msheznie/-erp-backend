@@ -54,4 +54,14 @@ class CategoryValidationService
 
         return trans('custom.you_cannot_add_different_category_item');
     }
+
+    public static function isCategoryApprovalEnabled(int $companySystemID, int $documentSystemID): bool
+    {
+        $docAttachment = CompanyDocumentAttachment::query()
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->first();
+
+        return (bool) ($docAttachment?->isCategoryApproval ?? false);
+    }
 }

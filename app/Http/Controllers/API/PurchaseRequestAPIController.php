@@ -2145,11 +2145,20 @@ class PurchaseRequestAPIController extends AppBaseController
             $amount = PurchaseRequestDetails::where('purchaseRequestID', $id)
                 ->sum('totalCost');
 
+            $categoryParam = $input['financeCategory'] ?? $purchaseRequest->financeCategory;
+            if (CategoryValidationService::isCategoryApprovalEnabled($purchaseRequest->companySystemID, (int) $purchaseRequest->documentSystemID)) {
+                $detailCategories = PurchaseRequestDetails::where('purchaseRequestID', $id)
+                    ->distinct()->pluck('itemFinanceCategoryID')->filter()->values();
+                if ($detailCategories->count() === 1) {
+                    $categoryParam = $detailCategories->first();
+                }
+            }
+
             $params = array('autoID' => $id,
                 'company' => $purchaseRequest->companySystemID,
                 'document' => $purchaseRequest->documentSystemID,
                 'segment' => $input['serviceLineSystemID'],
-                'category' => $input['financeCategory'],
+                'category' => $categoryParam,
                 'amount' => $amount,
                 'prType' => $input['prType']
             );
