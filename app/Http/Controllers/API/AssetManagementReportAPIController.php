@@ -288,50 +288,63 @@ class AssetManagementReportAPIController extends AppBaseController
             case 'AMAR': //Asset Register
                 if ($request->reportTypeID == 'ARD') { // Asset Register Detail
                     /*shahmy*/
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $requestArr = $request->all();
+                    $request = (object)$this->convertArrayToSelectedValue($requestArr, array('typeID'));
                     $typeID = $request->typeID;
                     $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
                     $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
                     $assetCategory = join(',', $assetCategory);
 
                     $output = $this->getAssetRegisterDetail($request);
-                    $outputArr = [];
-
-                 
-
+                    $allRows = $output ?? [];
                     $COSTUNIT = 0;
                     $costUnitRpt = 0;
                     $depAmountLocal = 0;
                     $depAmountRpt = 0;
                     $localnbv = 0;
                     $rptnbv = 0;
-                    if ($output) {
-                        foreach ($output as $val) {
+                    if ($allRows) {
+                        foreach ($allRows as $val) {
                             $localnbv += $val->localnbv;
                             $COSTUNIT += $val->COSTUNIT;
                             $costUnitRpt += $val->costUnitRpt;
                             $depAmountRpt += $val->depAmountRpt;
                             $depAmountLocal += $val->depAmountLocal;
                             $rptnbv += $val->rptnbv;
-                            $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
                     $companyData = Helper::companyCurrency($request->companySystemID);
 
-                    $sort = 'asc';
-                    return \DataTables::of($output)
-                    ->addIndexColumn()
-                    ->with('localcurrency', $companyData->localcurrency)
-                    ->with('reportingcurrency', $companyData->reportingcurrency)
-                    ->with('localnbv', $localnbv)
-                    ->with('rptnbv', $rptnbv)
-                    ->with('COSTUNIT', $COSTUNIT)
-                    ->with('costUnitRpt', $costUnitRpt)
-                    ->with('depAmountLocal', $depAmountLocal)
-                    ->with('depAmountRpt', $depAmountRpt)
-                    ->addIndexColumn()
-                    // ->with('orderCondition', $sort)
-                    ->make(true);
+                    $totalRecords = is_countable($allRows) ? count($allRows) : 0;
+
+                    $lengthRaw = isset($requestArr['length']) ? (int)$requestArr['length'] : 0;
+                    $length = ($lengthRaw > 0) ? min($lengthRaw, 500) : 500;
+
+                    $startRaw = isset($requestArr['start']) ? (int)$requestArr['start'] : 0;
+                    $pageRaw = isset($requestArr['page']) ? (int)$requestArr['page'] : 1;
+                    $page = ($pageRaw > 0) ? $pageRaw : 1;
+                    $start = ($startRaw > 0) ? $startRaw : (($page - 1) * $length);
+                    $start = max(0, $start);
+                    $draw = isset($requestArr['draw']) ? (int)$requestArr['draw'] : 0;
+
+                    $pagedRows = array_values(array_slice($allRows, $start, $length));
+
+                    return array(
+                        'draw' => $draw,
+                        'recordsTotal' => $totalRecords,
+                        'recordsFiltered' => $totalRecords,
+                        'reportData' => $pagedRows,
+                        'localcurrency' => $companyData->localcurrency,
+                        'reportingcurrency' => $companyData->reportingcurrency,
+                        'localnbv' => $localnbv,
+                        'rptnbv' => $rptnbv,
+                        'COSTUNIT' => $COSTUNIT,
+                        'costUnitRpt' => $costUnitRpt,
+                        'depAmountLocal' => $depAmountLocal,
+                        'depAmountRpt' => $depAmountRpt,
+                        'perPage' => $length,
+                        'page' => (int)floor($start / $length) + 1
+                    );
 
                    // return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
                 }
