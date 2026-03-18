@@ -10033,4 +10033,5 @@ return
     'grv_mixed_category_types' => 'GRV cannot contain items from multiple Item Finance Category Types. Please ensure all items belong to the same category.',
     'grv_multiple_subcategories' => 'GRV cannot contain items from multiple subcategories under the same main category. Please select items from a single subcategory.',
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
+    'payment_voucher_interbank_transfer' => 'Payment Voucher Interbank Transfer',
 ];
