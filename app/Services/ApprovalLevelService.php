@@ -87,6 +87,21 @@ class ApprovalLevelService
     }
 
     /**
+     * Check if any active approval level uses this category for this company.
+     *
+     * @param int $categoryID
+     * @param int $companySystemID
+     * @return bool
+     */
+    public function isCategoryUsedInActiveApprovalLevelForCompany(int $categoryID, int $companySystemID): bool
+    {
+        return ApprovalLevel::where('isActive', -1)
+            ->where('categoryID', $categoryID)
+            ->where('companySystemID', $companySystemID)
+            ->exists();
+    }
+
+    /**
      * Check if any active approval level uses this subcategory (subcategoryID).
      *
      * @param int $subcategoryID
