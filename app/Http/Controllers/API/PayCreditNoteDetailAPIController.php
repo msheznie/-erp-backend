@@ -406,6 +406,7 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             )
             ->selectRaw($decimalPlaces . ' as DecimalPlaces')
             ->selectRaw('IFNULL(erp_creditnote.creditAmountTrans, 0) as creditNoteAmount')
+            ->selectRaw('0 as isChecked')
             ->selectRaw('(IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0)) as totalPaidAmount')
             ->selectRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - (IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0))) as paymentBalancedAmount')
             ->selectRaw('GROUP_CONCAT(DISTINCT erp_customerreceivepayment.custPaymentReceiveCode SEPARATOR "|") as receiptVoucherCode')
@@ -480,13 +481,6 @@ class PayCreditNoteDetailAPIController extends AppBaseController
 
         if (empty($payMaster)) {
             return $this->sendError(trans('custom.payment_voucher_not_found'));
-        }
-
-        $selectedCreditNoteIds = [];
-        foreach ($input['detailTable'] as $item) {
-            if (isset($item['isChecked']) && $item['isChecked']) {
-                $selectedCreditNoteIds[] = $item['creditNoteAutoID'];
-            }
         }
 
         DB::beginTransaction();
