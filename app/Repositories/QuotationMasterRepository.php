@@ -151,7 +151,7 @@ class QuotationMasterRepository extends BaseRepository
             if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
                 $customerSystemCode = $request['customerSystemCode'];
                 $customerSystemCode = (array)$customerSystemCode;
-                $customerSystemCode = collect($customerSystemCode)->pluck('id');
+                //$customerSystemCode = collect($customerSystemCode)->pluck('id');
                 $quotationMaster->whereIn('customerSystemCode', $customerSystemCode);
             }
         }
@@ -169,7 +169,7 @@ class QuotationMasterRepository extends BaseRepository
             if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
                 $salesPersonID = $request['salesPersonID'];
                 $salesPersonID= (array)$salesPersonID;
-                $salesPersonID = collect($salesPersonID)->pluck('id');
+                //$salesPersonID = collect($salesPersonID)->pluck('id');
                 $quotationMaster->whereIn('salesPersonID', $salesPersonID);
             }
         }
