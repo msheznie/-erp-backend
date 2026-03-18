@@ -457,6 +457,19 @@ class ApprovalLevelAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
+        if ($request->isActive && (int) $approvalLevel->documentSystemID === 3 && !empty($approvalLevel->subcategoryID)) {
+            $documentConf = CompanyDocumentAttachment::where('companySystemID', $approvalLevel->companySystemID)
+                ->where('documentSystemID', $approvalLevel->documentSystemID)
+                ->first();
+            $docSubcategoryApproval = $documentConf
+                ? \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($documentConf->isSubcategoryApproval ?? 0)
+                : false;
+
+            if (!$docSubcategoryApproval) {
+                return $this->sendError(trans('custom.subcategory_approval_disabled_enable_before_activate'), 500);
+            }
+        }
+
         $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
 
         if (!$approvalLevelValidation['status']) {
