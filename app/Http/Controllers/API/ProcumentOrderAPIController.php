@@ -1297,7 +1297,16 @@ class ProcumentOrderAPIController extends AppBaseController
 
 
             if ($isAmendAccess != 1) {
-                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $input["financeCategory"], 'amount' => $procumentOrderUpdate->poTotalLocalCurrency);
+                $categoryParam = $input['financeCategory'] ?? $procumentOrderUpdate->financeCategory;
+                if (CategoryValidationService::isCategoryApprovalEnabled($procumentOrder->companySystemID, (int) $procumentOrder->documentSystemID)) {
+                    $detailCategories = ProcumentOrderDetail::where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                        ->distinct()->pluck('itemFinanceCategoryID')->filter()->values();
+                    if ($detailCategories->count() === 1) {
+                        $categoryParam = $detailCategories->first();
+                        $procumentOrderUpdate->financeCategory = $categoryParam;
+                    }
+                }
+                $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => $categoryParam, 'amount' => $procumentOrderUpdate->poTotalLocalCurrency);
                 $confirm = DocumentConfirm::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"]);
