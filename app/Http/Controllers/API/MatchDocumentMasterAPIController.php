@@ -3443,9 +3443,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             Sum( erp_directreceiptdetails.DRAmount ) AS SumOfreceiveAmountTrans,
                                             Sum( erp_directreceiptdetails.localAmount ) AS SumOfreceiveAmountLocal,
                                             Sum( erp_directreceiptdetails.comRptAmount ) AS SumOfreceiveAmountRpt,
-                                            IFNULL( advd.SumOfmatchingAmount, 0 ) AS SumOfmatchingAmount,
+                                            IFNULL( advd.SumOfmatchingAmount, 0 ) + IFNULL( payAdvance.totalPVAmount, 0 ) AS SumOfmatchingAmount,
                                             ROUND(
-                                            ( COALESCE ( SUM( erp_directreceiptdetails.DRAmount ), 0 ) - IFNULL( advd.SumOfmatchingAmount, 0 ) ),
+                                            ( COALESCE ( SUM( erp_directreceiptdetails.DRAmount ), 0 ) - IFNULL( advd.SumOfmatchingAmount, 0 ) - IFNULL( payAdvance.totalPVAmount, 0 ) ),
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
@@ -3473,8 +3473,21 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.companySystemID, 
                                             erp_matchdocumentmaster.serviceLineSystemID
                                             ) AS advd ON ( erp_directreceiptdetails.directReceiptAutoID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID AND advd.tableType = 1 AND erp_directreceiptdetails.serviceLineSystemID = advd.serviceLineSystemID) 
+                                            LEFT JOIN (
+                                        SELECT
+                                            advanceReceiptAutoID,
+                                            companySystemID,
+                                            COALESCE( SUM( ABS( advanceReceiptAmount ) ), 0 ) AS totalPVAmount
+                                        FROM
+                                            erp_pay_advance_receipt_details
                                         WHERE
-                                            erp_directreceiptdetails.companySystemID = " . $input['companySystemID'] . " 
+                                            companySystemID = " . $input['companySystemID'] . "
+                                        GROUP BY
+                                            advanceReceiptAutoID,
+                                            companySystemID
+                                            ) AS payAdvance ON ( erp_customerreceivepayment.custReceivePaymentAutoID = payAdvance.advanceReceiptAutoID AND erp_customerreceivepayment.companySystemID = payAdvance.companySystemID )
+                                        WHERE
+                                            erp_directreceiptdetails.companySystemID = " . $input['companySystemID'] . "
                                             AND erp_customerreceivepayment.documentType = 15 
                                             AND erp_customerreceivepayment.approved = - 1 
                                             AND customerID = " . $input['BPVsupplierID'] . "
@@ -3502,9 +3515,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             Sum( erp_advancereceiptdetails.supplierTransAmount ) AS SumOfreceiveAmountTrans,
                                             Sum( erp_advancereceiptdetails.localAmount ) AS SumOfreceiveAmountLocal,
                                             Sum( erp_advancereceiptdetails.comRptAmount ) AS SumOfreceiveAmountRpt,
-                                            IFNULL( advd.SumOfmatchingAmount, 0 ) AS SumOfmatchingAmount,
+                                            IFNULL( advd.SumOfmatchingAmount, 0 ) + IFNULL( payAdvance.totalPVAmount, 0 ) AS SumOfmatchingAmount,
                                             ROUND(
-                                            ( COALESCE ( SUM( erp_advancereceiptdetails.supplierTransAmount ), 0 ) - IFNULL( advd.SumOfmatchingAmount, 0 ) ),
+                                            ( COALESCE ( SUM( erp_advancereceiptdetails.supplierTransAmount ), 0 ) - IFNULL( advd.SumOfmatchingAmount, 0 ) - IFNULL( payAdvance.totalPVAmount, 0 ) ),
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
@@ -3532,6 +3545,19 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.companySystemID,
                                             erp_matchdocumentmaster.serviceLineSystemID 
                                             ) AS advd ON ( erp_advancereceiptdetails.custReceivePaymentAutoID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID AND advd.tableType = 2 AND erp_advancereceiptdetails.serviceLineSystemID = advd.serviceLineSystemID) 
+                                            LEFT JOIN (
+                                        SELECT
+                                            advanceReceiptAutoID,
+                                            companySystemID,
+                                            COALESCE( SUM( ABS( advanceReceiptAmount ) ), 0 ) AS totalPVAmount
+                                        FROM
+                                            erp_pay_advance_receipt_details
+                                        WHERE
+                                            companySystemID = " . $input['companySystemID'] . "
+                                        GROUP BY
+                                            advanceReceiptAutoID,
+                                            companySystemID
+                                            ) AS payAdvance ON ( erp_customerreceivepayment.custReceivePaymentAutoID = payAdvance.advanceReceiptAutoID AND erp_customerreceivepayment.companySystemID = payAdvance.companySystemID )
                                         WHERE
                                             erp_advancereceiptdetails.companySystemID = " . $input['companySystemID'] . "
                                             AND erp_customerreceivepayment.documentType = 15 
