@@ -332,8 +332,11 @@
             @if($masterdata->invoiceType == 2)
                  {{ __('custom.supplier_payment') }}
             @endif
-            @if($masterdata->invoiceType == 3)
+            @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                     {{ __('custom.direct_payment') }}
+            @endif
+            @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash == 15)
+                    {{ __('custom.payment_voucher_interbank_transfer') }}
             @endif
             @if($masterdata->invoiceType == 5)
                     {{ __('custom.supplier_advance_payment') }}
@@ -1015,7 +1018,9 @@
             </table>
         </div>
     @endif
-
+    @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash == 15)
+    <br>
+    @endif
     <div style="padding-bottom: 20px!important; padding-top: 35px!important; page-break-inside: avoid; !important;">
     <table style="width:100%;">
         <tr>
