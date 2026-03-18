@@ -175,8 +175,17 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             $newAssigned = array_key_exists('isAssigned', $input) ? $input['isAssigned'] : null;
             $newActive = array_key_exists('isActive', $input) ? $input['isActive'] : null;
             $willUnassignOrInactivate = ($newAssigned !== null && $newAssigned != -1 && $newAssigned != 1) || ($newActive !== null && !$newActive);
-            if ($willUnassignOrInactivate && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->itemCategorySubID, (int) $financeItemCategorySubAssigned->companySystemID)) {
-                return $this->sendError(trans('custom.approval_setup_uses_this_subcategory_cannot_inactivate'), 422);
+            if ($willUnassignOrInactivate) {
+                $companyName = $financeItemCategorySubAssigned->company ? $financeItemCategorySubAssigned->company->CompanyName : null;
+                if (empty($companyName)) {
+                    $companyName = $financeItemCategorySubAssigned->companyID;
+                }
+                if (!empty($financeItemCategorySubAssigned->mainItemCategoryID) && $this->approvalLevelService->isCategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->mainItemCategoryID, (int) $financeItemCategorySubAssigned->companySystemID)) {
+                    return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+                }
+                if (!empty($financeItemCategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->itemCategorySubID, (int) $financeItemCategorySubAssigned->companySystemID)) {
+                    return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+                }
             }
 
             $previousValue = $financeItemCategorySubAssigned->toArray();
@@ -322,13 +331,27 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
         /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
         if (empty($financeItemcategorySubAssigned)) {
             return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
+
+        // Block delete if active approval setup uses this category/subcategory for this company
+        $companyName = $financeItemcategorySubAssigned->company ? $financeItemcategorySubAssigned->company->CompanyName : null;
+        if (empty($companyName)) {
+            $companyName = $financeItemcategorySubAssigned->companyID;
+        }
+        if (!empty($financeItemcategorySubAssigned->mainItemCategoryID) && $this->approvalLevelService->isCategoryUsedInActiveApprovalLevelForCompany((int) $financeItemcategorySubAssigned->mainItemCategoryID, (int) $financeItemcategorySubAssigned->companySystemID)) {
+            return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+        }
+        if (!empty($financeItemcategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemcategorySubAssigned->itemCategorySubID, (int) $financeItemcategorySubAssigned->companySystemID)) {
+            return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+        }
+
         $masterData = $financeItemcategorySubAssigned->toArray();
 
         $financeItemcategorySubAssigned->delete();

@@ -9898,6 +9898,7 @@ return
     'subcategory_is_required_for_grv_approval' => 'الفئة الفرعية مطلوبة عند تفعيل الموافقة حسب الفئة والفقرة الفرعية لـ GRV.',
     'approval_setup_uses_this_category_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
     'approval_setup_uses_this_subcategory_cannot_inactivate' => 'يستخدم إعداد موافقة نشط فئة التمويل الفرعية هذه. لا يمكن إلغاء التفعيل أو إلغاء التعيين.',
+    'item_finance_category_used_in_active_approval_setup_for_company' => 'فئة التمويل هذه مستخدمة حالياً في إعداد موافقة نشط للشركة :company. يرجى إزالة أو إلغاء تفعيل إعداد الموافقة قبل إجراء هذا التغيير.',
     'transaction_details' => 'تفاصيل المعاملة',
     'transfer_amount' => 'مبلغ التحويل',
     'bank_charge_details' => 'تفاصيل رسوم البنك',
