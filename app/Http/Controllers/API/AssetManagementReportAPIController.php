@@ -452,7 +452,8 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
                     //ini_set('memory_limit', '4096M');
                     //return phpinfo();
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID'));
+                    $requestArr = $request->all();
+                    $request = (object)$this->convertArrayToSelectedValue($requestArr, array('currencyID', 'typeID'));
                     $output = $this->getAssetRegisterDetail2($request);
                     $companyCurrency = Helper::companyCurrency($request->companySystemID);
                     $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
@@ -464,7 +465,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     $totalChargeOnDisposal = 0;
                     $decimalPlaces = ($request->currencyID === 2) ? $companyCurrency->localcurrency->DecimalPlaces : $companyCurrency->reportingcurrency->DecimalPlaces;
                     
-                    foreach ($output['data'] as $row) {
+                    $allRows = $output['data'] ?? [];
+                    foreach ($allRows as $row) {
                         $sumCharge = 0;
                         foreach ($output['period'] as $periodValue) {
                             $sumCharge += $row->$periodValue ?? 0;  
@@ -487,11 +489,69 @@ class AssetManagementReportAPIController extends AppBaseController
                         $totalChargeOnDisposal += round($chargeOnDisposal, $decimalPlaces);
                     }
 
-                    return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period'], 
-                    'totalChargeOnDisposal' => round($totalChargeOnDisposal, $decimalPlaces),
-                    'totalClosingDep' => round($totalClosingDep, $decimalPlaces),
-                    'NBVTotal' => round($NBVTotal, $decimalPlaces),
-                    'chargeDuringYear' => round($chargeDuringYear, $decimalPlaces));
+                    $totalRecords = is_countable($allRows) ? count($allRows) : 0;
+
+                    $lengthRaw = isset($requestArr['length']) ? (int)$requestArr['length'] : 0;
+                    $length = ($lengthRaw > 0) ? min($lengthRaw, 500) : 500;
+
+                    $startRaw = isset($requestArr['start']) ? (int)$requestArr['start'] : 0;
+                    $pageRaw = isset($requestArr['page']) ? (int)$requestArr['page'] : 1;
+                    $page = ($pageRaw > 0) ? $pageRaw : 1;
+                    $start = ($startRaw > 0) ? $startRaw : (($page - 1) * $length);
+                    $start = max(0, $start);
+
+                    $draw = isset($requestArr['draw']) ? (int)$requestArr['draw'] : 0;
+
+                    $pagedRows = array_values(array_slice($allRows, $start, $length));
+
+                    $grandTotals = [
+                        'opening' => 0,
+                        'addition' => 0,
+                        'disposed' => 0,
+                        'costClosing' => 0,
+                        'openingDep' => 0,
+                        'periodTotals' => []
+                    ];
+                    foreach (($output['period'] ?? []) as $p) {
+                        $grandTotals['periodTotals'][$p] = 0;
+                    }
+                    foreach ($allRows as $row) {
+                        $grandTotals['opening'] += (float)($row->opening ?? 0);
+                        $grandTotals['addition'] += (float)($row->addition ?? 0);
+                        $grandTotals['disposed'] += (float)($row->disposed ?? 0);
+                        $grandTotals['costClosing'] += (float)($row->costClosing ?? 0);
+                        $grandTotals['openingDep'] += (float)($row->openingDep ?? 0);
+                        foreach (($output['period'] ?? []) as $p) {
+                            $grandTotals['periodTotals'][$p] += (float)($row->$p ?? 0);
+                        }
+                    }
+                    $grandTotals['opening'] = round($grandTotals['opening'], $decimalPlaces);
+                    $grandTotals['addition'] = round($grandTotals['addition'], $decimalPlaces);
+                    $grandTotals['disposed'] = round($grandTotals['disposed'], $decimalPlaces);
+                    $grandTotals['costClosing'] = round($grandTotals['costClosing'], $decimalPlaces);
+                    $grandTotals['openingDep'] = round($grandTotals['openingDep'], $decimalPlaces);
+                    foreach ($grandTotals['periodTotals'] as $k => $v) {
+                        $grandTotals['periodTotals'][$k] = round($v, $decimalPlaces);
+                    }
+
+                    return array(
+                        'draw' => $draw,
+                        'recordsTotal' => $totalRecords,
+                        'recordsFiltered' => $totalRecords,
+                        'reportData' => $pagedRows,
+                        'companyCurrency' => $companyCurrency,
+                        'currencyID' => $request->currencyID,
+                        'fromDate' => $fromDate,
+                        'toDate' => $toDate,
+                        'period' => $output['period'],
+                        'grandTotals' => $grandTotals,
+                        'totalChargeOnDisposal' => round($totalChargeOnDisposal, $decimalPlaces),
+                        'totalClosingDep' => round($totalClosingDep, $decimalPlaces),
+                        'NBVTotal' => round($NBVTotal, $decimalPlaces),
+                        'chargeDuringYear' => round($chargeDuringYear, $decimalPlaces),
+                        'perPage' => $length,
+                        'page' => (int)floor($start / $length) + 1
+                    );
                 }
 
                 if($request->reportTypeID == 'ARGD'){ // Asset Register Group Detail
