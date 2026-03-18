@@ -27,6 +27,7 @@ use App\Models\EmployeeLedger;
 use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\MatchDocumentMaster;
+use App\Models\PayAdvanceReceiptDetail;
 use App\Models\PayCreditNoteDetail;
 use App\Models\PaymentVoucherBankChargeDetails;
 use App\Models\PaySupplierInvoiceDetail;
@@ -1822,15 +1823,34 @@ class PaymentVoucherServices
 
             // refund type payment voucher
             if ($paySupplierInvoiceMaster->invoiceType == 8) {
-                $payCreditNoteDetailExist = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->get();
+                $refundType = (int) ($paySupplierInvoiceMaster->refundType ?? $input['refundType'] ?? 0);
 
-                if (count($payCreditNoteDetailExist) == 0) {
-                    return [
-                        'status' => false,
-                        'message' => trans('custom.pv_document_cannot_confirm_without_details'),
-                        'code' => 500,
-                        'type' => ['type' => 'confirm']
-                    ];
+                if ($refundType === 1) {
+                    $advanceDetailExist = PayAdvanceReceiptDetail::where('PayMasterAutoId', $id)
+                        ->where('companySystemID', $companySystemID)
+                        ->first();
+
+                    if (empty($advanceDetailExist)) {
+                        return [
+                            'status' => false,
+                            'message' => trans('custom.pv_document_cannot_confirm_without_details'),
+                            'code' => 500,
+                            'type' => ['type' => 'confirm']
+                        ];
+                    }
+                } else {
+                    $payCreditNoteDetailExist = PayCreditNoteDetail::where('PayMasterAutoId', $id)
+                        ->where('companySystemID', $companySystemID)
+                        ->get();
+
+                    if (count($payCreditNoteDetailExist) == 0) {
+                        return [
+                            'status' => false,
+                            'message' => trans('custom.pv_document_cannot_confirm_without_details'),
+                            'code' => 500,
+                            'type' => ['type' => 'confirm']
+                        ];
+                    }
                 }
             }
 
@@ -1867,14 +1887,32 @@ class PaymentVoucherServices
                 $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
             }
             else if ($paySupplierInvoiceMaster->invoiceType == 8) {
-                $amountForApproval = PayCreditNoteDetail::where('PayMasterAutoId', $id)->where('companySystemID', $companySystemID)->sum('creditNotePaymentAmount');
-                if ($amountForApproval == 0) {
-                    return [
-                        'status' => false,
-                        'message' => trans('custom.credit_note_payment_amount_cannot_be_zero'),
-                        'code' => 500,
-                        'type' => ['type' => 'confirm']
-                    ];
+                $refundType = (int) ($paySupplierInvoiceMaster->refundType ?? $input['refundType'] ?? 0);
+
+                if ($refundType === 1) {
+                    $amountForApproval = PayAdvanceReceiptDetail::where('PayMasterAutoId', $id)
+                        ->where('companySystemID', $companySystemID)
+                        ->sum('advanceReceiptAmount');
+                    if ($amountForApproval == 0) {
+                        return [
+                            'status' => false,
+                            'message' => trans('custom.advance_receipt_refund_payment_amount_cannot_be_zero'),
+                            'code' => 500,
+                            'type' => ['type' => 'confirm']
+                        ];
+                    }
+                } else {
+                    $amountForApproval = PayCreditNoteDetail::where('PayMasterAutoId', $id)
+                        ->where('companySystemID', $companySystemID)
+                        ->sum('creditNotePaymentAmount');
+                    if ($amountForApproval == 0) {
+                        return [
+                            'status' => false,
+                            'message' => trans('custom.credit_note_payment_amount_cannot_be_zero'),
+                            'code' => 500,
+                            'type' => ['type' => 'confirm']
+                        ];
+                    }
                 }
             }
 
@@ -2124,18 +2162,34 @@ class PaymentVoucherServices
             }
         }
 
-        if($paySupplierInvoiceMaster->invoiceType == 8) {
-            $totalAmount = PayCreditNoteDetail::selectRaw("SUM(creditNotePaymentAmount) as creditNotePaymentAmount")->where('PayMasterAutoId', $id)->first();
-            if ($totalAmount && $totalAmount->creditNotePaymentAmount > 0) {
-                $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $totalAmount->creditNotePaymentAmount);
-                $input['payAmountBank'] = $bankAmount["defaultAmount"];
-                $input['payAmountSuppTrans'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
-                $input['payAmountSuppDef'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
-                $input['payAmountCompLocal'] = Helper::roundValue($bankAmount["localAmount"]);
-                $input['payAmountCompRpt'] = Helper::roundValue($bankAmount["reportingAmount"]);
-                $input['suppAmountDocTotal'] = Helper::roundValue($totalAmount->creditNotePaymentAmount);
+        if ($paySupplierInvoiceMaster->invoiceType == 8) {
+            $refundType = (int) ($paySupplierInvoiceMaster->refundType ?? $input['refundType'] ?? 0);
+
+            if ($refundType === 1) {
+                $totalAmount = PayAdvanceReceiptDetail::selectRaw('SUM(advanceReceiptAmount) as advanceReceiptAmount')
+                    ->where('PayMasterAutoId', $id)
+                    ->first();
+                $refundTotal = $totalAmount && $totalAmount->advanceReceiptAmount > 0
+                    ? $totalAmount->advanceReceiptAmount
+                    : 0;
+            } else {
+                $totalAmount = PayCreditNoteDetail::selectRaw('SUM(creditNotePaymentAmount) as creditNotePaymentAmount')
+                    ->where('PayMasterAutoId', $id)
+                    ->first();
+                $refundTotal = $totalAmount && $totalAmount->creditNotePaymentAmount > 0
+                    ? $totalAmount->creditNotePaymentAmount
+                    : 0;
             }
-            else {
+
+            if ($refundTotal > 0) {
+                $bankAmount = Helper::convertAmountToLocalRpt(203, $id, $refundTotal);
+                $input['payAmountBank'] = $bankAmount['defaultAmount'];
+                $input['payAmountSuppTrans'] = Helper::roundValue($refundTotal);
+                $input['payAmountSuppDef'] = Helper::roundValue($refundTotal);
+                $input['payAmountCompLocal'] = Helper::roundValue($bankAmount['localAmount']);
+                $input['payAmountCompRpt'] = Helper::roundValue($bankAmount['reportingAmount']);
+                $input['suppAmountDocTotal'] = Helper::roundValue($refundTotal);
+            } else {
                 $input['payAmountBank'] = 0;
                 $input['payAmountSuppTrans'] = 0;
                 $input['payAmountSuppDef'] = 0;
