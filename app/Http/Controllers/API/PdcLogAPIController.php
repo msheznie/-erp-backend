@@ -388,8 +388,8 @@ class PdcLogAPIController extends AppBaseController
             
             $statusMap = [
                 'open' => 0,
-                'returned' => 2,
                 'deposited' => 1,
+                'returned' => 2,
                 'done' => 3,
             ];
             
