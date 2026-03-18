@@ -350,14 +350,15 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $requestArr = $request->all();
+                    $request = (object)$this->convertArrayToSelectedValue($requestArr, array('typeID'));
                     $typeID = $request->typeID;
                     $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
                     $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
                     $assetCategory = join(',', $assetCategory);
 
                     $output = $this->getAssetRegisterDetail3($request);
-                    $outputArr = [];
+                    $allRows = $output ?? [];
 
                     $COSTUNIT = 0;
                     $costUnitRpt = 0;
@@ -371,8 +372,8 @@ class AssetManagementReportAPIController extends AppBaseController
                     $costUnitDisposed = 0;
                     $profitDisposalRpt = 0;
                     $profitDisposalLocal = 0;
-                    if ($output) {
-                        foreach ($output as $val) {
+                    if ($allRows) {
+                        foreach ($allRows as $val) {
                             $localnbv += ($val->COSTUNIT - $val->depAmountLocal);
                             $rptnbv += ($val->costUnitRpt - $val->depAmountRpt);
                             $COSTUNIT += $val->COSTUNIT;
@@ -385,32 +386,46 @@ class AssetManagementReportAPIController extends AppBaseController
                             $costUnitDisposed += (($val->DIPOSED == -1) ? $val->COSTUNIT : 0);
                             $profitDisposalRpt += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceRpt - ($val->costUnitRpt - $val->acDepAmountRpt)) : 0);
                             $profitDisposalLocal += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceLocal - ($val->COSTUNIT - $val->adDepAmountLocal)) : 0);
-                            $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
 
                     $companyData = Helper::companyCurrency($request->companySystemID);
     
-                    $sort = 'asc';
+                    $totalRecords = is_countable($allRows) ? count($allRows) : 0;
 
-                    return \DataTables::of($output)
-                                    ->addIndexColumn()
-                                    ->with('localnbv', $localnbv)
-                                    ->with('rptnbv', $rptnbv)
-                                    ->with('localcurrency', $companyData->localcurrency)
-                                    ->with('reportingcurrency', $companyData->reportingcurrency)
-                                    ->with('COSTUNIT', $COSTUNIT)
-                                    ->with('costUnitRpt', $costUnitRpt)
-                                    ->with('depAmountLocal', $depAmountLocal)
-                                    ->with('depAmountRpt', $depAmountRpt)
-                                    ->with('costUnitRptDisposed', $costUnitRptDisposed)
-                                    ->with('costUnitDisposed', $costUnitDisposed)
-                                    ->with('profitDisposalRpt', $profitDisposalRpt)
-                                    ->with('profitDisposalLocal', $profitDisposalLocal)
-                                    ->with('acDepAmountRpt', $acDepAmountRpt)
-                                    ->with('adDepAmountLocal', $adDepAmountLocal)
-                                    ->addIndexColumn()
-                                    ->make(true);
+                    $lengthRaw = isset($requestArr['length']) ? (int)$requestArr['length'] : 0;
+                    $length = ($lengthRaw > 0) ? min($lengthRaw, 500) : 500;
+                    $startRaw = isset($requestArr['start']) ? (int)$requestArr['start'] : 0;
+                    $pageRaw = isset($requestArr['page']) ? (int)$requestArr['page'] : 1;
+                    $page = ($pageRaw > 0) ? $pageRaw : 1;
+                    $start = ($startRaw > 0) ? $startRaw : (($page - 1) * $length);
+                    $start = max(0, $start);
+                    $draw = isset($requestArr['draw']) ? (int)$requestArr['draw'] : 0;
+
+                    $pagedRows = array_values(array_slice($allRows, $start, $length));
+
+                    return array(
+                        'draw' => $draw,
+                        'recordsTotal' => $totalRecords,
+                        'recordsFiltered' => $totalRecords,
+                        'reportData' => $pagedRows,
+                        'localnbv' => $localnbv,
+                        'rptnbv' => $rptnbv,
+                        'localcurrency' => $companyData->localcurrency,
+                        'reportingcurrency' => $companyData->reportingcurrency,
+                        'COSTUNIT' => $COSTUNIT,
+                        'costUnitRpt' => $costUnitRpt,
+                        'depAmountLocal' => $depAmountLocal,
+                        'depAmountRpt' => $depAmountRpt,
+                        'costUnitRptDisposed' => $costUnitRptDisposed,
+                        'costUnitDisposed' => $costUnitDisposed,
+                        'profitDisposalRpt' => $profitDisposalRpt,
+                        'profitDisposalLocal' => $profitDisposalLocal,
+                        'acDepAmountRpt' => $acDepAmountRpt,
+                        'adDepAmountLocal' => $adDepAmountLocal,
+                        'perPage' => $length,
+                        'page' => (int)floor($start / $length) + 1
+                    );
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
