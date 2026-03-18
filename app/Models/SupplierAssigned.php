@@ -121,6 +121,7 @@ class SupplierAssigned extends Model
         'vatPercentage',
         'advanceAccountSystemID',
         'AdvanceAccount',
+        'supplierCommunicationYN',
     ];
 
     /**
@@ -180,6 +181,7 @@ class SupplierAssigned extends Model
         'vatNumber' => 'string',
         'vatPercentage' => 'integer',
         'deleted_at' => 'datetime',
+        'supplierCommunicationYN' => 'integer',
     ];
 
     /**
