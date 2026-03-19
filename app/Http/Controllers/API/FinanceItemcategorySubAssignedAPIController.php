@@ -180,9 +180,6 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
                 if (empty($companyName)) {
                     $companyName = $financeItemCategorySubAssigned->companyID;
                 }
-                if (!empty($financeItemCategorySubAssigned->mainItemCategoryID) && $this->approvalLevelService->isCategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->mainItemCategoryID, (int) $financeItemCategorySubAssigned->companySystemID)) {
-                    return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
-                }
                 if (!empty($financeItemCategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->itemCategorySubID, (int) $financeItemCategorySubAssigned->companySystemID)) {
                     return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
                 }
@@ -340,13 +337,9 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
 
-        // Block delete if active approval setup uses this category/subcategory for this company
         $companyName = $financeItemcategorySubAssigned->company ? $financeItemcategorySubAssigned->company->CompanyName : null;
         if (empty($companyName)) {
             $companyName = $financeItemcategorySubAssigned->companyID;
-        }
-        if (!empty($financeItemcategorySubAssigned->mainItemCategoryID) && $this->approvalLevelService->isCategoryUsedInActiveApprovalLevelForCompany((int) $financeItemcategorySubAssigned->mainItemCategoryID, (int) $financeItemcategorySubAssigned->companySystemID)) {
-            return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
         }
         if (!empty($financeItemcategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemcategorySubAssigned->itemCategorySubID, (int) $financeItemcategorySubAssigned->companySystemID)) {
             return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
