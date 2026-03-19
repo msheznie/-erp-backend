@@ -366,4 +366,6 @@ return [
     'draft_saved_successfully' => 'تم حفظ المسودة بنجاح.',
     'invalid_cc_emails' => 'عناوين البريد في نسخة (CC) غير صالحة',
     'supplier_required' => 'المورد مطلوب.',
+    'show_award_details_in_supplier_portal'=> 'عرض تفاصيل الترسية في بوابة الموردين',
+    'award_visibility_type' => 'نوع عرض نتائج الترسية'
 ];

@@ -64,7 +64,7 @@ class SrmTenderEditAmendService
                     'negotiation_doc_verify_comment', 'negotiation_doc_verify_status', 'technical_eval_status', 'doc_verifiy_comment', 'doc_verifiy_status',
                     'doc_verifiy_date', 'doc_verifiy_by_emp', 'negotiation_published', 'is_negotiation_started', 'commercial_line_item_status', 'document_type',
                     'commercial_ranking_line_item_status', 'commercial_verify_by', 'commercial_verify_at', 'commercial_verify_status', 'go_no_go_status',
-                    'technical_eval_status', 'timesReferred'
+                    'technical_eval_status', 'timesReferred', 'show_award_detail', 'award_visibility_type'
                 ], 'fieldDescriptions' => [
                     'commercial_passing_weightage' => trans('srm_tender_rfx.commercial_criteria_passing_weightage'),
                     'technical_passing_weightage' => trans('srm_tender_rfx.technical_criteria_passing_weightage'),
@@ -211,6 +211,8 @@ class SrmTenderEditAmendService
                     'technical_bid_closing_date' => trans('srm_tender_rfx.technical_bid_closing_date'),
                     'commerical_bid_opening_date' => trans('srm_tender_rfx.commercial_bid_opening_date'),
                     'commerical_bid_closing_date' => trans('srm_tender_rfx.commercial_bid_closing_date'),
+                    'show_award_detail' => trans('srm_tender_rfx.show_award_details_in_supplier_portal'),
+                    'award_visibility_type' => trans('srm_tender_rfx.award_visibility_type'),
                 ],
                 'fieldMappings' => [
                     'currency_id' => [
@@ -554,6 +556,14 @@ class SrmTenderEditAmendService
                         $oldValue = self::tenderStage($oldValue);
                         $newValue = self::tenderStage($newValue);
                     }
+                    if($field == 'show_award_detail'){
+                        $oldValue = self::showAwardDetail($oldValue);
+                        $newValue = self::showAwardDetail($newValue);
+                    }
+                    if($field == 'award_visibility_type'){
+                        $oldValue = self::awardVisibilityType($oldValue);
+                        $newValue = self::awardVisibilityType($newValue);
+                    }
                     if($sectionId == '3' && $field == 'status'){
                         $oldValue = self::pricingScheduleMasterStatus($oldValue);
                         $newValue = self::pricingScheduleMasterStatus($newValue);
@@ -711,5 +721,20 @@ class SrmTenderEditAmendService
         } catch (\Exception $ex){
             return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $ex->getMessage()])];
         }
+    }
+
+    public static function showAwardDetail($status): string
+    {
+        return $status ? 'True' : 'False';
+    }
+    public static function awardVisibilityType($type): string
+    {
+        $types = [
+            1 => 'Supplier Ranking',
+            2 => 'Supplier Ranking with Commercials',
+            3 => 'Suppliers and Awarded Items',
+        ];
+
+        return $types[(int) $type] ?? '-';
     }
 }
