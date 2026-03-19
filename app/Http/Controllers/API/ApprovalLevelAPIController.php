@@ -334,7 +334,7 @@ class ApprovalLevelAPIController extends AppBaseController
             ->where('documentSystemID', $input['documentSystemID'])
             ->when(isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1), function($query) use ($input){
                 $query->where('isCategoryWiseApproval', -1)
-                    ->where('categoryID', $input['categoryID']);
+                    ->where('categoryID', $input['categoryID'] ?? null);
                 if (isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 3) {
                     if (!empty($input['subcategoryID'])) {
                         $query->where('subcategoryID', $input['subcategoryID']);
