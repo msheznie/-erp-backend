@@ -316,6 +316,8 @@ class TenderMaster extends Model
         'final_tender_awarded',
         'final_tender_award_email',
         'award_commite_mem_status',
+        'show_award_detail',
+        'award_visibility_type',
         'final_tender_comment_status',
         'tender_edit_version_id',
         'is_negotiation_started',
@@ -409,7 +411,9 @@ class TenderMaster extends Model
         'negotiation_doc_verify_status'  => 'integer',
         'uuid'  => 'string',
         'is_clone' => 'integer',
-        'clone_master_id' => 'integer'
+        'clone_master_id' => 'integer',
+        'show_award_detail' => 'boolean',
+        'award_visibility_type' => 'integer',
     ];
 
     /**

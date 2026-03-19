@@ -169,4 +169,32 @@ class TenderFinalBids extends Model
         return $this->belongsTo('App\Models\SupplierTenderNegotiation', 'bid_id', 'srm_bid_submission_master_id');
 
     }
+    public function scopeRanking($query)
+    {
+        return $query->select('supplier_id', 'combined_ranking')
+            ->whereNotNull('combined_ranking')
+            ->orderBy('combined_ranking')
+            ->with(['supplier:id,name']);
+    }
+    public function scopeCommercial($query)
+    {
+        return $query->select('supplier_id', 'commercial_ranking', 'bid_id')
+            ->whereNotNull('commercial_ranking')
+            ->orderBy('commercial_ranking')
+            ->with(['supplier:id,name', 'bid_submission_master:id,line_item_total']);
+    }
+    public static function getScheduleRankingData(int $tenderId, string $type = 'ranking')
+    {
+        $query = self::query()->where('tender_id', $tenderId);
+
+        if ($type === 'ranking') {
+            $query->ranking();
+        } elseif ($type === 'commercial') {
+            $query->commercial();
+        } else {
+            return [];
+        }
+
+        return $query->get();
+    }
 }
