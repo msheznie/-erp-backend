@@ -17,6 +17,7 @@ use App\Http\Requests\GetLoiLoaEmailDataRequest;
 use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendScheduleWiseLoiLoaEmailRequest;
+use App\Http\Requests\UpdateTenderRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
@@ -763,7 +764,7 @@ class TenderMasterAPIController extends AppBaseController
         return $data;
     }
 
-    public function updateTender(Request $request)
+    public function updateTender(UpdateTenderRequest $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array(
             'bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
@@ -1742,27 +1743,6 @@ class TenderMasterAPIController extends AppBaseController
 
     public function validateTenderHeader($input)
     {
-        // Award detail visibility validation (Supplier Portal configuration)
-        $showAwardDetail = (bool) ($input['show_award_detail'] ?? false);
-        $awardVisibilityType = $input['award_visibility_type'] ?? null;
-        $evaluationTypeId = $input['evaluation_type_id'] ?? null;
-
-        if ($showAwardDetail) {
-            if ($awardVisibilityType === null || $awardVisibilityType === '') {
-                return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
-            }
-            
-            if ((int) $evaluationTypeId === 1) {
-                if ((int) $awardVisibilityType !== 3) {
-                    return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
-                }
-            } elseif ((int) $evaluationTypeId === 2) {
-                if (!in_array((int) $awardVisibilityType, [1, 2], true)) {
-                    return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
-                }
-            }
-        }
-
 
         $messages = [
             'title.required' => trans('srm_tender_rfx.title_is_required_dot'),

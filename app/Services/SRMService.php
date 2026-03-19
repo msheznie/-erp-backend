@@ -2018,60 +2018,75 @@ class SRMService
 
         $tenderId = $tender->id;
 
-        // Schedule-wise
         if ($tender->evaluation_type_id == TenderConstants::EVALUATION_SCHEDULE_WISE) {
-
-            if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING) {
-                return TenderFinalBids::getScheduleRankingData($tenderId, 'ranking')
-                    ->map(function ($row) {
-                        return [
-                            'supplier_name' => $row->supplier->name ?? null,
-                            'ranking' => $row->combined_ranking,
-                        ];
-                    })->toArray();
-            }
-
-            if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING_WITH_COMMERCIAL) {
-                return TenderFinalBids::getScheduleRankingData($tenderId, 'commercial')
-                    ->map(function ($row) use ($tender) {
-                        $decimalPlaces = isset($tender->currency->DecimalPlaces)
-                            ? (int) $tender->currency->DecimalPlaces
-                            : 3;
-                        $commercial = $row->bid_submission_master->line_item_total ?? null;
-
-                        return [
-                            'supplier_name' => $row->supplier->name ?? null,
-                            'ranking' => $row->commercial_ranking,
-                            'commercial' => $commercial !== null
-                                ? number_format((float) $commercial, $decimalPlaces, '.', '')
-                                : null,
-                        ];
-                    })->toArray();
-            }
+            return $this->buildScheduleWiseAwardDetails($tender, $tenderId);
         }
 
-        // Item-wise
         if (
             $tender->evaluation_type_id == TenderConstants::EVALUATION_ITEM_WISE &&
             $tender->award_visibility_type == TenderConstants::VISIBILITY_ITEM_SUPPLIER
         ) {
-            return SrmItemWiseTenderAwarding::getAwardedItems($tenderId)
-                ->map(function ($row) {
-                    $itemName = optional($row->boqItem)->item_name
-                        ?: optional($row->boqItem)->description
-                        ?: optional($row->pricingScheduleDetail)->label
-                        ?: optional($row->pricingScheduleDetail)->description;
-
-                    return [
-                        'item' => $itemName,
-                        'supplier_name' => $row->supplier->name ?? null,
-                    ];
-                })->toArray();
+            return $this->buildItemWiseAwardDetails($tenderId);
         }
 
         return [];
     }
+    private function buildScheduleWiseAwardDetails($tender, int $tenderId): array
+    {
+        if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING) {
+            return $this->buildScheduleRanking($tenderId);
+        }
 
+        if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING_WITH_COMMERCIAL) {
+            return $this->buildScheduleCommercial($tender, $tenderId);
+        }
+
+        return [];
+    }
+    private function buildScheduleRanking(int $tenderId): array
+    {
+        return TenderFinalBids::getScheduleRankingData($tenderId, 'ranking')
+            ->map(function ($row) {
+                return [
+                    'supplier_name' => $row->supplier->name ?? null,
+                    'ranking' => $row->combined_ranking,
+                ];
+            })->toArray();
+    }
+    private function buildScheduleCommercial($tender, int $tenderId): array
+    {
+        $decimalPlaces = isset($tender->currency->DecimalPlaces)
+            ? (int) $tender->currency->DecimalPlaces
+            : 3;
+
+        return TenderFinalBids::getScheduleRankingData($tenderId, 'commercial')
+            ->map(function ($row) use ($decimalPlaces) {
+                $commercial = $row->bid_submission_master->line_item_total ?? null;
+
+                return [
+                    'supplier_name' => $row->supplier->name ?? null,
+                    'ranking' => $row->commercial_ranking,
+                    'commercial' => $commercial !== null
+                        ? number_format((float) $commercial, $decimalPlaces, '.', '')
+                        : null,
+                ];
+            })->toArray();
+    }
+    private function buildItemWiseAwardDetails(int $tenderId): array
+    {
+        return SrmItemWiseTenderAwarding::getAwardedItems($tenderId)
+            ->map(function ($row) {
+                $itemName = optional($row->boqItem)->item_name
+                    ?: optional($row->boqItem)->description
+                    ?: optional($row->pricingScheduleDetail)->label
+                    ?: optional($row->pricingScheduleDetail)->description;
+    
+                return [
+                    'item' => $itemName,
+                    'supplier_name' => $row->supplier->name ?? null,
+                ];
+            })->toArray();
+    }
     public function saveTenderPurchase(Request $request)
     {
         $supplierUuid = $request->input('extra.supplierUuid') ?? $request->input('supplier_uuid');

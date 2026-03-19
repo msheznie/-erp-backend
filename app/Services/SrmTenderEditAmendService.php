@@ -727,20 +727,14 @@ class SrmTenderEditAmendService
     {
         return $status ? 'True' : 'False';
     }
-    public static function awardVisibilityType($type): string 
+    public static function awardVisibilityType($type): string
     {
-        if(is_null($type) || $type == ''){
-            return '-';
-        }
+        $types = [
+            1 => 'Supplier Ranking',
+            2 => 'Supplier Ranking with Commercials',
+            3 => 'Suppliers and Awarded Items',
+        ];
 
-        if($type == 1){
-            return 'Supplier Ranking';
-        }
-        if($type == 2){
-            return 'Supplier Ranking with Commercials';
-        }
-        if($type == 3){
-            return 'Suppliers and Awarded Items';
-        }
+        return $types[(int) $type] ?? '-';
     }
 }
