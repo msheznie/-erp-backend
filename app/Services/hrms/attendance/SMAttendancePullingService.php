@@ -701,7 +701,7 @@ class SMAttendancePullingService{
         if ($row['work_hour_calc_method'] == 2 && $isFeatureEnabled) {
             return $isCrossDay
                 ? SMRotaShiftIndividualPunchesComputation::class
-                : SMFixedShiftIndividualPunchesComputation::class;
+                : SMFixedShiftComputation::class;
         }
 
         if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
