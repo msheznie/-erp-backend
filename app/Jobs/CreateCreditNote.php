@@ -153,7 +153,8 @@ class CreateCreditNote implements ShouldQueue
             $receiptVoucherIndex = 0;
             $receiptVoucherDetails = $creditNote['receipt_voucher_details'] ?? null;
 
-            if (!is_null($receiptVoucherDetails) && $datasetMaster['status']) {
+
+            if(!is_null($receiptVoucherDetails) && $datasetMaster['status']) {
                 foreach ($receiptVoucherDetails as $reciptVoucherDetail) {
                     $datasetReceiptVoucher = self::validateCNReceiptVoucherDetailsData($creditNote, $reciptVoucherDetail, $datasetMaster);
 
@@ -171,8 +172,9 @@ class CreateCreditNote implements ShouldQueue
                 }
             }
 
+
             // Validate refund total matches credit note line total for refund type credit note
-            if (!is_null($receiptVoucherDetails) && isset($receiptVoucherDataSets[$masterIndex])) {
+            if(!is_null($receiptVoucherDetails) && isset($receiptVoucherDataSets[$masterIndex]) && isset($detailsDataSets[$masterIndex])) {
                 $totalMatchValidation = self::validateRefundAmountWithCreditNoteAmount($detailsDataSets[$masterIndex], $receiptVoucherDataSets[$masterIndex]);
                 if (!$totalMatchValidation['status']) {
                     $headerData['errors'] = [
