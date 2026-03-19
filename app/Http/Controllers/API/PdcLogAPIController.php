@@ -385,7 +385,7 @@ class PdcLogAPIController extends AppBaseController
                                 }]);
 
         if (!is_null($search)) {
-            
+
             $statusMap = [
                 'open' => 0,
                 'deposited' => 1,
@@ -398,16 +398,18 @@ class PdcLogAPIController extends AppBaseController
                 $query->where('chequeNo', 'like', "%{$search}%")
                     ->orWhereRaw("DATE_FORMAT(chequeDate, '%d/%m/%Y') like ?", ["%{$search}%"])
                     ->orWhere('amount', 'like', "%{$search}%")
-                    ->orWhere('documentmasterAutoID', 'like', "%{$search}%");
-                if (array_key_exists($search, $statusMap)) {
-                    $query->orWhere('chequeStatus', $statusMap[$search]);
-                }
-                    $query->orWhereHas('pay_supplier', function ($psq) use ($search) {
-                        $psq->where('BPVcode', 'like', "%{$search}%")
-                            ->orWhere('documentID', 'like', "%{$search}%");
-                    })->orWhereHas('currency', function ($cq) use ($search) {
-                    $cq->where('CurrencyCode', 'like', "%{$search}%");
-                });
+                    ->orWhereHas('pay_supplier', function ($psq) use ($search) {
+                        $psq->where('BPVcode', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('bank', function ($bq) use ($search) {
+                        $bq->where('bankName', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('currency', function ($cq) use ($search) {
+                        $cq->where('CurrencyCode', 'like', "%{$search}%");
+                    });
+                    if (array_key_exists($search, $statusMap)) {
+                        $query->orWhere('chequeStatus', $statusMap[$search]);
+                    }
             });
         }
 
@@ -473,16 +475,18 @@ class PdcLogAPIController extends AppBaseController
                 $query->where('chequeNo', 'like', "%{$search}%")
                     ->orWhereRaw("DATE_FORMAT(chequeDate, '%d/%m/%Y') like ?", ["%{$search}%"])
                     ->orWhere('amount', 'like', "%{$search}%")
-                    ->orWhere('documentmasterAutoID', 'like', "%{$search}%");
-                if (array_key_exists($search, $statusMap)) {
-                    $query->orWhere('chequeStatus', $statusMap[$search]);
-                }
-                    $query->orWhereHas('pay_supplier', function ($psq) use ($search) {
-                        $psq->where('BPVcode', 'like', "%{$search}%")
-                            ->orWhere('documentID', 'like', "%{$search}%");
-                    })->orWhereHas('currency', function ($cq) use ($search) {
-                    $cq->where('CurrencyCode', 'like', "%{$search}%");
-                });
+                    ->orWhereHas('customer_receive', function ($psq) use ($search) {
+                        $psq->where('custPaymentReceiveCode', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('bank', function ($bq) use ($search) {
+                        $bq->where('bankName', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('currency', function ($cq) use ($search) {
+                        $cq->where('CurrencyCode', 'like', "%{$search}%");
+                    });
+                    if (array_key_exists($search, $statusMap)) {
+                        $query->orWhere('chequeStatus', $statusMap[$search]);
+                    }
             });
         }
 
