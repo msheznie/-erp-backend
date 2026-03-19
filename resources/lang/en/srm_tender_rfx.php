@@ -367,4 +367,6 @@ return [
     'draft_saved_successfully' => 'Draft saved successfully.',
     'invalid_cc_emails' => 'Invalid CC emails',
     'supplier_required' => 'Supplier is required.',
+    'show_award_details_in_supplier_portal'=> 'Show Award Details in Supplier Portal',
+    'award_visibility_type' => 'Award Visibility Type'
 ];

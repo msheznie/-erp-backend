@@ -767,7 +767,8 @@ class TenderMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array(
             'bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
-            'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id'
+            'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id',
+            'award_visibility_type'
         ));
 
         $requestData = $this->documentModifyService->checkForEditOrAmendRequest($input['id']);
@@ -1226,6 +1227,8 @@ class TenderMasterAPIController extends AppBaseController
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date : null;
             $data['updated_by'] = $employee->employeeSystemID;
             $data['show_technical_criteria'] = $input['show_technical_criteria'];
+            $data['show_award_detail'] = (bool) ($input['show_award_detail'] ?? false);
+            $data['award_visibility_type'] = $input['award_visibility_type'] ?? null;
 
             $result = $this->tenderMasterRepository->updateTenderMaster($data, $input['id'], $editOrAmend, $versionID);
             if(!$result['success']){
@@ -1739,6 +1742,26 @@ class TenderMasterAPIController extends AppBaseController
 
     public function validateTenderHeader($input)
     {
+        // Award detail visibility validation (Supplier Portal configuration)
+        $showAwardDetail = (bool) ($input['show_award_detail'] ?? false);
+        $awardVisibilityType = $input['award_visibility_type'] ?? null;
+        $evaluationTypeId = $input['evaluation_type_id'] ?? null;
+
+        if ($showAwardDetail) {
+            if ($awardVisibilityType === null || $awardVisibilityType === '') {
+                return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
+            }
+            
+            if ((int) $evaluationTypeId === 1) {
+                if ((int) $awardVisibilityType !== 3) {
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
+                }
+            } elseif ((int) $evaluationTypeId === 2) {
+                if (!in_array((int) $awardVisibilityType, [1, 2], true)) {
+                    return ['status' => false, 'message' => trans('srm_tender_rfx.selection_is_required')];
+                }
+            }
+        }
 
 
         $messages = [
@@ -5804,7 +5827,7 @@ class TenderMasterAPIController extends AppBaseController
             ->with(['employee' => function ($q){
                 $q->select('employeeSystemID','empFullName');
             }])
-            ->where('documentSystemCode',$data['docModifiyMaster']['id'])
+            ->where('documentSystemCode', optional($data['docModifiyMaster'])->id)
             ->whereIn('documentSystemID',[117,118])
             ->get();
 

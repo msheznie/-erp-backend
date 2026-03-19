@@ -169,4 +169,25 @@ class TenderFinalBids extends Model
         return $this->belongsTo('App\Models\SupplierTenderNegotiation', 'bid_id', 'srm_bid_submission_master_id');
 
     }
+    public static function getScheduleRankingData($tenderId, $type = 'ranking')
+    {
+        $query = self::query()
+            ->where('tender_id', $tenderId)
+            ->with(['supplier:id,name']);
+
+        if ($type === 'ranking') {
+            $query->select('supplier_id', 'combined_ranking')
+                ->whereNotNull('combined_ranking')
+                ->orderBy('combined_ranking');
+        }
+
+        if ($type === 'commercial') {
+            $query->select('supplier_id', 'commercial_ranking', 'bid_id')
+                ->with(['bid_submission_master:id,line_item_total'])
+                ->whereNotNull('commercial_ranking')
+                ->orderBy('commercial_ranking');
+        }
+
+        return $query->get();
+    }
 }
