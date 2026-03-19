@@ -7,6 +7,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
 use App\Models\AppearanceSettings;
 
@@ -84,9 +85,10 @@ class EmailForQueuing extends Mailable implements ShouldQueue
                         $mail->attachData($content, $filename);
                     }
                 } catch (\Throwable $e) {
-                    sendError('EmailForQueuing: failed to attach from S3', [
-                        'path' => $this->mailAttachment,
+                    Log::channel('asset-register-export')->error('EmailForQueuing: failed to attach from S3', [
+                        'path' => (string) $this->mailAttachment,
                         'error' => $e->getMessage(),
+                        'exception' => get_class($e),
                     ]);
                 }
             }

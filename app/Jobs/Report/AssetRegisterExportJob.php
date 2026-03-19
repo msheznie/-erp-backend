@@ -22,6 +22,7 @@ use App\Exports\AssetManagement\AssetRegister\AssetRegisterDetail2;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use App\Mail\EmailForQueuing;
 
 class AssetRegisterExportJob implements ShouldQueue
@@ -56,7 +57,7 @@ class AssetRegisterExportJob implements ShouldQueue
    
     public function handle()
     {
-        ini_set('max_execution_time', config('app.report_max_execution_limit'));
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
@@ -143,10 +144,10 @@ class AssetRegisterExportJob implements ShouldQueue
                         );
                     }
                 } catch (\Exception $emailException) {
-                   sendError('AssetRegisterExportJob: failed to send email', [
-                    'error' => $emailException->getMessage(),
-                    'trace' => $emailException->getTraceAsString(),
-                   ]);
+                    Log::channel('asset-register-export')->error('AssetRegisterExportJob: failed to send email', [
+                        'message' => $emailException->getMessage(),
+                        'trace' => $emailException->getTraceAsString(),
+                    ]);
                 }
             }
 
@@ -186,7 +187,7 @@ class AssetRegisterExportJob implements ShouldQueue
             ->setCompanyName("")
             ->setFromDate("")
             ->setToDate("")
-            ->setType('xls')
+            ->setType('xlsx')
             ->setReportType(2)
             ->setCurrency("")
             ->setExcelFormat($excelColumnFormat)
@@ -311,7 +312,7 @@ class AssetRegisterExportJob implements ShouldQueue
 
         $fileName = trans('custom.asset_register_detail_3');
         $path = 'asset_register/report/excel/';
-        $basePath = CreateExcel::process($data, 'xls', $fileName, $path, $detail_array);
+        $basePath = CreateExcel::process($data, 'xlsx', $fileName, $path, $detail_array);
 
         if ($basePath == '') {
             throw new \Exception(trans('custom.unable_to_export_excel'));
@@ -485,7 +486,7 @@ class AssetRegisterExportJob implements ShouldQueue
             ->setCompanyName("")
             ->setFromDate($fromDate)
             ->setToDate($toDate)
-            ->setType('xls')
+            ->setType('xlsx')
             ->setReportType(2)
             ->setCurrency("")
             ->setExcelFormat($excelColumnFormat)
@@ -669,7 +670,7 @@ class AssetRegisterExportJob implements ShouldQueue
             ->setCompanyName("")
             ->setFromDate("")
             ->setToDate("")
-            ->setType("xls")
+            ->setType("xlsx")
             ->setReportType(2)
             ->setCurrency("")
             ->setExcelFormat($excelColumnFormat)
@@ -898,7 +899,7 @@ class AssetRegisterExportJob implements ShouldQueue
             ->setCompanyName("")
             ->setFromDate("")
             ->setToDate("")
-            ->setType("xls")
+            ->setType("xlsx")
             ->setReportType(2)
             ->setCurrency("")
             ->setExcelFormat($excelColumnFormat)
