@@ -40,8 +40,10 @@ use App\Models\AssetType;
 use App\Scopes\ActiveScope;
 use App\Services\AssetManagementService;
 use App\Services\Currency\CurrencyService;
+use App\Jobs\ExportAssetRegisterDetail2Excel;
 use App\Services\Excel\ExportReportToExcelService;
 use App\Services\Excel\ExportVatDetailReportService;
+use App\Services\AssetManagement\AssetRegister\ExportAssetRegisterDetail2ExcelService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use DateTime;
@@ -457,17 +459,52 @@ class AssetManagementReportAPIController extends AppBaseController
                     $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
                     $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
 
+                    $dataRows = $output['data'];
+                    $recordsTotal = count($dataRows);
+                    $recordsFiltered = $recordsTotal; 
+
+                    $start = isset($request->start) ? (int)$request->start : 0;
+                    $length = isset($request->length) ? (int)$request->length : $recordsTotal;
+                    if ($start < 0) {
+                        $start = 0;
+                    }
+                    
+                    if ($length <= 0) {
+                        $length = $recordsTotal;
+                    }
+                    $pageData = array_slice($dataRows, $start, $length);
+
+                    $totalOpening = 0;
+                    $totalAddition = 0;
+                    $totalDisposed = 0;
+                    $totalCostClosing = 0;
+                    $totalOpeningDep = 0;
+
                     $totalClosingDep = 0;
                     $NBVTotal = 0;
                     $chargeDuringYear = 0;
                     $totalChargeOnDisposal = 0;
+
+                    $periodTotals = [];
+                    foreach ($output['period'] as $periodValue) {
+                        $periodTotals[$periodValue] = 0;
+                    }
+
                     $decimalPlaces = ($request->currencyID === 2) ? $companyCurrency->localcurrency->DecimalPlaces : $companyCurrency->reportingcurrency->DecimalPlaces;
                     
-                    foreach ($output['data'] as $row) {
+                    foreach ($dataRows as $row) {
                         $sumCharge = 0;
                         foreach ($output['period'] as $periodValue) {
-                            $sumCharge += $row->$periodValue ?? 0;  
+                            $monthlyValue = $row->$periodValue ?? 0;
+                            $sumCharge += $monthlyValue;
+                            $periodTotals[$periodValue] += $monthlyValue;
                         }
+                    
+                        $totalOpening += round($row->opening ?? 0, $decimalPlaces);
+                        $totalAddition += round($row->addition ?? 0, $decimalPlaces);
+                        $totalDisposed += round($row->disposed ?? 0, $decimalPlaces);
+                        $totalCostClosing += round($row->costClosing ?? 0, $decimalPlaces);
+                        $totalOpeningDep += round($row->openingDep ?? 0, $decimalPlaces);
                     
                         
                         if ($row->disposedDep == 0) {
@@ -486,11 +523,28 @@ class AssetManagementReportAPIController extends AppBaseController
                         $totalChargeOnDisposal += round($chargeOnDisposal, $decimalPlaces);
                     }
 
-                    return array('reportData' => $output['data'], 'companyCurrency' => $companyCurrency, 'currencyID' => $request->currencyID, 'fromDate' => $fromDate, 'toDate' => $toDate, 'period' => $output['period'], 
-                    'totalChargeOnDisposal' => round($totalChargeOnDisposal, $decimalPlaces),
-                    'totalClosingDep' => round($totalClosingDep, $decimalPlaces),
-                    'NBVTotal' => round($NBVTotal, $decimalPlaces),
-                    'chargeDuringYear' => round($chargeDuringYear, $decimalPlaces));
+                    foreach ($periodTotals as $key => $val) {
+                        $periodTotals[$key] = round($val, $decimalPlaces);
+                    }
+
+                    return \DataTables::of($output['data'])
+                        ->addIndexColumn()
+                        ->with('companyCurrency', $companyCurrency)
+                        ->with('currencyID', $request->currencyID)
+                        ->with('fromDate', $fromDate)
+                        ->with('toDate', $toDate)
+                        ->with('period', $output['period'])
+                        ->with('openingTotal', round($totalOpening, $decimalPlaces))
+                        ->with('additionTotal', round($totalAddition, $decimalPlaces))
+                        ->with('disposedTotal', round($totalDisposed, $decimalPlaces))
+                        ->with('costClosingTotal', round($totalCostClosing, $decimalPlaces))
+                        ->with('openingDepTotal', round($totalOpeningDep, $decimalPlaces))
+                        ->with('periodTotals', $periodTotals)
+                        ->with('totalChargeOnDisposal', round($totalChargeOnDisposal, $decimalPlaces))
+                        ->with('totalClosingDep', round($totalClosingDep, $decimalPlaces))
+                        ->with('NBVTotal', round($NBVTotal, $decimalPlaces))
+                        ->with('chargeDuringYear', round($chargeDuringYear, $decimalPlaces))
+                        ->make(true);
                 }
 
                 if($request->reportTypeID == 'ARGD'){ // Asset Register Group Detail
@@ -1014,198 +1068,45 @@ class AssetManagementReportAPIController extends AppBaseController
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'typeID', 'excelType'));
+                    
+                    $this->setUserLocale();
 
+                    $input = $request->all();
+                    $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'typeID', 'excelType'));
 
-                    $output = $this->getAssetRegisterDetail2($request);
-                    $companyCurrency = Helper::companyCurrency($request->companySystemID);
-                    if ($request->currencyID == 2) {
-                        $currencyDecimalPlace = $companyCurrency->localcurrency->DecimalPlaces;
-                        $currencyCode = $companyCurrency->localcurrency->CurrencyCode;
-                    } else {
-                        $currencyDecimalPlace = $companyCurrency->reportingcurrency->DecimalPlaces;
-                        $currencyCode = $companyCurrency->reportingcurrency->CurrencyCode;
+                    $validator = \Validator::make($input, [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'toDate' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required',
+                        'companySystemID' => 'required',
+                        'excelType' => 'required',
+                    ]);
+
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
                     }
 
-                    $dataArray = array();
-
-                    $year = Carbon::parse($request->fromDate)->format('Y');
-                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
-                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
-
-                    if(empty($dataArray)) {
-                        $assetRegisterDetail2Header = new AssetRegisterDetail2();
-                        $allHeaders = collect($assetRegisterDetail2Header->getHeader())->toArray();
-                        
-                        $monthHeaders = [
-                            trans('custom.jan'),
-                            trans('custom.feb'),
-                            trans('custom.mar'),
-                            trans('custom.apr'),
-                            trans('custom.may'),
-                            trans('custom.jun'),
-                            trans('custom.jul'),
-                            trans('custom.aug'),
-                            trans('custom.sep'),
-                            trans('custom.oct'),
-                            trans('custom.nov'),
-                            trans('custom.dec')
-                        ];
-                        
-                        $monthStartIndex = -1;
-                        foreach ($allHeaders as $index => $header) {
-                            if (in_array($header, $monthHeaders)) {
-                                $monthStartIndex = $index;
-                                break;
-                            }
+                    // Additional d
+                    try {
+                        $from = Carbon::parse($input['fromDate']);
+                        $to = Carbon::parse($input['toDate']);
+                        if ($to < $from) {
+                            return $this->sendError('Invalid date range for export.', 422);
                         }
-                        
-                        $headers = array_slice($allHeaders, 0, $monthStartIndex);
-                        
-                        $monthMap = [
-                            'Jan' => trans('custom.jan'),
-                            'Feb' => trans('custom.feb'),
-                            'Mar' => trans('custom.mar'),
-                            'Apr' => trans('custom.apr'),
-                            'May' => trans('custom.may'),
-                            'Jun' => trans('custom.jun'),
-                            'Jul' => trans('custom.jul'),
-                            'Aug' => trans('custom.aug'),
-                            'Sep' => trans('custom.sep'),
-                            'Oct' => trans('custom.oct'),
-                            'Nov' => trans('custom.nov'),
-                            'Dec' => trans('custom.dec')
-                        ];
-                        
-                        foreach ($output['period'] as $period) {
-                            $periodParts = explode('-', $period);
-                            if (isset($periodParts[0]) && isset($monthMap[$periodParts[0]])) {
-                                $headers[] = $period;
-                            }
-                        }
-                        
-                        array_push($dataArray,$headers);
+                    } catch (\Exception $e) {
+                        return $this->sendError('Invalid date range for export.', 422);
                     }
 
-                    if ($output['data']) {
-                        foreach ($output['data'] as $val) {
-                            $financialData = new AssetRegisterDetail2();
-                            $datetime = Carbon::parse($val->postedDate);
-                            $datetime2 = Carbon::parse($val->dateDEP);
-                            $financialData->setGlCode($val->COSTGLCODE);
-                            $financialData->setCategory($val->catDescription);
-                            $financialData->setFaCode($val->faCode);
-                            $financialData->setGroupedFaCode($val->group_to);
-                            $financialData->setPostingDateOfFA($datetime->toDateString());
-                            $financialData->setDepStartDate($datetime2->toDateString());
-                            $financialData->setDepPercentage($val->DEPpercentage);
-                            $financialData->setServiceLine($val->ServiceLineDes);
-                            $financialData->setGrvDate($val->dateAQ);
-                            $financialData->setGrvNumber($val->docOrigin);
-                            $financialData->setSupplierName($val->supplierName);
-                            $financialData->setOpeningCost(round($val->opening, $currencyDecimalPlace));
-                            $financialData->setAdditionCost(round($val->addition, $currencyDecimalPlace));
-                            $financialData->setDisposalCost(round($val->disposed, $currencyDecimalPlace));
-                            $financialData->setClosingCost(round($val->costClosing, $currencyDecimalPlace));
-                            $financialData->setOpeningDep(round($val->openingDep, $currencyDecimalPlace));
+                    $userLang = app()->getLocale() ? app()->getLocale() : 'en';
+                    $dispatchDb = $request->input('db', '');
+                    $input['userId'] = Helper::getEmployeeSystemID();
 
-                            $sumPeriod = 0;
-                            foreach ($output['period'] as $val2) {
-                                $sumPeriod += $val->$val2;
-                            }
+                    ExportAssetRegisterDetail2Excel::dispatch($dispatchDb, $input, $userLang);
 
-                            $financialData->setChargeDuringTheYear(round($sumPeriod, $currencyDecimalPlace));
-                            
-                            if ($val->DIPOSED == 0) {
-                                $financialData->setChargeOnDisposal(round($val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->DIPOSED != 0) {
-                                $financialData->setChargeOnDisposal(round($val->openingDep + $sumPeriod, $currencyDecimalPlace));
-                            }
-
-                            if ($val->DIPOSED == 0) {
-                                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace));
-                            } elseif ($val->DIPOSED != 0) {
-                                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod), $currencyDecimalPlace));
-                            }
-
-                            if ($val->DIPOSED == 0) {
-                                $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep), $currencyDecimalPlace));
-                            } elseif ($val->DIPOSED != 0) {
-                                $financialData->setNbv(round($val->costClosing - ($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod)), $currencyDecimalPlace));
-                            }
-
-                            $rowData = [
-                                $financialData->glCode,
-                                $financialData->category,
-                                $financialData->faCode,
-                                $financialData->groupedFaCode,
-                                $financialData->postingDateOfFA,
-                                $financialData->depStartDate,
-                                $financialData->depPercentage,
-                                $financialData->serviceLine,
-                                $financialData->grvDate,
-                                $financialData->grvNumber,
-                                $financialData->supplierName,
-                                $financialData->openingCost,
-                                $financialData->additionCost,
-                                $financialData->disposalCost,
-                                $financialData->closingCost,
-                                $financialData->openingDep,
-                                $financialData->chargeDuringTheYear,
-                                $financialData->chargeOnDisposal,
-                                $financialData->closingDep,
-                                $financialData->nbv,
-                            ];
-                            
-                            for ($i = 0; $i < count($output['period']); $i++) {
-                                $propertyName = $output['period'][$i];
-                                $rowData[] = round($val->{$propertyName}, $currencyDecimalPlace);
-                            }
-
-                            array_push($dataArray, $rowData);
-
-                        }
-                    }
-                    $excelColumnFormat = [
-                        'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'M' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'N' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'O' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'P' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'Q' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'R' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'S' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'T' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                        'U' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
-                    ];
-                    $title = trans('custom.asset_register_detail2_report');
-                    $fileName = trans('custom.asset_register_detail2_report');
-                    $path = 'asset_register/report/excel/';
-
-                    $fromDate = Carbon::parse($request->fromDate)->format('Y-m-d');
-                    $toDate = Carbon::parse($request->toDate)->format('Y-m-d');
-
-                    $exportToExcel = $service
-                        ->setTitle($title)
-                        ->setFileName($fileName)
-                        ->setPath($path)
-                        ->setCompanyCode($companyCode)
-                        ->setCompanyName("")
-                        ->setFromDate($fromDate)
-                        ->setToDate($toDate)
-                        ->setType('xls')
-                        ->setReportType(2)
-                        ->setCurrency("")
-                        ->setExcelFormat($excelColumnFormat)
-                        ->setData($dataArray)
-                        ->setDateType(2)
-                        ->setDetails()
-                        ->generateExcel();
-
-                    if(!$exportToExcel['success'])
-                        return $this->sendError(trans('custom.unable_to_export_excel'));
-
-                    return $this->sendResponse($exportToExcel['data'], trans('custom.success_export'));
+                    return $this->sendResponse('', trans('custom.asset_register_detail2_report_export_progress'));
 
                 }
 
@@ -4253,7 +4154,7 @@ WHERE
                     dep2.* 
                 FROM
                     erp_fa_asset_master
-                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = erp_fa_asset_master.serviceLineSystemID
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
@@ -4305,7 +4206,7 @@ WHERE
                     dep2.* 
                 FROM
                     erp_fa_asset_master
-                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = erp_fa_asset_master.serviceLineSystemID
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
