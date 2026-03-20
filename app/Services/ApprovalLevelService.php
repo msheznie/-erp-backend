@@ -108,7 +108,7 @@ class ApprovalLevelService
      */
     public function isSubcategoryUsedInActiveApprovalLevelForCompany(int $subcategoryID, int $companySystemID): bool
     {
-        return ApprovalLevel::where('isActive', -1)
+        return ApprovalLevel::where('is_deleted', 0)
             ->where('subcategoryID', $subcategoryID)
             ->where('companySystemID', $companySystemID)
             ->exists();
