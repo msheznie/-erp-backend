@@ -630,7 +630,7 @@ class SMAttendancePullingService{
 
         $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
                 sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
-                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id, sm.work_hour_calc_method
                 FROM hr_shift_schedule_details AS she 
                 JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
                 JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
@@ -641,7 +641,7 @@ class SMAttendancePullingService{
         $rotaUnion = " UNION ALL 
                 SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
                 sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
-                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id, sm.work_hour_calc_method
                 FROM hr_shift_schedule_details AS she 
                 JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
                 JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
@@ -653,7 +653,7 @@ class SMAttendancePullingService{
                 WEEKDAY(she.schedule_date) AS weekDayNo, 1 AS isWeekend, 
                 '' AS gracePeriod, 1 AS isFlexyHour, '' AS flexyHrFrom, '' AS flexyHrTo, -1 AS shiftType, 
                 0 AS workingHour, 0 AS is_cross_day,
-                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id 
+                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id, 1 as work_hour_calc_method
                 FROM hr_shift_schedule_details AS she
                 WHERE she.company_id = {$this->companyId} 
                 AND she.shift_id = 0 
