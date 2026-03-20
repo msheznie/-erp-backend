@@ -38,6 +38,8 @@ class ExportAssetRegisterDetail2Excel implements ShouldQueue
 
     public function handle()
     {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 

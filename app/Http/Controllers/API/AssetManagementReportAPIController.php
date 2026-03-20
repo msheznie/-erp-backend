@@ -176,10 +176,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         $validator = \Validator::make($request->all(), [
                             'reportTypeID' => 'required',
                             'fromDate' => 'required',
-                            'toDate' => 'required',
+                            'toDate' => 'required|date|after_or_equal:fromDate',
+                            'ard2FinanceYear' => 'required|array|min:1',
                             'assetCategory' => 'required',
                             'currencyID' => 'required',
                             'typeID' => 'required'
+                        ], [
+                            'ard2FinanceYear.required' => trans('custom.please_select_finance_year'),
+                            'ard2FinanceYear.min' => trans('custom.please_select_finance_year'),
                         ]);
                     } else if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
                         $validator = \Validator::make($request->all(), [
@@ -1077,27 +1081,20 @@ class AssetManagementReportAPIController extends AppBaseController
                     $validator = \Validator::make($input, [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
-                        'toDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'ard2FinanceYear' => 'required|array|min:1',
                         'assetCategory' => 'required',
                         'currencyID' => 'required',
                         'typeID' => 'required',
                         'companySystemID' => 'required',
                         'excelType' => 'required',
+                    ], [
+                        'ard2FinanceYear.required' => trans('custom.please_select_finance_year'),
+                        'ard2FinanceYear.min' => trans('custom.please_select_finance_year'),
                     ]);
 
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
-                    }
-
-                    // Additional d
-                    try {
-                        $from = Carbon::parse($input['fromDate']);
-                        $to = Carbon::parse($input['toDate']);
-                        if ($to < $from) {
-                            return $this->sendError('Invalid date range for export.', 422);
-                        }
-                    } catch (\Exception $e) {
-                        return $this->sendError('Invalid date range for export.', 422);
                     }
 
                     $userLang = app()->getLocale() ? app()->getLocale() : 'en';

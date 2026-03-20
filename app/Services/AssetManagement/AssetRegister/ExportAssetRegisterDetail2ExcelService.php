@@ -58,10 +58,11 @@ class ExportAssetRegisterDetail2ExcelService
      */
     public function generateExcel(): string
     {
-        $input = $this->convertArrayToSelectedValue($this->input, ['currencyID', 'typeID', 'excelType']);
+        
+        $input = $this->input;
         $request = (object) $input;
 
-        $type = 'xls';
+        $type = 'xlsx';
 
         $output = $this->getAssetRegisterDetail2($request);
         $companyCurrency = Helper::companyCurrency($request->companySystemID);
@@ -77,7 +78,7 @@ class ExportAssetRegisterDetail2ExcelService
         $companyMaster = Company::find(isset($request->companySystemID) ? $request->companySystemID : null);
         $companyCode = isset($companyMaster->CompanyID) ? $companyMaster->CompanyID : 'common';
 
-        // Build headers 
+        
         $assetRegisterDetail2Header = new AssetRegisterDetail2();
         $allHeaders = collect($assetRegisterDetail2Header->getHeader())->toArray();
 
@@ -131,96 +132,93 @@ class ExportAssetRegisterDetail2ExcelService
         $dataArray[] = $headers;
 
         
-        $chunkSize = 500;
         $period = $output['period'] ?? [];
         $rows = $output['data'] ?? [];
 
-        collect($rows)->chunk($chunkSize)->each(function ($chunk) use (&$dataArray, $period, $currencyDecimalPlace) {
-            foreach ($chunk as $val) {
-                $financialData = new AssetRegisterDetail2();
+        foreach ($rows as $val) {
+            $financialData = new AssetRegisterDetail2();
 
-                $datetime = Carbon::parse($val->postedDate);
-                $datetime2 = Carbon::parse($val->dateDEP);
+            $datetime = Carbon::parse($val->postedDate);
+            $datetime2 = Carbon::parse($val->dateDEP);
 
-                $financialData->setGlCode($val->COSTGLCODE);
-                $financialData->setCategory($val->catDescription);
-                $financialData->setFaCode($val->faCode);
-                $financialData->setGroupedFaCode($val->group_to);
-                $financialData->setPostingDateOfFA($datetime->toDateString());
-                $financialData->setDepStartDate($datetime2->toDateString());
-                $financialData->setDepPercentage($val->DEPpercentage);
-                $financialData->setServiceLine($val->ServiceLineDes);
-                $financialData->setGrvDate($val->dateAQ);
-                $financialData->setGrvNumber($val->docOrigin);
-                $financialData->setSupplierName($val->supplierName);
-                $financialData->setOpeningCost(round($val->opening, $currencyDecimalPlace));
-                $financialData->setAdditionCost(round($val->addition, $currencyDecimalPlace));
-                $financialData->setDisposalCost(round($val->disposed, $currencyDecimalPlace));
-                $financialData->setClosingCost(round($val->costClosing, $currencyDecimalPlace));
-                $financialData->setOpeningDep(round($val->openingDep, $currencyDecimalPlace));
+            $financialData->setGlCode($val->COSTGLCODE);
+            $financialData->setCategory($val->catDescription);
+            $financialData->setFaCode($val->faCode);
+            $financialData->setGroupedFaCode($val->group_to);
+            $financialData->setPostingDateOfFA($datetime->toDateString());
+            $financialData->setDepStartDate($datetime2->toDateString());
+            $financialData->setDepPercentage($val->DEPpercentage);
+            $financialData->setServiceLine($val->ServiceLineDes);
+            $financialData->setGrvDate($val->dateAQ);
+            $financialData->setGrvNumber($val->docOrigin);
+            $financialData->setSupplierName($val->supplierName);
+            $financialData->setOpeningCost(round($val->opening, $currencyDecimalPlace));
+            $financialData->setAdditionCost(round($val->addition, $currencyDecimalPlace));
+            $financialData->setDisposalCost(round($val->disposed, $currencyDecimalPlace));
+            $financialData->setClosingCost(round($val->costClosing, $currencyDecimalPlace));
+            $financialData->setOpeningDep(round($val->openingDep, $currencyDecimalPlace));
 
-                $sumPeriod = 0;
-                foreach ($period as $val2) {
-                    $sumPeriod += $val->$val2;
-                }
-
-                $financialData->setChargeDuringTheYear(round($sumPeriod, $currencyDecimalPlace));
-
-                if ($val->DIPOSED == 0) {
-                    $financialData->setChargeOnDisposal(round($val->disposedDep, $currencyDecimalPlace));
-                } elseif ($val->DIPOSED != 0) {
-                    $financialData->setChargeOnDisposal(round($val->openingDep + $sumPeriod, $currencyDecimalPlace));
-                }
-
-                if ($val->DIPOSED == 0) {
-                    $financialData->setClosingDep(round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace));
-                } elseif ($val->DIPOSED != 0) {
-                    $financialData->setClosingDep(round($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod), $currencyDecimalPlace));
-                }
-
-                if ($val->DIPOSED == 0) {
-                    $financialData->setNbv(round(
-                        $val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep),
-                        $currencyDecimalPlace
-                    ));
-                } elseif ($val->DIPOSED != 0) {
-                    $financialData->setNbv(round(
-                        $val->costClosing - ($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod)),
-                        $currencyDecimalPlace
-                    ));
-                }
-
-                $rowData = [
-                    $financialData->glCode,
-                    $financialData->category,
-                    $financialData->faCode,
-                    $financialData->groupedFaCode,
-                    $financialData->postingDateOfFA,
-                    $financialData->depStartDate,
-                    $financialData->depPercentage,
-                    $financialData->serviceLine,
-                    $financialData->grvDate,
-                    $financialData->grvNumber,
-                    $financialData->supplierName,
-                    $financialData->openingCost,
-                    $financialData->additionCost,
-                    $financialData->disposalCost,
-                    $financialData->closingCost,
-                    $financialData->openingDep,
-                    $financialData->chargeDuringTheYear,
-                    $financialData->chargeOnDisposal,
-                    $financialData->closingDep,
-                    $financialData->nbv,
-                ];
-
-                for ($i = 0; $i < count($period); $i++) {
-                    $propertyName = $period[$i];
-                    $rowData[] = round($val->{$propertyName}, $currencyDecimalPlace);
-                }
-
-                $dataArray[] = $rowData;
+            $sumPeriod = 0;
+            foreach ($period as $val2) {
+                $sumPeriod += $val->$val2;
             }
-        });
+
+            $financialData->setChargeDuringTheYear(round($sumPeriod, $currencyDecimalPlace));
+
+            if ($val->DIPOSED == 0) {
+                $financialData->setChargeOnDisposal(round($val->disposedDep, $currencyDecimalPlace));
+            } elseif ($val->DIPOSED != 0) {
+                $financialData->setChargeOnDisposal(round($val->openingDep + $sumPeriod, $currencyDecimalPlace));
+            }
+
+            if ($val->DIPOSED == 0) {
+                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace));
+            } elseif ($val->DIPOSED != 0) {
+                $financialData->setClosingDep(round($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod), $currencyDecimalPlace));
+            }
+
+            if ($val->DIPOSED == 0) {
+                $financialData->setNbv(round(
+                    $val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep),
+                    $currencyDecimalPlace
+                ));
+            } elseif ($val->DIPOSED != 0) {
+                $financialData->setNbv(round(
+                    $val->costClosing - ($val->openingDep + $sumPeriod - ($val->openingDep + $sumPeriod)),
+                    $currencyDecimalPlace
+                ));
+            }
+
+            $rowData = [
+                $financialData->glCode,
+                $financialData->category,
+                $financialData->faCode,
+                $financialData->groupedFaCode,
+                $financialData->postingDateOfFA,
+                $financialData->depStartDate,
+                $financialData->depPercentage,
+                $financialData->serviceLine,
+                $financialData->grvDate,
+                $financialData->grvNumber,
+                $financialData->supplierName,
+                $financialData->openingCost,
+                $financialData->additionCost,
+                $financialData->disposalCost,
+                $financialData->closingCost,
+                $financialData->openingDep,
+                $financialData->chargeDuringTheYear,
+                $financialData->chargeOnDisposal,
+                $financialData->closingDep,
+                $financialData->nbv,
+            ];
+
+            for ($i = 0; $i < count($period); $i++) {
+                $propertyName = $period[$i];
+                $rowData[] = round($val->{$propertyName}, $currencyDecimalPlace);
+            }
+
+            $dataArray[] = $rowData;
+        }
 
         $excelColumnFormat = [
             'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
@@ -295,7 +293,7 @@ class ExportAssetRegisterDetail2ExcelService
                 $companyName;
 
             $attachmentList = [
-                'asset_register_detail2_report.xls' => $basePath,
+                'asset_register_detail2_report.xlsx' => $basePath,
             ];
 
             $dataEmail = [
@@ -314,21 +312,6 @@ class ExportAssetRegisterDetail2ExcelService
                 'trace' => $e->getTraceAsString(),
             ]);
         }
-    }
-
-    private function convertArrayToSelectedValue($input, $params): array
-    {
-        foreach ($input as $key => $value) {
-            if (in_array($key, $params, true)) {
-                if (is_array($input[$key])) {
-                    if (count($input[$key]) > 0) {
-                        $input[$key] = $input[$key][0];
-                    }
-                }
-            }
-        }
-
-        return $input;
     }
 
     /**
