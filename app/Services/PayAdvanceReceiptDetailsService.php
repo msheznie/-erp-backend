@@ -169,7 +169,7 @@ class PayAdvanceReceiptDetailsService extends AppBaseController
             ->where('erp_pay_advance_receipt_details.companySystemID', $companySystemID)
             ->get();
 
-        return ServiceResponse::success($advanceReceiptPaymentDetails->toArray(), 'Advance Receipt Payment Details retrieved successfully');
+        return ServiceResponse::success($advanceReceiptPaymentDetails, 'Advance Receipt Payment Details retrieved successfully');
     }
 
     public function addAdvanceReceiptPaymentDetail($input): ServiceResponse
