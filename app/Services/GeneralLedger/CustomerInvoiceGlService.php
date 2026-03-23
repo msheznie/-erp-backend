@@ -270,8 +270,9 @@ class CustomerInvoiceGlService
                 $arSegments = CustomerInvoiceItemDetails::selectRaw("
                         serviceLineSystemID,
                         SUM(sellingTotal) as sellingTotal,
-                        SUM(VATAmountLocal) as vatLocal,
-                        SUM(VATAmountRpt) as vatRpt
+                        SUM(qtyIssued * VATAmount) as vatTrans,
+                        SUM(qtyIssued * VATAmountLocal) as vatLocal,
+                        SUM(qtyIssued * VATAmountRpt) as vatRpt
                     ")
                     ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
                     ->groupBy('serviceLineSystemID')
@@ -290,7 +291,7 @@ class CustomerInvoiceGlService
 
                     $segmentData['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                     $segmentData['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                    $segmentData['documentTransAmount'] = $segmentRow->sellingTotal + ($segmentRow->vatLocal / max(1, $masterData->localCurrencyER));
+                    $segmentData['documentTransAmount'] = $segmentRow->sellingTotal + $segmentRow->vatTrans;
 
                     $segmentData['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                     $segmentData['documentLocalCurrencyER'] = $masterData->localCurrencyER;
