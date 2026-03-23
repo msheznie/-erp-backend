@@ -838,6 +838,11 @@ class PaySupplierInvoiceMaster extends Model
         return $this->hasMany('App\Models\PayCreditNoteDetail', 'PayMasterAutoId', 'PayMasterAutoId');
     }
 
+    public function advanceReceiptDetail()
+    {
+        return $this->hasMany('App\Models\PayAdvanceReceiptDetail', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
     public function localcurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');

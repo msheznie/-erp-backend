@@ -943,7 +943,47 @@
             </table>
         </div>
     @endif
-    @if($masterdata->invoiceType == 8)
+    @if($masterdata->invoiceType == 8 && (int) $masterdata->refundType === 1)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th>#</th>
+                    <th style="text-align: center">{{ __('custom.advance_voucher_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.advance_voucher_date') }}</th>
+                    <th style="text-align: center">{{ __('custom.advance_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.balance_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.payment_amount') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->advanceReceiptDetail ?? [] as $ddet)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>
+                            @if($ddet->advanceReceipt)
+                                {{ $ddet->advanceReceipt->custPaymentReceiveCode }}
+                            @endif
+                        </td>
+                        <td>
+                            @if($ddet->advanceReceipt && $ddet->advanceReceipt->custPaymentReceiveDate)
+                                {{ \App\helper\Helper::dateFormat($ddet->advanceReceipt->custPaymentReceiveDate)}}
+                            @endif
+                        </td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->advanceAmount ?? 0), $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->paymentBalancedAmount ?? 0), $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->advanceReceiptAmount ?? 0), $transDecimal) }}</td>
+                    </tr>
+                @endforeach
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ number_format($advanceReceiptDetailSubTotal, $transDecimal) }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @elseif($masterdata->invoiceType == 8 && (int) $masterdata->refundType !== 1)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
@@ -957,7 +997,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach ($masterdata->creditnotedetail as $ddet)
+                @foreach ($masterdata->creditnotedetail ?? [] as $ddet)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
                         <td>
@@ -972,12 +1012,12 @@
                         </td>
                         <td style="text-align: right">
                             @if($ddet->creditnote)
-                                {{number_format($ddet->creditnote->netAmount, $transDecimal)}}
+                                {{number_format($ddet->creditNoteAmount, $transDecimal)}}
                             @endif
                         </td>
                         <td style="text-align: right">
                             @if($ddet->creditnote)
-                                {{number_format($ddet->creditnote->netAmount - $ddet->creditNotePaymentAmount, $transDecimal)}}
+                                {{number_format($ddet->paymentBalancedAmount, $transDecimal)}}
                             @endif
                         </td>
                         <td style="text-align: right">{{number_format($ddet->creditNotePaymentAmount, $transDecimal)}}</td>
@@ -985,9 +1025,8 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
-                    <td style="text-align: right"
-                        style="background-color: rgb(215,215,215)">{{number_format($creditNoteDetailSubTotal, $transDecimal)}}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{number_format($creditNoteDetailSubTotal, $transDecimal)}}</td>
                 </tr>
                 </tbody>
             </table>
