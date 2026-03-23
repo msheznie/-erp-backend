@@ -31,10 +31,18 @@ class SMRotaShiftIndividualPunchesComputation
         $this->confIsFlexibleHourBaseComputation();
         $this->getAttendanceTempTableRecords();
         $this->calculateActualTimeIndividualPunches();
+        $this->normalizeExceptionPunchState();
         $this->configClockinClockoutSet();
 
         if ($this->dayType == AttDayType::NORMAL_DAY) {
             $this->calculateRotaShiftHours();
+        }
+
+        if (! empty($this->data['leaveMasterID']) && $this->data['leaveHalfDay'] != 1) {
+            $this->presentAbsentType = AbsentType::ON_LEAVE;
+            $this->isClockInOutSet = false;
+
+            return;
         }
 
         if(!in_array($this->presentAbsentType, [AbsentType::EXCEPTION, AbsentType::MISSED_PUNCH])){
@@ -52,6 +60,18 @@ class SMRotaShiftIndividualPunchesComputation
         $this->lateFeeComputation();
     }
 
+    private function normalizeExceptionPunchState(): void
+    {
+        if (empty($this->clockIn)) {
+            $this->clockInDate = null;
+        }
+
+        if (empty($this->clockOut)) {
+            $this->clockOutDate = null;
+            $this->clockOutFloorId = null;
+        }
+    }
+
     function individualPunchesGeneralComputation() {
         if (!$this->isShiftHoursSet || $this->dayType != AttDayType::NORMAL_DAY) {
             return false;
@@ -60,11 +80,39 @@ class SMRotaShiftIndividualPunchesComputation
         if ($this->isFlexibleHourBaseComputation){
             $this->flxLateHourComputation();
         }else{
-            $this->lateHoursComputation();
+            $this->rotaLateHoursComputation();
         }
 
         $this->workedHrEarlyOutComputation();
         $this->workedHrOverTimeComputation();
+    }
+
+    public function rotaLateHoursComputation(): bool
+    {
+        if (! $this->clockIn || $this->presentAbsentType == AbsentType::MISSED_PUNCH) {
+            return false;
+        }
+
+        $attDate = date('Y-m-d', strtotime($this->data['att_date']));
+        $clockInTime = (new DateTime($this->clockIn))->format('H:i:s');
+
+        $clockInDt = ($clockInTime <= trim($this->crossDayCutOffTime))
+            ? new DateTime(date('Y-m-d', strtotime($attDate.' +1 day')).' '.$clockInTime)
+            : new DateTime($attDate.' '.$clockInTime);
+
+        $gracePeriodDt = clone $this->onDutyDateTime;
+        $gracePeriodDt->modify("+{$this->gracePeriod} minutes");
+
+        if ($clockInDt > $gracePeriodDt) {
+            if ($this->presentAbsentType != AbsentType::EXCEPTION) {
+                $this->presentAbsentType = AbsentType::LATE;
+            }
+
+            $interval = $clockInDt->diff($this->onDutyDateTime);
+            $this->lateHours = ($interval->days * 24 * 60) + ($interval->h * 60) + $interval->i;
+        }
+
+        return true;
     }
 
     public function getAttendanceTempTableRecords(){
@@ -81,8 +129,10 @@ class SMRotaShiftIndividualPunchesComputation
                 $join->on('l.deviceID', '=', 't.device_id')
                     ->on('t.empMachineID', '=', 'l.empMachineID');
             })
-            ->where('t.companyID', $this->companyId)
-            ->where('t.emp_id', $this->data['emp_id'])
+            ->where([
+                't.companyID' => $this->companyId,
+                't.emp_id' => $this->data['emp_id'],
+            ])
             ->whereBetween('t.attDate', [$currentDate, $nextDate])
             ->whereBetween('t.attDateTime', [$currentDateWithCutTime, $nextDateWithCutTime])
             ->orderBy('t.attDate', 'ASC')
@@ -132,11 +182,12 @@ class SMRotaShiftIndividualPunchesComputation
                 }
 
                 $outDateTime = $attDateTime;
+                $clockInDateTime = $inDateTime;
                 $inDateTime = $actualIn != null && ($inDateTime < $actualIn) ? clone $actualIn : $inDateTime;
 
                 if ($outDateTime > $inDateTime){
                     if ($totalMinutes == 0) {
-                        $this->clockIn = $inDateTime->format('H:i:s');
+                        $this->clockIn = $clockInDateTime->format('H:i:s');
                     }
 
                     $workingDuration = $outDateTime->diff($inDateTime);
@@ -157,7 +208,7 @@ class SMRotaShiftIndividualPunchesComputation
     }
 
     function calculateOfficialTimeIndividualPunches(){
-        if (!$this->isShiftHoursSet || !$this->isClockInOutSet){
+        if (! $this->isShiftHoursSet) {
             return false;
         }
 
@@ -191,10 +242,10 @@ class SMRotaShiftIndividualPunchesComputation
             return false;
         }
 
-        $this->earlyHours = $this->shiftHours - $this->actualWorkingHours;
-
-        if ($this->gracePeriod > 0){
+        if ($this->gracePeriod > 0) {
             $this->calculateEarlyHourBaseOnGracePeriod();
+        } else {
+            $this->earlyHours = $this->shiftHours - $this->actualWorkingHours;
         }
     }
 
@@ -208,6 +259,7 @@ class SMRotaShiftIndividualPunchesComputation
 
     public function calculateCrossDayActualTime(){
         $actualWorkingHrs = 0;
+        $preLastRecord = 0;
         $previousDate = date('Y-m-d', strtotime($this->data['att_date'] . "-1 day"));
         $nextDate = date('Y-m-d', strtotime($this->data['att_date'] . "+1 day"));
         $occurrences = count($this->attTempRecords);
@@ -215,8 +267,10 @@ class SMRotaShiftIndividualPunchesComputation
 
         foreach ($this->attTempRecords as $key => $val){
             if ($key == 0 && $val->in_out == 2) {
-                $previouseLastRecord = $this->previousLastRecord($previousDate, $val->attDateTime);
-                $actualWorkingHrs += $previouseLastRecord;
+                $preLastRecord = $this->previousLastRecord($previousDate, $val->attDateTime);
+                if ($preLastRecord > 0) {
+                    $actualWorkingHrs += $preLastRecord;
+                }
                 continue;
             }
 
@@ -225,8 +279,10 @@ class SMRotaShiftIndividualPunchesComputation
                     $this->presentAbsentType = AbsentType::EXCEPTION;
                 }
 
-                $nextDayFirstRecord = $this->nextDayFirstRecord($nextDate, $val->attDateTime);
-                $actualWorkingHrs += $nextDayFirstRecord;
+                $nextDayFirstRecord = $this->nextDayFirstRecord($nextDate, $val->attDateTime, $preLastRecord);
+                if ($nextDayFirstRecord > 0) {
+                    $actualWorkingHrs += $nextDayFirstRecord;
+                }
             }
         }
 
@@ -235,12 +291,19 @@ class SMRotaShiftIndividualPunchesComputation
 
     public function getAttendanceTempFirstOrLastRecord($date, $orderBy)
     {
+        $nextDate = date('Y-m-d', strtotime($date.' +1 day'));
+        $currentDateWithCutTime = $date.' '.trim($this->crossDayCutOffTime);
+        $nextDateWithCutTime = $nextDate.' '.trim($this->crossDayCutOffTime);
+
         return DB::table('srp_erp_pay_empattendancetemptable')
-            ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
-            ->where('companyID', $this->companyId)
-            ->where('emp_id', $this->data['emp_id'])
-            ->where('attDate', $date)
-            ->orderBy('autoID', $orderBy)
+            ->select('autoID', 'emp_id', 'attDate', 'attDateTime', 'in_out', 'attTime')
+            ->where([
+                'companyID' => $this->companyId,
+                'emp_id' => $this->data['emp_id'],
+                'attDate' => $date,
+            ])
+            ->whereBetween('attDateTime', [$currentDateWithCutTime, $nextDateWithCutTime])
+            ->orderBy('attDateTime', $orderBy)
             ->first();
     }
 
@@ -253,13 +316,17 @@ class SMRotaShiftIndividualPunchesComputation
 
         $previousLastRecord = $this->getAttendanceTempFirstOrLastRecord($previousDate, 'DESC');
 
-        if (!empty($previousLastRecord) && $previousLastRecord['in_out'] == 1) {
-            $this->clockIn = ($this->isFlexibleHourBaseComputation) ? $this->flexibleHourFrom : $this->onDutyTime;
+        if (!empty($previousLastRecord) && $previousLastRecord->in_out == 1) {
+            $expectedInTime = ($this->isFlexibleHourBaseComputation)
+                ? $this->flexibleHourFrom
+                : $this->onDutyTime;
 
-            $clockInDtm = new DateTime($previousDate. ' ' .$this->clockIn);
+            $clockInDtm = new DateTime($this->data['att_date'].' '.$expectedInTime);
 
             $firstOutRecord = new DateTime($attDateTime);
             if ($clockInDtm < $firstOutRecord) {
+                $this->clockIn = null;
+                $this->clockInDate = null;
                 $workingDuration = $firstOutRecord->diff($clockInDtm);
                 $actualTime = ($workingDuration->h * 60) + $workingDuration->i;
             }
@@ -268,16 +335,26 @@ class SMRotaShiftIndividualPunchesComputation
         return $actualTime;
     }
 
-    public function nextDayFirstRecord($nextDate, $attTime){
-        $nextDayFirstRecord =$this->getAttendanceTempFirstOrLastRecord($nextDate, 'ASC');
+    public function nextDayFirstRecord($nextDate, $attDTime, $preLastRecord = 0)
+    {
+        $nextDayFirstRecord = $this->getAttendanceTempFirstOrLastRecord($nextDate, 'ASC');
         $actualTime = 0;
 
-        if (!empty($nextDayFirstRecord) && $nextDayFirstRecord['in_out'] == 2) {
-            $this->clockOut = '23:59:00';
-            $lastInRecord = new DateTime($attTime);
-            $clockOut = new DateTime($nextDayFirstRecord['attDate']. ' ' .'12:00:00');
-            $workingDuration = $clockOut->diff($lastInRecord);
+        if (! empty($nextDayFirstRecord) && $nextDayFirstRecord->in_out == 2) {
+            $this->clockOut = null;
+            $this->clockOutDate = null;
+            $lastInRecord = new DateTime($attDTime);
+            $noonTime = new DateTime($nextDate.' '.trim($this->crossDayCutOffTime));
+            $workingDuration = $noonTime->diff($lastInRecord);
             $actualTime = ($workingDuration->h * 60) + $workingDuration->i;
+
+            if (empty($this->clockIn) && $preLastRecord == 0) {
+                $dateTime = new DateTime($attDTime);
+                $this->clockInDate = $dateTime->format('Y-m-d');
+                $this->clockIn = $dateTime->format('H:i:s');
+            }
+
+            $this->presentAbsentType = AbsentType::EXCEPTION;
         }
 
         return $actualTime;
