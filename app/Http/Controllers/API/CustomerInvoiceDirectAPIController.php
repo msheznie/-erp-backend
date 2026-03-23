@@ -2545,7 +2545,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::with('segment')->where('custInvoiceDirectAutoID', $id)->first();
         } else {
-            $detail = CustomerInvoiceDirectDetail::with('segment')->where('custInvoiceDirectID', $id)->first();
+            $detail = CustomerInvoiceDirectDetail::with('department')->where('custInvoiceDirectID', $id)->first();
         }
 
         $customerInvoice = (object)[];
@@ -2891,17 +2891,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->accountIBAN = $accountIBAN;
         $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
-        $awsPolicy = Helper::checkPolicy($companySystemID, 50);
-
         $customerInvoice->logoExists = false;
-        if ($awsPolicy) {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
-                $customerInvoice->logoExists = true;
-            }            
-        } else {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
-                $customerInvoice->logoExists = true;
-            }      
+        $logoPath = $company->logoPath ?? null;
+        if (is_string($logoPath) && trim($logoPath) !== '') {
+            $customerInvoice->logoExists = Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($logoPath);
         }
 
         $directTraSubTotal = 0;
