@@ -2980,10 +2980,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $printTemplate = $printTemplate->first();
-
-        if (!is_null($printTemplate)) {
-            $printTemplate = $printTemplate->toArray();
-        }
+        $printTemplate = !is_null($printTemplate) ? $printTemplate->toArray() : ['printTemplateID' => null];
 
 
         if ($printTemplate['printTemplateID'] == 15) {
