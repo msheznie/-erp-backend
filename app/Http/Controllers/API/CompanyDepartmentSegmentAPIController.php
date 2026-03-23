@@ -12,7 +12,9 @@ use App\Repositories\CompanyDepartmentSegmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
+use App\Models\CompanyDepartmentEmployee;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Models\BudgetDelegateAccessRecord;
 use Response;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +106,8 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             'delegateUser' =>  Auth::user()->employee_id
         ]);
 
+        $companyDeparment = CompanyDepartmentEmployee::where('departmentSystemID', $departmentSystemID)
+                           ->where('employeeSystemID', Auth::user()->employee_id)->first();
       
         if (!$departmentSystemID) {
             return $this->sendError(trans('custom.department_id_is_required'));
@@ -118,24 +122,57 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
             // Restrict to departments the current user's employee belongs to (same logic as CompanyBudgetPlanningAPIController)
             $companyId = $input['companySystemID'] ?? null;
-            $allowedDepartmentIds = [];
-            if ($companyId) {
-                $allowedDepartmentIds = CompanyDepartment::where('companySystemID', $companyId)
-                    ->whereHas('employees', function ($q) {
-                        $q->where('employeeSystemID', Auth::user()->employee_id);
-                    })
-                    ->pluck('departmentSystemID')
-                    ->toArray();
-            }
 
-            $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
-                ->whereIn('departmentSystemID', $allowedDepartmentIds)
-                ->with(['segment', 'department'])
-                ->orderBy('departmentSegmentSystemID', $sort);
+            $segments = collect();
+
+            if ($companyDeparment) {
+                $delegateAccessRecords = BudgetDelegateAccessRecord::with([
+                    'budgetPlanningDetail.departmentSegment.segment'
+                ])->where('delegatee_id', $companyDeparment->departmentEmployeeSystemID)->get();
+
+                $items = $delegateAccessRecords
+                    ->map(function ($record) use ($departmentSystemID) {
+                        $departmentSegment = optional(optional($record->budgetPlanningDetail)->departmentSegment);
+                        $segment = $departmentSegment ? $departmentSegment->segment : null;
+
+                        if (!$segment) {
+                            return null;
+                        }
+
+                        return [
+                            'segment' => $segment,
+                            'departmentSystemID' => $departmentSegment->departmentSystemID ?? null,
+                            'departmentSegmentSystemID' => $departmentSegment->departmentSegmentSystemID ?? null,
+                        ];
+                    })
+                    ->filter(function ($item) {
+                        return $item !== null;
+                    })
+                    ->filter(function ($item) use ($departmentSystemID) {
+                        return (int) ($item['departmentSystemID'] ?? 0) === (int) $departmentSystemID;
+                    });
+
+                $items = $sort === 'asc'
+                    ? $items->sortBy('departmentSegmentSystemID')
+                    : $items->sortByDesc('departmentSegmentSystemID');
+
+                $segments = $items
+                    ->pluck('segment')
+                    ->filter()
+                    ->unique('serviceLineSystemID')
+                    ->values();
+            }
+           
+          
         } else {
-            $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
-            ->with(['segment', 'department'])
-            ->orderBy('departmentSegmentSystemID', $sort);
+            $segments = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+                ->with(['segment', 'department'])
+                ->orderBy('departmentSegmentSystemID', $sort)
+                ->get()
+                ->pluck('segment')
+                ->filter()
+                ->unique('serviceLineSystemID')
+                ->values();
         }
 
 
@@ -144,15 +181,18 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $query = $query->whereHas('segment', function ($query) use ($search) {
-                $query->where('ServiceLineCode', 'LIKE', "%{$search}%")
-                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
-            });
+            $segments = $segments->filter(function ($segment) use ($search) {
+                $code = $segment->ServiceLineCode ?? '';
+                $des = $segment->ServiceLineDes ?? '';
+
+                return (is_string($code) && stripos($code, $search) !== false)
+                    || (is_string($des) && stripos($des, $search) !== false);
+            })->values();
         }
 
 
         return $this->sendResponse([
-            'segments' => $query->get()->pluck('segment')
+            'segments' => $segments
         ], trans('custom.form_data_retrieved_successfully'));
 
     }
