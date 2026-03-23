@@ -36,11 +36,13 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Response;
 use App\helper\Helper;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\CreateExcelExport;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use Illuminate\Auth\Access\AuthorizationException;
 
 /**
  * Class DepartmentBudgetPlanningDetailController
@@ -999,43 +1001,16 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 return $this->sendError('At least one item must have a non-empty value',500);
             }
 
-
-            $newRequest = new Request();
-            $newRequest->replace([
-                'companyId' => $input['companySystemID'],
-                'departmentBudgetPlanningDetailID' => $budgetDetailId,
-                'delegateUser' =>  Helper::getEmployeeSystemID()
-            ]);
-            $controller = app(CompanyBudgetPlanningAPIController::class);
-            $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
-
-
-            if(empty($userPermission) || !$userPermission['success'])
-            {
-                return $this->sendError('User permissison not exists');
-            }
-
-
-            if(isset($userPermission['data']['delegateUser']) && $userPermission['data']['delegateUser']['status'])
-            {
-                $delegateUserAccess = $userPermission['data']['delegateUser'];
-
-                if(!empty($delegateUserAccess['access']) && $delegateUserAccess['access']['input'] === false)
-                {
-                   return  $this->sendError("User doesn't have permission to input data");
-                }
-
-
-                if((!empty($delegateUserAccess['access']) && !$delegateUserAccess['access']['edit_input']) && !empty($entryID))
-                {
-                    return  $this->sendError("User doesn't have permission to edit data");
-                }
-
-            }
-
-            if((isset($userPermission['data']['financeApprovalUser']) && $userPermission['data']['financeApprovalUser']['status']) || (isset($userPermission['data']['financeUser']) && $userPermission['data']['financeUser']['status']))
-            {
-                return  $this->sendError("User doesn't have permission to save data");
+            try {
+                Gate::authorize('BudgetPlanningUserPermissionGate', [
+                    $input['companySystemID'],
+                    $budgetDetailId,
+                    Helper::getEmployeeSystemID(),
+                    $entryID,
+                    true // check input/edit/save permissions for this endpoint
+                ]);
+            } catch (AuthorizationException $e) {
+                return $this->sendError($e->getMessage());
             }
 
             $record = BudgetDetTemplateEntry::where('entryID',$entryID)->first();
@@ -1245,7 +1220,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                     'entryData.templateColumn'
                 ]);
 
-                if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']))
+                if(!isset($delegateUserAccess['access']) ||  (isset($delegateUserAccess['access']) && !$delegateUserAccess['access']['show_others_input']) || $delegateUserAccess['isActive'] === false)
                 {
                     $entries = $entries->where('created_by',Helper::getEmployeeSystemID());
                 }

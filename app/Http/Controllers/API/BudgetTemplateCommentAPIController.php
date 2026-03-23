@@ -11,6 +11,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class BudgetTemplateCommentAPIController extends AppBaseController
 {
@@ -38,6 +40,18 @@ class BudgetTemplateCommentAPIController extends AppBaseController
     {
         try {
             DB::beginTransaction();
+            
+            try {
+                Gate::authorize('BudgetPlanningUserPermissionGate', [
+                    $request->companySystemID,
+                    $request->budget_detail_id,
+                    Auth::user()->employee_id
+                ]);
+            } catch (AuthorizationException $e) {
+                DB::rollBack();
+                return $this->sendError($e->getMessage());
+            }
+
             $comment = BudgetTemplateComment::create([
                 'budget_detail_id' => $request->budget_detail_id,
                 'user_id' => Auth::id(),
@@ -153,7 +167,7 @@ class BudgetTemplateCommentAPIController extends AppBaseController
             ->whereNull('parent_comment_id') // Only top-level comments
             ->orderBy('created_at', 'desc');
 
-        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'])
+        if($userPermission['data']['delegateUser']['status'] && $userPermission['data']['delegateUser']['access'] && !$userPermission['data']['delegateUser']['access']['show_all_comments'] || $userPermission['data']['delegateUser']['isActive'] === false)
         {
             $comments->where('user_id',Auth::id());
         }
