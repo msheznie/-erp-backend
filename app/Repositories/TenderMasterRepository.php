@@ -2929,6 +2929,11 @@ class TenderMasterRepository extends BaseRepository
             'RollLevForApp_curr' => 1,
             'approved_by_emp_name' => null,
 
+            'doc_verifiy_by_emp' => null,
+            'doc_verifiy_date' => null,
+            'doc_verifiy_status' => 0,
+            'doc_verifiy_comment' => null,
+
             'published_yn' => 0,
             'published_at' => null,
             'closed_yn' => 0,
