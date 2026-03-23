@@ -417,7 +417,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoiceUpdate = CustomerInvoiceAPIService::customerInvoiceUpdate($id, $input);
 
         if($customerInvoiceUpdate['status']){
-            if ($customerInvoiceDirect->confirmedYN == 0 && ($isPerforma == 0 || $isPerforma == 2)) {
+            if ($customerInvoiceDirect->confirmedYN == 0 && ($isPerforma == 0 || $isPerforma == 2 || $isPerforma == 3)) {
                 $this->customerInvoiceDirectRepository->applyMasterExchangeRatesToDetails($id);
             }
             return $this->sendReponseWithDetails($customerInvoiceUpdate['data'],$customerInvoiceUpdate['message'],1,$customerInvoiceUpdate['detail'] ?? null);
@@ -459,7 +459,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
         $previousLocalER = $customerInvoiceDirect->localCurrencyER;
         $previousReportingER = $customerInvoiceDirect->companyReportingER;
-        if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+        if(!$checkErChange && ($isPerforma == 0 || $isPerforma == 2 || $isPerforma == 3)) {
             $customerInvoiceDirect->update([
                 'localCurrencyER' => $previousLocalER,
                 'companyReportingER' => $previousReportingER
@@ -748,7 +748,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['confirmedYN'] == 1) {
             if ($customerInvoiceDirect->confirmedYN == 0) {
 
-                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
+                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2 || $isPerforma == 3)) {
                     // Get company currency information
                     $company = Company::find($input['companySystemID']);
                     $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;
