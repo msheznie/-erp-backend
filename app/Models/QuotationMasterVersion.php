@@ -512,7 +512,8 @@ class QuotationMasterVersion extends Model
         'isInSO',
         'timestamp',
         'isBulkItemJobRun',
-        'salesType'
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**
@@ -602,7 +603,8 @@ class QuotationMasterVersion extends Model
         'invoiceStatus' => 'integer',
         'deliveryStatus' => 'integer',
         'isBulkItemJobRun' => 'integer',
-        'salesType' => 'integer'
+        'salesType' => 'integer',
+        'isSegmentPolicyOn' => 'boolean'
     ];
 
     /**

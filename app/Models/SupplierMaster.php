@@ -174,7 +174,8 @@ class SupplierMaster extends Model
         'mol_rate',
         'mol_payment_mode',
         'isDelegation',
-        'paymentMethod'
+        'paymentMethod',
+        'supplierCommunicationYN'
     ];
 
     /**
@@ -263,7 +264,8 @@ class SupplierMaster extends Model
         'mol_rate' => 'float',
         'mol_payment_mode' => 'integer',
         'paymentMethod' => 'integer',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
+        'supplierCommunicationYN' => 'integer'
     ];
 
     /**

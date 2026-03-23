@@ -2188,16 +2188,20 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $validationRules = [
-            'wareHouse_code' => 'nullable|string',
-            'item_code' => 'nullable|string',
+            'wareHouse_code' => 'nullable|array',
+            'wareHouse_code.*' => 'string',
+            'item_code' => 'nullable|array',
+            'item_code.*' => 'string',
             'getAll' => 'nullable',
             'company_id' => 'required|integer',
             'pos_type' => 'nullable|integer',
         ];
 
         $validationMessages = [
-            'wareHouse_code.string' =>  trans('custom.wareHouse_code_must_be_a_string'),
-            'item_code.string' => trans('custom.item_code_must_be_a_string'),
+            'wareHouse_code.array' =>  trans('custom.wareHouse_code_must_be_array'),
+            'wareHouse_code.*.string' =>  trans('custom.wareHouse_code_must_be_a_string'),
+            'item_code.array' => trans('custom.item_code_must_be_a_array'),
+            'item_code.*.string' => trans('custom.item_code_must_be_a_string'),
             'company_id.required' => trans('custom.companySystemID_is_required'),
             'company_id.integer' => trans('custom.companySystemID_must_be_an_integer'),
             'pos_type.integer' => trans('custom.pos_type_must_be_an_integer'),
@@ -2240,9 +2244,13 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError($validator->errors()->first(), 422);
         }
 
-        $wareHouseCode = isset($input['wareHouse_code']) ? $input['wareHouse_code'] : null;
-        $itemCode = isset($input['item_code']) ? $input['item_code'] : null;
+        $wareHouseCodesRaw = $input['wareHouse_code'] ?? $input['warehouse_code'] ?? null;
+        $wareHouseCodes = isset($wareHouseCodesRaw) && is_array($wareHouseCodesRaw) ? array_values(array_filter($wareHouseCodesRaw, function ($v) { return $v !== null && $v !== ''; })) : [];
+        $itemCodesRaw = $input['item_code'] ?? null;
+        $itemCodes = isset($itemCodesRaw) && is_array($itemCodesRaw) ? array_values(array_filter($itemCodesRaw, function ($v) { return $v !== null && $v !== ''; })) : [];
         $companySystemID = $input['company_id'];
+
+
         
         $posType = null;
         if (isset($input['pos_type']) && $input['pos_type'] !== null) {
@@ -2266,54 +2274,84 @@ class ItemMasterAPIController extends AppBaseController
             $subCompanies = [$input['company_id']];
         }
 
-        $itemSystemCode = null;
-        $wareHouseSystemCode = null;
+        $itemSystemCodes = [];
+        $wareHouseSystemCodes = [];
 
         if (!$getAll) {
 
-            if(empty($itemCode) && empty($wareHouseCode))
+            if(empty($itemCodes) && empty($wareHouseCodes))
             { 
                return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
             }   
-
             
-            if (!empty($itemCode)) {
-                $itemMaster = ItemAssigned::where('itemPrimaryCode', $itemCode)->with('item_master')->where('isActive', 1)->where('isAssigned', -1)->whereIn('companySystemID', $subCompanies)
-                    ->first();
-                if (!$itemMaster) {
-                    return $this->sendError(trans('custom.the_item_code_not_matching_with_system', ['itemCode' => $itemCode]), 422);
-                }
+            if (!empty($itemCodes)) {
+                foreach ($itemCodes as $itemCode) {
+                    $itemMaster = ItemAssigned::where('itemPrimaryCode', $itemCode)->with('item_master')->where('isActive', 1)->where('isAssigned', -1)->whereIn('companySystemID', $subCompanies)
+                        ->first();
+                    if (!$itemMaster) {
+                        return $this->sendError(trans('custom.the_item_code_not_matching_with_system', ['itemCode' => $itemCode]), 422);
+                    }
 
-                if (isset($itemMaster->item_master->itemApprovedYN) && $itemMaster->item_master->itemApprovedYN != 1) {
-                    return $this->sendError(trans('custom.the_selected_item_is_not_fully_approved', ['itemCode' => $itemCode]), 422);
-                }
+                    if (isset($itemMaster->item_master->itemApprovedYN) && $itemMaster->item_master->itemApprovedYN != 1) {
+                        return $this->sendError(trans('custom.the_selected_item_is_not_fully_approved', ['itemCode' => $itemCode]), 422);
+                    }
 
-                $itemSystemCode = $itemMaster->itemCodeSystem;
+                    $itemSystemCodes[] = $itemMaster->itemCodeSystem;
+                }
             }
 
-            if (!empty($wareHouseCode)) {
-                $wareHouse = WarehouseMaster::where('wareHouseCode', $wareHouseCode)->where('isActive', 1)->whereIn('companySystemID', $subCompanies)
+            if (!empty($wareHouseCodes)) {
+                 foreach ($wareHouseCodes as $wareHouseCode) {
+                    $wareHouse = WarehouseMaster::where('wareHouseCode', $wareHouseCode)->where('isActive', 1)->whereIn('companySystemID', $subCompanies)
                     ->first();
                 if (!$wareHouse) {
                     return $this->sendError(trans('custom.the_warehouse_code_not_matching_with_system', ['wareHouseCode' => $wareHouseCode]), 422);
                 }
 
-                $wareHouseSystemCode = $wareHouse->wareHouseSystemCode;
+                    $wareHouseSystemCodes[] = $wareHouse->wareHouseSystemCode;
+                }
             }
         }
 
 
-        $selectFields = [
-            'companymaster.CompanyName as company_name',
-            'erp_itemledger.itemPrimaryCode as item_code',
-            'itemmaster.itemDescription as item_description',
-            DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
-        ];
-        
-        if (!empty($wareHouseSystemCode)) {
-            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
+        $groupByWarehouseOnly = !$getAll && empty($itemCodes) && !empty($wareHouseCodes);
+
+        if ($groupByWarehouseOnly) {
+            $selectFields = [
+                'companymaster.CompanyName as company_name',
+                DB::raw("'' as item_code"),
+                DB::raw("'' as item_description"),
+                DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
+                'warehousemaster.wareHouseDescription as warehouse',
+            ];
+            $groupByFields = [
+                'erp_itemledger.wareHouseSystemCode',
+                'companymaster.CompanyName',
+                'warehousemaster.wareHouseDescription',
+            ];
         } else {
-            $selectFields[] = DB::raw("'' as warehouse");
+            $selectFields = [
+                'companymaster.CompanyName as company_name',
+                'erp_itemledger.itemPrimaryCode as item_code',
+                'itemmaster.itemDescription as item_description',
+                DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
+            ];
+            if (!empty($wareHouseSystemCodes)) {
+                $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
+            } else {
+                $selectFields[] = DB::raw("'' as warehouse");
+            }
+            $groupByFields = ['erp_itemledger.itemSystemCode'];
+            if (!empty($wareHouseSystemCodes)) {
+                $groupByFields = [
+                    'erp_itemledger.itemSystemCode',
+                    'erp_itemledger.wareHouseSystemCode',
+                    'companymaster.CompanyName',
+                    'erp_itemledger.itemPrimaryCode',
+                    'itemmaster.itemDescription',
+                    'warehousemaster.wareHouseDescription',
+                ];
+            }
         }
 
         $baseQuery = ErpItemLedger::query()
@@ -2323,16 +2361,16 @@ class ItemMasterAPIController extends AppBaseController
             ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
             ->select($selectFields)
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
-            ->groupBy('erp_itemledger.itemSystemCode')
+            ->groupBy($groupByFields)
             ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
 
         if (!$getAll) {
-            if (!empty($itemSystemCode)) {
-                $baseQuery->where('erp_itemledger.itemSystemCode', $itemSystemCode);
+            if (!empty($itemSystemCodes)) {
+                $baseQuery->whereIn('erp_itemledger.itemSystemCode', $itemSystemCodes);
             }
 
-            if (!empty($wareHouseSystemCode)) {
-                $baseQuery->where('erp_itemledger.wareHouseSystemCode', $wareHouseSystemCode);
+            if (!empty($wareHouseSystemCodes)) {
+                $baseQuery->whereIn('erp_itemledger.wareHouseSystemCode', $wareHouseSystemCodes);
             }
         }
 
@@ -2367,14 +2405,28 @@ class ItemMasterAPIController extends AppBaseController
             $perPage = (int)$input['per_page'];
             $offset = ($page - 1) * $perPage;
 
-            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
-                ->offset($offset)
+            if ($groupByWarehouseOnly) {
+                $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
+            } else {
+                $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
+                if (!empty($wareHouseSystemCodes)) {
+                    $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
+                }
+            }
+            $data = $baseQuery->offset($offset)
                 ->limit($perPage)
                 ->get()
                 ->toArray();
         } else {
-            $data = $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc')
-                ->get()
+            if ($groupByWarehouseOnly) {
+                $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
+            } else {
+                $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
+                if (!empty($wareHouseSystemCodes)) {
+                    $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
+                }
+            }
+            $data = $baseQuery->get()
                 ->toArray();
         }
 

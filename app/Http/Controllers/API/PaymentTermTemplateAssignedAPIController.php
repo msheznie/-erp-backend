@@ -12,8 +12,8 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\SupplierAssigned;
 use App\Models\SupplierCategory;
-use App\Models\SupplierMaster;
 use App\Models\Company;
 use App\Models\PaymentTermTemplate;
 use App\helper\Helper;
@@ -374,10 +374,12 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $supplierCategoryID = $request['supplierCategoryID'];
         $companySystemID = $request['companySystemID'];
 
-        $suppliers = SupplierMaster::where('supplier_category_id', $supplierCategoryID)
-            ->where('primaryCompanySystemID', $companySystemID)
+        $suppliers = SupplierAssigned::where('supplier_category_id', $supplierCategoryID)
+            ->where('companySystemID', $companySystemID)
             ->where('isActive', true)
             ->where('isBlocked', false)
+            ->where('isAssigned', -1)
+            ->select('supplierCodeSytem as supplierCodeSystem', 'primarySupplierCode', 'supplierName')
             ->get();
 
         return $this->sendResponse($suppliers, trans('custom.record_retrieved_successfully_1'));

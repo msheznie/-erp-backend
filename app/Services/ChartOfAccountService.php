@@ -2,15 +2,153 @@
 
 namespace App\Services;
 
+use App\Http\Requests\API\PullChartofAccountAPIRequest;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyDepartmentSegment;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\SegmentMaster;
 use App\Models\DepBudgetTemplateGl;
+use App\Models\ReportTemplateDetails;
+use App\Repositories\ChartOfAccountRepository;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ChartOfAccountService
 {
+    /**
+     * @var ChartOfAccountRepository
+     */
+    protected $chartOfAccountRepository;
+
+    public function __construct(ChartOfAccountRepository $chartOfAccountRepository)
+    {
+        $this->chartOfAccountRepository = $chartOfAccountRepository;
+    }
+
+    /**
+     * Pull chart of accounts with filters and pagination.
+     *
+     * Validation stays in the FormRequest; this method receives the request
+     * and handles business logic and pagination.
+     *
+     * @param PullChartofAccountAPIRequest $request
+     * @return array
+     */
+    public function pullChartOfAccounts($request): array
+    {
+        $input = $request->all();
+        $companySystemID = $input['company_id'];
+        $categoryFilter = isset($input['category']) ? ($input['category'] === 'Balance sheet' ? 'BS' : 'PL') : null;
+        $controlAccountCodes = $input['controlAccounts'] ?? [];
+
+        $accountCodeFilter = array_values(array_filter(array_map('trim', $input['accountCode'] ?? [])));
+        if (!empty($accountCodeFilter)) {
+            $validCodes = ChartOfAccount::where('primaryCompanySystemID', $companySystemID)
+                ->where('isApproved', 1)
+                ->where('isActive', 1)
+                ->pluck('AccountCode')
+                ->toArray();
+
+            $invalidCodes = array_diff($accountCodeFilter, $validCodes);
+            if (!empty($invalidCodes)) {
+                throw new \Exception('The Account Code not matching: ' . implode(', ', $invalidCodes));
+            }
+
+            $assignedCodes = ChartOfAccount::where('primaryCompanySystemID', $companySystemID)
+                ->where('isApproved', 1)
+                ->where('isActive', 1)
+                ->whereHas('chartofaccount_assigned', function ($q) use ($companySystemID) {
+                    $q->where('companySystemID', $companySystemID)
+                        ->where('isActive', 1)
+                        ->where('isAssigned', -1);
+                })
+                ->pluck('AccountCode')
+                ->toArray();
+
+            $unassignedCodes = array_diff($accountCodeFilter, $assignedCodes);
+            if (!empty($unassignedCodes)) {
+                throw new \Exception('The account is not assigned: ' . implode(', ', $unassignedCodes));
+            }
+        }
+
+        $controlAccountYNFilter = null;
+        if (isset($input['controlAccountYN']) && $input['controlAccountYN'] !== '') {
+            $controlAccountYNFilter = $input['controlAccountYN'] === 'Yes' ? 1 : 0;
+        }
+        $isBankFilter = null;
+        if (isset($input['isBank']) && $input['isBank'] !== '') {
+            $isBankFilter = $input['isBank'] === 'Yes' ? 1 : 0;
+        }
+
+        $defaultTemplateCategoryDescriptions = array_values(array_filter(array_map('trim', $input['defaultTemplateCategory'] ?? [])));
+        if (!empty($defaultTemplateCategoryDescriptions)) {
+            $validDescriptions = ReportTemplateDetails::where('companySystemID', $companySystemID)
+                ->pluck('description')
+                ->toArray();
+            $invalidDescriptions = array_diff($defaultTemplateCategoryDescriptions, $validDescriptions);
+            if (!empty($invalidDescriptions)) {
+                throw new \Exception('The Default Template Category not matching: ' . implode(', ', $invalidDescriptions));
+            }
+        }
+
+        $usePagination = $request->has('page');
+        $page = (int) $request->get('page', 1);
+        $perPage = (int) $request->get('per_page', 10);
+
+        $accounts = $this->chartOfAccountRepository->getPullChartOfAccounts(
+            [
+                'company_id' => $companySystemID,
+                'categoryFilter' => $categoryFilter,
+                'controlAccountCodes' => $controlAccountCodes,
+                'accountCodeFilter' => $accountCodeFilter,
+                'controlAccountYNFilter' => $controlAccountYNFilter,
+                'isBankFilter' => $isBankFilter,
+                'defaultTemplateCategoryDescriptions' => $defaultTemplateCategoryDescriptions,
+            ],
+            $usePagination,
+            $page,
+            $perPage
+        );
+
+        $result = [];
+        foreach ($accounts as $account) {
+            $result[] = [
+                'companyName' => $account->chartofaccount_assigned && $account->chartofaccount_assigned->company
+                    ? ($account->chartofaccount_assigned->company->CompanyName ?? null)
+                    : null,
+                'accountCode' => $account->AccountCode,
+                'accountDescription' => $account->AccountDescription,
+                'category' => $account->accountType->description,
+                'controlAccount' => $account->controlAccount->description,
+                'controlAccountYN' => $account->controllAccountYN == 1 ? 'Yes' : 'No',
+                'defaultTemplateCategory' => $account->templateCategoryDetails->description ?? null,
+                'isActive' => $account->isActive == 1 ? 'Yes' : 'No',
+                'isBank' => $account->isBank == 1 ? 'Yes' : 'No',
+                'allocationType' => $account->allocation->Desciption ?? null,
+                'relatedPartyYN' => $account->relatedPartyYN == 1 ? 'Yes' : 'No',
+                
+            ];
+        }
+
+        if ($usePagination) {
+            $transformedItems = collect($result);
+            $paginatedResult = new LengthAwarePaginator(
+                $transformedItems,
+                $accounts->total(),
+                $accounts->perPage(),
+                $accounts->currentPage(),
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+
+            return $paginatedResult->toArray();
+        }
+
+        return $result;
+    }
+
     /**
      * Get chart of accounts by budget planning ID
      *

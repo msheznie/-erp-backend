@@ -51,14 +51,18 @@ class SupplierAgingReportService
                     $lineTotal += $val->$agingKey;
                 }
 
-                $unallocatedAmount = CurrencyService::convertNumberFormatToNumber(
-                    number_format($val->unAllocatedAmount, $val->balanceDecimalPlaces)
+                $advanceUnallocatedAmount = CurrencyService::convertNumberFormatToNumber(
+                    number_format($val->advanceUnallocatedAmount, $val->balanceDecimalPlaces)
+                );
+                $debitNoteUnallocatedAmount = CurrencyService::convertNumberFormatToNumber(
+                    number_format($val->debitNoteUnallocatedAmount, $val->balanceDecimalPlaces)
                 );
                 $totalAmount = CurrencyService::convertNumberFormatToNumber(
                     number_format($lineTotal + $val->unAllocatedAmount, $val->balanceDecimalPlaces)
                 );
 
-                $data[$currentIndex]['Advance/UnAllocated Amount'] = $unallocatedAmount;
+                $data[$currentIndex]['Advance Unallocated Amount'] = $advanceUnallocatedAmount;
+                $data[$currentIndex]['Debit Note Unallocated Amount'] = $debitNoteUnallocatedAmount;
                 $data[$currentIndex]['Total'] = $totalAmount;
             }
         }
@@ -102,7 +106,8 @@ class SupplierAgingReportService
                 }
 
 
-                $data[$index + 1]['Advance/UnAllocated Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->unAllocatedAmount,$val->balanceDecimalPlaces));
+                $data[$index + 1]['Advance Unallocated Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->advanceUnallocatedAmount,$val->balanceDecimalPlaces));
+                $data[$index + 1]['Debit Note Unallocated Amount'] = CurrencyService::convertNumberFormatToNumber(number_format($val->debitNoteUnallocatedAmount,$val->balanceDecimalPlaces));
 
                 $data[$index + 1]['Total'] = CurrencyService::convertNumberFormatToNumber(number_format($lineTotal + $val->unAllocatedAmount,$val->balanceDecimalPlaces));
             }

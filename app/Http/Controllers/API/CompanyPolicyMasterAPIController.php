@@ -242,58 +242,6 @@ class CompanyPolicyMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_policy_masters')]));
         }
         
-        if($companyPolicyMaster->companyPolicyCategoryID == 106){
-            $isDeactivating = isset($input['isYesNO']) && $companyPolicyMaster->isYesNO == 1 && $input['isYesNO'] == 0;
-            
-            if($isDeactivating){
-                $companySystemID = $companyPolicyMaster->companySystemID;
-                
-                $quotationDocuments = QuotationMaster::where('companySystemID', $companySystemID)
-                    ->whereIn('documentSystemID', [67, 68])
-                    ->where('cancelledYN', 0)
-                    ->where('closedYN', 0)
-                    ->where(function($query) {
-                        // Draft documents: not confirmed
-                        $query->where(function($q) {
-                            // Draft with salesType = 2: if it has any detail, show error
-                            $q->where('confirmedYN', 0)
-                              ->where('salesType', 2)
-                              ->whereHas('detail');
-                        })
-                        // Draft without salesType = 2: check if any detail has segment selected
-                        ->orWhere(function($q) {
-                            $q->where('confirmedYN', 0)
-                              ->where(function($subQ) {
-                                  $subQ->where('salesType', '!=', 2)
-                                       ->orWhereNull('salesType');
-                              })
-                              ->whereHas('detail', function($subQ) {
-                                  // Check if any line item has segment selected
-                                  $subQ->whereNotNull('serviceLineSystemID');
-                              });
-                        })
-                        // Confirmed documents: confirmed but not fully approved
-                        ->orWhere(function($q) {
-                            $q->where('confirmedYN', 1)
-                              ->where('approvedYN', 0)
-                              ->where('salesType', 2)
-                              ->whereHas('detail', function($subQ) {
-                                  // Must have at least one detail with segment selected
-                                  $subQ->whereNotNull('serviceLineSystemID');
-                              })
-                              ->whereDoesntHave('detail', function($subQ) {
-                                  // Exclude if any detail doesn't have segment selected
-                                  $subQ->whereNull('serviceLineSystemID');
-                              });
-                        });
-                    })
-                    ->exists();                
-                
-                    if($quotationDocuments){
-                        return $this->sendError(trans('custom.cannot_deactivate_policy_documents_with_segment_selection'), 500);
-                    }
-            }
-        }
 
         $companyPolicyMaster = $this->companyPolicyMasterRepository->update($input, $id);
 

@@ -217,12 +217,21 @@
 
         @if($request->linePdoinvoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
+                @php
+                    $showSegmentColumn = isset($request->isPerforma)
+                        && in_array($request->isPerforma, [4, 5])
+                        && isset($request->isSegmentPolicyOn)
+                        && (int) $request->isSegmentPolicyOn === 1;
+                @endphp
                 <thead>
                 <tr class="">
                     <th colspan="1" style="width:1%"></th>
                     <th colspan="3" style="text-align: center">Client Reference</th>
                     <th colspan="3" style="text-align: center">PO Detail ID</th>
                     <th colspan="3" style="text-align: center">Item Description</th>
+                    @if($showSegmentColumn)
+                        <th colspan="3" style="text-align: center">Segment</th>
+                    @endif
                     <th colspan="2" style="text-align: right">Quantity</th>
                     <th colspan="2" style="text-align: right">Unit Price</th>
                     <th colspan="2" style="text-align: right">Total Amount</th>
@@ -240,6 +249,15 @@
                         <td colspan="3">{{$item->client_referance}}</td>
                         <td colspan="3">{{$item->po_detail_id}}</td>
                         <td colspan="3">{{$item->item_description}}</td>
+                        @if($showSegmentColumn)
+                            <td colspan="3">
+                                @if(isset($item->segment) && $item->segment)
+                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                @else
+                                    {{$item->serviceLineCode ?? ''}}
+                                @endif
+                            </td>
+                        @endif
                         <td colspan="2" style="text-align: right">{{number_format($item->qty,2)}}</td>
                         <td colspan="2" style="text-align: right">{{number_format($item->unit_price,$numberFormatting)}}</td>
                         <td colspan="2" style="text-align: right" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>

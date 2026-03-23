@@ -110,7 +110,9 @@ class CustomerInvoiceDirectRefferedbackRepository extends BaseRepository
         'createdDateAndTime',
         'timestamp',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**

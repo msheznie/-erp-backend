@@ -4441,4 +4441,16 @@ class Helper
         }
     }
 
+    public static function parseRequestDate($date)
+    {
+        if ($date instanceof Carbon) {
+            return $date;
+        }
+        $parsed = Carbon::createFromFormat('d/m/Y', $date);
+        if ($parsed !== false) {
+            return $parsed;
+        }
+        return new Carbon($date);
+    }
+
 }

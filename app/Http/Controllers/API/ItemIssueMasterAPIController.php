@@ -1029,7 +1029,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     ->first();
 
                 if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
-                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
+                    $query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
                 }
 
                 $query->whereIn('employeesdepartments.documentSystemID', [8])

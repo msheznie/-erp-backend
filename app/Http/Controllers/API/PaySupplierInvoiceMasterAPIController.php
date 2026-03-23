@@ -105,6 +105,10 @@ use App\Services\ValidateDocumentAmend;
 use App\Services\GeneralLedgerService;
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentConfirm;
+use App\Models\PayAdvanceReceiptDetail;
+use App\Services\PayAdvanceReceiptDetailsService;
+use App\Services\PayCreditNoteDetailsService;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * Class PaySupplierInvoiceMasterController
@@ -119,14 +123,25 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     private $matchDocumentMasterRepository;
     private $expenseAssetAllocationRepository;
     private $vatReturnFillingMasterRepo;
+    private $payAdvanceReceiptDetailsService;
+    private $payCreditNoteDetailsService;
 
 
-    public function __construct(PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo, ExpenseAssetAllocationRepository $expenseAssetAllocationRepo, MatchDocumentMasterRepository $matchDocumentMasterRepository,VatReturnFillingMasterRepository $vatReturnFillingMasterRepo)
+    public function __construct(
+        PaySupplierInvoiceMasterRepository $paySupplierInvoiceMasterRepo,
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
+        MatchDocumentMasterRepository $matchDocumentMasterRepository,
+        VatReturnFillingMasterRepository $vatReturnFillingMasterRepo,
+        PayAdvanceReceiptDetailsService $payAdvanceReceiptDetailsService,
+        PayCreditNoteDetailsService $payCreditNoteDetailsService
+    )
     {
         $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepo;
         $this->matchDocumentMasterRepository = $matchDocumentMasterRepository;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
         $this->vatReturnFillingMasterRepo = $vatReturnFillingMasterRepo;
+        $this->payAdvanceReceiptDetailsService = $payAdvanceReceiptDetailsService;
+        $this->payCreditNoteDetailsService = $payCreditNoteDetailsService;
     }
 
     /**
@@ -1595,7 +1610,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier','customer','creditnotedetail.creditnote', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
                 $query->with('segment');
             }, 'bankaccount'=> function($query){
                 $query->with('currency');
@@ -1605,7 +1620,12 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 },
                 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
                 'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
-                    $query->with('project','segment');
+                    $query->with(['project','segment','to_bank' => function ($query) {
+                        $query->select('bankAccountAutoID', 'bankName', 'AccountNo', 'bankBranch', 'accountIBAN#', 'accountCurrencyID')
+                            ->with(['currency' => function ($q) {
+                                $q->select('currencyID', 'CurrencyCode');
+                            }]);
+                    }]);
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -1618,7 +1638,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by','pdc_cheque' => function ($q) {
                     $q->where('documentSystemID', 4);
-                } ])->first();
+                }])->first();
 
         $output['isProjectBase'] = false;
         if ($output) {
@@ -1640,6 +1660,37 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $output['supplierBeneficiaryNumber'] = $beneficiaryMemo;
         } else {
             $output['supplierBeneficiaryNumber'] = null;
+        }
+
+        if ($output && $output->invoiceType == 8) {
+            if ($output->refundType == 1) {
+                $advanceReceiptDetails = $this->payAdvanceReceiptDetailsService->getAdvanceReceiptPaymentDetails(['payMasterAutoId' => $output->PayMasterAutoId]);
+                if ($advanceReceiptDetails->isSuccess()) {
+                    $detailCollection = $advanceReceiptDetails->getData();
+                    if ($detailCollection instanceof \Illuminate\Support\Collection) {
+                        $output->setRelation('advanceReceiptDetail', $detailCollection);
+                    }
+                }
+            }
+            else if ($output->refundType == 3) {
+                $creditNoteDetails = $this->payCreditNoteDetailsService->getCreditNotePaymentDetails(['payMasterAutoId' => $output->PayMasterAutoId]);
+                if ($creditNoteDetails->isSuccess()) {
+                    $dataCreditNote = $creditNoteDetails->getData();
+                    if (isset($dataCreditNote['creditNotePaymentDetails'])) {
+                        $dataCreditNote = $dataCreditNote['creditNotePaymentDetails'];
+                        if ($dataCreditNote instanceof \Illuminate\Support\Collection) {
+                            if ($dataCreditNote->isNotEmpty()) {
+                                $output->setRelation('creditnotedetail', $dataCreditNote);
+                            }
+                        } else {
+                            // Backward compatibility if the service ever returns an array.
+                            if (!empty($dataCreditNote)) {
+                                $output->setRelation('creditnotedetail', $dataCreditNote);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
@@ -3082,8 +3133,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
     }
 
 
-    public
-    function printPaymentVoucher(Request $request)
+    public function printPaymentVoucher(Request $request)
     {
 
         $id = $request->get('PayMasterAutoId');
@@ -3095,13 +3145,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['project','supplier','customer', 'creditnotedetail.creditnote', 'bank_charge'=> function ($query) {
+            ->with(['project','supplier','customer', 'bank_charge'=> function ($query) {
                 $query->with('segment');
-            }, 'bankaccount', 'transactioncurrency', 'paymentmode',
+            }, 'bankaccount' => function ($q) { $q->with(['currency' => function ($q) {
+                $q->select('currencyID', 'CurrencyCode');
+            }]); 
+            }, 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
-                    $query->with('project','segment');
+                    $query->with(['project','segment','to_bank' => function ($query) {
+                        $query->select('bankAccountAutoID', 'bankName', 'AccountNo', 'bankBranch', 'accountIBAN#', 'accountCurrencyID')
+                            ->with(['currency' => function ($q) {
+                                $q->select('currencyID', 'CurrencyCode');
+                            }]);
+                    }]);
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -3149,6 +3207,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $creditNoteDetailSubTotal = PayCreditNoteDetail::where('PayMasterAutoId', $id)
             ->sum('creditNotePaymentAmount');
 
+        $advanceReceiptDetailSubTotal = PayAdvanceReceiptDetail::where('PayMasterAutoId', $id)
+            ->sum('advanceReceiptAmount');
+
         $bankChargeAndOthersTot = PaymentVoucherBankChargeDetails::where('payMasterAutoID',$id)->sum('dpAmount');
         
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -3166,6 +3227,37 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->value('erp_bankmemosupplier.memoDetail') ?? null;
         }
 
+        if ($output && $output->invoiceType == 8) {
+            if ($output->refundType == 1) {
+                $advanceReceiptDetails = $this->payAdvanceReceiptDetailsService->getAdvanceReceiptPaymentDetails(['payMasterAutoId' => $output->PayMasterAutoId]);
+                if ($advanceReceiptDetails->isSuccess()) {
+                    $detailCollection = $advanceReceiptDetails->getData();
+                    if ($detailCollection instanceof \Illuminate\Support\Collection) {
+                        $output->setRelation('advanceReceiptDetail', $detailCollection);
+                    }
+                }
+            }
+            else if ($output->refundType == 3) {
+                $creditNoteDetails = $this->payCreditNoteDetailsService->getCreditNotePaymentDetails(['payMasterAutoId' => $output->PayMasterAutoId]);
+                if ($creditNoteDetails->isSuccess()) {
+                    $dataCreditNote = $creditNoteDetails->getData();
+                    if (isset($dataCreditNote['creditNotePaymentDetails'])) {
+                        $dataCreditNote = $dataCreditNote['creditNotePaymentDetails'];
+                        if ($dataCreditNote instanceof \Illuminate\Support\Collection) {
+                            if ($dataCreditNote->isNotEmpty()) {
+                                $output->setRelation('creditnotedetail', $dataCreditNote);
+                            }
+                        } else {
+                            // Backward compatibility if the service ever returns an array.
+                            if (!empty($dataCreditNote)) {
+                                $output->setRelation('creditnotedetail', $dataCreditNote);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         $order = array(
             'masterdata' => $output,
             'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
@@ -3178,6 +3270,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra,
             'creditNoteDetailSubTotal' => $creditNoteDetailSubTotal,
+            'advanceReceiptDetailSubTotal' => $advanceReceiptDetailSubTotal,
             'bankChargeAndOthersTot' => $bankChargeAndOthersTot,
             'bankChargeCount' => $bankChargeCount
         );
@@ -3197,8 +3290,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         return $mpdf->Output($fileName, 'I');
     }
 
-    public
-    function getPaymentApprovalByUser(Request $request)
+    public function getPaymentApprovalByUser(Request $request)
     {
 
         $input = $request->all();

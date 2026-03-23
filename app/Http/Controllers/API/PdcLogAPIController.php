@@ -349,10 +349,9 @@ class PdcLogAPIController extends AppBaseController
         return $this->sendResponse([], trans('custom.pdc_cheques_deleted_successfully'));
     }
 
-    public function getIssuedCheques(Request $request) {
-
-
-        $input = $request;
+    public function getIssuedCheques(Request $request) 
+    {
+        $input = $request->all();
         $companyId = (isset($input['companyId'])) ? $input['companyId'] : '';
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
@@ -361,10 +360,12 @@ class PdcLogAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $bankmasterAutoID = $request['bank'];
+        $search = $request->input('search.value');
+
+        $bankmasterAutoID = $input['bank'];
         $bankmasterAutoID = (array)$bankmasterAutoID;
         $bankmasterAutoID = collect($bankmasterAutoID)->pluck('id');
-
+           
         $issuedCheques = PdcLog::where('documentSystemID',4)
                                 ->whereHas('pay_supplier', function ($query) {
                                     $query->where('approved', -1);
@@ -383,6 +384,35 @@ class PdcLogAPIController extends AppBaseController
                                     $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
                                 }]);
 
+        if (!is_null($search)) {
+
+            $statusMap = [
+                'open' => 0,
+                'deposited' => 1,
+                'returned' => 2,
+                'done' => 3,
+            ];
+            
+            $search = strtolower(trim(str_replace("\\", "\\\\", $search)));
+            $issuedCheques = $issuedCheques->where(function ($query) use ($search, $statusMap) {
+                $query->where('chequeNo', 'like', "%{$search}%")
+                    ->orWhereRaw("DATE_FORMAT(chequeDate, '%d/%m/%Y') like ?", ["%{$search}%"])
+                    ->orWhere('amount', 'like', "%{$search}%")
+                    ->orWhereHas('pay_supplier', function ($psq) use ($search) {
+                        $psq->where('BPVcode', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('bank', function ($bq) use ($search) {
+                        $bq->where('bankName', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('currency', function ($cq) use ($search) {
+                        $cq->where('CurrencyCode', 'like', "%{$search}%");
+                    });
+                    if (array_key_exists($search, $statusMap)) {
+                        $query->orWhere('chequeStatus', $statusMap[$search]);
+                    }
+            });
+        }
+
         return \DataTables::eloquent($issuedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -398,7 +428,8 @@ class PdcLogAPIController extends AppBaseController
 
     }
 
-    public function getAllReceivedCheques(Request $request) {
+    public function getAllReceivedCheques(Request $request) 
+    {
         $input = $request->all();
         $companyId = (isset($input['companyId'])) ? $input['companyId'] : '';
 
@@ -408,6 +439,8 @@ class PdcLogAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
+        
+        $search = $request->input('search.value');
 
         $bankmasterAutoID = $request['bank'];
         $bankmasterAutoID = (array)$bankmasterAutoID;
@@ -428,6 +461,34 @@ class PdcLogAPIController extends AppBaseController
                                 ->where('companySystemID',$companyId)
                                 ->with(['currency','bank','customer_receive']);
 
+        if (!is_null($search)) {
+
+            $statusMap = [
+                'open' => 0,
+                'deposited' => 1,
+                'returned' => 2,
+                'done' => 3,
+            ];
+            
+            $search = strtolower(trim(str_replace("\\", "\\\\", $search)));
+            $receivedCheques = $receivedCheques->where(function ($query) use ($search, $statusMap) {
+                $query->where('chequeNo', 'like', "%{$search}%")
+                    ->orWhereRaw("DATE_FORMAT(chequeDate, '%d/%m/%Y') like ?", ["%{$search}%"])
+                    ->orWhere('amount', 'like', "%{$search}%")
+                    ->orWhereHas('customer_receive', function ($psq) use ($search) {
+                        $psq->where('custPaymentReceiveCode', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('bank', function ($bq) use ($search) {
+                        $bq->where('bankName', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('currency', function ($cq) use ($search) {
+                        $cq->where('CurrencyCode', 'like', "%{$search}%");
+                    });
+                    if (array_key_exists($search, $statusMap)) {
+                        $query->orWhere('chequeStatus', $statusMap[$search]);
+                    }
+            });
+        }
 
         return \DataTables::eloquent($receivedCheques)
             ->addColumn('Actions', 'Actions', "Actions")

@@ -20,3 +20,9 @@ public/logos/
 package-lock.json
 .DS_Store
 /storage/*.key
+/boost.json
+/.mcp.json
+/.cursor
+/.claude
+/CLAUDE.md
+/AGENTS.md

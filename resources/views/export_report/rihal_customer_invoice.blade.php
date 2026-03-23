@@ -154,6 +154,13 @@
     </table>
 @endif
 
+@php
+    $showSegmentColumn = isset($request->isPerforma)
+        && in_array($request->isPerforma, [4, 5])
+        && isset($request->isSegmentPolicyOn)
+        && (int) $request->isSegmentPolicyOn === 1;
+@endphp
+
 @if ($request->template <> 1 && !$request->line_invoiceDetails && isset($request->invoicedetails) && sizeof($request->invoicedetails) > 0)
     <table class="table table-bordered" style="width: 100%;">
         <thead>
@@ -161,6 +168,9 @@
             <th colspan="1"></th>
             <th colspan="2">{{ __('custom.gl_code') }}</th>
             <th colspan="4">{{ __('custom.gl_code_description') }}</th>
+            @if($showSegmentColumn)
+                <th colspan="2">{{ __('custom.segments') }}</th>
+            @endif
             <th colspan="2">{{ __('custom.qty') }}</th>
             <th colspan="2">{{ __('custom.unit_rate') }}</th>
             <th colspan="2">{{ __('custom.vat_per_unit') }}</th>
@@ -178,6 +188,15 @@
                 <td colspan="1">{{$x}}</td>
                 <td colspan="2">{{$item->glCode}}</td>
                 <td colspan="4">{{$item->glCodeDes}}</td>
+                @if($showSegmentColumn)
+                    <td colspan="2">
+                        @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                            {{$item->department->ServiceLineDes}}
+                        @else
+                            {{$item->serviceLineCode ?? ''}}
+                        @endif
+                    </td>
+                @endif
                 <td colspan="2" class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                 <td colspan="2" class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                 <td colspan="2" class="text-right">{{number_format($item->VATAmountLocal,$numberFormatting)}}</td>
@@ -197,6 +216,9 @@
             <th colspan="1" style="width:3%"></th>
             <th colspan="2" style="width:60%;text-align: center">{{ __('custom.description') }}</th>
             <th colspan="2" style="width:30%;text-align: center">{{ __('custom.part_number') }}</th>
+            @if($showSegmentColumn)
+                <th colspan="2" style="width:20%;text-align: center">{{ __('custom.segments') }}</th>
+            @endif
             <th colspan="2" style="width:10%;text-align: center">{{ __('custom.quantity') }}</th>
             <th colspan="2" style="width:10%;text-align: center">{{ __('custom.unit_price') }}</th>
             <th colspan="2" style="width:10%;text-align: right">{{ __('custom.taxable_amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
@@ -218,6 +240,15 @@
                         <td colspan="1" >{{$x}}</td>
                         <td colspan="2" >{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
                         <td colspan="2" style="text-align: center">{{$item->part_no}}</td>
+                        @if($showSegmentColumn)
+                            <td colspan="2" style="text-align: center">
+                                @if(isset($item->segment) && $item->segment)
+                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                @else
+                                    {{$item->serviceLineCode ?? ''}}
+                                @endif
+                            </td>
+                        @endif
                     <!-- <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td> -->
                         <td colspan="2" class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
                         <td colspan="2" class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>

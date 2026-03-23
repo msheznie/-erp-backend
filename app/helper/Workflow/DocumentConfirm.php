@@ -742,6 +742,7 @@ class DocumentConfirm
                             if ($policy) {
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
+                                $isSubcategoryWise = !empty($policy->isSubcategoryApproval);
                                 $isValueWise = $policy->isAmountApproval;
                                 $isPRTypeWise = $policy->isPRTypeApproval;
                                 $isAttachment = $policy->isAttachmentYN;
@@ -803,6 +804,14 @@ class DocumentConfirm
                                     }
                                 } else {
                                     return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
+                                }
+                            }
+
+                            if ($isSubcategoryWise) {
+                                if (array_key_exists('subCategory', $params) && $params['subCategory']) {
+                                    $approvalLevel->where('subcategoryID', $params['subCategory']);
+                                } else {
+                                    return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                 }
                             }
 
