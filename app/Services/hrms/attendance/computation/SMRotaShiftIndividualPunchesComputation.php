@@ -135,8 +135,7 @@ class SMRotaShiftIndividualPunchesComputation
             ])
             ->whereBetween('t.attDate', [$currentDate, $nextDate])
             ->whereBetween('t.attDateTime', [$currentDateWithCutTime, $nextDateWithCutTime])
-            ->orderBy('t.attDate', 'ASC')
-            ->orderBy('t.attTime', 'ASC')
+            ->orderBy('t.attDateTime', 'ASC')
             ->get()
             ->toArray();
 
@@ -202,6 +201,18 @@ class SMRotaShiftIndividualPunchesComputation
         }
 
         $this->configMissedPunch();
+
+        if ($this->presentAbsentType === AbsentType::MISSED_PUNCH
+            && empty($this->clockIn)
+            && count($this->attTempRecords) === 1
+        ) {
+            $record = $this->attTempRecords[0];
+            if (! empty($record) && (int) $record->in_out === 1) {
+                $this->clockIn = $record->attTime;
+                $this->clockInDate = $record->attDate;
+            }
+        }
+
         $this->updateAttendanceTempTable();
         $crossDayActualTime = $this->calculateCrossDayActualTime();
         $this->actualWorkingHours = $totalMinutes + $crossDayActualTime;
