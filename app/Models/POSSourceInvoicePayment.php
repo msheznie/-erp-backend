@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceInvoicePayment",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="PaymentID",
  *          description="PaymentID",
@@ -131,14 +132,11 @@ use Eloquent as Model;
  */
 class POSSourceInvoicePayment extends Model
 {
-
     public $table = 'pos_source_invoicepayments';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'invoiceID',
@@ -160,7 +158,8 @@ class POSSourceInvoicePayment extends Model
         'modifiedUserName',
         'modifiedDateTime',
         'timestamp',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -189,7 +188,7 @@ class POSSourceInvoicePayment extends Model
         'modifiedUserName' => 'string',
         'modifiedDateTime' => 'datetime',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -198,10 +197,11 @@ class POSSourceInvoicePayment extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
 
-    public function paymentConfigMaster(){ 
+    public function paymentConfigMaster()
+    {
         return $this->hasOne('App\Models\POSSourcePaymentGlConfig', 'autoID', 'paymentConfigMasterID');
     }
 }

@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCEMenuSalesOutletTaxes",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="menuSalesOutletTaxID",
  *          description="menuSalesOutletTaxID",
@@ -141,8 +142,8 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="isSync",
- *          description="0 => Not Synced 
-1 => Send to ERP 
+ *          description="0 => Not Synced
+1 => Send to ERP
 2 => Fully Synced",
  *          type="integer",
  *          format="int32"
@@ -151,14 +152,11 @@ use Eloquent as Model;
  */
 class POSSOURCEMenuSalesOutletTaxes extends Model
 {
-
     public $table = 'pos_source_menusalesoutlettaxes';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'wareHouseAutoID',
@@ -183,7 +181,8 @@ class POSSOURCEMenuSalesOutletTaxes extends Model
         'is_sync',
         'id_store',
         'transaction_log_id',
-        'isSync'
+        'isSync',
+        'pos_type',
     ];
 
     /**
@@ -215,7 +214,7 @@ class POSSOURCEMenuSalesOutletTaxes extends Model
         'is_sync' => 'integer',
         'id_store' => 'integer',
         'transaction_log_id' => 'integer',
-        'isSync' => 'integer'
+        'isSync' => 'integer',
     ];
 
     /**
@@ -225,8 +224,6 @@ class POSSOURCEMenuSalesOutletTaxes extends Model
      */
     public static $rules = [
         'wareHouseAutoID' => 'required',
-        'isSync' => 'required'
+        'isSync' => 'required',
     ];
-
-    
 }

@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCETaxLedger",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="amount",
  *          description="amount",
@@ -100,12 +101,7 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="isSync",
- *          description="0 => Not Synced 
-1 => Send to ERP 
-2 => Fully Synced",
- *          type="integer",
- *          format="int32"
- *      ),
+ *          description="0 => Not Synced
  *      @SWG\Property(
  *          property="locationID",
  *          description="locationID",
@@ -231,14 +227,11 @@ use Eloquent as Model;
  */
 class POSSOURCETaxLedger extends Model
 {
-
     public $table = 'pos_source_taxledger';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'amount',
@@ -277,7 +270,8 @@ class POSSOURCETaxLedger extends Model
         'timestamp',
         'transaction_log_id',
         'transferGLAutoID',
-        'vatTypeID'
+        'vatTypeID',
+        'pos_type',
     ];
 
     /**
@@ -323,7 +317,7 @@ class POSSOURCETaxLedger extends Model
         'timestamp' => 'datetime',
         'transaction_log_id' => 'integer',
         'transferGLAutoID' => 'integer',
-        'vatTypeID' => 'integer'
+        'vatTypeID' => 'integer',
     ];
 
     /**
@@ -332,8 +326,6 @@ class POSSOURCETaxLedger extends Model
      * @var array
      */
     public static $rules = [
-        'isSync' => 'required'
+        'isSync' => 'required',
     ];
-
-    
 }

@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceMenuSalesMaster",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="menuSalesID",
  *          description="menuSalesID",
@@ -794,14 +795,11 @@ use Eloquent as Model;
  */
 class POSSourceMenuSalesMaster extends Model
 {
-
     public $table = 'pos_source_menusalesmaster';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'invoiceSequenceNo',
@@ -937,7 +935,8 @@ class POSSourceMenuSalesMaster extends Model
         'ownDeliveryPercentage',
         'ownDeliveryAmount',
         'isCancelled',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -1080,7 +1079,7 @@ class POSSourceMenuSalesMaster extends Model
         'ownDeliveryPercentage' => 'float',
         'ownDeliveryAmount' => 'float',
         'isCancelled' => 'integer',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -1090,22 +1089,26 @@ class POSSourceMenuSalesMaster extends Model
      */
     public static $rules = [
         'wareHouseAutoID' => 'required',
-        'grossAmount' => 'required'
+        'grossAmount' => 'required',
     ];
 
-    public function wareHouseMaster(){ 
+    public function wareHouseMaster()
+    {
         return $this->hasOne(WarehouseMaster::class, 'wareHouseSystemCode', 'wareHouseAutoID');
     }
 
-    public function menuSalesItems(){ 
+    public function menuSalesItems()
+    {
         return $this->hasMany('App\Models\POSSourceMenuSalesItem', 'menuSalesID', 'menuSalesID');
     }
 
-    public function customerTypeMaster(){ 
+    public function customerTypeMaster()
+    {
         return $this->hasOne('App\Models\SourceCustomerTypeMaster', 'customerTypeID', 'customerTypeID');
     }
 
-    public function menuSalesPayment(){ 
+    public function menuSalesPayment()
+    {
         return $this->hasMany('App\Models\POSSourceMenuSalesPayment', 'menuSalesID', 'menuSalesID');
     }
 }

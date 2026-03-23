@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceMenuSalesItem",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="menuSalesItemID",
  *          description="menuSalesItemID",
@@ -427,14 +428,11 @@ use Eloquent as Model;
  */
 class POSSourceMenuSalesItem extends Model
 {
-
     public $table = 'pos_source_menusalesitems';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'wareHouseAutoID',
@@ -507,7 +505,8 @@ class POSSourceMenuSalesItem extends Model
         'is_sync',
         'id_store',
         'isUpdated',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -587,7 +586,7 @@ class POSSourceMenuSalesItem extends Model
         'is_sync' => 'integer',
         'id_store' => 'integer',
         'isUpdated' => 'integer',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -598,10 +597,11 @@ class POSSourceMenuSalesItem extends Model
     public static $rules = [
         'wareHouseAutoID' => 'required',
         'menuSalesID' => 'required',
-        'id_store' => 'required'
+        'id_store' => 'required',
     ];
 
-    public function menuMaster(){ 
+    public function menuMaster()
+    {
         return $this->hasOne('App\Models\PosSourceMenuMaster', 'menuMasterID', 'menuID');
     }
 }

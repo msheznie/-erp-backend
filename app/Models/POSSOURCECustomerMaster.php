@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCECustomerMaster",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="capAmount",
  *          description="capAmount",
@@ -174,12 +175,7 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="isSync",
- *          description="0 => Not Synced 
-1 => Send to ERP 
-2 => Fully Synced",
- *          type="integer",
- *          format="int32"
- *      ),
+ *          description="0 => Not Synced
  *      @SWG\Property(
  *          property="levelNo",
  *          description="levelNo",
@@ -274,14 +270,11 @@ use Eloquent as Model;
  */
 class POSSOURCECustomerMaster extends Model
 {
-
     public $table = 'pos_source_customermaster';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'modifiedDateTime';
-
-
-
 
     public $fillable = [
         'capAmount',
@@ -329,7 +322,8 @@ class POSSOURCECustomerMaster extends Model
         'vatEligible',
         'vatIdNo',
         'vatNumber',
-        'vatPercentage'
+        'vatPercentage',
+        'pos_type',
     ];
 
     /**
@@ -384,7 +378,7 @@ class POSSOURCECustomerMaster extends Model
         'vatEligible' => 'integer',
         'vatIdNo' => 'string',
         'vatNumber' => 'integer',
-        'vatPercentage' => 'float'
+        'vatPercentage' => 'float',
     ];
 
     /**
@@ -394,8 +388,6 @@ class POSSOURCECustomerMaster extends Model
      */
     public static $rules = [
         'customerCurrencyID' => 'required',
-        'isSync' => 'required'
+        'isSync' => 'required',
     ];
-
-    
 }

@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceMenuSalesServiceCharge",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="menusalesServiceChargeID",
  *          description="menusalesServiceChargeID",
@@ -179,14 +180,11 @@ use Eloquent as Model;
  */
 class POSSourceMenuSalesServiceCharge extends Model
 {
-
     public $table = 'pos_source_menusalesservicecharge';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'wareHouseAutoID',
@@ -216,7 +214,8 @@ class POSSourceMenuSalesServiceCharge extends Model
         'timestamp',
         'is_sync',
         'id_store',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -253,7 +252,7 @@ class POSSourceMenuSalesServiceCharge extends Model
         'timestamp' => 'datetime',
         'is_sync' => 'integer',
         'id_store' => 'integer',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -262,8 +261,6 @@ class POSSourceMenuSalesServiceCharge extends Model
      * @var array
      */
     public static $rules = [
-        'wareHouseAutoID' => 'required'
+        'wareHouseAutoID' => 'required',
     ];
-
-    
 }

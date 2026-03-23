@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSInvoiceSourceDetail",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="invoiceDetailsID",
  *          description="invoiceDetailsID",
@@ -327,14 +328,11 @@ use Eloquent as Model;
  */
 class POSInvoiceSourceDetail extends Model
 {
-
     public $table = 'pos_source_invoicedetail';
 
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'invoiceID',
@@ -389,7 +387,8 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -451,7 +450,7 @@ class POSInvoiceSourceDetail extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**

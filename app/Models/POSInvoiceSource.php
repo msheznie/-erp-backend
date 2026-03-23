@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSInvoiceSource",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="invoiceID",
  *          description="invoiceID",
@@ -473,14 +474,11 @@ use Eloquent as Model;
  */
 class POSInvoiceSource extends Model
 {
-
     public $table = 'pos_source_invoice';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'documentSystemCode',
@@ -535,7 +533,7 @@ class POSInvoiceSource extends Model
         'customerCurrencyDecimalPlaces',
         'segmentID',
         'companyID',
-        'companyCode', 
+        'companyCode',
         'isVoid',
         'voidBy',
         'voidDatetime',
@@ -553,7 +551,8 @@ class POSInvoiceSource extends Model
         'promotiondiscount',
         'promotiondiscountAmount',
         'isPromotion',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -633,7 +632,7 @@ class POSInvoiceSource extends Model
         'promotiondiscount' => 'float',
         'promotiondiscountAmount' => 'float',
         'isPromotion' => 'integer',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -642,22 +641,31 @@ class POSInvoiceSource extends Model
      * @var array
      */
     public static $rules = [
-        
+
     ];
-    public function wareHouseMaster(){
+
+    public function wareHouseMaster()
+    {
         return $this->hasOne(WarehouseMaster::class, 'wareHouseSystemCode', 'wareHouseAutoID');
     }
-    public function invoiceDetailSource(){ 
+
+    public function invoiceDetailSource()
+    {
         return $this->hasMany('App\Models\POSInvoiceSourceDetail', 'invoiceID', 'invoiceID');
     }
-    public function invoicePaymentSource(){ 
+
+    public function invoicePaymentSource()
+    {
         return $this->hasMany('App\Models\POSSourceInvoicePayment', 'invoiceID', 'invoiceID');
     }
-    public function employee(){ 
-        return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
+
+    public function employee()
+    {
+        return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'createdUserID');
     }
 
-    public function bankGLEntries() {
+    public function bankGLEntries()
+    {
         return $this->hasMany(POSBankGLEntries::class, 'invoiceID', 'invoiceID');
     }
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * =============================================
  * -- File Name : ItemIssueMasterAPIController.php
@@ -17,81 +18,75 @@
  * -- Date: 29-August 2018 By: Fayas Description: Added new functions named as deliveryPrintItemIssue()
  * -- Date: 03-December 2018 By: Fayas Description: Added new functions named as materielIssueReferBack()
  */
+
 namespace App\Http\Controllers\API;
 
+use App\Criteria\LimitOffsetCriteria;
 use App\helper\CreateExcel;
+use App\helper\email as Email;
 use App\helper\Helper;
+use App\helper\inventory as Inventory;
+use App\helper\ItemTracking;
+use App\helper\Workflow\DocumentConfirm;
+use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateItemIssueDetailsAPIRequest;
 use App\Http\Requests\API\CreateItemIssueMasterAPIRequest;
 use App\Http\Requests\API\UpdateItemIssueMasterAPIRequest;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
-use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerInvoiceDirect;
-use App\Models\DeliveryOrder;
-use App\Models\FinanceItemcategorySubAssigned;
-use App\Models\FixedAssetMaster;
-use App\Models\ItemAssigned;
-use App\Models\ItemMaster;
-use App\Models\PurchaseReturn;
-use App\Models\SrpEmployeeDetails;
-use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
+use App\Models\DeliveryOrder;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\Employee;
 use App\Models\EmployeesDepartment;
-use App\Models\WarehouseBinLocation;
+use App\Models\ErpItemLedger;
+use App\Models\ErpProjectMaster;
+use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\FixedAssetMaster;
+use App\Models\ItemAssigned;
 use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueDetailsRefferedBack;
 use App\Models\ItemIssueMaster;
 use App\Models\ItemIssueMasterRefferedBack;
 use App\Models\ItemIssueType;
+use App\Models\ItemMaster;
 use App\Models\MaterielRequest;
-use App\Models\MaterielRequestDetails;
 use App\Models\Months;
+use App\Models\PurchaseReturn;
 use App\Models\SegmentMaster;
-use App\Models\SupplierMaster;
+use App\Models\StockTransfer;
 use App\Models\Unit;
-use App\Models\UnitConversion;
+use App\Models\UserToken;
+use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\ItemIssueMasterRepository;
+use App\Services\Excel\ExportReportToExcelService;
 use App\Services\Inventory\MaterialIssueService;
 use App\Traits\AuditTrial;
 use App\Validations\Inventory\StoreDetailsToMaterielRequest;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
-use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-use SwaggerFixures\Customer;
-use App\helper\ItemTracking;
-use App\Models\Employee;
-use App\Models\ErpProjectMaster;
-use Illuminate\Support\Arr;
-Use App\Models\UserToken;
-use GuzzleHttp\Client;
-use App\Models\ErpItemLedger;
-use App\Services\Excel\ExportReportToExcelService;
-use App\Exports\Inventory\MaterialIssueRegister;
-use App\helper\inventory as Inventory;
-use App\helper\email as Email;
-use App\helper\Workflow\DocumentConfirm;
+
 /**
  * Class ItemIssueMasterController
- * @package App\Http\Controllers\API
  */
 class ItemIssueMasterAPIController extends AppBaseController
 {
-    /** @var  ItemIssueMasterRepository */
+    /** @var ItemIssueMasterRepository */
     private $itemIssueMasterRepository;
 
     public function __construct(ItemIssueMasterRepository $itemIssueMasterRepo)
@@ -100,7 +95,6 @@ class ItemIssueMasterAPIController extends AppBaseController
     }
 
     /**
-     * @param Request $request
      * @return Response
      *
      * @SWG\Get(
@@ -109,11 +103,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      *      tags={"ItemIssueMaster"},
      *      description="Get all ItemIssueMasters",
      *      produces={"application/json"},
+     *
      *      @SWG\Response(
      *          response=200,
      *          description="successful operation",
+     *
      *          @SWG\Schema(
      *              type="object",
+     *
      *              @SWG\Property(
      *                  property="success",
      *                  type="boolean"
@@ -121,8 +118,10 @@ class ItemIssueMasterAPIController extends AppBaseController
      *              @SWG\Property(
      *                  property="data",
      *                  type="array",
+     *
      *                  @SWG\Items(ref="#/definitions/ItemIssueMaster")
      *              ),
+     *
      *              @SWG\Property(
      *                  property="message",
      *                  type="string"
@@ -141,7 +140,6 @@ class ItemIssueMasterAPIController extends AppBaseController
     }
 
     /**
-     * @param CreateItemIssueMasterAPIRequest $request
      * @return Response
      *
      * @SWG\Post(
@@ -150,18 +148,23 @@ class ItemIssueMasterAPIController extends AppBaseController
      *      tags={"ItemIssueMaster"},
      *      description="Store ItemIssueMaster",
      *      produces={"application/json"},
+     *
      *      @SWG\Parameter(
      *          name="body",
      *          in="body",
      *          description="ItemIssueMaster that should be stored",
      *          required=false,
+     *
      *          @SWG\Schema(ref="#/definitions/ItemIssueMaster")
      *      ),
+     *
      *      @SWG\Response(
      *          response=200,
      *          description="successful operation",
+     *
      *          @SWG\Schema(
      *              type="object",
+     *
      *              @SWG\Property(
      *                  property="success",
      *                  type="boolean"
@@ -182,7 +185,6 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-
         $input = $this->convertArrayToValue($input);
 
         $employee = Helper::getEmployeeInfo();
@@ -192,22 +194,22 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['createdUserSystemID'] = $employee->employeeSystemID;
 
         $companyFinanceYear = Helper::companyFinanceYearCheck($input);
-        if (!$companyFinanceYear["success"]) {
-            return $this->sendError($companyFinanceYear["message"], 500);
+        if (! $companyFinanceYear['success']) {
+            return $this->sendError($companyFinanceYear['message'], 500);
         }
 
         $inputParam = $input;
-        $inputParam["departmentSystemID"] = 10;
+        $inputParam['departmentSystemID'] = 10;
         $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
-        if (!$companyFinancePeriod["success"]) {
-            return $this->sendError($companyFinancePeriod["message"], 500);
+        if (! $companyFinancePeriod['success']) {
+            return $this->sendError($companyFinancePeriod['message'], 500);
         } else {
-            $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-            $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+            $input['FYBiggin'] = $companyFinancePeriod['message']->dateFrom;
+            $input['FYEnd'] = $companyFinancePeriod['message']->dateTo;
         }
         unset($inputParam);
 
-        if(isset($input['type']) && $input["type"] == "MRFROMMI") {
+        if (isset($input['type']) && $input['type'] == 'MRFROMMI') {
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
@@ -218,7 +220,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'issueRefNo' => 'required',
                 'comment' => 'required',
             ]);
-        }else {
+        } else {
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
                 'companyFinanceYearID' => 'required|numeric|min:1',
@@ -231,9 +233,6 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'comment' => 'required',
             ]);
         }
-
-
-
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
@@ -256,13 +255,12 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['documentSystemID'] = 8;
         $input['documentID'] = 'MI';
 
-
         $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
 
-        if(isset($input['type']) && $input["type"] != "MRFROMMI") {
+        if (isset($input['type']) && $input['type'] != 'MRFROMMI') {
             $warehouse = WarehouseMaster::where('wareHouseSystemCode', $input['wareHouseFrom'])->first();
             if ($warehouse) {
                 $input['wareHouseFromCode'] = $warehouse->wareHouseCode;
@@ -283,7 +281,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         //         $input["customerID"] = $customer->CutomerCode;
         //     }
         // }
-
 
         // get last serial number by company financial year
         $lastSerial = ItemIssueMaster::where('companySystemID', $input['companySystemID'])
@@ -309,11 +306,11 @@ class ItemIssueMasterAPIController extends AppBaseController
             $finYearExp = explode('-', $startYear);
             $finYear = $finYearExp[0];
         } else {
-            $finYear = date("Y");
+            $finYear = date('Y');
         }
 
         if ($documentMaster) { // generate document code
-            $itemIssueCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $itemIssueCode = ($company->CompanyID.'\\'.$finYear.'\\'.$documentMaster['documentID'].str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
             $input['itemIssueCode'] = $itemIssueCode;
         }
 
@@ -321,11 +318,12 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMasters = $this->itemIssueMasterRepository->create($input);
         DB::commit();
+
         return $this->sendResponse($itemIssueMasters->toArray(), trans('custom.item_issue_master_saved_successfully'));
     }
 
     /**
-     * @param int $id
+     * @param  int  $id
      * @return Response
      *
      * @SWG\Get(
@@ -334,6 +332,7 @@ class ItemIssueMasterAPIController extends AppBaseController
      *      tags={"ItemIssueMaster"},
      *      description="Get ItemIssueMaster",
      *      produces={"application/json"},
+     *
      *      @SWG\Parameter(
      *          name="id",
      *          description="id of ItemIssueMaster",
@@ -341,11 +340,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      *          required=true,
      *          in="path"
      *      ),
+     *
      *      @SWG\Response(
      *          response=200,
      *          description="successful operation",
+     *
      *          @SWG\Schema(
      *              type="object",
+     *
      *              @SWG\Property(
      *                  property="success",
      *                  type="boolean"
@@ -365,11 +367,11 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var ItemIssueMaster $itemIssueMaster */
-        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by','customer_by','finance_period_by' => function ($query) {
+        $itemIssueMaster = $this->itemIssueMasterRepository->with(['confirmed_by', 'created_by', 'customer_by', 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'finance_year_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
-        },'segment_by','warehouse_by'])->findWithoutFail($id);
+        }, 'segment_by', 'warehouse_by'])->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError(trans('custom.item_issue_master_not_found'));
@@ -379,8 +381,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     }
 
     /**
-     * @param int $id
-     * @param UpdateItemIssueMasterAPIRequest $request
+     * @param  int  $id
      * @return Response
      *
      * @SWG\Put(
@@ -389,6 +390,7 @@ class ItemIssueMasterAPIController extends AppBaseController
      *      tags={"ItemIssueMaster"},
      *      description="Update ItemIssueMaster",
      *      produces={"application/json"},
+     *
      *      @SWG\Parameter(
      *          name="id",
      *          description="id of ItemIssueMaster",
@@ -401,13 +403,17 @@ class ItemIssueMasterAPIController extends AppBaseController
      *          in="body",
      *          description="ItemIssueMaster that should be updated",
      *          required=false,
+     *
      *          @SWG\Schema(ref="#/definitions/ItemIssueMaster")
      *      ),
+     *
      *      @SWG\Response(
      *          response=200,
      *          description="successful operation",
+     *
      *          @SWG\Schema(
      *              type="object",
+     *
      *              @SWG\Property(
      *                  property="success",
      *                  type="boolean"
@@ -428,14 +434,12 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $api_key = $request['api_key'];
-        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by','api_key']);
+        $input = Arr::except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by', 'customer_by',
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID', 'segment_by', 'warehouse_by', 'api_key']);
 
         $input = $this->convertArrayToValue($input);
-        $wareHouseError = array('type' => 'wareHouse');
-        $serviceLineError = array('type' => 'serviceLine');
-
-
+        $wareHouseError = ['type' => 'wareHouse'];
+        $serviceLineError = ['type' => 'serviceLine'];
 
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
@@ -444,28 +448,21 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.item_issue_master_not_found'));
         }
 
-
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 0) {
 
             $service_line_id = $itemIssueMaster->serviceLineSystemID;
             $warehouse_id = $itemIssueMaster->wareHouseFrom;
 
-            if($warehouse_id != $input['wareHouseFrom'] || $service_line_id != $input['serviceLineSystemID']  )
-            {
-                $input['mfqJobID'] = NULL;
-                $input['mfqJobNo'] = NULL;
+            if ($warehouse_id != $input['wareHouseFrom'] || $service_line_id != $input['serviceLineSystemID']) {
+                $input['mfqJobID'] = null;
+                $input['mfqJobNo'] = null;
             }
 
-
         }
 
-
-        if($input['mfqJobID'] == 0)
-        {
+        if ($input['mfqJobID'] == 0) {
             $input['mfqJobID'] = null;
         }
-
-
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
@@ -474,8 +471,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if ($checkDepartmentActive->isActive == 0) {
-                $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null,'serviceLineCode' => null],$id);
-                return $this->sendError(trans('custom.please_select_active_department'), 500,$serviceLineError);
+                $this->itemIssueMasterRepository->update(['serviceLineSystemID' => null, 'serviceLineCode' => null], $id);
+
+                return $this->sendError(trans('custom.please_select_active_department'), 500, $serviceLineError);
             }
 
             $input['serviceLineCode'] = $checkDepartmentActive->ServiceLineCode;
@@ -488,7 +486,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
 
             if ($checkWareHouseActive->isActive == 0) {
-                 $this->itemIssueMasterRepository->update(['wareHouseFrom' => null,'wareHouseFromCode' => null,'wareHouseFromDes'=> null],$id);
+                $this->itemIssueMasterRepository->update(['wareHouseFrom' => null, 'wareHouseFromCode' => null, 'wareHouseFromDes' => null], $id);
+
                 return $this->sendError(trans('custom.please_select_active_warehouse'), 500, $wareHouseError);
             }
 
@@ -498,7 +497,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             if ($input['wareHouseFrom'] != $itemIssueMaster->wareHouseFrom) {
                 $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['wareHouseFrom'], $id, $itemIssueMaster->documentSystemID);
 
-                if (!$resWareHouseUpdate['status']) {
+                if (! $resWareHouseUpdate['status']) {
                     return $this->sendError($resWareHouseUpdate['message'], 500);
                 }
             }
@@ -510,22 +509,21 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        if(isset($input["customerSystemID"])){
-            $customer = CustomerMaster::where("customerCodeSystem", $input["customerSystemID"])->first();
+        if (isset($input['customerSystemID'])) {
+            $customer = CustomerMaster::where('customerCodeSystem', $input['customerSystemID'])->first();
 
-            if (!empty($customer)) {
-                $input["customerID"] = $customer->CutomerCode;
-            }else{
-                $input["customerID"] = null;
+            if (! empty($customer)) {
+                $input['customerID'] = $customer->CutomerCode;
+            } else {
+                $input['customerID'] = null;
             }
         }
 
-
         if (isset($input['contractUID'])) {
-            $contract = Contract::where("contractUID", $input["contractUIID"])->first();
+            $contract = Contract::where('contractUID', $input['contractUIID'])->first();
 
-            if (!empty($contract)) {
-                $input["contractID"] = $contract->ContractNumber;
+            if (! empty($contract)) {
+                $input['contractID'] = $contract->ContractNumber;
             }
         } else {
             $input['contractUID'] = null;
@@ -538,7 +536,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                     $materielRequest = MaterielRequest::where('RequestID', $input['reqDocID'])->with(['created_by'])->first();
 
-                    if (!empty($materielRequest)) {
+                    if (! empty($materielRequest)) {
                         if ($input['reqDocID'] != $itemIssueMaster->reqDocID) {
                             if ($materielRequest->selectedForIssue == -1) {
                                 return $this->sendError(trans('custom.this_request_already_selected_please_check_again'), 500);
@@ -549,7 +547,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                         $input['reqDate'] = $materielRequest->RequestedDate;
                         $input['reqComment'] = $materielRequest->comments;
 
-                        if (!empty($materielRequest->created_by)) {
+                        if (! empty($materielRequest->created_by)) {
                             $input['reqByName'] = $materielRequest->created_by->empName;
                         }
                     }
@@ -563,8 +561,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $input['reqByName'] = null;
         }
 
-        if(isset($itemIssueMaster->reqDocID) && $itemIssueMaster->reqDocID > 0)
-        {
+        if (isset($itemIssueMaster->reqDocID) && $itemIssueMaster->reqDocID > 0) {
             $input['reqDocID'] = $itemIssueMaster->reqDocID;
             $input['reqDate'] = $itemIssueMaster->reqDate;
             $input['reqComment'] = $itemIssueMaster->reqComment;
@@ -574,68 +571,59 @@ class ItemIssueMasterAPIController extends AppBaseController
         if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
             $companyFinanceYear = Helper::companyFinanceYearCheck($input);
-            if (!$companyFinanceYear["success"]) {
-                return $this->sendError($companyFinanceYear["message"], 500);
+            if (! $companyFinanceYear['success']) {
+                return $this->sendError($companyFinanceYear['message'], 500);
             }
 
             $trackingValidation = ItemTracking::validateTrackingOnDocumentConfirmation($itemIssueMaster->documentSystemID, $itemIssueMaster->itemIssueAutoID);
 
-            if (!$trackingValidation['status']) {
-                return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
+            if (! $trackingValidation['status']) {
+                return $this->sendError($trackingValidation['message'], 500, ['type' => 'confirm']);
             }
 
-
-            if(isset($itemIssueMaster->mfqJobID))
-            {
+            if (isset($itemIssueMaster->mfqJobID)) {
                 $bytes = random_bytes(10);
                 $hashKey = bin2hex($bytes);
                 $empID = Helper::getEmployeeSystemID();
 
                 Carbon::now()->addDays(1);
                 $insertData = [
-                'employee_id' => $empID,
-                'token' => $hashKey,
-                'expire_time' => Carbon::now()->addDays(1),
-                'module_id' => 1
-                  ];
+                    'employee_id' => $empID,
+                    'token' => $hashKey,
+                    'expire_time' => Carbon::now()->addDays(1),
+                    'module_id' => 1,
+                ];
 
                 $resData = UserToken::create($insertData);
 
-                $client = new Client();
+                $client = new Client;
                 $res = $client->request('GET', env('MANUFACTURING_URL').'/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
                     'headers' => [
-                    'Content-Type'=> 'application/json',
-                    'token' => $hashKey,
-                    'api_key' => $api_key
-                    ]
+                        'Content-Type' => 'application/json',
+                        'token' => $hashKey,
+                        'api_key' => $api_key,
+                    ],
                 ]);
 
                 if ($res->getStatusCode() == 200) {
                     $job = json_decode($res->getBody(), true);
 
-                    if($job['closedYN'] == 1)
-                    {
+                    if ($job['closedYN'] == 1) {
                         return $this->sendError(trans('custom.selected_job_is_closed'));
                     }
-                }
-                else
-                {
+                } else {
                     return $this->sendError(trans('custom.unable_to_get_mfqjob_status'));
                 }
             }
 
-
-
-
-
             $inputParam = $input;
-            $inputParam["departmentSystemID"] = 10;
+            $inputParam['departmentSystemID'] = 10;
             $companyFinancePeriod = Helper::companyFinancePeriodCheck($inputParam);
-            if (!$companyFinancePeriod["success"]) {
-                return $this->sendError($companyFinancePeriod["message"], 500);
+            if (! $companyFinancePeriod['success']) {
+                return $this->sendError($companyFinancePeriod['message'], 500);
             } else {
-                $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
-                $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
+                $input['FYBiggin'] = $companyFinancePeriod['message']->dateFrom;
+                $input['FYEnd'] = $companyFinancePeriod['message']->dateTo;
             }
 
             unset($inputParam);
@@ -655,12 +643,11 @@ class ItemIssueMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
-            $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($input['wareHouseFrom']);
-            if($is_manu)
-            {
-                if($input['mfqJobID'] == null)
-                {
+            $is_manu = WarehouseMaster::checkManuefactoringWareHouse($input['wareHouseFrom']);
+            if ($is_manu) {
+                if ($input['mfqJobID'] == null) {
                     $err_msg['mfq_job'] = ['The Mfq Job field is required !'];
+
                     return $this->sendError($err_msg, 422);
                 }
             }
@@ -691,21 +678,21 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             $itemIssueDetails = ItemIssueDetails::where('itemIssueAutoID', $id)->get();
 
-            $finalError = array('cost_zero' => array(),
-                'cost_neg' => array(),
-                'currentStockQty_zero' => array(),
-                'currentWareHouseStockQty_zero' => array(),
-                'currentStockQty_more' => array(),
-                'currentWareHouseStockQty_more' => array(),
-                'issuingQty_more_requested' => array()
-              );
+            $finalError = ['cost_zero' => [],
+                'cost_neg' => [],
+                'currentStockQty_zero' => [],
+                'currentWareHouseStockQty_zero' => [],
+                'currentStockQty_more' => [],
+                'currentWareHouseStockQty_more' => [],
+                'issuingQty_more_requested' => [],
+            ];
             $error_count = 0;
 
             foreach ($itemIssueDetails as $item) {
                 $updateItem = ItemIssueDetails::find($item['itemIssueDetailID']);
-                $data = array('companySystemID' => $itemIssueMaster->companySystemID,
+                $data = ['companySystemID' => $itemIssueMaster->companySystemID,
                     'itemCodeSystem' => $updateItem->itemCodeSystem,
-                    'wareHouseId' => $itemIssueMaster->wareHouseFrom);
+                    'wareHouseId' => $itemIssueMaster->wareHouseFrom];
                 $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
                 $updateItem->currentStockQty = $itemCurrentCostAndQty['currentStockQty'];
                 $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -714,7 +701,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $updateItem->issueCostRpt = $itemCurrentCostAndQty['wacValueReporting'];
                 $updateItem->issueCostLocalTotal = $itemCurrentCostAndQty['wacValueLocal'] * $updateItem->qtyIssuedDefaultMeasure;
                 $updateItem->issueCostRptTotal = $itemCurrentCostAndQty['wacValueReporting'] * $updateItem->qtyIssuedDefaultMeasure;
-                //$updateItem->p1 =  $itemIssueMaster->purchaseOrderNo;
+                // $updateItem->p1 =  $itemIssueMaster->purchaseOrderNo;
                 $updateItem->save();
 
                 if ($updateItem->issueCostLocal == 0 || $updateItem->issueCostRpt == 0) {
@@ -745,15 +732,15 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 if ($itemIssueMaster->issueType == 2) {
 
-                    if($updateItem->qtyIssuedDefaultMeasure > $updateItem->qtyRequested){
+                    if ($updateItem->qtyIssuedDefaultMeasure > $updateItem->qtyRequested) {
                         array_push($finalError['issuingQty_more_requested'], $updateItem->itemPrimaryCode);
                         $error_count++;
-                       // return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
+                        // return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
                     }
                 }
             }
 
-            $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
+            $confirm_error = ['type' => 'confirm_error', 'data' => $finalError];
             if ($error_count > 0) {
                 return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, $confirm_error);
             }
@@ -761,20 +748,19 @@ class ItemIssueMasterAPIController extends AppBaseController
             $amount = ItemIssueDetails::where('itemIssueAutoID', $id)
                 ->sum('issueCostRptTotal');
             $input['RollLevForApp_curr'] = 1;
-            $params = array('autoID' => $id,
+            $params = ['autoID' => $id,
                 'company' => $itemIssueMaster->companySystemID,
                 'document' => $itemIssueMaster->documentSystemID,
                 'segment' => $input['serviceLineSystemID'],
                 'category' => 0,
-                'amount' => $amount
-            );
+                'amount' => $amount,
+            ];
 
-             $confirm = DocumentConfirm::confirmDocument($params);
-             if (!$confirm["success"]) {
-                 return $this->sendError($confirm["message"], 500);
-             }
+            $confirm = DocumentConfirm::confirmDocument($params);
+            if (! $confirm['success']) {
+                return $this->sendError($confirm['message'], 500);
+            }
         }
-
 
         $employee = Helper::getEmployeeInfo();
 
@@ -782,14 +768,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
-
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), trans('custom.material_issue_updated_successfully'),1, isset($confirm['data']) ? $confirm['data'] : null);
+        return $this->sendReponseWithDetails($itemIssueMaster->toArray(), trans('custom.material_issue_updated_successfully'), 1, isset($confirm['data']) ? $confirm['data'] : null);
     }
 
     /**
-     * @param int $id
+     * @param  int  $id
      * @return Response
      *
      * @SWG\Delete(
@@ -798,6 +783,7 @@ class ItemIssueMasterAPIController extends AppBaseController
      *      tags={"ItemIssueMaster"},
      *      description="Delete ItemIssueMaster",
      *      produces={"application/json"},
+     *
      *      @SWG\Parameter(
      *          name="id",
      *          description="id of ItemIssueMaster",
@@ -805,11 +791,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      *          required=true,
      *          in="path"
      *      ),
+     *
      *      @SWG\Response(
      *          response=200,
      *          description="successful operation",
+     *
      *          @SWG\Schema(
      *              type="object",
+     *
      *              @SWG\Property(
      *                  property="success",
      *                  type="boolean"
@@ -844,16 +833,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      * get All Materiel Issues By Company
      * POST /getAllMaterielIssuesByCompany
      *
-     * @param Request $request
      *
      * @return Response
      */
-
     public function getAllMaterielIssuesByCompany(Request $request)
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, ['serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year']);
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -863,17 +850,17 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $search = $request->input('search.value');
         $grvLocation = $request['wareHouseFrom'];
-        $grvLocation = (array)$grvLocation;
+        $grvLocation = (array) $grvLocation;
         $grvLocation = collect($grvLocation)->pluck('id');
 
         $serviceLineSystemID = $request['serviceLineSystemID'];
-        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = (array) $serviceLineSystemID;
         $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
 
         $itemIssueMaster = $this->itemIssueMasterRepository->itemIssueListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID);
 
         return \DataTables::eloquent($itemIssueMaster)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', 'Actions', 'Actions')
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -890,16 +877,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      * get Materiel Issue Approved By User
      * POST /getMaterielIssueApprovedByUser
      *
-     * @param Request $request
      *
      * @return Response
      */
-
     public function getMaterielIssueApprovedByUser(Request $request)
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, ['serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year']);
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -921,7 +906,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+            ->join('erp_itemissuemaster', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
                     ->where('erp_itemissuemaster.companySystemID', $companyId)
                     ->where('erp_itemissuemaster.confirmedYN', 1);
@@ -936,25 +921,25 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+            if ($input['serviceLineSystemID'] && ! is_null($input['serviceLineSystemID'])) {
                 $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
         if (array_key_exists('wareHouseFrom', $input)) {
-            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+            if ($input['wareHouseFrom'] && ! is_null($input['wareHouseFrom'])) {
                 $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && ! is_null($input['month'])) {
                 $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && ! is_null($input['year'])) {
                 $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
             }
         }
@@ -962,7 +947,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
+            $search = str_replace('\\', '\\\\', $search);
             $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
                 $query->where('itemIssueCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
@@ -970,7 +955,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         return \DataTables::of($itemIssueMaster)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', 'Actions', 'Actions')
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -987,16 +972,14 @@ class ItemIssueMasterAPIController extends AppBaseController
      * get Materiel Issue Approval By User
      * POST /getMaterielIssueApprovalByUser
      *
-     * @param Request $request
      *
      * @return Response
      */
-
     public function getMaterielIssueApprovalByUser(Request $request)
     {
 
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, ['serviceLineSystemID', 'confirmedYN', 'approved', 'wareHouseFrom', 'month', 'year']);
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1008,9 +991,20 @@ class ItemIssueMasterAPIController extends AppBaseController
         $empID = Helper::getEmployeeSystemID();
 
         $search = $request->input('search.value');
+        $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
+            ->where('documentSystemID', 8)
+            ->first();
+
         $itemIssueMaster = DB::table('erp_documentapproved')
             ->select(
-                'employeesdepartments.approvalDeligated',
+                DB::raw('(SELECT approvalDeligated FROM employeesdepartments
+                    WHERE erp_documentapproved.approvalGroupID = employeesdepartments.employeeGroupID
+                      AND erp_documentapproved.documentSystemID = employeesdepartments.documentSystemID
+                      AND erp_documentapproved.companySystemID = employeesdepartments.companySystemID
+                      AND employeesdepartments.employeeSystemID = '.(int) $empID.'
+                      AND employeesdepartments.isActive = 1
+                      AND employeesdepartments.removedYN = 0
+                    LIMIT 1) as approvalDeligated'),
                 'erp_itemissuemaster.*',
                 'employees.empName As created_emp',
                 'serviceline.ServiceLineDes As MIServiceLineDes',
@@ -1019,31 +1013,24 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'rollLevelOrder',
                 'approvalLevelID',
                 'documentSystemCode')
-            ->join('employeesdepartments', function ($query) use ($companyId, $empID) {
-                $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
-                    ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
-                    ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-
-                $serviceLinePolicy = CompanyDocumentAttachment::where('companySystemID', $companyId)
-                    ->where('documentSystemID', 8)
-                    ->first();
-
-                if ($serviceLinePolicy && $serviceLinePolicy->isServiceLineApproval == -1) {
-                    //$query->on('erp_documentapproved.serviceLineSystemID', '=', 'employeesdepartments.ServiceLineSystemID');
-                }
-
-                $query->whereIn('employeesdepartments.documentSystemID', [8])
-                    ->where('employeesdepartments.companySystemID', $companyId)
-                    ->where('employeesdepartments.employeeSystemID', $empID)
-                    ->where('employeesdepartments.isActive', 1)
-                    ->where('employeesdepartments.removedYN', 0);
-            })
-            ->join('erp_itemissuemaster', function ($query) use ($companyId, $search) {
+            ->join('erp_itemissuemaster', function ($query) use ($companyId) {
                 $query->on('erp_documentapproved.documentSystemCode', '=', 'itemIssueAutoID')
                     ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                     ->where('erp_itemissuemaster.companySystemID', $companyId)
                     ->where('erp_itemissuemaster.approved', 0)
                     ->where('erp_itemissuemaster.confirmedYN', 1);
+            })
+            ->whereExists(function ($query) use ($companyId, $empID) {
+                $query->select(DB::raw(1))
+                    ->from('employeesdepartments')
+                    ->whereColumn('erp_documentapproved.approvalGroupID', 'employeesdepartments.employeeGroupID')
+                    ->whereColumn('erp_documentapproved.documentSystemID', 'employeesdepartments.documentSystemID')
+                    ->whereColumn('erp_documentapproved.companySystemID', 'employeesdepartments.companySystemID')
+                    ->whereIn('employeesdepartments.documentSystemID', [8])
+                    ->where('employeesdepartments.companySystemID', $companyId)
+                    ->where('employeesdepartments.employeeSystemID', $empID)
+                    ->where('employeesdepartments.isActive', 1)
+                    ->where('employeesdepartments.removedYN', 0);
             })
             ->where('erp_documentapproved.approvedYN', 0)
             ->leftJoin('employees', 'createdUserSystemID', 'employees.employeeSystemID')
@@ -1053,27 +1040,26 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->whereIn('erp_documentapproved.documentSystemID', [8])
             ->where('erp_documentapproved.companySystemID', $companyId);
 
-
         if (array_key_exists('serviceLineSystemID', $input)) {
-            if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+            if ($input['serviceLineSystemID'] && ! is_null($input['serviceLineSystemID'])) {
                 $itemIssueMaster->where('erp_itemissuemaster.serviceLineSystemID', $input['serviceLineSystemID']);
             }
         }
 
         if (array_key_exists('wareHouseFrom', $input)) {
-            if ($input['wareHouseFrom'] && !is_null($input['wareHouseFrom'])) {
+            if ($input['wareHouseFrom'] && ! is_null($input['wareHouseFrom'])) {
                 $itemIssueMaster->where('erp_itemissuemaster.wareHouseFrom', $input['wareHouseFrom']);
             }
         }
 
         if (array_key_exists('month', $input)) {
-            if ($input['month'] && !is_null($input['month'])) {
+            if ($input['month'] && ! is_null($input['month'])) {
                 $itemIssueMaster->whereMonth('erp_itemissuemaster.issueDate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
-            if ($input['year'] && !is_null($input['year'])) {
+            if ($input['year'] && ! is_null($input['year'])) {
                 $itemIssueMaster->whereYear('erp_itemissuemaster.issueDate', '=', $input['year']);
             }
         }
@@ -1081,7 +1067,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $search = $request->input('search.value');
 
         if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
+            $search = str_replace('\\', '\\\\', $search);
             $itemIssueMaster = $itemIssueMaster->where(function ($query) use ($search) {
                 $query->where('itemIssueCode', 'LIKE', "%{$search}%")
                     ->orWhere('comment', 'LIKE', "%{$search}%");
@@ -1095,7 +1081,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         return \DataTables::of($itemIssueMaster)
-            ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('Actions', 'Actions', 'Actions')
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1108,12 +1094,10 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->make(true);
     }
 
-
     /**
      * get Materiel Issue Form Data
      * Get /getMaterielIssueFormData
      *
-     * @param Request $request
      *
      * @return Response
      */
@@ -1121,12 +1105,12 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $segments = SegmentMaster::where("companySystemID", $companyId)->approved()->withAssigned($companyId);
+        $segments = SegmentMaster::where('companySystemID', $companyId)->approved()->withAssigned($companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $segments = $segments->where('isActive', 1);
         }
         $segments = $segments->get();
-        $wareHouseBinLocations = array();
+        $wareHouseBinLocations = [];
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
 
@@ -1135,7 +1119,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $years = ItemIssueMaster::select(DB::raw("YEAR(createdDateTime) as year"))
+        $years = ItemIssueMaster::select(DB::raw('YEAR(createdDateTime) as year'))
             ->whereNotNull('createdDateTime')
             ->groupby('year')
             ->orderby('year', 'desc')
@@ -1145,7 +1129,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->where('companySystemID', $companyId)
             ->first();
 
-        $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
+        $wareHouseLocation = WarehouseMaster::where('companySystemID', $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
         }
@@ -1161,15 +1145,15 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $typeId = [];
 
-        if (!empty($companyPolicyDirect)) {
+        if (! empty($companyPolicyDirect)) {
             if ($companyPolicyDirect->isYesNO == 1) {
-                array_push($typeId,1);
+                array_push($typeId, 1);
             }
         }
 
-        if (!empty($companyPolicyRequest)) {
+        if (! empty($companyPolicyRequest)) {
             if ($companyPolicyRequest->isYesNO == 1) {
-                array_push($typeId,2);
+                array_push($typeId, 2);
             }
         }
 
@@ -1189,28 +1173,28 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $types = ItemIssueType::whereIn('itemIssueTypeID', $typeId)->get();
 
-        $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
-            array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
+        $financialYears = [['value' => intval(date('Y')), 'label' => date('Y')],
+            ['value' => intval(date('Y', strtotime('-1 year'))), 'label' => date('Y', strtotime('-1 year'))]];
 
         $companyFinanceYear = Helper::companyFinanceYear($companyId);
 
-        $contracts = "";
+        $contracts = '';
 
         $units = Unit::all();
 
         $companyCurrency = Helper::companyCurrency($companyId);
 
         $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
-        ->where('companySystemID', $companyId)
-        ->where('isYesNO', 1)
-        ->exists();
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
         $projects = [];
         if ($isProject_base) {
             $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
         }
 
         $job = [];
-        $output = array(
+        $output = [
             'job_no' => $job,
             'segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
@@ -1228,10 +1212,9 @@ class ItemIssueMasterAPIController extends AppBaseController
             'isProjectBase' => $isProject_base,
             'projects' => $projects,
             'localCurrencyCode' => isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : 'OMR',
-            'localCurrencyDecimal' => isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3
+            'localCurrencyDecimal' => isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3,
 
-
-        );
+        ];
 
         return $this->sendResponse($output, trans('custom.record_retrieved_successfully_1'));
     }
@@ -1240,11 +1223,9 @@ class ItemIssueMasterAPIController extends AppBaseController
      * get All Materiel Request Not Selected For Issue By Company
      * GET /getAllMaterielRequestNotSelectedForIssueByCompany
      *
-     * @param Request $request
      *
      * @return Response
      */
-
     public function getAllMaterielRequestNotSelectedForIssueByCompany(Request $request)
     {
         $input = $request->all();
@@ -1257,12 +1238,14 @@ class ItemIssueMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $confirmYn= 0;
-        if(isset($input['id']))
-            $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID',$input['id'])->first();
-            $confirmYn = $materialIssue->confirmedYN;
+        $confirmYn = 0;
+        if (isset($input['id'])) {
+            $materialIssue = ItemIssueMaster::select('confirmedYN')->where('itemIssueAutoID', $input['id'])->first();
+        }
+        $confirmYn = $materialIssue->confirmedYN;
 
-        $data = MaterialIssueService::getMaterialRequest($subCompanies,$request,$input,$confirmYn);
+        $data = MaterialIssueService::getMaterialRequest($subCompanies, $request, $input, $confirmYn);
+
         return $this->sendResponse($data, trans('custom.materiel_issue_updated_successfully'));
     }
 
@@ -1270,8 +1253,7 @@ class ItemIssueMasterAPIController extends AppBaseController
      * Display the specified Materiel Issue Audit.
      * GET|HEAD /getMaterielIssueAudit
      *
-     * @param  int $id
-     *
+     * @param  int  $id
      * @return Response
      */
     public function getMaterielIssueAudit(Request $request)
@@ -1305,7 +1287,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_master_not_found'));
         }
 
-        if (!empty($company->localCurrencyID)) {
+        if (! empty($company->localCurrencyID)) {
             $localCurrency = $company->localCurrencyID;
             $localCurrency = CurrencyMaster::find($localCurrency);
             $materielIssue->localCurrencyCode = $localCurrency->CurrencyCode;
@@ -1327,24 +1309,24 @@ class ItemIssueMasterAPIController extends AppBaseController
             }
         }
 
-        $array = array(
+        $array = [
             'isShowAllocatedEmployeeTable' => $isShowAllocatedEmployeeTable,
             'isShowAllocatedAssetTable' => $isShowAllocatedAssetTable,
-            'entity' => $materielIssue
-        );
+            'entity' => $materielIssue,
+        ];
         $lang = app()->getLocale();
-        $time = strtotime("now");
-        $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
+        $time = strtotime('now');
+        $fileName = 'item_issue_'.$id.'_'.$time.'.pdf';
         $html = view('print.item_issue', $array);
         $htmlFooter = view('print.item_issue_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);
+
         return $mpdf->Output($fileName, 'I');
     }
-
 
     public function deliveryPrintItemIssue(Request $request)
     {
@@ -1357,16 +1339,17 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $materielIssue->docRefNo = Helper::getCompanyDocRefNo($materielIssue->companySystemID, $materielIssue->documentSystemID);
         $lang = app()->getLocale();
-        $array = array('entity' => $materielIssue);
-        $time = strtotime("now");
-        $fileName = 'item_issue_delivery' . $id . '_' . $time . '.pdf';
+        $array = ['entity' => $materielIssue];
+        $time = strtotime('now');
+        $fileName = 'item_issue_delivery'.$id.'_'.$time.'.pdf';
         $html = view('print.item_issue_delivery', $array);
         $htmlFooter = view('print.item_issue_delivery_footer', $array);
-        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10],$lang));
+        $mpdf = new \Mpdf\Mpdf(Helper::getMpdfConfig(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10], $lang));
         $mpdf->AddPage('L');
         $mpdf->setAutoBottomMargin = 'stretch';
         $mpdf->SetHTMLFooter($htmlFooter);
         $mpdf->WriteHTML($html);
+
         return $mpdf->Output($fileName, 'I');
 
     }
@@ -1374,7 +1357,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getTypeheadActiveEmployees(Request $request)
     {
         $input = $request->all();
-        $employees = "";
+        $employees = '';
         $discharged = isset($input['discharged']) ? $input['discharged'] : 0;
         $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
         $checkDischarged = isset($input['checkDischarged']) ? $input['checkDischarged'] : 1;
@@ -1389,7 +1372,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 $employees = $employees->where('empCompanySystemID', $companySystemID);
             }
 
-            if(!$discharged && $checkDischarged == 1){
+            if (! $discharged && $checkDischarged == 1) {
                 $employees = $employees->where('discharegedYN', 0);
             }
         }
@@ -1407,7 +1390,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $id = $input['itemIssueAutoID'];
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
-        $emails = array();
+        $emails = [];
         if (empty($itemIssueMaster)) {
             return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
@@ -1424,27 +1407,27 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.you_cannot_reopen_this_materiel_issue_it_is_not_co'));
         }
 
-        $updateInput = ['confirmedYN' => 0,'confirmedByEmpSystemID' => null,'confirmedByEmpID' => null,
-                        'confirmedByName' => null, 'confirmedDate' => null,'RollLevForApp_curr' => 1];
+        $updateInput = ['confirmedYN' => 0, 'confirmedByEmpSystemID' => null, 'confirmedByEmpID' => null,
+            'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-        $this->itemIssueMasterRepository->update($updateInput,$id);
+        $this->itemIssueMasterRepository->update($updateInput, $id);
 
         $employee = Helper::getEmployeeInfo();
 
         $document = DocumentMaster::where('documentSystemID', $itemIssueMaster->documentSystemID)->first();
 
-        $cancelDocNameBody = $document->documentDescription . ' <b>' . $itemIssueMaster->itemIssueCode . '</b>';
-        $cancelDocNameSubject = $document->documentDescription . ' ' . $itemIssueMaster->itemIssueCode;
+        $cancelDocNameBody = $document->documentDescription.' <b>'.$itemIssueMaster->itemIssueCode.'</b>';
+        $cancelDocNameSubject = $document->documentDescription.' '.$itemIssueMaster->itemIssueCode;
 
-        $subject = $cancelDocNameSubject . ' ' . trans('email.is_reopened');
+        $subject = $cancelDocNameSubject.' '.trans('email.is_reopened');
 
-        $body = '<p>' . $cancelDocNameBody . ' ' . trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]) . '</p><p>' . trans('email.comment') . ' : ' . $input['reopenComments'] . '</p>';
+        $body = '<p>'.$cancelDocNameBody.' '.trans('email.is_reopened_by', ['empID' => $employee->empID, 'empName' => $employee->empFullName]).'</p><p>'.trans('email.comment').' : '.$input['reopenComments'].'</p>';
 
         $documentApproval = DocumentApproved::where('companySystemID', $itemIssueMaster->companySystemID)
-                                            ->where('documentSystemCode', $itemIssueMaster->itemIssueAutoID)
-                                            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
-                                            ->where('rollLevelOrder', 1)
-                                            ->first();
+            ->where('documentSystemCode', $itemIssueMaster->itemIssueAutoID)
+            ->where('documentSystemID', $itemIssueMaster->documentSystemID)
+            ->where('rollLevelOrder', 1)
+            ->first();
 
         if ($documentApproval) {
             if ($documentApproval->approvedYN == 0) {
@@ -1471,18 +1454,18 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 foreach ($approvalList as $da) {
                     if ($da->employee) {
-                        $emails[] = array('empSystemID' => $da->employee->employeeSystemID,
+                        $emails[] = ['empSystemID' => $da->employee->employeeSystemID,
                             'companySystemID' => $documentApproval->companySystemID,
                             'docSystemID' => $documentApproval->documentSystemID,
                             'alertMessage' => $subject,
                             'emailAlertMessage' => $body,
-                            'docSystemCode' => $documentApproval->documentSystemCode);
+                            'docSystemCode' => $documentApproval->documentSystemCode];
                     }
                 }
 
                 $sendEmail = Email::sendEmail($emails);
-                if (!$sendEmail["success"]) {
-                    return ['success' => false, 'message' => $sendEmail["message"]];
+                if (! $sendEmail['success']) {
+                    return ['success' => false, 'message' => $sendEmail['message']];
                 }
             }
         }
@@ -1492,8 +1475,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->where('documentSystemID', $itemIssueMaster->documentSystemID)
             ->delete();
 
-        /*Audit entry*/
-        AuditTrial::createAuditTrial($itemIssueMaster->documentSystemID,$id,$input['reopenComments'],'Reopened');
+        /* Audit entry */
+        AuditTrial::createAuditTrial($itemIssueMaster->documentSystemID, $id, $input['reopenComments'], 'Reopened');
 
         return $this->sendResponse($itemIssueMaster->toArray(), trans('custom.materiel_issue_reopened_successfully'));
     }
@@ -1520,14 +1503,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         $fetchDetails = ItemIssueDetails::where('itemIssueAutoID', $id)
             ->get();
 
-        if (!empty($fetchDetails)) {
+        if (! empty($fetchDetails)) {
             foreach ($fetchDetails as $detail) {
                 $detail['timesReferred'] = $itemIssue->timesReferred;
             }
         }
 
         $itemIssueDetailArray = $fetchDetails->toArray();
-
 
         $storeSRDetailHistory = ItemIssueDetailsRefferedBack::insert($itemIssueDetailArray);
 
@@ -1536,14 +1518,13 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->where('documentSystemID', $itemIssue->documentSystemID)
             ->get();
 
-        if (!empty($fetchDocumentApproved)) {
+        if (! empty($fetchDocumentApproved)) {
             foreach ($fetchDocumentApproved as $DocumentApproved) {
                 $DocumentApproved['refTimes'] = $itemIssue->timesReferred;
             }
         }
 
         $DocumentApprovedArray = $fetchDocumentApproved->toArray();
-
 
         $storeDocumentRefereedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
 
@@ -1553,16 +1534,17 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->delete();
 
         if ($deleteApproval) {
-            $updateArray = ['refferedBackYN' => 0,'confirmedYN' => 0,'confirmedByEmpSystemID' => null,
-                'confirmedByEmpID' => null,'confirmedByName' => null,'confirmedDate' => null,'RollLevForApp_curr' => 1];
+            $updateArray = ['refferedBackYN' => 0, 'confirmedYN' => 0, 'confirmedByEmpSystemID' => null,
+                'confirmedByEmpID' => null, 'confirmedByName' => null, 'confirmedDate' => null, 'RollLevForApp_curr' => 1];
 
-            $this->itemIssueMasterRepository->update($updateArray,$id);
+            $this->itemIssueMasterRepository->update($updateArray, $id);
         }
 
         return $this->sendResponse($itemIssue->toArray(), trans('custom.materiel_issue_amend_successfully'));
     }
 
-    public function getMaterialIssueByRefNo(Request $request) {
+    public function getMaterialIssueByRefNo(Request $request)
+    {
 
         $input = $request->all();
 
@@ -1570,84 +1552,84 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $fetchDetails = ItemIssueMaster::where('issueRefNo', $id)->get();
 
-
-        if(count($fetchDetails) > 0) {
+        if (count($fetchDetails) > 0) {
             $data = [
-                "status" => true,
-                "data" => $fetchDetails
+                'status' => true,
+                'data' => $fetchDetails,
             ];
 
             return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
 
-        }else{
+        } else {
             $data = [
-                "status" => false,
-                "data" => []
+                'status' => false,
+                'data' => [],
             ];
+
             return $this->sendResponse($data, trans('custom.data_not_found_1'));
         }
 
     }
 
-    public function checkProductExistInItemMaster(Request $request){
-            $reqItems = $request->items;
+    public function checkProductExistInItemMaster(Request $request)
+    {
+        $reqItems = $request->items;
         foreach ($reqItems as $item) {
             $itemAvailable = ItemAssigned::where('itemCodeSystem', $item['itemCode'])->where('companySystemID', $request->companyId)->first();
-            if(empty($itemAvailable)) {
+            if (empty($itemAvailable)) {
                 return $this->sendError(trans('custom.few_items_in_this_document_are_not_linked_with_ite'));
             }
         }
+
         return $this->sendResponse([], trans('custom.data_retrieved_successfully'));
     }
 
-    public function checkProductExistInIssues($id,$companySystemID) {
+    public function checkProductExistInIssues($id, $companySystemID)
+    {
 
-        $fetchDetails = ItemIssueDetails::whereHas('master', function($q)
-        {
+        $fetchDetails = ItemIssueDetails::whereHas('master', function ($q) {
             $q->where('approved', 0);
 
         })->where('itemCodeSystem', $id)->get();
 
-
-
-        if(count($fetchDetails) > 0) {
+        if (count($fetchDetails) > 0) {
             $data = [
-                "status" => true,
-                "data" => $fetchDetails
+                'status' => true,
+                'data' => $fetchDetails,
             ];
 
             return $this->sendResponse($data, trans('custom.data_retreived_successfully'));
 
-        }else{
+        } else {
             $data = [
-                "status" => false,
-                "data" => []
+                'status' => false,
+                'data' => [],
             ];
+
             return $this->sendResponse($data, trans('custom.data_not_found_1'));
         }
 
-
     }
 
-
-    public function updateQntyByLocation(Request $request) {
+    public function updateQntyByLocation(Request $request)
+    {
         $input = $request->all();
 
         $location = $input['location'];
         $requestID = $input['RequestID'];
-        $companySystemID =  $input['companySystemID'];
+        $companySystemID = $input['companySystemID'];
 
         $itemIssue = ItemIssueMaster::find($requestID);
 
-        if($itemIssue) {
+        if ($itemIssue) {
 
-            if($itemIssue->details) {
+            if ($itemIssue->details) {
                 $issueDetails = $itemIssue->details;
 
-                foreach($issueDetails as $issueDetail) {
-                    $data = array('companySystemID' => $companySystemID,
-                    'itemCodeSystem' => $issueDetail->itemCodeSystem,
-                    'wareHouseId' => $location);
+                foreach ($issueDetails as $issueDetail) {
+                    $data = ['companySystemID' => $companySystemID,
+                        'itemCodeSystem' => $issueDetail->itemCodeSystem,
+                        'wareHouseId' => $location];
 
                     $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
 
@@ -1663,7 +1645,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 }
             }
-        }else {
+        } else {
             return $this->sendError(trans('custom.materiel_issue_not_found'));
         }
 
@@ -1682,66 +1664,56 @@ class ItemIssueMasterAPIController extends AppBaseController
         $segmentId = $request['segmentId'];
         $wareHouseId = $request['wareHouseId'];
 
-        $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($wareHouseId);
-
-
+        $is_manu = WarehouseMaster::checkManuefactoringWareHouse($wareHouseId);
 
         $job = [];
-        if($is_manu)
-        {
+        if ($is_manu) {
             Carbon::now()->addDays(1);
             $insertData = [
-            'employee_id' => $empID,
-            'token' => $hashKey,
-            'expire_time' => Carbon::now()->addDays(1),
-            'module_id' => 1
-              ];
+                'employee_id' => $empID,
+                'token' => $hashKey,
+                'expire_time' => Carbon::now()->addDays(1),
+                'module_id' => 1,
+            ];
 
             $resData = UserToken::create($insertData);
 
-            $client = new Client();
+            $client = new Client;
             $res = $client->request('GET', env('MANUFACTURING_URL').'/getOpenJobs?company_id='.$companyId.'&warehouse='.$wareHouseId.'&segment='.$segmentId, [
                 'headers' => [
-                'Content-Type'=> 'application/json',
-                'token' => $hashKey,
-                'api_key' => $api_key
-                ]
+                    'Content-Type' => 'application/json',
+                    'token' => $hashKey,
+                    'api_key' => $api_key,
+                ],
             ]);
-
-
 
             if ($res->getStatusCode() == 200) {
                 $job = json_decode($res->getBody(), true);
-            }
-            else
-            {
+            } else {
                 $job = [];
             }
 
-            foreach($job as $key=>$val)
-            {
+            foreach ($job as $key => $val) {
                 $job[$key]['jobID'] = intval($val['jobID']);
             }
         }
 
-
-
         $details['jobs'] = $job;
         $details['is_manu'] = $is_manu;
 
-
-       return $this->sendResponse($details, trans('custom.data_retrieved'));
+        return $this->sendResponse($details, trans('custom.data_retrieved'));
 
     }
 
     public function validateItemBeforeAdd(Request $request)
     {
 
-        $storeDetailsToMaterielRequest = new StoreDetailsToMaterielRequest();
-        $response =$storeDetailsToMaterielRequest->validate($request);
+        $storeDetailsToMaterielRequest = new StoreDetailsToMaterielRequest;
+        $response = $storeDetailsToMaterielRequest->validate($request);
 
-        if(!$response->getData()->success)
+        if (! $response->getData()->success) {
             return $this->sendError($response->getData()->message);
+        }
 
         return $this->sendResponse($response->getData()->data, '');
 
@@ -1751,30 +1723,31 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if(!isset($input['items']))
+        if (! isset($input['items'])) {
             return $this->sendError(trans('custom.materiel_issue_details_not_found'));
+        }
 
-        $items = ($input['items']) ? : [];
-        $materielIssueId = ($input['materielIssueId']) ? :null;
+        $items = ($input['items']) ?: [];
+        $materielIssueId = ($input['materielIssueId']) ?: null;
 
-        if(empty($items))
+        if (empty($items)) {
             return $this->sendError(trans('custom.materiel_issue_details_not_found'));
+        }
 
-        if(!$materielIssueId)
+        if (! $materielIssueId) {
             return $this->sendError(trans('custom.materiel_issue_id_not_found'));
+        }
 
+        $materielIssue = ItemIssueMaster::where('itemIssueAutoID', $materielIssueId)->first();
 
-        $materielIssue = ItemIssueMaster::where('itemIssueAutoID',$materielIssueId)->first();
-
-        if(!$materielIssue)
+        if (! $materielIssue) {
             return $this->sendError(trans('custom.materiel_issue_not_found'));
+        }
 
         $materielIssue->reqDocID = collect($items)->first()['RequestID'];
         $materielIssue->save();
 
-
-       collect($items)->each(function($item) use ($materielIssue)
-       {
+        collect($items)->each(function ($item) use ($materielIssue) {
 
             $data = [
                 'comments' => '',
@@ -1782,24 +1755,25 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'itemCode' => $item['RequestDetailsID'],
                 'itemIssueAutoID' => $materielIssue->itemIssueAutoID,
                 'issueType' => 2,
-                'reqDocID' =>$item['RequestID'],
+                'reqDocID' => $item['RequestID'],
                 'unitOfMeasureIssued' => [],
                 'partNumber' => $item['partNumber'],
-                'itemCodeSystem' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0]: null,
-                'originFrom' =>  "material-request",
+                'itemCodeSystem' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0] : null,
+                'originFrom' => 'material-request',
                 'qtyIssued' => (int) $item['qtyIssued'],
-                'mappingItemCode' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0]: null
+                'mappingItemCode' => isset($item['mappingItemCode']) ? $item['mappingItemCode'][0] : null,
             ];
 
-           $requestNew = new CreateItemIssueDetailsAPIRequest($data);
-           $itemIssueDetailsController = app('App\Http\Controllers\API\ItemIssueDetailsAPIController')->store($requestNew);
+            $requestNew = new CreateItemIssueDetailsAPIRequest($data);
+            $itemIssueDetailsController = app('App\Http\Controllers\API\ItemIssueDetailsAPIController')->store($requestNew);
 
-           $response = ($itemIssueDetailsController->getData()) ? $itemIssueDetailsController->getData() : null;
+            $response = ($itemIssueDetailsController->getData()) ? $itemIssueDetailsController->getData() : null;
 
-           if(!$response->success)
-               return $this->sendError($response->message);
+            if (! $response->success) {
+                return $this->sendError($response->message);
+            }
 
-           return $this->sendResponse($response->data, trans('custom.materiel_issue_details_saved_successfully'));
+            return $this->sendResponse($response->data, trans('custom.materiel_issue_details_saved_successfully'));
 
         });
 
@@ -1815,69 +1789,65 @@ class ItemIssueMasterAPIController extends AppBaseController
         $validator = \Validator::make($input, [
             'companySystemId' => 'required',
             'details' => 'required',
-            'itemIssueAutoId' => 'required'
+            'itemIssueAutoId' => 'required',
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-
-
         $details = $input['details'];
         $companySystemID = $input['companySystemId'];
         $itemIssueAutoId = $input['itemIssueAutoId'];
-        $validate = $this->validateItems($details,$companySystemID,$itemIssueAutoId);
+        $validate = $this->validateItems($details, $companySystemID, $itemIssueAutoId);
 
-
-        if(!empty($validate))
-        {
-            return $this->sendError(implode('<br/><br/>',$validate),422);
-        }else {
+        if (! empty($validate)) {
+            return $this->sendError(implode('<br/><br/>', $validate), 422);
+        } else {
             $newRequest = new Request([
-                'items'   => $details,
+                'items' => $details,
                 'materielIssueId' => $itemIssueAutoId,
             ]);
             $addItems = $this->addItemFromMrToMiDetails($newRequest);
 
             $response = $addItems->getData();
 
-            if($response->success)
+            if ($response->success) {
                 return $this->sendResponse([], trans('custom.materiel_issue_details_saved_successfully'));
+            }
         }
 
     }
 
-    public function validateItems($details,$companySystemID,$itemIssueAutoId)
+    public function validateItems($details, $companySystemID, $itemIssueAutoId)
     {
-        $errorsArray = Array();
+        $errorsArray = [];
 
-        foreach ($details as $detail)
-        {
+        foreach ($details as $detail) {
             $item = ItemAssigned::where('itemCodeSystem', $detail['itemCodeSystem'])
                 ->where('companySystemID', $companySystemID)
                 ->first();
 
-            if($detail['itemPrimaryCode'])
-            {
+            if ($detail['itemPrimaryCode']) {
                 $itemPrimaryCode = $detail['itemPrimaryCode'].'-'.$detail['itemDescription'];
-            }else {
+            } else {
                 $itemPrimaryCode = $detail['itemDescription'];
             }
 
-            if(!isset($detail['itemCodeSystem']) && (!($detail['mappingItemCode']) ||$detail['mappingItemCode'] == 0))
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.please_map_the_original_item'));
+            if (! isset($detail['itemCodeSystem']) && (! ($detail['mappingItemCode']) || $detail['mappingItemCode'] == 0)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.please_map_the_original_item'));
+            }
 
-            if(isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0)
-               array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_zero'));
+            if (isset($detail['qtyIssued']) && $detail['qtyIssued'] == 0) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_zero'));
+            }
 
-            if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
-               array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_empty'));
+            if (! isset($detail['qtyIssued']) || $detail['qtyIssued'] == '') {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.issuing_quantity_cannot_be_empty'));
+            }
 
-
-            if(isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0)
-            {
-                $originalItem = ItemMaster::where('itemCodeSystem',$detail['mappingItemCode'])->first();
+            if (isset($detail['mappingItemCode']) && isset($detail['mappingItemCode'][0]) && $detail['mappingItemCode'][0] > 0) {
+                $originalItem = ItemMaster::where('itemCodeSystem', $detail['mappingItemCode'])->first();
                 $detail['itemFinanceCategoryID'] = $originalItem->financeCategoryMaster;
                 $detail['itemFinanceCategorySubID'] = $originalItem->financeCategorySub;
                 $detail['itemCodeSystem'] = $originalItem->itemCodeSystem;
@@ -1890,26 +1860,22 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ->where('itemCategorySubID', $detail['itemFinanceCategorySubID'])
                 ->first();
 
-            if(empty($financeItemCategorySubAssigned))
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
+            if (empty($financeItemCategorySubAssigned)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
+            }
 
             $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $itemIssueAutoId)->first();
 
-
             $mfq_no = $itemIssueMaster->mfqJobID;
 
-            if(isset($financeItemCategorySubAssigned))
-            {
-                if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
-                {
+            if (isset($financeItemCategorySubAssigned)) {
+                if (! empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom)) {
                     $detail['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                     $detail['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                     $detail['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
                     $detail['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
 
-                }
-                else
-                {
+                } else {
 
                     $detail['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                     $detail['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
@@ -1917,13 +1883,12 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $detail['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
                 }
 
-
                 $detail['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
 
             }
 
-            if (!$detail['financeGLcodebBS'] || !$detail['financeGLcodebBSSystemID'] || !$detail['financeGLcodePL'] || !$detail['financeGLcodePLSystemID']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
+            if (! $detail['financeGLcodebBS'] || ! $detail['financeGLcodebBSSystemID'] || ! $detail['financeGLcodePL'] || ! $detail['financeGLcodePLSystemID']) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.account_code_not_updated'));
             }
 
             // check policy 18
@@ -1940,7 +1905,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'erp_itemissuemaster.companySystemID',
                     'erp_itemissuemaster.wareHouseFromCode',
                     'erp_itemissuemaster.itemIssueCode',
-                    'erp_itemissuemaster.approved'
+                    'erp_itemissuemaster.approved',
                 ])
                 ->groupBy(
                     'erp_itemissuemaster.itemIssueAutoID',
@@ -1949,16 +1914,15 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'erp_itemissuemaster.itemIssueCode',
                     'erp_itemissuemaster.approved'
                 )
-                ->whereHas('details', function ($query) use ($companySystemID, $detail) {
+                ->whereHas('details', function ($query) use ($detail) {
                     $query->where('itemCodeSystem', $detail['itemCodeSystem']);
                 })
                 ->where('approved', 0)
                 ->first();
 
-            if (!empty($checkWhether)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.materiel_issue_pending_approval', ['code' => $checkWhether->itemIssueCode]));
+            if (! empty($checkWhether)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.materiel_issue_pending_approval', ['code' => $checkWhether->itemIssueCode]));
             }
-
 
             $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
                 ->where('locationFrom', $itemIssueMaster->wareHouseFrom)
@@ -1967,7 +1931,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'erp_stocktransfer.companySystemID',
                     'erp_stocktransfer.locationFrom',
                     'erp_stocktransfer.stockTransferCode',
-                    'erp_stocktransfer.approved'
+                    'erp_stocktransfer.approved',
                 ])
                 ->groupBy(
                     'erp_stocktransfer.stockTransferAutoID',
@@ -1976,24 +1940,24 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'erp_stocktransfer.stockTransferCode',
                     'erp_stocktransfer.approved'
                 )
-                ->whereHas('details', function ($query) use ($companySystemID, $detail) {
+                ->whereHas('details', function ($query) use ($detail) {
                     $query->where('itemCodeSystem', $detail['itemCodeSystem']);
                 })
                 ->where('approved', 0)
                 ->first();
-            /* approved=0*/
+            /* approved=0 */
 
-            if (!empty($checkWhetherStockTransfer)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.stock_transfer_pending_approval', ['code' => $checkWhetherStockTransfer->stockTransferCode]));
+            if (! empty($checkWhetherStockTransfer)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.stock_transfer_pending_approval', ['code' => $checkWhetherStockTransfer->stockTransferCode]));
             }
 
-            /*check item sales invoice*/
+            /* check item sales invoice */
             $checkWhetherInvoice = CustomerInvoiceDirect::where('companySystemID', $companySystemID)
                 ->select([
                     'erp_custinvoicedirect.custInvoiceDirectAutoID',
                     'erp_custinvoicedirect.bookingInvCode',
                     'erp_custinvoicedirect.wareHouseSystemCode',
-                    'erp_custinvoicedirect.approved'
+                    'erp_custinvoicedirect.approved',
                 ])
                 ->groupBy(
                     'erp_custinvoicedirect.custInvoiceDirectAutoID',
@@ -2002,39 +1966,39 @@ class ItemIssueMasterAPIController extends AppBaseController
                     'erp_custinvoicedirect.wareHouseSystemCode',
                     'erp_custinvoicedirect.approved'
                 )
-                ->whereHas('issue_item_details', function ($query) use ($companySystemID, $detail) {
+                ->whereHas('issue_item_details', function ($query) use ($detail) {
                     $query->where('itemCodeSystem', $detail['itemCodeSystem']);
                 })
                 ->where('approved', 0)
                 ->where('canceledYN', 0)
                 ->first();
-            /* approved=0*/
+            /* approved=0 */
 
-            if (!empty($checkWhetherInvoice)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]));
+            if (! empty($checkWhetherInvoice)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.customer_invoice_pending_approval', ['code' => $checkWhetherInvoice->bookingInvCode]));
             }
 
             // check in delivery order
             $checkWhetherDeliveryOrder = DeliveryOrder::where('companySystemID', $companySystemID)
                 ->select([
                     'erp_delivery_order.deliveryOrderID',
-                    'erp_delivery_order.deliveryOrderCode'
+                    'erp_delivery_order.deliveryOrderCode',
                 ])
                 ->groupBy(
                     'erp_delivery_order.deliveryOrderID',
                     'erp_delivery_order.companySystemID'
                 )
-                ->whereHas('detail', function ($query) use ($companySystemID, $detail) {
+                ->whereHas('detail', function ($query) use ($detail) {
                     $query->where('itemCodeSystem', $detail['itemCodeSystem']);
                 })
                 ->where('approvedYN', 0)
                 ->first();
 
-            if (!empty($checkWhetherDeliveryOrder)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.delivery_order_pending_approval', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]));
+            if (! empty($checkWhetherDeliveryOrder)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.delivery_order_pending_approval', ['code' => $checkWhetherDeliveryOrder->deliveryOrderCode]));
             }
 
-            /*Check in purchase return*/
+            /* Check in purchase return */
             $checkWhetherPR = PurchaseReturn::where('companySystemID', $companySystemID)
                 ->select([
                     'erp_purchasereturnmaster.purhaseReturnAutoID',
@@ -2052,17 +2016,16 @@ class ItemIssueMasterAPIController extends AppBaseController
                 })
                 ->where('approved', 0)
                 ->first();
-            /* approved=0*/
+            /* approved=0 */
 
-            if (!empty($checkWhetherPR)) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.purchase_return_pending_approval', ['code' => $checkWhetherPR->purchaseReturnCode]));
+            if (! empty($checkWhetherPR)) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.purchase_return_pending_approval', ['code' => $checkWhetherPR->purchaseReturnCode]));
             }
 
-            $data = array('companySystemID' => $companySystemID,
+            $data = ['companySystemID' => $companySystemID,
                 'itemCodeSystem' => $detail['itemCodeSystem'],
-                'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
+                'wareHouseId' => $itemIssueMaster->wareHouseFrom];
             $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
-
 
             $detail['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
             $detail['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
@@ -2075,28 +2038,25 @@ class ItemIssueMasterAPIController extends AppBaseController
             $detail['qtyRequested'] = $detail['quantityRequested'];
             $qntyDetails = MaterialIssueService::getItemDetailsForMaterialIssue($detail);
 
-
-            if((int)$detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.quantity_issuing_greater_than_available'));
+            if ((int) $detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.quantity_issuing_greater_than_available'));
             }
 
-
-            if((int)$detail['qtyIssued'] >  $detail['currentWareHouseStockQty']) {
-                array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.current_warehouse_stock_qty_message', ['qty' => $detail['currentWareHouseStockQty']]));
+            if ((int) $detail['qtyIssued'] > $detail['currentWareHouseStockQty']) {
+                array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.current_warehouse_stock_qty_message', ['qty' => $detail['currentWareHouseStockQty']]));
             }
-
 
             if ($item && is_null($item->itemCodeSystem)) {
                 if (isset($detail['mappingItemCode']) && $detail['mappingItemCode'] > 0) {
-                    $storeDetailsToMaterialRequestValidation = new StoreDetailsToMaterielRequest();
+                    $storeDetailsToMaterialRequestValidation = new StoreDetailsToMaterielRequest;
                     $itemMap = $storeDetailsToMaterialRequestValidation->matchRequestItem($item->RequestID, $detail['mappingItemCode'], $companySystemID, $item->toArray());
-                    if (!$itemMap['status']) {
-                        array_push($errorsArray,$itemPrimaryCode.'-'.$itemMap['message']);
+                    if (! $itemMap['status']) {
+                        array_push($errorsArray, $itemPrimaryCode.'-'.$itemMap['message']);
                     } else {
                         $item = $itemMap['data'];
                     }
                 } else {
-                    array_push($errorsArray,$itemPrimaryCode.'-'.trans('custom.item_not_found_please_map_this_item_with_a_origina'));
+                    array_push($errorsArray, $itemPrimaryCode.'-'.trans('custom.item_not_found_please_map_this_item_with_a_origina'));
                 }
             }
 
@@ -2105,11 +2065,8 @@ class ItemIssueMasterAPIController extends AppBaseController
         return $errorsArray;
     }
 
-
-
     public function getMIReportData(Request $request)
     {
-
 
         $selectedCompanyId = $request['selectedCompanyId'];
         $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -2120,7 +2077,6 @@ class ItemIssueMasterAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-
         $item = ErpItemLedger::select('erp_itemledger.companySystemID', 'erp_itemledger.itemSystemCode', 'erp_itemledger.itemPrimaryCode', 'erp_itemledger.itemDescription', 'itemmaster.secondaryItemCode')
             ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
             ->whereIn('erp_itemledger.companySystemID', $subCompanies)
@@ -2128,16 +2084,16 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->groupBy('erp_itemledger.itemSystemCode')
             ->get();
 
+        $segments = SegmentMaster::where('companySystemID', $selectedCompanyId)->where('isActive', true)->where('isFinalLevel', true)->select(['serviceLineSystemID', 'ServiceLineCode', 'ServiceLineDes'])->get();
+        $employess = Employee::where('empCompanySystemID', $selectedCompanyId)->get();
 
-        $segments = SegmentMaster::where('companySystemID',$selectedCompanyId)->where('isActive',true)->where('isFinalLevel',true)->select(['serviceLineSystemID','ServiceLineCode','ServiceLineDes'])->get();
-      $employess = Employee::where('empCompanySystemID', $selectedCompanyId)->get();
-
-        $output = array(
+        $output = [
             'item' => $item,
             'employess' => $employess,
             'segments' => $segments,
-            'assets' => FixedAssetMaster::whereHas('allocatToExpense')->with('allocatToExpense')->where('companySystemID',$selectedCompanyId)->select(['faCode','faID','assetDescription'])->get()
-        );
+            'assets' => FixedAssetMaster::whereHas('allocatToExpense')->with('allocatToExpense')->where('companySystemID', $selectedCompanyId)->select(['faCode', 'faID', 'assetDescription'])->get(),
+        ];
+
         return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
     }
 
@@ -2168,9 +2124,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     {
         $input = $request->input();
 
-
-        if(isset($input['reportType']) && is_array($input['reportType']))
-        {
+        if (isset($input['reportType']) && is_array($input['reportType'])) {
             $input['reportType'] = $input['reportType'][0];
         }
 
@@ -2178,7 +2132,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $companyName = $details['companyName'];
         $startDate = $details['startDate'];
         $endDate = $details['endDate'];
-        $items =  $details['items'];
+        $items = $details['items'];
         $employee = $details['employee'];
         $employeeCondition = $details['employeeCondition'];
         $employeeSubQuery = $details['employeeSubQuery'];
@@ -2188,16 +2142,14 @@ class ItemIssueMasterAPIController extends AppBaseController
         $segmentConditon = $details['segmentConditon'];
         $segmentSubQuery = $details['segmentSubQuery'];
         $employeeSubQuery = $details['employeeSubQuery'];
-        if (empty($items))
-        {
+        if (empty($items)) {
             return $this->sendError(trans('custom.the_items_field_is_required'), 500);
 
         }
 
-        \DB::select("SET SESSION group_concat_max_len = 1000000");
+        \DB::select('SET SESSION group_concat_max_len = 1000000');
 
-        if($input['reportType'] == 1)
-        {
+        if ($input['reportType'] == 1) {
             $query = "SELECT 
                         erp_itemissuedetails.itemPrimaryCode,
                         CONCAT(
@@ -2268,26 +2220,19 @@ class ItemIssueMasterAPIController extends AppBaseController
                     erp_itemissuedetails.itemPrimaryCode
                 ";
 
-
             $output = \DB::select($query);
-        }
-        elseif($input['reportType'] == 2) {
+        } elseif ($input['reportType'] == 2) {
 
-            if(!empty($input['groupByAsset']))
-            {
+            if (! empty($input['groupByAsset'])) {
                 $assetsConditon = '';
 
-
-                if(isset($input['assets']))
-                {
+                if (isset($input['assets'])) {
                     $assets = collect($input['assets'])->pluck('id')->toArray();
                     $assets = implode(',', $assets);
-                    if(!empty($assets))
-                    {
+                    if (! empty($assets)) {
                         $assetsConditon = " AND ep.assetID IN ($assets)";
                     }
                 }
-
 
                 $query = "
                    select 
@@ -2316,11 +2261,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $assetsConditon
                 ";
 
-
                 $output = \DB::select($query);
 
-            }
-            else {
+            } else {
                 $groupByField = empty($input['groupByAsset'])
                     ? 'erp_itemissuedetails.itemPrimaryCode'
                     : 'expense_asset_allocation.assetID,erp_itemissuedetails.itemPrimaryCode,erp_itemissuedetails.itemIssueDetailID';
@@ -2370,10 +2313,10 @@ class ItemIssueMasterAPIController extends AppBaseController
                 ) AS items
             ";
 
-                $leftJoinAssetAllocation = empty($input['groupByAsset']) ? "" : "
+                $leftJoinAssetAllocation = empty($input['groupByAsset']) ? '' : '
                 LEFT JOIN expense_asset_allocation
                     ON expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
-            ";
+            ';
 
                 $query = "
                 SELECT 
@@ -2402,8 +2345,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 $output = \DB::select($query);
             }
-        }
-        else {
+        } else {
             $groupByField = empty($input['groupByAsset']) ? 'erp_itemissuedetails.itemPrimaryCode' : 'erp_itemissuemaster.serviceLineSystemID';
             $selectField = $groupByField;
 
@@ -2472,112 +2414,88 @@ class ItemIssueMasterAPIController extends AppBaseController
                     $groupByField
             ";
 
-
-
             $output = \DB::select($query);
         }
 
-
-
         $groupedResults = [];
 
+        foreach ($output as $row) {
 
-            foreach ($output as $row) {
-
-
-
-                if($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true))
-                {
-                    $groupedResults[$row->faCode][] = [
-                        'RequestCode' => $row->itemIssueCode,
-                        'expenseAllocations' => [
-                            [
-                                'empID' => $row->faCode,
-                                'amount' => $row->amount,
-                                'empName' => $row->assetDescription,
-                                'assignedQty' => $row->allocation_qty,
-                            ]
+            if ($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                $groupedResults[$row->faCode][] = [
+                    'RequestCode' => $row->itemIssueCode,
+                    'expenseAllocations' => [
+                        [
+                            'empID' => $row->faCode,
+                            'amount' => $row->amount,
+                            'empName' => $row->assetDescription,
+                            'assignedQty' => $row->allocation_qty,
                         ],
-                        'issueCostLocal' => $row->issueCostLocal,
-                        'issueCostLocalTotal' => $row->issueCostLocalTotal,
-                        'issueDate' => $row->issueDate,
-                        'itemDescription' => $row->itemDescription,
-                        'itemIssueCode' => $row->itemIssueCode,
-                        'itemIssueDetailID' => $row->itemIssueDetailID,
-                        'itemPrimaryCode' => $row->itemPrimaryCode,
-                        'qtyIssued' => $row->qtyIssued,
-                        'unit' => 'Each',
-                    ];
+                    ],
+                    'issueCostLocal' => $row->issueCostLocal,
+                    'issueCostLocalTotal' => $row->issueCostLocalTotal,
+                    'issueDate' => $row->issueDate,
+                    'itemDescription' => $row->itemDescription,
+                    'itemIssueCode' => $row->itemIssueCode,
+                    'itemIssueDetailID' => $row->itemIssueDetailID,
+                    'itemPrimaryCode' => $row->itemPrimaryCode,
+                    'qtyIssued' => $row->qtyIssued,
+                    'unit' => 'Each',
+                ];
 
-                }
-                else {
-                    $details = json_decode($row->items,true);
+            } else {
+                $details = json_decode($row->items, true);
 
+                if ($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                    $groupedResults[$row->assetID] = $details;
 
-                    if($input['reportType'] == 2 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true))
-                    {
-                        $groupedResults[$row->assetID] = $details;
+                    foreach ($details as $key => $value) {
 
+                        if ($value['expenseAllocations'] != null) {
 
-                        foreach($details as $key => $value)
-                        {
-
-                            if($value['expenseAllocations'] != null)
-                            {
-
-                                $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
-                            }
-                        }
-
-                    }
-                    else if($input['reportType'] == 3 &&  (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
-                        $details = json_decode($row->items,true);
-                        $groupedResults[$row->serviceLineSystemID] = $details;
-                        foreach($details as $key => $value)
-                        {
-
-                            if($value['expenseAllocations'] != null)
-                            {
-
-                                $groupedResults[$row->serviceLineSystemID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
-                            }
-                        }
-
-                    }else {
-                        $groupedResults[$row->itemPrimaryCode] = $details;
-
-
-                        foreach($details as $key => $value)
-                        {
-
-                            if($value['expenseAllocations'] != null)
-                            {
-
-                                $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'],true);
-                            }
+                            $groupedResults[$row->assetID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'], true);
                         }
                     }
 
-                }
+                } elseif ($input['reportType'] == 3 && (isset($input['groupByAsset']) && $input['groupByAsset'] === true)) {
+                    $details = json_decode($row->items, true);
+                    $groupedResults[$row->serviceLineSystemID] = $details;
+                    foreach ($details as $key => $value) {
 
+                        if ($value['expenseAllocations'] != null) {
+
+                            $groupedResults[$row->serviceLineSystemID][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'], true);
+                        }
+                    }
+
+                } else {
+                    $groupedResults[$row->itemPrimaryCode] = $details;
+
+                    foreach ($details as $key => $value) {
+
+                        if ($value['expenseAllocations'] != null) {
+
+                            $groupedResults[$row->itemPrimaryCode][$key]['expenseAllocations'] = json_decode($value['expenseAllocations'], true);
+                        }
+                    }
+                }
 
             }
 
+        }
 
-       $results['companyName']  = $companyName; 
-       $results['groupedResults']  = $groupedResults;    
+        $results['companyName'] = $companyName;
+        $results['groupedResults'] = $groupedResults;
 
-    return $this->sendResponse($results, trans('custom.meterial_issues_retrieved_successfully'));
+        return $this->sendResponse($results, trans('custom.meterial_issues_retrieved_successfully'));
 
     }
-
 
     public function exportMIRReport(Request $request, ExportReportToExcelService $exportReportToExcelService)
     {
         $input = $request->input();
 
-        if(isset($input['reportType']) && is_array($input['reportType']))
-        {
+        if (isset($input['reportType']) && is_array($input['reportType'])) {
             $input['reportType'] = $input['reportType'][0];
         }
 
@@ -2593,33 +2511,32 @@ class ItemIssueMasterAPIController extends AppBaseController
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new Carbon($request->toDate))->format('Y-m-d');
         $groupBy = $request->groupByAsset;
-       
-        $companyCode = isset($company->CompanyID)?$company->CompanyID: trans('custom.common');
 
+        $companyCode = isset($company->CompanyID) ? $company->CompanyID : trans('custom.common');
 
-        $selectedAssets  = $request->assets;
-        if(!empty($selectedAssets))
-        {
+        $selectedAssets = $request->assets;
+        if (! empty($selectedAssets)) {
             $selectedAssets = collect($selectedAssets)->map(function ($item) {
                 $parts = explode('|', isset($item['itemName']) ? $item['itemName'] : '');
+
                 return isset($parts[1]) ? trim($parts[1]) : '';
             })->filter()
-            ->implode(',');
+                ->implode(',');
 
         }
 
         $selectedSegments = $request->segments;
-        if(!empty($selectedSegments))
-        {
+        if (! empty($selectedSegments)) {
             $selectedSegments = collect($selectedSegments)->map(function ($item) {
                 $itemName = isset($item['itemName']) ? $item['itemName'] : '';
                 $parts = explode('|', $itemName);
+
                 return isset($parts[1]) ? trim($parts[1]) : '';
-            })->filter() 
-            ->implode(',');
+            })->filter()
+                ->implode(',');
 
         }
-        $templateName = "export_report.inventory.material_issue_register";
+        $templateName = 'export_report.inventory.material_issue_register';
 
         $reportData = [
             'reportData' => $data,
@@ -2631,14 +2548,14 @@ class ItemIssueMasterAPIController extends AppBaseController
             'fromDate' => $fromDate,
             'toDate' => $toDate,
             'groupBy' => $groupBy,
-            'selectedAssets' => empty($selectedAssets) ? null  : $selectedAssets,
+            'selectedAssets' => empty($selectedAssets) ? null : $selectedAssets,
             'selectedSegments' => empty($selectedSegments) ? null : $selectedSegments,
-            'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2
+            'currencyDecimalPlace' => ! empty($decimalPlace) ? $decimalPlace[0] : 2,
         ];
 
         $fileName = trans('exportExcelFile.material_issue_register');
         $path = 'inventory/report/material_issue_register/excel/';
-        $type = "xls";
+        $type = 'xls';
         $basePath = CreateExcel::loadView($reportData, $type, $fileName, $path, $templateName, $excelColumnFormat);
 
         if ($basePath == '') {
@@ -2649,52 +2566,48 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     }
 
-
-
     public function getMIRReportData($input)
     {
         $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
 
         if ($isGroup) {
             $subCompanies = Helper::getGroupCompany($input['companySystemID']);
-        }
-        else {
+        } else {
             $subCompanies = [$input['companySystemID']];
         }
 
-        if($subCompanies && $subCompanies[0]) {
+        if ($subCompanies && $subCompanies[0]) {
             $company = Company::find($subCompanies[0]);
-        }
-        else {
+        } else {
             return [
                 'status' => false,
-                'message' => 'Company System ID not found'
+                'message' => 'Company System ID not found',
             ];
         }
 
-        if(!isset($company)){
+        if (! isset($company)) {
             return [
                 'status' => false,
-                'message' => 'Company Details not found'
+                'message' => 'Company Details not found',
             ];
         }
 
         $companyName = $company->CompanyName;
-    
+
         $startDate = new Carbon($input['fromDate']);
         $startDate = $startDate->format('Y-m-d');
 
         $endDate = new Carbon($input['toDate']);
         $endDate = $endDate->format('Y-m-d');
 
-        $items=[];
+        $items = [];
         if (array_key_exists('Items', $input)) {
-            $items = collect($input['Items'])->pluck('itemSystemCode')->toArray(); 
+            $items = collect($input['Items'])->pluck('itemSystemCode')->toArray();
         }
 
-        $employess=[];
+        $employess = [];
         if (array_key_exists('employee', $input)) {
-            $employee = collect($input['employee'])->pluck('id')->toArray(); 
+            $employee = collect($input['employee'])->pluck('id')->toArray();
         }
 
         $assets = [];
@@ -2706,7 +2619,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (array_key_exists('segments', $input)) {
             $segments = collect($input['segments'])->pluck('id')->toArray();
         }
-
 
         $items = implode(',', $items);
         $employee = implode(',', $employee);
@@ -2720,10 +2632,10 @@ class ItemIssueMasterAPIController extends AppBaseController
         $segmentConditon = '';
         $segmentSubQuery = '';
 
-            if (!empty($employee)) {
-                $employeeCondition = "AND expense_employee_allocation.employeeSystemID IN ($employee)";
+        if (! empty($employee)) {
+            $employeeCondition = "AND expense_employee_allocation.employeeSystemID IN ($employee)";
 
-                $employeeSubQuery = "AND (
+            $employeeSubQuery = "AND (
                                         SELECT 
                                             COUNT(*) 
                                         FROM 
@@ -2732,12 +2644,12 @@ class ItemIssueMasterAPIController extends AppBaseController
                                             expense_employee_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
                                             $employeeCondition
                                     ) > 0";
-            }
+        }
 
-            if (!empty($assets)) {
-                $assetsConditon = "AND expense_asset_allocation.assetID IN ($assets)";
+        if (! empty($assets)) {
+            $assetsConditon = "AND expense_asset_allocation.assetID IN ($assets)";
 
-                $assetsSubQuery = "AND (
+            $assetsSubQuery = "AND (
                                             SELECT 
                                                 COUNT(*) 
                                             FROM 
@@ -2746,9 +2658,9 @@ class ItemIssueMasterAPIController extends AppBaseController
                                                 expense_asset_allocation.documentDetailID = erp_itemissuedetails.itemIssueDetailID
                                                 $assetsConditon
                                         ) > 0";
-            }
+        }
 
-        if (!empty($segments)) {
+        if (! empty($segments)) {
             $segmentConditon = "erp_itemissuemaster.serviceLineSystemID IN ($segments)";
 
             $segmentSubQuery = "AND (
@@ -2760,20 +2672,20 @@ class ItemIssueMasterAPIController extends AppBaseController
                                         ) > 0";
         }
 
-            return [
-                'companyName' => $companyName,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'items' => $items,
-                'employee' => $employee,
-                'employeeCondition' => $employeeCondition,
-                'employeeSubQuery' => $employeeSubQuery,
-                'assetsConditon' => $assetsConditon,
-                'assetsSubQuery' => $assetsSubQuery,
-                'segments' => $segments,
-                'segmentConditon' => $segmentConditon,
-                'segmentSubQuery' => $segmentSubQuery
-            ];
+        return [
+            'companyName' => $companyName,
+            'startDate' => $startDate,
+            'endDate' => $endDate,
+            'items' => $items,
+            'employee' => $employee,
+            'employeeCondition' => $employeeCondition,
+            'employeeSubQuery' => $employeeSubQuery,
+            'assetsConditon' => $assetsConditon,
+            'assetsSubQuery' => $assetsSubQuery,
+            'segments' => $segments,
+            'segmentConditon' => $segmentConditon,
+            'segmentSubQuery' => $segmentSubQuery,
+        ];
 
     }
 }

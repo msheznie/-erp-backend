@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCEPaymentGlConfigDetail",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="companyCode",
  *          description="companyCode",
@@ -65,12 +66,7 @@ use Eloquent as Model;
  *      ),
  *      @SWG\Property(
  *          property="isSync",
- *          description="0 => Not Synced 
-1 => Send to ERP 
-2 => Fully Synced",
- *          type="integer",
- *          format="int32"
- *      ),
+ *          description="0 => Not Synced
  *      @SWG\Property(
  *          property="modifiedDateTime",
  *          description="modifiedDateTime",
@@ -120,14 +116,11 @@ use Eloquent as Model;
  */
 class POSSOURCEPaymentGlConfigDetail extends Model
 {
-
     public $table = 'pos_source_paymentglconfigdetail';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'modifiedDateTime';
-
-
-
 
     public $fillable = [
         'companyCode',
@@ -148,7 +141,8 @@ class POSSOURCEPaymentGlConfigDetail extends Model
         'timestamp',
         'transaction_log_id',
         'warehouseID',
-        'erp_bank_acc_id'
+        'erp_bank_acc_id',
+        'pos_type',
     ];
 
     /**
@@ -176,7 +170,7 @@ class POSSOURCEPaymentGlConfigDetail extends Model
         'timestamp' => 'datetime',
         'transaction_log_id' => 'integer',
         'warehouseID' => 'integer',
-        'erp_bank_acc_id' => 'integer'
+        'erp_bank_acc_id' => 'integer',
     ];
 
     /**
@@ -185,8 +179,6 @@ class POSSOURCEPaymentGlConfigDetail extends Model
      * @var array
      */
     public static $rules = [
-        'isSync' => 'required'
+        'isSync' => 'required',
     ];
-
-    
 }

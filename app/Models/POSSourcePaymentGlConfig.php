@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourcePaymentGlConfig",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="autoID",
  *          description="autoID",
@@ -68,14 +69,11 @@ use Eloquent as Model;
  */
 class POSSourcePaymentGlConfig extends Model
 {
-
     public $table = 'pos_source_paymentglconfigmaster';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'description',
@@ -86,7 +84,8 @@ class POSSourcePaymentGlConfig extends Model
         'sortOrder',
         'selectBoxName',
         'timesstamp',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -104,7 +103,7 @@ class POSSourcePaymentGlConfig extends Model
         'sortOrder' => 'integer',
         'selectBoxName' => 'string',
         'timesstamp' => 'datetime',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -114,8 +113,6 @@ class POSSourcePaymentGlConfig extends Model
      */
     public static $rules = [
         'description' => 'required',
-        'glAccountType' => 'required'
+        'glAccountType' => 'required',
     ];
-
-    
 }

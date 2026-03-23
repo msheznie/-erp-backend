@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCETaxMaster",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="companyCode",
  *          description="companyCode",
@@ -174,14 +175,11 @@ use Eloquent as Model;
  */
 class POSSOURCETaxMaster extends Model
 {
-
     public $table = 'pos_source_taxmaster';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'modifiedDateTime';
-
-
-
 
     public $fillable = [
         'companyCode',
@@ -211,7 +209,8 @@ class POSSOURCETaxMaster extends Model
         'taxShortCode',
         'taxType',
         'timestamp',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -248,7 +247,7 @@ class POSSOURCETaxMaster extends Model
         'taxShortCode' => 'string',
         'taxType' => 'boolean',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -258,8 +257,6 @@ class POSSOURCETaxMaster extends Model
      */
     public static $rules = [
         'taxDescription' => 'required',
-        'taxShortCode' => 'required'
+        'taxShortCode' => 'required',
     ];
-
-    
 }

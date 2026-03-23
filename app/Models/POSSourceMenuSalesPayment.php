@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceMenuSalesPayment",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="menuSalesPaymentID",
  *          description="menuSalesPaymentID",
@@ -154,14 +155,11 @@ use Eloquent as Model;
  */
 class POSSourceMenuSalesPayment extends Model
 {
-
     public $table = 'pos_source_menusalespayments';
-    
+
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'wareHouseAutoID',
@@ -187,7 +185,8 @@ class POSSourceMenuSalesPayment extends Model
         'is_sync',
         'id_store',
         'isVerifiedByCashier',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -220,7 +219,7 @@ class POSSourceMenuSalesPayment extends Model
         'is_sync' => 'integer',
         'id_store' => 'integer',
         'isVerifiedByCashier' => 'boolean',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -229,10 +228,11 @@ class POSSourceMenuSalesPayment extends Model
      * @var array
      */
     public static $rules = [
-        'wareHouseAutoID' => 'required'
-    ];  
+        'wareHouseAutoID' => 'required',
+    ];
 
-    public function paymentConfig(){ 
+    public function paymentConfig()
+    {
         return $this->hasOne('App\Models\POSSourcePaymentGlConfig', 'autoID', 'paymentConfigMasterID');
     }
 }
