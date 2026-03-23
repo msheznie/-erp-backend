@@ -2381,7 +2381,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'directdetail' => function ($query) {
             $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
-            $query->with('grvmaster');
         }, 'item_details' => function ($query) {
             $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
@@ -2395,6 +2394,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
        switch ($output->documentType)
        {
+           case 0 :
+               $totalVatAmount = $output->detail->sum('VATAmount') + $output->directdetail->sum('VATAmount');
+               $stdVatAmountTotal = $output->detail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount')
+                   + $output->directdetail->filter(function ($item) {
+                       return optional($item->vat_sub_category)->subCatgeoryType == 1;
+                   })->sum('VATAmount');
+               break;
            case 1 :
                $totalVatAmount = $output->directdetail->sum('VATAmount');
                $stdVatAmountTotal = $output->directdetail->filter(function ($item) {
@@ -2405,7 +2413,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                $totalVatAmount = $output->detail->sum('VATAmount');
                $stdVatAmountTotal = $output->detail->filter(function ($item) {
                    return optional($item->vat_sub_category)->subCatgeoryType == 1;
-               })->sum('VATAmount');
+               })->sum('VATAmount');           
                break;
            case 3 :
                $totalVatAmount = $output->item_details->sum(function ($item) {
