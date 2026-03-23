@@ -1127,7 +1127,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
     {
 
         $budgetDetailData = DepartmentBudgetPlanningDetail::with(['budgetTemplate'])->find($budgetDetailId);
-
         $budgetTemplateColumn = BudgetTemplateColumn::where('templateColumnID',$budgetDetailData->budgetTemplate->linkRequestAmount)->first();
 
         $preColumn = BudgetTemplatePreColumn::where('preColumnID',$budgetTemplateColumn->preColumnID)->first();
@@ -1377,9 +1376,15 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
         $entry = BudgetDetTemplateEntry::where('entryID',$input['entryID'])->first();
+        $departmentBudgetPlanningDetail = DepartmentBudgetPlanningDetail::with('budgetTemplate')->find($entry->budget_detail_id);
+
         if ($entry) {
             $oldValue = BudgetDetTemplateEntryData::with(['templateColumn.preColumn'])->where('entryID', $entry['entryID'])->get();
-
+           
+           
+            $departmentBudgetPlanningDetail->request_amount -= $oldValue->where('templateColumnID', $departmentBudgetPlanningDetail->budgetTemplate->linkRequestAmount)->first()->value;
+            $departmentBudgetPlanningDetail->difference_current_request -= $oldValue->where('templateColumnID', $departmentBudgetPlanningDetail->budgetTemplate->linkRequestAmount)->first()->value;
+            $departmentBudgetPlanningDetail->save();
             // delete entry data
             BudgetDetTemplateEntryData::where('entryID', $entry['entryID'])->delete();
             // delete entry attachments
