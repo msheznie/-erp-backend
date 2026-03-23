@@ -527,7 +527,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                         'VATAmountRpt' => $VATAmountRpt
                     ]);
                 }
-            } else if ($isPerforma == 2) {
+            } else if ($isPerforma == 2 || $isPerforma == 3) {
                 // Item Sales Invoice - use CustomerInvoiceItemDetails
                 $details = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->get();
 
