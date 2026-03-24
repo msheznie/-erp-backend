@@ -10044,4 +10044,5 @@ return
     'grv_multiple_subcategories' => 'GRV cannot contain items from multiple subcategories under the same main category. Please select items from a single subcategory.',
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
     'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer',
+    'materiel_issue_pending_approval' => 'There is a Materiel Issue (:issueCode) pending approval for the material you are trying to add. Please check again.',
 ];
