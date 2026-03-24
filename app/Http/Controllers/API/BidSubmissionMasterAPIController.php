@@ -908,30 +908,56 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }])->where('id', $tenderId)
             ->get();
 
-        $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
+       /* $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
             ->where('status', 1)
             ->where('doc_verifiy_status', '!=', 0)
             ->get()
             ->toArray();
 
         $i = 0;
-        //$arr = [];
+        //$arr = [];2
         foreach ($resultTable as $a){
             $arr[$i] = DocumentAttachments::with(['bid_verify'])
                 ->whereIn('documentSystemCode', [$a['id']])
                 ->where('documentSystemID', $documentSystemID)
-                ->whereIn('attachmentType',[0, 11])
+                ->whereIn('attachmentType',[0,11])
                 ->where('envelopType',3)
                 ->get();
             $i++;
 
+        }*/
+
+
+        $documentSystemCodes = BidSubmissionMaster::where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->where('doc_verifiy_status', '!=', 0)
+            ->pluck('id');
+
+        $attachments = DocumentAttachments::with(['bid_verify'])
+            ->whereIn('documentSystemCode', $documentSystemCodes)
+            ->where('documentSystemID', $documentSystemID)
+            ->whereIn('attachmentType', [0, 11])
+            ->where('envelopType', 3)
+            ->get();
+
+        $attachmentsByBid = $attachments->groupBy('documentSystemCode');
+
+        $bidStatus = [];
+
+        foreach ($attachmentsByBid as $bidId => $docs) {
+            // If any attachment is 0 (pending) or 3 (not verified), overall status = 3
+            $notVerified = $docs->contains(function ($doc) {
+                $status = $doc->bid_verify->status ?? 0;
+                return $status == 0 || $status == 3;
+            });
+
+            $bidStatus[$bidId] = $notVerified ? 3 : 'Yes';
         }
 
-        $count = count($arr[0]);
-
+        $count = count($attachments);
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
-        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation, 'lang' => $lang);
+        $order = array('bidData' => $bidData, 'bidStatus'    => $bidStatus,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation, 'lang' => $lang);
 
         $isRTL = ($lang === 'ar'); // Check if Arabic language for RTL support
 

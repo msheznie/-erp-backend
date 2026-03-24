@@ -49,12 +49,17 @@ use App\Models\ScheduleBidFormatDetails;
 use App\Models\ScheduleBidFormatDetailsLog;
 use App\Models\SrmBudgetItem;
 use App\Models\SrmDepartmentMaster;
+use App\Models\SRMDocumentMaster;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
+use App\Models\SrmTenderAwardingMember;
+use App\Models\SrmTenderAwardingMemberEditLog;
+use App\Models\SrmItemWiseTenderAwarding;
 use App\Models\SrmTenderBudgetItem;
 use App\Models\SRMTenderCalendarLog;
 use App\Models\SrmTenderDepartment;
 use App\Models\SrmTenderMasterEditLog;
+use App\Models\SrmTenderPo;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\SRMTenderUserAccess;
@@ -82,6 +87,7 @@ use App\Models\TenderType;
 use App\Models\YesNoSelection;
 use App\Services\GeneralService;
 use App\Services\SRMService;
+use App\Services\TenderItemWiseAwardingService;
 use App\Services\TenderConfirmationService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
@@ -347,7 +353,6 @@ class TenderMasterRepository extends BaseRepository
         if ($tender->document_system_id == 113 && $opening_date_comp === null) {
             return true;
         }
-
         $opening_date_comp = Carbon::parse($opening_date_comp);
 
         return $current_date->gt($opening_date_comp) &&
@@ -355,9 +360,9 @@ class TenderMasterRepository extends BaseRepository
     }
 
 
-    public static function getTenderPOData($tenderId, $companyId)
+    public static function getTenderPOData($tenderId, $companyId, $supplierId = null)
     {
-        return TenderMaster::getTenderPOData($tenderId, $companyId);
+        return TenderMaster::getTenderPOData($tenderId, $companyId, $supplierId);
     }
     public function getPaymentProofDocumentApproval($request)
     {
@@ -545,9 +550,15 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $updatedData = $this->processTenderUpdate($formattedDatesAndTime, $tenderData,$input);
+
+            if (isset($updatedData['success']) && $updatedData['success'] === false) {
+                return $updatedData;
+            }
+
             if(!$updatedData['success']){
                 return $updatedData;
             }
+
             $title = ($isTender == 1) ? trans('srm_tender_rfx.tender') : trans('srm_tender_rfx.rfx');
 
             return [
@@ -744,16 +755,20 @@ class TenderMasterRepository extends BaseRepository
 
                 $tenderMaster->update($data);
 
-                $calendarDateMap = CalendarDates::calendarDateMap($input['calendarDates']);
+                $calendarDates = $input['calendarDates'] ?? [];
+                if (!is_array($calendarDates)) {
+                    $calendarDates = [];
+                }
+                $calendarDateMap = CalendarDates::calendarDateMap($calendarDates);
 
                 $defaultDateMappings = [
                     1 => ['start' => 'preBidClarificationStartDate', 'end' => 'preBidClarificationEndDate'],
                     2 => ['start' => 'siteVisitStartDate', 'end' => 'siteVisitEndDate'],
                 ];
 
-                foreach ($input['calendarDates'] as $calDate) {
+                foreach ($calendarDates as $calDate) {
 
-                    $calenderDateDetails = $calendarDateMap[$calDate['id']] ?? null;
+                    $calenderDateDetails = $calendarDateMap->get($calDate['id'] ?? null);
                     if (!$calenderDateDetails) {
                         continue;
                     }
@@ -774,8 +789,8 @@ class TenderMasterRepository extends BaseRepository
                             'to_date'   => $formattedDatesAndTime[$map['end']] ?? null,
                         ];
 
-                        CalendarDatesDetail::updateCalendarDates($tenderData['id'],$tenderData['company_id'],
-                            $calenderDateDetails['id'], $dates);
+                        CalendarDatesDetail::updateCalendarDates($tenderData['id'], $tenderData['company_id'],
+                            $calenderDateDetails->id, $dates);
                     }
                 }
             });
@@ -884,6 +899,11 @@ class TenderMasterRepository extends BaseRepository
             $calendarDatesExists = SRMTenderCalendarLog::checkCalendarDatesExists(
                 $tenderData['id'], $tenderData['company_id']);
 
+            $sort = 1;
+            if ($calendarDatesExists !== null) {
+                $currentSort = $calendarDatesExists->sort ?? $calendarDatesExists['sort'] ?? 0;
+                $sort = (int) $currentSort + 1;
+            }
             $sort = ($calendarDatesExists['sort'] ?? 0) + 1;
 
 
@@ -1837,6 +1857,32 @@ class TenderMasterRepository extends BaseRepository
         return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
     }
 
+    public function checkTenderAwardingMembersAdded($tenderMasterID, $editOrAmend, $amdID, $versionID){
+        $tenderMaster = $editOrAmend ? SrmTenderMasterEditLog::find($amdID) : TenderMaster::find($tenderMasterID);
+        if(empty($tenderMaster)) {
+            return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
+        }
+
+        $minApprovalForAwarding = $tenderMaster->min_approval_awarding ?? 1;
+
+        if ($minApprovalForAwarding > 0) {
+            $awardingMembers = $editOrAmend ?
+                SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $versionID) :
+                SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
+
+            if(count($awardingMembers) < $minApprovalForAwarding){
+                return [
+                    'success' => false,
+                    'message' => trans(
+                        'srm_tender_rfx.at_least_min_employee_should_be_selected_for_awarding',
+                        ['count' => $minApprovalForAwarding]
+                    )
+                ];
+            }
+        }
+        return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
+    }
+
     public function getTenderExistData($tenderID, $editOrAmend, $versionID){
         return $editOrAmend ? SrmTenderMasterEditLog::tenderMasterHistory($tenderID, $versionID) :
             TenderMaster::getTenderMasterData($tenderID);
@@ -1936,7 +1982,14 @@ class TenderMasterRepository extends BaseRepository
     {
         try {
             return DB::transaction(function () use ($tenderPurchaseRequestData, $tenderID, $companyID, $editOrAmend, $versionID) {
-                
+
+                /*  if (empty($tenderPurchaseRequestData)) {
+                      return [
+                          'success' => true,
+                          'message' => trans('srm_tender_rfx.no_purchase_request_to_update')
+                      ];
+                  }*/
+
                 $newPRIds = collect($tenderPurchaseRequestData)->pluck('id')->unique()->toArray();
                 $existingRecords = $editOrAmend
                     ? TenderPurchaseRequestEditLog::getPurchaseRequests($tenderID, $versionID)
@@ -2210,6 +2263,23 @@ class TenderMasterRepository extends BaseRepository
                     }
                 }
 
+                $minApprovalForAwarding = $input['min_approval_awarding'] ?? 1;
+                if ($minApprovalForAwarding > 0) {
+                    $awardingMembers = $requestData['enableRequestChange'] ?
+                        SrmTenderAwardingMemberEditLog::getAwardingMembersAmd($tenderMasterID, $requestData['versionID']) :
+                        SrmTenderAwardingMember::getAwardingMembers($tenderMasterID);
+
+                    if (count($awardingMembers) < $minApprovalForAwarding) {
+                        return [
+                            'success' => false,
+                            'message' => trans(
+                                'srm_tender_rfx.at_least_min_employee_should_be_selected_for_awarding',
+                                ['count' => $minApprovalForAwarding]
+                            )
+                        ];
+                    }
+                }
+
                 $data['tender_type_id'] = $input['tender_type_id'];
                 $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
                 $data['evaluation_type_id'] = $input['evaluation_type_id'];
@@ -2221,6 +2291,7 @@ class TenderMasterRepository extends BaseRepository
                 $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
                 $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
                 $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
+                $data['min_approval_awarding'] = $minApprovalForAwarding;
                 $updateTender = self::updateTenderMaster($data, $tenderMasterID, $requestData['enableRequestChange'], $requestData['versionID']);
 
                 if ($updateTender['success'] && !$requestData['enableRequestChange']) {
@@ -2643,20 +2714,20 @@ class TenderMasterRepository extends BaseRepository
 
     public function cloneTender($request){
         try {
-        $input = $request->all();
-        $tenderMasterUuid = $input['uuid'];
-        $companySystemID = $input['companySystemId'];
-        $isTender = $input['isTender'];
-        $documentSystemID = isset ($isTender) && $isTender ? 108 : 113;
-        $editOrAmendRequest = false;
-        $documentName = isset ($isTender) && $isTender ? 'Tender' : 'RFX';
+            $input = $request->all();
+            $tenderMasterUuid = $input['uuid'];
+            $companySystemID = $input['companySystemId'];
+            $isTender = $input['isTender'];
+            $documentSystemID = isset ($isTender) && $isTender ? 108 : 113;
+            $editOrAmendRequest = false;
+            $documentName = isset ($isTender) && $isTender ? 'Tender' : 'RFX';
 
-        $tenderMaster = TenderMaster::getTenderByUuid($tenderMasterUuid);
+            $tenderMaster = TenderMaster::getTenderByUuid($tenderMasterUuid);
             if(empty($tenderMaster)) {
                 return ['success' => false, 'message' => trans('srm_tender_rfx.tender_not_found')];
             }
 
-        $documentModify = DocumentModifyRequest::getTenderModifyRequest($tenderMaster['id']);
+            $documentModify = DocumentModifyRequest::getTenderModifyRequest($tenderMaster['id']);
             if(!empty($documentModify) && $documentModify->status == 1){
                 if($documentModify->approved ==0 && $documentModify->confirmation_approved == 0){
                     $editOrAmendRequest = true;
@@ -2673,6 +2744,7 @@ class TenderMasterRepository extends BaseRepository
 
                 $newTender = $this->cloneTenderMaster($tenderMaster, $companySystemID, $documentSystemID);
                 $this->cloneUserAccess($tenderMaster['id'], $newTender->id);
+                $this->cloneAwardingMembers($tenderMaster['id'], $newTender->id);
                 $this->cloneDepartments($tenderMaster['id'], $newTender->id);
                 $this->cloneProcurements($tenderMaster['id'], $newTender->id);
                 $this->cloneBudgetItems($tenderMaster['id'], $newTender->id);
@@ -2695,6 +2767,39 @@ class TenderMasterRepository extends BaseRepository
                     'clone_master_id' => $tenderMaster['id'],
                 ]);
 
+
+                $paramsAttachData = ['docSystemId' => $documentSystemID, 'tenderId' => $tenderMaster['id']];
+                $existingAttachments = DocumentAttachments::getAttachmentData($paramsAttachData);
+                $existingParentIds = $existingAttachments
+                    ->pluck('documentParentID')
+                    ->unique()
+                    ->toArray();
+                $params = ['masterData' => true, 'docSystemId' => $documentSystemID, 'ids' => $existingParentIds];
+                $getDocumentMasterData = SRMDocumentMaster::getAllDocumentMaster($params);
+
+                if (!empty( $getDocumentMasterData)) {
+                    foreach ($getDocumentMasterData as $doc) {
+                        $documentAttachment = [
+                            'companySystemID' => $companySystemID,
+                            'isAutoCreateDocument' => 1,
+                            'documentParentID' => $doc['id'],
+                            'documentSystemCode' => $newTender->id,
+                            'companyID' => $companySystemID,
+                            'documentSystemID' => $tenderMaster['document_system_id'],
+                            'documentID' => $tenderMaster['document_id'],
+                            'attachmentDescription' => $doc['document_name'],
+                            'path' => $doc['path'],
+                            'originalFileName' => $doc['original_file_name'],
+                            'myFileName' => $doc['my_file_name'],
+                            'attachmentType' => $doc['document_area'],
+                            'sizeInKbs' => $doc['size_in_kbs'],
+                            'isUploaded' => 1,
+                            'envelopType' => $doc['envelope_type']
+                        ];
+
+                        DocumentAttachments::create($documentAttachment);
+                    }
+                }
             });
 
             return [
@@ -2850,6 +2955,24 @@ class TenderMasterRepository extends BaseRepository
                 ]);
 
                 $newUser->tender_id = $newTenderId;
+                $newUser->save();
+            }
+        }
+    }
+    private function cloneAwardingMembers($oldTenderId, $newTenderId){
+        $awardingEmployees = SrmTenderAwardingMember::getAwardingMembers($oldTenderId);
+        if (!empty($awardingEmployees)) {
+            foreach ($awardingEmployees as $user) {
+                $newUser = $user->replicate([
+                    'id',
+                    'tender_id',
+                    'awarding_remarks',
+                    'status',
+                    'created_at'
+                ]);
+
+                $newUser->tender_id = $newTenderId;
+                $newUser->status = 0;
                 $newUser->save();
             }
         }
@@ -3015,7 +3138,7 @@ class TenderMasterRepository extends BaseRepository
             $oldTenderId
         );
         $criteriaIdMap = [];
-        
+
         if (!empty($evaluationCriteriaDetails)) {
 
             foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
@@ -3039,7 +3162,7 @@ class TenderMasterRepository extends BaseRepository
             }
 
             $maxLevel = $evaluationCriteriaDetails->max('level') ?? 1;
-            
+
             for ($level = 2; $level <= $maxLevel; $level++) {
                 foreach ($evaluationCriteriaDetails as $evaluationCriteria) {
                     if ((int) $evaluationCriteria->level !== $level) {
@@ -3057,12 +3180,12 @@ class TenderMasterRepository extends BaseRepository
                     $newCriteria->parent_id = $criteriaIdMap[$evaluationCriteria->parent_id] ?? null;
                     $newCriteria->evaluation_criteria_master_id = $evaluationCriteria->evaluation_criteria_master_id;
                     $newCriteria->save();
-                    
+
                     $criteriaIdMap[$evaluationCriteria->id] = $newCriteria->id;
                 }
             }
         }
-        
+
         return $criteriaIdMap;
     }
     private function cloneEvaluationCriteriaScoreConfig($oldTenderId, $criteriaIdMap)
@@ -3242,6 +3365,98 @@ class TenderMasterRepository extends BaseRepository
             'employee_name' => $confirmationDetail->actionByEmployee
                 ? $confirmationDetail->actionByEmployee->empFullName
                 : null
+        ];
+    }
+
+    public function getItemWiseAwardingForPO(int $tenderId): array
+    {
+        $tender = TenderMaster::select('id', 'tender_code', 'title', 'evaluation_type_id')->find($tenderId);
+        if (!$tender) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null
+            ];
+        }
+        if ((int) $tender->evaluation_type_id !== 1) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null
+            ];
+        }
+
+        $isNegotiation = TenderItemWiseAwardingService::resolveIsNegotiation($tender);
+        $rows = SrmItemWiseTenderAwarding::getAwardedRowsForTender($tenderId, $isNegotiation)
+            ->with([
+                'supplier' => function ($q) {
+                    $q->select('id', 'name');
+                },
+                'boqItem' => function ($q) {
+                    $q->select('id', 'item_name');
+                },
+                'pricingScheduleDetail' => function ($q) {
+                    $q->select('id', 'label');
+                },
+            ])
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [
+                'success' => true,
+                'message' => 'Success',
+                'data' => [
+                    'tender_code' => $tender->tender_code,
+                    'tender_title' => $tender->title,
+                    'items' => [],
+                ]
+            ];
+        }
+
+        $supplierIds = $rows->pluck('supplier_id')->filter()->unique()->values()->all();
+        $tenderPos = SrmTenderPo::getActivePOsByTenderAndSuppliers($tenderId, $supplierIds);
+
+        $poBySupplier = [];
+        foreach ($tenderPos as $po) {
+            $poBySupplier[$po->supplier_id] = [
+                'po_id' => $po->po_id,
+                'purchase_order_code' => $po->procument_order ? $po->procument_order->purchaseOrderCode : '',
+            ];
+        }
+
+        $items = [];
+        $counter = 1;
+        foreach ($rows as $row) {
+            $supplierId = $row->supplier_id;
+            $poInfo = $poBySupplier[$supplierId] ?? ['po_id' => null, 'purchase_order_code' => null];
+            $itemDisplay = null;
+            if ($row->boq_item_id && $row->boqItem) {
+                $itemDisplay = $row->boqItem->item_name;
+            } elseif ($row->bid_format_detail_id && $row->pricingScheduleDetail) {
+                $itemDisplay = $row->pricingScheduleDetail->label;
+            }
+            if ($itemDisplay === null || $itemDisplay === '') {
+                $itemDisplay = 'Item ' . $counter;
+            }
+
+            $items[] = [
+                'item_display' => $itemDisplay,
+                'supplier_id' => $supplierId,
+                'supplier_name' => $row->supplier ? $row->supplier->name : '',
+                'po_id' => $poInfo['po_id'],
+                'purchase_order_code' => $poInfo['purchase_order_code'],
+            ];
+
+            $counter++;
+        }
+        return [
+            'success' => true,
+            'message' => 'Success',
+            'data' => [
+                'tender_code' => $tender->tender_code,
+                'tender_title' => $tender->title,
+                'items' => $items,
+            ]
         ];
     }
 }

@@ -623,7 +623,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
                 $dataEmail['companySystemID'] = $companyId;
                 $dataEmail['alertMessage'] = "Pre Bid Clarification";
                 $dataEmail['empEmail'] = $forwardEmail;
-                $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br /><b>";
+                $body = "To whom it may concern,"."<br /><br />"." Supplier has requested the below Prebid Clarification regarding the ". $tenderCode ." | ". $tenderTitle .". Kindly review and provide the necessary inputs. "."<br /><br />"."$preBidClarificationsString"."</b><br /><br />"." Thank You"."<br /><br />" . Helper::getSupplierEmailFooter($companyId);
                 $dataEmail['emailAlertMessage'] = $body;
                 $dataEmail['attachmentList'] = $file;
                 $sendEmail = Email::sendEmailErp($dataEmail);

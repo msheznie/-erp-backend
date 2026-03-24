@@ -44,6 +44,7 @@ use App\Repositories\PdcLogRepository;
 use App\helper\CreateExcel;
 use App\Jobs\ExportDetailedPRList;
 use App\helper\Helper;
+use App\Repositories\SupplierRegistrationLinkRepository;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -81,10 +82,11 @@ class TransactionsExportExcel extends AppBaseController
     private $pdcLogRepository;
     private $recurringVoucherSetupRepository;
     private $erpBudgetAdditionRepository;
+    private $supplierRegistrationLinkRepository;
 
     public function __construct(
-        GRVMasterRepository $gRVMasterRepo, 
-        MaterielRequestRepository $materielRequestRepo, 
+        GRVMasterRepository $gRVMasterRepo,
+        MaterielRequestRepository $materielRequestRepo,
         ItemIssueMasterRepository $itemIssueMasterRepo,
         ItemReturnMasterRepository $itemReturnMasterRepo,
         StockTransferRepository $stockTransferRepo,
@@ -116,7 +118,8 @@ class TransactionsExportExcel extends AppBaseController
         FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
         PdcLogRepository $pdcLogRepository,
         RecurringVoucherSetupRepository $recurringVoucherSetupRepository,
-        ErpBudgetAdditionRepository $erpBudgetAdditionRepository
+        ErpBudgetAdditionRepository $erpBudgetAdditionRepository,
+        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository,
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -153,9 +156,10 @@ class TransactionsExportExcel extends AppBaseController
         $this->pdcLogRepository = $pdcLogRepository;
         $this->recurringVoucherSetupRepository = $recurringVoucherSetupRepository;
         $this->erpBudgetAdditionRepository = $erpBudgetAdditionRepository;
+        $this->supplierRegistrationLinkRepository = $supplierRegistrationLinkRepository;
     }
 
-    public function exportRecord(Request $request) { 
+    public function exportRecord(Request $request) {
 
         $input = $request->all();
         $type = $input['type'];
@@ -166,9 +170,9 @@ class TransactionsExportExcel extends AppBaseController
             case '1':
             case '50':
             case '51':
-            $input = $this->convertArrayToSelectedValue($input,
-                array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month',
-                    'year', 'buyerEmpSystemID'));
+                $input = $this->convertArrayToSelectedValue($input,
+                    array('serviceLineSystemID', 'cancelledYN', 'PRConfirmedYN', 'approved', 'month',
+                        'year', 'buyerEmpSystemID'));
                 $serviceLineSystemID = collect((array) $request['serviceLineSystemID'])->pluck('id');
                 $buyerEmpSystemId = collect((array) $request['buyerEmpSystemID'])->pluck('id');
                 $dataQry = $this->purchaseRequestRepository->purchaseRequestListQuery(
@@ -195,7 +199,7 @@ class TransactionsExportExcel extends AppBaseController
 
             case '4':
                 $input = $this->convertArrayToSelectedValue($input, array('month', 'createdBy' ,'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'customerID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'projectID', 'employeeID'));
-                
+
                 $employeeID = $request['employeeID'];
                 $employeeID = (array)$employeeID;
                 $employeeID = collect($employeeID)->pluck('id');
@@ -275,7 +279,7 @@ class TransactionsExportExcel extends AppBaseController
 
             case '11':
                 $input = $this->convertArrayToSelectedValue($input, array('cancelYN', 'confirmedYN', 'approved', 'month', 'year', 'supplierID', 'documentType', 'projectID'));
-                
+
                 $supplierID = $request['supplierID'];
                 $supplierID = (array)$supplierID;
                 $supplierID = collect($supplierID)->pluck('id');
@@ -317,7 +321,7 @@ class TransactionsExportExcel extends AppBaseController
             case '15':
                 if($input['docName'] == "receipt_voucher-matching") {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'customerID'));
-                    
+
                     $customerID = $request['customerID'];
                     $customerID = (array)$customerID;
                     $customerID = collect($customerID)->pluck('id');
@@ -326,7 +330,7 @@ class TransactionsExportExcel extends AppBaseController
                     $data = $this->matchDocumentMasterRepository->setReceiptVoucherMatchingExportExcelData($dataQry);
                 } else {
                     $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'supplierID'));
-                    
+
                     $supplierID = $request['supplierID'];
                     $supplierID = (array)$supplierID;
                     $supplierID = collect($supplierID)->pluck('id');
@@ -359,7 +363,7 @@ class TransactionsExportExcel extends AppBaseController
 
             case '20':
                 $input = $this->convertArrayToSelectedValue($input, array('invConfirmedYN', 'customerID', 'month', 'approved', 'canceledYN', 'year', 'isProforma'));
-                
+
                 $customerID = $request['customerID'];
                 $customerID = (array)$customerID;
                 $customerID = collect($customerID)->pluck('id');
@@ -388,7 +392,7 @@ class TransactionsExportExcel extends AppBaseController
 
             case '24':
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID',
-                'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
+                    'purchaseReturnLocation', 'confirmedYN', 'approved', 'month', 'year'));
                 $serviceLineSystemID = $request['serviceLineSystemID'];
                 $serviceLineSystemID = (array)$serviceLineSystemID;
                 $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
@@ -418,11 +422,11 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '61':
-                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by')); 
+                $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
                 $dataQry = $this->inventoryReclassificationRepository->inventoryReclassificationListQuery($request, $input, $search);
                 $data = $this->inventoryReclassificationRepository->setExportExcelData($dataQry);
                 break;
-                
+
             case '62':
                 $input = $this->convertArrayToSelectedValue($input, array('segment_by', 'created_by'));
 
@@ -512,6 +516,11 @@ class TransactionsExportExcel extends AppBaseController
                 $dataQry = $this->erpBudgetAdditionRepository->budgetAdditionFormListQuery($request, $input, $search);
                 $data = $this->erpBudgetAdditionRepository->setExportExcelData($dataQry);
                 break;
+            case '107':
+                $input = $this->convertArrayToSelectedValue($input, array('approved_yn'));
+                $dataQry = $this->supplierRegistrationLinkRepository->getSupplierRegistrationData($request, $input, $search);
+                $data =  $this->supplierRegistrationLinkRepository->setExportExcelData($dataQry);
+                break;
             default:
                 return $this->sendResponse(array(), trans('custom.export_failed'));
         }
@@ -546,20 +555,21 @@ class TransactionsExportExcel extends AppBaseController
         $translatedFileName = trans('exportExcelFile.'.$input['docName']);
         if($translatedFileName !== 'exportExcelFile.'.$input['docName']) {
             $fileName = $translatedFileName;
-        } 
+        }
+
 
 
         $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {
-             return $this->sendError('Unable to export excel');
+            return $this->sendError('Unable to export excel');
         }
         else
         {
-             return $this->sendResponse($basePath, trans('custom.success_export'));
+            return $this->sendResponse($basePath, trans('custom.success_export'));
         }
-        
+
 
 
     }

@@ -135,6 +135,10 @@ class APIController extends Controller
      */
     public function handleRequest(Request $request): array
     {
+
+        if ($request->input('request') === GET_TENDERS) {
+            ini_set('memory_limit', config('app.report_max_memory_limit'));
+        }
         switch ($request->input('request')) {
             case GET_CURRENCIES:
                 return $this->SRMService->getCurrencies();
