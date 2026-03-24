@@ -4938,4 +4938,82 @@ class BudgetMasterAPIController extends AppBaseController
 
         return $this->sendResponse($budgetMaster->toArray(), trans('custom.budget_amend_successfully'));
     }
+
+    public function budgetAmend(Request $request)
+    {
+        $input = $request->all();
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
+        $budgetMasterID = $input['budgetMasterID'];
+        $referBackComments = trim((string)($input['referBackComments'] ?? ''));
+
+        if ($referBackComments === '') {
+            return $this->sendError(trans('custom.comment_is_required'));
+        }
+
+        $budgetMaster = BudgetMaster::find($budgetMasterID);
+        if (empty($budgetMaster)) {
+            return $this->sendError(trans('custom.budget_not_found'));
+        }
+
+
+        if ($this->isBudgetGeneratedFromPlanning((int)$budgetMasterID)) {
+            return $this->sendError(trans('custom.selected_budget_upload_generated_through_budget_planning_cannot_be_amended'));
+        }
+
+        if (!$this->isBudgetFinancialPeriodActive($budgetMaster)) {
+            return $this->sendError(trans('custom.selected_financial_period_is_inactive'));
+        }
+
+        if ($this->hasBudgetConsumptionOrCommitment($budgetMaster)) {
+            return $this->sendError(trans('custom.consumed_budget_cannot_be_amended'));
+        }
+
+        $budgetMasterArray = $budgetMaster->toArray();
+
+        $storePOMasterHistory = BudgetMasterRefferedHistory::insert($budgetMasterArray);
+
+
+        Budjetdetails::where('budgetmasterID', $budgetMasterID)->chunk(500, function($budgetDetails) use ($budgetMaster) {
+            foreach ($budgetDetails as $budgetDetail){
+                $budgetDetail['timesReferred'] = $budgetMaster->timesReferred;
+                $budgetDetail = $budgetDetail->toArray();
+                BudgetDetailsRefferedHistory::insert($budgetDetail);
+            }
+        });
+
+        $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $budgetMasterID)
+            ->where('companySystemID', $budgetMaster->companySystemID)
+            ->where('documentSystemID', $budgetMaster->documentSystemID)
+            ->get();
+
+        if (!empty($fetchDocumentApproved)) {
+            foreach ($fetchDocumentApproved as $DocumentApproved) {
+                $DocumentApproved['refTimes'] = $budgetMaster->timesReferred;
+            }
+        }
+
+        $DocumentApprovedArray = $fetchDocumentApproved->toArray();
+
+        $storeDocumentReferedHistory = DocumentReferedHistory::insert($DocumentApprovedArray);
+
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $budgetMasterID)
+            ->where('companySystemID', $budgetMaster->companySystemID)
+            ->where('documentSystemID', $budgetMaster->documentSystemID)
+            ->delete();
+
+        if ($deleteApproval) {
+            $budgetMaster->refferedBackYN = 0;
+            $budgetMaster->confirmedYN = 0;
+            $budgetMaster->confirmedByEmpSystemID = null;
+            $budgetMaster->confirmedByEmpID = null;
+            $budgetMaster->confirmedDate = null;
+            $budgetMaster->RollLevForApp_curr = 1;
+            $budgetMaster->save();
+
+            AuditTrial::createAuditTrial($budgetMaster->documentSystemID, $budgetMasterID, $referBackComments, 'Referred Back');
+        }
+
+        return $this->sendResponse($budgetMaster->toArray(), trans('custom.budget_amend_successfully'));
+    }
 }
