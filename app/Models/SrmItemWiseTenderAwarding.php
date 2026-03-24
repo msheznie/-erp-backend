@@ -183,5 +183,12 @@ class SrmItemWiseTenderAwarding extends Model
             ->where('award', 1)
             ->get();
     }
+
+    public static function hasAwardedItemsForTender(int $tenderId): bool
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('is_awarded', 1)
+            ->exists();
+    }
     
 }
