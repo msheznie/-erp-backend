@@ -1403,7 +1403,8 @@ class GRVMasterAPIController extends AppBaseController
             'serviceline.ServiceLineDes as serviceLineDescription',
             'warehousemaster.wareHouseDescription as wareHouseSet',
             DB::raw('COALESCE(grvtypes_languages.des, erp_grvtpes.des) as des')
-        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
+        )->join('approvalgroups', 'erp_documentapproved.approvalGroupID', '=', 'approvalgroups.rightsGroupId')
+            ->leftJoin('employeesdepartments', function ($query) use ($companyID, $empID, $serviceLinePolicy) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
@@ -1433,7 +1434,21 @@ class GRVMasterAPIController extends AppBaseController
             })
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.documentSystemID', 3)
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->where(function ($query) use ($empID) {
+                $query->where(function ($subQuery) {
+                    // Normal approval groups: current user exists in employeesdepartments and group is not RM.
+                    $subQuery->whereNotNull('employeesdepartments.employeeSystemID')
+                        ->where(function ($q) {
+                            $q->whereNull('approvalgroups.isReportingManager')
+                                ->orWhere('approvalgroups.isReportingManager', '!=', 1);
+                        });
+                })->orWhere(function ($subQuery) use ($empID) {
+                    // Reporting Manager groups: include docs confirmed by this RM.
+                    $subQuery->where('approvalgroups.isReportingManager', 1)
+                        ->where('erp_documentapproved.docConfirmedByEmpSystemID', $empID);
+                });
+            });
 
         $search = $request->input('search.value');
 
