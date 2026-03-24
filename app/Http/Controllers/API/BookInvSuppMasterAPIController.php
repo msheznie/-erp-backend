@@ -2381,6 +2381,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'directdetail' => function ($query) {
             $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
+            $query->with('grvmaster');
         }, 'item_details' => function ($query) {
             $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
