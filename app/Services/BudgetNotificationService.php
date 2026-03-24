@@ -369,7 +369,6 @@ class BudgetNotificationService
             }
         }
 
-
         if (!empty($emails)) {
             Email::sendEmail($emails);
         }
@@ -421,6 +420,7 @@ class BudgetNotificationService
         );
 
         Email::sendEmail($emails);
+        
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -723,5 +723,4 @@ class BudgetNotificationService
         Email::sendEmail($emails);
         
    }
-
 }
