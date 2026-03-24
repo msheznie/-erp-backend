@@ -106,6 +106,8 @@ Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMaste
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");
 Route::post('approveTender', 'TenderMasterAPIController@approveTender')->name("Approve tender");
 Route::post('rejectTender', 'TenderMasterAPIController@rejectTender')->name("Reject tender");
+Route::post('createTenderCancellation', 'TenderMasterAPIController@createTenderCancellation')->name("Create tender cancellation");
+Route::post('getTenderCancellationStatus', 'TenderMasterAPIController@getTenderCancellationStatus')->name("Get tender cancellation status");
 Route::post('deletePreTender', 'TenderBidClarificationsAPIController@deletePreTender')->name("Delete pre tender");
 Route::post('getPreBidEditData', 'TenderBidClarificationsAPIController@getPreBidEditData')->name("Get pre bid edit data");
 Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid')->name("Update pre bid");
