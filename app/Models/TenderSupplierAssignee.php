@@ -163,4 +163,14 @@ class TenderSupplierAssignee extends Model
             ->where('company_id', $companyId)
             ->where('tender_master_id', $tenderMasterId);
     }
+
+    public static function getCancellationNotificationSuppliers(int $tenderId, int $companyId)
+    {
+        return self::where('tender_master_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->select('supplier_email', 'registration_link_id')
+            ->get()
+            ->unique('registration_link_id')
+            ->values();
+    }
 }

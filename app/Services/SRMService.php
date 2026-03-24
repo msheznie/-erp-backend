@@ -1687,7 +1687,7 @@ class SRMService
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
                 'site_visit_date', 'description_sec_lang', 'title_sec_lang', 'document_type', 'tender_document_fee',
-                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang', 'company_id')
+                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang', 'company_id', 'cancelled_yn')
                 ->with([
                     'currency:currencyID,CurrencyName',
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
@@ -1711,7 +1711,8 @@ class SRMService
                     }
                 ])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);
-                })->whereIn('id', $tenderMasterId)->where('published_yn', 1)->where('final_tender_awarded', 0);
+                })->whereIn('id', $tenderMasterId)->where('published_yn', 1)->where('final_tender_awarded', 0)
+                ->where('cancelled_yn', 0);
         } else if ($request->input('extra.tender_status') == 2) {
 
             $negotiatedTenders = TenderNegotiation::select('srm_tender_master_id')
@@ -1724,7 +1725,7 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date', 'document_type',
-                'tender_document_fee', 'negotiation_code', 'company_id')
+                'tender_document_fee', 'negotiation_code', 'company_id', 'cancelled_yn')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName', 'DecimalPlaces');
@@ -1764,7 +1765,8 @@ class SRMService
                 })
                 ->whereNotIn('id', $negotiatedTenders)
                 ->where('published_yn', 1)
-                ->where('final_tender_awarded', 0);
+                ->where('final_tender_awarded', 0)
+                ->where('cancelled_yn', 0);
 
         } else if ($request->input('extra.tender_status') == 3) {
 
@@ -1774,7 +1776,7 @@ class SRMService
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date',
                 'negotiation_code', 'document_type', 'tender_document_fee', 'company_id', 'evaluation_type_id',
-                'show_award_detail', 'award_visibility_type')
+                'show_award_detail', 'award_visibility_type', 'cancelled_yn')
                 ->with([
                     'currency' => function ($q){
                         $q->select('currencyID', 'CurrencyName');
@@ -1835,7 +1837,8 @@ class SRMService
                         ->orWhere(function ($query) {
                             $query->where('negotiation_is_awarded', 1)
                                 ->where('final_tender_awarded', 1);
-                        });
+                        })
+                        ->orWhere('cancelled_yn', 1);
                 })->where('published_yn', 1)
                 ->whereHas('srmTenderMasterSuppliers', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);

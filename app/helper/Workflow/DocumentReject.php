@@ -343,6 +343,13 @@ class DocumentReject
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                     break;
+                case 134:
+                    $docInforArr["tableName"] = 'srm_tender_cancellation';
+                    $docInforArr["modelName"] = 'TenderCancellation';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                    break;
                 case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
@@ -489,7 +496,7 @@ class DocumentReject
                             ]);
                         }
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117, 119, 127, 132])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108,113,134,69,117,119,127,132])) {
                             if ($input["documentSystemID"] == 132) {
                                 $timesReferredUpdate = $namespacedModel::withoutGlobalScope('final_level')->find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                                 $refferedBackYNUpdate = $namespacedModel::withoutGlobalScope('final_level')->find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
@@ -735,7 +742,7 @@ class DocumentReject
                     }
                     DB::commit();
 
-                    $rejectedMsg = ($input["documentSystemID"] == 108 || $input["documentSystemID"] == 113) ? trans('custom.referred_back') : trans('custom.rejected');
+                    $rejectedMsg = in_array($input["documentSystemID"], [108, 113, 134]) ? trans('custom.referred_back') : trans('custom.rejected');
                     return ['success' => true, 'message' => trans('custom.document_successfully') . ' ' . $rejectedMsg];
 
                 } else {

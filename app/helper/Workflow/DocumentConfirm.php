@@ -649,6 +649,17 @@ class DocumentConfirm
                     $docInforArr["modelName"] = 'CompanyBudgetPlanning';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 134: // SRM Tender/RFX Cancellation
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_cancellation';
+                    $docInforArr["modelName"] = 'TenderCancellation';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
@@ -1060,7 +1071,7 @@ class DocumentConfirm
 
                                        
 
-                                            $documentValues = [107,108,113,117,118]; // srm related documents.
+                                            $documentValues = [107,108,113,117,118,134]; // srm related documents.
                                             $redirectUrl = (in_array($params["document"], $documentValues)) ? Helper::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : Helper::checkDomai();
 
                                             $body = '<p>' . trans('email.is_pending_approval', ['attribute' => $approvedDocNameBody]) . '. <br><br>';
@@ -1071,10 +1082,16 @@ class DocumentConfirm
                                                 $body .= $ammendText;
                                             }
 
-                                            if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
+                                            if (in_array($document->documentSystemID, [108, 113, 134])) {
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                                $body .= '<p>' . trans('email.tender_title', ['type' => $type[$params["document_type"]], 'title' => $params["tender_title"]]) . '</p>';
-                                                $body .= '<p>' . trans('email.tender_description', ['type' => $type[$params["document_type"]], 'description' => $params["tender_description"]]) . '</p>';
+                                                if ($document->documentSystemID == 134) {
+                                                    $body .= '<p><b>Cancellation request:</b> ' . ($params["tender_title"] ?? '') . '</p>';
+                                                    $body .= '<p><b>Internal Comment:</b> ' . ($params["internal_comment"] ?? '-') . '</p>';
+                                                    $body .= '<p><b>Supplier Comment:</b> ' . ($params["external_comment"] ?? '-') . '</p>';
+                                                } else {
+                                                    $body .= '<p>' . trans('email.tender_title', ['type' => $type[$params["document_type"]], 'title' => $params["tender_title"]]) . '</p>';
+                                                    $body .= '<p>' . trans('email.tender_description', ['type' => $type[$params["document_type"]], 'description' => $params["tender_description"]]) . '</p>';
+                                                }
                                             }
 
                                             $body .= '<a href="' . $redirectUrl . '">' . trans('email.click_here_to_approve') . '</a></p>';
@@ -1083,9 +1100,12 @@ class DocumentConfirm
                                                 $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => '"' . $documentApproved->suppliername->name . '"']);
                                             }
 
-                                            if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            if(in_array($document->documentSystemID, [108, 113])){
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                                 $subject = trans('email.pending_approval', ['documentDescription' => $type[$params["document_type"]], 'documentCode' => $documentApproved->documentCode]);
+                                            }
+                                            if ($document->documentSystemID == 134) {
+                                                $subject = trans('email.pending_approval', ['documentDescription' => 'Cancellation', 'documentCode' => $documentApproved->documentCode]);
                                             }
 
                                             $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";

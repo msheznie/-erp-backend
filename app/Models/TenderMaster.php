@@ -280,6 +280,10 @@ class TenderMaster extends Model
         'RollLevForApp_curr',
         'approved_by_emp_name',
         'published_yn',
+        'cancelled_yn',
+        'cancelled_by',
+        'cancelled_by_emp_name',
+        'cancelled_date',
         'stage',
         'no_of_alternative_solutions',
         'commercial_weightage',
@@ -386,6 +390,10 @@ class TenderMaster extends Model
         'RollLevForApp_curr' => 'integer',
         'approved_by_emp_name' => 'string',
         'published_yn' => 'integer',
+        'cancelled_yn' => 'integer',
+        'cancelled_by' => 'integer',
+        'cancelled_by_emp_name' => 'string',
+        'cancelled_date' => 'datetime',
         'stage' => 'integer',
         'no_of_alternative_solutions' => 'integer',
         'commercial_weightage' => 'integer',
@@ -465,6 +473,21 @@ class TenderMaster extends Model
     public function tenderSupplierAssignee()
     {
         return $this->hasMany('App\Models\TenderSupplierAssignee', 'tender_master_id', 'id');
+    }
+
+    public function itemWiseAwardings()
+    {
+        return $this->hasMany(SrmItemWiseTenderAwarding::class, 'tender_id', 'id');
+    }
+
+    public function tenderCancellation()
+    {
+        return $this->hasMany(TenderCancellation::class, 'tender_id', 'id');
+    }
+
+    public function tenderCancellationLatest()
+    {
+        return $this->hasOne(TenderCancellation::class, 'tender_id', 'id')->latest('id');
     }
 
     public function srm_bid_submission_master()
@@ -695,6 +718,7 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\SrmTenderAwardingMember', 'tender_id', 'id');
     }
+
     public static function getTenderDidOpeningDates($tenderId, $companyId)
     {
         return TenderMaster::select('id','stage', 'bid_opening_date',
@@ -804,6 +828,9 @@ class TenderMaster extends Model
             'procument_activity',
             'confirmed_by' => function ($q) {
                 $q->select('employeeSystemID', 'empName');
+            },
+            'tenderCancellationLatest' => function ($q) {
+                $q->select('id', 'tender_id', 'confirmed_yn', 'approved', 'refferedBackYN');
             },
             'approvedRejectStatus' => function($q) use ($company_id , $isTender){
                 $q->select('documentSystemCode','status')
@@ -1103,5 +1130,75 @@ class TenderMaster extends Model
             'tender_id',
             'id'
         )->where('module', 9);
+    }
+
+    public static function getByIdAndCompany(int $tenderId, int $companyId): ?self
+    {
+        return self::where('id', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+    }
+
+    public function markAsCancelled(int $employeeSystemID, string $employeeName): bool
+    {
+        return $this->update([
+            'cancelled_yn' => 1,
+            'cancelled_by' => $employeeSystemID,
+            'cancelled_by_emp_name' => $employeeName,
+            'cancelled_date' => now(),
+        ]);
+    }
+    public static function getPendingCancellationApprovalListQuery(int $companyId, int $empId, bool $rfx = false)
+    {
+        return DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'erp_documentapproved.documentSystemID as document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.approvedComments',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            DB::raw('1 as is_cancellation'),
+            'srm_tender_cancellation.internal_comment',
+            'srm_tender_cancellation.external_comment'
+        )->join('employeesdepartments', function ($query) use ($companyId, $empId) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID', 134)
+                ->where('employeesdepartments.companySystemID', $companyId)
+                ->where('employeesdepartments.employeeSystemID', $empId)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('srm_tender_cancellation', function ($query) use ($companyId) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'srm_tender_cancellation.id')
+                ->where('srm_tender_cancellation.company_id', $companyId)
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'srm_tender_cancellation.RollLevForApp_curr')
+                ->where('srm_tender_cancellation.approved', 0)
+                ->where('srm_tender_cancellation.confirmed_yn', 1);
+        })->join('srm_tender_master', function ($query) use ($companyId, $rfx) {
+            $query->on('srm_tender_cancellation.tender_id', '=', 'srm_tender_master.id')
+                ->where('srm_tender_master.company_id', $companyId);
+            if ($rfx) {
+                $query->where('srm_tender_master.document_type', '!=', 0);
+            } else {
+                $query->where('srm_tender_master.document_type', 0);
+            }
+        })->join('currencymaster', 'srm_tender_master.currency_id', '=', 'currencyID')
+            ->join('employees', 'srm_tender_master.created_by', '=', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 134)
+            ->where('erp_documentapproved.companySystemID', $companyId);
     }
 }

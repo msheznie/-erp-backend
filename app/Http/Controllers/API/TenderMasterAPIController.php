@@ -18,6 +18,8 @@ use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendScheduleWiseLoiLoaEmailRequest;
 use App\Http\Requests\UpdateTenderRequest;
+use App\Http\Requests\CreateTenderCancellationRequest;
+use App\Http\Requests\GetTenderCancellationStatusRequest;
 use App\Models\BankAccount;
 use App\Models\BankMaster;
 use App\Models\CalendarDates;
@@ -64,6 +66,7 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
+use App\Models\TenderCancellation;
 use App\Models\TenderNegotiationArea;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderPurchaseRequest;
@@ -480,7 +483,12 @@ class TenderMasterAPIController extends AppBaseController
         }, 'tenderSupplierAssignee' => function ($q) use ($companyId) {
             $q->where('mail_sent',0)
             ->where('company_id', $companyId);
+        }, 'tenderCancellationLatest' => function ($q) {
+            $q->select('id', 'tender_id', 'approved', 'confirmed_yn', 'refferedBackYN', 'timesReferred');
         } ])->where('company_id', $companyId);
+        $tenderMaster->withCount(['itemWiseAwardings as item_wise_awarded_count' => function ($q) {
+            $q->where('is_awarded', 1);
+        }]);
 
         $filters = $this->getFilterData($input);
 
@@ -1846,7 +1854,7 @@ class TenderMasterAPIController extends AppBaseController
         $poMasters = DB::table('erp_documentapproved')->select(
             'srm_tender_master.id',
             'srm_tender_master.tender_code',
-            'srm_tender_master.document_system_id',
+            'erp_documentapproved.documentSystemID as document_system_id',
             'srm_tender_master.title',
             'srm_tender_master.description',
             'srm_tender_master.estimated_value',
@@ -1854,6 +1862,7 @@ class TenderMasterAPIController extends AppBaseController
             'srm_tender_master.bid_submission_closing_date',
             'srm_tender_master.created_at',
             'srm_tender_master.confirmed_date',
+            DB::raw('NULL as approvedComments'),
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
@@ -1902,6 +1911,14 @@ class TenderMasterAPIController extends AppBaseController
         }
 
 
+        $poMasters->addSelect(DB::raw('0 as is_cancellation'));
+        $poMasters->addSelect(DB::raw('NULL as internal_comment'));
+        $poMasters->addSelect(DB::raw('NULL as external_comment'));
+
+        $cancelMasters = TenderMaster::getPendingCancellationApprovalListQuery((int) $companyID, (int) $empID, (bool) $rfx);
+
+        $poMasters = $poMasters->unionAll($cancelMasters);
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -1943,6 +1960,12 @@ class TenderMasterAPIController extends AppBaseController
 
             return $this->sendError($approve["message"]);
         } else {
+            if ((int) $request->input('documentSystemID') === 134) {
+                $finalize = $this->tenderMasterRepository->finalizeTenderCancellationIfApproved((int) $request->input('documentSystemCode'));
+                if (!$finalize['success']) {
+                    return $this->sendError($finalize['message'], $finalize['code'] ?? 500);
+                }
+            }
 
             return $this->sendResponse(array(), $approve["message"]);
         }
@@ -1962,6 +1985,29 @@ class TenderMasterAPIController extends AppBaseController
             }
             return $this->sendResponse(array(), $reject["message"]);
         }
+    }
+
+    public function createTenderCancellation(CreateTenderCancellationRequest $request)
+    {
+        try {
+            $input = $request->all();
+            $input['company_id'] = (int) ($input['company_id'] ?? $request->input('companySystemID'));
+            $response = $this->tenderMasterRepository->createTenderCancellationRequest($input);
+            if (!$response['success']) {
+                return $this->sendError($response['message'], $response['code'] ?? 422);
+            }
+            return $this->sendResponse([], $response['message']);
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage(), 500);
+        }
+    }
+
+    public function getTenderCancellationStatus(GetTenderCancellationStatusRequest $request)
+    {
+        $tenderId = (int) $request->input('tender_id');
+        $companyId = (int) $request->input('company_id');
+        $data = $this->tenderMasterRepository->getCancellationStatus($tenderId, $companyId);
+        return $this->sendResponse($data, 'Success');
     }
 
     public function getTenderMasterFullApproved(Request $request)
@@ -1984,7 +2030,7 @@ class TenderMasterAPIController extends AppBaseController
         $poMasters = DB::table('erp_documentapproved')->select(
             'srm_tender_master.id',
             'srm_tender_master.tender_code',
-            'srm_tender_master.document_system_id',
+            'erp_documentapproved.documentSystemID as document_system_id',
             'srm_tender_master.title',
             'srm_tender_master.description',
             'srm_tender_master.estimated_value',
@@ -2603,7 +2649,8 @@ class TenderMasterAPIController extends AppBaseController
                         $q1->where('emp_id', $userId);
                     });
             })
-            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('company_id', $companyId);
+            ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('company_id', $companyId)
+            ->where('cancelled_yn', 0);
 
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3073,6 +3120,7 @@ class TenderMasterAPIController extends AppBaseController
             ])
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('company_id', $companyId)
+            ->where('cancelled_yn', 0)
             ->where(function ($query) use ($userId) {
                 $query->whereHas('tenderUserAccess', function ($q) use ($userId) {
                     $q->where('user_id', $userId)
@@ -3276,6 +3324,7 @@ class TenderMasterAPIController extends AppBaseController
             ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
             ->where('company_id', $companyId)
+            ->where('cancelled_yn', 0)
             ->where('technical_eval_status', 1);
 
         if($isNegotiation == 1){
@@ -3788,6 +3837,10 @@ class TenderMasterAPIController extends AppBaseController
 
     public function confirmCommBidLineItem(Request $request)
     {
+        $guard = $this->tenderMasterRepository->ensureTenderNotCancelled((int) $request['tenderMasterId']);
+        if (!$guard['success']) {
+            return $this->sendError($guard['message'], $guard['code'] ?? 422);
+        }
 
 
         DB::beginTransaction();
@@ -3953,9 +4006,14 @@ class TenderMasterAPIController extends AppBaseController
 
     public function confirmFinalCommercial(Request $request)
     {
+        $inputs = $request['extraParams'];
+        $guard = $this->tenderMasterRepository->ensureTenderNotCancelled((int) ($inputs['tenderMasterId'] ?? 0));
+        if (!$guard['success']) {
+            return $this->sendError($guard['message'], $guard['code'] ?? 422);
+        }
+
         DB::beginTransaction();
         try {
-            $inputs = $request['extraParams'];
             $tenderId = $inputs['tenderMasterId'];
             $isNegotiation = $inputs['isNegotiation'];
             $selected_suppliers = $inputs['suppliers'];
@@ -4131,7 +4189,9 @@ class TenderMasterAPIController extends AppBaseController
                     $po->select('purchaseOrderID', 'purchaseOrderCode');
                 }]);
             }])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where('company_id', $companyId)->where(function ($query) {
+            ->where('is_awarded', 1)->where('company_id', $companyId)
+            ->where('cancelled_yn', 0)
+            ->where(function ($query) {
                 $query->where('negotiation_published', 0)
                     ->orWhere('is_negotiation_closed', 1);
             });
@@ -4572,6 +4632,11 @@ class TenderMasterAPIController extends AppBaseController
      */
     public function awardItemWiseSupplier(Request $request)
     {
+        $guard = $this->tenderMasterRepository->ensureTenderNotCancelled((int) $request->input('tender_id'));
+        if (!$guard['success']) {
+            return $this->sendError($guard['message'], $guard['code'] ?? 422);
+        }
+
         $validator = Validator::make($request->all(), [
             'tender_id' => 'required|integer|min:1',
             'supplier_id' => 'required|integer|min:1',
@@ -4627,6 +4692,11 @@ class TenderMasterAPIController extends AppBaseController
      */
     public function markSupplierItemWiseAwarded(Request $request)
     {
+        $guard = $this->tenderMasterRepository->ensureTenderNotCancelled((int) $request->input('tender_id'));
+        if (!$guard['success']) {
+            return $this->sendError($guard['message'], $guard['code'] ?? 422);
+        }
+
         $validator = Validator::make($request->all(), [
             'tender_id' => 'required|integer|min:1',
             'supplier_id' => 'required|integer|min:1',
@@ -5823,6 +5893,9 @@ class TenderMasterAPIController extends AppBaseController
             ->get();
 
         $data['modifyRequestList'] = DocumentModifyRequest::getModificationRequestList($input['id']);
+        $companyId = (int) optional($data['tenderMaster'])->company_id;
+        $data['cancellationHistory'] = TenderCancellation::getCancellationHistory((int) $id, $companyId);
+        $data['cancellationApprovalHistory'] = TenderCancellation::getCancellationApprovalHistoryByTender((int) $id, $companyId);
 
         if (empty($data['tenderMaster'])) {
             return $this->sendError('Tender Master not found');
