@@ -570,25 +570,26 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $hasEvaluationComment = (bool)($currentRoundRow && ($currentRoundRow->comment !== null && $currentRoundRow->comment !== ''));
             $getEvaluationData = $currentRoundRow ? ['comment' => $currentRoundRow->comment ?? ''] : null;
 
-            if ($currentRoundRow && $currentRoundRow->attachment) {
+            if ($currentRoundRow) {
                 $getFileDetails = [
-                    'originalFileName' => $currentRoundRow->attachment->originalFileName,
-                    'attachmentID' => $currentRoundRow->attachment->attachmentID,
-                    'attachmentDescription' => $currentRoundRow->attachment->attachmentDescription,
+                    'originalFileName' => $currentRoundRow->attachment->originalFileName ?? '-',
+                    'attachmentID' => $currentRoundRow->attachment->attachmentID ?? null,
+                    'attachmentDescription' => $currentRoundRow->attachment->attachmentDescription ?? '-',
                 ];
             }
 
             $original = SRMTenderTechnicalEvaluationAttachment::getOriginalTenderData($tenderId, $companyId);
+            $originalAttachment = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
 
-            if ($original) {
-                $originalAttachment = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
-
+            if ($original || $originalAttachment) {
                 $evaluationHistory[] = [
                     'scope' => 'original',
                     'round_no' => 0,
                     'comment' => $original->comment ?? '',
                     'user_name' => $original->created_user->empName ?? '-',
-                    'commented_at' => $original->updated_at ?? $original->created_at,
+                    'commented_at' => optional($original)->updated_at 
+                        ?? optional($original)->created_at 
+                        ?? '-',
                     'attachment_description' => $originalAttachment->attachmentDescription ?? '-',
                     'attachment_id' => $originalAttachment->attachmentID ?? null,
                     'original_file_name' => $originalAttachment->originalFileName ?? null,
