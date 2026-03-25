@@ -4169,6 +4169,7 @@ WHERE
         LEFT JOIN erp_accountsreceivableledger ar ON ar.arAutoID  = ec2.arAutoID
         WHERE
             ec.creditNoteAutoID IS NOT NULL
+            AND IFNULL(ec.canceledYN, 0) <> -1
             AND em.matchingConfirmedYN = 1
             AND ec2.companySystemID IN (' . join(',', $companyID) . ')
             AND DATE(em.matchingDocdate)  <= "' . $asOfDate . '"
@@ -5161,6 +5162,7 @@ WHERE
     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $customerSystemID) . ')
     AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
+    AND NOT (erp_generalledger.documentSystemID = "19" AND IFNULL(erp_creditnote.canceledYN, 0) = -1)
 UNION ALL
     SELECT
     erp_generalledger.companySystemID,
