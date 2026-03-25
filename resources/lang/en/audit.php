@@ -127,5 +127,10 @@ return [
     // Employee Navigation Assign Audit Log Narrations
     'employee_has_been_assigned_to_user_group' => 'Employee {variable} has been assigned to user group',
     'employee_has_been_unassigned_from_user_group' => 'Employee {variable} has been unassigned from user group',
+
+    // Document Communication (messages/comments)
+    'document_communication_comment_added' => 'Document communication comment has been added',
+    'document_communication_comment_edited' => 'Document communication comment has been edited',
+    'document_communication_comment_deleted' => 'Document communication comment has been deleted',
 ];
 

@@ -71,14 +71,6 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
                 Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany')->name("Get suppliers by company");
 
-                // Document Communication
-                Route::get('document-communications/threads', 'DocumentCommunicationAPIController@thread')->name("Document communication thread");
-                Route::get('document-communications/messages', 'DocumentCommunicationAPIController@messages')->name("Document communication messages");
-                Route::post('document-communications/messages', 'DocumentCommunicationAPIController@storeMessage')->name("Document communication add message");
-                Route::post('document-communications/messages/reply', 'DocumentCommunicationAPIController@replyMessage')->name("Document communication add reply");
-                Route::put('document-communications/messages/{id}', 'DocumentCommunicationAPIController@updateMessage')->name("Document communication update");
-                Route::delete('document-communications/messages/{id}', 'DocumentCommunicationAPIController@deleteMessage')->name("Document communication delete");
-
                 Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
                 Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
 

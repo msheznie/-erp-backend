@@ -235,7 +235,7 @@ class DocumentCommunicationService
     {
         $db = $input['db'] ?? '';
         $uuid = $input['tenant_uuid'] ?? 'local';
-        $narration = "Document Communication: comment " . ($crudType === 'C' ? 'added' : ($crudType === 'U' ? 'edited' : 'deleted'));
+        $narration = (int)$message->documentSystemCode;
         $newValue = $message->toArray();
         $this->auditLog(
             $db,
