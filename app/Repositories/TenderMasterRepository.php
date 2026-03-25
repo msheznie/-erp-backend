@@ -76,6 +76,7 @@ use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderDocumentTypeAssignLog;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderMaster;
+use App\Models\TenderCancellation;
 use App\Models\TenderMasterSupplier;
 use App\Models\TenderNegotiation;
 use App\Models\TenderProcurementCategory;
@@ -91,6 +92,7 @@ use App\Services\GeneralService;
 use App\Services\SRMService;
 use App\Services\TenderItemWiseAwardingService;
 use App\Services\TenderConfirmationService;
+use App\Services\TenderCancellationService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
@@ -160,12 +162,15 @@ class TenderMasterRepository extends BaseRepository
     ];
 
     protected $srmDocumentModifyService;
+    protected $tenderCancellationService;
     public function __construct(
         Application $app,
-        SrmDocumentModifyService $srmDocumentModifyService
+        SrmDocumentModifyService $srmDocumentModifyService,
+        TenderCancellationService $tenderCancellationService
     ){
         parent::__construct($app);
         $this->srmDocumentModifyService = $srmDocumentModifyService;
+        $this->tenderCancellationService = $tenderCancellationService;
     }
 
     /**
@@ -2929,6 +2934,11 @@ class TenderMasterRepository extends BaseRepository
             'RollLevForApp_curr' => 1,
             'approved_by_emp_name' => null,
 
+            'cancelled_yn' => 0,
+            'cancelled_by' => null,
+            'cancelled_by_emp_name' => null,
+            'cancelled_date' => null,
+
             'doc_verifiy_by_emp' => null,
             'doc_verifiy_date' => null,
             'doc_verifiy_status' => 0,
@@ -3521,5 +3531,48 @@ class TenderMasterRepository extends BaseRepository
                 'items' => $items,
             ]
         ];
+    }
+
+    public function createTenderCancellationRequest(array $input): array
+    {
+        return $this->tenderCancellationService->createCancellationRequest($input);
+    }
+
+    public function finalizeTenderCancellationIfApproved(int $cancellationId): array
+    {
+        return $this->tenderCancellationService->finalizeIfApproved($cancellationId);
+    }
+
+    public function getCancellationStatus(int $tenderId, int $companyId): array
+    {
+        return $this->tenderCancellationService->getCancellationStatus($tenderId, $companyId);
+    }
+
+    public function ensureTenderNotCancelled(int $tenderId): array
+    {
+        if ($tenderId <= 0) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.cancellation_document_id_required'),
+                'code' => 422
+            ];
+        }
+
+        $tender = TenderMaster::select('id', 'cancelled_yn', 'document_system_id')
+            ->where('id', $tenderId)
+            ->first();
+
+        if ($tender && (int) $tender->cancelled_yn === 1) {
+            $documentType = (int) $tender->document_system_id === 113
+                ? trans('srm_tender_rfx.rfx')
+                : trans('srm_tender_rfx.tender');
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.cancellation_processing_not_allowed', ['document_type' => $documentType]),
+                'code' => 422
+            ];
+        }
+
+        return ['success' => true];
     }
 }
