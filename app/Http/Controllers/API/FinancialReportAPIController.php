@@ -7952,7 +7952,6 @@ LEFT JOIN (
         AND tax.documentSystemCode = ecn.creditNoteAutoID -- Assuming debitNoteAutoID is the correct link
 WHERE DATE(ecn.creditNoteDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND
     ecn.companySystemID IN (' . join(',', $companyID) . ')
-AND IFNULL(ecn.canceledYN, 0) <> -1
 AND ecn.approved = - 1 AND taxTotalAmount > 0' ;
 
             $query .= $groupby;
@@ -12738,8 +12737,7 @@ GROUP BY
                         WHERE bookingInvCodeSystem = $bookingInvCodeSystem
                         AND erp_customerreceivepayment.confirmedYN = 1
                         AND erp_customerreceivepayment.approved = -1
-                        AND erp_custreceivepaymentdet.addedDocumentID = 'INV'
-                        AND (erp_creditnote.creditNoteAutoID IS NULL OR IFNULL(erp_creditnote.canceledYN, 0) <> -1)";
+                        AND erp_custreceivepaymentdet.addedDocumentID = 'INV'";
 
                 $output = \DB::select($query);
 
