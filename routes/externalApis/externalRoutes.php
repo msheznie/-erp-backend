@@ -60,7 +60,5 @@ Route::prefix('integrations')->group(function () {
     Route::post('users/search', 'UserAPIController@pullUserDetails');
     Route::post('banks/search', 'BankMasterAPIController@pullBankMaster');
     Route::post('chart-of-accounts/search', 'ChartOfAccountAPIController@pullChartOfAccounts');
-
-    // POS shift sync (new standardised flow)
     Route::post('pos/shifts', 'POS\PosSyncAPIController@syncShift');
 });

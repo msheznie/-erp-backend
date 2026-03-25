@@ -118,6 +118,7 @@ class POSSOURCEPaymentGlConfigDetail extends Model
 {
     public $table = 'pos_source_paymentglconfigdetail';
 
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
 
     const UPDATED_AT = 'modifiedDateTime';

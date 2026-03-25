@@ -176,6 +176,7 @@ use Eloquent as Model;
 class POSSOURCETaxMaster extends Model
 {
     public $table = 'pos_source_taxmaster';
+    public $timestamps = false;
 
     const CREATED_AT = 'created_at';
 

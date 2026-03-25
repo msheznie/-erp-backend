@@ -70,6 +70,7 @@ use Eloquent as Model;
 class POSSourcePaymentGlConfig extends Model
 {
     public $table = 'pos_source_paymentglconfigmaster';
+    public $timestamps = false;
 
     const CREATED_AT = 'created_at';
 

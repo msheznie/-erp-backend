@@ -316,7 +316,7 @@ use Eloquent as Model;
 class POSSourceSalesReturnDetails extends Model
 {
     public $table = 'pos_source_salesreturndetails';
-
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
 
     const UPDATED_AT = 'updated_at';

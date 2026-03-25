@@ -315,7 +315,7 @@ use Eloquent as Model;
 class POSSOURCEShiftDetails extends Model
 {
     public $table = 'pos_source_shiftdetails';
-
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
 
     const UPDATED_AT = 'updated_at';
