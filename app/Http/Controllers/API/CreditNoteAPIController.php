@@ -386,6 +386,10 @@ class CreditNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.credit_note_not_found'), 500);
         }
 
+        if (($creditNote->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.credit_note_is_cancelled_cannot_update'), 500);
+        }
+
         if(empty($input['projectID'])){
             $input['projectID'] = null;
         }
@@ -1295,6 +1299,61 @@ class CreditNoteAPIController extends AppBaseController
 
     }
 
+    public function creditNoteCancel(Request $request)
+    {
+        $input = $request->all();
+        $creditNoteAutoID = $input['creditNoteAutoID'] ?? null;
+        if (empty($creditNoteAutoID)) {
+            return $this->sendError(trans('custom.credit_note_not_found'));
+        }
+
+        $cancelComments = isset($input['cancelComments']) ? trim($input['cancelComments']) : '';
+        if ($cancelComments === '') {
+            return $this->sendError(trans('custom.credit_note_cancel_comment_required'));
+        }
+
+        $creditNote = CreditNote::find($creditNoteAutoID);
+        if (empty($creditNote)) {
+            return $this->sendError(trans('custom.credit_note_not_found'));
+        }
+
+        if ($creditNote->confirmedYN == 1) {
+            return $this->sendError(trans('custom.you_cannot_cancel_this_credit_note_confirmed'));
+        }
+
+        if ($creditNote->approved == -1) {
+            return $this->sendError(trans('custom.you_cannot_cancel_this_credit_note_approved'));
+        }
+
+        if (($creditNote->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.you_cannot_cancel_this_credit_note_already_cancelled'));
+        }
+
+        $detailCount = CreditNoteDetails::where('creditNoteAutoID', $creditNoteAutoID)->count();
+        if ($detailCount > 0) {
+            return $this->sendError(trans('custom.you_cannot_cancel_this_credit_note_has_details_or_receipts'));
+        }
+
+        $receiptCount = CreditNoteReceipt::where('creditNoteAutoID', $creditNoteAutoID)->count();
+        if ($receiptCount > 0) {
+            return $this->sendError(trans('custom.you_cannot_cancel_this_credit_note_has_details_or_receipts'));
+        }
+
+        $employee = Helper::getEmployeeInfo();
+
+        $creditNote->canceledYN = -1;
+        $creditNote->canceledComments = $cancelComments;
+        $creditNote->canceledDateTime = now();
+        $creditNote->canceledByEmpSystemID = Helper::getEmployeeSystemID();
+        $creditNote->canceledByEmpID = $employee->empID;
+        $creditNote->canceledByEmpName = $employee->empFullName;
+        $creditNote->save();
+
+        AuditTrial::createAuditTrial($creditNote->documentSystemiD, $creditNoteAutoID, $cancelComments, 'Cancelled');
+
+        return $this->sendResponse($creditNote->toArray(), trans('custom.credit_note_cancelled_successfully'));
+    }
+
     public function creditNoteReopen(request $request)
     {
         $input = $request->all();
@@ -1304,6 +1363,10 @@ class CreditNoteAPIController extends AppBaseController
         $emails = array();
         if (empty($creditnote)) {
             return $this->sendError(trans('custom.credit_note_not_found_1'));
+        }
+
+        if (($creditnote->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.you_cannot_reopen_this_credit_note_it_is_cancelled'));
         }
 
         if ($creditnote->RollLevForApp_curr > 1) {
@@ -1761,6 +1824,10 @@ WHERE
             return $this->sendError(trans('custom.credit_note_not_found'));
         }
 
+        if (($creditNoteMasterData->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.you_cannot_amend_this_credit_note_it_is_cancelled'));
+        }
+
         if ($creditNoteMasterData->refferedBackYN != -1) {
             return $this->sendError(trans('custom.you_cannot_refer_back_this_credit_note'));
         }
@@ -1839,6 +1906,10 @@ WHERE
 
         if (empty($masterData)) {
             return $this->sendError(trans('custom.credit_note_not_found'));
+        }
+
+        if (($masterData->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.you_cannot_return_back_this_credit_note_it_is_cancelled'));
         }
 
         if ($masterData->confirmedYN == 0) {
