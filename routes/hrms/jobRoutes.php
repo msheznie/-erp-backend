@@ -11,6 +11,7 @@ Route::get('employee-profile-creation-notification', 'HRJobInvokeAPIController@s
 Route::get('hrNotificationDebug', 'HRJobInvokeAPIController@hrNotificationDebug')->name('HR notification debug');
 Route::get('clockOutJobCall', 'HRJobInvokeAPIController@clockOutJobCall')->name('Clock out job call');
 Route::get('crossDayClockOutJobCall', 'HRJobInvokeAPIController@crossDayClockOutJobCall')->name('Cross day clock out job call');
+Route::get('crossDayClockOutDebug', 'HRJobInvokeAPIController@crossDayClockOutJobCallDebug')->name('Cross day clock out job call');
 Route::get('leaveAccrualJobCallDebug', 'HRJobInvokeAPIController@leaveAccrualJobCallDebug')->name('Leave accrual job call debug');
 Route::get('delegationJobCallDebug', 'HRJobInvokeAPIController@delegationJobCallDebug')->name('Delegation job call debug');
 Route::get('empDesignationUpdateNotification', 'HRJobInvokeAPIController@sendEmpDesignationUpdateNotification')->name('Employee designation update notification');
