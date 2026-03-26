@@ -4864,11 +4864,6 @@ class BudgetMasterAPIController extends AppBaseController
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $budgetMasterID = $input['budgetMasterID'];
-        $referBackComments = trim((string)($input['referBackComments'] ?? ''));
-
-        if ($referBackComments === '') {
-            return $this->sendError(trans('custom.comment_is_required'));
-        }
 
         $budgetMaster = BudgetMaster::find($budgetMasterID);
         if (empty($budgetMaster)) {
@@ -4877,18 +4872,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         if ($budgetMaster->refferedBackYN != -1) {
             return $this->sendError(trans('custom.you_cannot_refer_back_this_budget'));
-        }
-
-        if ($this->isBudgetGeneratedFromPlanning((int)$budgetMasterID)) {
-            return $this->sendError(trans('custom.selected_budget_upload_generated_through_budget_planning_cannot_be_amended'));
-        }
-
-        if (!$this->isBudgetFinancialPeriodActive($budgetMaster)) {
-            return $this->sendError(trans('custom.selected_financial_period_is_inactive'));
-        }
-
-        if ($this->hasBudgetConsumptionOrCommitment($budgetMaster)) {
-            return $this->sendError(trans('custom.consumed_budget_cannot_be_amended'));
         }
 
         $budgetMasterArray = $budgetMaster->toArray();
@@ -4932,8 +4915,6 @@ class BudgetMasterAPIController extends AppBaseController
             $budgetMaster->confirmedDate = null;
             $budgetMaster->RollLevForApp_curr = 1;
             $budgetMaster->save();
-
-            AuditTrial::createAuditTrial($budgetMaster->documentSystemID, $budgetMasterID, $referBackComments, 'Referred Back');
         }
 
         return $this->sendResponse($budgetMaster->toArray(), trans('custom.budget_amend_successfully'));
