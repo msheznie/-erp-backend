@@ -153,4 +153,9 @@ class SupplierRegistrationLink extends Model
         ->distinct()
         ->get();
     }
+    public static function getSupplierRegistrationLinkId(int $supplierId): ?int
+    {
+        return self::where('supplier_master_id', $supplierId)
+            ->value('id');
+    }
 }

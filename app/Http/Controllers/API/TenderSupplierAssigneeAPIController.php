@@ -393,7 +393,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
                                 $tenderTitle,
                                 $isExist['id'],
-                                $urlString,
                                 $documentSystemID
                             );
                         } else if ($isExist['STATUS'] === 0){
@@ -407,7 +406,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                                 $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
                                     $tenderTitle,
                                     $isExist['id'],
-                                    $urlString,
                                     $documentSystemID
                                 );
                             }
@@ -426,7 +424,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
                                 $tenderTitle,
                                 $isCreated['id'],
-                                $urlString,
                                 $documentSystemID
                             );
                         }
@@ -507,7 +504,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
                         $tenderTitle,
                         $isExist['id'],
-                        $urlString,
                         $documentSystemID
                     );
                 } elseif ($isExist['STATUS'] === 0) {
@@ -518,12 +514,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
                         TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                             ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
-                        $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
-                            $tenderTitle,
-                            $isExist['id'],
-                            $urlString,
-                            $documentSystemID
-                        );
+                                $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                                    $tenderTitle,
+                                    $isExist['id'],
+                                    $documentSystemID
+                                );
                     }
                 }
                 DB::commit();
@@ -540,7 +535,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
                         $tenderTitle,
                         $isCreated['id'],
-                        $urlString,
                         $documentSystemID
                     );
                     DB::commit();

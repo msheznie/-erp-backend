@@ -174,4 +174,13 @@ class TenderSupplierAssignee extends Model
             ->unique('registration_link_id')
             ->values();
     }
+    public static function getSupplierAssignedForNotification(int $tenderId)
+    {
+        return self::where('tender_master_id', $tenderMasterId)
+                ->whereNotNull('registration_link_id')
+                ->pluck('registration_link_id')
+                ->unique()
+                ->values();
+    }
+    
 }
