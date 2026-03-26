@@ -191,4 +191,31 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         }
         return $type;
     }
+
+    public function getNonRegisteredSupplierList($request)
+    {
+        $search = $request->input('search.value');
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $linkData = SupplierRegistrationLink::getUnapprovedSuppliers($input['tenderMasterId'],
+            $input['companyId'],true);
+
+        return \DataTables::of($linkData)
+            ->filter(function ($query) use ($search) {
+                if ($search) {
+                    $query->where('name', 'LIKE', "%{$search}%")
+                        ->orWhere('email', 'LIKE', "%{$search}%")
+                        ->orWhere('registration_number', 'LIKE', "%{$search}%");
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
 }
