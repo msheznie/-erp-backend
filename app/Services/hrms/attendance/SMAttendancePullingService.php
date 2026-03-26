@@ -8,6 +8,7 @@ use App\helper\CommonJobService;
 use App\helper\SME;
 use App\Models\SrpEmployeeDetails;
 use App\Services\hrms\attendance\computation\SMFixedShiftComputation;
+use App\Services\hrms\attendance\computation\SMFixedShiftIndividualPunchesComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftCrossDayComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftDayComputation;
 use App\Services\hrms\attendance\computation\SMRotaShiftIndividualPunchesComputation;
@@ -701,7 +702,7 @@ class SMAttendancePullingService{
         if ($row['work_hour_calc_method'] == 2 && $isFeatureEnabled) {
             return $isCrossDay
                 ? SMRotaShiftIndividualPunchesComputation::class
-                : SMFixedShiftComputation::class;
+                : SMFixedShiftIndividualPunchesComputation::class;
         }
 
         if ($row['shiftType'] == Shifts::FIXED || empty($row['shiftType'])) {
