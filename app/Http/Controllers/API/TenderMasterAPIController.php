@@ -124,6 +124,7 @@ use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
 use Illuminate\Support\Facades\Validator;
+use App\Services\SrmNotificationService;
 
 /**
  * Class TenderMasterController
@@ -144,8 +145,12 @@ class TenderMasterAPIController extends AppBaseController
     private $tenderCommercialBidService;
     /** @var TenderItemWiseAwardingService */
     private $itemWiseAwardingService;
+    /** @var SrmNotificationService */
+    private $srmNotificationService;
 
-    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService, TenderCommercialBidService $tenderCommercialBidService, TenderItemWiseAwardingService $itemWiseAwardingService)
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository, SrmDocumentModifyService $documentModifyService, SrmTenderEditAmendService $srmTenderEditAmendService, TenderCommercialBidService $tenderCommercialBidService, TenderItemWiseAwardingService $itemWiseAwardingService,
+        SrmNotificationService $srmNotificationService
+    )
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
@@ -156,6 +161,7 @@ class TenderMasterAPIController extends AppBaseController
         $this->srmTenderEditAmendService = $srmTenderEditAmendService;
         $this->tenderCommercialBidService = $tenderCommercialBidService;
         $this->itemWiseAwardingService = $itemWiseAwardingService;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -2230,6 +2236,7 @@ class TenderMasterAPIController extends AppBaseController
         $companyId = $input['company_id'];
         $tenderType = $input['tender_type_id'];
         $documentType = $input['document_type'];
+        $documentSystemID = $input['document_system_id'];
 
         $apiKey = $request->input('api_key');
         $loginUrl = env('SRM_LINK');
@@ -2251,6 +2258,7 @@ class TenderMasterAPIController extends AppBaseController
                 DB::commit();
                 if ($tenderType == 1 && $documentType == 0) {
                     $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
+                    $this->srmNotificationService->sendOpenTenderInvitationNotification($tenderTitle, $companyId, $urlString, $documentSystemID);
                 }
                 return ['success' => true, 'message' => trans('srm_tender_rfx.successfully_published')];
             }
