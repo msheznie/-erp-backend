@@ -299,7 +299,7 @@ class SMAttendanceCrossDayPullingService{
             'actual_time' => $obj->actualWorkingHours,
             'official_work_time' => $obj->officialWorkTime
         ];
-        //echo '<pre>'; print_r($updateData); exit;
+        
         $this->bulkUpdateData[] = $updateData;
 
         if (!empty($autoId)) {
