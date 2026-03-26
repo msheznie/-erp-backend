@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
 use Response;
 use App\Traits\DocumentSystemMappingTrait;
 
@@ -308,5 +309,188 @@ class CustomerInvoiceAPIController extends AppBaseController
             return $this->sendAPIError($createCustomerInvoice['message'],422, $createCustomerInvoice['responseData']);
         }
 
+    }
+
+
+    public function getApprovedCustomerInvoiceBalancesAPI(Request $request)
+    {
+        $companyId = (int) $request->get('company_id', 0);
+        if ($companyId <= 0) {
+            return $this->sendAPIError('company_id is required', 422, []);
+        }
+
+        $invoiceCode = trim((string) $request->get('invoice_code', ''));
+        $invoiceType = trim((string) $request->get('invoice_type', ''));
+        $generatedFrom = trim((string) $request->get('generated_from', ''));
+        $customerCode = trim((string) $request->get('customer_code', ''));
+
+        $perPage = (int) $request->get('per_page', 10);
+        $perPage = max(1, min(500, $perPage));
+
+        // Map invoice_type (human) -> documentType (int) used by erp_custinvoicedirect
+        $typeMap = [
+            'direct invoice' => 1,
+            'item sales invoice' => 2,
+            'from delivery order' => 3,
+            'from sales order' => 4,
+            'from quotation' => 5,
+        ];
+
+        // Payments (receipt voucher + matching) aggregated per invoice
+        $paidSub = DB::query()->fromSub(function ($q) use ($companyId) {
+            $receipt = DB::table('erp_custreceivepaymentdet as det')
+                ->join('erp_customerreceivepayment as rv', 'det.custReceivePaymentAutoID', '=', 'rv.custReceivePaymentAutoID')
+                ->where('det.companySystemID', $companyId)
+                ->where('det.matchingDocID', 0)
+                ->where('rv.approved', -1)
+                ->selectRaw('det.bookingInvCodeSystem as invoice_id, SUM(IFNULL(det.receiveAmountTrans,0)) as paid_trans');
+
+            $matching = DB::table('erp_custreceivepaymentdet as det')
+                ->join('erp_matchdocumentmaster as m', function ($join) {
+                    $join->on('m.matchDocumentMasterAutoID', '=', 'det.matchingDocID')
+                        ->on('m.companySystemID', '=', 'det.companySystemID');
+                })
+                ->where('det.companySystemID', $companyId)
+                ->where('m.matchingConfirmedYN', 1)
+                ->selectRaw('det.bookingInvCodeSystem as invoice_id, SUM(IFNULL(det.receiveAmountTrans,0)) as paid_trans');
+
+            $q->from($receipt->unionAll($matching), 'u')
+                ->selectRaw('invoice_id, SUM(paid_trans) as paid_trans')
+                ->groupBy('invoice_id');
+        }, 'paid');
+
+        // Sales return amounts aggregated per invoice (approved returns only)
+        $returnSub = DB::table('salesreturndetails as srd')
+            ->join('salesreturn as sr', 'srd.salesReturnID', '=', 'sr.id')
+            ->where('srd.companySystemID', $companyId)
+            ->where('sr.approvedYN', -1)
+            ->selectRaw('srd.custInvoiceDirectAutoID as invoice_id, SUM(IFNULL(srd.transactionAmount,0) + (IFNULL(srd.transactionAmount,0) * IFNULL(srd.VATPercentage,0) / 100)) as return_trans')
+            ->groupBy('srd.custInvoiceDirectAutoID');
+
+        $query = DB::table('erp_custinvoicedirect as inv')
+            ->leftJoin('customermaster as c', 'c.customerCodeSystem', '=', 'inv.customerID')
+            ->leftJoinSub($paidSub, 'paid', 'paid.invoice_id', '=', 'inv.custInvoiceDirectAutoID')
+            ->leftJoinSub($returnSub, 'ret', 'ret.invoice_id', '=', 'inv.custInvoiceDirectAutoID')
+            ->where('inv.companySystemID', $companyId)
+            ->where('inv.confirmedYN', 1)
+            ->where('inv.approved', -1)
+            ->where(function ($q) {
+                $q->whereNull('inv.canceledYN')->orWhere('inv.canceledYN', 0);
+            })
+            ->selectRaw('
+                inv.custInvoiceDirectAutoID as invoice_id,
+                inv.bookingInvCode as invoice_code,
+                inv.customerInvoiceNo as customer_invoice_no,
+                inv.documentType as invoice_type_id,
+                inv.bookingDate as invoice_date,
+                inv.companySystemID as company_id,
+                inv.bookingAmountTrans as invoice_amount,
+                IFNULL(paid.paid_trans,0) as paid_amount,
+                IFNULL(ret.return_trans,0) as return_amount,
+                (IFNULL(inv.bookingAmountTrans,0) - IFNULL(paid.paid_trans,0) - IFNULL(ret.return_trans,0)) as balance_amount,
+                c.CutomerCode as customer_code,
+                c.CustomerName as customer_name
+            ');
+
+        if ($invoiceCode !== '') {
+            $query->where('inv.bookingInvCode', $invoiceCode);
+        }
+
+        if ($customerCode !== '') {
+            $query->where('c.CutomerCode', $customerCode);
+        }
+
+        if ($invoiceType !== '') {
+            $key = strtolower($invoiceType);
+            if (! array_key_exists($key, $typeMap)) {
+                return $this->sendAPIError('Customer invoice Type not match with system', 422, []);
+            }
+            $query->where('inv.documentType', $typeMap[$key]);
+        }
+
+        // Best-effort: if provided, validate value but do not hard-filter unless mapping exists.
+        if ($generatedFrom !== '') {
+            $gf = strtolower($generatedFrom);
+            if (! in_array($gf, ['pos generated', 'club generated'], true)) {
+                return $this->sendAPIError('Generated From - Invoice Flag not match with system', 422, []);
+            }
+        }
+
+        // Exact-match validation errors required by spec
+        if ($invoiceCode !== '') {
+            $exists = (clone $query)->exists();
+            if (! $exists) {
+                // Determine which error message to show
+                $anyCode = DB::table('erp_custinvoicedirect')
+                    ->where('companySystemID', $companyId)
+                    ->where('bookingInvCode', $invoiceCode)
+                    ->exists();
+                if (! $anyCode) {
+                    return $this->sendAPIError('Customer invoice not match with system', 422, []);
+                }
+                $approved = DB::table('erp_custinvoicedirect')
+                    ->where('companySystemID', $companyId)
+                    ->where('bookingInvCode', $invoiceCode)
+                    ->where('confirmedYN', 1)
+                    ->where('approved', -1)
+                    ->exists();
+                if (! $approved) {
+                    return $this->sendAPIError('Customer invoice not fully approved .', 422, []);
+                }
+            }
+        }
+
+        if ($customerCode !== '') {
+            $customerExists = DB::table('customermaster')
+                ->where('CutomerCode', $customerCode)
+                ->exists();
+            if (! $customerExists) {
+                return $this->sendAPIError('Customer code not match with system', 422, []);
+            }
+        }
+
+        $paginator = $query->orderBy('inv.custInvoiceDirectAutoID', 'desc')->paginate($perPage);
+
+        // Attach document-level status details (receipt voucher / matching) for the returned invoices
+        $invoiceIds = collect($paginator->items())->pluck('invoice_id')->filter()->values()->all();
+        $statusRows = [];
+        if ($invoiceIds) {
+            $statusRows = DB::select("
+                SELECT
+                    det.bookingInvCodeSystem AS invoice_id,
+                    IF(det.matchingDocID = 0 OR det.matchingDocID IS NULL, rv.custPaymentReceiveCode, m.matchingDocCode) AS docCode,
+                    IF(det.matchingDocID = 0 OR det.matchingDocID IS NULL, rv.custPaymentReceiveDate, m.matchingDocdate) AS docDate,
+                    det.receiveAmountTrans AS amount,
+                    rv.confirmedYN,
+                    rv.approved,
+                    m.matchingConfirmedYN
+                FROM erp_custreceivepaymentdet det
+                LEFT JOIN erp_customerreceivepayment rv ON det.custReceivePaymentAutoID = rv.custReceivePaymentAutoID
+                LEFT JOIN erp_matchdocumentmaster m ON det.matchingDocID = m.matchDocumentMasterAutoID
+                WHERE det.companySystemID = ?
+                  AND det.bookingInvCodeSystem IN (" . implode(',', array_map('intval', $invoiceIds)) . ")
+            ", [$companyId]);
+        }
+        $statusByInvoice = collect($statusRows)->groupBy('invoice_id')->map(fn($rows) => array_values(array_map(function ($r) {
+            return [
+                'doc_code' => $r->docCode ?? null,
+                'doc_date' => $r->docDate ?? null,
+                'amount' => (float) ($r->amount ?? 0),
+            ];
+        }, $rows->all())))->toArray();
+
+        $data = array_map(function ($row) use ($statusByInvoice) {
+            $row = (array) $row;
+            $row['status_details'] = $statusByInvoice[$row['invoice_id']] ?? [];
+            return $row;
+        }, $paginator->items());
+
+        return $this->sendResponse([
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'last_page' => $paginator->lastPage(),
+            'data' => $data,
+        ], 'Customer invoice balances retrieved successfully');
     }
 }

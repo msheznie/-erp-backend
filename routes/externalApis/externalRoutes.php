@@ -46,6 +46,7 @@ Route::prefix('integrations')->group(function () {
     // external integrations
     Route::post('customer-invoices', 'CustomerInvoiceAPIController@createCustomerInvoiceAPI');
     Route::post('credit-notes', 'CreditNoteAPIController@createCreditNoteAPI');
+    Route::get('customer-invoices/balances','CustomerInvoiceAPIController@getApprovedCustomerInvoiceBalancesAPI');
     Route::post('receipt-matchings', 'ReceiptMatchingAPIController@createReceiptMatchingAPI');
     Route::post('customer-invoices/cancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
     Route::post('supplier-invoices', 'BookInvSuppMasterAPIController@createSupplierInvoices');
