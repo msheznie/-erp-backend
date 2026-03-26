@@ -148,7 +148,7 @@ class SMRotaShiftIndividualPunchesComputation
 
     function calculateActualTimeIndividualPunches(){
         $totalMinutes = 0;
-        $inDateTime = null;
+        $inDateTime = $missedPunchTime = $missedPunchType = null;
         $firstClockInSet = false;
 
         $attDate = date('Y-m-d', strtotime($this->data['att_date']));
@@ -160,6 +160,9 @@ class SMRotaShiftIndividualPunchesComputation
 
         foreach ($this->attTempRecords as $record){
             $attDateTime = new DateTime($record->attDateTime);
+            $missedPunchTime = $attDateTime;
+            $missedPunchType = $record->in_out;
+
             if ($record->in_out == 1) {
                 if ($inDateTime != null) {
                     $this->presentAbsentType = AbsentType::EXCEPTION;
@@ -200,7 +203,7 @@ class SMRotaShiftIndividualPunchesComputation
             }
         }
 
-        $this->configMissedPunch();
+        $this->configMissedPunch($missedPunchTime, $missedPunchType);
 
         if ($this->presentAbsentType === AbsentType::MISSED_PUNCH
             && empty($this->clockIn)
