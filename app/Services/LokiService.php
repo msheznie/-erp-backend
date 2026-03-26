@@ -116,6 +116,9 @@ class LokiService
             case 'employee_navigation_assign':
                 $table = 'srp_erp_employeenavigation';
                 break;
+            case 'erp_document_communication_messages':
+                $table = 'erp_document_communication_messages';
+                break;
             default:
                 $table = null;
                 break;
@@ -150,6 +153,7 @@ class LokiService
             'department_budget_planning_details_template_data',
             'srp_erp_usergroups',
             'srp_erp_employeenavigation',
+            'erp_document_communication_messages',
         ];
     }
 

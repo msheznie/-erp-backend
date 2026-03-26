@@ -118,6 +118,10 @@ class AuditRoutesTenantService
             'api/v1/employee_navigations/{employee_navigation}',
             'api/v1/integrations/users/search',
             'api/v1/integrations/banks/search',
+            'api/v1/document-communications/messages',
+            'api/v1/document-communications/messages/reply',
+            'api/v1/document-communications/messages/{id}',
+            'api/v1/document-communications/messages/{id}/delete',
         ];
 
         return $lokiTenantRoutes;
