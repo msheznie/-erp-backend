@@ -112,7 +112,8 @@ class TenderSupplierAssignee extends Model
         'registration_number' => 'string',
         'tender_master_id' => 'integer',
         'mail_sent' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'unApprovedSupplier' => 'integer'
     ];
 
     /**

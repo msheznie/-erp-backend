@@ -341,4 +341,5 @@ Route::post('removeSRMDocMasterDelete', 'SRMDocumentMasterAPIController@removeDo
 Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster')->name("GET SRM Email Master");
 Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData')->name("Store SRM Email Master");;
 Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData')->name("GET SRM Email Edit Data");
+Route::post('getNonRegisteredSupplierList', 'TenderMasterAPIController@getNonRegisteredSupplierList')->name("GET SRM Email Edit Data");
 /*TenderPaymentDetailAPIController*/

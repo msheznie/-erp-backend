@@ -111,4 +111,37 @@ class SupplierRegistrationLink extends Model
         }
         return self::whereIn('id', $ids)->get()->keyBy('id');
     }
+
+    public static function getUnapprovedSuppliers($tenderId, $companyId, $isDataTable = false)
+    {
+        $query = self::select('id', 'name', 'email', 'registration_number')
+            ->where('approved_yn', 0)
+            ->whereNotNull('uuid')
+            ->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
+                $query->where('tender_master_id', $tenderId);
+            });
+        return $query;
+    }
+
+    public function tenderSupplierAssigned(){
+        return $this->hasOne('App\Models\TenderSupplierAssignee', 'registration_link_id','id');
+
+    }
+    public static function getallUnApprovedSuppliers($tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID)
+    {
+        $query = self::getUnapprovedSuppliers($tenderId, $companySystemId)
+            ->when($editOrAmend, function ($q) use ($tenderId, $versionID) {
+                $q->whereDoesntHave('tenderSupplierAssignedLog', function ($query) use ($tenderId, $versionID) {
+                    $query->where('tender_master_id', $tenderId)
+                        ->where('version_id', $versionID)
+                        ->where('is_deleted', 0);
+                });
+            })
+            ->whereNotIn('id', $removedSuppliersId);
+
+        return collect($query->get())->pluck('id')->toArray();
+    }
+    public function tenderSupplierAssignedLog(){
+        return $this->hasOne('App\Models\TenderSupplierAssignee', 'registration_link_id','id');
+    }
 }
