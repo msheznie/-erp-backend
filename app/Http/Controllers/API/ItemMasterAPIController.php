@@ -2313,45 +2313,38 @@ class ItemMasterAPIController extends AppBaseController
             }
         }
 
+        $selectFields = [
+            'companymaster.CompanyName as company_name',
+            'erp_itemledger.itemPrimaryCode as item_code',
+            'itemmaster.itemDescription as item_description',
+            DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
+        ];
 
-        $groupByWarehouseOnly = !$getAll && empty($itemCodes) && !empty($wareHouseCodes);
+        // Return quantity per warehouse when:
+        // - getAll = true OR
+        // - warehouse filter is provided OR
+        // - item filter is provided (split selected items across all warehouses)
+        $includeWarehouseInGrouping = $getAll || !empty($wareHouseSystemCodes) || !empty($itemSystemCodes);
 
-        if ($groupByWarehouseOnly) {
-            $selectFields = [
-                'companymaster.CompanyName as company_name',
-                DB::raw("'' as item_code"),
-                DB::raw("'' as item_description"),
-                DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
-                'warehousemaster.wareHouseDescription as warehouse',
-            ];
+        if ($includeWarehouseInGrouping) {
+            $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
+            $selectFields[] = DB::raw('warehousemaster.wareHouseCode as warehouse_code');
+            $selectFields[] = DB::raw('units.UnitShortCode as uom');
             $groupByFields = [
+                'erp_itemledger.itemSystemCode',
                 'erp_itemledger.wareHouseSystemCode',
                 'companymaster.CompanyName',
+                'erp_itemledger.itemPrimaryCode',
+                'itemmaster.itemDescription',
                 'warehousemaster.wareHouseDescription',
+                'warehousemaster.wareHouseCode',
+                'units.UnitShortCode',
             ];
         } else {
-            $selectFields = [
-                'companymaster.CompanyName as company_name',
-                'erp_itemledger.itemPrimaryCode as item_code',
-                'itemmaster.itemDescription as item_description',
-                DB::raw('SUM(erp_itemledger.inOutQty) as quantity'),
-            ];
-            if (!empty($wareHouseSystemCodes)) {
-                $selectFields[] = DB::raw('warehousemaster.wareHouseDescription as warehouse');
-            } else {
-                $selectFields[] = DB::raw("'' as warehouse");
-            }
+            $selectFields[] = DB::raw("'' as warehouse");
+            $selectFields[] = DB::raw("'' as warehouse_code");
+            $selectFields[] = DB::raw("'' as uom");
             $groupByFields = ['erp_itemledger.itemSystemCode'];
-            if (!empty($wareHouseSystemCodes)) {
-                $groupByFields = [
-                    'erp_itemledger.itemSystemCode',
-                    'erp_itemledger.wareHouseSystemCode',
-                    'companymaster.CompanyName',
-                    'erp_itemledger.itemPrimaryCode',
-                    'itemmaster.itemDescription',
-                    'warehousemaster.wareHouseDescription',
-                ];
-            }
         }
 
         $baseQuery = ErpItemLedger::query()
@@ -2388,9 +2381,9 @@ class ItemMasterAPIController extends AppBaseController
                 ->join('companymaster', 'erp_itemledger.companySystemID', '=', 'companymaster.companySystemID')
                 ->join('itemmaster', 'erp_itemledger.itemSystemCode', '=', 'itemmaster.itemCodeSystem')
                 ->leftJoin('warehousemaster', 'erp_itemledger.wareHouseSystemCode', '=', 'warehousemaster.wareHouseSystemCode')
-                ->select('erp_itemledger.itemSystemCode')
+                ->select('erp_itemledger.itemSystemCode', 'erp_itemledger.wareHouseSystemCode')
                 ->whereIn('erp_itemledger.companySystemID', $subCompanies)
-                ->groupBy('erp_itemledger.itemSystemCode')
+                ->groupBy('erp_itemledger.itemSystemCode', 'erp_itemledger.wareHouseSystemCode')
                 ->havingRaw('SUM(erp_itemledger.inOutQty) >= 0');
 
             if ($posType !== null) {
@@ -2405,26 +2398,18 @@ class ItemMasterAPIController extends AppBaseController
             $perPage = (int)$input['per_page'];
             $offset = ($page - 1) * $perPage;
 
-            if ($groupByWarehouseOnly) {
+            $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
+            if ($includeWarehouseInGrouping) {
                 $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
-            } else {
-                $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
-                if (!empty($wareHouseSystemCodes)) {
-                    $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
-                }
             }
             $data = $baseQuery->offset($offset)
                 ->limit($perPage)
                 ->get()
                 ->toArray();
         } else {
-            if ($groupByWarehouseOnly) {
+            $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
+            if ($includeWarehouseInGrouping) {
                 $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
-            } else {
-                $baseQuery->orderBy('erp_itemledger.itemPrimaryCode', 'asc');
-                if (!empty($wareHouseSystemCodes)) {
-                    $baseQuery->orderBy('warehousemaster.wareHouseDescription', 'asc');
-                }
             }
             $data = $baseQuery->get()
                 ->toArray();
