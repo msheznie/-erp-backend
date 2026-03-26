@@ -128,5 +128,10 @@ return [
     // Employee Navigation Assign Audit Log Narrations
     'employee_has_been_assigned_to_user_group' => 'تم تعيين الموظف {variable} إلى مجموعة المستخدمين',
     'employee_has_been_unassigned_from_user_group' => 'تم إلغاء تعيين الموظف {variable} من مجموعة المستخدمين',
+
+    // Document Communication (messages/comments)
+    'document_communication_comment_added' => 'تمت إضافة تعليق مراسلات المستندات',
+    'document_communication_comment_edited' => 'تم تعديل تعليق مراسلات المستندات',
+    'document_communication_comment_deleted' => 'تم حذف تعليق مراسلات المستندات',
 ];
 

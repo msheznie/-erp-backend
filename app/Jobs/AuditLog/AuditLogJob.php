@@ -30,6 +30,7 @@ use App\Services\AuditLog\AssetCostAuditService;
 use App\Services\AuditLog\SegmentMasterAuditService;
 use App\Services\AuditLog\SupplierMasterAuditService;
 use App\Services\AuditLog\AuditLogCommonService;
+use App\Services\AuditLog\DocumentCommunicationMessageAuditService;
 use Illuminate\Support\Facades\Log;
 use App\Models\AccessTokens;
 use App\Models\Employee;
@@ -175,6 +176,9 @@ class AuditLogJob implements ShouldQueue
                 break;
             case 'srp_erp_employeenavigation':
                 $data = EmployeeNavigationAssignAuditService::process($auditData);
+                break;
+            case 'erp_document_communication_messages':
+                $data = DocumentCommunicationMessageAuditService::process($auditData);
                 break;
             default:
                 // code...

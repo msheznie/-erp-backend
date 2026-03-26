@@ -1536,11 +1536,19 @@ class ProcumentOrderAPIController extends AppBaseController
         if ($input['poType_N'] != 1) {
             $procumentOrders->where('poType_N', $input['poType_N']);
         }
+        $companyIdForCommunication = isset($input['companyId']) ? (int)$input['companyId'] : 0;
+        Log::info('companyIdForCommunication: ' . $companyIdForCommunication);
+
         $procumentOrders->with(['created_by' => function ($query) {
             //$query->select(['empName']);
         }, 'category' => function ($query) {
         }, 'location' => function ($query) {
-        }, 'supplier' => function ($query) {
+        }, 'supplier' => function ($query) use ($companyIdForCommunication) {
+            $query->with(['assigned' => function ($subQuery) use ($companyIdForCommunication) {
+                if ($companyIdForCommunication > 0) {
+                    $subQuery->where('companySystemID', $companyIdForCommunication);
+                }
+            }]);
         }, 'currency' => function ($query) {
         }, 'fcategory' => function ($query) {
         }, 'segment' => function ($query) {
@@ -1708,6 +1716,18 @@ class ProcumentOrderAPIController extends AppBaseController
 
         return \DataTables::eloquent($procumentOrders)
             ->addColumn('Actions', $policy)
+            ->addColumn('communicationEnabled', function ($row) {
+                if ((int)$row->approved !== -1) {
+                    return 0;
+                }
+
+                $supplierAssigned = null;
+                if ($row->supplier && $row->supplier->assigned && count($row->supplier->assigned) > 0) {
+                    $supplierAssigned = $row->supplier->assigned->first();
+                }
+
+                return ($supplierAssigned && (int)$supplierAssigned->supplierCommunicationYN === 1) ? 1 : 0;
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {

@@ -272,6 +272,16 @@ class AuditLogCommonService
                     return 'audit.employee_has_been_unassigned_from_user_group';
                 }
                 break;
+
+            case 'erp_document_communication_messages':
+                if ($crudType === 'C') {
+                    return 'audit.document_communication_comment_added';
+                } elseif ($crudType === 'U') {
+                    return 'audit.document_communication_comment_edited';
+                } elseif ($crudType === 'D') {
+                    return 'audit.document_communication_comment_deleted';
+                }
+                break;
         }
         
         return '';
