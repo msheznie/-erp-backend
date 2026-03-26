@@ -43,6 +43,7 @@ class SMAttendanceCrossDayPullingService{
         $this->insertToLogTb('cross day execution started');
         DB::beginTransaction();
         try {
+            $this->isFeatureEnabled = FeatureFlagService::isFeatureEnabled('shift_work_hr_cal');
             $this->getUnConfirmAttendanceData();
 
             if (empty($this->reviewAttData)) {
@@ -54,7 +55,7 @@ class SMAttendanceCrossDayPullingService{
             $this->preLoadRelatedData();
             $this->mapEachEmpData();
             $this->performBulkUpdates();
-            $this->isFeatureEnabled = FeatureFlagService::isFeatureEnabled('shift_work_hr_cal');
+            
 
             DB::commit();
             return true;
@@ -90,7 +91,7 @@ class SMAttendanceCrossDayPullingService{
 
         $empIds = $this->reviewAttData->pluck('empID')->toArray();
         $shiftIds = $this->reviewAttData->pluck('shift_id')->unique()->toArray();
-
+        
         $this->preloadClockOutData($empIds);
         $this->preloadLeaveData($empIds);
         $this->preloadShiftData($shiftIds);
@@ -270,6 +271,7 @@ class SMAttendanceCrossDayPullingService{
             'att_id' => $attId,
             'gracePeriod' => $curRow->gracePeriod,
             'checkIn' => $obj->clockIn,
+            'check_in_date' => $obj->clockInDate,
             'checkOut' => $obj->clockOut,
             'check_out_date' => $obj->clockOutDate,
             'presentTypeID' => $obj->presentAbsentType,
@@ -297,7 +299,7 @@ class SMAttendanceCrossDayPullingService{
             'actual_time' => $obj->actualWorkingHours,
             'official_work_time' => $obj->officialWorkTime
         ];
-
+        //echo '<pre>'; print_r($updateData); exit;
         $this->bulkUpdateData[] = $updateData;
 
         if (!empty($autoId)) {
