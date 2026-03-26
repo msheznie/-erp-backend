@@ -6227,4 +6227,17 @@ class TenderMasterAPIController extends AppBaseController
         }
     }
 
+    public function getNonRegisteredSupplierList(Request $request)
+    {
+        try
+        {
+            $data = $this->registrationLinkRepository->getNonRegisteredSupplierList($request);
+            return $data;
+        }
+        catch(\Exception $e)
+        {
+            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+        }
+    }
+
 }

@@ -2390,7 +2390,7 @@ class TenderMasterRepository extends BaseRepository
                 $employee = Helper::getEmployeeInfo();
                 $data = [];
                 $insertSupplierAssignee = false;
-
+                $isUnapproved = $input['unapprovedSup'] ?? false;
                 $validation = self::checkTenderSupplierAssigneeValid($input);
                 if(!$validation['success']){
                     return $validation;
@@ -2407,20 +2407,40 @@ class TenderMasterRepository extends BaseRepository
 
                 if (!empty($pullList)) {
                     if ($tenderMaster['tender_type_id'] != 3 && $selectAll == true) {
-                        $deleteData = self::deleteTenderSupplierAssignee($tenderId, $editOrAmend, $versionID);
+                        $deleteData = self::deleteTenderSupplierAssignee($tenderId, $editOrAmend, $versionID, $isUnapproved);
                         if(!$deleteData['success']){
                             return $deleteData;
                         }
 
-                        $pullList = SupplierAssigned::tenderAssignSuppliersForCreation(
-                            $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID
-                        );
+                        if($isUnapproved)
+                        {
+                            $pullList = SupplierRegistrationLink::getallUnApprovedSuppliers(
+                                $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID);
+                        }else {
+                            $pullList = SupplierAssigned::tenderAssignSuppliersForCreation(
+                                $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID
+                            );
+                        }
+
+                    }
+
+                    if ($isUnapproved) {
+                        $registrationLinks = SupplierRegistrationLink::whereIn('id', $pullList)
+                            ->get()
+                            ->keyBy('id');
                     }
 
                     foreach ($pullList as $key => $val) {
+                        $reg = $isUnapproved ? ($registrationLinks[$val] ?? null) : null;
+
                         $data[$key] = [
                             'tender_master_id' => $tenderId,
-                            'supplier_assigned_id' => $val,
+                            'supplier_assigned_id' => $isUnapproved ? null : $val,
+                            'registration_link_id' => $isUnapproved ? $val : null,
+                            'supplier_name' => $isUnapproved && $reg ? $reg->name : null,
+                            'supplier_email' => $isUnapproved && $reg ? $reg->email : null,
+                            'unApprovedSupplier' => $isUnapproved ? 1 : null,
+                            'registration_number' => $isUnapproved && $reg ? $reg->registration_number : null,
                             'created_by' => $employee->employeeSystemID,
                             'company_id' => $companySystemId,
                             'created_at' => Helper::currentDateTime()
@@ -2446,21 +2466,34 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => $ex->getMessage()];
         }
     }
-    private function deleteTenderSupplierAssignee($tenderID, $editOrAmend, $versionID){
+    private function deleteTenderSupplierAssignee($tenderID, $editOrAmend, $versionID, $isUnapproved){
         try {
-            return DB::transaction(function () use ($tenderID, $editOrAmend, $versionID) {
+            return DB::transaction(function () use ($tenderID, $editOrAmend, $versionID, $isUnapproved) {
                 if($editOrAmend){
-                    TenderSupplierAssigneeEditLog::where('version_id', $versionID)
+                    $query = TenderSupplierAssigneeEditLog::where('version_id', $versionID)
                         ->where('is_deleted', 0)
                         ->where('tender_master_id', $tenderID)
-                        ->whereNotNull('supplier_assigned_id')
-                        ->where('mail_sent', 0)
-                        ->update(['is_deleted' => 1]);
+                        ->where('mail_sent', 0);
+
+                    if ($isUnapproved) {
+                        $query->where('unApprovedSupplier', 1);
+                    } else {
+                        $query->whereNotNull('supplier_assigned_id');
+                    }
+
+                    $query->update(['is_deleted' => 1]);
 
                 } else {
-                    TenderSupplierAssignee::where('tender_master_id', $tenderID)
-                        ->whereNotNull('supplier_assigned_id')->where('mail_sent', 0)
-                        ->delete();
+                    $query = TenderSupplierAssignee::where('tender_master_id', $tenderID)
+                        ->where('mail_sent', 0);
+
+                    if ($isUnapproved) {
+                        $query->where('unApprovedSupplier', 1);
+                    } else {
+                        $query->whereNotNull('supplier_assigned_id');
+                    }
+
+                    $query->delete();
                 }
                 return ['success' => true, 'message' => 'Record(s) deleted successfully.'];
             });
