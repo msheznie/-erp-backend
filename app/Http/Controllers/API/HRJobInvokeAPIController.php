@@ -188,6 +188,35 @@ class HRJobInvokeAPIController extends AppBaseController
         return $this->sendResponse($data, 'clock out pulling job added to queue');
     }
 
+    function crossDayClockOutJobCallDebug(Request $request)
+    {
+        $tenantId = $request->input('tenantId');
+        $companyId = $request->input('companyId');
+        $attDate = $request->input('attendanceDate');
+        $dispatchDb = CommonJobService::get_tenant_db($tenantId);
+
+        $validateRep = $this->validateClockOutJob($attDate, $tenantId, $dispatchDb, $companyId);
+        if (!$validateRep['status']) {
+            Log::error($validateRep['msg'] . " \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+        }
+
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $attDate,
+        ];
+
+        CommonJobService::db_switch($dispatchDb);
+
+        $isShiftModule = HrModuleAssignService::checkModuleAvailability($companyId, Modules::SHIFT);
+
+        if(!$isShiftModule){
+            return Log::channel('attendance_cross_day_job_service')->error("cannot proceed in old shift module");
+        }
+
+        $obj = new SMAttendanceCrossDayPullingService($companyId, $attDate);
+        $obj->execute();
+        return $this->sendResponse($data, 'clock out pulling job added to queue');
+    }
+
     function clockOutJobCall(Request $request)
     {
         $tenantId = $request->input('tenantId');
