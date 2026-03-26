@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceSalesReturn",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="salesReturnID",
  *          description="salesReturnID",
@@ -332,14 +333,11 @@ use Eloquent as Model;
  */
 class POSSourceSalesReturn extends Model
 {
-
     public $table = 'pos_source_salesreturn';
-    
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'invoiceID',
@@ -396,7 +394,8 @@ class POSSourceSalesReturn extends Model
         'customerReceivableAutoID',
         'timestamp',
         'isGroupBasedTax',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -460,7 +459,7 @@ class POSSourceSalesReturn extends Model
         'customerReceivableAutoID' => 'integer',
         'timestamp' => 'datetime',
         'isGroupBasedTax' => 'integer',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -469,16 +468,21 @@ class POSSourceSalesReturn extends Model
      * @var array
      */
     public static $rules = [
-        'invoiceID' => 'required'
+        'invoiceID' => 'required',
     ];
 
-    public function invoice(){  
-        return $this->hasOne('App\Models\POSInvoiceSource','invoiceID','invoiceID'); 
+    public function invoice()
+    {
+        return $this->hasOne('App\Models\POSInvoiceSource', 'invoiceID', 'invoiceID');
     }
-    public function invoiceReturn(){ 
+
+    public function invoiceReturn()
+    {
         return $this->hasMany('App\Models\POSSourceSalesReturnDetails', 'salesReturnID', 'salesReturnID');
     }
-    public function employee(){ 
-        return $this->hasOne('App\Models\Employee','employeeSystemID','createdUserID');
+
+    public function employee()
+    {
+        return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'createdUserID');
     }
 }

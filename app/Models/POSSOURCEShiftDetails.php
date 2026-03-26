@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSOURCEShiftDetails",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="cashSales",
  *          description="cashSales",
@@ -313,14 +314,11 @@ use Eloquent as Model;
  */
 class POSSOURCEShiftDetails extends Model
 {
-
     public $table = 'pos_source_shiftdetails';
-    
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'cashSales',
@@ -374,7 +372,8 @@ class POSSOURCEShiftDetails extends Model
         'transactionCurrencyID',
         'transactionExchangeRate',
         'wareHouseID',
-        'isSync'
+        'isSync',
+        'pos_type',
     ];
 
     /**
@@ -435,7 +434,7 @@ class POSSOURCEShiftDetails extends Model
         'transactionCurrencyID' => 'integer',
         'transactionExchangeRate' => 'float',
         'wareHouseID' => 'integer',
-        'isSync' => 'integer'
+        'isSync' => 'integer',
     ];
 
     /**
@@ -446,12 +445,12 @@ class POSSOURCEShiftDetails extends Model
     public static $rules = [
         'id_store' => 'required',
         'isClosed' => 'required',
-        'wareHouseID' => 'required'
+        'wareHouseID' => 'required',
     ];
 
     public function warehouse()
     {
-        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseID','wareHouseSystemCode');
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseID', 'wareHouseSystemCode');
     }
 
     public function menuSalesMasters()
