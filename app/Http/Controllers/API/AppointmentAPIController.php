@@ -439,7 +439,7 @@ class AppointmentAPIController extends AppBaseController
 
 
         $approve = DocumentApprove::approveDocument($params);
-        Log::info('approve', $approve);
+        
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {

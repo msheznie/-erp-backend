@@ -96,8 +96,6 @@ class WebPushNotificationService
             $params['uuid'] = $currentUserID;
             $response = $client->request('POST', $url, ['json' => $params]);
 
-            Log::info($url);
-
             if ($response) {
                 $notificationData = collect(json_decode($response->getBody(), true))->take(7);
 
