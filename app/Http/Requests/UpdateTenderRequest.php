@@ -58,8 +58,8 @@ class UpdateTenderRequest extends FormRequest
     public function messages()
     {
         return [
-            'award_visibility_type.required_if' => trans('srm_tender_rfx.selection_is_required'),
-            'award_visibility_type.in'          => trans('srm_tender_rfx.selection_is_required'),
+            'award_visibility_type.required_if' => trans('srm_tender_rfx.select_award_details_area'),
+            'award_visibility_type.in'          => trans('srm_tender_rfx.select_award_details_area'),
         ];
     }
 
@@ -80,7 +80,7 @@ class UpdateTenderRequest extends FormRequest
                 if ($evaluationTypeId === 1 && $awardVisibilityType !== 3) {
                     $validator->errors()->add(
                         'award_visibility_type',
-                        trans('srm_tender_rfx.selection_is_required')
+                        trans('srm_tender_rfx.select_award_details_area')
                     );
                 }
 
@@ -88,7 +88,7 @@ class UpdateTenderRequest extends FormRequest
                 if ($evaluationTypeId === 2 && !in_array($awardVisibilityType, [1, 2], true)) {
                     $validator->errors()->add(
                         'award_visibility_type',
-                        trans('srm_tender_rfx.selection_is_required')
+                        trans('srm_tender_rfx.select_award_details_area')
                     );
                 }
             }

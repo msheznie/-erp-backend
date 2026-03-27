@@ -386,4 +386,5 @@ return [
     'cancellation_finalized' => ':document_type cancellation finalized.',
     'cancellation_webpush_title' => ':document_type Cancelled',
     'cancellation_webpush_body' => ':document_type :tender_code has been cancelled.',
+    'select_award_details_area' => 'Please select visibility area for award details'
 ];
