@@ -66,8 +66,16 @@ class ThirdPartySystemNotificationJob implements ShouldQueue
         switch ($this->documentCode) {
             case 107:
                 $data = [
-                    'title' => 'Supplier Registration',
-                    'body' => 'Supplier Registration is approved.',
+                    'title' => 'KYC is Approved',
+                    'body' => '',
+                    'url' => "/suppliers/KYC",
+                ];
+                $type = 'supplier';
+                break;
+            case 108:
+                $data = [
+                    'title' => 'KYC is Rejected',
+                    'body' => '',
                     'url' => "/suppliers/KYC",
                 ];
                 $type = 'supplier';
