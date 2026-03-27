@@ -578,8 +578,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ];
             }
 
+            $negRows = SrmTenderTechnicalEvaluationHistory::tenderNegotiaitonTechEvaluationHistory($tenderId, $companyId);
+            $negotiationAttachmentIds = $negRows->pluck('attachment_id')->filter()->unique()->values()->toArray();
+
             $original = SRMTenderTechnicalEvaluationAttachment::getOriginalTenderData($tenderId, $companyId);
-            $originalAttachment = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+            $originalAttachment = DocumentAttachments::getOriginalFileName($companyId, $tenderId, $negotiationAttachmentIds);
 
             if ($original || $originalAttachment) {
                 $evaluationHistory[] = [
@@ -595,8 +598,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     'original_file_name' => $originalAttachment->originalFileName ?? null,
                 ];
             }
-
-            $negRows = SrmTenderTechnicalEvaluationHistory::tenderNegotiaitonTechEvaluationHistory($tenderId, $companyId);
 
             foreach ($negRows as $row) {
                 $evaluationHistory[] = [

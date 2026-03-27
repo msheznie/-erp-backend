@@ -385,4 +385,5 @@ return [
     'cancellation_finalized' => 'تم تنفيذ إلغاء :document_type نهائيًا.',
     'cancellation_webpush_title' => 'تم إلغاء :document_type',
     'cancellation_webpush_body' => 'تم إلغاء :document_type :tender_code.',
+    'select_award_details_area' => 'الرجاء تحديد منطقة الرؤية للحصول على تفاصيل الجائزة'
 ];
