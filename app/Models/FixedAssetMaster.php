@@ -16,6 +16,7 @@ use App\helper\Helper;
 use App\Traits\ApproveTrait;
 use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -790,6 +791,31 @@ class FixedAssetMaster extends Model
             $q->whereIn('assetStatus', [2, 3])
             ->orWhereNull('assetStatus');
         });
+    }
+
+    public static function depreciationJobBaseQuery($companySystemID, $depDate): Builder
+    {
+        return self::with([
+            'depperiod_by' => function ($query) {
+                $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                $query->whereHas('master_by', function ($query) {
+                    $query->where('approved', -1);
+                });
+                $query->groupBy('faID');
+            },
+            'depperiod_period',
+        ])
+        ->where(function ($q) use ($depDate) {
+            $q->isDisposed()
+                ->orWhere(function ($q1) use ($depDate) {
+                    $q1->disposed(-1)
+                        ->WhereDate('disposedDate', '>', $depDate);
+                });
+        })
+        ->ofCompany([$companySystemID])
+        ->isApproved()
+        ->assetType(1)
+        ->eligibleForDepreciation();
     }
 
     public function attributeValues()
