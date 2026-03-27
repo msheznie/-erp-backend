@@ -955,8 +955,8 @@
             $siNetTotal = $siRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
             $siRetentionAmount = $siRcm
                 ? (($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100))
-                : (($siBookingAmountTrans * ($siPct / 100)) - $retentionVatPortion);
-            $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct;
+                : ((($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100)) - $retentionVatPortion);
+            $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct - $siMol;
         @endphp
         <div class="row" style="margin-top: 30px">
             <table style="width:100%; border-collapse: collapse;">
