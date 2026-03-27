@@ -3201,6 +3201,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $stdVatTot = 0;
         $retentionVatPortion = 0;
+        $poVATamount = 0;
+
+        if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+            $poVATamount = SupplierInvoiceItemDetail::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount');
+        } else {
+            $poVATamount = (float) ($bookInvSuppMasterRecord->poVATamount ?? 0);
+        }
+
         if ($bookInvSuppMasterRecord->documentType != 4) {
             if (
                 ($bookInvSuppMasterRecord->retentionPercentage > 0) &&
@@ -3240,6 +3248,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt,
             'retentionVatPortion' => $retentionVatPortion,
+            'poVATamount' => round($poVATamount, $transDecimal),
             'directAmountReport' => $directAmountReport,
             'lang' => $lang // Pass lang to view
         );
