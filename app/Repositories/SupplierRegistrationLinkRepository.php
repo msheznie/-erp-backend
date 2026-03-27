@@ -205,14 +205,19 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $linkData = SupplierRegistrationLink::getUnapprovedSuppliers($input['tenderMasterId'],
             $input['companyId'],true);
 
+
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $linkData =   $linkData->where(function ($query) use($search) {
+                $query->where('name','LIKE',"%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+
         return \DataTables::of($linkData)
-            ->filter(function ($query) use ($search) {
-                if ($search) {
-                    $query->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%")
-                        ->orWhere('registration_number', 'LIKE', "%{$search}%");
-                }
-            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
