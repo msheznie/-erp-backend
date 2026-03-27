@@ -457,7 +457,6 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
             $isBidTender = optional($getSupplierAssignedData->supplierAssigned)->registrationNumber ? 0 : 1;
             $isExist = SupplierRegistrationLink::select('id','STATUS', 'token')
-                ->where('company_id', $companySystemId)
                 ->where('email', $email)
                 ->where('registration_number', $regNo)
                 ->orderBy("id", "desc")
