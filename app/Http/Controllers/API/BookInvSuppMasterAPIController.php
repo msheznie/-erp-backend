@@ -2441,6 +2441,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
 
         $vatAmount = ($totalVatAmount - (($stdVatAmountTotal*$output->retentionPercentage)/100));
+        $poVATamount = 0;
+        if ($output->rcmActivated != 1) {
+            $poVATamount = SupplierInvoiceItemDetail::where('bookingSuppMasInvAutoID', $output->bookingSuppMasInvAutoID)
+                ->sum('VATAmount');
+        }
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -2449,6 +2454,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poVATamount'] = round($poVATamount, $output->transactioncurrency->DecimalPlaces ?? 2);
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
