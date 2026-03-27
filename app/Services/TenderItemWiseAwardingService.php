@@ -833,6 +833,8 @@ class TenderItemWiseAwardingService
                 'document_type_label' => $documentTypeLabel,
                 'tender_code' => $tender->tender_code ?? '',
                 'tender_title' => $tender->title ?? '',
+                'final_tender_awarded' => (int) ($tender->final_tender_awarded ?? 0),
+                'final_tender_award_email' => (int) ($tender->final_tender_award_email ?? 0),
             ],
         ];
     }
