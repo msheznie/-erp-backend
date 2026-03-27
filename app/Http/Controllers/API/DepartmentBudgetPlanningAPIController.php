@@ -1206,12 +1206,27 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
     public function deleteTimeExtensionRequest(Request $request) {
         $input = $request->all();
 
-        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::find($input['id']);
+        $timeExtensionRequest = DeptBudgetPlanningTimeRequest::with([
+            'attachments',
+            'departmentBudgetPlanning.masterBudgetPlannings'
+        ])->find($input['id']);
         if (!$timeExtensionRequest) {
             return $this->sendError('Time request not found');
         }
 
         $oldValue = $timeExtensionRequest->toArray();
+        $narrationVariables = $timeExtensionRequest->request_code;
+
+        // Delete attachment files + their DB records
+        $companySystemID = $timeExtensionRequest->getCompanySystemID() ?? 1;
+        $disk = Helper::policyWiseDisk($companySystemID, 'public');
+
+        foreach ($timeExtensionRequest->attachments as $attachment) {
+            if (!empty($attachment->file_path) && \Storage::disk($disk)->exists($attachment->file_path)) {
+                \Storage::disk($disk)->delete($attachment->file_path);
+            }
+            $attachment->delete();
+        }
 
         // Delete the time extension request
         $timeExtensionRequest->delete();
@@ -1219,7 +1234,6 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         // Add audit log
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
-        $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
             $timeExtensionRequest->department_budget_planning_id,

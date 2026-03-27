@@ -764,6 +764,7 @@ return
     'budget_template_saved_successfully' => 'تم حفظ قالب الميزانية بنجاح',
     'budget_template_updated_successfully' => 'تم تحديث قالب الميزانية بنجاح',
     'budget_template_is_used_in_department_budget_planning' => 'قالب الميزانية هذا قيد الاستخدام ولا يمكن حذفه لأن الميزانية قد تم البدء بها بالفعل.',
+    'budget_template_type_already_assigned_to_department' => 'قالب ميزانية من هذا النوع معين بالفعل للقسم. لا يمكنك إضافة قالب آخر من نفس النوع.',
     'budget_templates_exported_successfully' => 'تم تصدير قوالب الميزانية بنجاح',
     'budget_templates_retrieved_successfully' => 'تم استرداد قوالب الميزانية بنجاح',
     'budget_templates_retrieved_successfully_1' => 'تم استرداد قوالب الميزانية بنجاح',
@@ -9934,4 +9935,5 @@ return
     'grv_multiple_subcategories' => 'لا يمكن أن يحتوي إشعار استلام البضاعة على عناصر من فئات فرعية متعددة تحت نفس الفئة الرئيسية. يرجى اختيار عناصر من فئة فرعية واحدة.',
     'subcategory_approval_disabled_enable_before_activate' => 'الموافقة حسب الفئة الفرعية معطلة حالياً في إعدادات المستند. يرجى تفعيل الموافقة حسب الفئة الفرعية قبل تفعيل إعداد موافقة حسب الفئة الفرعية.',
     'payment_voucher_interbank_transfer' => 'سند صرف - تحويل بين البنوك',
+    'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'لا يمكن حذف الموظف لأن تخطيط الميزانية قيد التنفيذ',
 ];

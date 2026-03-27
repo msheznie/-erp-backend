@@ -249,12 +249,20 @@ class DepartmentBudgetPlanningsDelegateAccess extends Model
         $currentLevel = $statusHierarchy[$currentStatus] ?? 0;
         $newLevel = $statusHierarchy[$newStatus] ?? 0;
 
-        // If trying to go backwards in status, throw exception
+        // Cannot go backwards in status
         if ($newLevel < $currentLevel) {
             $currentLabel = self::getWorkStatusLabel($currentStatus);
             $newLabel = self::getWorkStatusLabel($newStatus);
-            
+
             throw new \Exception("Cannot change work status from '{$currentLabel}' to '{$newLabel}'. Status can only progress forward.");
+        }
+
+        // Cannot skip a status: must move to next step only (e.g. 1 -> 2, then 2 -> 3)
+        if ($newLevel > $currentLevel + 1) {
+            $currentLabel = self::getWorkStatusLabel($currentStatus);
+            $newLabel = self::getWorkStatusLabel($newStatus);
+
+            throw new \Exception("Cannot change work status from '{$currentLabel}' directly to '{$newLabel}'. You must change to 'In Progress' first, then to 'Submitted To HOD'.");
         }
     }
 

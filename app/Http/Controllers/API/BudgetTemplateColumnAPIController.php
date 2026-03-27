@@ -47,7 +47,12 @@ class BudgetTemplateColumnAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $budgetTemplateColumn = $this->budgetTemplateColumnRepository->addToTemplate($input);
+       
+        try {
+            $budgetTemplateColumn = $this->budgetTemplateColumnRepository->addToTemplate($input);
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
 
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
@@ -89,7 +94,12 @@ class BudgetTemplateColumnAPIController extends AppBaseController
 
         $oldValues = $budgetTemplateColumn->toArray();
 
-        $budgetTemplateColumn = $this->budgetTemplateColumnRepository->update($request->all(), $id);
+        try {
+            $this->budgetTemplateColumnRepository->assertTemplateColumnModificationAllowed($budgetTemplateColumn->budgetTemplateID);
+            $budgetTemplateColumn = $this->budgetTemplateColumnRepository->update($request->all(), $id);
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
 
         // Audit log
         $uuid = $request->get('tenant_uuid', 'local');
@@ -112,6 +122,12 @@ class BudgetTemplateColumnAPIController extends AppBaseController
         }
 
         $previousValue = $budgetTemplateColumn->toArray();
+
+        try {
+            $this->budgetTemplateColumnRepository->assertTemplateColumnModificationAllowed($budgetTemplateColumn->budgetTemplateID);
+        } catch (\Exception $e) {
+            return $this->sendError($e->getMessage());
+        }
 
         // Check if this column is referenced in any formulas within the same template
         $referencingColumns = $this->budgetTemplateColumnRepository->getColumnsReferencingColumn(
