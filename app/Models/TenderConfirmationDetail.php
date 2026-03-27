@@ -42,7 +42,7 @@ class TenderConfirmationDetail extends Model
      */
     public static $rules = [
         'tender_id' => 'required',
-        'module' => 'required|integer|min:1|max:8',
+        'module' => 'required|integer|min:1|max:12',
     ];
 
     /**
@@ -73,4 +73,17 @@ class TenderConfirmationDetail extends Model
     const MODULE_NEGOTIATION = 7;
     const MODULE_AWARDING = 8;
     const MODULE_AWARDED = 9;
+    const MODULE_BID_OPENING_APPROVAL = 10;
+    const MODULE_COMMITTEE_BID_OPENING_APPROVAL = 11;
+    const MODULE_AWARDING_APPROVAL = 12;
+
+    public static function getTenderConfirmationDetails($tender_id, $module, $empIds){
+        return self::where('tender_id', $tender_id)
+            ->where('module', $module)
+            ->whereIn('reference_id', $empIds)
+            ->orderBy('id', 'desc')
+            ->get()
+            ->unique('reference_id')
+            ->keyBy('reference_id');
+    }
 }

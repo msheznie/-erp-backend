@@ -2911,6 +2911,7 @@ class TenderMasterAPIController extends AppBaseController
         $val = $input['data']['value'];
         $id = $input['id'];
         $type = $input['type'];
+        $cleanComment = isset($comments) && trim((string) $comments) !== '' ? $comments : null;
 
 
 
@@ -2937,6 +2938,26 @@ class TenderMasterAPIController extends AppBaseController
                 $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
             }
 
+            if ($type == 2) {
+                TenderConfirmationService::saveConfirmationDetails(
+                    (int) $tender_id,
+                    (int) $emp_id,
+                    TenderConfirmationDetail::MODULE_BID_OPENING_APPROVAL,
+                    null,
+                    $cleanComment
+                );
+            }
+
+            if ($type == 1) {
+                TenderConfirmationService::saveConfirmationDetails(
+                    (int) $tender_id,
+                    (int) $emp_id,
+                    TenderConfirmationDetail::MODULE_COMMITTEE_BID_OPENING_APPROVAL,
+                    null,
+                    $cleanComment
+                );
+            }
+
             if ($type == 3) {
                 $tender = TenderMaster::find($tender_id);
                 $minApprovalForAwarding = $tender->min_approval_awarding ?? 1;
@@ -2955,6 +2976,13 @@ class TenderMasterAPIController extends AppBaseController
                 }
 
                 TenderMaster::where('id', $tender_id)->update(['award_commite_mem_status' => $status]);
+                TenderConfirmationService::saveConfirmationDetails(
+                    (int) $tender_id,
+                    (int) $emp_id,
+                    TenderConfirmationDetail::MODULE_AWARDING_APPROVAL,
+                    null,
+                    $cleanComment
+                );
             }
 
             DB::commit();
