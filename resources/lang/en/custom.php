@@ -779,6 +779,7 @@ return
     'budget_template_saved_successfully' => 'Budget Template saved successfully',
     'budget_template_updated_successfully' => 'Budget Template updated successfully',
     'budget_template_is_used_in_department_budget_planning' => 'This Budget Template is in use and cannot be deleted because a Budget has already been initiated.',
+    'budget_template_type_already_assigned_to_department' => 'A budget template of this type is already assigned to the department. You cannot add another template of the same type.',
     'budget_templates_exported_successfully' => 'Budget Templates exported successfully',
     'budget_templates_retrieved_successfully' => 'Budget templates retrieved successfully',
     'budget_templates_retrieved_successfully_1' => 'Budget Templates retrieved successfully',
@@ -10060,4 +10061,5 @@ return
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
     'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer',
     'materiel_issue_pending_approval' => 'There is a Materiel Issue (:issueCode) pending approval for the material you are trying to add. Please check again.',
+    'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'Employee cannot be removed because budget planning is in progress',
 ];

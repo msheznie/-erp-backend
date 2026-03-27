@@ -611,15 +611,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
                 if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
 
-                    $delegateBudgetDetails = BudgetDelegateAccessRecord::with('delegatee')->whereHas('delegatee',function ($q) use ($employeeID) {
-                        $q->where('employeeSystemID',$employeeID);
-                    })->pluck('id')->toArray();
+                    $delegateBudgetDetails = BudgetDelegateAccessRecord::with(['delegatee', 'budgetPlanningDetail'])
+                        ->whereHas('delegatee', function ($q) use ($employeeID) {
+                            $q->where('employeeSystemID', $employeeID);
+                        })
+                        ->get();
+
+                    $delegateBudgetDetailIds = $delegateBudgetDetails->pluck('budget_planning_detail_id')->filter()->unique()->values()->toArray();
+                    $departmentPlanningIds = $delegateBudgetDetails->pluck('budgetPlanningDetail.department_planning_id')->filter()->unique()->values()->toArray();
 
                     $companyPlanningCodes = CompanyBudgetPlanning::with('departmentBudgetPlannings')
-                        ->whereHas('departmentBudgetPlannings.budgetPlanningDetails', function ($q) use ($delegateBudgetDetails) {
-                            $q->whereIn('id', $delegateBudgetDetails);
+                        ->whereHas('departmentBudgetPlannings.budgetPlanningDetails', function ($q) use ($delegateBudgetDetailIds) {
+                            $q->whereIn('id', $delegateBudgetDetailIds);
                         })
-                        ->select('planningCode','id')
+                        ->select('planningCode', 'id')
                         ->get();
 
                     $departmentPlanningCodes = $companyPlanningCodes;
