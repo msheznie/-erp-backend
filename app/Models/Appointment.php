@@ -3,6 +3,7 @@
 namespace App\Models;
 use Awobaz\Compoships\Compoships;
 use Eloquent as Model;
+use App\Models\SupplierRegistrationLink;
 
 /**
  * @SWG\Definition(
@@ -215,5 +216,11 @@ class Appointment extends Model
             'detail.po_master:purchaseOrderID,supplierTransactionCurrencyID,serviceLineSystemID',
             'detail.getPoDetails:purchaseOrderDetailsID,noQty,itemPrimaryCode,companySystemID'
         ])->find($id);
+    }
+    public static function getDeliveryAppointmentNotificationData(int $appointmentId)
+    {
+        return self::select('primary_code', 'supplier_id')
+            ->where('id', $appointmentId)
+            ->first();
     }
 }
