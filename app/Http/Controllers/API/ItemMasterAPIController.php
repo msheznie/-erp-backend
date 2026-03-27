@@ -2281,7 +2281,8 @@ class ItemMasterAPIController extends AppBaseController
 
             if(empty($itemCodes) && empty($wareHouseCodes))
             { 
-               return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
+                $getAll = true;
+               //return $this->sendResponse([], trans('custom.record_retrieved_successfully'));
             }   
             
             if (!empty($itemCodes)) {
