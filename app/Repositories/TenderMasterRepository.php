@@ -2436,7 +2436,6 @@ class TenderMasterRepository extends BaseRepository
                         $data[$key] = [
                             'tender_master_id' => $tenderId,
                             'supplier_assigned_id' => $isUnapproved ? null : $val,
-                            'registration_link_id' => $isUnapproved ? $val : null,
                             'supplier_name' => $isUnapproved && $reg ? $reg->name : null,
                             'supplier_email' => $isUnapproved && $reg ? $reg->email : null,
                             'unApprovedSupplier' => $isUnapproved ? 1 : null,
@@ -2445,6 +2444,11 @@ class TenderMasterRepository extends BaseRepository
                             'company_id' => $companySystemId,
                             'created_at' => Helper::currentDateTime()
                         ];
+
+                        if ($isUnapproved) {
+                            $data[$key]['registration_link_id'] = $val;
+                        }
+
                         if($editOrAmend){
                             $data[$key]['id'] = null;
                             $data[$key]['version_id'] = $versionID;
