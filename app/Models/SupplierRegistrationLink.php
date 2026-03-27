@@ -47,7 +47,7 @@ class SupplierRegistrationLink extends Model
         'id' => 'integer',
         'supplier_master_id' => 'integer',
         'uuid' => 'string',
-        'is_existing_erp_supplier' => 'integer',
+        'is_existing_erp_supplier' => 'integer'
         ];
 
     public function supplier(){
@@ -114,12 +114,17 @@ class SupplierRegistrationLink extends Model
 
     public static function getUnapprovedSuppliers($tenderId, $companyId, $isDataTable = false)
     {
-        $query = self::select('id', 'name', 'email', 'registration_number')
-            ->where('approved_yn', 0)
-            ->whereNotNull('uuid')
+        $query = self::select('id', 'name', 'email', 'registration_number','approved_yn','uuid')
+            ->where(function ($q) {
+                $q->where('approved_yn', 0)
+                    ->whereNotNull('uuid');
+            })
             ->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
                 $query->where('tender_master_id', $tenderId);
             });
+
+
+
         return $query;
     }
 
