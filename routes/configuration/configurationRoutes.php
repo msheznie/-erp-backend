@@ -121,6 +121,9 @@ Route::group([], function() {
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
     Route::resource('attachment_type_configurations', 'AttachmentTypeConfigurationAPIController');
     Route::post('getAttachmentTypeConfig', 'AttachmentTypeConfigurationAPIController@getAttachmentTypeConfig')->name('Get all attachment type config ');
+    Route::get('getPVTypeBaseApprovals', 'PvApprovalTypeSetupAPIController@getPVTypeBaseApprovals')->name('Get PV type base approvals');
+    Route::post('updatePVTypeBaseApprovalRow', 'PvApprovalTypeSetupAPIController@updatePVTypeBaseApprovalRow')->name('Update PV type base approval row');
+    Route::resource('pv_approval_type_setups', 'PvApprovalTypeSetupAPIController');
 });
 
 
@@ -238,12 +241,10 @@ Route::group([], function() {
      Route::resource('templateLinks', 'FinalReturnIncomeTemplateLinksAPIController');
      Route::resource('templateRaws', 'FinalReturnIncomeTemplateDefaultsAPIController');
      Route::resource('finalReportTemplateColumn', 'FinalReturnIncomeTemplateColumnsAPIController');
-  
-
 
      Route::post('getTemplateList', 'FinalReturnIncomeTemplateAPIController@getTemplateList')->name('Get template list');
      Route::get('chartOfAccountsTemplate', 'FinalReturnIncomeTemplateAPIController@chartOfAccountsTemplate')->name('Chart of accounts template');
      Route::get('getTemplateDetail/{id}', 'FinalReturnIncomeTemplateDetailsAPIController@getReportTemplateDetail')->name("Get report template detail by report template id");
      Route::post('templateDetailRaw', 'FinalReturnIncomeTemplateDetailsAPIController@templateDetailRaw')->name('Template detail raw');
      Route::get('templateColumnsLink', 'FinalReturnIncomeTemplateColumnsAPIController@templateColumnsLink')->name('Template columns link');
-    });
+});

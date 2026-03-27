@@ -10066,6 +10066,9 @@ return
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
     'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer',
     'materiel_issue_pending_approval' => 'There is a Materiel Issue (:issueCode) pending approval for the material you are trying to add. Please check again.',
+    'pv_approval_type_setup_not_found' => 'PV approval type setup not found.',
+    'description_cannot_be_duplicated' => 'Description cannot be Duplicated',
+    'pv_approval_type_setup_deleted_successfully' => 'PV approval type setup deleted successfully',
     'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'Employee cannot be removed because budget planning is in progress',
 
     // Document Communication Messages
