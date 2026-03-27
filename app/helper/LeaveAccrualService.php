@@ -143,16 +143,27 @@ class LeaveAccrualService
     function pending_sql_annual($str, $leaveGroupID, $master_id_filter): string
     {
         $dailyBasisYN = $this->dailyBasis ? 1 : 0;
-
-        $yearDateFilter = "m.company_finance_year_id = ".$this->year_det['id'];
-        if ($this->year_det['accrualPolicyValue'] == 2){
-            $year = Carbon::parse( $this->date )->format('Y');
-            $yearDateFilter = " m.year = '{$year}' ";
-        }
+        $yearDateFilter = '';
 
         if ($dailyBasisYN == 1) {
             $yearDateFilter = "m.dailyAccrualDate = '{$this->date}'";
+        } elseif (isset($this->year_det['accrualPolicyValue']) && $this->year_det['accrualPolicyValue'] == 2){
+            $year = Carbon::parse( $this->date )->format('Y');
+            $yearDateFilter = " m.year = '{$year}' ";
+        } elseif (isset($this->year_det['id'])){
+            $yearDateFilter = " m.company_finance_year_id = ".$this->year_det['id'];
         }
+
+        $extraFilters = '';
+
+        if (!empty($yearDateFilter)) {
+            $extraFilters .= " AND {$yearDateFilter}";
+        }
+
+        if (!empty($master_id_filter)) {
+            $extraFilters .= " {$master_id_filter}";
+        }
+
         return "SELECT {$str}
             FROM srp_employeesdetails AS emp
             JOIN (
@@ -164,7 +175,7 @@ class LeaveAccrualService
                 JOIN srp_erp_leaveaccrualmaster AS m ON m.leaveaccrualMasterID = det.leaveaccrualMasterID
                 WHERE emp.EIdNo = empID AND det.leaveGroupID = {$leaveGroupID} 
                 AND m.dailyAccrualYN = {$dailyBasisYN}
-                AND {$yearDateFilter} {$master_id_filter}
+                {$extraFilters}
                 AND m.policyMasterID = 1 AND m.manualYN = 0        
                 GROUP BY det.empID
             ) AND emp.leaveGroupID = {$leaveGroupID} AND emp.isDischarged != 1 AND emp.Erp_companyID={$this->company_id}";
