@@ -17,8 +17,12 @@ use App\helper\Helper;
 use App\Services\WebPushNotificationService;
 use App\Http\Requests\API\CreateUserAPIRequest;
 use App\Http\Requests\API\UpdateUserAPIRequest;
+use App\Models\Company;
+use App\Models\Employee;
 use App\Models\EmployeeNavigation;
+use App\Models\NavigationUserGroupSetup;
 use App\Models\User;
+use App\Models\UserType;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -318,4 +322,180 @@ class UserAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+
+
+    public function pullUserDetails(Request $request)
+    {
+        try {
+            $input = $request->all();
+
+            $validator = \Validator::make($input, [
+                'page'             => 'sometimes|integer|min:1',
+                'per_page'         => 'sometimes|integer|min:1|max:500',
+                'company'          => 'sometimes|array',
+                'company.*'        => 'string',
+                'user_type'        => 'sometimes|array',
+                'user_type.*'      => 'string',
+                'product_access'   => 'sometimes|array',
+                'product_access.*' => 'string',
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->errors()->first(), 422);
+            }
+
+            $companySystemIDs = null;
+            if ($request->has('company')) {
+                $companyNames = $this->employeeRepository->normalizeMultiValue($request->get('company'));
+                if (empty($companyNames)) {
+                    return $this->sendError(trans('custom.input_value_not_matching'), 422);
+                }
+
+                $companies = $this->companyRepository->findByCompanyNames($companyNames);
+                if ($companies->count() !== count(array_unique(array_map('strtolower', $companyNames)))) {
+                    return $this->sendError(trans('custom.input_value_not_matching'), 422);
+                }
+
+                $companySystemIDs = [];
+                foreach ($companies as $company) {
+                    $isGroup = Helper::checkIsCompanyGroup($company->companySystemID);
+                    if ($isGroup) {
+                        $companySystemIDs = array_merge(
+                            $companySystemIDs,
+                            Helper::getGroupCompany($company->companySystemID)
+                        );
+                    } else {
+                        $companySystemIDs[] = $company->companySystemID;
+                    }
+                }
+                $companySystemIDs = array_values(array_unique($companySystemIDs));
+            }
+
+            $userTypeIds = null;
+            if ($request->has('user_type')) {
+                $userTypeInputs = $this->employeeRepository->normalizeMultiValue($request->get('user_type'));
+                if (empty($userTypeInputs)) {
+                    return $this->sendError(trans('custom.user_type_not_found'), 422);
+                }
+
+                $aliases = $this->employeeRepository->getUserTypeAliases();
+                $aliasMap = collect($aliases)->mapWithKeys(fn($v, $k) => [strtolower($k) => $v])->all();
+
+                $searchTypes = [];
+                foreach ($userTypeInputs as $inputType) {
+                    $searchTypes[] = $aliasMap[strtolower($inputType)] ?? $inputType;
+                }
+                $searchTypes = array_unique($searchTypes);
+                $lowerSearchTypes = array_map('strtolower', $searchTypes);
+
+                $userTypes = UserType::whereIn(DB::raw('LOWER(userType)'), $lowerSearchTypes)->get();
+                $userTypeMap = $userTypes->keyBy(fn($ut) => strtolower($ut->userType));
+
+                $userTypeIds = [];
+                foreach ($userTypeInputs as $inputType) {
+                    $searchType = $aliasMap[strtolower($inputType)] ?? $inputType;
+                    $ut = $userTypeMap->get(strtolower($searchType));
+                    if (!$ut) {
+                        return $this->sendError(trans('custom.user_type_not_found'), 422);
+                    }
+                    $userTypeIds[] = $ut->id;
+                }
+                $userTypeIds = array_values(array_unique($userTypeIds));
+            }
+
+            $productAccessFilter = null;
+            if ($request->has('product_access')) {
+                $productAccessList = $this->employeeRepository->normalizeMultiValue($request->get('product_access'));
+                if (empty($productAccessList)) {
+                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                }
+
+                $validProducts = $this->employeeRepository->getProductNames();
+                $productMap = collect($validProducts)->mapWithKeys(fn($p) => [strtolower($p) => $p])->all();
+                $validProductAccessList = [];
+                foreach ($productAccessList as $name) {
+                    $matched = $productMap[strtolower($name)] ?? null;
+                    if ($matched !== null) {
+                        $validProductAccessList[] = $matched;
+                    } else {
+                        return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                    }
+                }
+
+                $productAccessFilter = $this->employeeRepository->getEmployeeIDsByProductAccess($validProductAccessList);
+                if (empty($productAccessFilter)) {
+                    return $this->sendError(trans('custom.product_access_value_not_matching'), 422);
+                }
+            }
+
+            $query = Employee::query()
+                ->select([
+                    'employeeSystemID',
+                    'empID',
+                    'empName',
+                    'empUserName',
+                    'empEmail',
+                    'empLoginActive',
+                    'discharegedYN',
+                    'empCompanySystemID',
+                    'designation',
+                ])
+                ->with([
+                    'user_data' => function ($query) {
+                        $query->select('id', 'employee_id', 'userType');
+                    },
+                    'user_data.user_type' => function ($query) {
+                        $query->select('id', 'userType');
+                    },
+                    'emp_company' => function ($query) {
+                        $query->select('companySystemID', 'CompanyName');
+                    },
+                    'erp_designation' => function ($query) {
+                        $query->select('DesignationID', 'DesDescription');
+                    },
+                    'hr_emp' => function ($query) {
+                        $query->select('EIdNo', 'EmpSecondaryCode');
+                    },
+                ]);              
+
+            if ($companySystemIDs !== null) {
+                $query->whereIn('empCompanySystemID', $companySystemIDs);
+            }
+            if ($userTypeIds !== null) {
+                $query->whereHas('user_data', function ($q) use ($userTypeIds) {
+                    $q->whereIn('userType', $userTypeIds);
+                });
+            }
+
+            if ($productAccessFilter !== null) {
+                $query->whereIn('employeeSystemID', $productAccessFilter);
+            }
+
+            if ($request->has('page')) {
+                $perPage = $request->get('per_page', 10);
+                $employees = $query->paginate($perPage);
+
+                $employeeIds = $employees->getCollection()->pluck('employeeSystemID')->toArray();
+                $accessMap = $this->employeeRepository->batchLoadAccessDetails($employeeIds);
+
+                $employees->getCollection()->transform(function ($employee) use ($accessMap) {
+                    return $this->employeeRepository->buildUserResponseItem($employee, $accessMap);
+                });
+            } else {
+                $allEmployees = $query->get();
+                $employeeIds = $allEmployees->pluck('employeeSystemID')->toArray();
+                $accessMap = $this->employeeRepository->batchLoadAccessDetails($employeeIds);
+
+                $employees = $allEmployees->map(function ($employee) use ($accessMap) {
+                    return $this->employeeRepository->buildUserResponseItem($employee, $accessMap);
+                });
+            }
+
+            return $this->sendResponse($employees, trans('custom.data_retrieved_successfully'));
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
 }

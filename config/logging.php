@@ -109,6 +109,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'stdout' => [
+            'driver' => 'monolog',
+            'handler' => StreamHandler::class,
+            'handler_with' => [
+                'stream' => 'php://stdout',
+            ],
+            'level' => env('LOG_LEVEL', 'debug'),
+            'processors' => [PsrLogMessageProcessor::class],
+        ],
+
         'null' => [
             'driver' => 'monolog',
             'handler' => NullHandler::class,
@@ -629,6 +639,12 @@ return [
         'authorization' => [
             'driver' => 'single',
             'path' => storage_path('logs/authorization.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+        'update_finance_posting_status_job' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/update-finance-posting-status-job.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'replace_placeholders' => true,
         ],

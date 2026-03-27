@@ -13,6 +13,7 @@ use App\Http\Middleware\MobileAccessVerify;
 |
 */
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use App\Http\Middleware\ExtractHeadersFromBody;
 
@@ -907,7 +908,7 @@ Route::group(['middleware' => ['mobileServer']], function () {
 
     Route::group(['middleware' => ['tenantById', 'cors']], function (){
         Route::get('pull_company_details', 'POS\PosAPIController@pullCompanyDetails');
-        Route::group(['middleware' => ['thirdPartyApis', 'thirdPartyApiLogger', 'hrms_employee']], function () {
+        Route::group(['middleware' => ['thirdPartyApis', 'hrms_employee']], function () {
             Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
             Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
             Route::post('create_supplier_invoices','BookInvSuppMasterAPIController@createSupplierInvoices');
@@ -958,6 +959,14 @@ Route::group(['middleware' => ['mobileServer']], function () {
             return 'CRON Job run successfully';
         });
         Route::get('confirmAPICreatedReceiptVouchers', 'ReceiptAPIController@confirmAPICreatedReceiptVouchers');
+        Route::get('test-log', function () {
+            Log::info('Test log message at ' . now()->toIso8601String());
+            Log::debug('Debug level test');
+            return response()->json([
+                'message' => 'Log test completed. Check stdout/container logs.',
+                'logged_at' => now()->toIso8601String(),
+            ]);
+        });
     }
 });
 

@@ -117,7 +117,7 @@ class B2BResourceAPIController extends AppBaseController
             } else {
                 $detailObject->setExchangeRate($rs['payment_voucher']['BPVbankCurrencyER']);
             }
-            $detailObject->setDealRefNo("");
+            // $detailObject->setDealRefNo("");
             $detailObject->setValueDate($rs['payment_voucher']['BPVdate']);
             $detailObject->setDebitAccountNo($bankTransferBankAccountDetails->AccountNo ?? "");
 
@@ -130,7 +130,7 @@ class B2BResourceAPIController extends AppBaseController
             $documentCode = explode('\\', $rs['documentCode']);
             $batchNo = Carbon::make($rs['payment_voucher']['BPVdate'])->year . '\\' . end($documentCode) . '\\' . $lastPart;
             $detailObject->setCreditAccountNo($creditAccountNo);
-            $detailObject->setTransactionReference($batchNo);
+            // $detailObject->setTransactionReference($batchNo);
             $detailObject->setDebitNarrative(substr(htmlspecialchars_decode($rs['payment_voucher']['BPVNarration']), 0, 35));
             $detailObject->setDebitNarrative2("");
             $detailObject->setCreditNarrative("");
@@ -172,7 +172,7 @@ class B2BResourceAPIController extends AppBaseController
             $detailObject->setEmail($supplierContactDetailsEmails ?? null);
             $detailObject->setDispatchMode("E");
             $detailObject->setTransactorCode("B");
-            $detailObject->setSupportingDocumentName("");
+            // $detailObject->setSupportingDocumentName("");
             $detailObject->setPaymentVoucherCode($rs['documentCode']);
 
             array_push($detailsArray, (array)$detailObject);
@@ -240,7 +240,7 @@ class B2BResourceAPIController extends AppBaseController
 
         $this->vendorFile->setHeaderData($this->headerDetails);
         $this->vendorFile->setDetailsData($this->details);
-        $this->vendorFile->setFooterData($footerDetails);
+        $this->vendorFile->setFooterData($this->bankTransferID);
 
         if (!empty(Arr::flatten($this->vendorFile->detailsDataErros)) || !empty(Arr::flatten($this->vendorFile->headerErrors))) {
             return $this->sendError(trans('custom.validation_failed_on_some_documents'), 500, [
@@ -299,7 +299,6 @@ class B2BResourceAPIController extends AppBaseController
     {
         $txtData = [];
 
-
 //        array_push($txtData, implode($reportData['header']['title'], ','));
         array_push($txtData, implode(',',Arr::flatten($reportData['header']['data'])));
 //        array_push($txtData, implode($reportData['detail']['title'], ','));
@@ -316,7 +315,9 @@ class B2BResourceAPIController extends AppBaseController
         }
         unset($dt);
 //        array_push($txtData, implode($reportData['footer']['title'], ','));
-        array_push($txtData, implode(',',Arr::flatten($reportData['footer']['data'])));
+        foreach ($reportData['footer']['data'] as $footerRow) {
+            array_push($txtData, implode(',', array_values($footerRow)));
+        }
         $txtData = implode("\n", $txtData);
 
         return $txtData;

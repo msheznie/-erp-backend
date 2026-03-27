@@ -83,6 +83,7 @@ use App\Repositories\CustomerInvoiceDirectRepository;
 use App\Repositories\CustomerInvoiceItemDetailsRepository;
 use App\Repositories\SalesReturnRepository;
 use App\Repositories\ShiftDetailsRepository;
+use App\Jobs\UpdateFinancePostingStatusToPosJob;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1691,8 +1692,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 \Illuminate\Support\Facades\DB::commit();
 
+                UpdateFinancePostingStatusToPosJob::dispatch($db, $shiftId, 1, 'Success');
             } catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
+                UpdateFinancePostingStatusToPosJob::dispatch($db, $shiftId, 0, $exception->getMessage());
                 return $this->sendError(trans('custom.error_occurred') . $exception->getMessage() . 'Line :' . $exception->getLine());
             }
 
@@ -2280,10 +2283,11 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 \Illuminate\Support\Facades\DB::commit();
 
-                
+                UpdateFinancePostingStatusToPosJob::dispatch($db, $shiftId, 1, 'Success');
             }
             catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
+                UpdateFinancePostingStatusToPosJob::dispatch($db, $shiftId, 0, $exception->getMessage());
                 return $this->sendError(trans('custom.error_occurred'). $exception->getMessage() . 'Line :' . $exception->getLine());
             }
 

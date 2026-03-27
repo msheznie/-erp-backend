@@ -12,11 +12,11 @@ class Detail
     public $credit_amount;
     public $credit_currency;
     public $exchange_rate;
-    public $deal_ref_no;
+    // public $deal_ref_no;
     public $value_date;
     public $debit_account_no;
     public $credit_account_no;
-    public $transaction_reference;
+    // public $transaction_reference;
     public $debit_narrative;
     public $debit_narrative2;
     public $credit_narrative;
@@ -45,7 +45,7 @@ class Detail
     public $email;
     public $dispatch_mode;
     public $transactor_code;
-    public $supporting_document_name;
+    // public $supporting_document_name;
 
     public $payment_voucher_code;
 
@@ -62,11 +62,11 @@ class Detail
     public function setCreditAmount($value,$bankCurrency) { $this->credit_amount = round($value,CurrencyMaster::find($bankCurrency)->DecimalPlaces); }
     public function setCreditCurrency($value) { $this->credit_currency = $this->getCurrencyCode($value); }
     public function setExchangeRate($value) { $this->exchange_rate = $value; }
-    public function setDealRefNo($value) { $this->deal_ref_no = $value; }
+    // public function setDealRefNo($value) { $this->deal_ref_no = $value; }
     public function setValueDate($value) { $this->value_date = Carbon::parse($value)->format('d/m/Y'); }
     public function setDebitAccountNo($value) { $this->debit_account_no = $value; }
     public function setCreditAccountNo($value) { $this->credit_account_no = $value; }
-    public function setTransactionReference($value) { $this->transaction_reference = $value; }
+    // public function setTransactionReference($value) { $this->transaction_reference = $value; }
     public function setDebitNarrative($value) { $this->debit_narrative = $value; }
     public function setDebitNarrative2($value) { $this->debit_narrative2 = $value; }
     public function setCreditNarrative($value) { $this->credit_narrative = $value; }
@@ -95,7 +95,7 @@ class Detail
     public function setEmail($value) { $this->email = $value; }
     public function setDispatchMode($value) { $this->dispatch_mode = $value; }
     public function setTransactorCode($value) { $this->transactor_code = $value; }
-    public function setSupportingDocumentName($value) { $this->supporting_document_name = $value; }
+    // public function setSupportingDocumentName($value) { $this->supporting_document_name = $value; }
 
 
     private function getCurrencyCode($currencyID)

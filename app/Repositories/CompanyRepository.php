@@ -99,4 +99,14 @@ class CompanyRepository extends BaseRepository
     {
         return Company::class;
     }
+
+    public function findByCompanyNames(array $names)
+    {
+        $names = array_filter(array_map('trim', $names));
+        if (empty($names)) {
+            return collect();
+        }
+        $lowerNames = array_values(array_unique(array_map('strtolower', $names)));
+        return $this->model->whereIn(\DB::raw('LOWER(CompanyName)'), $lowerNames)->get();
+    }
 }

@@ -217,16 +217,29 @@ class CustomerReceivePaymentGlService
                             ->get();
 
                     $serviceLineSystemIDs = collect($receiptDetails)->pluck('serviceLineSystemID')->toArray();
+                    $firstReceiptDetail = $receiptDetails->first();
+                    $sourceLocal = Helper::roundValue($receiptDetails->sum('receiveAmountLocal'));
+                    $sourceRpt = Helper::roundValue($receiptDetails->sum('receiveAmountRpt'));
 
-                    foreach ($receiptDetails as $keyRe => $valueRe) {
-                        $data['documentTransAmount'] = Helper::roundValue($valueRe->receiveAmountTrans) * -1;
-                        $data['documentLocalAmount'] = Helper::roundValue($valueRe->receiveAmountLocal) * -1;
-                        $data['documentRptAmount'] = Helper::roundValue($valueRe->receiveAmountRpt) * -1;
+                    if ($receiptDetails->count() === 1) {
+                        $valueRe = $receiptDetails->first();
+                        $arTrans = Helper::roundValue($cpd->transAmount) * -1;
+                        $data['documentTransAmount'] = $arTrans;
+                        $data['documentLocalAmount'] = $sourceLocal * -1;
+                        $data['documentRptAmount'] = $sourceRpt * -1;
                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
-                        $data['serviceLineCode'] =  $valueRe->serviceLineCode;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
+                        array_push($finalData, $data);
+                    } else {
+                        $valueRe = $receiptDetails->first();
+                        $arTrans = Helper::roundValue($cpd->transAmount) * -1;
+                        $data['documentTransAmount'] = $arTrans;
+                        $data['documentLocalAmount'] = $sourceLocal * -1;
+                        $data['documentRptAmount'] = $sourceRpt * -1;
+                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
                         array_push($finalData, $data);
                     }
-                    
 
                     $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account") :$masterData->bank->chartOfAccountSystemID;
                     $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, "pdc-receivable-account") : $masterData->bank->glCodeLinked;
@@ -245,19 +258,34 @@ class CustomerReceivePaymentGlService
                                                                 ->whereIn('serviceLineSystemID', $serviceLineSystemIDs)
                                                                 ->groupBy('serviceLineSystemID')
                                                                 ->get();
-                                                                
 
-                    foreach ($receiptDetails as $keyRe => $valueRe) {
+                    if ($receiptDetails->count() === 1) {
+                        $valueRe = $receiptDetails->first();
                         $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
-
-                        if($valueRe->net_amount > 0){
-                            $data['documentTransAmount'] = (Helper::roundValue(($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentLocalAmount'] = (Helper::roundValue((1 / $masterData->localCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['documentRptAmount'] = (Helper::roundValue((1 / $masterData->companyRptCurrencyER) * ($valueRe->net_amount + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                            $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
-                            $data['serviceLineCode'] =  $valueRe->serviceLineCode;
-                            array_push($finalData, $data); 
-                        }
+                        $directAmountTrans = isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0;
+                        $bankTrans = Helper::roundValue($cpd->transAmount) + Helper::roundValue($directAmountTrans);
+                        $receiptConv = Helper::convertAmountToLocalRpt(21, $masterModel["autoID"], abs($cpd->transAmount));
+                        $directLocal = isset($directAmountBank->localAmount) ? $directAmountBank->localAmount : 0;
+                        $directRpt = isset($directAmountBank->rptAmount) ? $directAmountBank->rptAmount : 0;
+                        $data['documentTransAmount'] = $bankTrans;
+                        $data['documentLocalAmount'] = Helper::roundValue($receiptConv['localAmount']) + Helper::roundValue($directLocal);
+                        $data['documentRptAmount'] = Helper::roundValue($receiptConv['reportingAmount']) + Helper::roundValue($directRpt);
+                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
+                        array_push($finalData, $data);
+                    } else {
+                        $totalDirectTrans = $directReceiptsBySegments->sum('transAmount');
+                        $totalDirectLocal = $directReceiptsBySegments->sum('localAmount');
+                        $totalDirectRpt = $directReceiptsBySegments->sum('rptAmount');
+                        $bankTrans = Helper::roundValue($cpd->transAmount) + Helper::roundValue($totalDirectTrans);
+                        $receiptConv = Helper::convertAmountToLocalRpt(21, $masterModel["autoID"], abs($cpd->transAmount));
+                        $valueRe = $receiptDetails->first();
+                        $data['documentTransAmount'] = $bankTrans;
+                        $data['documentLocalAmount'] = Helper::roundValue($receiptConv['localAmount']) + Helper::roundValue($totalDirectLocal);
+                        $data['documentRptAmount'] = Helper::roundValue($receiptConv['reportingAmount']) + Helper::roundValue($totalDirectRpt);
+                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
+                        array_push($finalData, $data);
                     }
 
                     $directReceiptsBySegmentsData = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")

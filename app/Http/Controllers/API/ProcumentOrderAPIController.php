@@ -127,6 +127,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCategoryICVMaster;
 use App\Models\SupplierContactDetails;
+use App\Models\BankMemoSupplier;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
 use App\Models\TenderMaster;
@@ -180,6 +181,7 @@ use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
+use App\Constants\Document;
 
 /**
  * Class ProcumentOrderController
@@ -2015,7 +2017,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
-                $query->select('vatNumber', 'supplierCodeSystem');
+                $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
             }, 'approved' => function ($query) {
                 $query->with(['employee'=>function($query2){
                     $query2->with(['hr_emp'=>function($query3){
@@ -2040,6 +2042,56 @@ class ProcumentOrderAPIController extends AppBaseController
             }, 'transactioncurrency', 'localcurrency', 'reportingcurrency', 'companydocumentattachment', 'project'
         ])->first();
 
+        $output['supplier_master_details'] = null;
+        if (!empty($output) && !empty($output->supplierID)) {
+            $supplierMasterDetails = SupplierMaster::with([
+                'supplier_group:id,group',
+                'supplier_category:id,category',
+                'country:countryID,countryName'
+            ])
+                ->select([
+                    'supplierCodeSystem',
+                    'supplierName',
+                    'address',
+                    'telephone',
+                    'fax',
+                    'supEmail',
+                    'webAddress',
+                    'omanization',
+                    'registrationNumber',
+                    'registrationExprity',
+                    'supplier_group_id',
+                    'supplier_category_id',
+                    'supplierCountryID'
+                ])
+                ->where('supplierCodeSystem', $output->supplierID)
+                ->first();
+
+            $output['supplier_master_details'] = $supplierMasterDetails ? [
+                'name' => $supplierMasterDetails->supplierName,
+                'supplierGroup' => data_get($supplierMasterDetails, 'supplier_group.group'),
+                'supplierCategory' => data_get($supplierMasterDetails, 'supplier_category.category'),
+                'address' => $supplierMasterDetails->address,
+                'country' => data_get($supplierMasterDetails, 'country.countryName'),
+                'telephone' => $supplierMasterDetails->telephone,
+                'fax' => $supplierMasterDetails->fax,
+                'email' => $supplierMasterDetails->supEmail,
+                'webAddress' => $supplierMasterDetails->webAddress,
+                'omanization' => ($supplierMasterDetails->omanization === null || $supplierMasterDetails->omanization === '')
+                    ? null
+                    : (is_numeric($supplierMasterDetails->omanization)
+                        ? ((fmod((float) $supplierMasterDetails->omanization, 1.0) == 0.0
+                            ? (string) ((int) $supplierMasterDetails->omanization)
+                            : rtrim(rtrim((string) $supplierMasterDetails->omanization, '0'), '.')) . '%')
+                        : null),
+                'registrationNumber' => $supplierMasterDetails->registrationNumber,
+                'registrationExpiry' => !empty($supplierMasterDetails->registrationExprity)
+                    ? Carbon::parse($supplierMasterDetails->registrationExprity)->toDateString()
+                    : null,
+            ] : null;
+        }
+
+        $output['supplierDocumentSystemID'] = !empty($output->supplierID) ? Document::SUPPLIER_MASTER : null;
 
         $is_specification = false;
 
@@ -2077,6 +2129,14 @@ class ProcumentOrderAPIController extends AppBaseController
             ->exists();
 
         $output['isProjectBase'] = $isProjectBase;
+
+        $beneficiaryMemo = BankMemoSupplier::query()
+            ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+            ->where('suppliercurrency.supplierCodeSystem', $output->supplierID)
+            ->where('suppliercurrency.currencyID', $output->supplierTransactionCurrencyID)
+            ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+            ->value('erp_bankmemosupplier.memoDetail');
+        $output['supplierBeneficiaryNumber'] = $beneficiaryMemo ?? null;
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -3562,10 +3622,20 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             $query->where('rejectedYN', 0);
             $query->whereIN('documentSystemID', [2, 5, 52]);
         }, 'supplier' => function ($query) {
-            $query->select('vatNumber', 'supplierCodeSystem');
+            $query->select('vatNumber', 'supplierCodeSystem', 'registrationNumber');
         }, 'suppliercontact' => function ($query) {
             $query->where('isDefault', -1);
         }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
+
+        $supplierBeneficiaryNumber = null;
+        if (!empty($outputRecord) && $outputRecord[0]->supplierID && $outputRecord[0]->supplierTransactionCurrencyID) {
+            $supplierBeneficiaryNumber = BankMemoSupplier::query()
+                ->join('suppliercurrency', 'erp_bankmemosupplier.supplierCurrencyID', '=', 'suppliercurrency.supplierCurrencyID')
+                ->where('suppliercurrency.supplierCodeSystem', $outputRecord[0]->supplierID)
+                ->where('suppliercurrency.currencyID', $outputRecord[0]->supplierTransactionCurrencyID)
+                ->where('erp_bankmemosupplier.bankMemoTypeID', 4)
+                ->value('erp_bankmemosupplier.memoDetail') ?? null;
+        }
 
         $is_specification = 0;
 
@@ -3695,6 +3765,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
 
         $order = array(
             'podata' => $outputRecord[0],
+            'supplierBeneficiaryNumber' => $supplierBeneficiaryNumber,
             'docRef' => $refernaceDoc,
             'numberFormatting' => $decimal,
             'isMergedCompany' => $isMergedCompany,

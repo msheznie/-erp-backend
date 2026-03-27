@@ -55,45 +55,45 @@ class UserAuthorization
         if ($checkRoleRoute) {
             return $next($request);
         } else {
-            // $navigationID = $request->header('X-nav-ID') ?? 0;
-            // $accessType = $request->header('X-Access-Type') ?? 'None';
+            $navigationID = $request->header('X-nav-ID') ?? 0;
+            $accessType = $request->header('X-Access-Type') ?? 'None';
 
-            // if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
+            if ($routeName != 'api.' && $navigationID > 0 && self::getActionType($accessType) > 0) {
 
-            //     NavigationRoute::firstOrCreate(
-            //         [
-            //             'navigationID' => $navigationID,
-            //             'routeName' => $routeName,
-            //             'action' => self::getActionType($accessType),
-            //         ]
-            //     );
+                NavigationRoute::firstOrCreate(
+                    [
+                        'navigationID' => $navigationID,
+                        'routeName' => $routeName,
+                        'action' => self::getActionType($accessType),
+                    ]
+                );
 
-            //     foreach ($userGroupIDs as $userGroupID) {
-            //         RoleRoute::create([
-            //             'routeName' => $routeName,
-            //             'userGroupID' => $userGroupID,
-            //             'companySystemID' => 0
-            //         ]);
-            //     }
+                foreach ($userGroupIDs as $userGroupID) {
+                    RoleRoute::create([
+                        'routeName' => $routeName,
+                        'userGroupID' => $userGroupID,
+                        'companySystemID' => 0
+                    ]);
+                }
                 
 
-            //     $checkRoleRouteAfterCreate = RoleRoute::whereIn('userGroupID', $userGroupIDs)
-            //                         ->where('routeName', $routeName)
-            //                         ->first();
+                $checkRoleRouteAfterCreate = RoleRoute::whereIn('userGroupID', $userGroupIDs)
+                                    ->where('routeName', $routeName)
+                                    ->first();
 
-            //     if ($checkRoleRouteAfterCreate) {
-            //         return $next($request);
-            //     } else {
-            //         return errorMsgs("Unauthorized Access");
-            //     }
-            // }
+                if ($checkRoleRouteAfterCreate) {
+                    return $next($request);
+                } else {
+                    return errorMsgs("Unauthorized Access");
+                }
+            }
 
-            // \Log::channel('authorization')->info(json_encode([
-            //     'navigationID' => $navigationID,
-            //     'routeName' => $routeName,
-            //     'routeURI' => $request->route()->uri,
-            //     'accessType' => $accessType
-            // ]));
+            \Log::channel('authorization')->info(json_encode([
+                'navigationID' => $navigationID,
+                'routeName' => $routeName,
+                'routeURI' => $request->route()->uri,
+                'accessType' => $accessType
+            ]));
             return errorMsgs("Unauthorized Access");
         }
     }
@@ -119,6 +119,7 @@ class UserAuthorization
             'api/v1/updateNotification',
             'api/v1/getThirdPartyApiLogDetail',
             'api/v1/getCurrentHomeUrl',
+            'api/v1/approvalPreCheckAllDoc',
             'api/v1/getPreDefinedWidgetData'
         ];
     }
@@ -201,6 +202,8 @@ class UserAuthorization
             'api/v1/getAllDeptBudgetPlDetColumns',
             'api/v1/verifyBudgetTemplateConfiguration/{budgetTemplateId}',
             'api/v1/getBudgetPlanningUserPermissions',
+            'api/v1/getBudgetGenerateDetails',
+            'api/v1/generate-company-budget-planning',
             'api/v1/getDepBudgetPlDetEmpColumns',
             'api/v1/updateDepartmentBudgetPlanningDetailAmount',
             'api/v1/getAllDepartmentSegments',

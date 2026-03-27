@@ -42,6 +42,7 @@ use App\Models\TaxVatCategories;
 use App\Models\CustomerInvoiceItemDetails;
 use Illuminate\Support\Arr;
 use App\helper\Helper;
+use App\Models\PayCreditNoteDetail;
 
 /**
  * Class CustomerReceivePaymentDetailController
@@ -577,6 +578,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $matchedAmountPreCheck['SumOfmatchedAmount'] + $sumReturnTransactionAmountPreCheck + $sumReturnDEOTransactionAmountPreCheck);
 
+        // For credit note (19): available balance is reduced by amount already used in payment vouchers.
+        if ($input['addedDocumentSystemID'] == 19) {
+            $sumPayCreditNotePreCheck = PayCreditNoteDetail::where('creditNoteAutoID', $input['bookingInvCodeSystem'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->sum('creditNotePaymentAmount');
+            $totReceiveAmountDetail += $sumPayCreditNotePreCheck;
+        }
+
         $epsilon = 0.00001;
         $allocationDifferent = $input["receiveAmountTrans"] - $input["custbalanceAmount"];
 
@@ -648,6 +657,14 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $totReceiveAmount = $totalReceiveAmountTrans + $sumOfMatchedAmount + $sumReturnTransactionAmount + $sumReturnDEOTransactionAmount;
 
         $custbalanceAmount = $detailUpdateBalance->bookingAmountTrans - $totReceiveAmount;
+
+        // For credit note (19): amount already used in payment vouchers reduces available balance.
+        if ($input['addedDocumentSystemID'] == 19) {
+            $sumPayCreditNoteTrans = PayCreditNoteDetail::where('creditNoteAutoID', $input['bookingInvCodeSystem'])
+                ->where('companySystemID', $input['companySystemID'])
+                ->sum('creditNotePaymentAmount');
+            $custbalanceAmount += $sumPayCreditNoteTrans;
+        }
 
         $detailUpdateBalance->custbalanceAmount = $custbalanceAmount;
         $detailUpdateBalance->save();
