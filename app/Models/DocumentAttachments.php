@@ -461,12 +461,17 @@ class DocumentAttachments extends Model
             ->where('documentSystemCode', $tenderId)->exists();
     }
 
-    public static function getOriginalFileName($companyId, $tenderId)
+    public static function getOriginalFileName($companyId, $tenderId, $excludeAttachmentIds = [])
     {
         $originalFileName = DocumentAttachments::select('originalFileName', 'attachmentID', 'attachmentDescription')
             ->where('documentSystemID', 130)
             ->where('companySystemID', $companyId)
-            ->where('documentSystemCode', $tenderId)->first();
+            ->where('documentSystemCode', $tenderId)
+            ->when(!empty($excludeAttachmentIds), function ($q) use ($excludeAttachmentIds) {
+                $q->whereNotIn('attachmentID', $excludeAttachmentIds);
+            })
+            ->orderBy('attachmentID', 'asc')
+            ->first();
 
         return $originalFileName;
     }
