@@ -149,4 +149,18 @@ class SupplierRegistrationLink extends Model
     public function tenderSupplierAssignedLog(){
         return $this->hasOne('App\Models\TenderSupplierAssignee', 'registration_link_id','id');
     }
+    public static function getFullyApprovedSuppliers($companyId){
+        return self::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
+        ->whereNotNull('supplier_master_id')
+        ->where('supplierassigned.companySystemID', $companyId)
+        ->where('supplierassigned.isActive', 1)
+        ->select('id')
+        ->distinct()
+        ->get();
+    }
+    public static function getSupplierRegistrationLinkId(int $supplierId): ?int
+    {
+        return self::where('supplier_master_id', $supplierId)
+            ->value('id');
+    }
 }

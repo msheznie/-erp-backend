@@ -259,11 +259,13 @@ class SupplierRegistrationApprovalController extends AppBaseController
      */
     public function rejectSupplierKYC($request)
     {
+        $db = isset($request->db) ? $request->db : "";
         $reject = DocumentReject::rejectDocument($request);
 
         if (!$reject["success"]) {
             return $this->sendError($reject["message"]);
         } else {
+            ThirdPartySystemNotificationJob::dispatch($db,108,$request['id']);
             $response = $this->srmService->callSRMAPIs([
                 'apiKey' => $request->input('api_key'),
                 'request' => 'UPDATE_KYC_STATUS',
