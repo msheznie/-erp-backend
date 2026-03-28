@@ -2441,6 +2441,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
 
         $vatAmount = ($totalVatAmount - (($stdVatAmountTotal*$output->retentionPercentage)/100));
+        $poVATamount = 0;
+        if ($output->rcmActivated != 1) {
+            $poVATamount = SupplierInvoiceItemDetail::where('bookingSuppMasInvAutoID', $output->bookingSuppMasInvAutoID)
+                ->sum('VATAmount');
+        }
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -2449,6 +2454,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poVATamount'] = round($poVATamount, $output->transactioncurrency->DecimalPlaces ?? 2);
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -3195,6 +3201,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $stdVatTot = 0;
         $retentionVatPortion = 0;
+        $poVATamount = 0;
+
+        if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+            $poVATamount = SupplierInvoiceItemDetail::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount');
+        } else {
+            $poVATamount = (float) ($bookInvSuppMasterRecord->poVATamount ?? 0);
+        }
+
         if ($bookInvSuppMasterRecord->documentType != 4) {
             if (
                 ($bookInvSuppMasterRecord->retentionPercentage > 0) &&
@@ -3234,6 +3248,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt,
             'retentionVatPortion' => $retentionVatPortion,
+            'poVATamount' => round($poVATamount, $transDecimal),
             'directAmountReport' => $directAmountReport,
             'lang' => $lang // Pass lang to view
         );
