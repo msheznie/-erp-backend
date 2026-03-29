@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\Collection;
 
 /**
  * @OA\Schema(
@@ -196,5 +197,53 @@ class TenderFinalBids extends Model
         }
 
         return $query->get();
+    }
+    public static function getScheduleAwardRankingRows(
+        int $tenderId,
+        int $isNegotiation,
+        array $negotiationBidSubmissionMasterIds
+    ): Collection {
+        $query = self::selectRaw('srm_tender_final_bids.supplier_id, srm_tender_final_bids.combined_ranking')
+            ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
+            ->where('srm_tender_final_bids.status', 1)
+            ->where('srm_tender_final_bids.tender_id', $tenderId);
+
+        if ($isNegotiation === 1) {
+            $query->whereIn('srm_bid_submission_master.id', $negotiationBidSubmissionMasterIds);
+        } else {
+            $query->whereNotIn('srm_bid_submission_master.id', $negotiationBidSubmissionMasterIds);
+        }
+
+        return $query
+            ->with(['supplier:id,name'])
+            ->orderBy('srm_tender_final_bids.total_weightage', 'desc')
+            ->get();
+    }
+
+    /**
+     * Schedule-wise commercial ranking rows for supplier award visibility (matches getCommercialRanking negotiation filter).
+     *
+     * @param  array<int>  $negotiationBidSubmissionMasterIds
+     */
+    public static function getScheduleAwardCommercialRows(
+        int $tenderId,
+        int $isNegotiation,
+        array $negotiationBidSubmissionMasterIds
+    ): Collection {
+        $query = self::selectRaw('srm_tender_final_bids.supplier_id, srm_tender_final_bids.commercial_ranking, srm_tender_final_bids.bid_id')
+            ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
+            ->where('srm_tender_final_bids.tender_id', $tenderId);
+
+        if ($isNegotiation === 1) {
+            $query->whereIn('srm_bid_submission_master.id', $negotiationBidSubmissionMasterIds);
+        } else {
+            $query->whereNotIn('srm_bid_submission_master.id', $negotiationBidSubmissionMasterIds);
+        }
+
+        return $query
+            ->with(['supplier:id,name', 'bid_submission_master:id,line_item_total'])
+            ->orderBy('srm_tender_final_bids.com_weightage', 'desc')
+            ->orderBy('srm_tender_final_bids.commercial_ranking')
+            ->get();
     }
 }
