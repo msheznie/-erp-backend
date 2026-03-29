@@ -786,8 +786,10 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $glDescriptionMap = [];
         $parentGLToGLDescMap = [];
         $segmentMap = [];
+        $departmentSegmentIds = [];
 
         foreach ($details as $detail) {
+            $deptId = null;
             if ($detail->departmentBudgetPlanning && $detail->departmentBudgetPlanning->department) {
                 $dept = $detail->departmentBudgetPlanning->department;
                 $deptId = $dept->departmentSystemID ?? $dept->id;
@@ -842,6 +844,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         'itemName' => $displayName
                     ];
                 }
+                if ($deptId && $segId) {
+                    if (!isset($departmentSegmentIds[$deptId])) {
+                        $departmentSegmentIds[$deptId] = [];
+                    }
+                    if (!in_array($segId, $departmentSegmentIds[$deptId])) {
+                        $departmentSegmentIds[$deptId][] = $segId;
+                    }
+                }
             }
         }
 
@@ -864,6 +874,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             'glDescriptions' => array_values($glDescriptionMap),
             'parentGLToGLDescMap' => $parentGLToGLDescMap,
             'segments' => array_values($segmentMap),
+            'departmentSegmentIds' => $departmentSegmentIds,
             'workflowMethod' => $workflowMethod
         ];
 
