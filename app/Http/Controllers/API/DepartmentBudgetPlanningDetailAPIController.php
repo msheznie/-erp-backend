@@ -2252,7 +2252,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             'source' => 'from_approval',
             'isCompany' => true,
         ]);
-        $userId = \Helper::getEmployeeSystemID();
+        $userId = Helper::getEmployeeSystemID();
         $db = $request->input('db', '');
         ExportCompanyBudgetPlanningDetailsJob::dispatch($db, $request->all(), $userId);
         return $this->sendResponse('', trans('custom.budget_planning_export_in_progress'));
