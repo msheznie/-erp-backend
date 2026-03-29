@@ -2,14 +2,10 @@
 
 namespace App\Jobs;
 
-use App\Models\CompanyFinancePeriod;
-use App\Models\CompanyFinanceYear;
-use App\Models\FixedAssetDepreciationPeriod;
+use App\Jobs\Concerns\UsesDepreciationQueueConnection;
 use App\Models\FixedAssetMaster;
 use App\Models\FixedAssetDepreciationMaster;
-use App\Jobs\ProcessDepreciation;
-use Carbon\Carbon;
-use Carbon\CarbonPeriod;
+use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -23,6 +19,8 @@ use App\Services\JobErrorLogService;
 class ProcessDepreciationQuery implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use UsesDepreciationQueueConnection;
+
     protected $page;
     protected $dataBase;
     protected $depMasterAutoID;
@@ -36,16 +34,7 @@ class ProcessDepreciationQuery implements ShouldQueue
      */
     public function __construct($page, $dataBase, $depMasterAutoID, $depDate, $chunkDataSizeCounts)
     {
-        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
-            if(env('IS_MULTI_TENANCY',false)){
-                self::onConnection('database_main');
-            }else{
-                self::onConnection('database');
-            }
-        }else{
-            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
-        }
-
+        $this->configureQueueConnection();
         $this->page = $page;
         $this->dataBase = $dataBase;
         $this->depDate = $depDate;
@@ -66,58 +55,42 @@ class ProcessDepreciationQuery implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
         $db = $this->dataBase;
         $depDate = $this->depDate;
-
         $depMasterAutoID = $this->depMasterAutoID;
         $chunkDataSizeCounts = $this->chunkDataSizeCounts;
-        
-        DB::beginTransaction();
         $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
+        if (!$depMaster) {
+            return;
+        }
+
         try {
-            $perPage = 100; // Items per page
-            $page = $this->page; // Page number 
-            $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                            $query->whereHas('master_by', function ($query) {
-                                $query->where('approved', -1);
-                            });
-                            $query->groupBy('faID');
-                        },'depperiod_period'])
-                            ->where(function($q) use($depDate){
-                                $q->isDisposed()
-                                    ->orWhere(function ($q1) use($depDate){
-                                        $q1->disposed(-1)
-                                            ->WhereDate('disposedDate','>',$depDate);
-                                    });
-                            })
-                            ->ofCompany([$depMaster->companySystemID])
-                            ->isApproved()
-                            ->assetType(1)
-                            ->eligibleForDepreciation()
-                            ->orderBy('faID', 'desc')
-                            ->skip(($page - 1) * $perPage) // Skip the items on previous pages
-                            ->take($perPage) 
-                            ->get()
-                            ->toArray();
-
-             if (count($faMaster) > 0) {
+            DB::transaction(function () use ($db, $depDate, $depMasterAutoID, $chunkDataSizeCounts, $depMaster) {
+                $perPage = 100;
+                $page = $this->page;
+                $faIds = FixedAssetMaster::depreciationJobBaseQuery($depMaster->companySystemID, $depDate)
+                    ->orderBy('faID', 'desc')
+                    ->skip(($page - 1) * $perPage)
+                    ->take($perPage)
+                    ->pluck('faID')
+                    ->values()
+                    ->all();
                 $faCounts = 1;
-                ProcessDepreciation::dispatch($db, $faMaster, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
-            } else {
-                $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
-            }
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error($this->failed($e));
-            DB::beginTransaction();
-
-            JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
-            $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
-            DB::commit();
+                ProcessDepreciation::dispatch($db, $faIds, $depMasterAutoID, $depDate, $faCounts, $chunkDataSizeCounts)->onQueue('single');
+            });
+        } catch (Throwable $e) {
+            Log::error($e->getMessage(), ['exception' => $e, 'depMasterAutoID' => $depMasterAutoID]);
+            DB::transaction(function () use ($depMasterAutoID, $depMaster, $e) {
+                JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->formatException($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+            });
         }
     }
 
-    public function failed($exception)
+    public function failed(Throwable $exception): void
+    {
+        Log::error($exception->getMessage(), ['exception' => $exception, 'depMasterAutoID' => $this->depMasterAutoID]);
+    }
+
+    private function formatException(Throwable $exception): string
     {
         return $exception->getMessage();
     }
