@@ -58,6 +58,7 @@ class SMAttendanceCrossDayPullingService{
             
 
             DB::commit();
+            Log::info('Cross day data pulled successfully'.$this->log_suffix(__LINE__));
             return true;
 
         } catch (Exception $ex) {
