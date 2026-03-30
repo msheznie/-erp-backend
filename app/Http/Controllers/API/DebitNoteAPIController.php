@@ -623,6 +623,10 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
 
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 500);
+        }
+
         if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
 
             $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
@@ -1120,6 +1124,10 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
 
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 500);
+        }
+
         if(isset($input['supplierTransactionCurrencyID']) && $input['supplierTransactionCurrencyID'] != $debitNote->supplierTransactionCurrencyID){
 
             $detailsCount = $debitNoteDetails = DebitNoteDetails::where('debitNoteAutoID', $id)->count();
@@ -1540,6 +1548,10 @@ class DebitNoteAPIController extends AppBaseController
         if ($debitNote->confirmedYN == 1) {
             return $this->sendError(trans('custom.this_document_already_confirmed_you_cannot_edit'), 500);
         }
+
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 500);
+        }
         $details['type'] = $type;
 
         $debitNote = $this->debitNoteRepository->update($details, $id);
@@ -1595,6 +1607,10 @@ class DebitNoteAPIController extends AppBaseController
             return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
+        }
+
         $debitNote->delete();
 
         return $this->sendResponse($id, trans('custom.debit_note_deleted_successfully'));
@@ -1614,6 +1630,9 @@ class DebitNoteAPIController extends AppBaseController
             $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
 
             $masterINVID = DebitNote::findOrFail($id);
+            if (($masterINVID->cancelYN ?? 0) == -1) {
+                return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 400);
+            }
             $masterInvoiceArray = array('localCurrencyER'=>$value, 'VATAmountLocal'=>$masterINVID->VATAmount/$value, 'netAmountLocal'=>$masterINVID->netAmount/$value);
             $masterINVID->update($masterInvoiceArray);
 
@@ -1645,6 +1664,9 @@ class DebitNoteAPIController extends AppBaseController
         $details = DebitNoteDetails::where('debitNoteAutoID',$id)->get();
 
         $masterINVID = DebitNote::findOrFail($id);
+        if (($masterINVID->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 400);
+        }
         $masterInvoiceArray = array('companyReportingER'=>$value, 'VATAmountRpt'=>$masterINVID->VATAmount/$value, 'netAmountRpt'=>$masterINVID->netAmount/$value, 'debitAmountRpt'=>$masterINVID->debitAmountTrans/$value);
 
         $masterINVID->update($masterInvoiceArray);
@@ -1681,7 +1703,7 @@ class DebitNoteAPIController extends AppBaseController
 
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID','type'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'supplierID', 'projectID','type', 'cancelYN'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -2030,6 +2052,43 @@ class DebitNoteAPIController extends AppBaseController
             ->make(true);
     }
 
+    public function debitNoteCancel(Request $request)
+    {
+        $input = $request->all();
+        $debitNoteAutoID = isset($input['debitNoteAutoID']) ? $input['debitNoteAutoID'] : null;
+        $debitNote = DebitNote::find($debitNoteAutoID);
+        if (empty($debitNote)) {
+            return $this->sendError(trans('custom.debit_note_not_found'));
+        }
+        if ($debitNote->confirmedYN == 1) {
+            return $this->sendError(trans('custom.debit_note_cannot_cancel_not_draft'));
+        }
+        if ($debitNote->approved == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_cancel_rejected'));
+        }
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_already_cancelled'));
+        }
+        $cancelComments = isset($input['cancelComments']) ? trim((string) $input['cancelComments']) : '';
+        if ($cancelComments === '') {
+            return $this->sendError(trans('custom.debit_note_cancel_comment_required'));
+        }
+        if (DebitNoteDetails::where('debitNoteAutoID', $debitNoteAutoID)->count() > 0) {
+            return $this->sendError(trans('custom.you_cannot_cancel_debit_note_detail_not_empty'));
+        }
+        $employee = Helper::getEmployeeInfo();
+        $debitNote->cancelYN = -1;
+        $debitNote->cancelComment = $cancelComments;
+        $debitNote->cancelDate = now();
+        $debitNote->canceledByEmpSystemID = Helper::getEmployeeSystemID();
+        $debitNote->canceledByEmpID = $employee->empID;
+        $debitNote->canceledByEmpName = $employee->empFullName;
+        $debitNote->save();
+        AuditTrial::createAuditTrial($debitNote->documentSystemID, $debitNoteAutoID, $cancelComments, 'Cancelled', 'Not Confirmed');
+
+        return $this->sendResponse($debitNote->toArray(), trans('custom.debit_note_cancelled_successfully'));
+    }
+
     public function debitNoteReopen(Request $request)
     {
         $input = $request->all();
@@ -2039,6 +2098,10 @@ class DebitNoteAPIController extends AppBaseController
         $emails = array();
         if (empty($debitNote)) {
             return $this->sendError(trans('custom.debit_note_not_found'));
+        }
+
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
         }
 
         if ($debitNote->approved == -1) {
@@ -2308,6 +2371,10 @@ UNION ALL
         $debitNoteMasterData = DebitNote::find($debitNoteAutoID);
         if (empty($debitNoteMasterData)) {
             return $this->sendError(trans('custom.debit_note_not_found'));
+        }
+
+        if (($debitNoteMasterData->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
         }
 
         if ($debitNoteMasterData->refferedBackYN != -1) {
@@ -2583,7 +2650,7 @@ UNION ALL
 
         $input = $request->all();
         
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'cancelYN', 'type', 'supplierID', 'projectID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -2729,6 +2796,12 @@ UNION ALL
             }
         }
 
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $debitNotes = $debitNotes->where('cancelYN', $input['cancelYN']);
+            }
+        }
+
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
                 $debitNotes = $debitNotes->whereMonth('debitNoteDate', '=', $input['month']);
@@ -2779,6 +2852,10 @@ UNION ALL
 
             if (!$debitNote) {
                 return $this->sendError(trans('custom.debit_note_not_found'), 404);
+            }
+
+            if (($debitNote->cancelYN ?? 0) == -1) {
+                return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'), 400);
             }
 
             // Get local currency exchange rate
