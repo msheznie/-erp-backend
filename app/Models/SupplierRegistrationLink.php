@@ -158,6 +158,17 @@ class SupplierRegistrationLink extends Model
         ->distinct()
         ->get();
     }
+
+    public static function getOpenTenderCancellationRecipients(int $companyId)
+    {
+        return self::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
+            ->whereNotNull('supplier_master_id')
+            ->where('supplierassigned.companySystemID', $companyId)
+            ->where('supplierassigned.isActive', 1)
+            ->selectRaw('MAX(srm_supplier_registration_link.id) as registration_link_id, srm_supplier_registration_link.email as supplier_email')
+            ->groupBy('srm_supplier_registration_link.email')
+            ->get();
+    }
     public static function getSupplierRegistrationLinkId(int $supplierId): ?int
     {
         return self::where('supplier_master_id', $supplierId)
