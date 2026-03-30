@@ -8601,6 +8601,7 @@ return
     'please_select_customer' => 'Please select a customer',
     'please_select_match_type' => 'Please select a match type',
     'financial_period_closed' => 'The Financial Period :dateFrom | :dateTo on which this document was posted is closed, can’t refer back the matching.',
+    'approve_document_closed_finance_period_confirmation' => 'The selected document is on :documentDate and will be posting the entries on :approvingDate as the document date applicable Financial period is closed.',
     'cannot_amend_document' => 'Cannot amend document',
     'document_id_not_found' => 'Document ID not found',
 

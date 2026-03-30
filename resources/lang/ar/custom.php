@@ -8498,6 +8498,7 @@ return
     'please_select_customer' => 'الرجاء اختيار العميل',
     'please_select_match_type' => 'الرجاء تحديد نوع المباراة',
     'financial_period_closed' => 'الفترة المالية :dateFrom | :dateTo التي تم فيها نشر هذا المستند مغلقة، ولا يمكن الرجوع إلى المطابقة.',
+    'approve_document_closed_finance_period_confirmation' => 'المستند المحدد بتاريخ :documentDate وسيتم ترحيل القيود بتاريخ :approvingDate لأن الفترة المالية الخاصة بتاريخ المستند مغلقة.',
     'cannot_amend_document' => 'لا يمكن تعديل المستند',
     'document_id_not_found' => 'معرف المستند غير موجود',
     // Missing translations for FixedAssetMasterAPIController

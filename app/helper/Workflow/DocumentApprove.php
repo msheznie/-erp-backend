@@ -58,6 +58,7 @@ use App\Jobs\CreateCustomerInvoice;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Jobs\PushNotification;
 use App\Jobs\CreateRecurringVoucherSetupSchedules;
+use App\Services\Common\PendingApprovalDocumentsService;
 use App\Services\UserTypeService;
 use App\Services\ChartOfAccountValidationService;
 use App\helper\BudgetConsumptionService;
@@ -871,7 +872,7 @@ class DocumentApprove
                     }
                 }
 
-                if (["documentSystemID"] == 46) {
+                if ($input["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
                         return ['success' => false, 'message' => trans('custom.budget_transfer_not_current_year')];
                     }
@@ -936,7 +937,31 @@ class DocumentApprove
                             ];
                         }
 
-                        if (($approvalLevel && ($approvalLevel->noOfLevels == $input["rollLevelOrder"])) || (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument'])) { // update the document after the final approval
+                        $isFinalApprovalLevelForGlPosting = $approvalLevel
+                            && (int) $approvalLevel->noOfLevels === (int) $input['rollLevelOrder'];
+
+                        if ($isFinalApprovalLevelForGlPosting || (isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument'])) { // update the document after the final approval
+
+                            if (empty($input['confirmClosedPeriodPosting']) && empty($input['isAutoCreateDocument']) && $isFinalApprovalLevelForGlPosting) {
+                                $docSystemCode = $input['documentSystemCode'] ?? $input['jvMasterAutoId'] ?? null;
+                                $closedPreview = $docSystemCode !== null
+                                    ? app(PendingApprovalDocumentsService::class)
+                                        ->closedPeriodApproveConfirmationPreview((int)$input['documentSystemID'], $docSystemCode)
+                                    : null;
+                                if ($closedPreview && !empty($closedPreview['needsConfirmation'])) {
+                                    DB::rollback();
+                                    return [
+                                        'success' => false,
+                                        'message' => trans('custom.approve_document_closed_finance_period_confirmation', [
+                                            'documentDate' => $closedPreview['documentDateFormatted'] ?? '',
+                                            'approvingDate' => $closedPreview['approvingDateFormatted'] ?? '',
+                                        ]),
+                                        'type' => 'closedPeriodConfirm',
+                                        'documentDate' => $closedPreview['documentDateFormatted'] ?? '',
+                                        'approvingDate' => $closedPreview['approvingDateFormatted'] ?? '',
+                                    ];
+                                }
+                            }
 
                             $validatePostedDate = GlPostedDateService::validatePostedDate($input["documentSystemCode"], $input["documentSystemID"]);
 

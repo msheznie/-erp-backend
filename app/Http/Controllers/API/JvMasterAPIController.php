@@ -1022,7 +1022,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 ];
             }
             else{
-                return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+                $errorData = ['type' => isset($approve['type']) ? $approve['type'] : ''];
+                if (isset($approve['documentDate'])) {
+                    $errorData['documentDate'] = $approve['documentDate'];
+                }
+                if (isset($approve['approvingDate'])) {
+                    $errorData['approvingDate'] = $approve['approvingDate'];
+                }
+                return $this->sendError($approve['message'], 404, $errorData);
             }
         } else {
             if(isset($input['isAutoCreateDocument']) && $input['isAutoCreateDocument']){
