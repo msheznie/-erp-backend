@@ -944,18 +944,26 @@
     @endif
     @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         @php
-            $siBookingAmountTrans = (float) ($masterdata->bookingAmountTrans ?? 0);
+            $siOrderTotal = (float) ($grvTotTra + $directTotTra);
             $siPoVatAmount = (float) ($poVATamount ?? ($masterdata->poVATamount ?? 0));
             $siPct = (float) ($masterdata->retentionPercentage ?? 0);
             $siRcm = (int) ($masterdata->rcmActivated ?? 0);
+            $siPoMasterRcmActive = (bool) ($poMasterRcmActive ?? false);
+            $siEffectiveRcm = (($masterdata->documentType == 0 || $masterdata->documentType == 2) ? ($siPoMasterRcmActive || $siRcm) : (bool) $siRcm);
             $siWhtDeduct = ($masterdata->whtApplicable && (int) ($masterdata->whtPaymentMethod ?? 0) != 2) ? (float) ($masterdata->whtAmount ?? 0) : 0;
             $siMol = (($masterdata->mol_applicable ?? 0) == 1 || (float) ($masterdata->mol_amount ?? 0) != 0) ? (float) ($masterdata->mol_amount ?? 0) : 0;
-            $siPoVatAdjustedTotal = $siBookingAmountTrans - $siPoVatAmount;
-            $siVatAmount = $siPoVatAmount - (($siPoVatAmount * $siPct) / 100);
-            $siNetTotal = $siRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
-            $siRetentionAmount = $siRcm
-                ? (($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100))
-                : ((($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100)) - $retentionVatPortion);
+            $siRetentionVatPortion = (float) ($retentionVatPortion ?? 0);
+            $siPoVatAdjustedTotal = $siEffectiveRcm ? $siOrderTotal : ($siOrderTotal - $siPoVatAmount);
+            $siVatAmount = $siEffectiveRcm ? 0 : ($siPoVatAmount - $siRetentionVatPortion);
+            $siNetTotal = $siEffectiveRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
+            if ($siEffectiveRcm) {
+                $siRetentionAmount = $siOrderTotal * ($siPct / 100);
+            } elseif ($masterdata->documentType == 2) {
+                // Direct GRV retention follows VAT-exclusive total base as shown in edit.
+                $siRetentionAmount = $siPoVatAdjustedTotal * ($siPct / 100);
+            } else {
+                $siRetentionAmount = ((($siOrderTotal + $siPoVatAmount) * ($siPct / 100)) - $siRetentionVatPortion);
+            }
             $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct - $siMol;
         @endphp
         <div class="row" style="margin-top: 30px">
@@ -974,7 +982,7 @@
                                     <span class="font-weight-bold">{{ number_format($siPoVatAdjustedTotal, $transDecimal) }}</span>
                                 </td>
                             </tr>
-                            @if ($isVATEligible && $masterdata->vatRegisteredYN && !$siRcm)
+                            @if ($isVATEligible && $masterdata->vatRegisteredYN && !$siEffectiveRcm)
                                 <tr>
                                     <td class="text-left" style="padding: 7px 10px; border: none;">
                                         <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.vat') }}</span>

@@ -2381,7 +2381,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'directdetail' => function ($query) {
             $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
-            $query->with('grvmaster');
+            $query->with('grvmaster', 'pomaster');
         }, 'item_details' => function ($query) {
             $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
@@ -2396,8 +2396,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
        switch ($output->documentType)
        {
            case 0 :
-               $totalVatAmount = $output->detail->sum('VATAmount') + $output->directdetail->sum('VATAmount');
-               $stdVatAmountTotal = $output->detail->filter(function ($item) {
+               $poItemDetails = SupplierInvoiceItemDetail::with(['vat_sub_category'])
+                   ->where('bookingSuppMasInvAutoID', $output->bookingSuppMasInvAutoID)
+                   ->get();
+               $totalVatAmount = $poItemDetails->sum('VATAmount') + $output->directdetail->sum('VATAmount');
+               $stdVatAmountTotal = $poItemDetails->filter(function ($item) {
                    return optional($item->vat_sub_category)->subCatgeoryType == 1;
                })->sum('VATAmount')
                    + $output->directdetail->filter(function ($item) {
@@ -2411,9 +2414,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                })->sum('VATAmount');
                break;
            case 2 :
-               $totalVatAmount = $output->detail->sum('VATAmount');
-               $stdVatAmountTotal = $output->detail->filter(function ($item) {
-                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               $poItemDetails = SupplierInvoiceItemDetail::with(['vat_sub_category'])
+                   ->where('bookingSuppMasInvAutoID', $output->bookingSuppMasInvAutoID)
+                   ->get();
+               $totalVatAmount = $poItemDetails->sum('VATAmount');
+               $stdVatAmountTotal = $poItemDetails->filter(function ($item) {
+                   return $item->vat_sub_category && optional($item->vat_sub_category)->subCatgeoryType != 3;
                })->sum('VATAmount');           
                break;
            case 3 :
@@ -2452,7 +2458,21 @@ class BookInvSuppMasterAPIController extends AppBaseController
         ->where('isYesNO', 1)
         ->exists();
 
+        $poMasterRcmActive = false;
+        if ($output->documentType == 0 || $output->documentType == 2) {
+            foreach ($output->detail as $detail) {
+                $poMaster = $detail->pomaster;
+                $isPoRcmActive = $poMaster && (int) $poMaster->rcmActivated === 1;
+                $isPoRcmAvailable = $poMaster && ($poMaster->rcmAvailable === true || (int) $poMaster->rcmAvailable === 1);
+                if ($isPoRcmActive && $isPoRcmAvailable) {
+                    $poMasterRcmActive = true;
+                    break;
+                }
+            }
+        }
+
         $output['isProjectBase'] = $isProjectBase;
+        $output['poMasterRcmActive'] = $poMasterRcmActive;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
         $output['poVATamount'] = round($poVATamount, $output->transactioncurrency->DecimalPlaces ?? 2);
 
@@ -3130,7 +3150,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'directdetail' => function ($query) {
             $query->with('project','segment','vat_sub_category','purchase_order');
         }, 'detail' => function ($query) {
-            $query->with('grvmaster');
+            $query->with('grvmaster', 'pomaster');
         }, 'item_details' => function ($query) {
             $query->with('unit','vat_sub_category');
         }, 'approved_by' => function ($query) {
@@ -3202,6 +3222,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $stdVatTot = 0;
         $retentionVatPortion = 0;
         $poVATamount = 0;
+        $poMasterRcmActive = false;
 
         if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
             $poVATamount = SupplierInvoiceItemDetail::where('bookingSuppMasInvAutoID', $id)->sum('VATAmount');
@@ -3210,12 +3231,36 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($bookInvSuppMasterRecord->documentType != 4) {
+            if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+                foreach ($bookInvSuppMasterRecord->detail as $detail) {
+                    $poMaster = $detail->pomaster;
+                    $isPoRcmActive = $poMaster && (int) $poMaster->rcmActivated === 1;
+                    $isPoRcmAvailable = $poMaster && ($poMaster->rcmAvailable === true || (int) $poMaster->rcmAvailable === 1);
+                    if ($isPoRcmActive && $isPoRcmAvailable) {
+                        $poMasterRcmActive = true;
+                        break;
+                    }
+                }
+            }
+
             if (
                 ($bookInvSuppMasterRecord->retentionPercentage > 0) &&
                 ($bookInvSuppMasterRecord->vatRegisteredYN == 1) &&
                 ($bookInvSuppMasterRecord->rcmActivated == 0) &&
                 ($bookInvSuppMasterRecord->whtApplicable == 0)
             ) {
+                if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+                    $poDetailItems = SupplierInvoiceItemDetail::with(['vat_sub_category'])
+                        ->where('bookingSuppMasInvAutoID', $id)
+                        ->get();
+
+                    foreach ($poDetailItems as $data) {
+                        if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType != 3) {
+                            $stdVatTot += $data->VATAmount;
+                        }
+                    }
+                }
+
                 foreach ($bookInvSuppMasterRecord->directdetail as $data) {
                     if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType == 1) {
                         $stdVatTot += $data->VATAmount;
@@ -3249,6 +3294,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'grvTotRpt' => $grvTotRpt,
             'retentionVatPortion' => $retentionVatPortion,
             'poVATamount' => round($poVATamount, $transDecimal),
+            'poMasterRcmActive' => $poMasterRcmActive,
             'directAmountReport' => $directAmountReport,
             'lang' => $lang // Pass lang to view
         );
