@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Criteria\LimitOffsetCriteria;
+use App\Models\ApprovalLevel;
 use App\Models\PvApprovalTypeSetup;
 use App\Repositories\PvApprovalTypeSetupRepository;
 use App\Utils\ServiceResponse;
@@ -96,8 +97,44 @@ class PvApprovalTypeSetupService
             }
         }
 
-        $setup->fill($validatedData);
+        if (isset($validatedData['is_active'])) {
+            $companySystemId = $validatedData['company_system_id'];
+            if ((int) $validatedData['is_active'] === 1) {
+                $existingActiveSetupDescription = null;
+                $documentAttachmentId = $validatedData['document_attachment_id'];
 
+                $typeValues = $this->getPvTypeFlagValues($validatedData, $setup);
+                $query = PvApprovalTypeSetup::where('company_system_id', $companySystemId)
+                    ->where('document_attachment_id', $documentAttachmentId)
+                    ->where('is_active', 1)
+                    ->where('id', '!=', (int) $setup->id);
+
+                foreach ($typeValues as $column => $value) {
+                    $query->where($column, $value);
+                }
+
+                $conflictingSetup = $query->first();
+
+                if (!empty($conflictingSetup)) {
+                    $existingActiveSetupDescription = $conflictingSetup->setup_description;
+                    return ServiceResponse::failure(trans('custom.pv_type_setup_active_conflict', ['description' => $existingActiveSetupDescription]));
+                }
+            }
+            else {
+                $activeLevel = ApprovalLevel::where('companySystemID', $companySystemId)
+                    ->where('documentSystemID', 4)
+                    ->where('pvTypeWise', 1)
+                    ->where('pvTypeSetupID', $id)
+                    ->where('isActive', -1)
+                    ->first();
+
+                if ($activeLevel) {
+                    return ServiceResponse::failure(trans('custom.there_is_an_approval_level_created_for_this_docume'));
+                }
+            }
+        }
+
+        $setup->fill($validatedData);
         $setup->save();
 
         return ServiceResponse::success($setup, 'PV approval type setup updated successfully');
@@ -110,9 +147,56 @@ class PvApprovalTypeSetupService
             return ServiceResponse::failure(trans('custom.pv_approval_type_setup_not_found'));
         }
 
+        $approvalLevels = ApprovalLevel::where('companySystemID', $setup->company_system_id)
+            ->where('pvTypeWise', 1)
+            ->where('pvTypeSetupID', $id)
+            ->where('is_deleted', 0)
+            ->get();
+
+        if (count($approvalLevels) > 0) {
+            return ServiceResponse::failure(trans('custom.pv_approval_type_setup_has_approval_levels'));
+        }
+
         $setup->delete();
 
         return ServiceResponse::success($setup, trans('custom.pv_approval_type_setup_deleted_successfully'));
+    }
+
+    private function getPvTypeFlagValues($data, $fallbackSetup = null): array
+    {
+        $columns = [
+            'is_amount_approval',
+            'is_general_approval',
+            'is_supplier_payment',
+            'is_supplier_advance_payment',
+            'is_employee_payment',
+            'is_employee_advance_payment',
+            'is_direct_payment_general',
+            'is_iou_voucher',
+            'is_salary_transfer',
+            'is_expense_claim',
+            'is_petty_cash',
+            'is_cash',
+            'is_inter_company_funds_transfer',
+            'is_collection_on_behalf',
+            'is_inter_bank_account_transfer',
+        ];
+
+        $values = [];
+
+        foreach ($columns as $column) {
+            if (array_key_exists($column, $data)) {
+                $values[$column] = (int) $data[$column];
+            } 
+            elseif (!empty($fallbackSetup) && isset($fallbackSetup->{$column})) {
+                $values[$column] = (int) $fallbackSetup->{$column};
+            } 
+            else {
+                $values[$column] = 0;
+            }
+        }
+
+        return $values;
     }
 }
 

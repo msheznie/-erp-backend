@@ -87,13 +87,16 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
 
-        $grvSubcategoryCheck = $this->approvalLevelService->validateGrvSubcategoryRequired(
-            (int) ($input['companySystemID'] ?? 0),
-            (int) ($input['documentSystemID'] ?? 0),
-            $input
-        );
-        if (!$grvSubcategoryCheck['valid']) {
-            return $this->sendError($grvSubcategoryCheck['message'], 422);
+        if (isset($input['documentSystemID']) && ($input['documentSystemID'] == 3)) {
+            $grvSubcategoryCheck = $this->approvalLevelService->validateGrvSubcategoryRequired(
+                (int) ($input['companySystemID'] ?? 0),
+                (int) ($input['documentSystemID'] ?? 0),
+                $input
+            );
+
+            if (!$grvSubcategoryCheck['valid']) {
+                return $this->sendError($grvSubcategoryCheck['message'], 422);
+            }
         }
 
         if(isset($input['documentSystemID']) && ($input['documentSystemID'] != 1)){
@@ -118,7 +121,6 @@ class ApprovalLevelAPIController extends AppBaseController
         }
 
         if (isset($request->tenderTypeId)) {
-
             $tenderType = TenderType::getTenderTypeData($input['tenderTypeId']);
             $input["tenderTypeCode"] =  $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
@@ -384,6 +386,16 @@ class ApprovalLevelAPIController extends AppBaseController
             ->when(isset($input['approvalLevelID']), function($query) use ($input) {
                 $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
             })
+            /* ->when(isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 4, function ($query) use ($input) {
+                if (!empty($input['pvTypeSetupID'])) {
+                    $query->where('pvTypeSetupID', $input['pvTypeSetupID']);
+                } else {
+                    $query->where(function ($q) {
+                        $q->whereNull('pvApprovalTypeSetupID')
+                            ->orWhere('pvApprovalTypeSetupID', 0);
+                    });
+                }
+            }) */
             ->when(isset($input['workflow']), function ($query) use ($input) {
                 $query->where(function ($query) use ($input) {
                     $query->where('workflow', $input['workflow']);

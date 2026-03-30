@@ -10069,6 +10069,7 @@ return
     'pv_approval_type_setup_not_found' => 'PV approval type setup not found.',
     'description_cannot_be_duplicated' => 'Description cannot be Duplicated',
     'pv_approval_type_setup_deleted_successfully' => 'PV approval type setup deleted successfully',
+    'pv_type_setup_active_conflict' => 'Existing ":description" setup is already active. Cannot activate same type more than one.',
     'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'Employee cannot be removed because budget planning is in progress',
 
     // Document Communication Messages
@@ -10100,5 +10101,6 @@ return
     'company_field_must_be_an_integer' => 'Company field must be an integer',
     'document_system_id_is_required' => 'Document system ID is required',
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
+    'pv_approval_type_setup_has_approval_levels' => 'Approvel type setup is assigned to approval levels, cannot be deleted',
     'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
 ];

@@ -9946,9 +9946,8 @@ return
     'pv_approval_type_setup_not_found' => 'لم يتم العثور على إعداد اعتماد نوع سند الصرف.',
     'description_cannot_be_duplicated' => 'لا يمكن تكرار الوصف',
     'pv_approval_type_setup_deleted_successfully' => 'تم حذف إعداد اعتماد نوع سند الصرف بنجاح',
+    'pv_type_setup_active_conflict' => 'الإعداد ":description" نشط بالفعل. لا يمكن تفعيل نفس النوع لأكثر من واحد.',
     'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'لا يمكن حذف الموظف لأن تخطيط الميزانية قيد التنفيذ',
-
-    // Document Communication Messages
     'comment_added_successfully' => 'تم إضافة التعليق بنجاح',
     'reply_added_successfully' => 'تم إضافة الرد بنجاح',
     'comment_updated_successfully' => 'تم تحديث التعليق بنجاح',
@@ -9977,5 +9976,6 @@ return
     'company_field_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
     'document_system_id_is_required' => 'معرف النظام المستندي مطلوب',
     'document_system_id_must_be_an_integer' => 'معرف النظام المستندي يجب أن يكون رقمًا صحيحًا',
+    'pv_approval_type_setup_has_approval_levels' => 'إعداد اعتماد نوع سند الصرف مخصص لموافقات، لا يمكن حذفه',
     'supplier_communication_requires_active_supplier' => 'لتفعيل خيار التواصل مع المورد، يجب أن يكون المورد نشطًا.<br>يرجى تفعيل المورد أولاً.',
 ];
