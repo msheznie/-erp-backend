@@ -27,12 +27,12 @@ class DocumentCommunicationService
             'documentSystemID' => 'required|integer',
             'documentSystemCode' => 'required|integer',
         ], [
-            'companySystemID.required' => 'companySystemID is required',
-            'companySystemID.integer' => 'companySystemID must be an integer',
-            'documentSystemID.required' => 'documentSystemID is required',
-            'documentSystemID.integer' => 'documentSystemID must be an integer',
-            'documentSystemCode.required' => 'documentSystemCode is required',
-            'documentSystemCode.integer' => 'documentSystemCode must be an integer',
+            'companySystemID.required' => trans('custom.company_field_is_required'),
+            'companySystemID.integer' => trans('custom.company_field_must_be_an_integer'),
+            'documentSystemID.required' => trans('custom.document_system_id_is_required'),
+            'documentSystemID.integer' => trans('custom.document_system_id_must_be_an_integer'),
+            'documentSystemCode.required' => trans('custom.document_system_code_is_required'),
+            'documentSystemCode.integer' => trans('custom.document_system_code_must_be_an_integer'),
         ]);
 
         if ($validator->fails()) {
@@ -67,11 +67,11 @@ class DocumentCommunicationService
             'documentSystemCode' => 'required|integer',
             'sort' => 'nullable|in:newest,oldest',
         ], [
-            'thread_id.required' => 'thread_id is required',
-            'thread_id.string' => 'thread_id must be a string',
-            'documentSystemCode.required' => 'documentSystemCode is required',
-            'documentSystemCode.integer' => 'documentSystemCode must be an integer',
-            'sort.in' => 'sort must be either newest or oldest',
+            'thread_id.required' => trans('custom.thread_id_is_required'),
+            'thread_id.string' => trans('custom.thread_id_must_be_a_string'),
+            'documentSystemCode.required' => trans('custom.document_system_code_is_required'),
+            'documentSystemCode.integer' => trans('custom.document_system_code_must_be_an_integer'),
+            'sort.in' => trans('custom.sort_must_be_either_newest_or_oldest'),
         ]);
 
         if ($validator->fails()) {
@@ -92,19 +92,19 @@ class DocumentCommunicationService
             'author_id' => 'nullable|integer',
         ];
         $messages = [
-            'thread_id.required' => 'thread_id is required',
-            'thread_id.string' => 'thread_id must be a string',
-            'documentSystemCode.required' => 'documentSystemCode is required',
-            'documentSystemCode.integer' => 'documentSystemCode must be an integer',
-            'body.required' => 'body is required',
-            'body.string' => 'body must be a string',
-            'author_type.in' => 'author_type must be either 1 or 2',
-            'author_id.integer' => 'author_id must be an integer',
+            'thread_id.required' => trans('custom.thread_id_is_required'),
+            'thread_id.string' => trans('custom.thread_id_must_be_a_string'),
+            'documentSystemCode.required' => trans('custom.document_system_code_is_required'),
+            'documentSystemCode.integer' => trans('custom.document_system_code_must_be_an_integer'),
+            'body.required' => trans('custom.body_is_required'),
+            'body.string' => trans('custom.body_must_be_a_string'),
+            'author_type.in' => trans('custom.author_type_must_be_either_1_or_2'),
+            'author_id.integer' => trans('custom.author_id_must_be_an_integer'),
         ];
         if ($isReply) {
             $rules['parent_message_id'] = 'required|string';
-            $messages['parent_message_id.required'] = 'parent_message_id is required';
-            $messages['parent_message_id.string'] = 'parent_message_id must be a string';
+            $messages['parent_message_id.required'] = trans('custom.parent_message_id_is_required');
+            $messages['parent_message_id.string'] = trans('custom.parent_message_id_must_be_a_string');
         }
 
         $validator = Validator::make($input, $rules, $messages);
@@ -128,7 +128,7 @@ class DocumentCommunicationService
             }
 
             if (!$parentMessage) {
-                return ['success' => false, 'code' => 404, 'message' => 'Parent comment not found.'];
+                return ['success' => false, 'code' => 404, 'message' => trans('custom.parent_comment_not_found')];
             }
 
             $parentUuid = $parentMessage->uuid;
@@ -168,12 +168,12 @@ class DocumentCommunicationService
             'author_type' => 'nullable|in:1,2',
             'author_id' => 'nullable|integer',
         ], [
-            'body.required' => 'body is required',
-            'body.string' => 'body must be a string',
-            'expected_version.required' => 'expected_version is required',
-            'expected_version.integer' => 'expected_version must be an integer',
-            'author_type.in' => 'author_type must be either 1 or 2',
-            'author_id.integer' => 'author_id must be an integer',
+            'body.required' => trans('custom.body_is_required'),
+            'body.string' => trans('custom.body_must_be_a_string'),
+            'expected_version.required' => trans('custom.expected_version_is_required'),
+            'expected_version.integer' => trans('custom.expected_version_must_be_an_integer'),
+            'author_type.in' => trans('custom.author_type_must_be_either_1_or_2'),
+            'author_id.integer' => trans('custom.author_id_must_be_an_integer'),
         ]);
         if ($validator->fails()) {
             return ['success' => false, 'code' => 422, 'message' => $validator->errors()->first()];
@@ -181,17 +181,17 @@ class DocumentCommunicationService
 
         $message = $this->repository->getMessageById($id);
         if (!$message || $message->deleted_at) {
-            return ['success' => false, 'code' => 404, 'message' => 'Comment not found.'];
+            return ['success' => false, 'code' => 404, 'message' => trans('custom.comment_not_found')];
         }
 
         $authorType = isset($input['author_type']) ? (int)$input['author_type'] : 1;
         $authorId = isset($input['author_id']) ? (int)$input['author_id'] : (int)Helper::getEmployeeSystemID();
         if ((int)$message->authortype !== $authorType || (int)$message->authorId !== $authorId) {
-            return ['success' => false, 'code' => 403, 'message' => 'You can edit only your own comments.'];
+            return ['success' => false, 'code' => 403, 'message' => trans('custom.you_can_edit_only_your_own_comments')];
         }
 
         if ((int)$message->version !== (int)$input['expected_version']) {
-            return ['success' => false, 'code' => 409, 'message' => 'Comment updated by another user. Please refresh.'];
+            return ['success' => false, 'code' => 409, 'message' => trans('custom.comment_updated_by_another_user_please_refresh')];
         }
 
         $previous = $message->toArray();
@@ -209,17 +209,17 @@ class DocumentCommunicationService
     {
         $message = $this->repository->getMessageById($id);
         if (!$message || $message->deleted_at) {
-            return ['success' => false, 'code' => 404, 'message' => 'Comment not found.'];
+            return ['success' => false, 'code' => 404, 'message' => trans('custom.comment_not_found')];
         }
 
         $authorType = isset($input['author_type']) ? (int)$input['author_type'] : 1;
         $authorId = isset($input['author_id']) ? (int)$input['author_id'] : (int)Helper::getEmployeeSystemID();
         if ((int)$message->authortype !== $authorType || (int)$message->authorId !== $authorId) {
-            return ['success' => false, 'code' => 403, 'message' => 'You can delete only your own comments.'];
+            return ['success' => false, 'code' => 403, 'message' => trans('custom.you_can_delete_only_your_own_comments')];
         }
 
         if ($this->repository->hasReplies((string)$message->uuid)) {
-            return ['success' => false, 'code' => 422, 'message' => 'Cannot delete comment with replies.'];
+            return ['success' => false, 'code' => 422, 'message' => trans('custom.cannot_delete_comment_with_replies')];
         }
 
         $previous = $message->toArray();
