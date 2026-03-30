@@ -1009,11 +1009,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         $monthBegin = $jvMasterData['FYBiggin'];
         $monthEnd = $jvMasterData['FYEnd'];
         if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
-            return [
-                "status" => false,
-                "message" => trans('custom.jv_financial_period_validation'),
-                "httpCode" => 500
-            ];
+            return $this->sendError(trans('custom.jv_financial_period_validation'));
         }
 
         $approve = DocumentApprove::approveDocument($input);
