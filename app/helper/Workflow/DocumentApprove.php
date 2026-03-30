@@ -940,7 +940,7 @@ class DocumentApprove
                         }
 
 
-                        if ($input['documentSystemID'] == 106 || $input['documentSystemID'] == 107 || $input['documentSystemID'] == 127 || $input['documentSystemID'] == 117 || $input['documentSystemID'] == 118) {
+                        if ($input['documentSystemID'] == 106 || $input['documentSystemID'] == 107 || $input['documentSystemID'] == 127 || $input['documentSystemID'] == 117 || $input['documentSystemID'] == 118 || $input['documentSystemID'] == 134) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
