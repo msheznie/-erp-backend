@@ -53,7 +53,7 @@ class AttendanceCrossDayPulling implements ShouldQueue{
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
         if(!$isShiftModule){
-            return Log::channel('attendance_cross_day_job_service')->error("cannot proceed in old shift module at ". $this->dateTime);
+            return;
         }
 
         $obj = new SMAttendanceCrossDayPullingService($this->companyId, $this->attDate);
